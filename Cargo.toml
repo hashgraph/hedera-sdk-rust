@@ -1,2 +1,2 @@
 [workspace]
-members = ["protobufs/rust"]
+members = ["protobufs/rust", "sdk/rust"]
