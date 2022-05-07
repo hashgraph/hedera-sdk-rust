@@ -1,0 +1,5 @@
+# Intellij project directory
+.idea/
+
+# Rust build output directory
+target/
