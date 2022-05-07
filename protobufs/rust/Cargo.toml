@@ -1,0 +1,20 @@
+[package]
+name = "hedera-proto"
+version = "0.4.0"
+edition = "2021"
+
+[features]
+# enable gRPC server generation
+server = []
+
+[dependencies]
+prost = "0.10.1"
+tonic = { version = "0.7.1", features = [ "compression" ] }
+serde = { version = "1.0.136", features = [ "derive" ], optional = true }
+chrono_0_4 = { version = "0.4.19", optional = true, package = "chrono" }
+time_0_2 = { version = "0.2.27", optional = true, package = "time" }
+time_0_3 = { version = "0.3.9", optional = true, package = "time" }
+
+[build-dependencies]
+anyhow = "1.0.55"
+tonic-build = { version = "0.7.0", features = ["compression"] }
