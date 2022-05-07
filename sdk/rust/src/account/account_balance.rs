@@ -18,11 +18,10 @@ pub struct AccountBalance {
 }
 
 impl FromProtobuf for AccountBalance {
-    type Protobuf = services::Response;
+    type Protobuf = services::response::Response;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
-        let response = pb_getf!(pb, response, "Response")?;
-        let response = pb_getv!(response, CryptogetAccountBalance, services::response::Response);
+        let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
         let account_id =
             pb_getf!(response, account_id, "accountId", "CryptoGetAccountBalanceResponse")?;

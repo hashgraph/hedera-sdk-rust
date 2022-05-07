@@ -1,7 +1,10 @@
+use async_trait::async_trait;
 use hedera_proto::services;
 
 use crate::account::AccountInfo;
-use crate::{AccountIdOrAlias, Client, Query, ToProtobuf};
+use crate::client::NetworkChannel;
+use crate::query::QueryExecute;
+use crate::{AccountId, AccountIdOrAlias, Client, Query, ToProtobuf};
 
 /// Get all the information about an account, including the balance.
 ///
@@ -37,15 +40,14 @@ impl ToProtobuf for AccountInfoQueryData {
     }
 }
 
-impl AccountInfoQuery {
-    pub async fn execute(&self, client: &Client) -> crate::Result<AccountInfo> {
-        let request = self.data.to_protobuf();
+#[async_trait]
+impl QueryExecute for AccountInfoQuery {
+    type Response = AccountInfo;
 
-        let response = client.crypto().get_account_info(request).await?;
-        let response = response.into_inner();
-
-        println!("response = {:#?}", response);
-
-        todo!()
+    async fn execute(
+        &self,
+        channel: NetworkChannel,
+    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
+        channel.crypto().get_account_info(self.data.to_protobuf()).await
     }
 }

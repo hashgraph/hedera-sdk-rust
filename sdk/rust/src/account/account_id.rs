@@ -1,3 +1,5 @@
+use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
 use hedera_proto::services;
@@ -11,6 +13,12 @@ pub struct AccountId {
     pub shard: u64,
     pub realm: u64,
     pub num: u64,
+}
+
+impl Display for AccountId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+    }
 }
 
 impl ToProtobuf for AccountId {
