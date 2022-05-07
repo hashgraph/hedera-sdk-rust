@@ -1,0 +1,4 @@
+merge_derives = true
+imports_granularity = "Module"
+imports_layout = "Horizontal"
+group_imports = "StdExternalCrate"

@@ -1,5 +1,7 @@
-use crate::{AccountId, PublicKey};
+use hedera_proto::services;
 use time::{Duration, OffsetDateTime};
+
+use crate::{AccountId, FromProtobuf, PublicKey};
 
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -18,7 +20,7 @@ pub struct AccountInfo {
 
     /// The account ID of the account to which this is proxy staked.
     #[deprecated]
-    pub proxy_account_id: AccountId,
+    pub proxy_account_id: Option<AccountId>,
 
     /// The total number of hbars proxy staked to this account.
     pub proxy_received: u64, // TODO: Hbar
@@ -48,10 +50,10 @@ pub struct AccountInfo {
     pub receiver_signature_required: bool,
 
     /// The TimeStamp time at which this account is set to expire.
-    pub expires_at: OffsetDateTime,
+    pub expires_at: Option<OffsetDateTime>,
 
     /// The duration for expiration time will extend every this many seconds.
-    pub auto_renew_period: Duration,
+    pub auto_renew_period: Option<Duration>,
     //
     // All tokens related to this account.
     // TODO: pub token_relationships: HashMap<TokenId, TokenRelationship>,
@@ -77,3 +79,44 @@ pub struct AccountInfo {
 }
 
 // TODO: fromProtobuf
+
+impl FromProtobuf for AccountInfo {
+    type Protobuf = services::response::Response;
+
+    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let response = pb_getv!(pb, CryptoGetInfo, services::response::Response);
+        let info = pb_getf!(response, account_info, "accountInfo", "CryptoGetInfoResponse")?;
+
+        let account_id = pb_getf!(info, account_id, "accountId", "AccountInfo")?;
+
+        Ok(Self {
+            account_id: AccountId::from_protobuf(account_id)?,
+            contract_account_id: info.contract_account_id,
+            deleted: info.deleted,
+            #[allow(deprecated)]
+            proxy_account_id: info.proxy_account_id.map(AccountId::from_protobuf).transpose()?,
+            proxy_received: info.proxy_received as u64,
+            // FIXME: key
+            key: PublicKey(Vec::new()),
+            balance: info.balance as u64,
+            #[allow(deprecated)]
+            send_record_threshold: info.generate_send_record_threshold,
+            #[allow(deprecated)]
+            receive_record_threshold: info.generate_receive_record_threshold,
+            receiver_signature_required: info.receiver_sig_required,
+            // FIXME: expires_at
+            expires_at: None,
+            // FIXME: auto_renew_period
+            auto_renew_period: None,
+            memo: info.memo,
+            owned_nfts: info.owned_nfts as u64,
+            max_automatic_token_associations: info.max_automatic_token_associations as u32,
+            // FIXME: alias
+            alias: None,
+            ethereum_nonce: info.ethereum_nonce as u64,
+        })
+    }
+}
