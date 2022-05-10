@@ -1,17 +1,11 @@
 use async_trait::async_trait;
-use backoff::backoff::Backoff;
-use backoff::ExponentialBackoff;
 use hedera_proto::services;
-use hedera_proto::services::response::Response;
-use hedera_proto::services::ResponseCodeEnum;
+use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
-use tokio::time::sleep;
+use tonic::transport::Channel;
 
-use crate::client::NetworkChannel;
 use crate::query::{Query, QueryExecute};
-use crate::{
-    AccountBalance, AccountId, AccountIdOrAlias, Client, ContractIdOrEvmAddress, Error, FromProtobuf, ToProtobuf
-};
+use crate::{AccountBalance, AccountIdOrAlias, ContractIdOrEvmAddress, ToProtobuf};
 
 /// Get the balance of a cryptocurrency account.
 ///
@@ -32,7 +26,7 @@ impl AccountBalanceQuery {
     ///
     /// This is mutually exclusive with [`contract_id`](#method.contract_id).
     ///
-    pub fn account_id(&mut self, id: AccountIdOrAlias) -> &mut Self {
+    pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
         self.data.account_id = Some(id.into());
         self
     }
@@ -70,9 +64,9 @@ impl QueryExecute for AccountBalanceQuery {
     type Response = AccountBalance;
 
     async fn execute(
-        &self,
-        channel: NetworkChannel,
+        channel: Channel,
+        request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        channel.crypto().crypto_get_balance(self.data.to_protobuf()).await
+        CryptoServiceClient::new(channel).crypto_get_balance(request).await
     }
 }

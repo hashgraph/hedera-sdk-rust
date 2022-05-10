@@ -9,7 +9,7 @@ async fn main() -> anyhow::Result<()> {
     let id = AccountId::from(1001);
 
     let ab = AccountBalanceQuery::new()
-        .account_id(id.into())
+        .account_id(id)
         .execute(&client)
         .await?;
 

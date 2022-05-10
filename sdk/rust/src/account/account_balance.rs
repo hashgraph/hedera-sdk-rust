@@ -1,6 +1,6 @@
 use hedera_proto::services;
 
-use crate::{AccountId, Error, FromProtobuf};
+use crate::{AccountId, FromProtobuf};
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -23,9 +23,7 @@ impl FromProtobuf for AccountBalance {
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
-        let account_id =
-            pb_getf!(response, account_id, "accountId", "CryptoGetAccountBalanceResponse")?;
-
+        let account_id = pb_getf!(response, account_id)?;
         let account_id = AccountId::from_protobuf(account_id)?;
 
         let balance = response.balance;

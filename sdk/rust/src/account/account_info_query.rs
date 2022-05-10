@@ -1,10 +1,11 @@
 use async_trait::async_trait;
 use hedera_proto::services;
+use hedera_proto::services::crypto_service_client::CryptoServiceClient;
+use tonic::transport::Channel;
 
 use crate::account::AccountInfo;
-use crate::client::NetworkChannel;
 use crate::query::QueryExecute;
-use crate::{AccountId, AccountIdOrAlias, Client, Query, ToProtobuf};
+use crate::{AccountIdOrAlias, Query, ToProtobuf};
 
 /// Get all the information about an account, including the balance.
 ///
@@ -45,9 +46,9 @@ impl QueryExecute for AccountInfoQuery {
     type Response = AccountInfo;
 
     async fn execute(
-        &self,
-        channel: NetworkChannel,
+        channel: Channel,
+        request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        channel.crypto().get_account_info(self.data.to_protobuf()).await
+        CryptoServiceClient::new(channel).get_account_info(request).await
     }
 }
