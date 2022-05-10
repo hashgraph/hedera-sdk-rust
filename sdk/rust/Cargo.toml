@@ -12,7 +12,7 @@ serde = { version = "1.0.137", features = ["derive"] }
 thiserror = "1.0.31"
 time = { version = "0.3.9", features = ["serde"] }
 tokio = { version = "1.18.1" }
-hedera-proto = { path = "../../protobufs/rust" }
+hedera-proto = { path = "../../protobufs/rust", features = ["time_0_3"] }
 serde_json = "1.0.79"
 serde_with = "1.12.1"
 tonic = { version = "0.7.1", features = ["compression"] }
@@ -22,9 +22,11 @@ hex = "0.4.3"
 paste = "1.0.7"
 parking_lot = "0.12.0"
 http = "0.2.7"
-rand = "0.8.5"
+rand = "0.7.3"
 log = "0.4.17"
 backoff = "0.4.0"
+ed25519-dalek = { version = "1.0.1", features = ["rand", "serde"] }
+sha2 = "0.10.2"
 
 [dev-dependencies]
 anyhow = "1.0.57"

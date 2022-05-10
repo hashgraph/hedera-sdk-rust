@@ -3,18 +3,21 @@ use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use hedera_proto::services;
 use hedera_proto::services::ResponseCodeEnum;
+use rand::thread_rng;
 use tokio::time::sleep;
+use tonic::transport::Channel;
+use tonic::{Response, Status};
 
-use crate::client::NetworkChannel;
-use crate::{AccountId, Client, Error, FromProtobuf, ToProtobuf};
+use crate::execute::{execute, Execute};
+use crate::{AccountId, Client, Error, FromProtobuf, ToProtobuf, TransactionId};
 
 #[async_trait]
 pub trait QueryExecute {
     type Response: FromProtobuf<Protobuf = services::response::Response>;
 
     async fn execute(
-        &self,
-        channel: NetworkChannel,
+        channel: Channel,
+        request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status>;
 }
 
@@ -78,132 +81,116 @@ impl<D> Query<D> {
     }
 }
 
+#[async_trait]
+impl<D> Execute for Query<D>
+where
+    Self: QueryExecute,
+    D: ToProtobuf<Protobuf = services::Query>,
+{
+    type GrpcRequest = services::Query;
+
+    type GrpcResponse = services::Response;
+
+    type Response = <Self as QueryExecute>::Response;
+
+    type RequestContext = ();
+
+    type ResponseContext = ();
+
+    fn node_account_ids(&self) -> Option<&[AccountId]> {
+        self.node_account_ids.as_deref()
+    }
+
+    fn transaction_id(&self) -> Option<TransactionId> {
+        // TODO: paid queries
+        None
+    }
+
+    fn requires_transaction_id() -> bool {
+        // TODO: paid queries
+        false
+    }
+
+    async fn make_request(
+        &self,
+        client: &Client,
+        _transaction_id: Option<TransactionId>,
+        _node_account_id: AccountId,
+        _context: &Self::RequestContext,
+    ) -> crate::Result<(Self::GrpcRequest, Self::ResponseContext)> {
+        // TODO: paid queries
+        Ok((self.data.to_protobuf(), ()))
+    }
+
+    async fn execute(
+        channel: Channel,
+        request: Self::GrpcRequest,
+    ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status> {
+        <Self as QueryExecute>::execute(channel, request).await
+    }
+
+    fn make_response(
+        response: Self::GrpcResponse,
+        _context: Self::ResponseContext,
+        _node_account_id: AccountId,
+        _transaction_id: Option<TransactionId>,
+    ) -> crate::Result<Self::Response> {
+        let response = pb_getf!(response, response)?;
+
+        <<Self as QueryExecute>::Response as FromProtobuf>::from_protobuf(response)
+    }
+
+    fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
+        Ok(response_header(response)?.node_transaction_precheck_code)
+    }
+}
+
 impl<D> Query<D>
 where
     Self: QueryExecute,
     D: ToProtobuf<Protobuf = services::Query>,
 {
     /// Execute this query against the provided client of the Hedera network.
+    #[inline]
     pub async fn execute(
         &self,
         client: &Client,
     ) -> crate::Result<<Self as QueryExecute>::Response> {
-        let mut backoff = ExponentialBackoff::default();
-        let mut last_error: Option<Error> = None;
-
-        loop {
-            // FIXME: do we really want to check EVERY node before we start backing off?
-            //  we can sample 2/3 or even 1/3 safely I think
-
-            let num_nodes = self
-                .node_account_ids
-                .as_ref()
-                .map(|ids| ids.len())
-                .unwrap_or_else(|| client.network.num_nodes());
-
-            let node_indexes =
-                rand::seq::index::sample(&mut rand::thread_rng(), num_nodes, num_nodes);
-
-            for node_index in node_indexes.iter() {
-                let channel = match &self.node_account_ids {
-                    Some(ids) => client.network.channel(ids[node_index]),
-                    None => client.network.channel_nth(node_index),
-                };
-
-                let response = match QueryExecute::execute(self, channel).await {
-                    Ok(response) => response,
-                    Err(status) => {
-                        match status.code() {
-                            tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                                // NOTE: this is an "unhealthy" node
-                                // try the next node in our allowed list, immediately
-                                last_error = Some(status.into());
-                                continue;
-                            }
-
-                            // FIXME: handle stream has been reset failures (?)
-                            _ => {
-                                // fail immediately
-                                return Err(status.into());
-                            }
-                        }
-                    }
-                };
-
-                let response = response.into_inner();
-
-                let mut response = pb_getf!(response, response, "Response")?;
-
-                let header = response_take_header(&mut response)?;
-                let status =
-                    ResponseCodeEnum::from_i32(header.node_transaction_precheck_code).unwrap();
-
-                match status {
-                    ResponseCodeEnum::Ok => {
-                        return <<Self as QueryExecute>::Response as FromProtobuf>::from_protobuf(
-                            response,
-                        );
-                    }
-
-                    ResponseCodeEnum::Busy | ResponseCodeEnum::PlatformNotActive => {
-                        // NOTE: this is a "busy" node
-                        // try the next node in our allowed list, immediately
-                        last_error = Some(Error::query_pre_check(status));
-                        continue;
-                    }
-
-                    _ => {
-                        // fail immediately
-                        return Err(Error::query_pre_check(status));
-                    }
-                }
-            }
-
-            // we tried ~every~ node in our defined network, suspend execution until the next
-            // backoff interval
-            if let Some(duration) = backoff.next_backoff() {
-                sleep(duration).await;
-            } else {
-                // maximum time allowed has elapsed
-                // return a timeout failure with the last observed error
-                return Err(Error::Timeout(last_error.unwrap().into()));
-            }
-        }
+        execute(client, self, ()).await
     }
 }
 
-fn response_take_header(
-    response: &mut services::response::Response,
-) -> crate::Result<services::ResponseHeader> {
+fn response_header(response: &services::Response) -> crate::Result<&services::ResponseHeader> {
     use services::response::Response::*;
 
-    let header = match response {
-        CryptogetAccountBalance(response) => response.header.take(),
-        GetByKey(response) => response.header.take(),
-        GetBySolidityId(response) => response.header.take(),
-        ContractCallLocal(response) => response.header.take(),
-        ContractGetBytecodeResponse(response) => response.header.take(),
-        ContractGetInfo(response) => response.header.take(),
-        ContractGetRecordsResponse(response) => response.header.take(),
-        CryptoGetAccountRecords(response) => response.header.take(),
-        CryptoGetInfo(response) => response.header.take(),
-        CryptoGetLiveHash(response) => response.header.take(),
-        CryptoGetProxyStakers(response) => response.header.take(),
-        FileGetContents(response) => response.header.take(),
-        FileGetInfo(response) => response.header.take(),
-        TransactionGetReceipt(response) => response.header.take(),
-        TransactionGetRecord(response) => response.header.take(),
-        TransactionGetFastRecord(response) => response.header.take(),
-        ConsensusGetTopicInfo(response) => response.header.take(),
-        NetworkGetVersionInfo(response) => response.header.take(),
-        TokenGetInfo(response) => response.header.take(),
-        ScheduleGetInfo(response) => response.header.take(),
-        TokenGetAccountNftInfos(response) => response.header.take(),
-        TokenGetNftInfo(response) => response.header.take(),
-        TokenGetNftInfos(response) => response.header.take(),
-        NetworkGetExecutionTime(response) => response.header.take(),
-        AccountDetails(response) => response.header.take(),
+    let header = match &response.response {
+        Some(CryptogetAccountBalance(response)) => &response.header,
+        Some(GetByKey(response)) => &response.header,
+        Some(GetBySolidityId(response)) => &response.header,
+        Some(ContractCallLocal(response)) => &response.header,
+        Some(ContractGetBytecodeResponse(response)) => &response.header,
+        Some(ContractGetInfo(response)) => &response.header,
+        Some(ContractGetRecordsResponse(response)) => &response.header,
+        Some(CryptoGetAccountRecords(response)) => &response.header,
+        Some(CryptoGetInfo(response)) => &response.header,
+        Some(CryptoGetLiveHash(response)) => &response.header,
+        Some(CryptoGetProxyStakers(response)) => &response.header,
+        Some(FileGetContents(response)) => &response.header,
+        Some(FileGetInfo(response)) => &response.header,
+        Some(TransactionGetReceipt(response)) => &response.header,
+        Some(TransactionGetRecord(response)) => &response.header,
+        Some(TransactionGetFastRecord(response)) => &response.header,
+        Some(ConsensusGetTopicInfo(response)) => &response.header,
+        Some(NetworkGetVersionInfo(response)) => &response.header,
+        Some(TokenGetInfo(response)) => &response.header,
+        Some(ScheduleGetInfo(response)) => &response.header,
+        Some(TokenGetAccountNftInfos(response)) => &response.header,
+        Some(TokenGetNftInfo(response)) => &response.header,
+        Some(TokenGetNftInfos(response)) => &response.header,
+        Some(NetworkGetExecutionTime(response)) => &response.header,
+        Some(AccountDetails(response)) => &response.header,
+        None => &None,
     };
 
-    header.ok_or_else(|| Error::from_protobuf("unexpected missing `header` in `Response`"))
+    header.as_ref().ok_or_else(|| Error::from_protobuf("unexpected missing `header` in `Response`"))
 }

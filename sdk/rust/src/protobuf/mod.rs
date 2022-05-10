@@ -1,6 +1,6 @@
 mod convert;
 
 #[macro_use]
-mod get;
+pub(crate) mod get;
 
 pub use convert::{FromProtobuf, ToProtobuf};

@@ -1,11 +1,11 @@
 use hedera_proto::services;
 use time::{Duration, OffsetDateTime};
 
-use crate::{AccountId, FromProtobuf, PublicKey};
+use crate::{AccountId, FromProtobuf, Key};
 
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+// TODO: #[serde(rename_all = "camelCase")]
 pub struct AccountInfo {
     /// The account that is being referenced.
     pub account_id: AccountId,
@@ -25,9 +25,9 @@ pub struct AccountInfo {
     /// The total number of hbars proxy staked to this account.
     pub proxy_received: u64, // TODO: Hbar
 
-    /// The key for the account, which must sign in order to transfer out, or to modify the
+    /// The key for the account, which must sign in order to transfer_transaction out, or to modify the
     /// account in any way other than extending its expiration date.
-    pub key: PublicKey,
+    pub key: Key,
 
     /// Current balance of the referenced account.
     // TODO: use Hbar type
@@ -45,7 +45,7 @@ pub struct AccountInfo {
     #[deprecated]
     pub receive_record_threshold: u64,
 
-    /// If true, no transaction can transfer to this account unless signed by
+    /// If true, no transaction can transfer_transaction to this account unless signed by
     /// this account's key.
     pub receiver_signature_required: bool,
 
@@ -78,19 +78,18 @@ pub struct AccountInfo {
     // TODO: pub staking: StakingInfo;
 }
 
-// TODO: fromProtobuf
-
 impl FromProtobuf for AccountInfo {
     type Protobuf = services::response::Response;
 
+    #[allow(deprecated)]
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
     where
         Self: Sized,
     {
         let response = pb_getv!(pb, CryptoGetInfo, services::response::Response);
-        let info = pb_getf!(response, account_info, "accountInfo", "CryptoGetInfoResponse")?;
-
-        let account_id = pb_getf!(info, account_id, "accountId", "AccountInfo")?;
+        let info = pb_getf!(response, account_info)?;
+        let key = pb_getf!(info, key)?;
+        let account_id = pb_getf!(info, account_id)?;
 
         Ok(Self {
             account_id: AccountId::from_protobuf(account_id)?,
@@ -100,9 +99,8 @@ impl FromProtobuf for AccountInfo {
             proxy_account_id: info.proxy_account_id.map(AccountId::from_protobuf).transpose()?,
             proxy_received: info.proxy_received as u64,
             // FIXME: key
-            key: PublicKey(Vec::new()),
+            key: Key::from_protobuf(key)?,
             balance: info.balance as u64,
-            #[allow(deprecated)]
             send_record_threshold: info.generate_send_record_threshold,
             #[allow(deprecated)]
             receive_record_threshold: info.generate_receive_record_threshold,

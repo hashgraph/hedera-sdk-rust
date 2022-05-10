@@ -4,10 +4,10 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
-use crate::{Error, FromProtobuf, ToProtobuf};
+use crate::{FromProtobuf, PublicKey, ToProtobuf};
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, serde::Serialize, Copy, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
 #[repr(C)]
 pub struct AccountId {
     pub shard: u64,
@@ -37,7 +37,7 @@ impl FromProtobuf for AccountId {
     type Protobuf = services::AccountId;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
-        let account = pb_getf!(pb, account, "AccountId")?;
+        let account = pb_getf!(pb, account)?;
         let num = pb_getv!(account, AccountNum, services::account_id::Account);
 
         Ok(Self { num: num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
