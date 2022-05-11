@@ -3,7 +3,7 @@ use std::result::Result as StdResult;
 
 use hedera_proto::services::ResponseCodeEnum;
 
-use crate::AccountId;
+use crate::{AccountId, TransactionId};
 
 pub type Result<T> = StdResult<T, Error>;
 
@@ -23,8 +23,8 @@ pub enum Error {
     /// Signals that a query or transaction has failed the pre-check.
     // FIXME: Use hedera::Status (once available)
     // TODO: Add transaction_id: Option<TransactionId>
-    #[error("transaction `_` failed pre-check with status `{status:?}`")]
-    PreCheckStatus { status: ResponseCodeEnum },
+    #[error("transaction `{}` failed pre-check with status `{status:?}`", .transaction_id.as_ref().map(|id| id.to_string()).as_deref().unwrap_or("_"))]
+    PreCheckStatus { status: ResponseCodeEnum, transaction_id: Option<TransactionId> },
 
     #[error("failed to parse a key: {0}")]
     KeyParse(BoxStdError),
@@ -58,7 +58,10 @@ impl Error {
         Self::Signature(error.into())
     }
 
-    pub(crate) fn pre_check(status: ResponseCodeEnum) -> Self {
-        Self::PreCheckStatus { status }
+    pub(crate) fn pre_check(
+        status: ResponseCodeEnum,
+        transaction_id: Option<TransactionId>,
+    ) -> Self {
+        Self::PreCheckStatus { status, transaction_id }
     }
 }

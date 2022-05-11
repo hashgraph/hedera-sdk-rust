@@ -1,5 +1,4 @@
-use std::fmt::{self, Debug};
-use std::fmt::{Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
 use hedera_proto::services;
@@ -70,9 +69,7 @@ impl FromStr for AccountId {
 pub struct AccountAlias {
     pub shard: u64,
     pub realm: u64,
-
-    // TODO: Use hedera::PublicKey instead of Vec<u8>
-    pub alias: Vec<u8>,
+    pub alias: PublicKey,
 }
 
 impl ToProtobuf for AccountAlias {
@@ -80,7 +77,7 @@ impl ToProtobuf for AccountAlias {
 
     fn to_protobuf(&self) -> Self::Protobuf {
         services::AccountId {
-            account: Some(services::account_id::Account::Alias(self.alias.clone())),
+            account: Some(services::account_id::Account::Alias(self.alias.as_bytes_raw().to_vec())),
             realm_num: self.realm as i64,
             shard_num: self.shard as i64,
         }

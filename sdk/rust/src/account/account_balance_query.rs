@@ -17,8 +17,13 @@ pub type AccountBalanceQuery = Query<AccountBalanceQueryData>;
 
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
 pub struct AccountBalanceQueryData {
-    account_id: Option<AccountIdOrAlias>,
-    contract_id: Option<ContractIdOrEvmAddress>,
+    source: Option<AccountBalanceSource>,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
+enum AccountBalanceSource {
+    Account(AccountIdOrAlias),
+    Contract(ContractIdOrEvmAddress),
 }
 
 impl AccountBalanceQuery {
@@ -27,7 +32,7 @@ impl AccountBalanceQuery {
     /// This is mutually exclusive with [`contract_id`](#method.contract_id).
     ///
     pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
-        self.data.account_id = Some(id.into());
+        self.data.source = Some(AccountBalanceSource::Account(id.into()));
         self
     }
 
@@ -36,18 +41,17 @@ impl AccountBalanceQuery {
     /// This is mutually exclusive with [`account_id`](#method.account_id).
     ///
     pub fn contract_id(&mut self, id: ContractIdOrEvmAddress) -> &mut Self {
-        self.data.contract_id = Some(id.into());
+        self.data.source = Some(AccountBalanceSource::Contract(id.into()));
         self
     }
 }
 
 impl ToQueryProtobuf for AccountBalanceQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let source = match (&self.account_id, &self.contract_id) {
-            (Some(id), _) => Some(BalanceSource::AccountId(id.to_protobuf())),
-            (_, Some(id)) => todo!(), // Some(BalanceSource::ContractId(id.to_protobuf())),
-            _ => None,
-        };
+        let source = self.source.as_ref().map(|source| match source {
+            AccountBalanceSource::Account(id) => BalanceSource::AccountId(id.to_protobuf()),
+            AccountBalanceSource::Contract(id) => BalanceSource::ContractId(id.to_protobuf()),
+        });
 
         services::Query {
             query: Some(services::query::Query::CryptogetAccountBalance(

@@ -1,19 +1,17 @@
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-    Arc,
-};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use hedera_proto::services;
 use prost::Message;
-use tonic::{transport::Channel, Response, Status};
+use tonic::transport::Channel;
+use tonic::{Response, Status};
 
+use crate::execute::Execute;
+use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::{
-    execute::Execute, AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash,
-    TransactionId, TransactionResponse,
+    AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash, TransactionId, TransactionResponse
 };
-
-use super::protobuf::ToTransactionDataProtobuf;
 
 #[async_trait]
 pub trait TransactionExecute {
