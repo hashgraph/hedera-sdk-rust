@@ -2,11 +2,9 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
-use crate::{
-    execute::Execute, AccountId, Client, Error, FromProtobuf, Query, ToProtobuf, TransactionId,
-};
-
-use super::ToQueryProtobuf;
+use crate::execute::Execute;
+use crate::query::ToQueryProtobuf;
+use crate::{AccountId, Client, Error, FromProtobuf, Query, TransactionId};
 
 /// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]

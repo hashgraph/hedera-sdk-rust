@@ -1,5 +1,3 @@
-use std::any::type_name;
-
 /// Get an optional field from a protobuf object, returning an error if the field does not exist.
 macro_rules! pb_getf {
     ($expr:expr, $field:ident) => {{

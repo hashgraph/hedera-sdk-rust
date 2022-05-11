@@ -1,11 +1,10 @@
 use async_trait::async_trait;
-use hedera_proto::services::{self, crypto_service_client::CryptoServiceClient};
+use hedera_proto::services::crypto_service_client::CryptoServiceClient;
+use hedera_proto::services::{self};
 use tonic::transport::Channel;
 
-use crate::{
-    transaction::{ToTransactionDataProtobuf, TransactionExecute},
-    AccountId, ToProtobuf, Transaction, TransactionId,
-};
+use crate::transaction::{ToTransactionDataProtobuf, TransactionExecute};
+use crate::{AccountId, ToProtobuf, Transaction, TransactionId};
 
 pub(super) type PaymentTransaction = Transaction<PaymentTransactionData>;
 

@@ -1,8 +1,7 @@
-use hedera_proto::services;
 use time::Duration;
 
 use crate::execute::execute;
-use crate::{AccountId, Client, Signer, ToProtobuf, TransactionId, TransactionResponse};
+use crate::{AccountId, Client, Signer, TransactionId, TransactionResponse};
 
 mod execute;
 mod protobuf;

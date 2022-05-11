@@ -3,7 +3,6 @@ use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use hedera_proto::services::ResponseCodeEnum;
 use prost::Message;
-use rand::seq::SliceRandom;
 use rand::thread_rng;
 use tokio::time::sleep;
 use tonic::transport::Channel;
@@ -71,7 +70,6 @@ where
 
     let mut backoff = ExponentialBackoff::default();
     let mut last_error: Option<Error> = None;
-    let mut last_request: Option<(AccountId, E::Context)> = None;
     let max_attempts = 10; // FIXME: from client
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
@@ -122,8 +120,6 @@ where
             let (request, context) =
                 executable.make_request(client, &transaction_id, node_account_id).await?;
 
-            last_request = Some((node_account_id, context));
-
             let response = match E::execute(channel, request).await {
                 Ok(response) => response.into_inner(),
                 Err(status) => {
@@ -153,8 +149,6 @@ where
                         // TODO: another function in the Execute trait to see if we need to
                         //  retry yet again
 
-                        let (node_account_id, context) = last_request.unwrap();
-
                         return E::make_response(
                             response,
                             context,
@@ -166,21 +160,21 @@ where
                     ResponseCodeEnum::Busy | ResponseCodeEnum::PlatformNotActive => {
                         // NOTE: this is a "busy" node
                         // try the next node in our allowed list, immediately
-                        last_error = Some(Error::pre_check(status));
+                        last_error = Some(Error::pre_check(status, transaction_id));
                         continue;
                     }
 
                     ResponseCodeEnum::TransactionExpired if explicit_transaction_id.is_none() => {
                         // the transaction that was generated has since expired
                         // re-generate the transaction ID and try again, immediately
+                        last_error = Some(Error::pre_check(status, transaction_id));
                         transaction_id = client.generate_transaction_id();
-                        last_error = Some(Error::pre_check(status));
                         continue;
                     }
 
                     _ => {
                         // any other pre-check is an error that the user needs to fix, fail immediately
-                        return Err(Error::pre_check(status));
+                        return Err(Error::pre_check(status, transaction_id));
                     }
                 },
 

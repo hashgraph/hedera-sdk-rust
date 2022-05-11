@@ -20,7 +20,7 @@ async fn main() -> anyhow::Result<()> {
 
     TransferTransaction::new()
         .hbar_transfer(sender_id, -amount)
-        .hbar_transfer(receiver_id, amount)
+        .hbar_transfer(receiver_id, 2)
         .execute(&client)
         .await?;
 
