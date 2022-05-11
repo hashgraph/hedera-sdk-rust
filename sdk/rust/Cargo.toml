@@ -7,6 +7,9 @@ edition = "2021"
 crate-type = ["lib", "staticlib", "cdylib"]
 bench = false
 
+[features]
+ffi = []
+
 [dependencies]
 serde = { version = "1.0.137", features = ["derive"] }
 thiserror = "1.0.31"
@@ -27,8 +30,13 @@ log = "0.4.17"
 backoff = "0.4.0"
 ed25519-dalek = { version = "1.0.1", features = ["rand", "serde"] }
 sha2 = "0.10.2"
+itertools = "0.10.3"
 
 [dev-dependencies]
 anyhow = "1.0.57"
 pretty_env_logger = "0.4.0"
 tokio = { version = "1.18.1", features = ["full"] }
+
+[build-dependencies]
+anyhow = "1.0.57"
+cbindgen = "0.23.0"
