@@ -1,4 +1,4 @@
-use std::fmt;
+use std::fmt::{self, Debug};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
@@ -7,12 +7,18 @@ use hedera_proto::services;
 use crate::{FromProtobuf, PublicKey, ToProtobuf};
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-#[derive(Debug, serde::Serialize, Copy, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(serde::Serialize, Copy, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
 #[repr(C)]
 pub struct AccountId {
     pub shard: u64,
     pub realm: u64,
     pub num: u64,
+}
+
+impl Debug for AccountId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
 }
 
 impl Display for AccountId {

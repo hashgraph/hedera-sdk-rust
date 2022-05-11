@@ -28,17 +28,21 @@ struct HbarTransfer {
 }
 
 impl TransferTransaction {
-    // FIXME: [hbar_transfer] or [transfer_hbar]
-    pub fn hbar_transfer(&mut self, account: AccountIdOrAlias, amount: i64) -> &mut Self {
-        self.data.hbar_transfers.push(HbarTransfer { account, amount });
+    // TODO: [hbar_transfer] or [transfer_hbar]
+    pub fn hbar_transfer(
+        &mut self,
+        account: impl Into<AccountIdOrAlias>,
+        amount: i64,
+    ) -> &mut Self {
+        self.data.hbar_transfers.push(HbarTransfer { account: account.into(), amount });
         self
     }
 
-    // FIXME: [hbar_transfer_to] or [transfer_hbar_to]
+    // TODO: [hbar_transfer_to] or [transfer_hbar_to]
     pub fn hbar_transfer_to(
         &mut self,
-        sender: AccountIdOrAlias,
-        receiver: AccountIdOrAlias,
+        sender: impl Into<AccountIdOrAlias>,
+        receiver: impl Into<AccountIdOrAlias>,
         amount: u64,
     ) -> &mut Self {
         self.hbar_transfer(sender, -(amount as i64));

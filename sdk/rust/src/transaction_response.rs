@@ -1,4 +1,4 @@
-use crate::{AccountId, TransactionId};
+use crate::{AccountId, TransactionHash, TransactionId};
 
 #[derive(Debug)]
 pub struct TransactionResponse {
@@ -6,5 +6,5 @@ pub struct TransactionResponse {
 
     pub transaction_id: TransactionId,
 
-    pub transaction_hash: [u8; 48],
+    pub transaction_hash: TransactionHash,
 }
