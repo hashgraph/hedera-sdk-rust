@@ -1,7 +1,5 @@
-use std::{
-    hash::{Hash, Hasher},
-    str::FromStr,
-};
+use std::hash::{Hash, Hasher};
+use std::str::FromStr;
 
 use crate::Error;
 

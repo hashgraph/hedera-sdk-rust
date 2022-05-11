@@ -1,8 +1,6 @@
-use std::{
-    ffi::CStr,
-    os::raw::{c_char, c_int},
-    str::FromStr,
-};
+use std::ffi::CStr;
+use std::os::raw::{c_char, c_int};
+use std::str::FromStr;
 
 use crate::PrivateKey;
 

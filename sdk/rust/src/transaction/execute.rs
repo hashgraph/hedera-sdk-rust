@@ -62,14 +62,14 @@ where
         let transaction_body = self.to_transaction_body_protobuf(
             node_account_id,
             transaction_id,
-            &client.max_transaction_fee,
+            client.max_transaction_fee(),
         );
 
         let body_bytes = transaction_body.encode_to_vec();
 
         let mut signatures = Vec::with_capacity(self.signers.len());
 
-        let default_signers = client.default_signers.read().await;
+        let default_signers = client.default_signers().await;
 
         for signer in default_signers.iter().chain(&self.signers) {
             // TODO: should we run the signers in parallel?
@@ -128,7 +128,7 @@ where
         &self,
         node_account_id: AccountId,
         transaction_id: &TransactionId,
-        client_max_transaction_fee: &Arc<AtomicU64>,
+        client_max_transaction_fee: &AtomicU64,
     ) -> services::TransactionBody {
         let data = self.data.to_transaction_data_protobuf(node_account_id, transaction_id);
 
