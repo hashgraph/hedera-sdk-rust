@@ -1,4 +1,7 @@
-use std::hash::{Hash, Hasher};
+use std::{
+    hash::{Hash, Hasher},
+    str::FromStr,
+};
 
 use crate::Error;
 
@@ -30,6 +33,17 @@ impl PublicKey {
 impl Hash for PublicKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.as_bytes_raw().hash(state);
+    }
+}
+
+impl FromStr for PublicKey {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // TODO: handle DER-prefixed
+        // TODO: handle ecdsa
+
+        Self::from_bytes_raw_ed25519(&hex::decode(s).map_err(Error::key_parse)?)
     }
 }
 
