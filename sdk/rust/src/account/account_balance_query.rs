@@ -4,7 +4,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
-use crate::query::{Query, QueryExecute};
+use crate::query::{Query, QueryExecute, ToQueryProtobuf};
 use crate::{AccountBalance, AccountIdOrAlias, ContractIdOrEvmAddress, ToProtobuf};
 
 /// Get the balance of a cryptocurrency account.
@@ -41,10 +41,8 @@ impl AccountBalanceQuery {
     }
 }
 
-impl ToProtobuf for AccountBalanceQueryData {
-    type Protobuf = services::Query;
-
-    fn to_protobuf(&self) -> Self::Protobuf {
+impl ToQueryProtobuf for AccountBalanceQueryData {
+    fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
         let source = match (&self.account_id, &self.contract_id) {
             (Some(id), _) => Some(BalanceSource::AccountId(id.to_protobuf())),
             (_, Some(id)) => todo!(), // Some(BalanceSource::ContractId(id.to_protobuf())),
@@ -53,7 +51,10 @@ impl ToProtobuf for AccountBalanceQueryData {
 
         services::Query {
             query: Some(services::query::Query::CryptogetAccountBalance(
-                services::CryptoGetAccountBalanceQuery { balance_source: source, header: None },
+                services::CryptoGetAccountBalanceQuery {
+                    balance_source: source,
+                    header: Some(header),
+                },
             )),
         }
     }
@@ -62,6 +63,10 @@ impl ToProtobuf for AccountBalanceQueryData {
 #[async_trait]
 impl QueryExecute for AccountBalanceQuery {
     type Response = AccountBalance;
+
+    fn is_payment_required() -> bool {
+        false
+    }
 
     async fn execute(
         channel: Channel,

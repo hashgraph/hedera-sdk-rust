@@ -1,91 +1,35 @@
 use async_trait::async_trait;
-use backoff::backoff::Backoff;
-use backoff::ExponentialBackoff;
 use hedera_proto::services;
-use hedera_proto::services::ResponseCodeEnum;
-use rand::thread_rng;
-use tokio::time::sleep;
 use tonic::transport::Channel;
-use tonic::{Response, Status};
 
-use crate::execute::{execute, Execute};
-use crate::{AccountId, Client, Error, FromProtobuf, ToProtobuf, TransactionId};
+use crate::{
+    execute::Execute, AccountId, Client, Error, FromProtobuf, Query, ToProtobuf, TransactionId,
+};
 
+use super::ToQueryProtobuf;
+
+/// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]
 pub trait QueryExecute {
     type Response: FromProtobuf<Protobuf = services::response::Response>;
 
+    /// Returns `true` if this query requires a payment to be submitted.
+    fn is_payment_required() -> bool {
+        true
+    }
+
+    /// Execute the prepared query request against the provided GRPC channel.
     async fn execute(
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status>;
 }
 
-#[derive(Debug, Default)]
-pub struct Query<D> {
-    pub(crate) data: D,
-    pub(crate) node_account_ids: Option<Vec<AccountId>>,
-    // TODO: payment_transaction: Option<TransferTransaction>,
-    payment_amount: Option<u64>,
-    payment_amount_max: Option<Option<u64>>,
-}
-
-impl<D> Query<D>
-where
-    D: Default,
-{
-    #[inline]
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
-impl<D> Query<D> {
-    /// Set the account IDs of the nodes that this query may be submitted to.
-    ///
-    /// Defaults to the full list of nodes configured on the client; or, the node account IDs
-    /// configured on the query payment transaction (if explicitly provided).
-    ///
-    pub fn node_account_ids(&mut self, ids: impl IntoIterator<Item = AccountId>) -> &mut Self {
-        self.node_account_ids = Some(ids.into_iter().collect());
-        self
-    }
-
-    /// Set an explicit payment amount for this query.
-    ///
-    /// The client will submit exactly this amount for the payment of this query. Hedera
-    /// will not return any remainder (over the actual cost for this query).
-    ///
-    // TODO: Use Hbar
-    pub fn payment_amount(&mut self, amount: impl Into<Option<u64>>) -> &mut Self {
-        self.payment_amount = amount.into();
-        self
-    }
-
-    /// Set the maximum payment allowable for this query.
-    ///
-    /// When a query is executed without an explicit payment amount set,
-    /// the client will first request the cost of the given query from the node it will be
-    /// submitted to and attach a payment for that amount from the operator account on the client.
-    ///
-    /// If the returned value is greater than this value, a [`MaxQueryPaymentExceeded`] error
-    /// will be returned.
-    ///
-    /// Defaults to the maximum payment amount configured on the client.
-    ///
-    /// Set to `None` to disable automatic query payments for this query.
-    ///
-    pub fn max_payment_amount(&mut self, max: impl Into<Option<u64>>) -> &mut Self {
-        self.payment_amount_max = Some(max.into());
-        self
-    }
-}
-
 #[async_trait]
 impl<D> Execute for Query<D>
 where
     Self: QueryExecute,
-    D: ToProtobuf<Protobuf = services::Query>,
+    D: ToQueryProtobuf,
 {
     type GrpcRequest = services::Query;
 
@@ -93,33 +37,35 @@ where
 
     type Response = <Self as QueryExecute>::Response;
 
-    type RequestContext = ();
-
-    type ResponseContext = ();
+    type Context = ();
 
     fn node_account_ids(&self) -> Option<&[AccountId]> {
-        self.node_account_ids.as_deref()
+        self.payment.node_account_ids()
     }
 
     fn transaction_id(&self) -> Option<TransactionId> {
-        // TODO: paid queries
-        None
+        self.payment.transaction_id()
     }
 
     fn requires_transaction_id() -> bool {
-        // TODO: paid queries
-        false
+        Self::is_payment_required()
     }
 
     async fn make_request(
         &self,
         client: &Client,
-        _transaction_id: Option<TransactionId>,
-        _node_account_id: AccountId,
-        _context: &Self::RequestContext,
-    ) -> crate::Result<(Self::GrpcRequest, Self::ResponseContext)> {
-        // TODO: paid queries
-        Ok((self.data.to_protobuf(), ()))
+        transaction_id: &Option<TransactionId>,
+        node_account_id: AccountId,
+    ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
+        let payment = if Self::is_payment_required() {
+            Some(self.payment.make_request(client, transaction_id, node_account_id).await?.0)
+        } else {
+            None
+        };
+
+        let header = services::QueryHeader { response_type: 0, payment };
+
+        Ok((self.data.to_query_protobuf(header), ()))
     }
 
     async fn execute(
@@ -131,7 +77,7 @@ where
 
     fn make_response(
         response: Self::GrpcResponse,
-        _context: Self::ResponseContext,
+        _context: Self::Context,
         _node_account_id: AccountId,
         _transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response> {
@@ -142,21 +88,6 @@ where
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(response)?.node_transaction_precheck_code)
-    }
-}
-
-impl<D> Query<D>
-where
-    Self: QueryExecute,
-    D: ToProtobuf<Protobuf = services::Query>,
-{
-    /// Execute this query against the provided client of the Hedera network.
-    #[inline]
-    pub async fn execute(
-        &self,
-        client: &Client,
-    ) -> crate::Result<<Self as QueryExecute>::Response> {
-        execute(client, self, ()).await
     }
 }
 
