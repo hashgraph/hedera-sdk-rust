@@ -33,7 +33,10 @@ pub enum Error {
     NoPayerAccountOrTransactionId,
 
     #[error("exceeded maximum attempts for request; most recent attempt failed with: {0}")]
-    MaxAttemptsExceededException(Box<Error>),
+    MaxAttemptsExceeded(Box<Error>),
+
+    #[error("cost of {query_cost} without explicit payment is greater than the maximum allowed payment of {max_query_payment}")]
+    MaxQueryPaymentExceeded { query_cost: u64, max_query_payment: u64 },
 
     #[error("node account `{0}` was not found in the configured network")]
     NodeAccountUnknown(AccountId),

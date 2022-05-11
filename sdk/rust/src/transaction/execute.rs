@@ -1,5 +1,4 @@
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use hedera_proto::services;
@@ -10,7 +9,8 @@ use tonic::{Response, Status};
 use crate::execute::Execute;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::{
-    AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash, TransactionId, TransactionResponse
+    AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash, TransactionId,
+    TransactionResponse,
 };
 
 #[async_trait]
@@ -85,7 +85,7 @@ where
 
         let signed_transaction_bytes = signed_transaction.encode_to_vec();
 
-        let transaction_hash = TransactionHash::hash(&signed_transaction_bytes);
+        let transaction_hash = TransactionHash::new(&signed_transaction_bytes);
 
         let transaction =
             services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };

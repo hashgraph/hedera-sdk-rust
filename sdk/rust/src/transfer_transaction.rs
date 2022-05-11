@@ -1,3 +1,5 @@
+use std::ops::Not;
+
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
@@ -9,7 +11,7 @@ use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
 ///
-/// Each transfer_transaction list can specify up to 10 adjustments. Each negative amount is withdrawn
+/// Each transfer list can specify up to 10 adjustments. Each negative amount is withdrawn
 /// from the corresponding account (a sender), and each positive one is added to the corresponding
 /// account (a receiver). The amounts list must sum to zero.
 ///
@@ -40,6 +42,7 @@ impl TransferTransaction {
     }
 
     // TODO: [hbar_transfer_to] or [transfer_hbar_to]
+    #[allow(clippy::cast_possible_wrap)]
     pub fn hbar_transfer_to(
         &mut self,
         sender: impl Into<AccountIdOrAlias>,
@@ -80,17 +83,9 @@ impl ToTransactionDataProtobuf for TransferTransactionData {
         _node_account_id: crate::AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let transfers = if !self.hbar_transfers.is_empty() {
-            Some(services::TransferList {
-                account_amounts: self
-                    .hbar_transfers
-                    .iter()
-                    .map(|amount| amount.to_protobuf())
-                    .collect(),
-            })
-        } else {
-            None
-        };
+        let transfers = self.hbar_transfers.is_empty().not().then(|| services::TransferList {
+            account_amounts: self.hbar_transfers.iter().map(HbarTransfer::to_protobuf).collect(),
+        });
 
         services::transaction_body::Data::CryptoTransfer(services::CryptoTransferTransactionBody {
             transfers,

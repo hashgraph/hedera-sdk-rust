@@ -12,7 +12,7 @@ pub(super) type PaymentTransaction = Transaction<PaymentTransactionData>;
 pub(super) struct PaymentTransactionData {
     // TODO: Use Hbar
     pub(super) amount: Option<u64>,
-    pub(super) max_amount: Option<Option<u64>>,
+    pub(super) max_amount: Option<u64>,
 }
 
 #[async_trait]
@@ -26,6 +26,7 @@ impl TransactionExecute for PaymentTransaction {
 }
 
 impl ToTransactionDataProtobuf for PaymentTransactionData {
+    #[allow(clippy::cast_possible_wrap)]
     fn to_transaction_data_protobuf(
         &self,
         node_account_id: AccountId,

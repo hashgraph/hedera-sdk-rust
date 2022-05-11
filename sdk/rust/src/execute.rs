@@ -196,5 +196,5 @@ where
     }
 
     // NOTE: it should be impossible to reach here without capturing at least one error
-    Err(Error::MaxAttemptsExceededException(Box::new(last_error.unwrap())))
+    Err(Error::MaxAttemptsExceeded(Box::new(last_error.unwrap())))
 }

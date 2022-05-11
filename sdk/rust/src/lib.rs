@@ -1,3 +1,16 @@
+#![warn(deprecated_in_future)]
+#![warn(future_incompatible)]
+#![warn(rust_2018_compatibility)]
+#![warn(rust_2018_idioms)]
+#![warn(absolute_paths_not_starting_with_crate)]
+#![warn(clippy::cargo_common_metadata)]
+#![warn(clippy::multiple_crate_versions)]
+#![warn(clippy::pedantic)]
+#![warn(clippy::future_not_send)]
+#![allow(clippy::module_name_repetitions)]
+#![allow(clippy::missing_errors_doc)]
+#![allow(clippy::enum_glob_use)]
+
 #[macro_use]
 mod protobuf;
 
@@ -24,7 +37,8 @@ mod transfer_transaction;
 mod ffi;
 
 pub use account::{
-    AccountAlias, AccountBalance, AccountBalanceQuery, AccountId, AccountIdOrAlias, AccountInfo, AccountInfoQuery
+    AccountAlias, AccountBalance, AccountBalanceQuery, AccountId, AccountIdOrAlias, AccountInfo,
+    AccountInfoQuery,
 };
 pub use client::Client;
 pub use contract::{ContractEvmAddress, ContractId, ContractIdOrEvmAddress};
