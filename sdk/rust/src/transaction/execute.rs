@@ -71,7 +71,9 @@ where
 
         let mut signatures = Vec::with_capacity(self.signers.len());
 
-        for signer in &self.signers {
+        let default_signers = client.default_signers.read().await;
+
+        for signer in default_signers.iter().chain(&self.signers) {
             // TODO: should we run the signers in parallel?
             let signature = signer.sign(&body_bytes).await.map_err(Error::signature)?;
 
