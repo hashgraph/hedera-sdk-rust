@@ -69,7 +69,6 @@ where
 {
     // the overall timeout for the backoff starts measuring from here
 
-    let mut rng = thread_rng();
     let mut backoff = ExponentialBackoff::default();
     let mut last_error: Option<Error> = None;
     let mut last_request: Option<(AccountId, E::Context)> = None;
@@ -113,7 +112,11 @@ where
             node_indexes.len()
         };
 
-        for &node_index in node_indexes.choose_multiple(&mut rng, node_sample_amount) {
+        let node_index_indexes =
+            rand::seq::index::sample(&mut thread_rng(), node_indexes.len(), node_sample_amount);
+
+        for index in node_index_indexes.iter() {
+            let node_index = node_indexes[index];
             let (node_account_id, channel) = client.network.channel(node_index);
 
             let (request, context) =
