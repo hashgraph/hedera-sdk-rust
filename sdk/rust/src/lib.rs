@@ -1,5 +1,3 @@
-extern crate core;
-
 #[macro_use]
 mod protobuf;
 

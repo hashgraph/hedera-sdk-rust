@@ -15,7 +15,6 @@ async fn main() -> anyhow::Result<()> {
 
     let info = AccountInfoQuery::new()
         .account_id(id.into())
-        .payment_amount(100)
         .payment_signer(&payer_key)
         .execute(&client)
         .await?;

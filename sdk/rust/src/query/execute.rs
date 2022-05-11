@@ -87,14 +87,16 @@ where
     }
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
-        Ok(response_header(response)?.node_transaction_precheck_code)
+        Ok(response_header(&response.response)?.node_transaction_precheck_code)
     }
 }
 
-fn response_header(response: &services::Response) -> crate::Result<&services::ResponseHeader> {
+pub(super) fn response_header(
+    response: &Option<services::response::Response>,
+) -> crate::Result<&services::ResponseHeader> {
     use services::response::Response::*;
 
-    let header = match &response.response {
+    let header = match response {
         Some(CryptogetAccountBalance(response)) => &response.header,
         Some(GetByKey(response)) => &response.header,
         Some(GetBySolidityId(response)) => &response.header,

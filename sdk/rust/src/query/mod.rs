@@ -1,10 +1,11 @@
-use hedera_proto::services;
 use time::Duration;
 
 use crate::execute::execute;
+use crate::query::cost::QueryCost;
 use crate::query::payment_transaction::PaymentTransaction;
-use crate::{AccountId, Client, Signer, ToProtobuf, TransactionId, TransferTransaction};
+use crate::{AccountId, Client, Signer, TransactionId};
 
+mod cost;
 mod execute;
 mod payment_transaction;
 mod protobuf;
@@ -127,16 +128,20 @@ impl<D> Query<D> {
 
 impl<D> Query<D>
 where
-    Self: QueryExecute,
+    Self: QueryExecute + Send + Sync,
     D: ToQueryProtobuf,
 {
     /// Execute this query against the provided client of the Hedera network.
-    #[inline]
     pub async fn execute(
         &mut self,
         client: &Client,
     ) -> crate::Result<<Self as QueryExecute>::Response> {
-        // TODO: request cost for query (if paid query)
+        if self.payment.data.amount.is_none() && Self::is_payment_required() {
+            // payment is required but none was specified, query the cost
+            let cost = QueryCost::new(self).execute(client).await?;
+            self.payment.data.amount = Some(cost);
+        }
+
         execute(client, self).await
     }
 }
