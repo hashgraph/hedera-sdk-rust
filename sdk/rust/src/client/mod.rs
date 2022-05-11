@@ -21,6 +21,7 @@ pub struct Client {
 // TODO: Client(Arc<Inner>)
 
 impl Client {
+    /// Construct a Hedera client pre-configured for testnet access.
     pub fn for_testnet() -> Self {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),

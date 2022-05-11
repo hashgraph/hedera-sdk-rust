@@ -20,8 +20,12 @@ mod transaction_id;
 mod transaction_response;
 mod transfer_transaction;
 
+#[cfg(feature = "ffi")]
+mod ffi;
+
 pub use account::{
-    AccountAlias, AccountBalance, AccountBalanceQuery, AccountId, AccountIdOrAlias, AccountInfo, AccountInfoQuery
+    AccountAlias, AccountBalance, AccountBalanceQuery, AccountId, AccountIdOrAlias, AccountInfo,
+    AccountInfoQuery,
 };
 pub use client::Client;
 pub use contract::{ContractEvmAddress, ContractId, ContractIdOrEvmAddress};
