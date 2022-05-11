@@ -1,5 +1,6 @@
-use cbindgen::Language;
 use std::env;
+
+use cbindgen::Language;
 
 fn main() -> anyhow::Result<()> {
     cbindgen::Builder::new()

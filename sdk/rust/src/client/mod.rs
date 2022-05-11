@@ -2,7 +2,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use parking_lot::RwLock;
-use tokio::sync::RwLock as AsyncRwLock;
+use tokio::sync::{OwnedRwLockReadGuard, RwLock as AsyncRwLock};
 use tokio::task::block_in_place;
 
 use crate::client::network::{Network, TESTNET};
@@ -10,15 +10,14 @@ use crate::{AccountId, Signer, TransactionId};
 
 mod network;
 
+/// Managed client for use on the Hedera network.
 #[derive(Clone)]
 pub struct Client {
-    pub(crate) network: Arc<Network>,
-    pub(crate) payer_account_id: Arc<RwLock<Option<AccountId>>>,
-    pub(crate) default_signers: Arc<AsyncRwLock<Vec<Box<dyn Signer>>>>,
-    pub(crate) max_transaction_fee: Arc<AtomicU64>,
+    network: Arc<Network>,
+    payer_account_id: Arc<RwLock<Option<AccountId>>>,
+    default_signers: Arc<AsyncRwLock<Vec<Box<dyn Signer>>>>,
+    max_transaction_fee: Arc<AtomicU64>,
 }
-
-// TODO: Client(Arc<Inner>)
 
 impl Client {
     /// Construct a Hedera client pre-configured for testnet access.
@@ -59,10 +58,24 @@ impl Client {
             self.default_signers.blocking_write().clear();
         });
     }
-}
 
-impl Client {
+    /// Generate a new transaction ID from the stored payer account ID, if present.
     pub(crate) fn generate_transaction_id(&self) -> Option<TransactionId> {
         self.payer_account_id.read().map(TransactionId::generate)
+    }
+
+    /// Gets a reference to the configured network.
+    pub(crate) fn network(&self) -> &Network {
+        &self.network
+    }
+
+    /// Gets the maximum transaction fee the paying account is willing to pay.
+    pub(crate) fn max_transaction_fee(&self) -> &AtomicU64 {
+        &self.max_transaction_fee
+    }
+
+    /// Gets a list of the default signers.
+    pub(crate) async fn default_signers(&self) -> OwnedRwLockReadGuard<Vec<Box<dyn Signer>>> {
+        Arc::clone(&self.default_signers).read_owned().await
     }
 }

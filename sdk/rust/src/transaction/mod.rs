@@ -67,7 +67,7 @@ impl<D> Transaction<D> {
         self
     }
 
-    /// Set the maximum transaction fee the operator (paying account) is willing to pay.
+    /// Set the maximum transaction fee the paying account is willing to pay.
     pub fn max_transaction_fee(&mut self, fee: u64) -> &mut Self {
         self.max_transaction_fee = Some(fee);
         self

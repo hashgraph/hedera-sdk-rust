@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/**
+ * Managed client for use on the Hedera network.
+ */
 typedef struct HederaClient HederaClient;
 
 /**

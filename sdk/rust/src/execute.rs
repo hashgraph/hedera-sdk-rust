@@ -86,7 +86,7 @@ where
 
     let explicit_node_indexes = executable
         .node_account_ids()
-        .map(|ids| client.network.node_indexes_for_ids(ids))
+        .map(|ids| client.network().node_indexes_for_ids(ids))
         .transpose()?;
 
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
@@ -99,7 +99,7 @@ where
         // each iteration
 
         let healthy_node_indexes =
-            explicit_node_indexes.is_none().then(|| client.network.healthy_node_indexes());
+            explicit_node_indexes.is_none().then(|| client.network().healthy_node_indexes());
 
         let node_indexes =
             explicit_node_indexes.as_deref().or(healthy_node_indexes.as_deref()).unwrap();
@@ -115,7 +115,7 @@ where
 
         for index in node_index_indexes.iter() {
             let node_index = node_indexes[index];
-            let (node_account_id, channel) = client.network.channel(node_index);
+            let (node_account_id, channel) = client.network().channel(node_index);
 
             let (request, context) =
                 executable.make_request(client, &transaction_id, node_account_id).await?;
@@ -126,7 +126,7 @@ where
                     match status.code() {
                         tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
                             // NOTE: this is an "unhealthy" node
-                            client.network.mark_node_unhealthy(node_index);
+                            client.network().mark_node_unhealthy(node_index);
 
                             // try the next node in our allowed list, immediately
                             last_error = Some(status.into());
