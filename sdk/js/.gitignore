@@ -1,0 +1,8 @@
+# Node.js local dependencies
+node_modules/
+
+# TypeScript artifacts
+src/**/*.d*
+
+# TypeScript configuration build information
+tsconfig.tsbuildinfo

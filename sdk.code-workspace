@@ -1,0 +1,20 @@
+{
+  "folders": [
+	{
+		"path": "sdk/go"
+	},
+	{
+		"path": "sdk/rust"
+	},
+	{
+		"path": "sdk/swift"
+	},
+	{
+		"path": "sdk/java"
+	},
+	{
+		"path": "sdk/js"
+	}
+],
+  "settings": {}
+}
