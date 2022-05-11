@@ -3,3 +3,6 @@
 
 # Rust build output directory
 target/
+
+# Swift intermediate build directory
+.build/
