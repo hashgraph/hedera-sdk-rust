@@ -3,7 +3,7 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::transaction::TransactionExecute;
+use crate::transaction::{ToTransactionDataProtobuf, TransactionExecute};
 use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
@@ -15,13 +15,14 @@ use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
 ///
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct TransferTransactionData {
     hbar_transfers: Vec<HbarTransfer>,
     // TODO: token_transfers
     // TODO: nft_transfers
 }
 
+#[derive(Debug)]
 struct HbarTransfer {
     account: AccountIdOrAlias,
     amount: i64,
@@ -73,10 +74,12 @@ impl ToProtobuf for HbarTransfer {
     }
 }
 
-impl ToProtobuf for TransferTransactionData {
-    type Protobuf = services::transaction_body::Data;
-
-    fn to_protobuf(&self) -> Self::Protobuf {
+impl ToTransactionDataProtobuf for TransferTransactionData {
+    fn to_transaction_data_protobuf(
+        &self,
+        _node_account_id: crate::AccountId,
+        _transaction_id: &crate::TransactionId,
+    ) -> services::transaction_body::Data {
         let transfers = if !self.hbar_transfers.is_empty() {
             Some(services::TransferList {
                 account_amounts: self

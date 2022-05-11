@@ -91,12 +91,18 @@ impl FromProtobuf for AccountInfo {
         let key = pb_getf!(info, key)?;
         let account_id = pb_getf!(info, account_id)?;
 
+        let proxy_account_id = info
+            .proxy_account_id
+            .map(AccountId::from_protobuf)
+            .transpose()?
+            .filter(|id| id.num > 0);
+
         Ok(Self {
             account_id: AccountId::from_protobuf(account_id)?,
             contract_account_id: info.contract_account_id,
             deleted: info.deleted,
             #[allow(deprecated)]
-            proxy_account_id: info.proxy_account_id.map(AccountId::from_protobuf).transpose()?,
+            proxy_account_id,
             proxy_received: info.proxy_received as u64,
             // FIXME: key
             key: Key::from_protobuf(key)?,

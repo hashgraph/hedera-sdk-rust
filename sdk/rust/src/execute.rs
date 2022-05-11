@@ -16,14 +16,10 @@ pub(crate) trait Execute {
 
     type GrpcResponse: Message;
 
-    /// Additional context given at the start of the execution, passed by
-    /// reference into each call to `make_request`.
-    type RequestContext;
-
     /// Additional context returned from each call to `make_request`. Upon
     /// a successful request, the associated response context is passed to
     /// `make_response`.
-    type ResponseContext;
+    type Context;
 
     type Response;
 
@@ -44,10 +40,9 @@ pub(crate) trait Execute {
     async fn make_request(
         &self,
         client: &Client,
-        transaction_id: Option<TransactionId>,
+        transaction_id: &Option<TransactionId>,
         node_account_id: AccountId,
-        context: &Self::RequestContext,
-    ) -> crate::Result<(Self::GrpcRequest, Self::ResponseContext)>;
+    ) -> crate::Result<(Self::GrpcRequest, Self::Context)>;
 
     /// Execute the created GRPC request against the provided GRPC channel.
     async fn execute(
@@ -59,7 +54,7 @@ pub(crate) trait Execute {
     /// and node account ID from the successful request.
     fn make_response(
         response: Self::GrpcResponse,
-        context: Self::ResponseContext,
+        context: Self::Context,
         node_account_id: AccountId,
         transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response>;
@@ -68,11 +63,7 @@ pub(crate) trait Execute {
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
 }
 
-pub(crate) async fn execute<E>(
-    client: &Client,
-    executable: &E,
-    context: E::RequestContext,
-) -> crate::Result<E::Response>
+pub(crate) async fn execute<E>(client: &Client, executable: &E) -> crate::Result<E::Response>
 where
     E: Execute,
 {
@@ -81,7 +72,7 @@ where
     let mut rng = thread_rng();
     let mut backoff = ExponentialBackoff::default();
     let mut last_error: Option<Error> = None;
-    let mut last_request: Option<(AccountId, E::ResponseContext)> = None;
+    let mut last_request: Option<(AccountId, E::Context)> = None;
     let max_attempts = 10; // FIXME: from client
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
@@ -126,7 +117,7 @@ where
             let (node_account_id, channel) = client.network.channel(node_index);
 
             let (request, context) =
-                executable.make_request(client, transaction_id, node_account_id, &context).await?;
+                executable.make_request(client, &transaction_id, node_account_id).await?;
 
             last_request = Some((node_account_id, context));
 

@@ -29,7 +29,7 @@ pub enum Error {
     #[error("failed to parse a key: {0}")]
     KeyParse(BoxStdError),
 
-    #[error("client must be configured with a payer account or transactions must be given an explicit transaction id")]
+    #[error("client must be configured with a payer account or requests must be given an explicit transaction id")]
     NoPayerAccountOrTransactionId,
 
     #[error("exceeded maximum attempts for request; most recent attempt failed with: {0}")]
