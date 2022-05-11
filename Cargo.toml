@@ -1,2 +1,8 @@
 [workspace]
 members = ["protobufs/rust", "sdk/rust"]
+
+[profile.release]
+strip = true
+lto = "fat"
+overflow-checks = false
+debug = 0
