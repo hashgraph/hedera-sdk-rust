@@ -18,8 +18,8 @@ async fn main() -> anyhow::Result<()> {
     let amount = 10_000;
 
     TransferTransaction::new()
-        .hbar_transfer(sender_id.into(), -amount)
-        .hbar_transfer(receiver_id.into(), amount)
+        .hbar_transfer(sender_id, -amount)
+        .hbar_transfer(receiver_id, amount)
         // TODO: .payer_account_id(AccountId::from(6189))
         .signer(&payer_key)
         .execute(&client)

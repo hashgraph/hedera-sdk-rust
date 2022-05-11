@@ -84,7 +84,7 @@ where
     let mut last_request: Option<(AccountId, E::ResponseContext)> = None;
     let max_attempts = 10; // FIXME: from client
 
-    // TODO: generate transaction ID (if needed)
+    // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
 
     // if we need to generate a transaction ID for this request (and one was not provided),
     // generate one now
@@ -128,6 +128,8 @@ where
             let (request, context) =
                 executable.make_request(client, transaction_id, node_account_id, &context).await?;
 
+            last_request = Some((node_account_id, context));
+
             let response = match E::execute(channel, request).await {
                 Ok(response) => response.into_inner(),
                 Err(status) => {
@@ -138,7 +140,6 @@ where
 
                             // try the next node in our allowed list, immediately
                             last_error = Some(status.into());
-                            last_request = Some((node_account_id, context));
                             continue;
                         }
 

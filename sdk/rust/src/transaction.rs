@@ -4,13 +4,15 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use hedera_proto::services;
 use prost::Message;
-use sha2::{Digest, Sha384};
 use time::Duration;
 use tonic::transport::Channel;
 use tonic::{Response, Status};
 
 use crate::execute::{execute, Execute};
-use crate::{AccountId, Client, Error, Signer, ToProtobuf, TransactionId, TransactionResponse};
+use crate::{
+    AccountId, Client, Error, Signer, ToProtobuf, TransactionHash, TransactionId,
+    TransactionResponse,
+};
 
 pub struct Transaction<D> {
     pub(crate) data: D,
@@ -156,7 +158,7 @@ where
 
     type RequestContext = ();
 
-    type ResponseContext = [u8; 48];
+    type ResponseContext = TransactionHash;
 
     type Response = TransactionResponse;
 
@@ -206,12 +208,12 @@ where
 
         let signed_transaction_bytes = signed_transaction.encode_to_vec();
 
-        let transaction_hash = Sha384::digest(&signed_transaction_bytes);
+        let transaction_hash = TransactionHash::hash(&signed_transaction_bytes);
 
         let transaction =
             services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
 
-        Ok((transaction, transaction_hash.into()))
+        Ok((transaction, transaction_hash))
     }
 
     async fn execute(

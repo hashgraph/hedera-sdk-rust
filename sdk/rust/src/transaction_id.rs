@@ -1,3 +1,5 @@
+use std::fmt::{self, Debug, Display, Formatter};
+
 use hedera_proto::services;
 use rand::{thread_rng, Rng};
 use time::{Duration, OffsetDateTime};
@@ -10,7 +12,7 @@ use crate::{AccountId, ToProtobuf};
 /// right after creating it, for instantiating a smart contract with bytecode in a file just created,
 /// and internally by the network for detecting when duplicate transactions are submitted.
 ///
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash)]
 pub struct TransactionId {
     /// The account that pays for this transaction.
     pub account_id: AccountId,
@@ -22,7 +24,7 @@ pub struct TransactionId {
     ///
     pub valid_start: OffsetDateTime,
 
-    pub nonce: u32,
+    pub nonce: Option<i32>,
     pub scheduled: bool,
 }
 
@@ -32,7 +34,27 @@ impl TransactionId {
         let valid_start = OffsetDateTime::now_utc()
             - Duration::nanoseconds(thread_rng().gen_range(5000000000, 8000000000));
 
-        Self { account_id, valid_start, scheduled: false, nonce: 0 }
+        Self { account_id, valid_start, scheduled: false, nonce: None }
+    }
+}
+
+impl Debug for TransactionId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for TransactionId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}@{}.{}{}{}",
+            self.account_id,
+            self.valid_start.unix_timestamp(),
+            self.valid_start.nanosecond(),
+            if self.scheduled { "?scheduled" } else { "" },
+            self.nonce.map(|nonce| format!("/{}", nonce)).as_deref().unwrap_or_default()
+        )
     }
 }
 
@@ -43,7 +65,7 @@ impl ToProtobuf for TransactionId {
         services::TransactionId {
             account_id: Some(self.account_id.to_protobuf()),
             scheduled: self.scheduled,
-            nonce: self.nonce as i32,
+            nonce: self.nonce.unwrap_or_default(),
             transaction_valid_start: Some(self.valid_start.into()),
         }
     }
