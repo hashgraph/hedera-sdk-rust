@@ -1,22 +1,32 @@
 {
     "folders": [
         {
-            "path": "sdk/go"
+            "path": ".",
+            "name": "Hedera SDK"
         },
         {
-            "path": "sdk/rust"
+            "path": "sdk/go",
+            "name": "Go"
         },
         {
-            "path": "sdk/swift"
+            "path": "sdk/rust",
+            "name": "Rust"
         },
         {
-            "path": "sdk/java"
+            "path": "sdk/swift",
+            "name": "Swift"
         },
         {
-            "path": "sdk/js"
+            "path": "sdk/java",
+            "name": "Java"
         },
         {
-            "path": "sdk/c"
+            "path": "sdk/js",
+            "name": "JavaScript"
+        },
+        {
+            "path": "sdk/c",
+            "name": "C"
         }
     ],
     "settings": {}
