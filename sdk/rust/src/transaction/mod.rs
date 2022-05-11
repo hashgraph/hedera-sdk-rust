@@ -43,6 +43,7 @@ where
     D: Default,
 {
     #[inline]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

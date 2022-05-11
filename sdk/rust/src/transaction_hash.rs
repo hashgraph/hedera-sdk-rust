@@ -6,7 +6,8 @@ use sha2::{Digest, Sha384};
 pub struct TransactionHash(pub [u8; 48]);
 
 impl TransactionHash {
-    pub fn hash(bytes: &[u8]) -> Self {
+    #[must_use]
+    pub(crate) fn new(bytes: &[u8]) -> Self {
         Self(Sha384::digest(&bytes).into())
     }
 }

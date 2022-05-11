@@ -30,9 +30,10 @@ pub struct TransactionId {
 
 impl TransactionId {
     /// Generates a new transaction ID for the given account ID.
+    #[must_use]
     pub fn generate(account_id: AccountId) -> Self {
         let valid_start = OffsetDateTime::now_utc()
-            - Duration::nanoseconds(thread_rng().gen_range(5000000000, 8000000000));
+            - Duration::nanoseconds(thread_rng().gen_range(5_000_000_000, 8_000_000_000));
 
         Self { account_id, valid_start, scheduled: false, nonce: None }
     }

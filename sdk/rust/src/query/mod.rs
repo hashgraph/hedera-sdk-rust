@@ -3,7 +3,7 @@ use time::Duration;
 use crate::execute::execute;
 use crate::query::cost::QueryCost;
 use crate::query::payment_transaction::PaymentTransaction;
-use crate::{AccountId, Client, Signer, TransactionId};
+use crate::{AccountId, Client, Error, Signer, TransactionId};
 
 mod cost;
 mod execute;
@@ -26,6 +26,7 @@ where
 {
     /// Create a new query ready for configuration and execution.
     #[inline]
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -68,7 +69,7 @@ impl<D> Query<D> {
     ///
     // TODO: Use Hbar
     pub fn max_payment_amount(&mut self, max: impl Into<Option<u64>>) -> &mut Self {
-        self.payment.data.max_amount = Some(max.into());
+        self.payment.data.max_amount = max.into();
         self
     }
 
@@ -139,6 +140,16 @@ where
         if self.payment.data.amount.is_none() && Self::is_payment_required() {
             // payment is required but none was specified, query the cost
             let cost = QueryCost::new(self).execute(client).await?;
+
+            if let Some(max_amount) = self.payment.data.max_amount {
+                if cost > max_amount {
+                    return Err(Error::MaxQueryPaymentExceeded {
+                        query_cost: cost,
+                        max_query_payment: max_amount,
+                    });
+                }
+            }
+
             self.payment.data.amount = Some(cost);
         }
 

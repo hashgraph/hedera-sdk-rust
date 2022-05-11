@@ -9,7 +9,7 @@ use tonic::transport::{Channel, Endpoint};
 
 use crate::{AccountId, Error};
 
-pub(crate) const TESTNET: &'static [(u64, &'static [&'static str])] = &[
+pub(crate) const TESTNET: &[(u64, &[&str])] = &[
     (3, &["0.testnet.hedera.com", "34.94.106.61", "50.18.132.211", "138.91.142.219"]),
     (4, &["1.testnet.hedera.com", "35.237.119.55", "3.212.6.13", "52.168.76.241"]),
     (5, &["2.testnet.hedera.com", "35.245.27.193", "52.20.18.86", "40.79.83.124"]),
