@@ -37,7 +37,7 @@ impl TransferTransaction {
         account: impl Into<AccountIdOrAlias>,
         amount: i64,
     ) -> &mut Self {
-        self.data.hbar_transfers.push(HbarTransfer { account: account.into(), amount });
+        self.body.data.hbar_transfers.push(HbarTransfer { account: account.into(), amount });
         self
     }
 

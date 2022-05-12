@@ -4,7 +4,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
-use crate::query::{Query, QueryExecute, ToQueryProtobuf};
+use crate::query::{AnyQueryData, Query, QueryData, QueryExecute, ToQueryProtobuf};
 use crate::{AccountBalance, AccountIdOrAlias, ContractIdOrEvmAddress, ToProtobuf};
 
 /// Get the balance of a cryptocurrency account.
@@ -17,13 +17,24 @@ pub type AccountBalanceQuery = Query<AccountBalanceQueryData>;
 
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
 pub struct AccountBalanceQueryData {
+    #[serde(flatten)]
     source: Option<AccountBalanceSource>,
 }
 
+impl From<AccountBalanceQueryData> for AnyQueryData {
+    #[inline]
+    fn from(data: AccountBalanceQueryData) -> Self {
+        Self::AccountBalance(data)
+    }
+}
+
+impl QueryData for AccountBalanceQueryData {}
+
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 enum AccountBalanceSource {
-    Account(AccountIdOrAlias),
-    Contract(ContractIdOrEvmAddress),
+    AccountId(AccountIdOrAlias),
+    ContractId(ContractIdOrEvmAddress),
 }
 
 impl AccountBalanceQuery {
@@ -32,7 +43,7 @@ impl AccountBalanceQuery {
     /// This is mutually exclusive with [`contract_id`](#method.contract_id).
     ///
     pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
-        self.data.source = Some(AccountBalanceSource::Account(id.into()));
+        self.data.source = Some(AccountBalanceSource::AccountId(id.into()));
         self
     }
 
@@ -41,7 +52,7 @@ impl AccountBalanceQuery {
     /// This is mutually exclusive with [`account_id`](#method.account_id).
     ///
     pub fn contract_id(&mut self, id: ContractIdOrEvmAddress) -> &mut Self {
-        self.data.source = Some(AccountBalanceSource::Contract(id.into()));
+        self.data.source = Some(AccountBalanceSource::ContractId(id.into()));
         self
     }
 }
@@ -49,8 +60,8 @@ impl AccountBalanceQuery {
 impl ToQueryProtobuf for AccountBalanceQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
         let source = self.source.as_ref().map(|source| match source {
-            AccountBalanceSource::Account(id) => BalanceSource::AccountId(id.to_protobuf()),
-            AccountBalanceSource::Contract(id) => BalanceSource::ContractId(id.to_protobuf()),
+            AccountBalanceSource::AccountId(id) => BalanceSource::AccountId(id.to_protobuf()),
+            AccountBalanceSource::ContractId(id) => BalanceSource::ContractId(id.to_protobuf()),
         });
 
         services::Query {

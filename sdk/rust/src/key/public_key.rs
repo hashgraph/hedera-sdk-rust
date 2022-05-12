@@ -1,13 +1,16 @@
+use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::str::FromStr;
+
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate::Error;
 
 /// A public key on the Hedera network.
-#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Eq, PartialEq, SerializeDisplay, DeserializeFromStr)]
 pub struct PublicKey(pub(crate) PublicKeyData);
 
-#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Eq, PartialEq)]
 pub(crate) enum PublicKeyData {
     Ed25519(ed25519_dalek::PublicKey),
     // TODO: Ecdsa(_)
@@ -25,6 +28,19 @@ impl PublicKey {
             PublicKeyData::Ed25519(key) => key.as_bytes(),
             // TODO: ecdsa
         }
+    }
+}
+
+impl Debug for PublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for PublicKey {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        // TODO: to_bytes_der
+        write!(f, "{}", hex::encode(self.as_bytes_raw()))
     }
 }
 

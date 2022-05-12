@@ -1,3 +1,8 @@
+use std::fmt::Debug;
+
+use serde::de::DeserializeOwned;
+use serde::Serialize;
+use serde_with::{serde_as, FromInto};
 use time::Duration;
 
 use crate::execute::execute;
@@ -5,24 +10,34 @@ use crate::query::cost::QueryCost;
 use crate::query::payment_transaction::PaymentTransaction;
 use crate::{AccountId, Client, Error, Signer, TransactionId};
 
+mod any;
 mod cost;
 mod execute;
 mod payment_transaction;
 mod protobuf;
 
+pub(crate) use any::AnyQueryData;
 pub(crate) use execute::QueryExecute;
 pub(crate) use protobuf::ToQueryProtobuf;
 
+pub trait QueryData:
+    Into<AnyQueryData> + Clone + Debug + Serialize + DeserializeOwned + ToQueryProtobuf
+{
+}
+
 /// A query that can be executed on the Hedera network.
-#[derive(Default)]
-pub struct Query<D> {
+#[serde_as]
+#[derive(Default, serde::Serialize)]
+pub struct Query<D: QueryData> {
+    #[serde(flatten)]
+    #[serde_as(as = "FromInto<AnyQueryData>")]
     pub(crate) data: D,
     payment: PaymentTransaction,
 }
 
 impl<D> Query<D>
 where
-    D: Default,
+    D: QueryData + Default,
 {
     /// Create a new query ready for configuration and execution.
     #[inline]
@@ -32,7 +47,10 @@ where
     }
 }
 
-impl<D> Query<D> {
+impl<D> Query<D>
+where
+    D: QueryData,
+{
     /// Set the account IDs of the nodes that this query may be submitted to.
     ///
     /// Defaults to the full list of nodes configured on the client; or, the node account IDs
@@ -50,7 +68,7 @@ impl<D> Query<D> {
     ///
     // TODO: Use Hbar
     pub fn payment_amount(&mut self, amount: u64) -> &mut Self {
-        self.payment.data.amount = Some(amount);
+        self.payment.body.data.amount = Some(amount);
         self
     }
 
@@ -69,7 +87,7 @@ impl<D> Query<D> {
     ///
     // TODO: Use Hbar
     pub fn max_payment_amount(&mut self, max: impl Into<Option<u64>>) -> &mut Self {
-        self.payment.data.max_amount = max.into();
+        self.payment.body.data.max_amount = max.into();
         self
     }
 
@@ -130,18 +148,18 @@ impl<D> Query<D> {
 impl<D> Query<D>
 where
     Self: QueryExecute + Send + Sync,
-    D: ToQueryProtobuf,
+    D: QueryData,
 {
     /// Execute this query against the provided client of the Hedera network.
     pub async fn execute(
         &mut self,
         client: &Client,
     ) -> crate::Result<<Self as QueryExecute>::Response> {
-        if self.payment.data.amount.is_none() && Self::is_payment_required() {
+        if self.payment.body.data.amount.is_none() && Self::is_payment_required() {
             // payment is required but none was specified, query the cost
             let cost = QueryCost::new(self).execute(client).await?;
 
-            if let Some(max_amount) = self.payment.data.max_amount {
+            if let Some(max_amount) = self.payment.body.data.max_amount {
                 if cost > max_amount {
                     return Err(Error::MaxQueryPaymentExceeded {
                         query_cost: cost,
@@ -150,7 +168,7 @@ where
                 }
             }
 
-            self.payment.data.amount = Some(cost);
+            self.payment.body.data.amount = Some(cost);
         }
 
         execute(client, self).await

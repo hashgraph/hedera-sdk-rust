@@ -8,9 +8,9 @@ use tonic::{Response, Status};
 
 use crate::execute::Execute;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
+use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
-    AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash, TransactionId,
-    TransactionResponse,
+    AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash, TransactionId, TransactionResponse
 };
 
 #[async_trait]
@@ -40,11 +40,11 @@ where
     type Response = TransactionResponse;
 
     fn node_account_ids(&self) -> Option<&[AccountId]> {
-        self.node_account_ids.as_deref()
+        self.body.node_account_ids.as_deref()
     }
 
     fn transaction_id(&self) -> Option<TransactionId> {
-        self.transaction_id
+        self.body.transaction_id
     }
 
     fn requires_transaction_id() -> bool {
@@ -130,9 +130,9 @@ where
         transaction_id: &TransactionId,
         client_max_transaction_fee: &AtomicU64,
     ) -> services::TransactionBody {
-        let data = self.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+        let data = self.body.data.to_transaction_data_protobuf(node_account_id, transaction_id);
 
-        let max_transaction_fee = self.max_transaction_fee.unwrap_or_else(|| {
+        let max_transaction_fee = self.body.max_transaction_fee.unwrap_or_else(|| {
             // no max has been set on the *transaction*
             // check if there is a global max set on the client
             match client_max_transaction_fee.load(Ordering::Relaxed) {
@@ -147,8 +147,13 @@ where
         services::TransactionBody {
             data: Some(data),
             transaction_id: Some(transaction_id.to_protobuf()),
-            transaction_valid_duration: Some(self.transaction_valid_duration.into()),
-            memo: self.transaction_memo.clone(),
+            transaction_valid_duration: Some(
+                self.body
+                    .transaction_valid_duration
+                    .unwrap_or(DEFAULT_TRANSACTION_VALID_DURATION)
+                    .into(),
+            ),
+            memo: self.body.transaction_memo.clone(),
             node_account_id: Some(node_account_id.to_protobuf()),
             generate_record: false,
             transaction_fee: max_transaction_fee,

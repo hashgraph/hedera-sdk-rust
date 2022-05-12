@@ -2,11 +2,12 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
 use hedera_proto::services;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate::{FromProtobuf, PublicKey, ToProtobuf};
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-#[derive(serde::Serialize, Copy, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(SerializeDisplay, DeserializeFromStr, Copy, Hash, PartialEq, Eq, Clone)]
 #[repr(C)]
 pub struct AccountId {
     pub shard: u64,
@@ -65,11 +66,23 @@ impl FromStr for AccountId {
 
 /// The identifier for a cryptocurrency account represented with an alias instead of an
 /// account number.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
 pub struct AccountAlias {
     pub shard: u64,
     pub realm: u64,
     pub alias: PublicKey,
+}
+
+impl Debug for AccountAlias {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for AccountAlias {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}.{}", self.shard, self.realm, self.alias)
+    }
 }
 
 impl ToProtobuf for AccountAlias {
@@ -97,11 +110,25 @@ impl FromStr for AccountAlias {
 /// Either [`AccountId`] or [`AccountAlias`]. Some transactions and queries
 /// accept `AccountIdOrAlias` as an input. All transactions and queries return only `AccountId`
 /// as an output however.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
-#[serde(untagged)]
+#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
 pub enum AccountIdOrAlias {
     AccountId(AccountId),
     AccountAlias(AccountAlias),
+}
+
+impl Debug for AccountIdOrAlias {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for AccountIdOrAlias {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::AccountId(id) => Display::fmt(id, f),
+            Self::AccountAlias(id) => Display::fmt(id, f),
+        }
+    }
 }
 
 impl ToProtobuf for AccountIdOrAlias {
