@@ -6,3 +6,10 @@ strip = true
 lto = "fat"
 overflow-checks = false
 debug = 0
+opt-level = "z"
+codegen-units = 1
+panic = "abort"
+
+[patch.crates-io]
+curve25519-dalek = { git = "https://github.com/launchbadge/curve25519-dalek", branch = "lb-update" }
+ed25519-dalek = { git = "https://github.com/launchbadge/ed25519-dalek", branch = "lb-update" }
