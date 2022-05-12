@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use hedera_proto::services::{self};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::transaction::{ToTransactionDataProtobuf, TransactionExecute};
@@ -8,7 +9,8 @@ use crate::{AccountId, ToProtobuf, Transaction, TransactionId};
 
 pub(super) type PaymentTransaction = Transaction<PaymentTransactionData>;
 
-#[derive(Default)]
+#[skip_serializing_none]
+#[derive(Default, serde::Serialize, serde::Deserialize)]
 pub(super) struct PaymentTransactionData {
     // TODO: Use Hbar
     pub(super) amount: Option<u64>,

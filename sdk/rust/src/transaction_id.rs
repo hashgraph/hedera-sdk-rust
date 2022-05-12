@@ -2,6 +2,7 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 use hedera_proto::services;
 use rand::{thread_rng, Rng};
+use serde_with::SerializeDisplay;
 use time::{Duration, OffsetDateTime};
 
 use crate::{AccountId, ToProtobuf};
@@ -12,7 +13,7 @@ use crate::{AccountId, ToProtobuf};
 /// right after creating it, for instantiating a smart contract with bytecode in a file just created,
 /// and internally by the network for detecting when duplicate transactions are submitted.
 ///
-#[derive(Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, SerializeDisplay)]
 pub struct TransactionId {
     /// The account that pays for this transaction.
     pub account_id: AccountId,

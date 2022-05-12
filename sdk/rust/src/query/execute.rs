@@ -3,7 +3,7 @@ use hedera_proto::services;
 use tonic::transport::Channel;
 
 use crate::execute::Execute;
-use crate::query::ToQueryProtobuf;
+use crate::query::QueryData;
 use crate::{AccountId, Client, Error, FromProtobuf, Query, TransactionId};
 
 /// Describes a specific query that can be executed on the Hedera network.
@@ -27,7 +27,7 @@ pub trait QueryExecute {
 impl<D> Execute for Query<D>
 where
     Self: QueryExecute,
-    D: ToQueryProtobuf,
+    D: QueryData,
 {
     type GrpcRequest = services::Query;
 
