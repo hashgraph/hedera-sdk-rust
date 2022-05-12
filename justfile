@@ -6,9 +6,13 @@ export AR_x86_64_unknown_linux_gnu := if os() == "macos" { "x86_64-unknown-linux
 export CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER := if os() == "macos" { "x86_64-unknown-linux-gnu-gcc" } else { "" }
 
 build:
+    @ # Ensure we have rust-src
+    @ rustup component add rust-src 2> /dev/null
+
     @ # Build for all targets except Windows
     @ for TARGET in x86_64-apple-darwin x86_64-apple-ios aarch64-apple-darwin aarch64-apple-ios x86_64-unknown-linux-gnu x86_64-pc-windows-gnu; do \
-        cargo +nightly build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target $TARGET; \
+        rustup target add $TARGET 2> /dev/null; \
+        cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target $TARGET; \
     done
 
     @ # Strip libraries
