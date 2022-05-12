@@ -31,14 +31,16 @@ build:
     @ x86_64-unknown-linux-gnu-strip --strip-unneeded target/x86_64-unknown-linux-gnu/release/libhedera.so 2> /dev/null
     @ x86_64-w64-mingw32-strip --strip-unneeded target/x86_64-pc-windows-gnu/release/hedera.dll 2> /dev/null
 
+    @ # --------------------------------------------------------------------------------------------
+    @ # C
+    @ # --------------------------------------------------------------------------------------------
+
     @ # Copy libraries into C SDK
 
     @ mkdir -p sdk/c/lib/macos-x86_64/
     @ mkdir -p sdk/c/lib/ios-x86_64/
     @ mkdir -p sdk/c/lib/macos-arm64/
-    @ mkdir -p sdk/c/lib/macos-universal/
     @ mkdir -p sdk/c/lib/ios-arm64/
-    @ mkdir -p sdk/c/lib/ios-universal/
     @ mkdir -p sdk/c/lib/linux-x86_64/
     @ mkdir -p sdk/c/lib/windows-x86_64/
 
@@ -54,14 +56,35 @@ build:
     @ cp target/x86_64-unknown-linux-gnu/release/libhedera.so sdk/c/lib/linux-x86_64/
     @ cp target/x86_64-pc-windows-gnu/release/hedera.dll sdk/c/lib/windows-x86_64/
 
-    @ lipo \
-        sdk/c/lib/macos-x86_64/libhedera.a \
-        sdk/c/lib/macos-arm64/libhedera.a \
-        -create -output \
-        sdk/c/lib/macos-universal/libhedera.a
+    @ # --------------------------------------------------------------------------------------------
+    @ # Swift
+    @ # --------------------------------------------------------------------------------------------
 
-    @ lipo \
-        sdk/c/lib/ios-x86_64/libhedera.a \
-        sdk/c/lib/ios-arm64/libhedera.a \
-        -create -output \
-        sdk/c/lib/ios-universal/libhedera.a
+    @ # Copy libraries into Swift SDK
+
+    @ mkdir -p sdk/swift/CHedera.xcframework/macos-{x86_64,arm64}/Headers/
+    @ mkdir -p sdk/swift/CHedera.xcframework/ios-{x86_64-simulator,arm64}/Headers/
+
+    @ cp sdk/c/lib/macos-x86_64/libhedera.a sdk/swift/CHedera.xcframework/macos-x86_64/
+    @ cp sdk/c/lib/macos-arm64/libhedera.a sdk/swift/CHedera.xcframework/macos-arm64/
+    @ cp sdk/c/lib/ios-x86_64/libhedera.a sdk/swift/CHedera.xcframework/ios-x86_64-simulator/
+    @ cp sdk/c/lib/ios-arm64/libhedera.a sdk/swift/CHedera.xcframework/ios-arm64/
+
+    @ # Copy headers into Swift SDK
+
+    @ cp sdk/c/include/hedera.h sdk/swift/CHedera.xcframework/macos-x86_64/Headers/
+    @ cp sdk/c/include/hedera.h sdk/swift/CHedera.xcframework/macos-arm64/Headers/
+    @ cp sdk/c/include/hedera.h sdk/swift/CHedera.xcframework/ios-x86_64-simulator/Headers/
+    @ cp sdk/c/include/hedera.h sdk/swift/CHedera.xcframework/ios-arm64/Headers/
+
+    @ # Copy .modulemap into each platform folder for Swift SDK
+
+    @ cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/macos-x86_64/Headers/
+    @ cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/macos-arm64/Headers/
+    @ cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/ios-x86_64-simulator/Headers/
+    @ cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/ios-arm64/Headers/
+
+clean:
+    @ rm -rf sdk/c/lib/*
+    @ rm -rf sdk/swift/CHedera.xcframework/ios-*/
+    @ rm -rf sdk/swift/CHedera.xcframework/macos-*/

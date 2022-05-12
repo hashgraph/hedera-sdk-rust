@@ -13,3 +13,6 @@ indent_style = tab
 
 [*.go]
 indent_style = tab
+
+[*.plist]
+indent_style = tab

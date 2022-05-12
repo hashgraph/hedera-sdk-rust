@@ -1,5 +1,5 @@
 /// Either `AccountId` or `AccountAlias`. Some transactions and queries
-/// accept `AccountIdOrAlias` as an input. All transactions and queries 
+/// accept `AccountIdOrAlias` as an input. All transactions and queries
 /// return only `AccountId` as an output however.
 public class AccountIdOrAlias {
     /// The shard number (non-negative).
@@ -9,8 +9,8 @@ public class AccountIdOrAlias {
     public let realm: UInt64
 
     fileprivate init(shard: UInt64, realm: UInt64) {
-        self.shard = shard;
-        self.realm = realm;
+        self.shard = shard
+        self.realm = realm
     }
 }
 

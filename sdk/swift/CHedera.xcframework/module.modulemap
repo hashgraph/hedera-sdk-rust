@@ -1,0 +1,4 @@
+module CHedera {
+    header "hedera.h"
+    export *
+}
