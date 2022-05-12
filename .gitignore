@@ -6,3 +6,6 @@ target/
 
 # Swift intermediate build directory
 .build/
+
+# Built C libraries
+sdk/c/lib/*/
