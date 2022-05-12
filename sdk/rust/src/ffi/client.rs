@@ -1,7 +1,7 @@
 use crate::ffi::signer::Signer;
 use crate::{AccountId, Client};
 
-/// Open a Hedera client pre-configured for testnet access.
+/// Construct a Hedera client pre-configured for testnet access.
 #[no_mangle]
 pub extern "C" fn hedera_client_for_testnet() -> *mut Client {
     let client = Client::for_testnet();

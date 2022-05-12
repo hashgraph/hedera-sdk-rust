@@ -37,7 +37,7 @@ typedef struct HederaAccountId {
 } HederaAccountId;
 
 /**
- * Open a Hedera client pre-configured for testnet access.
+ * Construct a Hedera client pre-configured for testnet access.
  */
 struct HederaClient *hedera_client_for_testnet(void);
 

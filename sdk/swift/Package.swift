@@ -13,6 +13,11 @@ let package = Package(
     dependencies: [
     ],
     targets: [
-        .target(name: "Hedera", dependencies: []),
+        .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
+        .target(name: "Hedera", dependencies: ["CHedera"]),
+
+        // Examples
+        .target(name: "GetAccountBalanceExample", dependencies: ["Hedera"], path: "Examples/GetAccountBalance"),
+        .target(name: "GetAccountInfoExample", dependencies: ["Hedera"], path: "Examples/GetAccountInfo"),
     ]
 )

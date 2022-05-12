@@ -9,3 +9,6 @@ target/
 
 # Built C libraries
 sdk/c/lib/*/
+
+# Built C libraries in Swift XCFramework
+sdk/swift/CHedera.xcframework/*/
