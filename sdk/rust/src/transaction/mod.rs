@@ -130,6 +130,7 @@ where
     D: ToTransactionDataProtobuf,
     Self: TransactionExecute,
 {
+    /// Execute this transaction against the provided client of the Hedera network.
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
         execute(client, self).await
     }
