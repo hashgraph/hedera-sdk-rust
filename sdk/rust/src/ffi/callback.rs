@@ -1,16 +1,16 @@
 use std::os::raw::c_void;
 
-/// Alias to a callback that refers to a function with the C calling convention.
-pub(super) type CallbackHandle<T> = extern "C" fn(context: *const c_void, value: T);
-
 /// Wrapper around a C callback handle and an associated opaque context pointer.
 pub(super) struct Callback<T> {
-    handle: CallbackHandle<T>,
+    handle: extern "C" fn(context: *const c_void, value: T),
     context: *const c_void,
 }
 
 impl<T> Callback<T> {
-    pub(super) fn new(context: *const c_void, handle: CallbackHandle<T>) -> Self {
+    pub(super) fn new(
+        context: *const c_void,
+        handle: extern "C" fn(context: *const c_void, value: T),
+    ) -> Self {
         Self { handle, context }
     }
 
