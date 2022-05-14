@@ -26,6 +26,10 @@ pub enum Error {
     #[error("transaction `{}` failed pre-check with status `{status:?}`", .transaction_id.as_ref().map(|id| id.to_string()).as_deref().unwrap_or("_"))]
     PreCheckStatus { status: ResponseCodeEnum, transaction_id: Option<TransactionId> },
 
+    /// Failed to parse a basic type from string (ex. AccountId, ContractId, TransactionId, etc.).
+    #[error("failed to parse: {0}")]
+    BasicParse(BoxStdError),
+
     #[error("failed to parse a key: {0}")]
     KeyParse(BoxStdError),
 
@@ -55,6 +59,10 @@ impl Error {
 
     pub(crate) fn key_parse<E: Into<BoxStdError>>(error: E) -> Self {
         Self::KeyParse(error.into())
+    }
+
+    pub(crate) fn basic_parse<E: Into<BoxStdError>>(error: E) -> Self {
+        Self::BasicParse(error.into())
     }
 
     pub(crate) fn signature<E: Into<BoxStdError>>(error: E) -> Self {

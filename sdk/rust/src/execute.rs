@@ -29,7 +29,7 @@ pub(crate) trait Execute {
     fn transaction_id(&self) -> Option<TransactionId>;
 
     /// Get whether to generate transaction IDs for request creation.
-    fn requires_transaction_id() -> bool;
+    fn requires_transaction_id(&self) -> bool;
 
     /// Create a new request for execution.
     ///
@@ -45,6 +45,7 @@ pub(crate) trait Execute {
 
     /// Execute the created GRPC request against the provided GRPC channel.
     async fn execute(
+        &self,
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status>;
@@ -77,7 +78,8 @@ where
     // if we need to generate a transaction ID for this request (and one was not provided),
     // generate one now
     let explicit_transaction_id = executable.transaction_id();
-    let mut transaction_id = E::requires_transaction_id()
+    let mut transaction_id = executable
+        .requires_transaction_id()
         .then(|| explicit_transaction_id.or_else(|| client.generate_transaction_id()))
         .flatten();
 

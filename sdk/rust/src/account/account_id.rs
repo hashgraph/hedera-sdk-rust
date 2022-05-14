@@ -2,9 +2,10 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
 use hedera_proto::services;
+use itertools::Itertools;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
-use crate::{FromProtobuf, PublicKey, ToProtobuf};
+use crate::{Error, FromProtobuf, PublicKey, ToProtobuf};
 
 /// The unique identifier for a cryptocurrency account on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Copy, Hash, PartialEq, Eq, Clone)]
@@ -57,10 +58,21 @@ impl From<u64> for AccountId {
 }
 
 impl FromStr for AccountId {
-    type Err = crate::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        // TODO: share with other entity IDs
+
+        let parts: Vec<u64> =
+            s.splitn(3, '.').map(u64::from_str).try_collect().map_err(Error::basic_parse)?;
+
+        if parts.len() == 1 {
+            Ok(Self::from(parts[0]))
+        } else if parts.len() == 3 {
+            Ok(Self { shard: parts[0], realm: parts[1], num: parts[2] })
+        } else {
+            Err(Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`)"))
+        }
     }
 }
 
@@ -97,13 +109,29 @@ impl ToProtobuf for AccountAlias {
     }
 }
 
-// TODO: From<PublicKey> for AccountAlias
+impl From<PublicKey> for AccountAlias {
+    fn from(alias: PublicKey) -> Self {
+        Self { shard: 0, realm: 0, alias }
+    }
+}
 
 impl FromStr for AccountAlias {
-    type Err = crate::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        let parts: Vec<&str> = s.splitn(3, '.').collect();
+
+        if parts.len() == 1 {
+            Ok(Self::from(PublicKey::from_str(parts[0])?))
+        } else if parts.len() == 3 {
+            let shard = parts[0].parse().map_err(Error::basic_parse)?;
+            let realm = parts[1].parse().map_err(Error::basic_parse)?;
+            let alias = parts[2].parse().map_err(Error::basic_parse)?;
+
+            Ok(Self { shard, realm, alias })
+        } else {
+            Err(Error::basic_parse("expecting <shard>.<realm>.<alias> (ex. `0.0.0a410c8fe4912e3652b61dd222b1b4d7773261537d7ebad59df6cd33622a693e`)"))
+        }
     }
 }
 
@@ -155,9 +183,12 @@ impl From<AccountAlias> for AccountIdOrAlias {
 }
 
 impl FromStr for AccountIdOrAlias {
-    type Err = crate::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        todo!()
+        AccountId::from_str(s)
+            .map(Self::AccountId)
+            .or_else(|_| AccountAlias::from_str(s).map(Self::AccountAlias))
+            .map_err(|_| Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`) or <shard>.<realm>.<alias> (ex. `0.0.0a410c8fe4912e3652b61dd222b1b4d7773261537d7ebad59df6cd33622a693e`)"))
     }
 }

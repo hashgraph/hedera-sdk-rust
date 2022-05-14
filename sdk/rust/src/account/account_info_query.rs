@@ -4,7 +4,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::account::AccountInfo;
-use crate::query::{AnyQueryData, QueryData, QueryExecute, ToQueryProtobuf};
+use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
 use crate::{AccountIdOrAlias, Query, ToProtobuf};
 
 /// Get all the information about an account, including the balance.
@@ -24,8 +24,6 @@ impl From<AccountInfoQueryData> for AnyQueryData {
         Self::AccountInfo(data)
     }
 }
-
-impl QueryData for AccountInfoQueryData {}
 
 impl AccountInfoQuery {
     /// Sets the account ID for which information is requested.
@@ -49,10 +47,11 @@ impl ToQueryProtobuf for AccountInfoQueryData {
 }
 
 #[async_trait]
-impl QueryExecute for AccountInfoQuery {
+impl QueryExecute for AccountInfoQueryData {
     type Response = AccountInfo;
 
     async fn execute(
+        &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {

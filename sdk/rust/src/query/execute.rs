@@ -1,23 +1,30 @@
+use std::fmt::Debug;
+
 use async_trait::async_trait;
 use hedera_proto::services;
+use serde::de::DeserializeOwned;
+use serde::Serialize;
 use tonic::transport::Channel;
 
 use crate::execute::Execute;
-use crate::query::QueryData;
+use crate::query::{AnyQueryData, ToQueryProtobuf};
 use crate::{AccountId, Client, Error, FromProtobuf, Query, TransactionId};
 
 /// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]
-pub trait QueryExecute {
+pub trait QueryExecute:
+    Sync + Send + Into<AnyQueryData> + Clone + Debug + Serialize + DeserializeOwned + ToQueryProtobuf
+{
     type Response: FromProtobuf<Protobuf = services::response::Response>;
 
     /// Returns `true` if this query requires a payment to be submitted.
-    fn is_payment_required() -> bool {
+    fn is_payment_required(&self) -> bool {
         true
     }
 
     /// Execute the prepared query request against the provided GRPC channel.
     async fn execute(
+        &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status>;
@@ -26,14 +33,13 @@ pub trait QueryExecute {
 #[async_trait]
 impl<D> Execute for Query<D>
 where
-    Self: QueryExecute,
-    D: QueryData,
+    D: QueryExecute,
 {
     type GrpcRequest = services::Query;
 
     type GrpcResponse = services::Response;
 
-    type Response = <Self as QueryExecute>::Response;
+    type Response = D::Response;
 
     type Context = ();
 
@@ -45,8 +51,8 @@ where
         self.payment.transaction_id()
     }
 
-    fn requires_transaction_id() -> bool {
-        Self::is_payment_required()
+    fn requires_transaction_id(&self) -> bool {
+        self.data.is_payment_required()
     }
 
     async fn make_request(
@@ -55,7 +61,7 @@ where
         transaction_id: &Option<TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
-        let payment = if Self::is_payment_required() {
+        let payment = if self.data.is_payment_required() {
             Some(self.payment.make_request(client, transaction_id, node_account_id).await?.0)
         } else {
             None
@@ -67,10 +73,11 @@ where
     }
 
     async fn execute(
+        &self,
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status> {
-        <Self as QueryExecute>::execute(channel, request).await
+        self.data.execute(channel, request).await
     }
 
     fn make_response(
@@ -81,7 +88,7 @@ where
     ) -> crate::Result<Self::Response> {
         let response = pb_getf!(response, response)?;
 
-        <<Self as QueryExecute>::Response as FromProtobuf>::from_protobuf(response)
+        <D::Response as FromProtobuf>::from_protobuf(response)
     }
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {

@@ -1,3 +1,5 @@
+import CHedera
+
 /// Either `AccountId` or `AccountAlias`. Some transactions and queries
 /// accept `AccountIdOrAlias` as an input. All transactions and queries
 /// return only `AccountId` as an output however.
@@ -15,12 +17,30 @@ public class AccountIdOrAlias {
 }
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-public class AccountId: AccountIdOrAlias {
+public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decodable {
     public let num: UInt64
 
     public init(num: UInt64, shard: UInt64 = 0, realm: UInt64 = 0) {
         self.num = num
         super.init(shard: shard, realm: realm)
+    }
+
+    public init(_ description: String) {
+        var accountId = HederaAccountId()
+        var _ = hedera_account_id_from_string(description, &accountId)
+
+        // TODO: handle errors
+
+        num = accountId.num
+        super.init(shard: accountId.shard, realm: accountId.realm)
+    }
+
+    public init(from decoder: Decoder) throws {
+        self.init(try decoder.singleValueContainer().decode(String.self))
+    }
+
+    public var description: String {
+        "\(shard).\(realm).\(num)"
     }
 }
 
