@@ -9,9 +9,8 @@ fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
     // in the beginning, there was only services and it was named "protos"
 
-    let services: Vec<_> = read_dir("../src/services")?
-        .filter_map(|entry| Some(entry.ok()?.path()))
-        .collect();
+    let services: Vec<_> =
+        read_dir("../src/services")?.filter_map(|entry| Some(entry.ok()?.path())).collect();
 
     let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
 
@@ -123,66 +122,30 @@ fn main() -> anyhow::Result<()> {
         .extern_path(".proto.SignatureMap", "crate::services::SignatureMap")
         .extern_path(".proto.SignaturePair", "crate::services::SignaturePair")
         .extern_path(".proto.ThresholdKey", "crate::services::ThresholdKey")
-        .extern_path(
-            ".proto.ThresholdSignature",
-            "crate::services::ThresholdSignature",
-        )
-        .extern_path(
-            ".proto.TimestampSeconds",
-            "crate::services::TimestampSeconds",
-        )
+        .extern_path(".proto.ThresholdSignature", "crate::services::ThresholdSignature")
+        .extern_path(".proto.TimestampSeconds", "crate::services::TimestampSeconds")
         .extern_path(".proto.TokenBalance", "crate::services::TokenBalance")
         .extern_path(".proto.TokenBalances", "crate::services::TokenBalances")
-        .extern_path(
-            ".proto.TokenRelationship",
-            "crate::services::TokenRelationship",
-        )
-        .extern_path(
-            ".proto.TokenTransferList",
-            "crate::services::TokenTransferList",
-        )
+        .extern_path(".proto.TokenRelationship", "crate::services::TokenRelationship")
+        .extern_path(".proto.TokenTransferList", "crate::services::TokenTransferList")
         .extern_path(".proto.TopicID", "crate::services::TopicId")
-        .extern_path(
-            ".proto.TransactionFeeSchedule",
-            "crate::services::TransactionFeeSchedule",
-        )
+        .extern_path(".proto.TransactionFeeSchedule", "crate::services::TransactionFeeSchedule")
         .extern_path(".proto.TransactionID", "crate::services::TransactionId")
         .extern_path(".proto.TransferList", "crate::services::TransferList")
-        .extern_path(
-            ".proto.HederaFunctionality",
-            "crate::services::HederaFunctionality",
-        )
+        .extern_path(".proto.HederaFunctionality", "crate::services::HederaFunctionality")
         .extern_path(".proto.SubType", "crate::services::SubType")
-        .extern_path(
-            ".proto.TokenFreezeStatus",
-            "crate::services::TokenFreezeStatus",
-        )
+        .extern_path(".proto.TokenFreezeStatus", "crate::services::TokenFreezeStatus")
         .extern_path(".proto.TokenKycStatus", "crate::services::TokenKycStatus")
         .extern_path(".proto.TokenSupplyType", "crate::services::TokenSupplyType")
         .extern_path(".proto.TokenType", "crate::services::TokenType")
-        .extern_path(
-            ".proto.GrantedCryptoAllowance",
-            "crate::services::GrantedCryptoAllowance",
-        )
-        .extern_path(
-            ".proto.GrantedTokenAllowance",
-            "crate::services::GrantedTokenAllowance",
-        )
+        .extern_path(".proto.GrantedCryptoAllowance", "crate::services::GrantedCryptoAllowance")
+        .extern_path(".proto.GrantedTokenAllowance", "crate::services::GrantedTokenAllowance")
         .extern_path(".proto.CryptoAllowance", "crate::services::CryptoAllowance")
         .extern_path(".proto.TokenAllowance", "crate::services::TokenAllowance")
-        .extern_path(
-            ".proto.GrantedNftAllowance",
-            "crate::services::GrantedNftAllowance",
-        )
+        .extern_path(".proto.GrantedNftAllowance", "crate::services::GrantedNftAllowance")
         .extern_path(".proto.NftAllowance", "crate::services::NftAllowance")
-        .extern_path(
-            ".proto.TokenPauseStatus",
-            "crate::services::TokenPauseStatus",
-        )
-        .extern_path(
-            ".proto.TokenAssociation",
-            "crate::services::TokenAssociation",
-        )
+        .extern_path(".proto.TokenPauseStatus", "crate::services::TokenPauseStatus")
+        .extern_path(".proto.TokenAssociation", "crate::services::TokenAssociation")
         .extern_path(".proto.ContractID", "crate::services::ContractId");
 
     cfg.out_dir(&streams_out_dir).compile(

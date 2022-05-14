@@ -8,9 +8,7 @@ impl From<super::services::Duration> for Duration {
 
 impl From<Duration> for super::services::Duration {
     fn from(duration: Duration) -> Self {
-        Self {
-            seconds: duration.whole_seconds(),
-        }
+        Self { seconds: duration.whole_seconds() }
     }
 }
 
@@ -22,9 +20,7 @@ impl From<super::services::TimestampSeconds> for OffsetDateTime {
 
 impl From<OffsetDateTime> for super::services::TimestampSeconds {
     fn from(dt: OffsetDateTime) -> Self {
-        Self {
-            seconds: dt.unix_timestamp(),
-        }
+        Self { seconds: dt.unix_timestamp() }
     }
 }
 
@@ -38,9 +34,6 @@ impl From<OffsetDateTime> for super::services::Timestamp {
     fn from(dt: OffsetDateTime) -> Self {
         let unix = dt - OffsetDateTime::unix_epoch();
 
-        Self {
-            seconds: unix.whole_seconds(),
-            nanos: unix.subsec_nanoseconds(),
-        }
+        Self { seconds: unix.whole_seconds(), nanos: unix.subsec_nanoseconds() }
     }
 }
