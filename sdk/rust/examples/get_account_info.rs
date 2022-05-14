@@ -4,8 +4,6 @@ use hedera::{AccountId, AccountInfoQuery, Client, PrivateKey};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    pretty_env_logger::try_init_timed()?;
-
     let client = Client::for_testnet();
 
     client.set_payer_account_id(AccountId::from(6189));

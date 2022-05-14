@@ -9,7 +9,8 @@ use crate::{AccountId, TransactionHash, TransactionId};
 /// To learn the consensus result, the client should later obtain a
 /// receipt (free), or can buy a more detailed record (not free).
 ///
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, serde::Serialize)]
+// TODO: Deserialize
 #[serde(rename_all = "camelCase")]
 pub struct TransactionResponse {
     /// The account ID of the node that the transaction was submitted to.

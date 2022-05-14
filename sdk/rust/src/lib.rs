@@ -46,7 +46,7 @@ pub use error::{Error, Result};
 pub use file::FileId;
 pub use key::{Key, PrivateKey, PublicKey};
 pub use protobuf::{FromProtobuf, ToProtobuf};
-pub use query::Query;
+pub use query::{AnyQuery, Query};
 pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;

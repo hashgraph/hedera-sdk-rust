@@ -47,7 +47,7 @@ where
         self.body.transaction_id
     }
 
-    fn requires_transaction_id() -> bool {
+    fn requires_transaction_id(&self) -> bool {
         true
     }
 
@@ -94,6 +94,7 @@ where
     }
 
     async fn execute(
+        &self,
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> Result<Response<Self::GrpcResponse>, Status> {

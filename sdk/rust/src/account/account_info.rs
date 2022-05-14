@@ -4,8 +4,8 @@ use time::{Duration, OffsetDateTime};
 use crate::{AccountId, FromProtobuf, Key};
 
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
-#[derive(Debug, Clone)]
-// TODO: #[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountInfo {
     /// The account that is being referenced.
     pub account_id: AccountId,
@@ -27,6 +27,8 @@ pub struct AccountInfo {
 
     /// The key for the account, which must sign in order to transfer_transaction out, or to modify the
     /// account in any way other than extending its expiration date.
+    // TODO: serde
+    #[serde(skip)]
     pub key: Key,
 
     /// Current balance of the referenced account.

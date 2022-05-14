@@ -4,16 +4,16 @@ use tonic::transport::Channel;
 
 use crate::execute::{execute, Execute};
 use crate::query::execute::response_header;
-use crate::query::{QueryData, QueryExecute};
+use crate::query::QueryExecute;
 use crate::{AccountId, Client, Query, TransactionId};
 
 pub(super) struct QueryCost<'a, D>(&'a Query<D>)
 where
-    D: QueryData;
+    D: QueryExecute;
 
 impl<'a, D> QueryCost<'a, D>
 where
-    D: QueryData,
+    D: QueryExecute,
 {
     pub(super) fn new(query: &'a Query<D>) -> Self {
         Self(query)
@@ -23,9 +23,8 @@ where
 #[async_trait]
 impl<D> Execute for QueryCost<'_, D>
 where
-    Query<D>: QueryExecute,
     Query<D>: Execute,
-    D: QueryData,
+    D: QueryExecute,
 {
     type GrpcRequest = services::Query;
 
@@ -43,7 +42,7 @@ where
         None
     }
 
-    fn requires_transaction_id() -> bool {
+    fn requires_transaction_id(&self) -> bool {
         false
     }
 
@@ -62,10 +61,11 @@ where
     }
 
     async fn execute(
+        &self,
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status> {
-        <Query<D> as QueryExecute>::execute(channel, request).await
+        <D as QueryExecute>::execute(&self.0.data, channel, request).await
     }
 
     fn make_response(
@@ -84,8 +84,7 @@ where
 
 impl<D> QueryCost<'_, D>
 where
-    Query<D>: QueryExecute + Send + Sync,
-    D: QueryData,
+    D: QueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
     pub async fn execute(&mut self, client: &Client) -> crate::Result<u64> {

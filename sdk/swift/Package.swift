@@ -1,23 +1,33 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.5
 import PackageDescription
+
+// collect example targets
+var exampleTargets: [PackageDescription.Target] = []
+for name in ["GetAccountBalance"] {
+    exampleTargets.append(
+        .executableTarget(
+            name: "\(name)Example",
+            dependencies: ["Hedera"],
+            path: "Examples/\(name)",
+            swiftSettings: [
+                .unsafeFlags([
+                    "-parse-as-library"
+                ])
+            ]))
+}
 
 let package = Package(
     name: "Hedera",
     platforms: [
-        .macOS(.v10_13),
+        .macOS(.v10_15),
         .iOS(.v12),
     ],
     products: [
-        .library(name: "Hedera", targets: ["Hedera"]),
+        .library(name: "Hedera", targets: ["Hedera"])
     ],
-    dependencies: [
-    ],
+    dependencies: [],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
         .target(name: "Hedera", dependencies: ["CHedera"]),
-
-        // Examples
-        .target(name: "GetAccountBalanceExample", dependencies: ["Hedera"], path: "Examples/GetAccountBalance"),
-        .target(name: "GetAccountInfoExample", dependencies: ["Hedera"], path: "Examples/GetAccountInfo"),
-    ]
+    ] + exampleTargets
 )

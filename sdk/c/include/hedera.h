@@ -37,6 +37,16 @@ typedef struct HederaAccountId {
 } HederaAccountId;
 
 /**
+ * Alias to a callback that refers to a function with the C calling convention.
+ */
+typedef void (*HederaCallbackHandle______c_char)(const void *context, const char *value);
+
+/**
+ * Parse a Hedera `AccountId` from the passed string.
+ */
+int hedera_account_id_from_string(const char *s, struct HederaAccountId *id);
+
+/**
  * Construct a Hedera client pre-configured for testnet access.
  */
 struct HederaClient *hedera_client_for_testnet(void);
@@ -60,6 +70,14 @@ void hedera_client_set_payer_account_id(struct HederaClient *client, struct Hede
  *
  */
 void hedera_client_add_default_signer(struct HederaClient *client, struct HederaSigner *signer);
+
+/**
+ * Execute this request against the provided client of the Hedera network.
+ */
+void hedera_execute(const struct HederaClient *client,
+                    const char *request,
+                    const void *context,
+                    HederaCallbackHandle______c_char callback);
 
 /**
  * Parse a Hedera private key from the passed string.

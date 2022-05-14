@@ -2,7 +2,8 @@ import CHedera
 
 /// Managed client for use on the Hedera network.
 public class Client {
-    private let ptr: OpaquePointer
+    // TODO: is there a better way to share this everywhere?
+    let ptr: OpaquePointer
 
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
@@ -14,7 +15,7 @@ public class Client {
 
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Client {
-        return Client(hedera_client_for_testnet())
+        Client(hedera_client_for_testnet())
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with

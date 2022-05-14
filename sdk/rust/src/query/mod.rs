@@ -1,7 +1,3 @@
-use std::fmt::Debug;
-
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 use serde_with::{serde_as, FromInto};
 use time::Duration;
 
@@ -16,19 +12,18 @@ mod execute;
 mod payment_transaction;
 mod protobuf;
 
+pub use any::AnyQuery;
 pub(crate) use any::AnyQueryData;
 pub(crate) use execute::QueryExecute;
 pub(crate) use protobuf::ToQueryProtobuf;
 
-pub trait QueryData:
-    Into<AnyQueryData> + Clone + Debug + Serialize + DeserializeOwned + ToQueryProtobuf
-{
-}
-
 /// A query that can be executed on the Hedera network.
 #[serde_as]
 #[derive(Default, serde::Serialize)]
-pub struct Query<D: QueryData> {
+pub struct Query<D>
+where
+    D: QueryExecute,
+{
     #[serde(flatten)]
     #[serde_as(as = "FromInto<AnyQueryData>")]
     pub(crate) data: D,
@@ -37,7 +32,7 @@ pub struct Query<D: QueryData> {
 
 impl<D> Query<D>
 where
-    D: QueryData + Default,
+    D: QueryExecute + Default,
 {
     /// Create a new query ready for configuration and execution.
     #[inline]
@@ -49,7 +44,7 @@ where
 
 impl<D> Query<D>
 where
-    D: QueryData,
+    D: QueryExecute,
 {
     /// Set the account IDs of the nodes that this query may be submitted to.
     ///
@@ -147,15 +142,11 @@ where
 
 impl<D> Query<D>
 where
-    Self: QueryExecute + Send + Sync,
-    D: QueryData,
+    D: QueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
-    pub async fn execute(
-        &mut self,
-        client: &Client,
-    ) -> crate::Result<<Self as QueryExecute>::Response> {
-        if self.payment.body.data.amount.is_none() && Self::is_payment_required() {
+    pub async fn execute(&mut self, client: &Client) -> crate::Result<D::Response> {
+        if self.payment.body.data.amount.is_none() && self.data.is_payment_required() {
             // payment is required but none was specified, query the cost
             let cost = QueryCost::new(self).execute(client).await?;
 

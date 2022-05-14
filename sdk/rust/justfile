@@ -1,0 +1,10 @@
+build:
+    @ cargo build --message-format=short
+
+alias fmt := format
+
+format:
+    @ cargo fmt
+
+lint:
+    @ cargo clippy
