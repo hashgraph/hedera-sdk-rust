@@ -4,7 +4,7 @@ use std::os::raw::c_char;
 use once_cell::sync::Lazy;
 use tokio::runtime::{self, Runtime};
 
-use crate::ffi::callback::{Callback, CallbackHandle};
+use crate::ffi::callback::Callback;
 use crate::ffi::util::cstr_from_ptr;
 use crate::{AnyQuery, Client};
 
@@ -18,7 +18,7 @@ pub extern "C" fn hedera_execute(
     client: *const Client,
     request: *const c_char,
     context: *const c_void,
-    callback: CallbackHandle<*const c_char>,
+    callback: extern "C" fn(context: *const c_void, value: *const c_char),
 ) {
     assert!(!client.is_null());
 

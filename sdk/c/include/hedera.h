@@ -36,10 +36,9 @@ typedef struct HederaAccountId {
   uint64_t num;
 } HederaAccountId;
 
-/**
- * Alias to a callback that refers to a function with the C calling convention.
- */
-typedef void (*HederaCallbackHandle______c_char)(const void *context, const char *value);
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 
 /**
  * Parse a Hedera `AccountId` from the passed string.
@@ -77,7 +76,7 @@ void hedera_client_add_default_signer(struct HederaClient *client, struct Hedera
 void hedera_execute(const struct HederaClient *client,
                     const char *request,
                     const void *context,
-                    HederaCallbackHandle______c_char callback);
+                    void (*callback)(const void *context, const char *value));
 
 /**
  * Parse a Hedera private key from the passed string.
@@ -93,5 +92,9 @@ void hedera_private_key_free(struct HederaPrivateKey *key);
  * Create an opaque signer from a `HederaPrivateKey`.
  */
 struct HederaSigner *hedera_signer_private_key(struct HederaPrivateKey *key);
+
+#ifdef __cplusplus
+} // extern "C"
+#endif // __cplusplus
 
 #endif /* _HEDERA_H */

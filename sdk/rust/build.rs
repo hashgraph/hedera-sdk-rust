@@ -1,9 +1,14 @@
 use std::env;
 
-use cbindgen::Language;
+use cbindgen::{Config, ExportConfig, Language};
 
 fn main() -> anyhow::Result<()> {
     cbindgen::Builder::new()
+        .with_config(Config {
+            cpp_compat: true,
+
+            ..Default::default()
+        })
         .with_crate(env::var("CARGO_MANIFEST_DIR")?)
         .with_include_version(true)
         .with_include_guard("_HEDERA_H")
