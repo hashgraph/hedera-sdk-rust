@@ -94,9 +94,6 @@ impl<'de> Deserialize<'de> for AnyQuery {
         D: Deserializer<'de>,
     {
         <AnyQueryProxy as Deserialize>::deserialize(deserializer)
-            .inspect(|query| {
-                log::trace!("wtf, {:#?}", query);
-            })
             .map(|query| Self { data: query.data, payment: PaymentTransaction::default() })
     }
 }
