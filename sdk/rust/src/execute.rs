@@ -122,7 +122,7 @@ where
             let (request, context) =
                 executable.make_request(client, &transaction_id, node_account_id).await?;
 
-            let response = match E::execute(channel, request).await {
+            let response = match executable.execute(channel, request).await {
                 Ok(response) => response.into_inner(),
                 Err(status) => {
                     match status.code() {
