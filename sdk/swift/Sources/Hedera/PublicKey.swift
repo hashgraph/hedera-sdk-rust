@@ -1,18 +1,20 @@
 import CHedera
 
 /// A private key on the Hedera network.
-public class PublicKey {
+public final class PublicKey {
     private let ptr: OpaquePointer
 
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }
 
-    public init(_ description: String) {
+    public init?(_ description: String) {
         var key = OpaquePointer.init(bitPattern: 0)
-        var _ = hedera_public_key_from_string(description, &key)
+        let err = hedera_public_key_from_string(description, &key)
 
-        // TODO: handle errors
+        if err != HEDERA_ERROR_OK {
+            return nil
+        }
 
         ptr = key!
     }

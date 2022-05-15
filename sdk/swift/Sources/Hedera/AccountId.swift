@@ -25,11 +25,13 @@ public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decod
         super.init(shard: shard, realm: realm)
     }
 
-    public init(_ description: String) {
+    public init?(_ description: String) {
         var accountId = HederaAccountId()
-        var _ = hedera_account_id_from_string(description, &accountId)
-
-        // TODO: handle errors
+        let err = hedera_account_id_from_string(description, &accountId)
+        
+        if err != HEDERA_ERROR_OK {
+            return nil
+        }
 
         num = accountId.num
         super.init(shard: accountId.shard, realm: accountId.realm)

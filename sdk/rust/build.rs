@@ -12,7 +12,6 @@ fn main() -> anyhow::Result<()> {
             },
             ..Default::default()
         })
-        .rename_item("FfiResult", "Result")
         .with_crate(env::var("CARGO_MANIFEST_DIR")?)
         .with_include_version(true)
         .with_include_guard("_HEDERA_H")

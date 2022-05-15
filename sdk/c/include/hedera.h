@@ -11,22 +11,22 @@
 /**
  * Represents any possible result from a fallible function in the Hedera SDK.
  */
-typedef enum HederaResult {
-  HEDERA_RESULT_OK = 0,
-  HEDERA_RESULT_ERR_TIMED_OUT = 1,
-  HEDERA_RESULT_ERR_GRPC_STATUS = 2,
-  HEDERA_RESULT_ERR_FROM_PROTOBUF = 3,
-  HEDERA_RESULT_ERR_PRE_CHECK_STATUS = 4,
-  HEDERA_RESULT_ERR_BASIC_PARSE = 5,
-  HEDERA_RESULT_ERR_KEY_PARSE = 6,
-  HEDERA_RESULT_ERR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID = 7,
-  HEDERA_RESULT_ERR_MAX_ATTEMPTS_EXCEEDED = 8,
-  HEDERA_RESULT_ERR_MAX_QUERY_PAYMENT_EXCEEDED = 9,
-  HEDERA_RESULT_ERR_NODE_ACCOUNT_UNKNOWN = 10,
-  HEDERA_RESULT_ERR_RESPONSE_STATUS_UNRECOGNIZED = 11,
-  HEDERA_RESULT_ERR_SIGNATURE = 12,
-  HEDERA_RESULT_ERR_REQUEST_PARSE = 13,
-} HederaResult;
+typedef enum HederaError {
+  HEDERA_ERROR_OK = 0,
+  HEDERA_ERROR_TIMED_OUT = 1,
+  HEDERA_ERROR_GRPC_STATUS = 2,
+  HEDERA_ERROR_FROM_PROTOBUF = 3,
+  HEDERA_ERROR_PRE_CHECK_STATUS = 4,
+  HEDERA_ERROR_BASIC_PARSE = 5,
+  HEDERA_ERROR_KEY_PARSE = 6,
+  HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID = 7,
+  HEDERA_ERROR_MAX_ATTEMPTS_EXCEEDED = 8,
+  HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED = 9,
+  HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN = 10,
+  HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED = 11,
+  HEDERA_ERROR_SIGNATURE = 12,
+  HEDERA_ERROR_REQUEST_PARSE = 13,
+} HederaError;
 
 /**
  * Managed client for use on the Hedera network.
@@ -73,20 +73,20 @@ const char *hedera_error_message(void);
 
 /**
  * Returns the GRPC status code for the last error. Undefined if the last error was not
- * `HEDERA_RESULT_ERR_GRPC_STATUS`.
+ * `HEDERA_ERROR_GRPC_STATUS`.
  */
 int32_t hedera_error_grpc_status(void);
 
 /**
  * Returns the hedera services response code for the last error. Undefined if the last error
- * was not `HEDERA_RESULT_ERR_PRE_CHECK_STATUS`.
+ * was not `HEDERA_ERROR_PRE_CHECK_STATUS`.
  */
 int32_t hedera_error_pre_check_status(void);
 
 /**
  * Parse a Hedera `AccountId` from the passed string.
  */
-enum HederaResult hedera_account_id_from_string(const char *s, struct HederaAccountId *id);
+enum HederaError hedera_account_id_from_string(const char *s, struct HederaAccountId *id);
 
 /**
  * Construct a Hedera client pre-configured for testnet access.
@@ -116,15 +116,15 @@ void hedera_client_add_default_signer(struct HederaClient *client, struct Hedera
 /**
  * Execute this request against the provided client of the Hedera network.
  */
-enum HederaResult hedera_execute(const struct HederaClient *client,
-                                 const char *request,
-                                 const void *context,
-                                 void (*callback)(const void *context, enum HederaResult err, const char *response));
+enum HederaError hedera_execute(const struct HederaClient *client,
+                                const char *request,
+                                const void *context,
+                                void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
  * Parse a Hedera private key from the passed string.
  */
-enum HederaResult hedera_private_key_from_string(const char *s, struct HederaPrivateKey **key);
+enum HederaError hedera_private_key_from_string(const char *s, struct HederaPrivateKey **key);
 
 /**
  * Releases memory associated with the private key.
@@ -134,7 +134,7 @@ void hedera_private_key_free(struct HederaPrivateKey *key);
 /**
  * Parse a Hedera public key from the passed string.
  */
-enum HederaResult hedera_public_key_from_string(const char *s, struct HederaPublicKey **key);
+enum HederaError hedera_public_key_from_string(const char *s, struct HederaPublicKey **key);
 
 /**
  * Releases memory associated with the public key.
