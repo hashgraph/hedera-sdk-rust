@@ -24,18 +24,21 @@ impl FromProtobuf for Key {
         use services::key::Key::*;
 
         match pb.key {
-            Some(Ed25519(bytes)) => Ok(Self::Primitive(PublicKey::from_bytes_raw_ed25519(&bytes)?)),
+            Some(Ed25519(bytes)) => Ok(Self::Primitive(PublicKey::from_bytes_ed25519(&bytes)?)),
             Some(ContractId(_)) => todo!(),
-            Some(Rsa3072(_)) => todo!(),
-            Some(Ecdsa384(_)) => todo!(),
+            Some(Rsa3072(_)) => {
+                Err(Error::from_protobuf("unexpected unsupported RSA-3072 key in Key"))
+            }
+            Some(Ecdsa384(_)) => {
+                Err(Error::from_protobuf("unexpected unsupported ECDSA-384 key in Key"))
+            }
             Some(ThresholdKey(_)) => todo!(),
             Some(KeyList(_)) => todo!(),
-            Some(EcdsaSecp256k1(_)) => todo!(),
-            Some(DelegatableContractId(_)) => todo!(),
-
-            None => {
-                return Err(Error::from_protobuf("unexpected empty key in Key"));
+            Some(EcdsaSecp256k1(bytes)) => {
+                Ok(Self::Primitive(PublicKey::from_bytes_ecdsa_secp256k1(&bytes)?))
             }
+            Some(DelegatableContractId(_)) => todo!(),
+            None => Err(Error::from_protobuf("unexpected empty key in Key")),
         }
     }
 }

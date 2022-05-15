@@ -35,7 +35,7 @@ impl ToProtobuf for SignaturePair {
         services::SignaturePair {
             signature: Some(signature),
             // TODO: is there any way to utilize the _prefix_ nature of this field?
-            pub_key_prefix: self.public.as_bytes_raw().to_vec(),
+            pub_key_prefix: self.public.to_bytes_raw().to_vec(),
         }
     }
 }

@@ -102,7 +102,7 @@ impl ToProtobuf for AccountAlias {
 
     fn to_protobuf(&self) -> Self::Protobuf {
         services::AccountId {
-            account: Some(services::account_id::Account::Alias(self.alias.as_bytes_raw().to_vec())),
+            account: Some(services::account_id::Account::Alias(self.alias.to_bytes_raw().to_vec())),
             realm_num: self.realm as i64,
             shard_num: self.shard as i64,
         }
