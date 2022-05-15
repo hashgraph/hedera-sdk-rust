@@ -7,9 +7,9 @@ use once_cell::sync::Lazy;
 use tokio::runtime::{self, Runtime};
 
 use crate::ffi::callback::Callback;
-use crate::ffi::error::FfiResult;
+use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
-use crate::{AnyQuery, Client, Error};
+use crate::{AnyQuery, Client};
 
 static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
     runtime::Builder::new_multi_thread().enable_all().max_blocking_threads(8).build().unwrap()
@@ -25,15 +25,15 @@ pub extern "C" fn hedera_execute(
     client: *const Client,
     request: *const c_char,
     context: *const c_void,
-    callback: extern "C" fn(context: *const c_void, err: FfiResult, response: *const c_char),
-) -> FfiResult {
+    callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
+) -> Error {
     assert!(!client.is_null());
 
     let client = unsafe { &*client };
     let request = unsafe { cstr_from_ptr(request) };
 
     let mut query: AnyQuery =
-        ffi_try!(serde_json::from_str(&request).map_err(Error::request_parse));
+        ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
 
     let callback = Callback::new(context, callback);
 
@@ -48,12 +48,12 @@ pub extern "C" fn hedera_execute(
         });
 
         let (err, response) = match response {
-            Ok(response) => (FfiResult::Ok, response),
-            Err(error) => (FfiResult::new(error), null()),
+            Ok(response) => (Error::Ok, response),
+            Err(error) => (Error::new(error), null()),
         };
 
         callback.call(err, response);
     });
 
-    FfiResult::Ok
+    Error::Ok
 }

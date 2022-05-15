@@ -1,7 +1,7 @@
 use std::os::raw::c_char;
 use std::str::FromStr;
 
-use crate::ffi::error::FfiResult;
+use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
 use crate::PublicKey;
 
@@ -10,7 +10,7 @@ use crate::PublicKey;
 pub extern "C" fn hedera_public_key_from_string(
     s: *const c_char,
     key: *mut *mut PublicKey,
-) -> FfiResult {
+) -> Error {
     assert!(!key.is_null());
 
     let s = unsafe { cstr_from_ptr(s) };
@@ -20,7 +20,7 @@ pub extern "C" fn hedera_public_key_from_string(
         *key = Box::into_raw(Box::new(parsed));
     }
 
-    FfiResult::Ok
+    Error::Ok
 }
 
 /// Releases memory associated with the public key.

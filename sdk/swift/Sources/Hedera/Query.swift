@@ -12,16 +12,20 @@ public class Query<O: Decodable>: Encodable {
         let request = String(data: requestBytes, encoding: .utf8)!
 
         // start an unmanaged continuation to bridge a C callback with Swift async
-        let responseBytes: Data = await withUnmanagedContinuation { continuation in
+        let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
             // invoke `hedera_execute`, callback will be invoked on request completion
             hedera_execute(client.ptr, request, continuation) { continuation, err, responsePtr in
-                // TODO: handle failures
+                if err != HEDERA_ERROR_OK {
+                    // an error has occurred, consume from the TLS storage for the error
+                    // and throw it up back to the async task
+                    resumeUnmanagedContinuation(continuation, throwing: HError(err)!)
+                } else {
+                    // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
+                    let responseBytes = String(validatingUTF8: responsePtr!)!.data(using: .utf8)!
 
-                // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
-                let responseBytes = String(validatingUTF8: responsePtr!)!.data(using: .utf8)!
-
-                // resumes the continuation which bridges us back into Swift async
-                resumeUnmanagedContinuation(continuation, with: .success(responseBytes))
+                    // resumes the continuation which bridges us back into Swift async
+                    resumeUnmanagedContinuation(continuation, returning: responseBytes)
+                }
             }
         }
 

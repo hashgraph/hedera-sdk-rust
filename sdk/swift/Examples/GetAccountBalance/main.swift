@@ -5,7 +5,7 @@ struct Program {
     static func main() async throws {
         let client = Client.forTestnet()
 
-        let id = AccountId(num: 1001)
+        let id = AccountId(num: 10012)
 
         let ab = try await AccountBalanceQuery()
             .accountId(id)
