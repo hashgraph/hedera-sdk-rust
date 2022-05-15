@@ -33,6 +33,8 @@ sha2 = "0.10.2"
 itertools = "0.10.3"
 once_cell = "1.10.0"
 futures-util = "0.3.21"
+k256 = "0.11.0"
+pkcs8 = "0.9.0"
 
 [dev-dependencies]
 anyhow = "1.0.57"
