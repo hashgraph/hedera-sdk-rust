@@ -2,7 +2,6 @@ import CHedera
 
 /// Managed client for use on the Hedera network.
 public class Client {
-    // TODO: is there a better way to share this everywhere?
     let ptr: OpaquePointer
 
     private init(_ ptr: OpaquePointer) {

@@ -5,6 +5,7 @@ import Foundation
 public class Query<O: Decodable>: Encodable {
     internal init() {}
 
+    /// Execute this query against the provided client of the Hedera network.
     public func execute(_ client: Client) async throws -> O {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
@@ -13,7 +14,7 @@ public class Query<O: Decodable>: Encodable {
         // start an unmanaged continuation to bridge a C callback with Swift async
         let responseBytes: Data = await withUnmanagedContinuation { continuation in
             // invoke `hedera_execute`, callback will be invoked on request completion
-            hedera_execute(client.ptr, request, continuation) { continuation, responsePtr in
+            hedera_execute(client.ptr, request, continuation) { continuation, err, responsePtr in
                 // TODO: handle failures
 
                 // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
