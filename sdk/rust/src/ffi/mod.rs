@@ -5,6 +5,7 @@ mod account_id;
 mod callback;
 mod client;
 mod execute;
-mod key;
+mod private_key;
+mod public_key;
 mod signer;
 mod util;

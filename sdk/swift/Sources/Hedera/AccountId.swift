@@ -35,7 +35,7 @@ public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decod
         super.init(shard: accountId.shard, realm: accountId.realm)
     }
 
-    public init(from decoder: Decoder) throws {
+    public convenience init(from decoder: Decoder) throws {
         self.init(try decoder.singleValueContainer().decode(String.self))
     }
 

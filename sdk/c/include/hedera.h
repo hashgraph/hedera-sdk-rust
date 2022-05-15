@@ -39,6 +39,11 @@ typedef struct HederaClient HederaClient;
 typedef struct HederaPrivateKey HederaPrivateKey;
 
 /**
+ * A public key on the Hedera network.
+ */
+typedef struct HederaPublicKey HederaPublicKey;
+
+/**
  * An opaque signer that can sign Hedera transactions.
  *
  * Intended to be a temporary object that is generalized and passed into
@@ -119,12 +124,22 @@ enum HederaResult hedera_execute(const struct HederaClient *client,
 /**
  * Parse a Hedera private key from the passed string.
  */
-int hedera_private_key_from_string(const char *s, struct HederaPrivateKey **key);
+enum HederaResult hedera_private_key_from_string(const char *s, struct HederaPrivateKey **key);
 
 /**
  * Releases memory associated with the private key.
  */
 void hedera_private_key_free(struct HederaPrivateKey *key);
+
+/**
+ * Parse a Hedera public key from the passed string.
+ */
+enum HederaResult hedera_public_key_from_string(const char *s, struct HederaPublicKey **key);
+
+/**
+ * Releases memory associated with the public key.
+ */
+void hedera_public_key_free(struct HederaPublicKey *key);
 
 /**
  * Create an opaque signer from a `HederaPrivateKey`.

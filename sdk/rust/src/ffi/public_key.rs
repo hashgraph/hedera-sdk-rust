@@ -1,20 +1,20 @@
-use std::os::raw::{c_char, c_int};
+use std::os::raw::c_char;
 use std::str::FromStr;
 
 use crate::ffi::error::FfiResult;
 use crate::ffi::util::cstr_from_ptr;
-use crate::PrivateKey;
+use crate::PublicKey;
 
-/// Parse a Hedera private key from the passed string.
+/// Parse a Hedera public key from the passed string.
 #[no_mangle]
-pub extern "C" fn hedera_private_key_from_string(
+pub extern "C" fn hedera_public_key_from_string(
     s: *const c_char,
-    key: *mut *mut PrivateKey,
+    key: *mut *mut PublicKey,
 ) -> FfiResult {
     assert!(!key.is_null());
 
     let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(PrivateKey::from_str(&s));
+    let parsed = ffi_try!(PublicKey::from_str(&s));
 
     unsafe {
         *key = Box::into_raw(Box::new(parsed));
@@ -23,9 +23,9 @@ pub extern "C" fn hedera_private_key_from_string(
     FfiResult::Ok
 }
 
-/// Releases memory associated with the private key.
+/// Releases memory associated with the public key.
 #[no_mangle]
-pub extern "C" fn hedera_private_key_free(key: *mut PrivateKey) {
+pub extern "C" fn hedera_public_key_free(key: *mut PublicKey) {
     assert!(!key.is_null());
 
     let _key = unsafe { Box::from_raw(key) };
