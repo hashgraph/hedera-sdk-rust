@@ -1,6 +1,7 @@
 use std::os::raw::{c_char, c_int};
 use std::str::FromStr;
 
+use crate::ffi::error::FfiResult;
 use crate::ffi::util::cstr_from_ptr;
 use crate::PrivateKey;
 
@@ -9,19 +10,17 @@ use crate::PrivateKey;
 pub extern "C" fn hedera_private_key_from_string(
     s: *const c_char,
     key: *mut *mut PrivateKey,
-) -> c_int {
+) -> FfiResult {
     assert!(!key.is_null());
 
     let s = unsafe { cstr_from_ptr(s) };
-
-    // TODO: handle errors
-    let parsed = PrivateKey::from_str(&s).unwrap();
+    let parsed = ffi_try!(PrivateKey::from_str(&s));
 
     unsafe {
         *key = Box::into_raw(Box::new(parsed));
     }
 
-    0
+    FfiResult::Ok
 }
 
 /// Releases memory associated with the private key.

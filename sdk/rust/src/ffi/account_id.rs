@@ -1,22 +1,21 @@
-use std::os::raw::{c_char, c_int};
+use std::os::raw::c_char;
 use std::str::FromStr;
 
+use crate::ffi::error::FfiResult;
 use crate::ffi::util::cstr_from_ptr;
 use crate::AccountId;
 
 /// Parse a Hedera `AccountId` from the passed string.
 #[no_mangle]
-pub extern "C" fn hedera_account_id_from_string(s: *const c_char, id: *mut AccountId) -> c_int {
+pub extern "C" fn hedera_account_id_from_string(s: *const c_char, id: *mut AccountId) -> FfiResult {
     assert!(!id.is_null());
 
     let s = unsafe { cstr_from_ptr(s) };
-
-    // TODO: handle errors
-    let parsed = AccountId::from_str(&s).unwrap();
+    let parsed = ffi_try!(AccountId::from_str(&s));
 
     unsafe {
         *id = parsed;
     }
 
-    0
+    FfiResult::Ok
 }

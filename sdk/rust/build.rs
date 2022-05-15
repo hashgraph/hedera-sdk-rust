@@ -1,10 +1,18 @@
 use std::env;
 
-use cbindgen::{Config, Language};
+use cbindgen::{Config, EnumConfig, Language, RenameRule};
 
 fn main() -> anyhow::Result<()> {
     cbindgen::Builder::new()
-        .with_config(Config { cpp_compat: true, ..Default::default() })
+        .with_config(Config {
+            cpp_compat: true,
+            enumeration: EnumConfig {
+                rename_variants: RenameRule::QualifiedScreamingSnakeCase,
+                ..Default::default()
+            },
+            ..Default::default()
+        })
+        .rename_item("FfiResult", "Result")
         .with_crate(env::var("CARGO_MANIFEST_DIR")?)
         .with_include_version(true)
         .with_include_guard("_HEDERA_H")

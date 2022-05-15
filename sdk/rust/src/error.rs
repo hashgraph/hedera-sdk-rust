@@ -50,6 +50,9 @@ pub enum Error {
 
     #[error("failed to sign request: {0}")]
     Signature(BoxStdError),
+
+    #[error("failed to parse a request from JSON: {0}")]
+    RequestParse(BoxStdError),
 }
 
 impl Error {
@@ -63,6 +66,10 @@ impl Error {
 
     pub(crate) fn basic_parse<E: Into<BoxStdError>>(error: E) -> Self {
         Self::BasicParse(error.into())
+    }
+
+    pub(crate) fn request_parse<E: Into<BoxStdError>>(error: E) -> Self {
+        Self::RequestParse(error.into())
     }
 
     pub(crate) fn signature<E: Into<BoxStdError>>(error: E) -> Self {
