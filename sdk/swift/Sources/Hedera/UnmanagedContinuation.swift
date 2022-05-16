@@ -22,7 +22,7 @@ internal func withUnmanagedThrowingContinuation<T>(_ fun: (UnsafeRawPointer) -> 
 /// Must be called with a pointer that was returned in the callback from ``withUnmanagedContinuation``.
 internal func resumeUnmanagedContinuation(_ ptr: UnsafeRawPointer!) {
     let continuationHandle = Unmanaged<ContinuationHandle<Void, Never>>.fromOpaque(ptr!)
-            .takeUnretainedValue()
+        .takeUnretainedValue()
 
     let continuation = continuationHandle.continuation
 
@@ -32,10 +32,10 @@ internal func resumeUnmanagedContinuation(_ ptr: UnsafeRawPointer!) {
 /// Resumes the current task with the given success.
 /// Must be called with a pointer that was returned in the callback from ``withUnmanagedThrowingContinuation``.
 internal func resumeUnmanagedContinuation<T>(
-        _ ptr: UnsafeRawPointer!, returning value: T
+    _ ptr: UnsafeRawPointer!, returning value: T
 ) {
     let continuationHandle = Unmanaged<ContinuationHandle<T, Error>>.fromOpaque(ptr!)
-            .takeUnretainedValue()
+        .takeUnretainedValue()
 
     let continuation = continuationHandle.continuation
 
@@ -45,10 +45,10 @@ internal func resumeUnmanagedContinuation<T>(
 /// Resumes the current task with the given failure.
 /// Must be called with a pointer that was returned in the callback from ``withUnmanagedThrowingContinuation``.
 internal func resumeUnmanagedContinuation(
-        _ ptr: UnsafeRawPointer!, throwing error: Error
+    _ ptr: UnsafeRawPointer!, throwing error: Error
 ) {
     let continuationHandle = Unmanaged<ContinuationHandle<Never, Error>>.fromOpaque(ptr!)
-            .takeUnretainedValue()
+        .takeUnretainedValue()
 
     let continuation = continuationHandle.continuation
 

@@ -1,5 +1,5 @@
-use crate::ffi::signer::Signer;
-use crate::{AccountId, Client};
+use crate::ffi::signer::{AnySigner, Signer};
+use crate::{AccountId, Client, PrivateKey};
 
 /// Construct a Hedera client pre-configured for testnet access.
 #[no_mangle]
@@ -41,5 +41,7 @@ pub extern "C" fn hedera_client_add_default_signer(client: *mut Client, signer: 
     let client = unsafe { &*client };
     let signer = unsafe { Box::from_raw(signer) };
 
-    client.add_default_signer(signer.0);
+    match signer.0 {
+        AnySigner::PrivateKey(key) => client.add_default_signer(key),
+    }
 }

@@ -17,7 +17,7 @@ public class AccountIdOrAlias {
 }
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decodable {
+public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Codable {
     public let num: UInt64
 
     public init(num: UInt64, shard: UInt64 = 0, realm: UInt64 = 0) {
@@ -28,7 +28,7 @@ public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decod
     public init?(_ description: String) {
         var accountId = HederaAccountId()
         let err = hedera_account_id_from_string(description, &accountId)
-        
+
         if err != HEDERA_ERROR_OK {
             return nil
         }
@@ -38,7 +38,13 @@ public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decod
     }
 
     public convenience init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))
+        self.init(try decoder.singleValueContainer().decode(String.self))!
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        try container.encode(String(describing: self))
     }
 
     public var description: String {

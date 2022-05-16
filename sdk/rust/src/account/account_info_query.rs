@@ -14,6 +14,7 @@ use crate::{AccountIdOrAlias, Query, ToProtobuf};
 pub type AccountInfoQuery = Query<AccountInfoQueryData>;
 
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct AccountInfoQueryData {
     account_id: Option<AccountIdOrAlias>,
 }
