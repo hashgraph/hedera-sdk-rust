@@ -1,10 +1,10 @@
 import CHedera
 
 /// A private key on the Hedera network.
-public final class PublicKey {
+public final class PublicKey: LosslessStringConvertible {
     private let ptr: OpaquePointer
 
-    private init(_ ptr: OpaquePointer) {
+    internal init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }
 
@@ -21,5 +21,12 @@ public final class PublicKey {
 
     deinit {
         hedera_public_key_free(ptr)
+    }
+
+    public var description: String {
+        let descriptionBytes = hedera_public_key_to_string(ptr)
+        let description = String(validatingUTF8: descriptionBytes!)!
+
+        return description
     }
 }

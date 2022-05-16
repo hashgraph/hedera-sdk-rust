@@ -113,6 +113,9 @@ void hedera_client_set_payer_account_id(struct HederaClient *client, struct Hede
  */
 void hedera_client_add_default_signer(struct HederaClient *client, struct HederaSigner *signer);
 
+void hedera_client_add_default_signer_private_key(struct HederaClient *client,
+                                                  struct HederaPrivateKey *key);
+
 /**
  * Execute this request against the provided client of the Hedera network.
  */
@@ -122,9 +125,29 @@ enum HederaError hedera_execute(const struct HederaClient *client,
                                 void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
+ * Generates a new Ed25519 private key.
+ */
+struct HederaPrivateKey *hedera_private_key_generate_ed25519(void);
+
+/**
+ * Generates a new ECDSA(secp256k1) private key.
+ */
+struct HederaPrivateKey *hedera_private_key_generate_ecdsa_secp256k1(void);
+
+/**
+ * Gets the public key which corresponds to this private key.
+ */
+struct HederaPublicKey *hedera_private_key_get_public_key(struct HederaPrivateKey *key);
+
+/**
  * Parse a Hedera private key from the passed string.
  */
 enum HederaError hedera_private_key_from_string(const char *s, struct HederaPrivateKey **key);
+
+/**
+ * Format a Hedera private key as a string.
+ */
+const char *hedera_private_key_to_string(struct HederaPrivateKey *key);
 
 /**
  * Releases memory associated with the private key.
@@ -135,6 +158,11 @@ void hedera_private_key_free(struct HederaPrivateKey *key);
  * Parse a Hedera public key from the passed string.
  */
 enum HederaError hedera_public_key_from_string(const char *s, struct HederaPublicKey **key);
+
+/**
+ * Format a Hedera public key as a string.
+ */
+const char *hedera_public_key_to_string(struct HederaPublicKey *key);
 
 /**
  * Releases memory associated with the public key.

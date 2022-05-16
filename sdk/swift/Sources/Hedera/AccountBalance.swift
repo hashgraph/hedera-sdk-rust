@@ -9,11 +9,6 @@ public final class AccountBalance: Decodable {
 
     // TODO: tokens
 
-    private init(accountId: AccountId, balance: UInt64) {
-        self.accountId = accountId
-        self.balance = balance
-    }
-
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let accountBalance = try container.nestedContainer(keyedBy: AccountBalanceKeys.self, forKey: .accountBalance)

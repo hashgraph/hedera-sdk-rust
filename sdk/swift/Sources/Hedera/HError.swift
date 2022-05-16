@@ -1,5 +1,5 @@
-import Foundation
 import CHedera
+import Foundation
 
 /// Represents any possible error from a fallible function in the Hedera SDK.
 public struct HError: Error, CustomStringConvertible {
@@ -21,8 +21,8 @@ public struct HError: Error, CustomStringConvertible {
         case requestParse
     }
 
-    public let description: String;
-    public let kind: ErrorKind;
+    public let description: String
+    public let kind: ErrorKind
 
     internal init?(_ error: HederaError) {
         switch error {
@@ -67,7 +67,7 @@ public struct HError: Error, CustomStringConvertible {
 
         default:
             // HEDERA_ERROR_OK
-            return nil;
+            return nil
         }
 
         let descriptionBytes = hedera_error_message()

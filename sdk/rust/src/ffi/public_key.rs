@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::ffi::CString;
 use std::os::raw::c_char;
 use std::str::FromStr;
 
@@ -21,6 +23,21 @@ pub extern "C" fn hedera_public_key_from_string(
     }
 
     Error::Ok
+}
+
+/// Format a Hedera public key as a string.
+#[no_mangle]
+pub extern "C" fn hedera_public_key_to_string(key: *mut PublicKey) -> *const c_char {
+    thread_local! {
+        static PRIVATE_KEY_DISPLAY: RefCell<Option<CString>> = RefCell::new(None);
+    }
+
+    assert!(!key.is_null());
+
+    let key = unsafe { &*key };
+
+    PRIVATE_KEY_DISPLAY
+        .with(|cell| cell.borrow_mut().insert(CString::new(key.to_string()).unwrap()).as_ptr())
 }
 
 /// Releases memory associated with the public key.
