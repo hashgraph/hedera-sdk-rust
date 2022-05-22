@@ -52,6 +52,7 @@ pub enum Error {
     #[error("failed to sign request: {0}")]
     Signature(BoxStdError),
 
+    #[cfg(feature = "ffi")]
     #[error("failed to parse a request from JSON: {0}")]
     RequestParse(BoxStdError),
 }
@@ -69,6 +70,7 @@ impl Error {
         Self::BasicParse(error.into())
     }
 
+    #[cfg(feature = "ffi")]
     pub(crate) fn request_parse<E: Into<BoxStdError>>(error: E) -> Self {
         Self::RequestParse(error.into())
     }

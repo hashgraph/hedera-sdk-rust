@@ -1,11 +1,13 @@
 use std::fmt::{self, Debug, Display, Formatter};
+use std::str::FromStr;
 
 use hedera_proto::services;
+use itertools::Itertools;
 use rand::{thread_rng, Rng};
-use serde_with::SerializeDisplay;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 use time::{Duration, OffsetDateTime};
 
-use crate::{AccountId, ToProtobuf};
+use crate::{AccountId, Error, ToProtobuf};
 
 /// The client-generated ID for a transaction.
 ///
@@ -13,7 +15,7 @@ use crate::{AccountId, ToProtobuf};
 /// right after creating it, for instantiating a smart contract with bytecode in a file just created,
 /// and internally by the network for detecting when duplicate transactions are submitted.
 ///
-#[derive(Copy, Clone, Eq, PartialEq, Hash, SerializeDisplay)]
+#[derive(Copy, Clone, Eq, PartialEq, Hash, SerializeDisplay, DeserializeFromStr)]
 pub struct TransactionId {
     /// The account that pays for this transaction.
     pub account_id: AccountId,
@@ -57,6 +59,52 @@ impl Display for TransactionId {
             if self.scheduled { "?scheduled" } else { "" },
             self.nonce.map(|nonce| format!("/{}", nonce)).as_deref().unwrap_or_default()
         )
+    }
+}
+
+// TODO: add unit tests to prove parsing
+// TODO: potentially improve parsing with `nom` or `combine`
+impl FromStr for TransactionId {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        const EXPECTED: &str = "expecting <accountId>@<validStart>[?scheduled][/<nonce>]";
+
+        let mut parts = s.splitn(4, &['@', '?', '/']);
+
+        let account_id = if let Some(account_id_s) = parts.next() {
+            AccountId::from_str(account_id_s)?
+        } else {
+            return Err(Error::basic_parse(EXPECTED));
+        };
+
+        let valid_start = if let Some(valid_start_s) = parts.next() {
+            let (seconds_s, nanos_s) = valid_start_s
+                .splitn(2, '.')
+                .next_tuple()
+                .ok_or_else(|| Error::basic_parse(EXPECTED))?;
+
+            let seconds = i64::from_str(seconds_s).map_err(Error::basic_parse)?;
+            let nanos = i64::from_str(nanos_s).map_err(Error::basic_parse)?;
+
+            OffsetDateTime::from_unix_timestamp(seconds).map_err(Error::basic_parse)?
+                + Duration::nanoseconds(nanos)
+        } else {
+            return Err(Error::basic_parse(EXPECTED));
+        };
+
+        let mut scheduled = false;
+        let mut nonce = None;
+
+        for part in parts.take(2) {
+            if part == "scheduled" {
+                scheduled = true;
+            } else {
+                nonce = Some(i32::from_str(part).map_err(Error::basic_parse)?);
+            }
+        }
+
+        Ok(Self { scheduled, nonce, valid_start, account_id })
     }
 }
 

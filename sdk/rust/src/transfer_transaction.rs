@@ -17,14 +17,15 @@ use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
 ///
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TransferTransactionData {
     hbar_transfers: Vec<HbarTransfer>,
     // TODO: token_transfers
     // TODO: nft_transfers
 }
 
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 struct HbarTransfer {
     account: AccountIdOrAlias,
     amount: i64,
@@ -56,8 +57,9 @@ impl TransferTransaction {
 }
 
 #[async_trait]
-impl TransactionExecute for TransferTransaction {
+impl TransactionExecute for TransferTransactionData {
     async fn execute(
+        &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {

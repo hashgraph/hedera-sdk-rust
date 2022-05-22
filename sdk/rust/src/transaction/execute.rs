@@ -14,12 +14,13 @@ use crate::{
 };
 
 #[async_trait]
-pub trait TransactionExecute {
-    fn default_max_transaction_fee() -> u64 {
+pub trait TransactionExecute: ToTransactionDataProtobuf {
+    fn default_max_transaction_fee(&self) -> u64 {
         2 * 100_000_000 // 2 hbar
     }
 
     async fn execute(
+        &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status>;
@@ -28,8 +29,7 @@ pub trait TransactionExecute {
 #[async_trait]
 impl<D> Execute for Transaction<D>
 where
-    D: ToTransactionDataProtobuf,
-    Self: TransactionExecute,
+    D: TransactionExecute,
 {
     type GrpcRequest = services::Transaction;
 
@@ -98,7 +98,7 @@ where
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> Result<Response<Self::GrpcResponse>, Status> {
-        <Self as TransactionExecute>::execute(channel, request).await
+        self.body.data.execute(channel, request).await
     }
 
     fn make_response(
@@ -121,8 +121,7 @@ where
 
 impl<D> Transaction<D>
 where
-    D: ToTransactionDataProtobuf,
-    Self: TransactionExecute,
+    D: TransactionExecute,
 {
     #[allow(deprecated)]
     fn to_transaction_body_protobuf(
@@ -141,7 +140,7 @@ where
 
                 // no max has been set on the client either
                 // fallback to the hard-coded default for this transaction type
-                _ => Self::default_max_transaction_fee(),
+                _ => self.body.data.default_max_transaction_fee(),
             }
         });
 
