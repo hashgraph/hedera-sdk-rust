@@ -9,6 +9,7 @@ use crate::query::payment_transaction::PaymentTransaction;
 use crate::query::QueryExecute;
 use crate::{AccountBalance, AccountInfo, FromProtobuf, Query};
 
+/// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
@@ -81,11 +82,12 @@ impl FromProtobuf for AnyQueryResponse {
 //  we create a proxy type that has the same layout but is only for AnyQueryData and does
 //  derive(Deserialize).
 
-#[derive(serde::Deserialize, Debug)]
+#[derive(serde::Deserialize)]
 struct AnyQueryProxy {
     #[serde(flatten)]
     data: AnyQueryData,
-    // TODO: payment: Option<PaymentTransaction>
+    #[serde(default)]
+    payment: PaymentTransaction,
 }
 
 impl<'de> Deserialize<'de> for AnyQuery {
@@ -94,6 +96,6 @@ impl<'de> Deserialize<'de> for AnyQuery {
         D: Deserializer<'de>,
     {
         <AnyQueryProxy as Deserialize>::deserialize(deserializer)
-            .map(|query| Self { data: query.data, payment: PaymentTransaction::default() })
+            .map(|query| Self { data: query.data, payment: query.payment })
     }
 }

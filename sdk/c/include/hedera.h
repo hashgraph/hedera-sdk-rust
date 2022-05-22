@@ -113,9 +113,6 @@ void hedera_client_set_payer_account_id(struct HederaClient *client, struct Hede
  */
 void hedera_client_add_default_signer(struct HederaClient *client, struct HederaSigner *signer);
 
-void hedera_client_add_default_signer_private_key(struct HederaClient *client,
-                                                  struct HederaPrivateKey *key);
-
 /**
  * Execute this request against the provided client of the Hedera network.
  */

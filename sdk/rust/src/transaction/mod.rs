@@ -4,6 +4,7 @@ use time::Duration;
 use crate::execute::execute;
 use crate::{AccountId, Client, Signer, TransactionId, TransactionResponse};
 
+mod any;
 mod execute;
 mod protobuf;
 
@@ -12,28 +13,29 @@ pub(crate) use protobuf::ToTransactionDataProtobuf;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
+/// A transaction that can be executed on the Hedera network.
 #[derive(serde::Serialize)]
 pub struct Transaction<D> {
     #[serde(flatten)]
     pub(crate) body: TransactionBody<D>,
 
     #[serde(skip)]
-    signers: Vec<Box<dyn Signer>>,
+    pub(crate) signers: Vec<Box<dyn Signer>>,
 }
 
 #[skip_serializing_none]
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TransactionBody<D> {
+pub(crate) struct TransactionBody<D> {
     pub(crate) data: D,
-    node_account_ids: Option<Vec<AccountId>>,
+    pub(crate) node_account_ids: Option<Vec<AccountId>>,
     #[serde(with = "crate::serde::duration_opt")]
-    transaction_valid_duration: Option<Duration>,
-    max_transaction_fee: Option<u64>,
+    pub(crate) transaction_valid_duration: Option<Duration>,
+    pub(crate) max_transaction_fee: Option<u64>,
     #[serde(skip_serializing_if = "crate::serde::skip_if_string_empty")]
-    transaction_memo: String,
-    payer_account_id: Option<AccountId>,
-    transaction_id: Option<TransactionId>,
+    pub(crate) transaction_memo: String,
+    pub(crate) payer_account_id: Option<AccountId>,
+    pub(crate) transaction_id: Option<TransactionId>,
 }
 
 impl<D> Default for Transaction<D>
@@ -127,8 +129,7 @@ impl<D> Transaction<D> {
 
 impl<D> Transaction<D>
 where
-    D: ToTransactionDataProtobuf,
-    Self: TransactionExecute,
+    D: TransactionExecute,
 {
     /// Execute this transaction against the provided client of the Hedera network.
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
