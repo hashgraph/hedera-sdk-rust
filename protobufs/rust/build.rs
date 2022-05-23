@@ -1,5 +1,5 @@
 use std::env;
-use std::fs::{create_dir_all, read_dir};
+use std::fs::{self, create_dir_all, read_dir};
 use std::path::Path;
 
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
@@ -48,11 +48,27 @@ fn main() -> anyhow::Result<()> {
         .type_attribute("proto.GrantedTokenAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.Duration", DERIVE_EQ_HASH_COPY);
 
+    // the ResponseCodeEnum should be marked as #[non_exhaustive] so
+    // adding variants does not trigger a breaking change
+    cfg = cfg.type_attribute("proto.ResponseCodeEnum", "#[non_exhaustive]");
+
+    // the ResponseCodeEnum is not documented in the proto source
+    cfg = cfg.type_attribute("proto.ResponseCodeEnum", r#"#[doc = "
+Returned in `TransactionReceipt`, `Error::PreCheckStatus`, and `Error::ReceiptStatus`.
+
+The success variant is `Success` which is what a `TransactionReceipt` will contain for a
+successful transaction.
+    "]"#);
+
     if cfg!(feature = "serde") {
-        cfg = cfg.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
+        cfg = cfg.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
+            .type_attribute("proto.ResponseCodeEnum", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
     }
 
     cfg.compile(&services, &["../src/services/"])?;
+
+    // NOTE: prost generates rust doc comments and fails to remove the leading * line
+    remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
 
     // mirror
     // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
@@ -152,6 +168,17 @@ fn main() -> anyhow::Result<()> {
         &["../src/streams/account_balance_file.proto"],
         &["../src/streams/", "../src/services/"],
     )?;
+
+    Ok(())
+}
+
+fn remove_useless_comments(path: &Path) -> anyhow::Result<()> {
+    let mut contents = fs::read_to_string(path)?;
+
+    contents = contents.replace("///*", "");
+    contents = contents.replace("/// UNDOCUMENTED", "");
+
+    fs::write(path, contents)?;
 
     Ok(())
 }

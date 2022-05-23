@@ -1,6 +1,6 @@
 use hedera_proto::services;
 
-use crate::ToProtobuf;
+use crate::{FromProtobuf, ToProtobuf};
 
 /// The unique identifier for a smart contract on Hedera.
 #[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone, Copy)]
@@ -9,6 +9,17 @@ pub struct ContractId {
     pub shard: u64,
     pub realm: u64,
     pub num: u64,
+}
+
+impl FromProtobuf for ContractId {
+    type Protobuf = services::ContractId;
+
+    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+        let account = pb_getf!(pb, contract)?;
+        let num = pb_getv!(account, ContractNum, services::contract_id::Contract);
+
+        Ok(Self { num: num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+    }
 }
 
 /// The identifier for a smart contract represented with an EVM address instead of a

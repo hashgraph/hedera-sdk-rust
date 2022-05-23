@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 use time::{Duration, OffsetDateTime};
 
-use crate::{AccountId, Error, ToProtobuf};
+use crate::{AccountId, Error, FromProtobuf, ToProtobuf};
 
 /// The client-generated ID for a transaction.
 ///
@@ -59,6 +59,24 @@ impl Display for TransactionId {
             if self.scheduled { "?scheduled" } else { "" },
             self.nonce.map(|nonce| format!("/{}", nonce)).as_deref().unwrap_or_default()
         )
+    }
+}
+
+impl FromProtobuf for TransactionId {
+    type Protobuf = services::TransactionId;
+
+    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+        let account_id = pb_getf!(pb, account_id)?;
+        let account_id = AccountId::from_protobuf(account_id)?;
+
+        let valid_start = pb_getf!(pb, transaction_valid_start)?;
+
+        Ok(Self {
+            account_id,
+            valid_start: valid_start.into(),
+            nonce: (pb.nonce != 0).then(|| pb.nonce),
+            scheduled: pb.scheduled,
+        })
     }
 }
 

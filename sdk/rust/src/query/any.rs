@@ -8,7 +8,8 @@ use crate::account::{AccountBalanceQueryData, AccountInfoQueryData};
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
 use crate::transaction::AnyTransactionBody;
-use crate::{AccountBalance, AccountInfo, FromProtobuf, Query, Transaction};
+use crate::transaction_receipt_query::TransactionReceiptQueryData;
+use crate::{AccountBalance, AccountInfo, FromProtobuf, Query, Transaction, TransactionReceipt};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -18,6 +19,7 @@ pub type AnyQuery = Query<AnyQueryData>;
 pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
+    TransactionReceipt(TransactionReceiptQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -25,6 +27,7 @@ pub enum AnyQueryData {
 pub enum AnyQueryResponse {
     AccountBalance(AccountBalance),
     AccountInfo(AccountInfo),
+    TransactionReceipt(TransactionReceipt),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -32,6 +35,7 @@ impl ToQueryProtobuf for AnyQueryData {
         match self {
             Self::AccountBalance(data) => data.to_query_protobuf(header),
             Self::AccountInfo(data) => data.to_query_protobuf(header),
+            Self::TransactionReceipt(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -44,6 +48,7 @@ impl QueryExecute for AnyQueryData {
         match self {
             Self::AccountInfo(query) => query.is_payment_required(),
             Self::AccountBalance(query) => query.is_payment_required(),
+            Self::TransactionReceipt(query) => query.is_payment_required(),
         }
     }
 
@@ -55,6 +60,7 @@ impl QueryExecute for AnyQueryData {
         match self {
             Self::AccountInfo(query) => query.execute(channel, request).await,
             Self::AccountBalance(query) => query.execute(channel, request).await,
+            Self::TransactionReceipt(query) => query.execute(channel, request).await,
         }
     }
 }
@@ -69,6 +75,9 @@ impl FromProtobuf for AnyQueryResponse {
         use services::response::Response::*;
 
         Ok(match response {
+            TransactionGetReceipt(_) => {
+                Self::TransactionReceipt(TransactionReceipt::from_protobuf(response)?)
+            }
             CryptoGetInfo(_) => Self::AccountInfo(AccountInfo::from_protobuf(response)?),
             CryptogetAccountBalance(_) => {
                 Self::AccountBalance(AccountBalance::from_protobuf(response)?)
