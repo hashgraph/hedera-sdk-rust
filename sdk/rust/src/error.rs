@@ -1,9 +1,7 @@
 use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
-use hedera_proto::services::ResponseCodeEnum;
-
-use crate::{AccountId, TransactionId};
+use crate::{AccountId, Status, TransactionId};
 
 pub type Result<T> = StdResult<T, Error>;
 
@@ -25,7 +23,7 @@ pub enum Error {
     // FIXME: Use hedera::Status (once available)
     // TODO: Add transaction_id: Option<TransactionId>
     #[error("transaction `{}` failed pre-check with status `{status:?}`", .transaction_id.as_ref().map(|id| id.to_string()).as_deref().unwrap_or("_"))]
-    PreCheckStatus { status: ResponseCodeEnum, transaction_id: Option<TransactionId> },
+    PreCheckStatus { status: Status, transaction_id: Option<TransactionId> },
 
     /// Failed to parse a basic type from string (ex. AccountId, ContractId, TransactionId, etc.).
     #[error("failed to parse: {0}")]
@@ -79,10 +77,7 @@ impl Error {
         Self::Signature(error.into())
     }
 
-    pub(crate) fn pre_check(
-        status: ResponseCodeEnum,
-        transaction_id: Option<TransactionId>,
-    ) -> Self {
+    pub(crate) fn pre_check(status: Status, transaction_id: Option<TransactionId>) -> Self {
         Self::PreCheckStatus { status, transaction_id }
     }
 }

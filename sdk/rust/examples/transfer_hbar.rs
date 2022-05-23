@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use hedera::{AccountId, Client, PrivateKey, TransferTransaction};
+use hedera::{AccountId, Client, PrivateKey, TransferTransaction, TransactionReceiptQuery};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -16,9 +16,9 @@ async fn main() -> anyhow::Result<()> {
 
     let amount = 10_000;
 
-    TransferTransaction::new()
+    let response = TransferTransaction::new()
         .hbar_transfer(sender_id, -amount)
-        .hbar_transfer(receiver_id, 2)
+        .hbar_transfer(receiver_id, amount)
         .execute(&client)
         .await?;
 

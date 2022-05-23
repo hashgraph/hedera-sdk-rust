@@ -1,13 +1,12 @@
 use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
-use hedera_proto::services::ResponseCodeEnum;
 use prost::Message;
 use rand::thread_rng;
 use tokio::time::sleep;
 use tonic::transport::Channel;
 
-use crate::{AccountId, Client, Error, TransactionId};
+use crate::{AccountId, Client, Error, Status, TransactionId};
 
 #[async_trait]
 pub(crate) trait Execute {
@@ -145,9 +144,9 @@ where
 
             let pre_check_status = E::response_pre_check_status(&response)?;
 
-            match ResponseCodeEnum::from_i32(pre_check_status) {
+            match Status::from_i32(pre_check_status) {
                 Some(status) => match status {
-                    ResponseCodeEnum::Ok => {
+                    Status::Ok => {
                         // TODO: another function in the Execute trait to see if we need to
                         //  retry yet again
 
@@ -159,14 +158,14 @@ where
                         );
                     }
 
-                    ResponseCodeEnum::Busy | ResponseCodeEnum::PlatformNotActive => {
+                    Status::Busy | Status::PlatformNotActive => {
                         // NOTE: this is a "busy" node
                         // try the next node in our allowed list, immediately
                         last_error = Some(Error::pre_check(status, transaction_id));
                         continue;
                     }
 
-                    ResponseCodeEnum::TransactionExpired if explicit_transaction_id.is_none() => {
+                    Status::TransactionExpired if explicit_transaction_id.is_none() => {
                         // the transaction that was generated has since expired
                         // re-generate the transaction ID and try again, immediately
                         last_error = Some(Error::pre_check(status, transaction_id));
