@@ -1,4 +1,7 @@
-use serde_with::skip_serializing_none;
+use std::fmt;
+use std::fmt::{Debug, Formatter};
+
+use serde_with::{serde_as, skip_serializing_none, FromInto};
 use time::Duration;
 
 use crate::execute::execute;
@@ -8,6 +11,8 @@ mod any;
 mod execute;
 mod protobuf;
 
+pub use any::AnyTransaction;
+pub(crate) use any::{AnyTransactionBody, AnyTransactionData};
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
@@ -15,7 +20,10 @@ const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 /// A transaction that can be executed on the Hedera network.
 #[derive(serde::Serialize)]
-pub struct Transaction<D> {
+pub struct Transaction<D>
+where
+    D: TransactionExecute,
+{
     #[serde(flatten)]
     pub(crate) body: TransactionBody<D>,
 
@@ -23,10 +31,16 @@ pub struct Transaction<D> {
     pub(crate) signers: Vec<Box<dyn Signer>>,
 }
 
+#[serde_as]
 #[skip_serializing_none]
-#[derive(serde::Serialize)]
+#[derive(Debug, Default, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct TransactionBody<D> {
+pub(crate) struct TransactionBody<D>
+where
+    D: TransactionExecute,
+{
+    #[serde(flatten)]
+    #[serde_as(as = "FromInto<AnyTransactionData>")]
     pub(crate) data: D,
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
     #[serde(with = "crate::serde::duration_opt")]
@@ -40,7 +54,7 @@ pub(crate) struct TransactionBody<D> {
 
 impl<D> Default for Transaction<D>
 where
-    D: Default,
+    D: Default + TransactionExecute,
 {
     fn default() -> Self {
         Self {
@@ -58,9 +72,18 @@ where
     }
 }
 
+impl<D> Debug for Transaction<D>
+where
+    D: Debug + TransactionExecute,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Transaction").field("body", &self.body).finish()
+    }
+}
+
 impl<D> Transaction<D>
 where
-    D: Default,
+    D: Default + TransactionExecute,
 {
     #[inline]
     #[must_use]
@@ -69,7 +92,10 @@ where
     }
 }
 
-impl<D> Transaction<D> {
+impl<D> Transaction<D>
+where
+    D: TransactionExecute,
+{
     /// Set the account IDs of the nodes that this transaction may be submitted to.
     ///
     /// Defaults to the full list of nodes configured on the client.

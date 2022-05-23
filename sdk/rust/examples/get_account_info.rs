@@ -14,7 +14,7 @@ async fn main() -> anyhow::Result<()> {
     let id = AccountId::from(1001);
 
     let info = AccountInfoQuery::new()
-        .account_id(id.into())
+        .account_id(id)
         .execute(&client)
         .await?;
 

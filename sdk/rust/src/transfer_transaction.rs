@@ -5,7 +5,7 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::transaction::{ToTransactionDataProtobuf, TransactionExecute};
+use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
 use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
@@ -17,17 +17,19 @@ use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
 ///
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferTransactionData {
+    #[serde(default, skip_serializing_if = "Vec::is_empty", rename = "tinybarTransfers")]
     hbar_transfers: Vec<HbarTransfer>,
     // TODO: token_transfers
     // TODO: nft_transfers
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct HbarTransfer {
     account: AccountIdOrAlias,
+    #[serde(default)]
     amount: i64,
 }
 
@@ -58,6 +60,7 @@ impl TransferTransaction {
 
 #[async_trait]
 impl TransactionExecute for TransferTransactionData {
+    // noinspection DuplicatedCode
     async fn execute(
         &self,
         channel: Channel,
@@ -93,5 +96,64 @@ impl ToTransactionDataProtobuf for TransferTransactionData {
             transfers,
             token_transfers: Vec::new(),
         })
+    }
+}
+
+impl From<TransferTransactionData> for AnyTransactionData {
+    fn from(transaction: TransferTransactionData) -> Self {
+        Self::Transfer(transaction)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+    use crate::{AccountId, TransferTransaction};
+
+    // language=JSON
+    const TRANSFER_HBAR: &str = r#"{
+  "transfer": {
+    "tinybarTransfers": [
+      {
+        "account": "0.0.1001",
+        "amount": 20
+      },
+      {
+        "account": "0.0.1002",
+        "amount": -20
+      }
+    ]
+  },
+  "payerAccountId": "0.0.6189"
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TransferTransaction::new();
+        transaction
+            .hbar_transfer(AccountId::from(1001), 20)
+            .hbar_transfer(AccountId::from(1002), -20)
+            .payer_account_id(AccountId::from(6189));
+
+        let s = serde_json::to_string_pretty(&transaction)?;
+        assert_eq!(s, TRANSFER_HBAR);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TRANSFER_HBAR)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::Transfer(transaction) => transaction);
+
+        assert_eq!(data.hbar_transfers.len(), 2);
+
+        assert_eq!(data.hbar_transfers[0].amount, 20);
+        assert_eq!(data.hbar_transfers[1].amount, -20);
+
+        Ok(())
     }
 }
