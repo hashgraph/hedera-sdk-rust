@@ -9,6 +9,7 @@ use tokio::runtime::{self, Runtime};
 use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
+use crate::transaction::AnyTransaction;
 use crate::{AnyQuery, Client};
 
 static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
@@ -17,6 +18,13 @@ static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
 
 thread_local! {
     static EXECUTE_RESPONSE: RefCell<CString> = RefCell::new(CString::new("").unwrap());
+}
+
+#[derive(serde::Deserialize)]
+#[serde(untagged)]
+enum AnyRequest {
+    Transaction(AnyTransaction),
+    Query(AnyQuery),
 }
 
 /// Execute this request against the provided client of the Hedera network.
@@ -32,16 +40,27 @@ pub extern "C" fn hedera_execute(
     let client = unsafe { &*client };
     let request = unsafe { cstr_from_ptr(request) };
 
-    let mut query: AnyQuery =
+    let request: AnyRequest =
         ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
 
     let callback = Callback::new(context, callback);
 
     RUNTIME.spawn(async move {
-        let response = query.execute(client).await.map(|response| {
+        let response = match request {
+            AnyRequest::Query(mut query) => query
+                .execute(client)
+                .await
+                .map(|response| serde_json::to_string(&response).unwrap()),
+
+            AnyRequest::Transaction(mut transaction) => transaction
+                .execute(client)
+                .await
+                .map(|response| serde_json::to_string(&response).unwrap()),
+        };
+
+        let response = response.map(|response| {
             EXECUTE_RESPONSE.with(|response_text| {
-                *response_text.borrow_mut() =
-                    CString::new(serde_json::to_string(&response).unwrap()).unwrap();
+                *response_text.borrow_mut() = CString::new(response).unwrap();
 
                 response_text.borrow().as_ptr()
             })
