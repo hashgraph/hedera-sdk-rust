@@ -7,6 +7,7 @@ use tonic::transport::Channel;
 use tonic::{Response, Status};
 
 use crate::execute::Execute;
+use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
@@ -14,7 +15,7 @@ use crate::{
 };
 
 #[async_trait]
-pub trait TransactionExecute: ToTransactionDataProtobuf {
+pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> {
     fn default_max_transaction_fee(&self) -> u64 {
         2 * 100_000_000 // 2 hbar
     }

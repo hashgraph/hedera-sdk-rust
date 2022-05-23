@@ -1,4 +1,4 @@
-use serde_with::{serde_as, FromInto};
+use serde_with::serde_as;
 use time::Duration;
 
 use crate::execute::execute;
@@ -9,7 +9,7 @@ use crate::{AccountId, Client, Error, Signer, TransactionId};
 mod any;
 mod cost;
 mod execute;
-mod payment_transaction;
+pub(super) mod payment_transaction;
 mod protobuf;
 
 pub use any::AnyQuery;
@@ -19,15 +19,13 @@ pub(crate) use protobuf::ToQueryProtobuf;
 
 /// A query that can be executed on the Hedera network.
 #[serde_as]
-#[derive(Default, serde::Serialize)]
+#[derive(Debug, Default)]
 pub struct Query<D>
 where
     D: QueryExecute,
 {
-    #[serde(flatten)]
-    #[serde_as(as = "FromInto<AnyQueryData>")]
     pub(crate) data: D,
-    payment: PaymentTransaction,
+    pub(crate) payment: PaymentTransaction,
 }
 
 impl<D> Query<D>

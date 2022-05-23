@@ -1,13 +1,14 @@
 use async_trait::async_trait;
 use hedera_proto::services;
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tonic::transport::Channel;
 
 use super::ToQueryProtobuf;
 use crate::account::{AccountBalanceQueryData, AccountInfoQueryData};
-use crate::query::payment_transaction::PaymentTransaction;
+use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
-use crate::{AccountBalance, AccountInfo, FromProtobuf, Query};
+use crate::transaction::AnyTransactionBody;
+use crate::{AccountBalance, AccountInfo, FromProtobuf, Query, Transaction};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -78,16 +79,33 @@ impl FromProtobuf for AnyQueryResponse {
     }
 }
 
-// NOTE: as we cannot derive Deserialize on Query<T> directly as `T` is not Deserialize,
+// NOTE: as we cannot derive serde on Query<T> directly as `T`,
 //  we create a proxy type that has the same layout but is only for AnyQueryData and does
 //  derive(Deserialize).
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, serde::Serialize)]
 struct AnyQueryProxy {
     #[serde(flatten)]
     data: AnyQueryData,
     #[serde(default)]
-    payment: PaymentTransaction,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    payment: Option<AnyTransactionBody<PaymentTransactionData>>,
+}
+
+impl<D> Serialize for Query<D>
+where
+    D: QueryExecute,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        // TODO: remove the clones, should be possible with Cows
+
+        let payment = self.data.is_payment_required().then(|| self.payment.body.clone().into());
+
+        AnyQueryProxy { payment, data: self.data.clone().into() }.serialize(serializer)
+    }
 }
 
 impl<'de> Deserialize<'de> for AnyQuery {
@@ -95,7 +113,12 @@ impl<'de> Deserialize<'de> for AnyQuery {
     where
         D: Deserializer<'de>,
     {
-        <AnyQueryProxy as Deserialize>::deserialize(deserializer)
-            .map(|query| Self { data: query.data, payment: query.payment })
+        <AnyQueryProxy as Deserialize>::deserialize(deserializer).map(|query| Self {
+            data: query.data,
+            payment: Transaction {
+                body: query.payment.map(Into::into).unwrap_or_default(),
+                signers: Vec::new(),
+            },
+        })
     }
 }
