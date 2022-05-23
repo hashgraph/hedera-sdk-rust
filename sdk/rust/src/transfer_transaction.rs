@@ -34,7 +34,6 @@ struct HbarTransfer {
 }
 
 impl TransferTransaction {
-    // TODO: [hbar_transfer] or [transfer_hbar]
     pub fn hbar_transfer(
         &mut self,
         account: impl Into<AccountIdOrAlias>,
@@ -44,7 +43,6 @@ impl TransferTransaction {
         self
     }
 
-    // TODO: [hbar_transfer_to] or [transfer_hbar_to]
     #[allow(clippy::cast_possible_wrap)]
     pub fn hbar_transfer_to(
         &mut self,

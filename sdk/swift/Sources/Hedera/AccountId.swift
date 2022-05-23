@@ -3,7 +3,7 @@ import CHedera
 /// Either `AccountId` or `AccountAlias`. Some transactions and queries
 /// accept `AccountIdOrAlias` as an input. All transactions and queries
 /// return only `AccountId` as an output however.
-public class AccountIdOrAlias {
+public class AccountIdOrAlias: Encodable {
     /// The shard number (non-negative).
     public let shard: UInt64
 
@@ -17,7 +17,7 @@ public class AccountIdOrAlias {
 }
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Codable {
+public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decodable {
     public let num: UInt64
 
     public init(num: UInt64, shard: UInt64 = 0, realm: UInt64 = 0) {
@@ -41,7 +41,7 @@ public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Codab
         self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
-    public func encode(to encoder: Encoder) throws {
+    public override func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
         try container.encode(String(describing: self))
@@ -61,6 +61,16 @@ public class AccountAlias: AccountIdOrAlias {
     public init(alias: Bool, shard: UInt64 = 0, realm: UInt64 = 0) {
         self.alias = alias
         super.init(shard: shard, realm: realm)
+    }
+
+    public override func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        try container.encode(String(describing: self))
+    }
+
+    public var description: String {
+        "\(shard).\(realm).\(alias)"
     }
 }
 
