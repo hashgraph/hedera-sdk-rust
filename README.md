@@ -1,4 +1,4 @@
-# Hedera SDK
+# Hedera™ SDK
 
 > The SDK for interacting with Hedera Hashgraph: the official distributed
 > consensus platform built using the hashgraph consensus algorithm for fast,
