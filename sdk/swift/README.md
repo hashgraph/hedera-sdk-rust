@@ -28,7 +28,7 @@ adding a swift package to an Xcode project.
 ## Usage
 
 ```swift
-import Hedra
+import Hedera
 
 // connect to the Hedera network
 let client = Client.forTestnet()
