@@ -6,6 +6,9 @@ use time::Duration;
 use tonic::transport::Channel;
 use tonic::{Response, Status};
 
+use crate::account::{
+    AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData
+};
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
 use crate::{AccountId, Transaction, TransactionId};
@@ -16,6 +19,9 @@ pub type AnyTransaction = Transaction<AnyTransactionData>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AnyTransactionData {
+    AccountCreate(AccountCreateTransactionData),
+    AccountUpdate(AccountUpdateTransactionData),
+    AccountDelete(AccountDeleteTransactionData),
     Transfer(TransferTransactionData),
 }
 
@@ -29,6 +35,18 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::Transfer(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
+
+            Self::AccountCreate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::AccountUpdate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::AccountDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
         }
     }
 }
@@ -38,6 +56,9 @@ impl TransactionExecute for AnyTransactionData {
     fn default_max_transaction_fee(&self) -> u64 {
         match self {
             Self::Transfer(transaction) => transaction.default_max_transaction_fee(),
+            Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
+            Self::AccountUpdate(transaction) => transaction.default_max_transaction_fee(),
+            Self::AccountDelete(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -47,6 +68,9 @@ impl TransactionExecute for AnyTransactionData {
         request: services::Transaction,
     ) -> Result<Response<services::TransactionResponse>, Status> {
         match self {
+            Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
+            Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
+            Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
             Self::Transfer(transaction) => transaction.execute(channel, request).await,
         }
     }

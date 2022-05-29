@@ -40,7 +40,7 @@ mod transfer_transaction;
 mod ffi;
 
 pub use account::{
-    AccountAlias, AccountBalance, AccountBalanceQuery, AccountId, AccountIdOrAlias, AccountInfo, AccountInfoQuery
+    AccountAlias, AccountBalance, AccountBalanceQuery, AccountCreateTransaction, AccountDeleteTransaction, AccountId, AccountIdOrAlias, AccountInfo, AccountInfoQuery, AccountUpdateTransaction
 };
 pub use client::Client;
 pub use contract::{ContractEvmAddress, ContractId, ContractIdOrEvmAddress};
