@@ -27,6 +27,14 @@ impl PublicKey {
         Self(PublicKeyData::EcdsaSecp256k1(key))
     }
 
+    pub fn is_ed25519(&self) -> bool {
+        matches!(&self.0, PublicKeyData::Ed25519(_))
+    }
+
+    pub fn is_ecdsa_secp256k1(&self) -> bool {
+        matches!(&self.0, PublicKeyData::EcdsaSecp256k1(_))
+    }
+
     /// Parse a `PublicKey` from a sequence of bytes.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         if bytes.len() == 32 {

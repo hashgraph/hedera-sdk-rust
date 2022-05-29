@@ -9,6 +9,7 @@ server = []
 
 [dependencies]
 prost = "0.10.1"
+prost-types = "0.10.1"
 tonic = { version = "0.7.1", features = [ "compression" ] }
 serde = { version = "1.0.136", features = [ "derive" ], optional = true }
 chrono_0_4 = { version = "0.4.19", optional = true, package = "chrono" }

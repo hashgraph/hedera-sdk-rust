@@ -666,6 +666,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "prost",
+ "prost-types",
  "serde",
  "time 0.2.27",
  "time 0.3.9",
