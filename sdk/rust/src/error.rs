@@ -58,6 +58,9 @@ pub enum Error {
     #[error("received unrecognized status code: {0}, try updating your SDK")]
     ResponseStatusUnrecognized(i32),
 
+    #[error("receipt for transaction `{transaction_id}` failed with status `{status:?}`")]
+    ReceiptStatus { status: Status, transaction_id: TransactionId },
+
     #[error("failed to sign request: {0}")]
     Signature(BoxStdError),
 

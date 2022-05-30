@@ -4,10 +4,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{Query, Status, ToProtobuf, TransactionId, TransactionReceipt};
-
-// TODO: support children
-// TODO: support duplicates
+use crate::{Query, Status, ToProtobuf, TransactionId, TransactionReceiptResponse};
 
 /// Get the receipt of a transaction, given its transaction ID.
 ///
@@ -20,6 +17,8 @@ pub type TransactionReceiptQuery = Query<TransactionReceiptQueryData>;
 #[serde(rename_all = "camelCase")]
 pub struct TransactionReceiptQueryData {
     transaction_id: Option<TransactionId>,
+    include_children: bool,
+    include_duplicates: bool,
 }
 
 impl From<TransactionReceiptQueryData> for AnyQueryData {
@@ -35,6 +34,19 @@ impl TransactionReceiptQuery {
         self.data.transaction_id = Some(transaction_id);
         self
     }
+
+    /// Whether the response should include the receipts of any child transactions spawned by the
+    /// top-level transaction with the given transaction.
+    pub fn include_children(&mut self, include: bool) -> &mut Self {
+        self.data.include_children = include;
+        self
+    }
+
+    /// Whether receipts of processing duplicate transactions should be returned.
+    pub fn include_duplicates(&mut self, include: bool) -> &mut Self {
+        self.data.include_duplicates = include;
+        self
+    }
 }
 
 impl ToQueryProtobuf for TransactionReceiptQueryData {
@@ -46,8 +58,8 @@ impl ToQueryProtobuf for TransactionReceiptQueryData {
                 services::TransactionGetReceiptQuery {
                     header: Some(header),
                     transaction_id,
-                    include_child_receipts: false,
-                    include_duplicates: false,
+                    include_child_receipts: self.include_children,
+                    include_duplicates: self.include_duplicates,
                 },
             )),
         }
@@ -56,7 +68,7 @@ impl ToQueryProtobuf for TransactionReceiptQueryData {
 
 #[async_trait]
 impl QueryExecute for TransactionReceiptQueryData {
-    type Response = TransactionReceipt;
+    type Response = TransactionReceiptResponse;
 
     fn is_payment_required(&self) -> bool {
         false
@@ -76,5 +88,25 @@ impl QueryExecute for TransactionReceiptQueryData {
 
     fn should_retry_pre_check(&self, status: Status) -> bool {
         matches!(status, Status::ReceiptNotFound | Status::RecordNotFound)
+    }
+
+    fn should_retry(&self, response: &services::Response) -> bool {
+        // extract the receipt status from the receipt
+        // without altering or freeing the memory from the response
+
+        let receipt_status = loop {
+            if let Some(services::response::Response::TransactionGetReceipt(r)) = &response.response
+            {
+                if let Some(receipt) = &r.receipt {
+                    if let Some(status) = Status::from_i32(receipt.status) {
+                        break status;
+                    }
+                }
+            }
+
+            return false;
+        };
+
+        matches!(receipt_status, Status::Unknown)
     }
 }

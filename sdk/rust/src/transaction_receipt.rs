@@ -7,9 +7,6 @@ use crate::{
     AccountId, ContractId, Error, FileId, FromProtobuf, ScheduleId, Status, TokenId, TopicId, TransactionId
 };
 
-// TODO: support children
-// TODO: support duplicates
-
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize)]
@@ -70,15 +67,12 @@ pub struct TransactionReceipt {
 }
 
 impl FromProtobuf for TransactionReceipt {
-    type Protobuf = services::response::Response;
+    type Protobuf = services::TransactionReceipt;
 
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    fn from_protobuf(receipt: Self::Protobuf) -> crate::Result<Self>
     where
         Self: Sized,
     {
-        let pb = pb_getv!(pb, TransactionGetReceipt, services::response::Response);
-        let receipt = pb_getf!(pb, receipt)?;
-
         let status = if let Some(status) = Status::from_i32(receipt.status) {
             status
         } else {
