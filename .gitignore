@@ -1,3 +1,6 @@
+# Local environment
+.env
+
 # Intellij project directory
 .idea/
 
