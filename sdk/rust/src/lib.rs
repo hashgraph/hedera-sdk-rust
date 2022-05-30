@@ -54,7 +54,9 @@ pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
 pub use token::TokenId;
-pub use topic::TopicId;
+pub use topic::{
+    TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessageSubmitTransaction, TopicUpdateTransaction
+};
 pub use transaction::Transaction;
 pub use transaction_hash::TransactionHash;
 pub use transaction_id::TransactionId;
