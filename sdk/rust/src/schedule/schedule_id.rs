@@ -2,11 +2,12 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
 use hedera_proto::services;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 
 use crate::{entity_id, FromProtobuf, ToProtobuf};
 
 /// The unique identifier for a schedule on Hedera.
-#[derive(serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct ScheduleId {
     pub shard: u64,
