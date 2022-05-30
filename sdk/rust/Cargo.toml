@@ -35,6 +35,8 @@ once_cell = "1.10.0"
 futures-util = "0.3.21"
 k256 = "0.11.0"
 pkcs8 = "0.9.0"
+async-stream = "0.3.3"
+futures-core = "0.3.21"
 
 [dev-dependencies]
 anyhow = "1.0.57"
@@ -43,6 +45,7 @@ pretty_env_logger = "0.4.0"
 tokio = { version = "1.18.1", features = ["full"] }
 clap = { version = "3.1.18", features = ["derive", "env"] }
 dotenv = "0.15.0"
+futures = "0.3"
 
 [build-dependencies]
 anyhow = "1.0.57"

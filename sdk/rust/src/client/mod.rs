@@ -5,15 +5,18 @@ use parking_lot::RwLock;
 use tokio::sync::{OwnedRwLockReadGuard, RwLock as AsyncRwLock};
 use tokio::task::block_in_place;
 
+use self::mirror_network::MirrorNetwork;
 use crate::client::network::{Network, TESTNET};
 use crate::{AccountId, Signer, TransactionId};
 
+mod mirror_network;
 mod network;
 
 /// Managed client for use on the Hedera network.
 #[derive(Clone)]
 pub struct Client {
     network: Arc<Network>,
+    mirror_network: Arc<MirrorNetwork>,
     payer_account_id: Arc<RwLock<Option<AccountId>>>,
     default_signers: Arc<AsyncRwLock<Vec<Box<dyn Signer>>>>,
     max_transaction_fee: Arc<AtomicU64>,
@@ -24,6 +27,7 @@ impl Client {
     pub fn for_testnet() -> Self {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),
+            mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
             payer_account_id: Arc::new(RwLock::new(None)),
             max_transaction_fee: Arc::new(AtomicU64::new(0)),
             default_signers: Arc::new(AsyncRwLock::new(Vec::with_capacity(1))),
@@ -67,6 +71,11 @@ impl Client {
     /// Gets a reference to the configured network.
     pub(crate) fn network(&self) -> &Network {
         &self.network
+    }
+
+    /// Gets a reference to the configured mirror network.
+    pub(crate) fn mirror_network(&self) -> &MirrorNetwork {
+        &self.mirror_network
     }
 
     /// Gets the maximum transaction fee the paying account is willing to pay.

@@ -20,7 +20,7 @@ use crate::{AccountId, Key, Transaction, TransactionId};
 pub type TopicCreateTransaction = Transaction<TopicCreateTransactionData>;
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TopicCreateTransactionData {
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
@@ -40,6 +40,18 @@ pub struct TopicCreateTransactionData {
 
     /// Optional account to be used at the topic's expiration time to extend the life of the topic.
     auto_renew_account_id: Option<AccountId>,
+}
+
+impl Default for TopicCreateTransactionData {
+    fn default() -> Self {
+        Self {
+            topic_memo: String::new(),
+            admin_key: None,
+            submit_key: None,
+            auto_renew_period: Some(Duration::days(90)),
+            auto_renew_account_id: None,
+        }
+    }
 }
 
 impl TopicCreateTransaction {
