@@ -1,18 +1,28 @@
-use std::str::FromStr;
 use std::time::Duration;
 
 use assert_matches::assert_matches;
+use clap::Parser;
 use hedera::{AccountCreateTransaction, AccountId, Client, PrivateKey, TransactionReceiptQuery};
 use tokio::time::sleep;
 
+#[derive(Parser, Debug)]
+struct Args {
+    #[clap(long, env)]
+    payer_account_id: AccountId,
+
+    #[clap(long, env)]
+    default_signer: PrivateKey,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    let _ = dotenv::dotenv();
+    let args = Args::parse();
+
     let client = Client::for_testnet();
 
-    client.set_payer_account_id(AccountId::from(6189));
-    client.add_default_signer(PrivateKey::from_str(
-        "7f7ac6c8025a15ff1e07ef57c7295601379a4e9a526560790ae85252393868f0",
-    )?);
+    client.set_payer_account_id(args.payer_account_id);
+    client.add_default_signer(args.default_signer);
 
     let new_key = PrivateKey::generate_ed25519();
 
