@@ -4,7 +4,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{Query, ToProtobuf, TransactionId, TransactionReceipt};
+use crate::{Query, Status, ToProtobuf, TransactionId, TransactionReceipt};
 
 // TODO: support children
 // TODO: support duplicates
@@ -58,11 +58,23 @@ impl ToQueryProtobuf for TransactionReceiptQueryData {
 impl QueryExecute for TransactionReceiptQueryData {
     type Response = TransactionReceipt;
 
+    fn is_payment_required(&self) -> bool {
+        false
+    }
+
+    fn transaction_id(&self) -> Option<TransactionId> {
+        self.transaction_id
+    }
+
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         CryptoServiceClient::new(channel).get_transaction_receipts(request).await
+    }
+
+    fn should_retry_pre_check(&self, status: Status) -> bool {
+        matches!(status, Status::ReceiptNotFound | Status::RecordNotFound)
     }
 }

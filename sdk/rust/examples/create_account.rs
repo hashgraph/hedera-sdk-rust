@@ -1,9 +1,6 @@
-use std::time::Duration;
-
 use assert_matches::assert_matches;
 use clap::Parser;
 use hedera::{AccountCreateTransaction, AccountId, Client, PrivateKey, TransactionReceiptQuery};
-use tokio::time::sleep;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -33,9 +30,6 @@ async fn main() -> anyhow::Result<()> {
         .key(new_key.public_key())
         .execute(&client)
         .await?;
-
-    // TODO: <TransactionReceiptQuery> should auto-retry
-    sleep(Duration::from_secs(5)).await;
 
     let receipt = TransactionReceiptQuery::new()
         .transaction_id(response.transaction_id)

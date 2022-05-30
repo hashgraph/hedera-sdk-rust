@@ -77,6 +77,20 @@ where
         Ok(response_header(&response.response)?.cost)
     }
 
+    fn make_error_pre_check(
+        &self,
+        status: crate::Status,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Error {
+        if let Some(transaction_id) = self.0.data.transaction_id() {
+            crate::Error::QueryPreCheckStatus { status, transaction_id }
+        } else if let Some(transaction_id) = transaction_id {
+            crate::Error::QueryPaymentPreCheckStatus { status, transaction_id }
+        } else {
+            crate::Error::QueryNoPaymentPreCheckStatus { status }
+        }
+    }
+
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
     }

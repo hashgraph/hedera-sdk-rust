@@ -8,7 +8,7 @@ use tonic::transport::Channel;
 
 use crate::execute::Execute;
 use crate::query::{AnyQueryData, ToQueryProtobuf};
-use crate::{AccountId, Client, Error, FromProtobuf, Query, TransactionId};
+use crate::{AccountId, Client, Error, FromProtobuf, Query, Status, TransactionId};
 
 /// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]
@@ -20,6 +20,17 @@ pub trait QueryExecute:
     /// Returns `true` if this query requires a payment to be submitted.
     fn is_payment_required(&self) -> bool {
         true
+    }
+
+    /// Returns `true` if this query should be retried after a back-off from the result
+    /// of a pre-check.
+    fn should_retry_pre_check(&self, _status: Status) -> bool {
+        false
+    }
+
+    /// Returns the transaction ID that this query is for, if this query is about a transaction.
+    fn transaction_id(&self) -> Option<TransactionId> {
+        None
     }
 
     /// Execute the prepared query request against the provided GRPC channel.
@@ -53,6 +64,10 @@ where
 
     fn requires_transaction_id(&self) -> bool {
         self.data.is_payment_required()
+    }
+
+    fn should_retry_pre_check(&self, status: Status) -> bool {
+        self.data.should_retry_pre_check(status)
     }
 
     async fn make_request(
@@ -89,6 +104,20 @@ where
         let response = pb_getf!(response, response)?;
 
         <D::Response as FromProtobuf>::from_protobuf(response)
+    }
+
+    fn make_error_pre_check(
+        &self,
+        status: crate::Status,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Error {
+        if let Some(transaction_id) = self.data.transaction_id() {
+            crate::Error::QueryPreCheckStatus { status, transaction_id }
+        } else if let Some(transaction_id) = transaction_id {
+            crate::Error::QueryPaymentPreCheckStatus { status, transaction_id }
+        } else {
+            crate::Error::QueryNoPaymentPreCheckStatus { status }
+        }
     }
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {

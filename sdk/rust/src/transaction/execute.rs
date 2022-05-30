@@ -115,6 +115,18 @@ where
         })
     }
 
+    fn make_error_pre_check(
+        &self,
+        status: crate::Status,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Error {
+        if let Some(transaction_id) = transaction_id {
+            crate::Error::TransactionPreCheckStatus { status, transaction_id }
+        } else {
+            crate::Error::TransactionNoIdPreCheckStatus { status }
+        }
+    }
+
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response.node_transaction_precheck_code)
     }
