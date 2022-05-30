@@ -44,7 +44,7 @@ pub struct TopicUpdateTransactionData {
 }
 
 impl TopicUpdateTransaction {
-    /// Set the account ID which is being updated.
+    /// Set the topic ID which is being updated.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.body.data.topic_id = Some(id.into());
         self

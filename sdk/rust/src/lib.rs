@@ -45,7 +45,9 @@ pub use account::{
 pub use client::Client;
 pub use contract::{ContractEvmAddress, ContractId, ContractIdOrEvmAddress};
 pub use error::{Error, Result};
-pub use file::FileId;
+pub use file::{
+    FileAppendTransaction, FileCreateTransaction, FileDeleteTransaction, FileId, FileUpdateTransaction
+};
 pub use hedera_proto::services::ResponseCodeEnum as Status;
 pub use key::{Key, PrivateKey, PublicKey};
 pub use protobuf::{FromProtobuf, ToProtobuf};
