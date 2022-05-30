@@ -5,12 +5,13 @@ use tonic::transport::Channel;
 
 use super::ToQueryProtobuf;
 use crate::account::{AccountBalanceQueryData, AccountInfoQueryData};
+use crate::file::FileContentsQueryData;
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
-    AccountBalanceResponse, AccountInfo, FromProtobuf, Query, Transaction, TransactionReceiptResponse
+    AccountBalanceResponse, AccountInfo, FileContentsResponse, FromProtobuf, Query, Transaction, TransactionReceiptResponse
 };
 
 /// Any possible query that may be executed on the Hedera network.
@@ -22,6 +23,7 @@ pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
     TransactionReceipt(TransactionReceiptQueryData),
+    FileContents(FileContentsQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -30,6 +32,7 @@ pub enum AnyQueryResponse {
     AccountBalance(AccountBalanceResponse),
     AccountInfo(AccountInfo),
     TransactionReceipt(TransactionReceiptResponse),
+    FileContents(FileContentsResponse),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -38,6 +41,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::AccountBalance(data) => data.to_query_protobuf(header),
             Self::AccountInfo(data) => data.to_query_protobuf(header),
             Self::TransactionReceipt(data) => data.to_query_protobuf(header),
+            Self::FileContents(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -51,6 +55,7 @@ impl QueryExecute for AnyQueryData {
             Self::AccountInfo(query) => query.is_payment_required(),
             Self::AccountBalance(query) => query.is_payment_required(),
             Self::TransactionReceipt(query) => query.is_payment_required(),
+            Self::FileContents(query) => query.is_payment_required(),
         }
     }
 
@@ -63,6 +68,7 @@ impl QueryExecute for AnyQueryData {
             Self::AccountInfo(query) => query.execute(channel, request).await,
             Self::AccountBalance(query) => query.execute(channel, request).await,
             Self::TransactionReceipt(query) => query.execute(channel, request).await,
+            Self::FileContents(query) => query.execute(channel, request).await,
         }
     }
 }
@@ -83,6 +89,9 @@ impl FromProtobuf for AnyQueryResponse {
             CryptoGetInfo(_) => Self::AccountInfo(AccountInfo::from_protobuf(response)?),
             CryptogetAccountBalance(_) => {
                 Self::AccountBalance(AccountBalanceResponse::from_protobuf(response)?)
+            }
+            FileGetContents(_) => {
+                Self::FileContents(FileContentsResponse::from_protobuf(response)?)
             }
 
             _ => todo!(),
