@@ -9,6 +9,9 @@ use tonic::{Response, Status};
 use crate::account::{
     AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData
 };
+use crate::file::{
+    FileAppendTransactionData, FileCreateTransactionData, FileDeleteTransactionData, FileUpdateTransactionData
+};
 use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
 };
@@ -30,6 +33,10 @@ pub enum AnyTransactionData {
     TopicUpdate(TopicUpdateTransactionData),
     TopicDelete(TopicDeleteTransactionData),
     TopicMessageSubmit(TopicMessageSubmitTransactionData),
+    FileAppend(FileAppendTransactionData),
+    FileCreate(FileCreateTransactionData),
+    FileUpdate(FileUpdateTransactionData),
+    FileDelete(FileDeleteTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -52,6 +59,22 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::AccountDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::FileAppend(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::FileCreate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::FileUpdate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::FileDelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -82,6 +105,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::FileAppend(transaction) => transaction.default_max_transaction_fee(),
+            Self::FileCreate(transaction) => transaction.default_max_transaction_fee(),
+            Self::FileUpdate(transaction) => transaction.default_max_transaction_fee(),
+            Self::FileDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -99,6 +126,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
             Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
             Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
+            Self::FileAppend(transaction) => transaction.execute(channel, request).await,
+            Self::FileCreate(transaction) => transaction.execute(channel, request).await,
+            Self::FileUpdate(transaction) => transaction.execute(channel, request).await,
+            Self::FileDelete(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
