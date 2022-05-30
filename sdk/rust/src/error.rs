@@ -19,11 +19,22 @@ pub enum Error {
     #[error("failed to create a SDK type from a protobuf response: {0}")]
     FromProtobuf(BoxStdError),
 
-    /// Signals that a query or transaction has failed the pre-check.
-    // FIXME: Use hedera::Status (once available)
-    // TODO: Add transaction_id: Option<TransactionId>
-    #[error("transaction `{}` failed pre-check with status `{status:?}`", .transaction_id.as_ref().map(|id| id.to_string()).as_deref().unwrap_or("_"))]
-    PreCheckStatus { status: Status, transaction_id: Option<TransactionId> },
+    #[error("transaction `{transaction_id}` failed pre-check with status `{status:?}`")]
+    TransactionPreCheckStatus { status: Status, transaction_id: TransactionId },
+
+    #[error("transaction without transaction id failed pre-check with status `{status:?}`")]
+    TransactionNoIdPreCheckStatus { status: Status },
+
+    #[error("query for transaction `{transaction_id}` failed pre-check with status `{status:?}`")]
+    QueryPreCheckStatus { status: Status, transaction_id: TransactionId },
+
+    #[error(
+        "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
+    )]
+    QueryPaymentPreCheckStatus { status: Status, transaction_id: TransactionId },
+
+    #[error("query with no payment transaction failed pre-check with status `{status:?}`")]
+    QueryNoPaymentPreCheckStatus { status: Status },
 
     /// Failed to parse a basic type from string (ex. AccountId, ContractId, TransactionId, etc.).
     #[error("failed to parse: {0}")]
@@ -75,9 +86,5 @@ impl Error {
 
     pub(crate) fn signature<E: Into<BoxStdError>>(error: E) -> Self {
         Self::Signature(error.into())
-    }
-
-    pub(crate) fn pre_check(status: Status, transaction_id: Option<TransactionId>) -> Self {
-        Self::PreCheckStatus { status, transaction_id }
     }
 }

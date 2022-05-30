@@ -30,6 +30,11 @@ pub(crate) trait Execute {
     /// Get whether to generate transaction IDs for request creation.
     fn requires_transaction_id(&self) -> bool;
 
+    /// Check whether to retry an pre-check status.
+    fn should_retry_pre_check(&self, _status: Status) -> bool {
+        false
+    }
+
     /// Create a new request for execution.
     ///
     /// A created request is cached per node until any request returns
@@ -57,6 +62,13 @@ pub(crate) trait Execute {
         node_account_id: AccountId,
         transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response>;
+
+    /// Create an error from the given pre-check status.
+    fn make_error_pre_check(
+        &self,
+        status: Status,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Error;
 
     /// Extract the pre-check status from the GRPC response.
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
@@ -161,21 +173,27 @@ where
                     Status::Busy | Status::PlatformNotActive => {
                         // NOTE: this is a "busy" node
                         // try the next node in our allowed list, immediately
-                        last_error = Some(Error::pre_check(status, transaction_id));
+                        last_error = Some(executable.make_error_pre_check(status, transaction_id));
                         continue;
                     }
 
                     Status::TransactionExpired if explicit_transaction_id.is_none() => {
                         // the transaction that was generated has since expired
                         // re-generate the transaction ID and try again, immediately
-                        last_error = Some(Error::pre_check(status, transaction_id));
+                        last_error = Some(executable.make_error_pre_check(status, transaction_id));
                         transaction_id = client.generate_transaction_id();
                         continue;
                     }
 
+                    _ if executable.should_retry_pre_check(status) => {
+                        // conditional retry on pre-check should back-off and try again
+                        last_error = Some(executable.make_error_pre_check(status, transaction_id));
+                        break;
+                    }
+
                     _ => {
                         // any other pre-check is an error that the user needs to fix, fail immediately
-                        return Err(Error::pre_check(status, transaction_id));
+                        return Err(executable.make_error_pre_check(status, transaction_id));
                     }
                 },
 
