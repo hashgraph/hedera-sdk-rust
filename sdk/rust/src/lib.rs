@@ -17,6 +17,7 @@ mod protobuf;
 mod account;
 mod client;
 mod contract;
+mod entity_id;
 mod error;
 mod execute;
 mod file;

@@ -1,9 +1,13 @@
-use hedera_proto::services;
+use std::fmt::{self, Debug, Display, Formatter};
+use std::str::FromStr;
 
-use crate::{FromProtobuf, ToProtobuf};
+use hedera_proto::services;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
+
+use crate::{entity_id, FromProtobuf, ToProtobuf};
 
 /// The unique identifier for a smart contract on Hedera.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct ContractId {
     pub shard: u64,
@@ -11,14 +15,52 @@ pub struct ContractId {
     pub num: u64,
 }
 
+impl Debug for ContractId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for ContractId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+    }
+}
+
 impl FromProtobuf for ContractId {
     type Protobuf = services::ContractId;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
-        let account = pb_getf!(pb, contract)?;
-        let num = pb_getv!(account, ContractNum, services::contract_id::Contract);
+        let contract = pb_getf!(pb, contract)?;
+        let num = pb_getv!(contract, ContractNum, services::contract_id::Contract);
 
         Ok(Self { num: num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+    }
+}
+
+impl ToProtobuf for ContractId {
+    type Protobuf = services::ContractId;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ContractId {
+            contract: Some(services::contract_id::Contract::ContractNum(self.num as i64)),
+            realm_num: self.realm as i64,
+            shard_num: self.shard as i64,
+        }
+    }
+}
+
+impl From<u64> for ContractId {
+    fn from(num: u64) -> Self {
+        Self { num, shard: 0, realm: 0 }
+    }
+}
+
+impl FromStr for ContractId {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        entity_id::parse(s).map(|(shard, realm, num)| Self { shard, realm, num })
     }
 }
 
@@ -37,18 +79,6 @@ pub struct ContractEvmAddress {
 pub enum ContractIdOrEvmAddress {
     ContractId(ContractId),
     ContractEvmAddress(ContractEvmAddress),
-}
-
-impl ToProtobuf for ContractId {
-    type Protobuf = services::ContractId;
-
-    fn to_protobuf(&self) -> Self::Protobuf {
-        services::ContractId {
-            contract: Some(services::contract_id::Contract::ContractNum(self.num as i64)),
-            realm_num: self.realm as i64,
-            shard_num: self.shard as i64,
-        }
-    }
 }
 
 impl ToProtobuf for ContractEvmAddress {
