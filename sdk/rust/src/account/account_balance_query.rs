@@ -5,7 +5,9 @@ use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
 use crate::query::{AnyQueryData, Query, QueryExecute, ToQueryProtobuf};
-use crate::{AccountBalance, AccountId, AccountIdOrAlias, ContractIdOrEvmAddress, ToProtobuf};
+use crate::{
+    AccountBalanceResponse, AccountId, AccountIdOrAlias, ContractIdOrEvmAddress, ToProtobuf
+};
 
 /// Get the balance of a cryptocurrency account.
 ///
@@ -81,7 +83,7 @@ impl ToQueryProtobuf for AccountBalanceQueryData {
 
 #[async_trait]
 impl QueryExecute for AccountBalanceQueryData {
-    type Response = AccountBalance;
+    type Response = AccountBalanceResponse;
 
     fn is_payment_required(&self) -> bool {
         false

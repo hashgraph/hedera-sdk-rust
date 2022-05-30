@@ -10,7 +10,7 @@ use crate::query::QueryExecute;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
-    AccountBalance, AccountInfo, FromProtobuf, Query, Transaction, TransactionReceiptResponse
+    AccountBalanceResponse, AccountInfo, FromProtobuf, Query, Transaction, TransactionReceiptResponse
 };
 
 /// Any possible query that may be executed on the Hedera network.
@@ -27,7 +27,7 @@ pub enum AnyQueryData {
 #[derive(Debug, serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub enum AnyQueryResponse {
-    AccountBalance(AccountBalance),
+    AccountBalance(AccountBalanceResponse),
     AccountInfo(AccountInfo),
     TransactionReceipt(TransactionReceiptResponse),
 }
@@ -82,7 +82,7 @@ impl FromProtobuf for AnyQueryResponse {
             }
             CryptoGetInfo(_) => Self::AccountInfo(AccountInfo::from_protobuf(response)?),
             CryptogetAccountBalance(_) => {
-                Self::AccountBalance(AccountBalance::from_protobuf(response)?)
+                Self::AccountBalance(AccountBalanceResponse::from_protobuf(response)?)
             }
 
             _ => todo!(),

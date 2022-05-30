@@ -7,7 +7,7 @@ mod account_info;
 mod account_info_query;
 mod account_update_transaction;
 
-pub use account_balance::AccountBalance;
+pub use account_balance::AccountBalanceResponse;
 pub use account_balance_query::AccountBalanceQuery;
 pub(crate) use account_balance_query::AccountBalanceQueryData;
 pub use account_create_transaction::AccountCreateTransaction;
