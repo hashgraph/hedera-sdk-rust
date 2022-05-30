@@ -5,7 +5,7 @@ use crate::{AccountId, FromProtobuf};
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AccountBalance {
+pub struct AccountBalanceResponse {
     /// The account that is being referenced.
     pub account_id: AccountId,
 
@@ -17,7 +17,7 @@ pub struct AccountBalance {
     // TODO: pub tokens: HashMap<TokenId, AccountTokenBalance>,
 }
 
-impl FromProtobuf for AccountBalance {
+impl FromProtobuf for AccountBalanceResponse {
     type Protobuf = services::response::Response;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
