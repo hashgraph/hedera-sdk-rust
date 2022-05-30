@@ -59,7 +59,7 @@ pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
 pub use token::TokenId;
 pub use topic::{
-    TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessageSubmitTransaction, TopicUpdateTransaction
+    TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction
 };
 pub use transaction::Transaction;
 pub use transaction_hash::TransactionHash;

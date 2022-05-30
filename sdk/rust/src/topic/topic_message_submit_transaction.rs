@@ -43,8 +43,8 @@ impl TopicMessageSubmitTransaction {
     }
 
     /// Sets the message to be submitted.
-    pub fn message(&mut self, bytes: Vec<u8>) -> &mut Self {
-        self.body.data.message = Some(bytes);
+    pub fn message(&mut self, bytes: impl Into<Vec<u8>>) -> &mut Self {
+        self.body.data.message = Some(bytes.into());
         self
     }
 
