@@ -51,8 +51,6 @@ impl TransactionResponse {
     ) -> crate::Result<TransactionReceipt> {
         let receipt = self.get_receipt(client).await?;
 
-        println!("receipt = {receipt:#?}");
-
         if receipt.status != Status::Success {
             return Err(Error::ReceiptStatus {
                 transaction_id: self.transaction_id,

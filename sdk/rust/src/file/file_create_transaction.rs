@@ -3,7 +3,7 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use itertools::Itertools;
 use serde_with::skip_serializing_none;
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -14,7 +14,7 @@ use crate::{AccountId, Key, Transaction, TransactionId};
 pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;
 
 #[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileCreateTransactionData {
     /// The memo associated with the file.
@@ -33,6 +33,17 @@ pub struct FileCreateTransactionData {
     expires_at: Option<OffsetDateTime>,
 }
 
+impl Default for FileCreateTransactionData {
+    fn default() -> Self {
+        Self {
+            file_memo: String::new(),
+            keys: None,
+            contents: None,
+            expires_at: Some(OffsetDateTime::now_utc() + Duration::days(90)),
+        }
+    }
+}
+
 impl FileCreateTransaction {
     /// Sets the memo associated with the file.
     pub fn file_memo(&mut self, memo: impl Into<String>) -> &mut Self {
@@ -41,8 +52,8 @@ impl FileCreateTransaction {
     }
 
     /// Sets the bytes that are to be the contents of the file.
-    pub fn contents(&mut self, contents: Vec<u8>) -> &mut Self {
-        self.body.data.contents = Some(contents);
+    pub fn contents(&mut self, contents: impl Into<Vec<u8>>) -> &mut Self {
+        self.body.data.contents = Some(contents.into());
         self
     }
 
