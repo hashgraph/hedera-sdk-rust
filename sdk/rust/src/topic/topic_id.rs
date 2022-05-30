@@ -1,14 +1,30 @@
-use hedera_proto::services;
+use std::fmt::{self, Debug, Display, Formatter};
+use std::str::FromStr;
 
-use crate::{FromProtobuf, ToProtobuf};
+use hedera_proto::services;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
+
+use crate::{entity_id, FromProtobuf, ToProtobuf};
 
 /// The unique identifier for a topic on Hedera.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct TopicId {
     pub shard: u64,
     pub realm: u64,
     pub num: u64,
+}
+
+impl Debug for TopicId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self)
+    }
+}
+
+impl Display for TopicId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+    }
 }
 
 impl FromProtobuf for TopicId {
@@ -32,5 +48,19 @@ impl ToProtobuf for TopicId {
             realm_num: self.realm as i64,
             shard_num: self.shard as i64,
         }
+    }
+}
+
+impl From<u64> for TopicId {
+    fn from(num: u64) -> Self {
+        Self { num, shard: 0, realm: 0 }
+    }
+}
+
+impl FromStr for TopicId {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        entity_id::parse(s).map(|(shard, realm, num)| Self { shard, realm, num })
     }
 }
