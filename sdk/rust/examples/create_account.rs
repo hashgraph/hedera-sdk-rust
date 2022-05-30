@@ -1,6 +1,6 @@
 use assert_matches::assert_matches;
 use clap::Parser;
-use hedera::{AccountCreateTransaction, AccountId, Client, PrivateKey, TransactionReceiptQuery};
+use hedera::{AccountCreateTransaction, AccountId, Client, PrivateKey};
 
 #[derive(Parser, Debug)]
 struct Args {
