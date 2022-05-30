@@ -103,6 +103,7 @@ where
     }
 
     fn make_response(
+        &self,
         _response: Self::GrpcResponse,
         transaction_hash: Self::Context,
         node_account_id: AccountId,

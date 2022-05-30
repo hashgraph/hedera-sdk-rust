@@ -31,10 +31,7 @@ async fn main() -> anyhow::Result<()> {
         .execute(&client)
         .await?;
 
-    let receipt = TransactionReceiptQuery::new()
-        .transaction_id(response.transaction_id)
-        .execute(&client)
-        .await?;
+    let receipt = response.get_successful_receipt(&client).await?;
 
     let new_account_id = assert_matches!(receipt.account_id, Some(id) => id);
 

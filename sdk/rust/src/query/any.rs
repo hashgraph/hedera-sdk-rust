@@ -9,7 +9,9 @@ use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
-use crate::{AccountBalance, AccountInfo, FromProtobuf, Query, Transaction, TransactionReceipt};
+use crate::{
+    AccountBalance, AccountInfo, FromProtobuf, Query, Transaction, TransactionReceiptResponse
+};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -27,7 +29,7 @@ pub enum AnyQueryData {
 pub enum AnyQueryResponse {
     AccountBalance(AccountBalance),
     AccountInfo(AccountInfo),
-    TransactionReceipt(TransactionReceipt),
+    TransactionReceipt(TransactionReceiptResponse),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -76,7 +78,7 @@ impl FromProtobuf for AnyQueryResponse {
 
         Ok(match response {
             TransactionGetReceipt(_) => {
-                Self::TransactionReceipt(TransactionReceipt::from_protobuf(response)?)
+                Self::TransactionReceipt(TransactionReceiptResponse::from_protobuf(response)?)
             }
             CryptoGetInfo(_) => Self::AccountInfo(AccountInfo::from_protobuf(response)?),
             CryptogetAccountBalance(_) => {

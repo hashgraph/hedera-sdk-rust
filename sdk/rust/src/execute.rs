@@ -35,6 +35,12 @@ pub(crate) trait Execute {
         false
     }
 
+    /// Check whether we should retry an otherwise successful response.
+    #[allow(unused_variables)]
+    fn should_retry(&self, response: &Self::GrpcResponse) -> bool {
+        false
+    }
+
     /// Create a new request for execution.
     ///
     /// A created request is cached per node until any request returns
@@ -57,6 +63,7 @@ pub(crate) trait Execute {
     /// Create a response from the GRPC response and the saved transaction
     /// and node account ID from the successful request.
     fn make_response(
+        &self,
         response: Self::GrpcResponse,
         context: Self::Context,
         node_account_id: AccountId,
@@ -158,11 +165,13 @@ where
 
             match Status::from_i32(pre_check_status) {
                 Some(status) => match status {
-                    Status::Ok => {
-                        // TODO: another function in the Execute trait to see if we need to
-                        //  retry yet again
+                    Status::Ok if executable.should_retry(&response) => {
+                        last_error = Some(executable.make_error_pre_check(status, transaction_id));
+                        break;
+                    }
 
-                        return E::make_response(
+                    Status::Ok => {
+                        return executable.make_response(
                             response,
                             context,
                             node_account_id,

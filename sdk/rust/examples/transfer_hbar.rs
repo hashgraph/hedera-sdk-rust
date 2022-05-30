@@ -35,6 +35,8 @@ async fn main() -> anyhow::Result<()> {
         .hbar_transfer(sender, -args.amount)
         .hbar_transfer(args.receiver, args.amount)
         .execute(&client)
+        .await?
+        .wait_for_successful_consensus(&client)
         .await?;
 
     Ok(())

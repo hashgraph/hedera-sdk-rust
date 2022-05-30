@@ -69,6 +69,7 @@ where
     }
 
     fn make_response(
+        &self,
         response: Self::GrpcResponse,
         _context: Self::Context,
         _node_account_id: AccountId,

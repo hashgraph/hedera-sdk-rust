@@ -28,9 +28,22 @@ pub trait QueryExecute:
         false
     }
 
+    /// Check whether we should retry an otherwise successful response.
+    #[allow(unused_variables)]
+    fn should_retry(&self, response: &services::Response) -> bool {
+        false
+    }
+
     /// Returns the transaction ID that this query is for, if this query is about a transaction.
     fn transaction_id(&self) -> Option<TransactionId> {
         None
+    }
+
+    fn make_response(
+        &self,
+        response: services::response::Response,
+    ) -> crate::Result<Self::Response> {
+        <Self::Response as FromProtobuf>::from_protobuf(response)
     }
 
     /// Execute the prepared query request against the provided GRPC channel.
@@ -70,6 +83,10 @@ where
         self.data.should_retry_pre_check(status)
     }
 
+    fn should_retry(&self, response: &Self::GrpcResponse) -> bool {
+        self.data.should_retry(response)
+    }
+
     async fn make_request(
         &self,
         client: &Client,
@@ -96,14 +113,13 @@ where
     }
 
     fn make_response(
+        &self,
         response: Self::GrpcResponse,
         _context: Self::Context,
         _node_account_id: AccountId,
         _transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response> {
-        let response = pb_getf!(response, response)?;
-
-        <D::Response as FromProtobuf>::from_protobuf(response)
+        pb_getf!(response, response).and_then(|response| self.data.make_response(response))
     }
 
     fn make_error_pre_check(
