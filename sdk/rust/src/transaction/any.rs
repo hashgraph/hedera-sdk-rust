@@ -9,6 +9,9 @@ use tonic::{Response, Status};
 use crate::account::{
     AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData
 };
+use crate::topic::{
+    TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
+};
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
 use crate::{AccountId, Transaction, TransactionId};
@@ -23,6 +26,10 @@ pub enum AnyTransactionData {
     AccountUpdate(AccountUpdateTransactionData),
     AccountDelete(AccountDeleteTransactionData),
     Transfer(TransferTransactionData),
+    TopicCreate(TopicCreateTransactionData),
+    TopicUpdate(TopicUpdateTransactionData),
+    TopicDelete(TopicDeleteTransactionData),
+    TopicMessageSubmit(TopicMessageSubmitTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -47,6 +54,22 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::AccountDelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
+
+            Self::TopicCreate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::TopicUpdate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::TopicDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::TopicMessageSubmit(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
         }
     }
 }
@@ -59,6 +82,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
+            Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
+            Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::TopicMessageSubmit(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -68,10 +95,14 @@ impl TransactionExecute for AnyTransactionData {
         request: services::Transaction,
     ) -> Result<Response<services::TransactionResponse>, Status> {
         match self {
+            Self::Transfer(transaction) => transaction.execute(channel, request).await,
             Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
             Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
             Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
-            Self::Transfer(transaction) => transaction.execute(channel, request).await,
+            Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
+            Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
+            Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
+            Self::TopicMessageSubmit(transaction) => transaction.execute(channel, request).await,
         }
     }
 }

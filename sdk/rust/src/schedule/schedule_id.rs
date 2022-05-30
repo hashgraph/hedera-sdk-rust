@@ -15,6 +15,10 @@ impl FromProtobuf for ScheduleId {
     type Protobuf = services::ScheduleId;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
-        Ok(Self { num: pb.schedule_num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+        Ok(Self {
+            num: pb.schedule_num as u64,
+            shard: pb.shard_num as u64,
+            realm: pb.realm_num as u64,
+        })
     }
 }

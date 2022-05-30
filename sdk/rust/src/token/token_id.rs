@@ -15,6 +15,10 @@ impl FromProtobuf for TokenId {
     type Protobuf = services::TokenId;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
-        Ok(Self { num: pb.token_num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+        Ok(Self {
+            num: pb.token_num as u64,
+            shard: pb.shard_num as u64,
+            realm: pb.realm_num as u64,
+        })
     }
 }

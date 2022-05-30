@@ -38,7 +38,7 @@ pub struct AccountUpdateTransactionData {
     pub auto_renew_period: Option<Duration>,
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    pub expire_at: Option<OffsetDateTime>,
+    pub expires_at: Option<OffsetDateTime>,
 
     /// The memo associated with the account.
     pub memo: Option<String>,
@@ -60,6 +60,12 @@ impl AccountUpdateTransaction {
     /// Set the account ID which is being updated.
     pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
         self.body.data.account_id = Some(id.into());
+        self
+    }
+
+    /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
+    pub fn expires_at(&mut self, at: OffsetDateTime) -> &mut Self {
+        self.body.data.expires_at = Some(at);
         self
     }
 
@@ -126,7 +132,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
         let account_id = self.account_id.as_ref().map(AccountIdOrAlias::to_protobuf);
         let key = self.key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let expiration_time = self.expire_at.as_ref().map(OffsetDateTime::to_protobuf);
+        let expiration_time = self.expires_at.as_ref().map(OffsetDateTime::to_protobuf);
 
         let receiver_signature_required = self.receiver_signature_required.map(|required| {
             services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
