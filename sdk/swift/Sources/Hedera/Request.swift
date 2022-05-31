@@ -21,7 +21,7 @@ public class Request<Response: Decodable>: Encodable {
                     resumeUnmanagedContinuation(continuation, throwing: HError(err)!)
                 } else {
                     // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
-                    let responseText = String(validatingUTF8: responsePtr!)!;
+                    let responseText = String(validatingUTF8: responsePtr!)!
                     let responseBytes = responseText.data(using: .utf8)!
 
                     // resumes the continuation which bridges us back into Swift async

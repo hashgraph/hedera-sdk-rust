@@ -18,12 +18,17 @@ public final class TransferTransaction: Transaction {
         return self
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case tinybarTransfers
+        // TODO: case tokenTransfers
+        // TODO: case nftTransfers
+    }
+
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        var transfer = container.nestedContainer(keyedBy: TransferKeys.self, forKey: .transfer)
+        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
+        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .transfer)
 
-        try transfer.encode(hbarTransfers, forKey: .tinybarTransfers)
-
+        try data.encode(hbarTransfers, forKey: .tinybarTransfers)
         try super.encode(to: encoder)
     }
 }
@@ -31,14 +36,4 @@ public final class TransferTransaction: Transaction {
 private struct HbarTransfer: Encodable {
     let account: AccountIdOrAlias
     let amount: Int64
-}
-
-private enum CodingKeys: String, CodingKey {
-    case transfer
-}
-
-private enum TransferKeys: String, CodingKey {
-    case tinybarTransfers
-    // TODO: case tokenTransfers
-    // TODO: case nftTransfers
 }
