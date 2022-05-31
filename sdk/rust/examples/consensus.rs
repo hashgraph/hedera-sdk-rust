@@ -64,8 +64,8 @@ async fn main() -> anyhow::Result<()> {
 
     let mut latencies = Vec::new();
 
-    while let Some(response) = stream.try_next().await? {
-        let message = String::from_utf8(response.message)?;
+    while let Some(tm) = stream.try_next().await? {
+        let message = String::from_utf8(tm.contents)?;
 
         let times = message_send_times.read();
         let start = times.get(&message).unwrap();
@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
 
         println!(
             "recv: {}, message: {:?}, latency: {:.3?}",
-            response.sequence_number, message, latency,
+            tm.sequence_number, message, latency,
         );
 
         latencies.push(latency.as_secs_f64());
