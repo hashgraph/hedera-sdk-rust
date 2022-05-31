@@ -6,18 +6,19 @@ use backoff::ExponentialBackoff;
 use futures_core::Stream;
 use hedera_proto::mirror::consensus_service_client::ConsensusServiceClient;
 use hedera_proto::mirror::{ConsensusTopicQuery, ConsensusTopicResponse};
+use time::OffsetDateTime;
 use tokio::time::sleep;
 
 use crate::{Client, Error, ToProtobuf, TopicId};
 
 // TODO: test, test, and test
 // TODO: investigate failure scenarios
-// TODO: set start time
-// TODO: set end time
 
 #[derive(Debug, Default, Clone)]
 pub struct TopicMessageQuery {
     topic_id: Option<TopicId>,
+    start_time: Option<OffsetDateTime>,
+    end_time: Option<OffsetDateTime>,
     limit: u64,
 }
 
@@ -30,6 +31,19 @@ impl TopicMessageQuery {
     /// Sets the topic ID to retrieve messages for.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.topic_id = Some(id.into());
+        self
+    }
+
+    /// Set to include messages which reached consensus on or after this time.
+    /// Defaults to the current time.
+    pub fn start_time(&mut self, time: OffsetDateTime) -> &mut Self {
+        self.start_time = Some(time);
+        self
+    }
+
+    /// Set to include messages which reached consensus before this time.
+    pub fn end_time(&mut self, time: OffsetDateTime) -> &mut Self {
+        self.end_time = Some(time);
         self
     }
 
@@ -140,10 +154,12 @@ impl TopicMessageQuery {
 
     fn make_request(&self) -> ConsensusTopicQuery {
         let topic_id = self.topic_id.as_ref().map(TopicId::to_protobuf);
+        let consensus_end_time = self.end_time.map(Into::into);
+        let consensus_start_time = self.start_time.map(Into::into);
 
         ConsensusTopicQuery {
-            consensus_end_time: None,
-            consensus_start_time: None,
+            consensus_end_time,
+            consensus_start_time,
             topic_id,
             limit: self.limit,
         }
