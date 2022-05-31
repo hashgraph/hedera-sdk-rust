@@ -5,11 +5,11 @@ use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use futures_core::Stream;
 use hedera_proto::mirror::consensus_service_client::ConsensusServiceClient;
-use hedera_proto::mirror::{ConsensusTopicQuery, ConsensusTopicResponse};
+use hedera_proto::mirror::ConsensusTopicQuery;
 use time::OffsetDateTime;
 use tokio::time::sleep;
 
-use crate::{Client, Error, ToProtobuf, TopicId};
+use crate::{Client, Error, FromProtobuf, ToProtobuf, TopicId, TopicMessage};
 
 // TODO: test, test, and test
 // TODO: investigate failure scenarios
@@ -58,7 +58,7 @@ impl TopicMessageQuery {
     pub fn subscribe(
         &self,
         client: &Client,
-    ) -> Pin<Box<dyn Stream<Item = crate::Result<ConsensusTopicResponse>>>> {
+    ) -> Pin<Box<dyn Stream<Item = crate::Result<TopicMessage>>>> {
         let self_ = self.clone();
         let client = client.clone();
         let channel = client.mirror_network().channel();
@@ -118,7 +118,7 @@ impl TopicMessageQuery {
                             attempt = 0;
                         }
 
-                        yield Ok(message);
+                        yield TopicMessage::from_protobuf(message);
                     }
                 }
 
