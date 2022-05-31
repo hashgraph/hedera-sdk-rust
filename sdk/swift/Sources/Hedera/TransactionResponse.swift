@@ -41,7 +41,9 @@ public struct TransactionResponse: Decodable {
         let receipt = try await self.getReceipt(client)
 
         if receipt.status != "SUCCESS" {
-            throw HError(kind: .receiptStatus(status: receipt.status), description: "receipt for transaction `\(transactionId)` failed with status `\(receipt.status)`")
+            throw HError(
+                kind: .receiptStatus(status: receipt.status),
+                description: "receipt for transaction `\(transactionId)` failed with status `\(receipt.status)`")
         }
 
         return receipt
