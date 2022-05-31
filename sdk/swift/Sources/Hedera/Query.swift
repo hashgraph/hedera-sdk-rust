@@ -23,7 +23,7 @@ public class Query<Response: Decodable>: Request<Response> {
     ///
     // TODO: Use Hbar
     public func paymentAmount(_ amount: UInt64) -> Self {
-        self.payment.amount = amount;
+        self.payment.amount = amount
 
         return self
     }
@@ -43,7 +43,7 @@ public class Query<Response: Decodable>: Request<Response> {
     ///
     // TODO: Use Hbar
     public func maxPaymentAmount(_ maxAmount: UInt64?) -> Self {
-        self.payment.maxAmount = maxAmount;
+        self.payment.maxAmount = maxAmount
 
         return self
     }
