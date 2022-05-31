@@ -12,20 +12,25 @@
  * Represents any possible result from a fallible function in the Hedera SDK.
  */
 typedef enum HederaError {
-  HEDERA_ERROR_OK = 0,
-  HEDERA_ERROR_TIMED_OUT = 1,
-  HEDERA_ERROR_GRPC_STATUS = 2,
-  HEDERA_ERROR_FROM_PROTOBUF = 3,
-  HEDERA_ERROR_PRE_CHECK_STATUS = 4,
-  HEDERA_ERROR_BASIC_PARSE = 5,
-  HEDERA_ERROR_KEY_PARSE = 6,
-  HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID = 7,
-  HEDERA_ERROR_MAX_ATTEMPTS_EXCEEDED = 8,
-  HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED = 9,
-  HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN = 10,
-  HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED = 11,
-  HEDERA_ERROR_SIGNATURE = 12,
-  HEDERA_ERROR_REQUEST_PARSE = 13,
+  HEDERA_ERROR_OK,
+  HEDERA_ERROR_TIMED_OUT,
+  HEDERA_ERROR_GRPC_STATUS,
+  HEDERA_ERROR_FROM_PROTOBUF,
+  HEDERA_ERROR_TRANSACTION_PRE_CHECK_STATUS,
+  HEDERA_ERROR_TRANSACTION_NO_ID_PRE_CHECK_STATUS,
+  HEDERA_ERROR_QUERY_PRE_CHECK_STATUS,
+  HEDERA_ERROR_QUERY_PAYMENT_PRE_CHECK_STATUS,
+  HEDERA_ERROR_QUERY_NO_PAYMENT_PRE_CHECK_STATUS,
+  HEDERA_ERROR_BASIC_PARSE,
+  HEDERA_ERROR_KEY_PARSE,
+  HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID,
+  HEDERA_ERROR_MAX_ATTEMPTS_EXCEEDED,
+  HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED,
+  HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN,
+  HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED,
+  HEDERA_ERROR_RECEIPT_STATUS,
+  HEDERA_ERROR_SIGNATURE,
+  HEDERA_ERROR_REQUEST_PARSE,
 } HederaError;
 
 /**
@@ -60,6 +65,51 @@ typedef struct HederaAccountId {
   uint64_t realm;
   uint64_t num;
 } HederaAccountId;
+
+/**
+ * The unique identifier for a smart contract on Hedera.
+ */
+typedef struct HederaContractId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+} HederaContractId;
+
+/**
+ * The unique identifier for a file on Hedera.
+ */
+typedef struct HederaFileId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+} HederaFileId;
+
+/**
+ * The unique identifier for a schedule on Hedera.
+ */
+typedef struct HederaScheduleId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+} HederaScheduleId;
+
+/**
+ * The unique identifier for a token on Hedera.
+ */
+typedef struct HederaTokenId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+} HederaTokenId;
+
+/**
+ * The unique identifier for a topic on Hedera.
+ */
+typedef struct HederaTopicId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+} HederaTopicId;
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,12 +164,22 @@ void hedera_client_set_payer_account_id(struct HederaClient *client, struct Hede
 void hedera_client_add_default_signer(struct HederaClient *client, struct HederaSigner *signer);
 
 /**
+ * Parse a Hedera `ContractId` from the passed string.
+ */
+enum HederaError hedera_contract_id_from_string(const char *s, struct HederaContractId *id);
+
+/**
  * Execute this request against the provided client of the Hedera network.
  */
 enum HederaError hedera_execute(const struct HederaClient *client,
                                 const char *request,
                                 const void *context,
                                 void (*callback)(const void *context, enum HederaError err, const char *response));
+
+/**
+ * Parse a Hedera `FileId` from the passed string.
+ */
+enum HederaError hedera_file_id_from_string(const char *s, struct HederaFileId *id);
 
 /**
  * Generates a new Ed25519 private key.
@@ -167,9 +227,24 @@ const char *hedera_public_key_to_string(struct HederaPublicKey *key);
 void hedera_public_key_free(struct HederaPublicKey *key);
 
 /**
+ * Parse a Hedera `ScheduleId` from the passed string.
+ */
+enum HederaError hedera_schedule_id_from_string(const char *s, struct HederaScheduleId *id);
+
+/**
  * Create an opaque signer from a `HederaPrivateKey`.
  */
 struct HederaSigner *hedera_signer_private_key(struct HederaPrivateKey *key);
+
+/**
+ * Parse a Hedera `TokenId` from the passed string.
+ */
+enum HederaError hedera_token_id_from_string(const char *s, struct HederaTokenId *id);
+
+/**
+ * Parse a Hedera `TopicId` from the passed string.
+ */
+enum HederaError hedera_topic_id_from_string(const char *s, struct HederaTopicId *id);
 
 #ifdef __cplusplus
 } // extern "C"

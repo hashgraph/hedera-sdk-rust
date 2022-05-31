@@ -1,7 +1,7 @@
 import CHedera
 
 /// A private key on the Hedera network.
-public final class PublicKey: LosslessStringConvertible {
+public final class PublicKey: LosslessStringConvertible, Encodable {
     private let ptr: OpaquePointer
 
     internal init(_ ptr: OpaquePointer) {
@@ -28,5 +28,11 @@ public final class PublicKey: LosslessStringConvertible {
         let description = String(validatingUTF8: descriptionBytes!)!
 
         return description
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        try container.encode(String(describing: self))
     }
 }

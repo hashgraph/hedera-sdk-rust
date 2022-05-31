@@ -29,20 +29,25 @@ pub(crate) fn set_last_error(error: crate::Error) {
 #[derive(Debug)]
 #[repr(C)]
 pub enum Error {
-    Ok = 0,
-    TimedOut = 1,
-    GrpcStatus = 2,
-    FromProtobuf = 3,
-    PreCheckStatus = 4,
-    BasicParse = 5,
-    KeyParse = 6,
-    NoPayerAccountOrTransactionId = 7,
-    MaxAttemptsExceeded = 8,
-    MaxQueryPaymentExceeded = 9,
-    NodeAccountUnknown = 10,
-    ResponseStatusUnrecognized = 11,
-    Signature = 12,
-    RequestParse = 13,
+    Ok,
+    TimedOut,
+    GrpcStatus,
+    FromProtobuf,
+    TransactionPreCheckStatus,
+    TransactionNoIdPreCheckStatus,
+    QueryPreCheckStatus,
+    QueryPaymentPreCheckStatus,
+    QueryNoPaymentPreCheckStatus,
+    BasicParse,
+    KeyParse,
+    NoPayerAccountOrTransactionId,
+    MaxAttemptsExceeded,
+    MaxQueryPaymentExceeded,
+    NodeAccountUnknown,
+    ResponseStatusUnrecognized,
+    ReceiptStatus,
+    Signature,
+    RequestParse,
 }
 
 impl Error {
@@ -51,7 +56,13 @@ impl Error {
             crate::Error::TimedOut(_) => Self::TimedOut,
             crate::Error::GrpcStatus(_) => Self::GrpcStatus,
             crate::Error::FromProtobuf(_) => Self::FromProtobuf,
-            crate::Error::PreCheckStatus { .. } => Self::PreCheckStatus,
+            crate::Error::TransactionPreCheckStatus { .. } => Self::TransactionPreCheckStatus,
+            crate::Error::TransactionNoIdPreCheckStatus { .. } => {
+                Self::TransactionNoIdPreCheckStatus
+            }
+            crate::Error::QueryPreCheckStatus { .. } => Self::QueryPreCheckStatus,
+            crate::Error::QueryPaymentPreCheckStatus { .. } => Self::QueryPaymentPreCheckStatus,
+            crate::Error::QueryNoPaymentPreCheckStatus { .. } => Self::QueryNoPaymentPreCheckStatus,
             crate::Error::BasicParse(_) => Self::BasicParse,
             crate::Error::KeyParse(_) => Self::KeyParse,
             crate::Error::NoPayerAccountOrTransactionId => Self::NoPayerAccountOrTransactionId,
@@ -59,6 +70,7 @@ impl Error {
             crate::Error::MaxQueryPaymentExceeded { .. } => Self::MaxQueryPaymentExceeded,
             crate::Error::NodeAccountUnknown(_) => Self::NodeAccountUnknown,
             crate::Error::ResponseStatusUnrecognized(_) => Self::ResponseStatusUnrecognized,
+            crate::Error::ReceiptStatus { .. } => Self::ReceiptStatus,
             crate::Error::Signature(_) => Self::Signature,
             crate::Error::RequestParse(_) => Self::RequestParse,
         };
@@ -106,12 +118,17 @@ pub extern "C" fn hedera_error_grpc_status() -> i32 {
 pub extern "C" fn hedera_error_pre_check_status() -> i32 {
     LAST_ERROR.with(|error| {
         if let Some(error) = &*error.borrow() {
-            if let crate::Error::PreCheckStatus { status, .. } = error {
+            if let crate::Error::TransactionPreCheckStatus { status, .. }
+            | crate::Error::TransactionNoIdPreCheckStatus { status }
+            | crate::Error::QueryPreCheckStatus { status, .. }
+            | crate::Error::QueryPaymentPreCheckStatus { status, .. }
+            | crate::Error::QueryNoPaymentPreCheckStatus { status } = error
+            {
                 return *status as i32;
             }
         }
 
-        // NOTE: -1 is an unlikely sentinel value for if this error wasn't a GrpcStatus
+        // NOTE: -1 is an unlikely sentinel value for if this error wasn't a PreCheckStatus
         -1
     })
 }

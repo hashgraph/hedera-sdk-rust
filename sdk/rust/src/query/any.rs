@@ -71,6 +71,24 @@ impl QueryExecute for AnyQueryData {
             Self::FileContents(query) => query.execute(channel, request).await,
         }
     }
+
+    fn should_retry_pre_check(&self, status: crate::Status) -> bool {
+        match self {
+            Self::AccountInfo(query) => query.should_retry_pre_check(status),
+            Self::AccountBalance(query) => query.should_retry_pre_check(status),
+            Self::TransactionReceipt(query) => query.should_retry_pre_check(status),
+            Self::FileContents(query) => query.should_retry_pre_check(status),
+        }
+    }
+
+    fn should_retry(&self, response: &services::Response) -> bool {
+        match self {
+            Self::AccountInfo(query) => query.should_retry(response),
+            Self::AccountBalance(query) => query.should_retry(response),
+            Self::TransactionReceipt(query) => query.should_retry(response),
+            Self::FileContents(query) => query.should_retry(response),
+        }
+    }
 }
 
 impl FromProtobuf for AnyQueryResponse {

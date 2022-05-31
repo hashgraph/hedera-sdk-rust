@@ -10,6 +10,7 @@ use crate::{
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TransactionReceipt {
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
     /// the associated transaction did not have a valid payer signature.
