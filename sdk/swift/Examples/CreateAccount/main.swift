@@ -15,6 +15,7 @@ struct Program {
 
         let response = try await AccountCreateTransaction()
             .key(newKey.publicKey)
+            .initialBalance(500_000_000)
             .execute(client)
 
         let receipt = try await response.getSuccessfulReceipt(client)
