@@ -53,8 +53,7 @@ async fn main() -> anyhow::Result<()> {
                     .await
                     .unwrap();
 
-                // sleep(Duration::from_millis(250)).await;
-                sleep(Duration::from_secs(60 * 60)).await;
+                sleep(Duration::from_millis(500)).await;
             }
         }
     });
