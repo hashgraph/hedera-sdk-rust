@@ -7,7 +7,7 @@
 public class AccountBalanceQuery: Query<AccountBalanceResponse> {
     private var balanceSource: AccountBalanceSource?
 
-    /// Create a new ``AccountBalanceQuery`` ready for configuration and execution.
+    /// Create a new ``AccountBalanceQuery`` ready for configuration.
     public override init() {}
 
     /// Sets the account ID for which information is requested.

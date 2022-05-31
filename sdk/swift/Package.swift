@@ -3,7 +3,7 @@ import PackageDescription
 
 // collect example targets
 var exampleTargets: [PackageDescription.Target] = []
-for name in ["GetAccountBalance", "GenerateKey", "GetAccountInfo", "TransferHbar"] {
+for name in ["GetAccountBalance", "GenerateKey", "GetAccountInfo", "TransferHbar", "CreateAccount"] {
     exampleTargets.append(
         .executableTarget(
             name: "\(name)Example",

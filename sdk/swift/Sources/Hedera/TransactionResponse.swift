@@ -24,4 +24,37 @@ public struct TransactionResponse: Decodable {
     ///
     public let transactionHash: String
     // TODO: Use `TransactionHash` type
+
+    /// Get the receipt of this transaction. Will wait for consensus.
+    public func getReceipt(_ client: Client) async throws -> TransactionReceipt {
+        let receiptResponse = try await TransactionReceiptQuery()
+            .transactionId(transactionId)
+            // TODO: .nodeAccountIds([nodeAccountId])
+            .execute(client)
+
+        return receiptResponse.reciept
+    }
+
+    /// Get the _successful_ receipt of this transaction. Will wait for consensus.
+    /// Will return a `receiptStatus` error for a failing receipt.
+    public func getSuccessfulReceipt(_ client: Client) async throws -> TransactionReceipt {
+        let receipt = try await self.getReceipt(client)
+
+        if receipt.status != "SUCCESS" {
+            throw HError(kind: .receiptStatus(status: receipt.status), description: "receipt for transaction `\(transactionId)` failed with status `\(receipt.status)`")
+        }
+
+        return receipt
+    }
+
+    /// Wait for consensus to be reached for this transaction.
+    public func waitForConsensus(_ client: Client) async throws {
+        let _ = try await self.getReceipt(client)
+    }
+
+    /// Wait for _successful_ consensus to be reached for this transaction.
+    /// Will return a `receiptStatus` error for a failing receipt from consensus.
+    public func waitForSuccessfulConsensus(_ client: Client) async throws {
+        let _ = try await self.getSuccessfulReceipt(client)
+    }
 }

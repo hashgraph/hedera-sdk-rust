@@ -17,7 +17,7 @@ pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
 // TODO: new_realm_admin_key: Option<Key>,
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct AccountCreateTransactionData {
     /// The key that must sign each transfer out of the account.
     ///
@@ -36,7 +36,7 @@ pub struct AccountCreateTransactionData {
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.
-    pub memo: String,
+    pub account_memo: String,
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
@@ -58,7 +58,7 @@ impl Default for AccountCreateTransactionData {
             initial_balance: 0,
             receiver_signature_required: false,
             auto_renew_period: Some(Duration::days(90)),
-            memo: String::new(),
+            account_memo: String::new(),
             max_automatic_token_associations: 0,
             staked_account_id: None,
             decline_staking_reward: false,
@@ -93,7 +93,7 @@ impl AccountCreateTransaction {
 
     /// Set the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.memo = memo.into();
+        self.body.data.account_memo = memo.into();
         self
     }
 
@@ -152,7 +152,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 shard_id: None,
                 realm_id: None,
                 new_realm_admin_key: None,
-                memo: self.memo.clone(),
+                memo: self.account_memo.clone(),
                 max_automatic_token_associations: self.max_automatic_token_associations,
                 decline_reward: self.decline_staking_reward,
                 staked_id,
@@ -164,5 +164,29 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
 impl From<AccountCreateTransactionData> for AnyTransactionData {
     fn from(transaction: AccountCreateTransactionData) -> Self {
         Self::AccountCreate(transaction)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use time::Duration;
+
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const ACCOUNT_CREATE_EMPTY: &str = r#"{
+  "accountCreate": {}
+}"#;
+
+    #[test]
+    fn it_should_deserialize_empty() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_EMPTY)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
+
+        assert_eq!(data.auto_renew_period, Some(Duration::days(90)));
+
+        Ok(())
     }
 }
