@@ -1,5 +1,5 @@
 /// Response from ``AccountBalanceQuery``.
-public final class AccountBalance: Decodable {
+public final class AccountBalanceResponse: Decodable {
     /// The account that is being referenced.
     public let accountId: AccountId
 

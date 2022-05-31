@@ -4,7 +4,7 @@
 /// than ``AccountInfoQuery``, which returns the balance plus
 /// additional information.
 ///
-public class AccountBalanceQuery: Query<AccountBalance> {
+public class AccountBalanceQuery: Query<AccountBalanceResponse> {
     private var balanceSource: AccountBalanceSource?
 
     /// Create a new ``AccountBalanceQuery`` ready for configuration and execution.
