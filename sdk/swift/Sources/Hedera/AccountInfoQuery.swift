@@ -26,6 +26,7 @@ public class AccountInfoQuery: Query<AccountInfo> {
         var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountInfo)
 
         try data.encodeIfPresent(accountId, forKey: .accountId)
+
         try super.encode(to: encoder)
     }
 }

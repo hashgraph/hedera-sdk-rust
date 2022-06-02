@@ -10,7 +10,9 @@ use crate::{FileContentsResponse, FileId, ToProtobuf};
 pub type FileContentsQuery = Query<FileContentsQueryData>;
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct FileContentsQueryData {
+    /// The file ID for which contents are requested.
     file_id: Option<FileId>,
 }
 
@@ -22,7 +24,7 @@ impl From<FileContentsQueryData> for AnyQueryData {
 }
 
 impl FileContentsQuery {
-    /// Sets the file ID for which contents are requested
+    /// Sets the file ID for which contents are requested.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
         self.data.file_id = Some(id.into());
         self
