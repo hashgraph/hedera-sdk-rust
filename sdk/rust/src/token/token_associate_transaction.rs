@@ -53,7 +53,7 @@ impl TokenAssociateTransaction {
 }
 
 #[async_trait]
-impl TransactionExecute for TokenAssociateTransaction {
+impl TransactionExecute for TokenAssociateTransactionData {
     async fn execute(
         &self,
         channel: Channel,
@@ -66,8 +66,8 @@ impl TransactionExecute for TokenAssociateTransaction {
 impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
+        _node_account_id: AccountId,
+        _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
         let tokens =
@@ -85,7 +85,7 @@ impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
     }
 }
 
-impl From<TokenAssociateTransaction> for AnyTransactionData {
+impl From<TokenAssociateTransactionData> for AnyTransactionData {
     fn from(transaction: TokenAssociateTransactionData) -> Self {
         Self::TokenAssociate(transaction)
     }
