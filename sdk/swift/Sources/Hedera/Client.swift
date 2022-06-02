@@ -2,7 +2,7 @@ import CHedera
 
 /// Managed client for use on the Hedera network.
 public class Client {
-    let ptr: OpaquePointer
+    internal let ptr: OpaquePointer
 
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr

@@ -36,6 +36,7 @@ public struct HError: Error, CustomStringConvertible {
         self.description = description
     }
 
+    // swiftlint:disable cyclomatic_complexity function_body_length
     internal init?(_ error: HederaError) {
         switch error {
         case HEDERA_ERROR_TIMED_OUT:
@@ -101,6 +102,7 @@ public struct HError: Error, CustomStringConvertible {
         let descriptionBytes = hedera_error_message()
         description = String(validatingUTF8: descriptionBytes!)!
     }
+    // swiftlint:enable cyclomatic_complexity function_body_length
 }
 
 extension HError: LocalizedError {

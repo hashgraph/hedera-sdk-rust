@@ -7,4 +7,4 @@ format:
     @ swift format -i -p -r Sources Examples Package.swift
 
 lint:
-    @ swiftlint
+    @ swiftlint --strict --quiet
