@@ -1,7 +1,11 @@
+use async_trait::async_trait;
 use itertools::Itertools;
 use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
+use serde_with::base64::Base64;
+use serde_with::{serde_as, skip_serializing_none, TimestampNanoSeconds};
+
 use crate::{AccountId, TokenId, ToProtobuf, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
 
@@ -20,6 +24,8 @@ use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, Transact
 /// ready to interact with the tokens.
 pub type TokenAssociateTransaction = Transaction<TokenAssociateTransaction>;
 
+#[serde_as]
+#[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenAssociateTransactionData {
