@@ -5,7 +5,7 @@ use crate::{ContractId, Error, FromProtobuf, PublicKey, ToProtobuf};
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Key {
-    Primitive(PublicKey),
+    Single(PublicKey),
     ContractId(ContractId),
     DelegatableContractId(ContractId),
     // TODO: KeyList
@@ -20,7 +20,7 @@ impl ToProtobuf for Key {
 
         services::Key {
             key: Some(match self {
-                Self::Primitive(key) => {
+                Self::Single(key) => {
                     let bytes = key.to_bytes_raw();
 
                     if key.is_ed25519() {
@@ -39,7 +39,7 @@ impl ToProtobuf for Key {
 
 impl From<PublicKey> for Key {
     fn from(key: PublicKey) -> Self {
-        Self::Primitive(key)
+        Self::Single(key)
     }
 }
 
@@ -59,7 +59,7 @@ impl FromProtobuf for Key {
         use services::key::Key::*;
 
         match pb.key {
-            Some(Ed25519(bytes)) => Ok(Self::Primitive(PublicKey::from_bytes_ed25519(&bytes)?)),
+            Some(Ed25519(bytes)) => Ok(Self::Single(PublicKey::from_bytes_ed25519(&bytes)?)),
             Some(ContractId(id)) => Ok(Self::ContractId(crate::ContractId::from_protobuf(id)?)),
             Some(DelegatableContractId(id)) => {
                 Ok(Self::DelegatableContractId(crate::ContractId::from_protobuf(id)?))
@@ -73,7 +73,7 @@ impl FromProtobuf for Key {
             Some(ThresholdKey(_)) => todo!(),
             Some(KeyList(_)) => todo!(),
             Some(EcdsaSecp256k1(bytes)) => {
-                Ok(Self::Primitive(PublicKey::from_bytes_ecdsa_secp256k1(&bytes)?))
+                Ok(Self::Single(PublicKey::from_bytes_ecdsa_secp256k1(&bytes)?))
             }
             None => Err(Error::from_protobuf("unexpected empty key in Key")),
         }

@@ -1,12 +1,12 @@
 public enum Key {
-    case primitive(PublicKey)
+    case single(PublicKey)
     case contractId(ContractId)
     case delegatableContractId(ContractId)
 }
 
 extension Key: Encodable {
     private enum KeyKeys: CodingKey {
-        case primitive
+        case single
         case contractId
         case delegatableContractId
     }
@@ -15,8 +15,8 @@ extension Key: Encodable {
         var container = encoder.container(keyedBy: KeyKeys.self)
 
         switch self {
-        case .primitive(let publicKey):
-            try container.encode(publicKey, forKey: .primitive)
+        case .single(let publicKey):
+            try container.encode(publicKey, forKey: .single)
 
         case .contractId(let contractId):
             try container.encode(contractId, forKey: .contractId)

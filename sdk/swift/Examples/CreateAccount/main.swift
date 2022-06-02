@@ -14,7 +14,7 @@ struct Program {
         print("public key = \(newKey.publicKey)")
 
         let response = try await AccountCreateTransaction()
-            .key(newKey.publicKey)
+            .key(.single(newKey.publicKey))
             .initialBalance(500_000_000)
             .execute(client)
 

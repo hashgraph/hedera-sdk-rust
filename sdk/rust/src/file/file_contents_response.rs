@@ -1,6 +1,6 @@
 use hedera_proto::services;
 use serde::{Deserialize, Serialize};
-use serde_with::hex::Hex;
+use serde_with::base64::Base64;
 use serde_with::serde_as;
 
 use crate::{FileId, FromProtobuf};
@@ -11,7 +11,7 @@ use crate::{FileId, FromProtobuf};
 pub struct FileContentsResponse {
     pub file_id: FileId,
 
-    #[serde_as(as = "Hex")]
+    #[serde_as(as = "Base64")]
     pub contents: Vec<u8>,
 }
 
