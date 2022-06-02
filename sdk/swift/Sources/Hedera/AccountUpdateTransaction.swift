@@ -1,14 +1,31 @@
 import Foundation
 
-/// Create a new Hedera™ account.
-public final class AccountCreateTransaction: Transaction {
+/// Change properties for the given account.
+///
+/// Any null field is ignored (left unchanged). This
+/// transaction must be signed by the existing key for this account. If
+/// the transaction is changing the key field, then the transaction must be
+/// signed by both the old key (from before the change) and the new key.
+///
+public class AccountUpdateTransaction: Transaction {
     /// Create a new `AccountCreateTransaction` ready for configuration.
     public override init() {}
 
-    /// The key that must sign each transfer out of the account.
+    /// The account ID which is being updated in this transaction.
+    public private(set) var accountId: AccountIdOrAlias?
+
+    /// Sets the account ID which is being updated in this transaction.
+    @discardableResult
+    public func accountId(_ accountId: AccountIdOrAlias) -> Self {
+        self.accountId = accountId
+
+        return self
+    }
+
+    /// The new key.
     public private(set) var key: Key?
 
-    /// Sets the key that must sign each transfer out of the account.
+    /// Sets the new key.
     @discardableResult
     public func key(_ key: Key) -> Self {
         self.key = key
@@ -16,22 +33,10 @@ public final class AccountCreateTransaction: Transaction {
         return self
     }
 
-    // TODO: Hbar
-    /// The initial number of Hbar to put into the account.
-    public private(set) var initialBalance: UInt64 = 0
-
-    /// Sets the initial number of Hbar to put into the account.
-    @discardableResult
-    public func initialBalance(_ initialBalance: UInt64) -> Self {
-        self.initialBalance = initialBalance
-
-        return self
-    }
-
     /// If true, this account's key must sign any transaction depositing into this account.
-    public private(set) var receiverSignatureRequired: Bool = false
+    public private(set) var receiverSignatureRequired: Bool?
 
-    /// Set to true to require this account to sign any transfer of hbars to this account.
+    /// Set to true, this account's key must sign any transaction depositing into this account.
     @discardableResult
     public func receiverSignatureRequired(_ receiverSignatureRequired: Bool) -> Self {
         self.receiverSignatureRequired = receiverSignatureRequired
@@ -50,8 +55,19 @@ public final class AccountCreateTransaction: Transaction {
         return self
     }
 
+    /// The new expiration time to extend to (ignored if equal to or before the current one).
+    public private(set) var expiresAt: Date?
+
+    /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
+    @discardableResult
+    public func expiresAt(_ expiresAt: Date) -> Self {
+        self.expiresAt = expiresAt
+
+        return self
+    }
+
     /// The memo associated with the account.
-    public private(set) var accountMemo: String = ""
+    public private(set) var accountMemo: String?
 
     /// Sets the memo associated with the account.
     @discardableResult
@@ -62,7 +78,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
-    public private(set) var maxAutomaticTokenAssociations: UInt32 = 0
+    public private(set) var maxAutomaticTokenAssociations: UInt32?
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     @discardableResult
@@ -84,7 +100,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// If true, the account declines receiving a staking reward. The default value is false.
-    public private(set) var declineStakingReward: Bool = false
+    public private(set) var declineStakingReward: Bool?
 
     /// Set to true, the account declines receiving a staking reward. The default value is false.
     @discardableResult
@@ -95,10 +111,11 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     private enum CodingKeys: String, CodingKey {
+        case accountId
         case key
-        case initialBalance
         case accountMemo
         case autoRenewPeriod
+        case expiresAt
         case maxAutomaticTokenAssociations
         case stakedAccountId
         case declineStakingReward
@@ -106,15 +123,15 @@ public final class AccountCreateTransaction: Transaction {
 
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountCreate)
+        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountUpdate)
 
         try data.encodeIfPresent(key, forKey: .key)
-        try data.encode(initialBalance, forKey: .initialBalance)
-        try data.encode(accountMemo, forKey: .accountMemo)
+        try data.encodeIfPresent(accountMemo, forKey: .accountMemo)
         try data.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try data.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
+        try data.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try data.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
         try data.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try data.encode(declineStakingReward, forKey: .declineStakingReward)
+        try data.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
 
         try super.encode(to: encoder)
     }
