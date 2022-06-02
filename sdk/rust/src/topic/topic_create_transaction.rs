@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
-use serde_with::skip_serializing_none;
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds};
 use time::Duration;
 use tonic::transport::Channel;
 
@@ -11,7 +11,7 @@ use crate::{AccountId, Key, Transaction, TransactionId};
 
 /// Create a topic to be used for consensus.
 ///
-/// If an `auto_renew_account` is specified, that account must also sign this transaction.
+/// If an `auto_renew_account_id` is specified, that account must also sign this transaction.
 ///
 /// If an `admin_key` is specified, the adminKey must sign the transaction.
 ///
@@ -19,6 +19,7 @@ use crate::{AccountId, Key, Transaction, TransactionId};
 ///
 pub type TopicCreateTransaction = Transaction<TopicCreateTransactionData>;
 
+#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -36,9 +37,10 @@ pub struct TopicCreateTransactionData {
     /// The initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time, if
     /// the `auto_renew_account_id` is configured.
+    #[serde_as(as = "Option<DurationSeconds<i64>>")]
     auto_renew_period: Option<Duration>,
 
-    /// Optional account to be used at the topic's expiration time to extend the life of the topic.
+    /// Account to be used at the topic's expiration time to extend the life of the topic.
     auto_renew_account_id: Option<AccountId>,
 }
 

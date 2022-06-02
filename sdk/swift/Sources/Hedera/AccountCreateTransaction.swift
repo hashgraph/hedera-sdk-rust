@@ -87,7 +87,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
-    public private(set) var stakedNodeId: UInt64
+    public private(set) var stakedNodeId: UInt64?
 
     /// Sets the ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
