@@ -1,8 +1,8 @@
 import Hedera
 
 @main
-struct Program {
-    static func main() async throws {
+public enum Program {
+    public static func main() async throws {
         let client = Client.forTestnet()
 
         client.setPayerAccountId(AccountId(num: 6189))

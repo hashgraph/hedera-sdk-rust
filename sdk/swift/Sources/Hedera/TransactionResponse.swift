@@ -51,12 +51,12 @@ public struct TransactionResponse: Decodable {
 
     /// Wait for consensus to be reached for this transaction.
     public func waitForConsensus(_ client: Client) async throws {
-        let _ = try await self.getReceipt(client)
+        _ = try await getReceipt(client)
     }
 
     /// Wait for _successful_ consensus to be reached for this transaction.
     /// Will return a `receiptStatus` error for a failing receipt from consensus.
     public func waitForSuccessfulConsensus(_ client: Client) async throws {
-        let _ = try await self.getSuccessfulReceipt(client)
+        _ = try await getSuccessfulReceipt(client)
     }
 }

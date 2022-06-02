@@ -6,7 +6,7 @@ private let unixEpoch: Date = Calendar.current.date(from: DateComponents(timeZon
 
 extension Date {
     /// Construct a `Date` from the provided Unix timestamp (in nanoseconds).
-    init(unixTimestampNanos: UInt64) {
+    internal init(unixTimestampNanos: UInt64) {
         let seconds = Int(unixTimestampNanos / 1_000_000_000)
         let nanoseconds = Int(unixTimestampNanos % 1_000_000_000)
 
@@ -16,7 +16,7 @@ extension Date {
     }
 
     /// Get the Unix timestamp in nanoseconds.
-    var unixTimestampNanos: UInt64 {
+    internal var unixTimestampNanos: UInt64 {
         let components = Calendar.current.dateComponents([.second, .nanosecond], from: unixEpoch, to: self)
 
         var timestamp = UInt64(components.second!) * 1_000_000_000
