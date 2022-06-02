@@ -8,9 +8,13 @@ use crate::{FileId, FromProtobuf};
 /// Response from [`FileContentsQuery`][crate::FileContentsQuery].
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FileContentsResponse {
+    /// The file ID of the file whose contents are being returned.
     pub file_id: FileId,
 
+    // TODO: .contents vs .bytes (?)
+    /// The bytes contained in the file.
     #[serde_as(as = "Base64")]
     pub contents: Vec<u8>,
 }
