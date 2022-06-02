@@ -16,7 +16,7 @@ use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, Transact
 /// transaction will resolve to TOKEN_ALREADY_ASSOCIATED_TO_ACCOUNT.
 /// - If the provided account's associations count exceed the constraint of maximum token associations
 /// per account, the transaction will resolve to TOKENS_PER_ACCOUNT_LIMIT_EXCEEDED.
-/// - On success, associations between the provided account and tokens are mad e and the account is
+/// - On success, associations between the provided account and tokens are made and the account is
 /// ready to interact with the tokens.
 pub type TokenAssociateTransaction = Transaction<TokenAssociateTransaction>;
 
@@ -26,8 +26,8 @@ pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
     account_id: Option<AccountId>,
 
-    /// The tokens to be associated with the provided account. In the case on NON_FUNGIBLE_UNIQUE
-    /// Type, one an account is associated, it can hold any number of NFTs (serial numbers) of that
+    /// The tokens to be associated with the provided account. In the case of NON_FUNGIBLE_UNIQUE
+    /// Type, once an account is associated, it can hold any number of NFTs (serial numbers) of that
     /// account type.
     tokens: Option<Vec<TokenId>>,
 }
