@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
-use serde_with::skip_serializing_none;
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds};
 use time::Duration;
 use tonic::transport::Channel;
 
@@ -15,6 +15,7 @@ pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
 // TODO: shard_id: Option<ShardId>
 // TODO: realm_id: Option<RealmId>
 // TODO: new_realm_admin_key: Option<Key>,
+#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -33,6 +34,7 @@ pub struct AccountCreateTransactionData {
     pub receiver_signature_required: bool,
 
     /// The account is charged to extend its expiration date every this many seconds.
+    #[serde_as(as = "Option<DurationSeconds>")]
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.
@@ -42,7 +44,7 @@ pub struct AccountCreateTransactionData {
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     ///
-    pub max_automatic_token_associations: i32,
+    pub max_automatic_token_associations: u16,
 
     /// ID of the account to which this account is staking.
     pub staked_account_id: Option<AccountIdOrAlias>,
@@ -99,7 +101,7 @@ impl AccountCreateTransaction {
 
     /// Set the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
-        self.body.data.max_automatic_token_associations = amount as i32;
+        self.body.data.max_automatic_token_associations = amount;
         self
     }
 
@@ -153,7 +155,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 realm_id: None,
                 new_realm_admin_key: None,
                 memo: self.account_memo.clone(),
-                max_automatic_token_associations: self.max_automatic_token_associations,
+                max_automatic_token_associations: self.max_automatic_token_associations as i32,
                 decline_reward: self.decline_staking_reward,
                 staked_id,
             },

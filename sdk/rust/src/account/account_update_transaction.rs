@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
-use serde_with::skip_serializing_none;
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds, TimestampNanoSeconds};
 use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
 
@@ -21,6 +21,7 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 // TODO: shard_id: Option<ShardId>
 // TODO: realm_id: Option<RealmId>
 // TODO: new_realm_admin_key: Option<Key>,
+#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,19 +36,21 @@ pub struct AccountUpdateTransactionData {
     pub receiver_signature_required: Option<bool>,
 
     /// The account is charged to extend its expiration date every this many seconds.
+    #[serde_as(as = "Option<DurationSeconds>")]
     pub auto_renew_period: Option<Duration>,
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
+    #[serde_as(as = "Option<TimestampNanoSeconds>")]
     pub expires_at: Option<OffsetDateTime>,
 
     /// The memo associated with the account.
-    pub memo: Option<String>,
+    pub account_memo: Option<String>,
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     ///
-    pub max_automatic_token_associations: Option<i32>,
+    pub max_automatic_token_associations: Option<u16>,
 
     /// ID of the account to which this account is staking.
     pub staked_account_id: Option<AccountIdOrAlias>,
@@ -89,13 +92,13 @@ impl AccountUpdateTransaction {
 
     /// Set the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.memo = Some(memo.into());
+        self.body.data.account_memo = Some(memo.into());
         self
     }
 
     /// Set the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
-        self.body.data.max_automatic_token_associations = Some(amount as i32);
+        self.body.data.max_automatic_token_associations = Some(amount);
         self
     }
 
@@ -151,8 +154,8 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
                 proxy_fraction: 0,
                 auto_renew_period,
                 expiration_time,
-                memo: self.memo.clone(),
-                max_automatic_token_associations: self.max_automatic_token_associations,
+                memo: self.account_memo.clone(),
+                max_automatic_token_associations: self.max_automatic_token_associations.into(),
                 decline_reward: self.decline_staking_reward,
                 send_record_threshold_field: None,
                 receive_record_threshold_field: None,
