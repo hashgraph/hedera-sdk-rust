@@ -7,4 +7,8 @@ internal enum AnyTransactionCodingKeys: String, CodingKey {
     case fileCreate
     case fileUpdate
     case fileDelete
+    case topicCreate
+    case topicUpdate
+    case topicDelete
+    case topicMessageSubmit
 }

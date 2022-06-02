@@ -26,7 +26,7 @@ pub struct TopicDeleteTransactionData {
 }
 
 impl TopicDeleteTransaction {
-    /// Set the account ID which is being deleted.
+    /// Sets the topic ID which is being deleted in this transaction.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.body.data.topic_id = Some(id.into());
         self
