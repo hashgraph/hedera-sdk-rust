@@ -48,6 +48,12 @@ pub enum Error {
     ReceiptStatus,
     Signature,
     RequestParse,
+    InvalidAccountId,
+    AccountDeleted,
+    InvalidTokenRef,
+    TokenWasDeleted,
+    TokenAlreadyAssociatedToAccount,
+    TokensPerAccountLimitExceeded,
 }
 
 impl Error {
@@ -73,6 +79,12 @@ impl Error {
             crate::Error::ReceiptStatus { .. } => Self::ReceiptStatus,
             crate::Error::Signature(_) => Self::Signature,
             crate::Error::RequestParse(_) => Self::RequestParse,
+            crate::Error::InvalidAccountId { .. } => Self::InvalidAccountId,
+            crate::Error::AccountDeleted { .. } => Self::AccountDeleted,
+            crate::Error::InvalidTokenRef { .. } => Self::InvalidTokenRef,
+            crate::Error::TokenWasDeleted { .. } => Self::TokenWasDeleted,
+            crate::Error::TokenAlreadyAssociatedToAccount { .. } => Self::TokenAlreadyAssociatedToAccount,
+            crate::Error::TokensPerAccountLimitExceeded { .. } => Self::TokensPerAccountLimitExceeded,
         };
 
         set_last_error(error);

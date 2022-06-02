@@ -29,7 +29,7 @@ pub enum Error {
     QueryPreCheckStatus { status: Status, transaction_id: TransactionId },
 
     #[error(
-        "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
+    "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
     )]
     QueryPaymentPreCheckStatus { status: Status, transaction_id: TransactionId },
 
@@ -67,6 +67,24 @@ pub enum Error {
     #[cfg(feature = "ffi")]
     #[error("failed to parse a request from JSON: {0}")]
     RequestParse(BoxStdError),
+
+    #[error("transaction `{transaction_id}` failed: account with id `{account_id}` was not found")]
+    InvalidAccountId { transaction_id: TransactionId, account_id: AccountId },
+
+    #[error("transaction `{transaction_id}` failed: account `{account_id}` has been deleted")]
+    AccountDeleted { transaction_id: TransactionId, account_id: AccountId },
+
+    #[error("transaction `{transaction_id}` failed: one of the provided tokens was not found")]
+    InvalidTokenRef { transaction_id: TransactionId },
+
+    #[error("transaction `{transaction_id}` failed: one of the provided tokens was previously deleted")]
+    TokenWasDeleted { transaction_id: TransactionId },
+
+    #[error("transaction `{transaction_id}` failed: one of the provided tokens is already associated with account `{account_id}`")]
+    TokenAlreadyAssociatedToAccount { transaction_id: TransactionId, account_id: AccountId },
+
+    #[error("transaction `{transaction_id}` failed: max token association limit has been reach for account `{account_id}`")]
+    TokensPerAccountLimitExceeded { transaction_id: TransactionId, account_it: AccountId },
 }
 
 impl Error {

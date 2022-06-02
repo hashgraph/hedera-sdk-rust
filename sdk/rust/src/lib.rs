@@ -56,7 +56,7 @@ pub use query::{AnyQuery, Query};
 pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
-pub use token::TokenId;
+pub use token::{TokenId, TokenAssociateTransaction};
 pub use topic::{
     TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessage, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction
 };
