@@ -36,7 +36,7 @@ pub struct AccountUpdateTransactionData {
     pub receiver_signature_required: Option<bool>,
 
     /// The account is charged to extend its expiration date every this many seconds.
-    #[serde_as(as = "Option<DurationSeconds>")]
+    #[serde_as(as = "Option<DurationSeconds<i64>>")]
     pub auto_renew_period: Option<Duration>,
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
@@ -53,7 +53,12 @@ pub struct AccountUpdateTransactionData {
     pub max_automatic_token_associations: Option<u16>,
 
     /// ID of the account to which this account is staking.
+    /// This is mutually exclusive with `staked_node_id`.
     pub staked_account_id: Option<AccountIdOrAlias>,
+
+    /// ID of the node this account is staked to.
+    /// This is mutually exclusive with `staked_account_id`.
+    pub staked_node_id: Option<u64>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
     pub decline_staking_reward: Option<bool>,
@@ -103,8 +108,16 @@ impl AccountUpdateTransaction {
     }
 
     /// Set the ID of the account to which this account is staking.
+    /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
+        self
+    }
+
+    /// Set the ID of the node to which this account is staking.
+    /// This is mutually exclusive with `staked_account_id`.
+    pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
+        self.body.data.staked_node_id = Some(id);
         self
     }
 
@@ -141,9 +154,19 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
             services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
         });
 
-        let staked_id = self.staked_account_id.as_ref().map(|id| {
-            services::crypto_update_transaction_body::StakedId::StakedAccountId(id.to_protobuf())
-        });
+        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
+            (_, Some(node_id)) => Some(
+                services::crypto_update_transaction_body::StakedId::StakedNodeId(node_id as i64),
+            ),
+
+            (Some(account_id), _) => {
+                Some(services::crypto_update_transaction_body::StakedId::StakedAccountId(
+                    account_id.to_protobuf(),
+                ))
+            }
+
+            _ => None,
+        };
 
         services::transaction_body::Data::CryptoUpdateAccount(
             #[allow(deprecated)]
@@ -155,12 +178,14 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
                 auto_renew_period,
                 expiration_time,
                 memo: self.account_memo.clone(),
-                max_automatic_token_associations: self.max_automatic_token_associations.into(),
+                max_automatic_token_associations: self
+                    .max_automatic_token_associations
+                    .map(Into::into),
                 decline_reward: self.decline_staking_reward,
                 send_record_threshold_field: None,
                 receive_record_threshold_field: None,
                 receiver_sig_required_field: receiver_signature_required,
-                staked_id: staked_id,
+                staked_id,
             },
         )
     }

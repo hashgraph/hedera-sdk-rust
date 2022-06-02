@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 
-use serde_with::{serde_as, skip_serializing_none, FromInto};
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds, FromInto};
 use time::Duration;
 
 use crate::execute::execute;
@@ -42,13 +42,19 @@ where
     #[serde(flatten)]
     #[serde_as(as = "FromInto<AnyTransactionData>")]
     pub(crate) data: D,
+
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
-    #[serde(with = "crate::serde::duration_opt")]
+
+    #[serde_as(as = "Option<DurationSeconds<i64>>")]
     pub(crate) transaction_valid_duration: Option<Duration>,
+
     pub(crate) max_transaction_fee: Option<u64>,
-    #[serde(skip_serializing_if = "crate::serde::skip_if_string_empty")]
+
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) transaction_memo: String,
+
     pub(crate) payer_account_id: Option<AccountId>,
+
     pub(crate) transaction_id: Option<TransactionId>,
 }
 

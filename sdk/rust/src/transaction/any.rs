@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use serde::{Deserialize, Deserializer};
-use serde_with::skip_serializing_none;
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds};
 use time::Duration;
 use tonic::transport::Channel;
 use tonic::{Response, Status};
@@ -142,22 +142,30 @@ impl TransactionExecute for AnyTransactionData {
 //  we create a proxy type that has the same layout but is only for AnyQueryData and does
 //  derive(Deserialize).
 
+#[serde_as]
 #[skip_serializing_none]
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AnyTransactionBody<D> {
     #[serde(flatten)]
     data: D,
+
     #[serde(default)]
     node_account_ids: Option<Vec<AccountId>>,
-    #[serde(default, with = "crate::serde::duration_opt")]
+
+    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(default)]
     transaction_valid_duration: Option<Duration>,
+
     #[serde(default)]
     max_transaction_fee: Option<u64>,
-    #[serde(default, skip_serializing_if = "crate::serde::skip_if_string_empty")]
+
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     transaction_memo: String,
+
     #[serde(default)]
     payer_account_id: Option<AccountId>,
+
     #[serde(default)]
     transaction_id: Option<TransactionId>,
 }
