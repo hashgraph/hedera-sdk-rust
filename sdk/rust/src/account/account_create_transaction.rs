@@ -34,7 +34,7 @@ pub struct AccountCreateTransactionData {
     pub receiver_signature_required: bool,
 
     /// The account is charged to extend its expiration date every this many seconds.
-    #[serde_as(as = "Option<DurationSeconds>")]
+    #[serde_as(as = "Option<DurationSeconds<i64>>")]
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.
@@ -47,7 +47,12 @@ pub struct AccountCreateTransactionData {
     pub max_automatic_token_associations: u16,
 
     /// ID of the account to which this account is staking.
+    /// This is mutually exclusive with `staked_node_id`.
     pub staked_account_id: Option<AccountIdOrAlias>,
+
+    /// ID of the node this account is staked to.
+    /// This is mutually exclusive with `staked_account_id`.
+    pub staked_node_id: Option<u64>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
     pub decline_staking_reward: bool,
@@ -63,6 +68,7 @@ impl Default for AccountCreateTransactionData {
             account_memo: String::new(),
             max_automatic_token_associations: 0,
             staked_account_id: None,
+            staked_node_id: None,
             decline_staking_reward: false,
         }
     }
@@ -106,8 +112,16 @@ impl AccountCreateTransaction {
     }
 
     /// Set the ID of the account to which this account is staking.
+    /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
+        self
+    }
+
+    /// Set the ID of the node to which this account is staking.
+    /// This is mutually exclusive with `staked_account_id`.
+    pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
+        self.body.data.staked_node_id = Some(id);
         self
     }
 
@@ -137,9 +151,20 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
     ) -> services::transaction_body::Data {
         let key = self.key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let staked_id = self.staked_account_id.as_ref().map(|id| {
-            services::crypto_create_transaction_body::StakedId::StakedAccountId(id.to_protobuf())
-        });
+
+        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
+            (_, Some(node_id)) => Some(
+                services::crypto_create_transaction_body::StakedId::StakedNodeId(node_id as i64),
+            ),
+
+            (Some(account_id), _) => {
+                Some(services::crypto_create_transaction_body::StakedId::StakedAccountId(
+                    account_id.to_protobuf(),
+                ))
+            }
+
+            _ => None,
+        };
 
         services::transaction_body::Data::CryptoCreateAccount(
             #[allow(deprecated)]

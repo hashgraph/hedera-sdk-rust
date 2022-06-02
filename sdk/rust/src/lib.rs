@@ -24,7 +24,6 @@ mod file;
 mod key;
 mod query;
 mod schedule;
-mod serde;
 mod signature;
 mod signer;
 mod token;

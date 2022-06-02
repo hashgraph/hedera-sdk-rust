@@ -89,12 +89,27 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// ID of the account to which this account is staking.
+    /// This is mutually exclusive with `stakedNodeId`.
     public private(set) var stakedAccountId: AccountIdOrAlias?
 
     /// Sets the ID of the account to which this account is staking.
+    /// This is mutually exclusive with `stakedNodeId`.
     @discardableResult
     public func stakedAccountId(_ stakedAccountId: AccountIdOrAlias) -> Self {
         self.stakedAccountId = stakedAccountId
+
+        return self
+    }
+
+    /// ID of the node this account is staked to.
+    /// This is mutually exclusive with `staked_account_id`.
+    public private(set) var stakedNodeId: UInt64
+
+    /// Sets the ID of the node this account is staked to.
+    /// This is mutually exclusive with `staked_account_id`.
+    @discardableResult
+    public func stakedNodeId(_ stakedNodeId: UInt64) -> Self {
+        self.stakedNodeId = stakedNodeId
 
         return self
     }
@@ -118,6 +133,7 @@ public class AccountUpdateTransaction: Transaction {
         case expiresAt
         case maxAutomaticTokenAssociations
         case stakedAccountId
+        case stakedNodeId
         case declineStakingReward
     }
 
@@ -131,6 +147,7 @@ public class AccountUpdateTransaction: Transaction {
         try data.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
         try data.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
         try data.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
+        try data.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
         try data.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
 
         try super.encode(to: encoder)
