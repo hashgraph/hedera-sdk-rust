@@ -3,4 +3,8 @@ internal enum AnyTransactionCodingKeys: String, CodingKey {
     case accountCreate
     case accountUpdate
     case accountDelete
+    case fileAppend
+    case fileCreate
+    case fileUpdate
+    case fileDelete
 }

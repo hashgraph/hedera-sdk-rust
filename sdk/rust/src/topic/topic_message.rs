@@ -1,6 +1,6 @@
 use hedera_proto::mirror;
 use serde::Serialize;
-use serde_with::hex::Hex;
+use serde_with::base64::Base64;
 use serde_with::serde_as;
 use time::OffsetDateTime;
 
@@ -13,10 +13,11 @@ pub struct TopicMessage {
     pub consensus_at: OffsetDateTime,
 
     /// The content of the message.
-    #[serde_as(as = "Hex")]
+    #[serde_as(as = "Base64")]
     pub contents: Vec<u8>,
 
     /// The new running hash of the topic that received the message.
+    #[serde_as(as = "Base64")]
     pub running_hash: Vec<u8>,
 
     /// Version of the SHA-384 digest used to update the running hash.

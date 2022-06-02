@@ -17,7 +17,7 @@ time = { version = "0.3.9", features = ["serde"] }
 tokio = { version = "1.18.1" }
 hedera-proto = { path = "../../protobufs/rust", features = ["serde", "time_0_3"] }
 serde_json = "1.0.79"
-serde_with = { version = "1.12.1", features = ["hex"] }
+serde_with = { version = "1.12.1", features = ["hex", "base64"] }
 tonic = { version = "0.7.1", features = ["compression"] }
 async-trait = "0.1.53"
 prost = "0.10.1"

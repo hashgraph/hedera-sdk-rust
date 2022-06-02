@@ -1,4 +1,5 @@
 import Hedera
+import Foundation
 
 @main
 struct Program {

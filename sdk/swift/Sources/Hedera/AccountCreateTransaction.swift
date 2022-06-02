@@ -1,8 +1,8 @@
 import Foundation
 
 /// Create a new Hedera™ account.
-public class AccountCreateTransaction: Transaction {
-    /// Create a new ``AccountCreateTransaction`` ready for configuration.
+public final class AccountCreateTransaction: Transaction {
+    /// Create a new `AccountCreateTransaction` ready for configuration.
     public override init() {}
 
     /// The key that must sign each transfer out of the account.
@@ -12,14 +12,6 @@ public class AccountCreateTransaction: Transaction {
     @discardableResult
     public func key(_ key: Key) -> Self {
         self.key = key
-
-        return self
-    }
-
-    /// Sets the key that must sign each transfer out of the account.
-    @discardableResult
-    public func key(_ publicKey: PublicKey) -> Self {
-        self.key = .primitive(publicKey)
 
         return self
     }
