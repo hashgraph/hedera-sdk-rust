@@ -5,7 +5,7 @@
 .idea/
 
 # Rust build output directory
-target/
+sdk/rust/target/
 
 # Swift intermediate build directory
 .build/

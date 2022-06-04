@@ -10,7 +10,7 @@ fn main() -> anyhow::Result<()> {
     // in the beginning, there was only services and it was named "protos"
 
     let services: Vec<_> =
-        read_dir("../src/services")?.filter_map(|entry| Some(entry.ok()?.path())).collect();
+        read_dir("../../../protobufs/services")?.filter_map(|entry| Some(entry.ok()?.path())).collect();
 
     let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
 
@@ -65,7 +65,7 @@ successful transaction.
             .type_attribute("proto.ResponseCodeEnum", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
     }
 
-    cfg.compile(&services, &["../src/services/"])?;
+    cfg.compile(&services, &["../../../protobufs/services/"])?;
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
@@ -89,10 +89,10 @@ successful transaction.
         .out_dir(&mirror_out_dir)
         .compile(
             &[
-                "../src/mirror/consensus_service.proto",
-                "../src/mirror/mirror_network_service.proto",
+                "../../../protobufs/mirror/consensus_service.proto",
+                "../../../protobufs/mirror/mirror_network_service.proto",
             ],
-            &["../src/mirror/", "../src/services/"],
+            &["../../../protobufs/mirror/", "../../../protobufs/services/"],
         )?;
 
     // streams
@@ -165,8 +165,8 @@ successful transaction.
         .extern_path(".proto.ContractID", "crate::services::ContractId");
 
     cfg.out_dir(&streams_out_dir).compile(
-        &["../src/streams/account_balance_file.proto"],
-        &["../src/streams/", "../src/services/"],
+        &["../../../protobufs/streams/account_balance_file.proto"],
+        &["../../../protobufs/streams/", "../../../protobufs/services/"],
     )?;
 
     Ok(())
