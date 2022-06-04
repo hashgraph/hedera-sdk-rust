@@ -89,7 +89,6 @@ where
 
     let mut backoff = ExponentialBackoff::default();
     let mut last_error: Option<Error> = None;
-    let max_attempts = 10; // FIXME: from client
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
 
@@ -113,7 +112,7 @@ where
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
 
-    for _ in 0..max_attempts {
+    loop {
         // if no explicit set of node account IDs, we randomly sample 1/3 of all
         // healthy nodes on the client. this set of healthy nodes can change on
         // each iteration
@@ -222,7 +221,4 @@ where
             return Err(Error::TimedOut(last_error.unwrap().into()));
         }
     }
-
-    // NOTE: it should be impossible to reach here without capturing at least one error
-    Err(Error::MaxAttemptsExceeded(Box::new(last_error.unwrap())))
 }

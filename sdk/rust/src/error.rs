@@ -46,9 +46,6 @@ pub enum Error {
     #[error("client must be configured with a payer account or requests must be given an explicit transaction id")]
     NoPayerAccountOrTransactionId,
 
-    #[error("exceeded maximum attempts for request; most recent attempt failed with: {0}")]
-    MaxAttemptsExceeded(Box<Error>),
-
     #[error("cost of {query_cost} without explicit payment is greater than the maximum allowed payment of {max_query_payment}")]
     MaxQueryPaymentExceeded { query_cost: u64, max_query_payment: u64 },
 
