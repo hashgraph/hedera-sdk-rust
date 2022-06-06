@@ -41,7 +41,7 @@ pub type TokenBurnTransaction = Transaction<TokenBurnTransactionData>;
 pub struct TokenBurnTransactionData {
     /// The token for which to burn tokens. If token does not exist, transaction results in
     /// INVALID_TOKEN_ID
-    token: Option<TokenId>,
+    token_id: Option<TokenId>,
 
     /// Applicable to tokens of type FUNGIBLE_COMMON. The amount to burn from the Treasury Account.
     /// Amount must be a positive non-zero number, not bigger than the token balance of the treasury
@@ -54,8 +54,8 @@ pub struct TokenBurnTransactionData {
 
 impl TokenBurnTransaction {
     /// Sets the Token ID for which to burn tokens
-    pub fn token(&mut self, token: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token = Some(token.into());
+    pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
+        self.body.data.token_id = Some(token_id.into());
         self
     }
 
@@ -96,7 +96,7 @@ impl ToTransactionDataProtobuf for TokenBurnTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let token = self.token.as_ref().map(TokenId::to_protobuf);
+        let token = self.token_id.as_ref().map(TokenId::to_protobuf);
         let amount = self.amount.clone().unwrap_or_default();
         let serial_numbers = self.serial_numbers.clone().unwrap_or_default();
 
