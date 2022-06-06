@@ -16,7 +16,7 @@ impl<T> Callback<T> {
         Self { handle, context }
     }
 
-    pub(super) fn call(self, err: Error, value: T) {
+    pub(super) fn call(&self, err: Error, value: T) {
         (self.handle)(self.context, err, value)
     }
 }
