@@ -3,8 +3,7 @@ use itertools::Itertools;
 use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::base64::Base64;
-use serde_with::{serde_as, skip_serializing_none, TimestampNanoSeconds};
+use serde_with::{serde_as, skip_serializing_none};
 
 use crate::{AccountId, TokenId, ToProtobuf, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
@@ -22,7 +21,7 @@ use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, Transact
 /// per account, the transaction will resolve to TOKENS_PER_ACCOUNT_LIMIT_EXCEEDED.
 /// - On success, associations between the provided account and tokens are made and the account is
 /// ready to interact with the tokens.
-pub type TokenAssociateTransaction = Transaction<TokenAssociateTransaction>;
+pub type TokenAssociateTransaction = Transaction<TokenAssociateTransactionData>;
 
 #[serde_as]
 #[skip_serializing_none]
@@ -30,24 +29,24 @@ pub type TokenAssociateTransaction = Transaction<TokenAssociateTransaction>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
-    account_id: Option<AccountId>,
+    account: Option<AccountId>,
 
     /// The tokens to be associated with the provided account. In the case of NON_FUNGIBLE_UNIQUE
     /// Type, once an account is associated, it can hold any number of NFTs (serial numbers) of that
     /// account type.
-    tokens: Option<Vec<TokenId>>,
+    tokens: Vec<TokenId>,
 }
 
 impl TokenAssociateTransaction {
     /// Sets the account to be associated with the provided tokens.
-    pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
-        self.body.data.account_id = Some(account_id.into());
+    pub fn account(&mut self, account: impl Into<AccountId>) -> &mut Self {
+        self.body.data.account = Some(account.into());
         self
     }
 
     /// Sets the tokens to be associated with the provided account.
-    pub fn tokens(&mut self, tokens: impl Into<Vec<Token>>) -> &mut Self {
-        self.body.data.tokens = Some(tokens);
+    pub fn tokens(&mut self, tokens: impl IntoIterator<Item = TokenId>) -> &mut Self {
+        self.body.data.tokens = tokens.into_iter().collect();
         self
     }
 }
@@ -69,18 +68,13 @@ impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
+        let account = self.account.as_ref().map(AccountId::to_protobuf);
         let tokens =
-            self.tokens
-                .as_deref()
-                .unwrap_or_default()
-                .iter()
-                .map(TokenId::to_protobuf)
-                .collect_vec();
+            self.tokens.iter().map(TokenId::to_protobuf).collect_vec();
 
         services::transaction_body::Data::TokenAssociate(services::TokenAssociateTransactionBody {
-            account_id,
-            tokens: Some(tokens),
+            account,
+            tokens
         })
     }
 }
