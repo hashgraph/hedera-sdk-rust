@@ -7,7 +7,7 @@ use time::OffsetDateTime;
 use crate::{FromProtobuf, TransactionId};
 
 #[serde_as]
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Clone, Debug)]
 pub struct TopicMessage {
     /// The consensus timestamp of the message.
     pub consensus_at: OffsetDateTime,
