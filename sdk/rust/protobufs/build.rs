@@ -9,8 +9,9 @@ fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
     // in the beginning, there was only services and it was named "protos"
 
-    let services: Vec<_> =
-        read_dir("../../../protobufs/services")?.filter_map(|entry| Some(entry.ok()?.path())).collect();
+    let services: Vec<_> = read_dir("../../../protobufs/services")?
+        .filter_map(|entry| Some(entry.ok()?.path()))
+        .collect();
 
     let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
 
@@ -53,16 +54,23 @@ fn main() -> anyhow::Result<()> {
     cfg = cfg.type_attribute("proto.ResponseCodeEnum", "#[non_exhaustive]");
 
     // the ResponseCodeEnum is not documented in the proto source
-    cfg = cfg.type_attribute("proto.ResponseCodeEnum", r#"#[doc = "
+    cfg = cfg.type_attribute(
+        "proto.ResponseCodeEnum",
+        r#"#[doc = "
 Returned in `TransactionReceipt`, `Error::PreCheckStatus`, and `Error::ReceiptStatus`.
 
 The success variant is `Success` which is what a `TransactionReceipt` will contain for a
 successful transaction.
-    "]"#);
+    "]"#,
+    );
 
     if cfg!(feature = "serde") {
-        cfg = cfg.type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
-            .type_attribute("proto.ResponseCodeEnum", "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]");
+        cfg = cfg
+            .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
+            .type_attribute(
+                "proto.ResponseCodeEnum",
+                "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]",
+            );
     }
 
     cfg.compile(&services, &["../../../protobufs/services/"])?;

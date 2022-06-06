@@ -13,6 +13,7 @@ pub(crate) use topic_delete_transaction::TopicDeleteTransactionData;
 pub use topic_id::TopicId;
 pub use topic_message::TopicMessage;
 pub use topic_message_query::TopicMessageQuery;
+pub(crate) use topic_message_query::TopicMessageQueryData;
 pub use topic_message_submit_transaction::TopicMessageSubmitTransaction;
 pub(crate) use topic_message_submit_transaction::TopicMessageSubmitTransactionData;
 pub use topic_update_transaction::TopicUpdateTransaction;

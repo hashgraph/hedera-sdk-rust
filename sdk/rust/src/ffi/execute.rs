@@ -10,7 +10,7 @@ use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
 use crate::transaction::AnyTransaction;
-use crate::{AnyQuery, Client};
+use crate::{AnyMirrorQuery, AnyQuery, Client};
 
 static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
     runtime::Builder::new_multi_thread().enable_all().max_blocking_threads(8).build().unwrap()
@@ -25,6 +25,7 @@ thread_local! {
 enum AnyRequest {
     Transaction(AnyTransaction),
     Query(AnyQuery),
+    MirrorQuery(AnyMirrorQuery),
 }
 
 /// Execute this request against the provided client of the Hedera network.
@@ -53,6 +54,11 @@ pub extern "C" fn hedera_execute(
                 .map(|response| serde_json::to_string(&response).unwrap()),
 
             AnyRequest::Transaction(mut transaction) => transaction
+                .execute(client)
+                .await
+                .map(|response| serde_json::to_string(&response).unwrap()),
+
+            AnyRequest::MirrorQuery(mut mirror_query) => mirror_query
                 .execute(client)
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),

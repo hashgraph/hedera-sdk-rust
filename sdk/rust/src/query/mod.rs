@@ -1,4 +1,3 @@
-use serde_with::serde_as;
 use time::Duration;
 
 use crate::execute::execute;
@@ -12,13 +11,12 @@ mod execute;
 pub(super) mod payment_transaction;
 mod protobuf;
 
-pub use any::AnyQuery;
 pub(crate) use any::AnyQueryData;
+pub use any::{AnyQuery, AnyQueryResponse};
 pub(crate) use execute::QueryExecute;
 pub(crate) use protobuf::ToQueryProtobuf;
 
 /// A query that can be executed on the Hedera network.
-#[serde_as]
 #[derive(Debug, Default)]
 pub struct Query<D>
 where
