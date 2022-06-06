@@ -1,6 +1,6 @@
 import CHedera
 
-/// A private key on the Hedera network.
+/// A public key on the Hedera network.
 public final class PublicKey: LosslessStringConvertible, Encodable {
     private let ptr: OpaquePointer
 
