@@ -18,7 +18,6 @@ public struct HError: Error, CustomStringConvertible {
         case basicParse
         case keyParse
         case noPayerAccountOrTransactionId
-        case maxAttemptsExceeded
         case maxQueryPaymentExceeded
         case nodeAccountUnknown
         case responseStatusUnrecognized
@@ -71,9 +70,6 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID:
             kind = .noPayerAccountOrTransactionId
-
-        case HEDERA_ERROR_MAX_ATTEMPTS_EXCEEDED:
-            kind = .maxAttemptsExceeded
 
         case HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED:
             kind = .maxQueryPaymentExceeded

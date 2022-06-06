@@ -1,0 +1,139 @@
+version: "3"
+
+silent: false
+
+tasks:
+    build:
+        run: once
+        generates:
+            - target/debug/libhedera.a
+        sources:
+            - src/**/*.rs
+        cmds:
+            # Build the Hedera Rust SDK (in debug mode)
+            - cargo build --message-format=short --features=ffi
+
+            # Package for Swift
+            - rm -rf ../swift/CHedera.xcframework/macos-*/
+            - mkdir -p ../swift/CHedera.xcframework/macos-{x86_64,arm64}/Headers/
+            - cp target/debug/libhedera.a ../swift/CHedera.xcframework/macos-x86_64/
+            - cp target/debug/libhedera.a ../swift/CHedera.xcframework/macos-arm64/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-x86_64/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-arm64/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-x86_64/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-arm64/Headers/
+
+    format:
+        cmds:
+            - cargo fmt
+
+    lint:
+        cmds:
+            - cargo clippy --features=ffi --message-format=short
+
+    package:
+        run: once
+        sources:
+            - src/**/*.rs
+        generates:
+            - ../c/lib/macos-x86_64/libhedera.a
+            - ../c/lib/ios-x86_64/libhedera.a
+            - ../c/lib/macos-arm64/libhedera.a
+            - ../c/lib/ios-arm64/libhedera.a
+            - ../c/lib/linux-x86_64/libhedera.a
+            - ../c/lib/windows-x86_64/libhedera.a
+            - ../c/lib/macos-x86_64/libhedera.dylib
+            - ../c/lib/macos-arm64/libhedera.dylib
+            - ../c/lib/linux-x86_64/libhedera.so
+            - ../c/lib/windows-x86_64/hedera.dll
+        cmds:
+            #
+            # Build the Hedera Rust SDK (in release mode)
+            #
+
+            # Ensure we have rust-src
+            - rustup component add rust-src 2> /dev/null
+
+            # Build for target: x86_64-apple-darwin
+            - rustup target add x86_64-apple-darwin 2> /dev/null
+            - cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-apple-darwin
+            - strip -X -S -N -x ./target/x86_64-apple-darwin/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/x86_64-apple-darwin/release/libhedera.dylib 2> /dev/null
+
+            # Build for target: x86_64-apple-ios
+            - rustup target add x86_64-apple-ios 2> /dev/null
+            - cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-apple-ios
+            - strip -X -S -N -x ./target/x86_64-apple-ios/release/libhedera.a 2> /dev/null
+
+            # Build for target: aarch64-apple-darwin
+            - rustup target add aarch64-apple-darwin 2> /dev/null
+            - cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target aarch64-apple-darwin
+            - strip -X -S -N -x ./target/aarch64-apple-darwin/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/aarch64-apple-darwin/release/libhedera.dylib 2> /dev/null
+
+            # Build for target: aarch64-apple-ios
+            - rustup target add aarch64-apple-ios 2> /dev/null
+            - cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target aarch64-apple-ios
+            - strip -X -S -N -x ./target/aarch64-apple-ios/release/libhedera.a 2> /dev/null
+
+            # Build for target: x86_64-unknown-linux-gnu
+            - rustup target add x86_64-unknown-linux-gnu 2> /dev/null
+
+            - env
+                CC_x86_64_unknown_linux_gnu=x86_64-unknown-linux-gnu-gcc
+                CXX_x86_64_unknown_linux_gnu=x86_64-unknown-linux-gnu-g++
+                AR_x86_64_unknown_linux_gnu=x86_64-unknown-linux-gnu-ar
+                CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-unknown-linux-gnu-gcc
+                cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-unknown-linux-gnu
+
+            - x86_64-unknown-linux-gnu-strip --strip-unneeded target/x86_64-unknown-linux-gnu/release/libhedera.a 2> /dev/null
+            - x86_64-unknown-linux-gnu-strip --strip-unneeded target/x86_64-unknown-linux-gnu/release/libhedera.so 2> /dev/null
+
+            # Build for target: x86_64-pc-windows-gnu
+            - rustup target add x86_64-pc-windows-gnu 2> /dev/null
+            - cargo build --features ffi --release -p hedera -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-pc-windows-gnu
+            - x86_64-w64-mingw32-strip --strip-unneeded target/x86_64-pc-windows-gnu/release/libhedera.a 2> /dev/null
+            - x86_64-w64-mingw32-strip --strip-unneeded target/x86_64-pc-windows-gnu/release/hedera.dll 2> /dev/null
+
+            #
+            # Package for C
+            #
+
+            - mkdir -p ../c/lib/{macos,ios}-{x86_64,arm64}/
+            - mkdir -p ../c/lib/{linux,windows}-x86_64/
+
+            - cp target/x86_64-apple-darwin/release/libhedera.a ../c/lib/macos-x86_64/
+            - cp target/x86_64-apple-ios/release/libhedera.a ../c/lib/ios-x86_64/
+            - cp target/aarch64-apple-darwin/release/libhedera.a ../c/lib/macos-arm64/
+            - cp target/aarch64-apple-ios/release/libhedera.a ../c/lib/ios-arm64/
+            - cp target/x86_64-unknown-linux-gnu/release/libhedera.a ../c/lib/linux-x86_64/
+            - cp target/x86_64-pc-windows-gnu/release/libhedera.a ../c/lib/windows-x86_64/
+
+            - cp target/x86_64-apple-darwin/release/libhedera.dylib ../c/lib/macos-x86_64/
+            - cp target/aarch64-apple-darwin/release/libhedera.dylib ../c/lib/macos-arm64/
+            - cp target/x86_64-unknown-linux-gnu/release/libhedera.so ../c/lib/linux-x86_64/
+            - cp target/x86_64-pc-windows-gnu/release/hedera.dll ../c/lib/windows-x86_64/
+
+            #
+            # Package for Swift
+            #
+
+            - rm -rf ../swift/CHedera.xcframework/{ios,macos}-*/
+
+            - mkdir -p ../swift/CHedera.xcframework/macos-{x86_64,arm64}/Headers/
+            - mkdir -p ../swift/CHedera.xcframework/ios-{x86_64-simulator,arm64}/Headers/
+
+            - cp ../c/lib/macos-x86_64/libhedera.a ../swift/CHedera.xcframework/macos-x86_64/
+            - cp ../c/lib/macos-arm64/libhedera.a ../swift/CHedera.xcframework/macos-arm64/
+            - cp ../c/lib/ios-x86_64/libhedera.a ../swift/CHedera.xcframework/ios-x86_64-simulator/
+            - cp ../c/lib/ios-arm64/libhedera.a ../swift/CHedera.xcframework/ios-arm64/
+
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-x86_64/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-arm64/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/ios-x86_64-simulator/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/ios-arm64/Headers/
+
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-x86_64/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-arm64/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/ios-x86_64-simulator/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/ios-arm64/Headers/

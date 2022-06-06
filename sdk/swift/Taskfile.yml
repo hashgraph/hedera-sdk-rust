@@ -1,0 +1,27 @@
+version: "3"
+
+silent: true
+
+includes:
+    ":rust":
+        taskfile: ../rust/Taskfile.yml
+        dir: ../rust
+
+tasks:
+    build:
+        deps: [":rust:build"]
+        cmds:
+            - swift build
+
+    format:
+        cmds:
+            - swift format -i -p -r Sources Examples Package.swift
+
+    lint:
+        cmds:
+            - swiftlint --strict --quiet
+
+    package:
+        deps: [":rust:package"]
+        cmds:
+            - swift build -c release
