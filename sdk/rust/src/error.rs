@@ -29,7 +29,7 @@ pub enum Error {
     QueryPreCheckStatus { status: Status, transaction_id: TransactionId },
 
     #[error(
-        "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
+    "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
     )]
     QueryPaymentPreCheckStatus { status: Status, transaction_id: TransactionId },
 
