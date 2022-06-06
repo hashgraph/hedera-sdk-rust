@@ -29,24 +29,24 @@ pub type TokenAssociateTransaction = Transaction<TokenAssociateTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
-    account: Option<AccountId>,
+    account_id: Option<AccountId>,
 
     /// The tokens to be associated with the provided account. In the case of NON_FUNGIBLE_UNIQUE
     /// Type, once an account is associated, it can hold any number of NFTs (serial numbers) of that
     /// account type.
-    tokens: Vec<TokenId>,
+    token_ids: Vec<TokenId>,
 }
 
 impl TokenAssociateTransaction {
     /// Sets the account to be associated with the provided tokens.
-    pub fn account(&mut self, account: impl Into<AccountId>) -> &mut Self {
-        self.body.data.account = Some(account.into());
+    pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
+        self.body.data.account_id = Some(account_id.into());
         self
     }
 
     /// Sets the tokens to be associated with the provided account.
-    pub fn tokens(&mut self, tokens: impl IntoIterator<Item = TokenId>) -> &mut Self {
-        self.body.data.tokens = tokens.into_iter().collect();
+    pub fn token_ids(&mut self, token_ids: impl IntoIterator<Item = TokenId>) -> &mut Self {
+        self.body.data.token_ids = token_ids.into_iter().collect();
         self
     }
 }
@@ -68,9 +68,9 @@ impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account.as_ref().map(AccountId::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let tokens =
-            self.tokens.iter().map(TokenId::to_protobuf).collect_vec();
+            self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
 
         services::transaction_body::Data::TokenAssociate(services::TokenAssociateTransactionBody {
             account,
