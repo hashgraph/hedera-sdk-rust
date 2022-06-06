@@ -27,7 +27,11 @@
         {
             "path": "sdk/c",
             "name": "C"
-        }
+        },
+	{
+	    "path": "sdk/kotlin",
+	    "name": "Kotlin"
+	}
     ],
     "settings": {}
 }
