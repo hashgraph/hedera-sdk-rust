@@ -1,0 +1,3 @@
+.build/
+CHedera.xcframework/*/
+.vscode/launch.json

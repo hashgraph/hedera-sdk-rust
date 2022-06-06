@@ -1,17 +1,2 @@
-# Local environment
 .env
-
-# Intellij project directory
 .idea/
-
-# Rust build output directory
-sdk/rust/target/
-
-# Swift intermediate build directory
-.build/
-
-# Built C libraries
-sdk/c/lib/*/
-
-# Built C libraries in Swift XCFramework
-sdk/swift/CHedera.xcframework/*/
