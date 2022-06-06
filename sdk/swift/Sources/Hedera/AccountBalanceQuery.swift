@@ -33,15 +33,31 @@ public class AccountBalanceQuery: Query<AccountBalanceResponse> {
         return self
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case accountId
+        case contractId
+    }
+
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: AnyQueryCodingKeys.self)
+        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountBalance)
 
-        try container.encodeIfPresent(balanceSource, forKey: .accountBalance)
+        switch (balanceSource) {
+            case .accountId(let accountId):
+                try data.encode(accountId, forKey: .accountId)
+
+            case .contractId(let contractId):
+                try data.encode(contractId, forKey: .contractId)
+
+            case nil:
+                break
+        }
+
         try super.encode(to: encoder)
     }
 }
 
-private enum AccountBalanceSource: Encodable {
+private enum AccountBalanceSource {
     case accountId(AccountIdOrAlias)
     // TODO: Use ContractIdOrEvmAddress
     case contractId(AccountIdOrAlias)

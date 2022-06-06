@@ -1,0 +1,35 @@
+version: "3"
+
+silent: true
+
+includes:
+    rust:
+        taskfile: ./sdk/rust/Taskfile.yml
+        dir: ./sdk/rust
+
+    swift:
+        taskfile: ./sdk/swift/Taskfile.yml
+        dir: ./sdk/swift
+
+tasks:
+    build:
+        deps:
+            - rust:build
+            - swift:build
+
+    format:
+        deps:
+            - rust:format
+            - swift:format
+
+    lint:
+        cmds:
+            - task: rust:lint
+            - task: swift:lint
+
+    package:
+        deps:
+            - rust:package
+            - swift:package
+
+    # TODO: publish
