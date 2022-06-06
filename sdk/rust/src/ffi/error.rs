@@ -26,7 +26,7 @@ pub(crate) fn set_last_error(error: crate::Error) {
 }
 
 /// Represents any possible result from a fallible function in the Hedera SDK.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(C)]
 pub enum Error {
     Ok,

@@ -3,18 +3,12 @@ use std::ffi::{c_void, CString};
 use std::os::raw::c_char;
 use std::ptr::null;
 
-use once_cell::sync::Lazy;
-use tokio::runtime::{self, Runtime};
-
 use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
+use crate::ffi::runtime::RUNTIME;
 use crate::ffi::util::cstr_from_ptr;
 use crate::transaction::AnyTransaction;
 use crate::{AnyMirrorQuery, AnyQuery, Client};
-
-static RUNTIME: Lazy<Runtime> = Lazy::new(|| {
-    runtime::Builder::new_multi_thread().enable_all().max_blocking_threads(8).build().unwrap()
-});
 
 thread_local! {
     static EXECUTE_RESPONSE: RefCell<CString> = RefCell::new(CString::new("").unwrap());

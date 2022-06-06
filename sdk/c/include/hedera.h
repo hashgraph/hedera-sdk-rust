@@ -236,6 +236,15 @@ enum HederaError hedera_schedule_id_from_string(const char *s, struct HederaSche
 struct HederaSigner *hedera_signer_private_key(struct HederaPrivateKey *key);
 
 /**
+ * Subscribe with this request against the provided client of the Hedera network.
+ * On successful completion, calls `callback` with `ERROR_OK` and a `NULL` `message`.
+ */
+enum HederaError hedera_subscribe(const struct HederaClient *client,
+                                  const char *request,
+                                  const void *context,
+                                  void (*callback)(const void *context, enum HederaError err, const char *message));
+
+/**
  * Parse a Hedera `TokenId` from the passed string.
  */
 enum HederaError hedera_token_id_from_string(const char *s, struct HederaTokenId *id);
