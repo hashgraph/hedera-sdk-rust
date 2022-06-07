@@ -16,7 +16,7 @@ use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
 };
 use crate::token::{
-    TokenAssociateTransactionData, TokenFreezeAccountTransactionData, TokenGrantKycTransactionData, TokenRevokeKycTransactionData
+    TokenAssociateTransactionData, TokenFreezeAccountTransactionData, TokenGrantKycTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeAccountTransactionData,
 };
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
@@ -44,6 +44,7 @@ pub enum AnyTransactionData {
     TokenFreezeAccount(TokenFreezeAccountTransactionData),
     TokenGrantKyc(TokenGrantKycTransactionData),
     TokenRevokeKyc(TokenRevokeKycTransactionData),
+    TokenUnfreezeAccount(TokenUnfreezeAccountTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -101,6 +102,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
+            Self::TokenUnfreezeAccount(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
             Self::TopicCreate(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
@@ -136,6 +141,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenFreezeAccount(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenGrantKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenRevokeKyc(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenUnfreezeAccount(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -161,6 +167,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenFreezeAccount(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
+            Self::TokenUnfreezeAccount(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
