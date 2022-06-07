@@ -63,7 +63,9 @@ pub use query::{AnyQuery, AnyQueryResponse, Query};
 pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
-pub use token::{TokenId, TokenAssociateTransaction, TokenGrantKycTransaction, TokenRevokeKycTransaction};
+pub use token::{
+    TokenId, TokenAssociateTransaction, TokenFreezeAccountTransaction, TokenGrantKycTransaction, TokenRevokeKycTransaction
+};
 pub use topic::{
     TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessage, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction
 };
