@@ -49,7 +49,7 @@ pub struct TokenBurnTransactionData {
     amount: Option<u64>,
 
     /// Applicable to tokens of type NON_FUNGIBLE_UNIQUE. The list of serial numbers to be burned.
-    serial_numbers: Option<Vec<i64>>,
+    serial_numbers: Vec<i64>,
 }
 
 impl TokenBurnTransaction {
