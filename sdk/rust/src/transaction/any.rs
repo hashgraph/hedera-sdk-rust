@@ -15,9 +15,7 @@ use crate::file::{
 use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
 };
-use crate::token::{
-    TokenAssociateTransactionData
-};
+use crate::token::{TokenAssociateTransactionData, TokenGrantKycTransactionData};
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
 use crate::{AccountId, Transaction, TransactionId};
@@ -41,6 +39,7 @@ pub enum AnyTransactionData {
     FileUpdate(FileUpdateTransactionData),
     FileDelete(FileDeleteTransactionData),
     TokenAssociate(TokenAssociateTransactionData),
+    TokenGrantKyc(TokenGrantKycTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -86,6 +85,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
+            Self::TokenGrantKyc(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
             Self::TopicCreate(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
@@ -118,6 +121,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::FileDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenAssociate(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenGrantKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -140,6 +144,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileUpdate(transaction) => transaction.execute(channel, request).await,
             Self::FileDelete(transaction) => transaction.execute(channel, request).await,
             Self::TokenAssociate(transaction) => transaction.execute(channel, request).await,
+            Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
