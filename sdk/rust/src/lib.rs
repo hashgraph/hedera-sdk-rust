@@ -43,6 +43,10 @@ mod transfer_transaction;
 #[cfg(feature = "ffi")]
 mod ffi;
 
+#[cfg(test)]
+#[macro_use]
+mod mock;
+
 pub use account::{
     AccountAddress, AccountAlias, AccountBalanceQuery, AccountBalanceResponse, AccountCreateTransaction, AccountDeleteTransaction, AccountId, AccountInfo, AccountInfoQuery, AccountUpdateTransaction
 };
