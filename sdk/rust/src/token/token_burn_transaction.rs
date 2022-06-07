@@ -74,7 +74,7 @@ impl TokenBurnTransaction {
     ///
     /// Applicable to tokens of type NON_FUNGIBLE_UNIQUE
     pub fn serial_numbers(&mut self, serial_numbers: impl IntoIterator<Item = i64>) -> &mut Self {
-        self.body.data.serial_numbers = Some(serial_numbers.into_iter().collect());
+        self.body.data.serial_numbers = serial_numbers.into_iter().collect();
         self
     }
 }
@@ -98,7 +98,7 @@ impl ToTransactionDataProtobuf for TokenBurnTransactionData {
     ) -> services::transaction_body::Data {
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
         let amount = self.amount.clone().unwrap_or_default();
-        let serial_numbers = self.serial_numbers.clone().unwrap_or_default();
+        let serial_numbers = self.serial_numbers.clone();
 
         services::transaction_body::Data::TokenBurn(services::TokenBurnTransactionBody {
             token,
