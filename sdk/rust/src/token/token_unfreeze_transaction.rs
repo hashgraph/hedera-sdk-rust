@@ -81,6 +81,6 @@ impl ToTransactionDataProtobuf for TokenUnfreezeTransactionData {
 
 impl From<TokenUnfreezeTransactionData> for AnyTransactionData {
     fn from(transaction: TokenUnfreezeTransactionData) -> Self {
-        Self::TokenUnfreezeAccount(transaction)
+        Self::TokenUnfreeze(transaction)
     }
 }
