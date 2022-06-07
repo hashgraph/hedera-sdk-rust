@@ -16,7 +16,7 @@ use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
 };
 use crate::token::{
-    TokenAssociateTransactionData, TokenFreezeAccountTransactionData, TokenGrantKycTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeAccountTransactionData,
+    TokenAssociateTransactionData, TokenFreezeTransactionData, TokenGrantKycTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeTransactionData
 };
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
@@ -41,10 +41,10 @@ pub enum AnyTransactionData {
     FileUpdate(FileUpdateTransactionData),
     FileDelete(FileDeleteTransactionData),
     TokenAssociate(TokenAssociateTransactionData),
-    TokenFreezeAccount(TokenFreezeAccountTransactionData),
+    TokenFreeze(TokenFreezeTransactionData),
     TokenGrantKyc(TokenGrantKycTransactionData),
     TokenRevokeKyc(TokenRevokeKycTransactionData),
-    TokenUnfreezeAccount(TokenUnfreezeAccountTransactionData),
+    TokenUnfreeze(TokenUnfreezeTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -90,7 +90,7 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
-            Self::TokenFreezeAccount(transaction) => {
+            Self::TokenFreeze(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -102,7 +102,7 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
-            Self::TokenUnfreezeAccount(transaction) => {
+            Self::TokenUnfreeze(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -138,10 +138,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::FileDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenAssociate(transaction) => transaction.default_max_transaction_fee(),
-            Self::TokenFreezeAccount(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenFreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenGrantKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenRevokeKyc(transaction) => transaction.default_max_transaction_fee(),
-            Self::TokenUnfreezeAccount(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenUnfreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -164,10 +164,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileUpdate(transaction) => transaction.execute(channel, request).await,
             Self::FileDelete(transaction) => transaction.execute(channel, request).await,
             Self::TokenAssociate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenFreezeAccount(transaction) => transaction.execute(channel, request).await,
+            Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
-            Self::TokenUnfreezeAccount(transaction) => transaction.execute(channel, request).await,
+            Self::TokenUnfreeze(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,

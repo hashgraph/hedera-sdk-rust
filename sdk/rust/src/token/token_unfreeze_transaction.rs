@@ -8,10 +8,10 @@ use crate::protobuf::ToProtobuf;
 use crate::{AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
 
-/// Freezes transfers of the specified token for the account. Must be signed by the Token's freezeKey.
+/// Unfreezes transfers of the specified token for the account. Must be signed by the Token's freezeKey.
 ///
-/// Once executed the Account is marked as Frozen and will not be able to receive or send tokens
-/// unless unfrozen. The operation is idempotent.
+/// Once executed the Account is marked as Unfrozen and will be able to receive or send tokens.
+/// The operation is idempotent.
 ///
 /// - If the provided account is not found, the transaction will resolve to INVALID_ACCOUNT_ID.
 /// - If the provided account has been deleted, the transaction will resolve to ACCOUNT_DELETED.
@@ -20,30 +20,30 @@ use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, Transact
 /// - If an Association between the provided token and account is not found, the transaction will
 /// resolve to TOKEN_NOT_ASSOCIATED_TO_ACCOUNT.
 /// - If no Freeze Key is defined, the transaction will resolve to TOKEN_HAS_NO_FREEZE_KEY.
-pub type TokenFreezeAccountTransaction = Transaction<TokenFreezeAccountTransactionData>;
+pub type TokenUnfreezeTransaction = Transaction<TokenUnfreezeTransactionData>;
 
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TokenFreezeAccountTransactionData {
-    /// The account to be frozen
+pub struct TokenUnfreezeTransactionData {
+    /// The account to be unfrozen
     account_id: Option<AccountId>,
 
-    /// The token for which this account will be frozen.
+    /// The token for which this account will be unfrozen.
     ///
     /// If token does not exist, transaction results in INVALID_TOKEN_ID
     token_id: Option<TokenId>,
 }
 
-impl TokenFreezeAccountTransaction {
-    /// Sets the account to be frozen
+impl TokenUnfreezeTransaction {
+    /// Sets the account to be unfrozen
     pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
 
-    /// Sets the token for which this account will be frozen.
+    /// Sets the token for which this account will be unfrozen.
     ///
     /// If token does not exist, transaction results in INVALID_TOKEN_ID
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
@@ -53,17 +53,17 @@ impl TokenFreezeAccountTransaction {
 }
 
 #[async_trait]
-impl TransactionExecute for TokenFreezeAccountTransactionData {
+impl TransactionExecute for TokenUnfreezeTransactionData {
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        TokenServiceClient::new(channel).freeze_token_account(request).await
+        TokenServiceClient::new(channel).unfreeze_token_account(request).await
     }
 }
 
-impl ToTransactionDataProtobuf for TokenFreezeAccountTransactionData {
+impl ToTransactionDataProtobuf for TokenUnfreezeTransactionData {
     fn to_transaction_data_protobuf(
         &self,
         _node_account_id: AccountId,
@@ -72,15 +72,15 @@ impl ToTransactionDataProtobuf for TokenFreezeAccountTransactionData {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
-        services::transaction_body::Data::TokenFreeze(services::TokenFreezeAccountTransactionBody {
+        services::transaction_body::Data::TokenUnfreeze(services::TokenUnfreezeAccountTransactionBody {
             account,
             token,
         })
     }
 }
 
-impl From<TokenFreezeAccountTransactionData> for AnyTransactionData {
-    fn from(transaction: TokenFreezeAccountTransactionData) -> Self {
-        Self::TokenFreezeAccount(transaction)
+impl From<TokenUnfreezeTransactionData> for AnyTransactionData {
+    fn from(transaction: TokenUnfreezeTransactionData) -> Self {
+        Self::TokenUnfreezeAccount(transaction)
     }
 }
