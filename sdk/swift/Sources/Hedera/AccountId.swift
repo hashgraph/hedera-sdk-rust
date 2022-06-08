@@ -1,69 +1,113 @@
 import CHedera
 
 /// Either `AccountId` or `AccountAlias`. Some transactions and queries
-/// accept `AccountIdOrAlias` as an input. All transactions and queries
+/// accept `AccountAddress` as an input. All transactions and queries
 /// return only `AccountId` as an output however.
-public class AccountIdOrAlias: Encodable {
-    /// The shard number (non-negative).
-    public let shard: UInt64
+public enum AccountAddress: LosslessStringConvertible, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral, Codable
+{
+    case accountId(AccountId)
+    case accountAlias(AccountAlias)
 
-    /// The realm number (non-negative).
-    public let realm: UInt64
-
-    fileprivate init(shard: UInt64, realm: UInt64) {
-        self.shard = shard
-        self.realm = realm
+    public init(_ accountAlias: AccountAlias) {
+        self = .accountAlias(accountAlias)
     }
-}
 
-/// The unique identifier for a cryptocurrency account on Hedera.
-public final class AccountId: AccountIdOrAlias, LosslessStringConvertible, Decodable {
-    public let num: UInt64
-
-    public init(num: UInt64, shard: UInt64 = 0, realm: UInt64 = 0) {
-        self.num = num
-        super.init(shard: shard, realm: realm)
+    public init(_ accountId: AccountId) {
+        self = .accountId(accountId)
     }
 
     public init?(_ description: String) {
-        var accountId = HederaAccountId()
-        let err = hedera_account_id_from_string(description, &accountId)
+        var shard: UInt64 = 0
+        var realm: UInt64 = 0
+        var num: UInt64 = 0
+        var alias: OpaquePointer?
+
+        let err = hedera_account_address_from_string(description, &shard, &realm, &num, &alias)
 
         if err != HEDERA_ERROR_OK {
             return nil
         }
 
-        num = accountId.num
-        super.init(shard: accountId.shard, realm: accountId.realm)
+        if alias == nil {
+            self = .accountId(AccountId(shard: shard, realm: realm, num: num))
+        } else {
+            self = .accountAlias(AccountAlias(shard: shard, realm: realm, alias: PublicKey(alias!)))
+        }
     }
 
-    public convenience init(from decoder: Decoder) throws {
+    public init(integerLiteral value: IntegerLiteralType) {
+        self = .accountId(AccountId(num: UInt64(value)))
+    }
+
+    public init(stringLiteral value: StringLiteralType) {
+        self.init(value)!
+    }
+
+    public init(from decoder: Decoder) throws {
         self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
-    public override func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
         try container.encode(String(describing: self))
     }
 
     public var description: String {
-        "\(shard).\(realm).\(num)"
+        switch self {
+        case .accountId(let accountId):
+            return accountId.description
+
+        case .accountAlias(let accountAlias):
+            return accountAlias.description
+        }
     }
+}
+
+/// The unique identifier for a cryptocurrency account on Hedera.
+public class AccountId: EntityId {
 }
 
 /// The unique identifier for a cryptocurrency account represented with an
 /// alias instead of an account number.
-public class AccountAlias: AccountIdOrAlias {
-    // TODO: PublicKey
-    public let alias: Bool
+public final class AccountAlias: LosslessStringConvertible, ExpressibleByStringLiteral, Codable {
+    /// The shard number (non-negative).
+    public let shard: UInt64
 
-    public init(alias: Bool, shard: UInt64 = 0, realm: UInt64 = 0) {
+    /// The realm number (non-negative).
+    public let realm: UInt64
+
+    public let alias: PublicKey
+
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, alias: PublicKey) {
+        self.shard = shard
+        self.realm = realm
         self.alias = alias
-        super.init(shard: shard, realm: realm)
     }
 
-    public override func encode(to encoder: Encoder) throws {
+    public convenience init?(_ description: String) {
+        var shard: UInt64 = 0
+        var realm: UInt64 = 0
+        var alias: OpaquePointer?
+
+        let err = hedera_account_alias_from_string(description, &shard, &realm, &alias)
+
+        if err != HEDERA_ERROR_OK {
+            return nil
+        }
+
+        self.init(shard: shard, realm: realm, alias: PublicKey(alias!))
+    }
+
+    public convenience init(stringLiteral value: StringLiteralType) {
+        self.init(value)!
+    }
+
+    public convenience init(from decoder: Decoder) throws {
+        self.init(try decoder.singleValueContainer().decode(String.self))!
+    }
+
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
         try container.encode(String(describing: self))
@@ -75,8 +119,6 @@ public class AccountAlias: AccountIdOrAlias {
 }
 
 // TODO: checksum
-// TODO: from string
-// TODO: to string
 // TODO: to evm address
 // TODO: hash
 // TODO: equals

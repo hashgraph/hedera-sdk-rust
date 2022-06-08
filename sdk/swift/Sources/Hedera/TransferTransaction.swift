@@ -12,7 +12,7 @@ public final class TransferTransaction: Transaction {
     }
 
     @discardableResult
-    public func hbarTransfer(account: AccountIdOrAlias, amount: Int64) -> Self {
+    public func hbarTransfer(account: AccountAddress, amount: Int64) -> Self {
         hbarTransfers.append(HbarTransfer(account: account, amount: amount))
 
         return self
@@ -25,15 +25,15 @@ public final class TransferTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .transfer)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(hbarTransfers, forKey: .tinybarTransfers)
+        try container.encode(hbarTransfers, forKey: .tinybarTransfers)
+
         try super.encode(to: encoder)
     }
 }
 
 private struct HbarTransfer: Encodable {
-    let account: AccountIdOrAlias
+    let account: AccountAddress
     let amount: Int64
 }

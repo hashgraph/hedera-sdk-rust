@@ -100,13 +100,17 @@ public class Query<Response: Decodable>: Request<Response> {
     // TODO: paymentSigner
 
     private enum CodingKeys: String, CodingKey {
-        case data
+        case type = "$type"
         case payment
     }
 
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
+        let typeName = String(describing: type(of: self))
+        let requestName = typeName.prefix(1).lowercased() + typeName.dropFirst().dropLast(5)
+
+        try container.encode(requestName, forKey: .type)
         try container.encode(payment, forKey: .payment)
     }
 }

@@ -47,12 +47,11 @@ public class TransactionReceiptQuery: Query<TransactionReceiptResponse> {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyQueryCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .transactionReceipt)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(transactionId, forKey: .transactionId)
-        try data.encode(includeDuplicates, forKey: .includeDuplicates)
-        try data.encode(includeChildren, forKey: .includeChildren)
+        try container.encode(transactionId, forKey: .transactionId)
+        try container.encode(includeDuplicates, forKey: .includeDuplicates)
+        try container.encode(includeChildren, forKey: .includeChildren)
 
         try super.encode(to: encoder)
     }

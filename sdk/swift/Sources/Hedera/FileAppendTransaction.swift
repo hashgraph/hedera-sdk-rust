@@ -33,11 +33,10 @@ public final class FileAppendTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .fileAppend)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encodeIfPresent(fileId, forKey: .fileId)
-        try data.encode(contents.base64EncodedString(), forKey: .contents)
+        try container.encodeIfPresent(fileId, forKey: .fileId)
+        try container.encode(contents.base64EncodedString(), forKey: .contents)
 
         try super.encode(to: encoder)
     }

@@ -32,7 +32,7 @@ public struct TransactionResponse: Decodable {
             // TODO: .nodeAccountIds([nodeAccountId])
             .execute(client)
 
-        return receiptResponse.reciept
+        return receiptResponse.receipt
     }
 
     /// Get the _successful_ receipt of this transaction. Will wait for consensus.

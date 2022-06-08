@@ -84,14 +84,13 @@ public final class TopicMessageSubmitTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .topicMessageSubmit)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(topicId, forKey: .topicId)
-        try data.encodeIfPresent(message.base64EncodedString(), forKey: .message)
-        try data.encodeIfPresent(initialTransactionId, forKey: .initialTransactionId)
-        try data.encode(chunkTotal, forKey: .chunkTotal)
-        try data.encode(chunkNumber, forKey: .chunkNumber)
+        try container.encode(topicId, forKey: .topicId)
+        try container.encodeIfPresent(message.base64EncodedString(), forKey: .message)
+        try container.encodeIfPresent(initialTransactionId, forKey: .initialTransactionId)
+        try container.encode(chunkTotal, forKey: .chunkTotal)
+        try container.encode(chunkNumber, forKey: .chunkNumber)
 
         try super.encode(to: encoder)
     }

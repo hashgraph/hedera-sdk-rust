@@ -21,10 +21,9 @@ public final class FileContentsQuery: Query<FileContentsResponse> {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyQueryCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .fileContents)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(fileId, forKey: .fileId)
+        try container.encode(fileId, forKey: .fileId)
 
         try super.encode(to: encoder)
     }
