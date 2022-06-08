@@ -105,7 +105,7 @@ mod tests {
     use crate::account::account_balance_query::AccountBalanceSource;
     use crate::query::AnyQueryData;
     use crate::{AccountAddress, AccountBalanceQuery, AccountId, AnyQuery};
-    use crate::mock::{MockResponse, Mocker};
+    use crate::mock::{AnyMockResponseInput, Mocker};
 
     // language=JSON
     const ACCOUNT_BALANCE: &str = r#"{
@@ -139,10 +139,8 @@ mod tests {
 
     #[tokio::test]
     async fn mock_query_balance() -> anyhow::Result<()> {
-        use MockResponse::*;
-
         let responses = vec![
-            QueryResponse(services::Response {
+            services::Response {
                 response: Some(services::response::Response::CryptogetAccountBalance(services::CryptoGetAccountBalanceResponse {
                     header: Some(services::ResponseHeader::default()),
                     account_id: Some(services::AccountId {
@@ -152,7 +150,7 @@ mod tests {
                     balance: 10,
                     ..Default::default()
                 })),
-            })
+            }.into()
         ];
 
         let mocker = Mocker::new(responses).await?;
