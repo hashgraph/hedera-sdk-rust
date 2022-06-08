@@ -64,10 +64,6 @@ public enum AccountAddress: LosslessStringConvertible, ExpressibleByIntegerLiter
     }
 }
 
-/// The unique identifier for a cryptocurrency account on Hedera.
-public class AccountId: EntityId {
-}
-
 /// The unique identifier for a cryptocurrency account represented with an
 /// alias instead of an account number.
 public final class AccountAlias: LosslessStringConvertible, ExpressibleByStringLiteral, Codable {

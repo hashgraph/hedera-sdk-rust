@@ -51,3 +51,27 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, C
         "\(shard).\(realm).\(num)"
     }
 }
+
+/// The unique identifier for a cryptocurrency account on Hedera.
+public final class AccountId: EntityId {
+}
+
+/// The unique identifier for a file on Hedera.
+public final class FileId: EntityId {
+}
+
+/// The unique identifier for a smart contract on Hedera.
+public final class ContractId: EntityId {
+}
+
+/// The unique identifier for a topic on Hedera.
+public final class TopicId: EntityId {
+}
+
+/// The unique identifier for a token on Hedera.
+public final class TokenId: EntityId {
+}
+
+/// The unique identifier for a schedule on Hedera.
+public final class ScheduleId: EntityId {
+}
