@@ -1,10 +1,12 @@
 package com.hedera.hashgraph.sdk;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * The unique identifier for a cryptocurrency account represented with an
  * alias instead of an account number.
  */
-public final class AccountAlias extends AccountIdOrAlias {
+public final class AccountAlias extends AccountAddress {
     public final PublicKey alias;
 
     public AccountAlias(PublicKey alias) {
@@ -15,5 +17,11 @@ public final class AccountAlias extends AccountIdOrAlias {
         super(shard, realm);
 
         this.alias = alias;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.format("%d.%d.%s", shard, realm, alias);
     }
 }
