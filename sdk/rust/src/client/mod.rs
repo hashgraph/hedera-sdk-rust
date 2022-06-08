@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
@@ -28,6 +29,17 @@ impl Client {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
+            payer_account_id: Arc::new(RwLock::new(None)),
+            max_transaction_fee: Arc::new(AtomicU64::new(0)),
+            default_signers: Arc::new(AsyncRwLock::new(Vec::with_capacity(1))),
+        }
+    }
+
+    /// Construct a Hedera client pre-configured for testnet access.
+    pub fn for_network(network: HashMap<AccountId, Vec<String>>) -> Self {
+        Self {
+            network: Arc::new(Network::for_network(network)),
+            mirror_network: Arc::new(MirrorNetwork::from_static(&[])),
             payer_account_id: Arc::new(RwLock::new(None)),
             max_transaction_fee: Arc::new(AtomicU64::new(0)),
             default_signers: Arc::new(AsyncRwLock::new(Vec::with_capacity(1))),

@@ -1,6 +1,9 @@
+use std::collections::HashMap;
 use tonic::{transport::Server, Request, Response, Status};
 use hedera_proto::services::{self, crypto_service_server::CryptoServiceServer};
 use std::sync::{Arc, Mutex};
+use tokio::task::JoinError;
+use crate::{AccountId, Client};
 
 macro_rules! response {
     ($self: ident) => {{
@@ -32,25 +35,34 @@ impl MockService {
     }
 }
 
-pub(crate) struct Mocker<'a> {
-    // client: Client,
-    server: futures::future::BoxFuture<'a, Result<(), tonic::transport::Error>>,
+pub(crate) struct Mocker {
+    pub(crate) client: Client,
 }
 
-impl<'a> Mocker<'a> {
-    pub async fn new(responses: Vec<MockResponse>) -> anyhow::Result<Mocker<'a>> {
-        let addr = "[::1]:50051".parse()?;
+impl Mocker {
+    pub async fn new(responses: Vec<MockResponse>) -> anyhow::Result<Mocker> {
+        // FIXME: We should likely not be hardcoding the address here since
+        // there can be multiple mocking tests running at the same time and hence
+        // would cause this to fail
+        let addr = "127.0.0.1:50211".parse()?;
+
         let service = Arc::new(Mutex::new(MockService::new(responses)));
         let crypto_service = CryptoServiceServer::new(MockCryptoService(service.clone()));
+
         // TODO: other services
 
-
-        let server = Server::builder()
+        tokio::task::spawn(
+            Server::builder()
             .add_service(crypto_service)
-            .serve(addr);
+            .serve(addr)
+        );
+
+        let network = HashMap::from([
+            (AccountId::from(3), Vec::from(["127.0.0.1".to_owned()])),
+        ]);
 
         Ok(Mocker {
-            server: Box::pin(server),
+            client: Client::for_network(network),
         })
     }
 }

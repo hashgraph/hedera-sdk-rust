@@ -48,105 +48,105 @@ impl services::crypto_service_server::CryptoService for MockCryptoService {
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn crypto_transfer(
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn crypto_delete(
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn approve_allowances(
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn delete_allowances(
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn add_live_hash(
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn delete_live_hash(
         &self,
         request: Request<services::Transaction>,
     ) -> Result<Response<services::TransactionResponse>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_live_hash(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_account_records(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn crypto_get_balance(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_account_info(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_transaction_receipts(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_fast_transaction_record(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_tx_record_by_tx_id(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 
     async fn get_stakers_by_account_id(
         &self,
         request: Request<services::Query>,
     ) -> Result<Response<services::Response>, Status> {
-        todo!()
+        response!(self)
     }
 }
 

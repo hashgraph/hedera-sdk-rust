@@ -48,6 +48,25 @@ impl Network {
         Self { map, nodes, addresses, channels, healthy }
     }
 
+    pub(crate) fn for_network(network: HashMap<AccountId, Vec<String>>) -> Self {
+        let mut map = HashMap::with_capacity(network.len());
+        let mut nodes = Vec::with_capacity(network.len());
+        let mut addresses = Vec::with_capacity(network.len());
+        let mut channels = Vec::with_capacity(network.len());
+        let mut healthy = Vec::with_capacity(network.len());
+
+        for (i, (node_account_id, address)) in network.into_iter().enumerate() {
+
+            map.insert(node_account_id, i);
+            nodes.push(node_account_id);
+            addresses.push(address.into_iter().map(|address| Cow::Owned(address)).collect());
+            channels.push(RwLock::new(None));
+            healthy.push(AtomicI64::new(0));
+        }
+
+        Self { map, nodes, addresses, channels, healthy }
+    }
+
     pub(crate) fn node_indexes_for_ids(&self, ids: &[AccountId]) -> crate::Result<Vec<usize>> {
         let mut indexes = Vec::new();
         for id in ids {
@@ -87,6 +106,7 @@ impl Network {
         let addresses = &self.addresses[index];
 
         let endpoints = addresses.iter().map(|address| {
+            // FIXME: Don't hardcode port
             let uri = format!("tcp://{}:50211", address);
             let endpoint = Endpoint::from_shared(uri)
                 .unwrap()

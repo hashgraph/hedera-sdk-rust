@@ -98,11 +98,14 @@ impl QueryExecute for AccountBalanceQueryData {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     use assert_matches::assert_matches;
 
     use crate::account::account_balance_query::AccountBalanceSource;
     use crate::query::AnyQueryData;
     use crate::{AccountAddress, AccountBalanceQuery, AccountId, AnyQuery};
+    use crate::mock::{MockResponse, Mocker};
 
     // language=JSON
     const ACCOUNT_BALANCE: &str = r#"{
@@ -130,6 +133,37 @@ mod tests {
         let source = assert_matches!(source, AccountAddress::AccountId(id) => id);
 
         assert_eq!(source.num, 1001);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn mock_query_balance() -> anyhow::Result<()> {
+        use MockResponse::*;
+
+        let responses = vec![
+            QueryResponse(services::Response {
+                response: Some(services::response::Response::CryptogetAccountBalance(services::CryptoGetAccountBalanceResponse {
+                    header: Some(services::ResponseHeader::default()),
+                    account_id: Some(services::AccountId {
+                       account: Some(services::account_id::Account::AccountNum(3)),
+                        ..Default::default()
+                    }),
+                    balance: 10,
+                    ..Default::default()
+                })),
+            })
+        ];
+
+        let mocker = Mocker::new(responses).await?;
+
+        let response = AccountBalanceQuery::new()
+            .account_id(AccountId::from(3))
+            .execute(&mocker.client)
+            .await?;
+
+        assert_eq!(response.account_id, AccountId::from(3));
+        assert_eq!(response.balance, 10);
 
         Ok(())
     }
