@@ -8,6 +8,15 @@ use crate::protobuf::ToProtobuf;
 use crate::{AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
 
+/// Marks a token as deleted, though it will remain in the ledger.
+///
+/// The operation must be signed by the specified Admin Key of the Token.
+///
+/// Once deleted update, mint, burn, wipe, freeze, unfreeze, grant kyc, revoke
+/// kyc and token transfer transactions will resolve to TOKEN_WAS_DELETED.
+///
+/// - If admin key is not set, Transaction will result in TOKEN_IS_IMMUTABlE.
+/// - If invalid token is specified, transaction will result in INVALID_TOKEN_ID
 pub type TokenDeleteTransaction = Transaction<TokenDeleteTransactionData>;
 
 #[serde_as]
@@ -15,10 +24,12 @@ pub type TokenDeleteTransaction = Transaction<TokenDeleteTransactionData>;
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenDeleteTransactionData {
+    /// The token to be deleted.
     token_id: Option<TokenId>,
 }
 
 impl TokenDeleteTransaction {
+    /// Sets the token to be deleted.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
