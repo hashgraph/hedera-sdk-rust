@@ -26,6 +26,7 @@ use crate::token::{
     TokenRevokeKycTransactionData,
     TokenUnfreezeTransactionData,
     TokenUnpauseTransactionData,
+    TokenWipeTransactionData,
 };
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
@@ -59,6 +60,7 @@ pub enum AnyTransactionData {
     TokenRevokeKyc(TokenRevokeKycTransactionData),
     TokenUnfreeze(TokenUnfreezeTransactionData),
     TokenUnpause(TokenUnpauseTransactionData),
+    TokenWipe(TokenWipeTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -140,6 +142,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
+            Self::TokenWipe(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
             Self::TopicCreate(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
@@ -181,6 +187,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenRevokeKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUnfreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUnpause(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenWipe(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -212,6 +219,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenUnfreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenUnpause(transaction) => transaction.execute(channel, request).await,
+            Self::TokenWipe(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
