@@ -2,10 +2,9 @@ use std::fmt::{self, Debug, Display, Formatter};
 use std::str::FromStr;
 
 use hedera_proto::services;
-use itertools::Itertools;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
-use crate::{Error, FromProtobuf, PublicKey, ToProtobuf};
+use crate::{EntityId, Error, FromProtobuf, PublicKey, ToProtobuf};
 
 /// The unique identifier for a cryptocurrency account on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Copy, Hash, PartialEq, Eq, Clone)]
@@ -61,18 +60,7 @@ impl FromStr for AccountId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // TODO: share with other entity IDs
-
-        let parts: Vec<u64> =
-            s.splitn(3, '.').map(u64::from_str).try_collect().map_err(Error::basic_parse)?;
-
-        if parts.len() == 1 {
-            Ok(Self::from(parts[0]))
-        } else if parts.len() == 3 {
-            Ok(Self { shard: parts[0], realm: parts[1], num: parts[2] })
-        } else {
-            Err(Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`)"))
-        }
+        s.parse().map(|EntityId { shard, realm, num }| Self { shard, realm, num })
     }
 }
 
@@ -136,21 +124,21 @@ impl FromStr for AccountAlias {
 }
 
 /// Either [`AccountId`] or [`AccountAlias`]. Some transactions and queries
-/// accept `AccountIdOrAlias` as an input. All transactions and queries return only `AccountId`
+/// accept either as an input. All transactions and queries return only `AccountId`
 /// as an output however.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
-pub enum AccountIdOrAlias {
+pub enum AccountAddress {
     AccountId(AccountId),
     AccountAlias(AccountAlias),
 }
 
-impl Debug for AccountIdOrAlias {
+impl Debug for AccountAddress {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "\"{}\"", self)
     }
 }
 
-impl Display for AccountIdOrAlias {
+impl Display for AccountAddress {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::AccountId(id) => Display::fmt(id, f),
@@ -159,7 +147,7 @@ impl Display for AccountIdOrAlias {
     }
 }
 
-impl ToProtobuf for AccountIdOrAlias {
+impl ToProtobuf for AccountAddress {
     type Protobuf = services::AccountId;
 
     fn to_protobuf(&self) -> Self::Protobuf {
@@ -170,19 +158,19 @@ impl ToProtobuf for AccountIdOrAlias {
     }
 }
 
-impl From<AccountId> for AccountIdOrAlias {
+impl From<AccountId> for AccountAddress {
     fn from(id: AccountId) -> Self {
         Self::AccountId(id)
     }
 }
 
-impl From<AccountAlias> for AccountIdOrAlias {
+impl From<AccountAlias> for AccountAddress {
     fn from(alias: AccountAlias) -> Self {
         Self::AccountAlias(alias)
     }
 }
 
-impl FromStr for AccountIdOrAlias {
+impl FromStr for AccountAddress {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {

@@ -1,3 +1,3 @@
 mod contract_id;
 
-pub use contract_id::{ContractEvmAddress, ContractId, ContractIdOrEvmAddress};
+pub use contract_id::{ContractAddress, ContractEvmAddress, ContractId};

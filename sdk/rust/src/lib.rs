@@ -44,10 +44,11 @@ mod transfer_transaction;
 mod ffi;
 
 pub use account::{
-    AccountAlias, AccountBalanceQuery, AccountBalanceResponse, AccountCreateTransaction, AccountDeleteTransaction, AccountId, AccountIdOrAlias, AccountInfo, AccountInfoQuery, AccountUpdateTransaction
+    AccountAddress, AccountAlias, AccountBalanceQuery, AccountBalanceResponse, AccountCreateTransaction, AccountDeleteTransaction, AccountId, AccountInfo, AccountInfoQuery, AccountUpdateTransaction
 };
 pub use client::Client;
-pub use contract::{ContractEvmAddress, ContractId, ContractIdOrEvmAddress};
+pub use contract::{ContractAddress, ContractEvmAddress, ContractId};
+pub use entity_id::EntityId;
 pub use error::{Error, Result};
 pub use file::{
     FileAppendTransaction, FileContentsQuery, FileContentsResponse, FileCreateTransaction, FileDeleteTransaction, FileId, FileUpdateTransaction

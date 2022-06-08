@@ -1,7 +1,5 @@
 version: "3"
 
-silent: false
-
 tasks:
     build:
         run: once
@@ -30,6 +28,10 @@ tasks:
     lint:
         cmds:
             - cargo clippy --features=ffi --message-format=short
+
+    test:
+        cmds:
+            - cargo test
 
     package:
         run: once

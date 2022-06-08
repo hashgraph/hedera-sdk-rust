@@ -4,7 +4,7 @@ use std::str::FromStr;
 use hedera_proto::services;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
-use crate::{entity_id, Error, FromProtobuf, ToProtobuf};
+use crate::{EntityId, Error, FromProtobuf, ToProtobuf};
 
 /// The unique identifier for a token on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
@@ -61,6 +61,6 @@ impl FromStr for TokenId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        entity_id::parse(s).map(|(shard, realm, num)| Self { shard, realm, num })
+        s.parse().map(|EntityId { shard, realm, num }| Self { shard, realm, num })
     }
 }
