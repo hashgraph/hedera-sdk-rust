@@ -80,14 +80,13 @@ public final class FileUpdateTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .fileUpdate)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(fileId, forKey: .fileId)
-        try data.encode(fileMemo, forKey: .fileMemo)
-        try data.encode(keys, forKey: .keys)
-        try data.encode(contents.base64EncodedString(), forKey: .contents)
-        try data.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encode(fileId, forKey: .fileId)
+        try container.encode(fileMemo, forKey: .fileMemo)
+        try container.encode(keys, forKey: .keys)
+        try container.encode(contents.base64EncodedString(), forKey: .contents)
+        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
 
         try super.encode(to: encoder)
     }

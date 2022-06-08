@@ -12,11 +12,11 @@ public class AccountUpdateTransaction: Transaction {
     public override init() {}
 
     /// The account ID which is being updated in this transaction.
-    public private(set) var accountId: AccountIdOrAlias?
+    public private(set) var accountId: AccountAddress?
 
     /// Sets the account ID which is being updated in this transaction.
     @discardableResult
-    public func accountId(_ accountId: AccountIdOrAlias) -> Self {
+    public func accountId(_ accountId: AccountAddress) -> Self {
         self.accountId = accountId
 
         return self
@@ -90,12 +90,12 @@ public class AccountUpdateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public private(set) var stakedAccountId: AccountIdOrAlias?
+    public private(set) var stakedAccountId: AccountAddress?
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
     @discardableResult
-    public func stakedAccountId(_ stakedAccountId: AccountIdOrAlias) -> Self {
+    public func stakedAccountId(_ stakedAccountId: AccountAddress) -> Self {
         self.stakedAccountId = stakedAccountId
 
         return self
@@ -138,17 +138,16 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountUpdate)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encodeIfPresent(key, forKey: .key)
-        try data.encodeIfPresent(accountMemo, forKey: .accountMemo)
-        try data.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try data.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
-        try data.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try data.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try data.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try data.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
+        try container.encodeIfPresent(key, forKey: .key)
+        try container.encodeIfPresent(accountMemo, forKey: .accountMemo)
+        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
+        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
+        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
+        try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
 
         try super.encode(to: encoder)
     }

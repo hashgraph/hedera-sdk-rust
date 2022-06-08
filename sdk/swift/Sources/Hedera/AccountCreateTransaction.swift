@@ -74,12 +74,12 @@ public final class AccountCreateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public private(set) var stakedAccountId: AccountIdOrAlias?
+    public private(set) var stakedAccountId: AccountAddress?
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
     @discardableResult
-    public func stakedAccountId(_ stakedAccountId: AccountIdOrAlias) -> Self {
+    public func stakedAccountId(_ stakedAccountId: AccountAddress) -> Self {
         self.stakedAccountId = stakedAccountId
 
         return self
@@ -121,17 +121,16 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountCreate)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encodeIfPresent(key, forKey: .key)
-        try data.encode(initialBalance, forKey: .initialBalance)
-        try data.encode(accountMemo, forKey: .accountMemo)
-        try data.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try data.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try data.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try data.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try data.encode(declineStakingReward, forKey: .declineStakingReward)
+        try container.encodeIfPresent(key, forKey: .key)
+        try container.encode(initialBalance, forKey: .initialBalance)
+        try container.encode(accountMemo, forKey: .accountMemo)
+        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
+        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
+        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
+        try container.encode(declineStakingReward, forKey: .declineStakingReward)
 
         try super.encode(to: encoder)
     }

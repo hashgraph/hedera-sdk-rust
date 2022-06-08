@@ -27,10 +27,9 @@ public final class TopicDeleteTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .topicDelete)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(topicId, forKey: .topicId)
+        try container.encode(topicId, forKey: .topicId)
 
         try super.encode(to: encoder)
     }

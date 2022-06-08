@@ -9,7 +9,7 @@ public enum Program {
         client.addDefaultSigner(PrivateKey("7f7ac6c8025a15ff1e07ef57c7295601379a4e9a526560790ae85252393868f0")!)
 
         let response = try await FileContentsQuery()
-            .fileId(FileId("0.0.34945328")!)
+            .fileId("0.0.34945328")
             .execute(client)
 
         let text = String(data: response.contents, encoding: .utf8)!

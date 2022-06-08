@@ -99,16 +99,15 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .topicUpdate)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encode(topicId, forKey: .topicId)
-        try data.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
-        try data.encodeIfPresent(topicMemo, forKey: .topicMemo)
-        try data.encodeIfPresent(adminKey, forKey: .adminKey)
-        try data.encodeIfPresent(submitKey, forKey: .submitKey)
-        try data.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try data.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
+        try container.encode(topicId, forKey: .topicId)
+        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(topicMemo, forKey: .topicMemo)
+        try container.encodeIfPresent(adminKey, forKey: .adminKey)
+        try container.encodeIfPresent(submitKey, forKey: .submitKey)
+        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
 
         try super.encode(to: encoder)
     }

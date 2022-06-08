@@ -5,21 +5,33 @@
 /// additional information.
 ///
 public class AccountBalanceQuery: Query<AccountBalanceResponse> {
-    private var balanceSource: AccountBalanceSource?
-
     /// Create a new `AccountBalanceQuery` ready for configuration.
-    public override init() {}
+    public init(
+        accountId: AccountAddress? = nil,
+        contractId: AccountAddress? = nil
+    ) {
+        self.accountId = accountId
+        self.contractId = contractId
+    }
+
+    /// The account ID for which information is requested.
+    public var accountId: AccountAddress?
 
     /// Sets the account ID for which information is requested.
     ///
     /// This is mutually exclusive with `contractId`.
     ///
     @discardableResult
-    public func accountId(_ id: AccountIdOrAlias) -> Self {
-        balanceSource = .accountId(id)
+    public func accountId(_ accountId: AccountAddress) -> Self {
+        self.accountId = accountId
+        contractId = nil
 
         return self
     }
+
+    /// The contract ID for which information is requested.
+    // TODO: Use ContractIdOrEvmAddress
+    public var contractId: AccountAddress?
 
     /// Sets the contract ID for which information is requested.
     ///
@@ -27,8 +39,9 @@ public class AccountBalanceQuery: Query<AccountBalanceResponse> {
     ///
     // TODO: Use ContractIdOrEvmAddress
     @discardableResult
-    public func contractId(_ id: AccountIdOrAlias) -> Self {
-        balanceSource = .contractId(id)
+    public func contractId(_ contractId: AccountAddress) -> Self {
+        self.contractId = contractId
+        accountId = nil
 
         return self
     }
@@ -39,26 +52,11 @@ public class AccountBalanceQuery: Query<AccountBalanceResponse> {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyQueryCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountBalance)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        switch (balanceSource) {
-            case .accountId(let accountId):
-                try data.encode(accountId, forKey: .accountId)
-
-            case .contractId(let contractId):
-                try data.encode(contractId, forKey: .contractId)
-
-            case nil:
-                break
-        }
+        try container.encodeIfPresent(accountId, forKey: .accountId)
+        try container.encodeIfPresent(contractId, forKey: .contractId)
 
         try super.encode(to: encoder)
     }
-}
-
-private enum AccountBalanceSource {
-    case accountId(AccountIdOrAlias)
-    // TODO: Use ContractIdOrEvmAddress
-    case contractId(AccountIdOrAlias)
 }

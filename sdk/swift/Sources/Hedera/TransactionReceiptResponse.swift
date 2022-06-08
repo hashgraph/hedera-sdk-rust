@@ -1,7 +1,7 @@
 /// Response from [`TransactionReceiptQuery`][crate::TransactionReceiptQuery].
 public final class TransactionReceiptResponse: Decodable {
     /// The receipt of processing the first consensus transaction with the given id.
-    public let reciept: TransactionReceipt
+    public let receipt: TransactionReceipt
 
     /// The receipts of processing all transactions with the given id, in consensus time order.
     public let duplicateReceipts: [TransactionReceipt]
@@ -17,11 +17,10 @@ public final class TransactionReceiptResponse: Decodable {
     }
 
     public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: AnyQueryResponseCodingKeys.self)
-        let data = try container.nestedContainer(keyedBy: CodingKeys.self, forKey: .transactionReceipt)
+        let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        reciept = try data.decode(TransactionReceipt.self, forKey: .receipt)
-        duplicateReceipts = try data.decodeIfPresent([TransactionReceipt].self, forKey: .duplicateReceipts) ?? []
-        childReceipts = try data.decodeIfPresent([TransactionReceipt].self, forKey: .childReceipts) ?? []
+        receipt = try container.decode(TransactionReceipt.self, forKey: .receipt)
+        duplicateReceipts = try container.decodeIfPresent([TransactionReceipt].self, forKey: .duplicateReceipts) ?? []
+        childReceipts = try container.decodeIfPresent([TransactionReceipt].self, forKey: .childReceipts) ?? []
     }
 }

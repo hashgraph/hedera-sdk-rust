@@ -10,22 +10,22 @@ public class AccountDeleteTransaction: Transaction {
     public override init() {}
 
     /// The account ID which will receive all remaining hbars.
-    public private(set) var transferAccountId: AccountIdOrAlias?
+    public private(set) var transferAccountId: AccountAddress?
 
     /// Sets the account ID which will receive all remaining hbars.
     @discardableResult
-    public func transferAccountId(_ transferAccountId: AccountIdOrAlias) -> Self {
+    public func transferAccountId(_ transferAccountId: AccountAddress) -> Self {
         self.transferAccountId = transferAccountId
 
         return self
     }
 
     /// The account ID which should be deleted.
-    public private(set) var deleteAccountId: AccountIdOrAlias?
+    public private(set) var deleteAccountId: AccountAddress?
 
     /// Sets the account ID which should be deleted.
     @discardableResult
-    public func deleteAccountId(_ deleteAccountId: AccountIdOrAlias) -> Self {
+    public func deleteAccountId(_ deleteAccountId: AccountAddress) -> Self {
         self.deleteAccountId = deleteAccountId
 
         return self
@@ -37,11 +37,10 @@ public class AccountDeleteTransaction: Transaction {
     }
 
     public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: AnyTransactionCodingKeys.self)
-        var data = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .accountDelete)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try data.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
-        try data.encodeIfPresent(deleteAccountId, forKey: .deleteAccountId)
+        try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
+        try container.encodeIfPresent(deleteAccountId, forKey: .deleteAccountId)
 
         try super.encode(to: encoder)
     }

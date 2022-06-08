@@ -25,3 +25,8 @@ tasks:
         deps: [":rust:package"]
         cmds:
             - swift build -c release
+
+    example:
+        deps: [":rust:build"]
+        cmds:
+            - swift run {{.CLI_ARGS}}Example
