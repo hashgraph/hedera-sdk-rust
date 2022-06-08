@@ -1,7 +1,5 @@
 version: "3"
 
-silent: true
-
 includes:
     rust:
         taskfile: ./sdk/rust/Taskfile.yml
