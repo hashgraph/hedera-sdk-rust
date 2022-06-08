@@ -18,6 +18,7 @@ use crate::topic::{
 use crate::token::{
     TokenAssociateTransactionData,
     TokenBurnTransactionData,
+    TokenDeleteTransactionData,
     TokenDissociateTransactionData,
     TokenFreezeTransactionData,
     TokenGrantKycTransactionData,
@@ -50,6 +51,7 @@ pub enum AnyTransactionData {
     FileDelete(FileDeleteTransactionData),
     TokenAssociate(TokenAssociateTransactionData),
     TokenBurn(TokenBurnTransactionData),
+    TokenDelete(TokenDeleteTransactionData),
     TokenDissociate(TokenDissociateTransactionData),
     TokenFreeze(TokenFreezeTransactionData),
     TokenGrantKyc(TokenGrantKycTransactionData),
@@ -103,6 +105,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::TokenBurn(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::TokenDelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -167,6 +173,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenAssociate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenBurn(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenDissociate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenFreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenGrantKyc(transaction) => transaction.default_max_transaction_fee(),
@@ -197,6 +204,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileDelete(transaction) => transaction.execute(channel, request).await,
             Self::TokenAssociate(transaction) => transaction.execute(channel, request).await,
             Self::TokenBurn(transaction) => transaction.execute(channel, request).await,
+            Self::TokenDelete(transaction) => transaction.execute(channel, request).await,
             Self::TokenDissociate(transaction) => transaction.execute(channel, request).await,
             Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
