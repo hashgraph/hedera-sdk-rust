@@ -11,7 +11,7 @@ use crate::{FromProtobuf, MirrorQuery, NodeAddress, NodeAddressBookQueryData, To
 pub type AnyMirrorQuery = MirrorQuery<AnyMirrorQueryData>;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyMirrorQueryData {
     NodeAddressBook(NodeAddressBookQueryData),
     TopicMessage(TopicMessageQueryData),
@@ -20,7 +20,7 @@ pub enum AnyMirrorQueryData {
 pub type AnyMirrorQueryResponse = Vec<AnyMirrorQueryMessage>;
 
 #[derive(Debug, serde::Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyMirrorQueryMessage {
     NodeAddressBook(NodeAddress),
     TopicMessage(TopicMessage),

@@ -7,7 +7,7 @@ use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, AccountIdOrAlias, Key, Transaction};
+use crate::{AccountAddress, AccountId, Key, Transaction};
 
 /// Create a new Hedera™ account.
 pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
@@ -48,7 +48,7 @@ pub struct AccountCreateTransactionData {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub staked_account_id: Option<AccountIdOrAlias>,
+    pub staked_account_id: Option<AccountAddress>,
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -113,7 +113,7 @@ impl AccountCreateTransaction {
 
     /// Set the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub fn staked_account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
+    pub fn staked_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
         self
     }

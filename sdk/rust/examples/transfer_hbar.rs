@@ -1,5 +1,5 @@
 use clap::Parser;
-use hedera::{AccountId, AccountIdOrAlias, Client, PrivateKey, TransferTransaction};
+use hedera::{AccountAddress, AccountId, Client, PrivateKey, TransferTransaction};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -13,7 +13,7 @@ struct Args {
     sender: Option<AccountId>,
 
     #[clap(long, default_value = "0.0.1001")]
-    receiver: AccountIdOrAlias,
+    receiver: AccountAddress,
 
     #[clap(long, default_value = "1000")]
     amount: i64,

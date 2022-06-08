@@ -5,9 +5,7 @@ use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
 use crate::query::{AnyQueryData, Query, QueryExecute, ToQueryProtobuf};
-use crate::{
-    AccountBalanceResponse, AccountId, AccountIdOrAlias, ContractIdOrEvmAddress, ToProtobuf
-};
+use crate::{AccountAddress, AccountBalanceResponse, AccountId, ContractAddress, ToProtobuf};
 
 /// Get the balance of a cryptocurrency account.
 ///
@@ -39,8 +37,8 @@ impl From<AccountBalanceQueryData> for AnyQueryData {
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 enum AccountBalanceSource {
-    AccountId(AccountIdOrAlias),
-    ContractId(ContractIdOrEvmAddress),
+    AccountId(AccountAddress),
+    ContractId(ContractAddress),
 }
 
 impl AccountBalanceQuery {
@@ -48,7 +46,7 @@ impl AccountBalanceQuery {
     ///
     /// This is mutually exclusive with [`contract_id`](#method.contract_id).
     ///
-    pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
+    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
         self.data.source = AccountBalanceSource::AccountId(id.into());
         self
     }
@@ -57,7 +55,7 @@ impl AccountBalanceQuery {
     ///
     /// This is mutually exclusive with [`account_id`](#method.account_id).
     ///
-    pub fn contract_id(&mut self, id: ContractIdOrEvmAddress) -> &mut Self {
+    pub fn contract_id(&mut self, id: ContractAddress) -> &mut Self {
         self.data.source = AccountBalanceSource::ContractId(id.into());
         self
     }
@@ -104,13 +102,12 @@ mod tests {
 
     use crate::account::account_balance_query::AccountBalanceSource;
     use crate::query::AnyQueryData;
-    use crate::{AccountBalanceQuery, AccountId, AccountIdOrAlias, AnyQuery};
+    use crate::{AccountAddress, AccountBalanceQuery, AccountId, AnyQuery};
 
     // language=JSON
     const ACCOUNT_BALANCE: &str = r#"{
-  "accountBalance": {
-    "accountId": "0.0.1001"
-  }
+  "$type": "accountBalance",
+  "accountId": "0.0.1001"
 }"#;
 
     #[test]
@@ -130,7 +127,7 @@ mod tests {
 
         let data = assert_matches!(query.data, AnyQueryData::AccountBalance(query) => query);
         let source = assert_matches!(data.source, AccountBalanceSource::AccountId(id) => id);
-        let source = assert_matches!(source, AccountIdOrAlias::AccountId(id) => id);
+        let source = assert_matches!(source, AccountAddress::AccountId(id) => id);
 
         assert_eq!(source.num, 1001);
 

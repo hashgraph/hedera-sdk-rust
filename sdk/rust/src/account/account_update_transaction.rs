@@ -7,7 +7,7 @@ use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, AccountIdOrAlias, Key, Transaction};
+use crate::{AccountAddress, AccountId, Key, Transaction};
 
 /// Change properties for the given account.
 ///
@@ -27,7 +27,7 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct AccountUpdateTransactionData {
     /// The account ID which is being updated in this transaction.
-    pub account_id: Option<AccountIdOrAlias>,
+    pub account_id: Option<AccountAddress>,
 
     /// The new key.
     pub key: Option<Key>,
@@ -54,7 +54,7 @@ pub struct AccountUpdateTransactionData {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub staked_account_id: Option<AccountIdOrAlias>,
+    pub staked_account_id: Option<AccountAddress>,
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -66,7 +66,7 @@ pub struct AccountUpdateTransactionData {
 
 impl AccountUpdateTransaction {
     /// Set the account ID which is being updated.
-    pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
+    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.account_id = Some(id.into());
         self
     }
@@ -109,7 +109,7 @@ impl AccountUpdateTransaction {
 
     /// Set the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub fn staked_account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
+    pub fn staked_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
         self
     }
@@ -145,7 +145,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let account_id = self.account_id.as_ref().map(AccountIdOrAlias::to_protobuf);
+        let account_id = self.account_id.as_ref().map(AccountAddress::to_protobuf);
         let key = self.key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
         let expiration_time = self.expires_at.as_ref().map(OffsetDateTime::to_protobuf);

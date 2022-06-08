@@ -18,7 +18,7 @@ use crate::{
 pub type AnyQuery = Query<AnyQueryData>;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
@@ -27,7 +27,7 @@ pub enum AnyQueryData {
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyQueryResponse {
     AccountBalance(AccountBalanceResponse),
     AccountInfo(AccountInfo),

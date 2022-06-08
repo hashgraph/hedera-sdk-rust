@@ -4,7 +4,7 @@ use std::str::FromStr;
 use hedera_proto::services;
 use serde_with::{DeserializeFromStr, SerializeDisplay};
 
-use crate::{entity_id, FromProtobuf, ToProtobuf};
+use crate::{EntityId, FromProtobuf, ToProtobuf};
 
 /// The unique identifier for a smart contract on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
@@ -60,7 +60,7 @@ impl FromStr for ContractId {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        entity_id::parse(s).map(|(shard, realm, num)| Self { shard, realm, num })
+        s.parse().map(|EntityId { shard, realm, num }| Self { shard, realm, num })
     }
 }
 
@@ -71,14 +71,6 @@ pub struct ContractEvmAddress {
     pub shard: u64,
     pub realm: u64,
     pub address: [u8; 20],
-}
-
-/// Either [`ContractId`] or [`ContractEvmAddress`].
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
-#[serde(untagged)]
-pub enum ContractIdOrEvmAddress {
-    ContractId(ContractId),
-    ContractEvmAddress(ContractEvmAddress),
 }
 
 impl ToProtobuf for ContractEvmAddress {
@@ -93,7 +85,15 @@ impl ToProtobuf for ContractEvmAddress {
     }
 }
 
-impl ToProtobuf for ContractIdOrEvmAddress {
+/// Either [`ContractId`] or [`ContractEvmAddress`].
+#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[serde(untagged)]
+pub enum ContractAddress {
+    ContractId(ContractId),
+    ContractEvmAddress(ContractEvmAddress),
+}
+
+impl ToProtobuf for ContractAddress {
     type Protobuf = services::ContractId;
 
     fn to_protobuf(&self) -> Self::Protobuf {

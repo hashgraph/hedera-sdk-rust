@@ -5,7 +5,7 @@ use tonic::transport::Channel;
 
 use crate::account::AccountInfo;
 use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{AccountIdOrAlias, Query, ToProtobuf};
+use crate::{AccountAddress, Query, ToProtobuf};
 
 /// Get all the information about an account, including the balance.
 ///
@@ -16,7 +16,7 @@ pub type AccountInfoQuery = Query<AccountInfoQueryData>;
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountInfoQueryData {
-    account_id: Option<AccountIdOrAlias>,
+    account_id: Option<AccountAddress>,
 }
 
 impl From<AccountInfoQueryData> for AnyQueryData {
@@ -28,7 +28,7 @@ impl From<AccountInfoQueryData> for AnyQueryData {
 
 impl AccountInfoQuery {
     /// Sets the account ID for which information is requested.
-    pub fn account_id(&mut self, id: impl Into<AccountIdOrAlias>) -> &mut Self {
+    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
         self.data.account_id = Some(id.into());
         self
     }
@@ -65,13 +65,12 @@ mod tests {
     use assert_matches::assert_matches;
 
     use crate::query::AnyQueryData;
-    use crate::{AccountId, AccountIdOrAlias, AccountInfoQuery, AnyQuery};
+    use crate::{AccountAddress, AccountId, AccountInfoQuery, AnyQuery};
 
     // language=JSON
     const ACCOUNT_INFO: &str = r#"{
-  "accountInfo": {
-    "accountId": "0.0.1001"
-  },
+  "$type": "accountInfo",
+  "accountId": "0.0.1001",
   "payment": {
     "amount": 50,
     "transactionMemo": "query payment",
@@ -100,7 +99,7 @@ mod tests {
 
         let data = assert_matches!(query.data, AnyQueryData::AccountInfo(query) => query);
         let account_id =
-            assert_matches!(data.account_id, Some(AccountIdOrAlias::AccountId(id)) => id);
+            assert_matches!(data.account_id, Some(AccountAddress::AccountId(id)) => id);
 
         assert_eq!(account_id.num, 1001);
         assert_eq!(query.payment.body.data.amount, Some(50));

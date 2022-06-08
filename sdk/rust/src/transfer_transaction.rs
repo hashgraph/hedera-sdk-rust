@@ -6,7 +6,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountIdOrAlias, ToProtobuf, Transaction};
+use crate::{AccountAddress, ToProtobuf, Transaction};
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
@@ -28,17 +28,13 @@ pub struct TransferTransactionData {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct HbarTransfer {
-    account: AccountIdOrAlias,
+    account: AccountAddress,
     #[serde(default)]
     amount: i64,
 }
 
 impl TransferTransaction {
-    pub fn hbar_transfer(
-        &mut self,
-        account: impl Into<AccountIdOrAlias>,
-        amount: i64,
-    ) -> &mut Self {
+    pub fn hbar_transfer(&mut self, account: impl Into<AccountAddress>, amount: i64) -> &mut Self {
         self.body.data.hbar_transfers.push(HbarTransfer { account: account.into(), amount });
         self
     }
@@ -46,8 +42,8 @@ impl TransferTransaction {
     #[allow(clippy::cast_possible_wrap)]
     pub fn hbar_transfer_to(
         &mut self,
-        sender: impl Into<AccountIdOrAlias>,
-        receiver: impl Into<AccountIdOrAlias>,
+        sender: impl Into<AccountAddress>,
+        receiver: impl Into<AccountAddress>,
         amount: u64,
     ) -> &mut Self {
         self.hbar_transfer(sender, -(amount as i64));
