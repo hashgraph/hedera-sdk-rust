@@ -16,7 +16,15 @@ use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
 };
 use crate::token::{
-    TokenAssociateTransactionData, TokenBurnTransactionData, TokenDissociateTransactionData, TokenFreezeTransactionData, TokenGrantKycTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeTransactionData
+    TokenAssociateTransactionData,
+    TokenBurnTransactionData,
+    TokenDissociateTransactionData,
+    TokenFreezeTransactionData,
+    TokenGrantKycTransactionData,
+    TokenPauseTransactionData,
+    TokenRevokeKycTransactionData,
+    TokenUnfreezeTransactionData,
+    TokenUnpauseTransactionData,
 };
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
@@ -45,8 +53,10 @@ pub enum AnyTransactionData {
     TokenDissociate(TokenDissociateTransactionData),
     TokenFreeze(TokenFreezeTransactionData),
     TokenGrantKyc(TokenGrantKycTransactionData),
+    TokenPause(TokenPauseTransactionData),
     TokenRevokeKyc(TokenRevokeKycTransactionData),
     TokenUnfreeze(TokenUnfreezeTransactionData),
+    TokenUnpause(TokenUnpauseTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -108,11 +118,19 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
+            Self::TokenPause(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
             Self::TokenRevokeKyc(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
             Self::TokenUnfreeze(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::TokenUnpause(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -152,8 +170,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenDissociate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenFreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenGrantKyc(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenPause(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenRevokeKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUnfreeze(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenUnpause(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -180,8 +200,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenDissociate(transaction) => transaction.execute(channel, request).await,
             Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
+            Self::TokenPause(transaction) => transaction.execute(channel, request).await,
             Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenUnfreeze(transaction) => transaction.execute(channel, request).await,
+            Self::TokenUnpause(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
