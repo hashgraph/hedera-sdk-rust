@@ -59,7 +59,7 @@ open class Query<Response> protected constructor(private val responseClass: Clas
     }
 
     @JvmName("execute")
-    fun executeSync(client: Client): Response {
+    fun executeBlocking(client: Client): Response {
         return executeAsync(client).get()
     }
 }
