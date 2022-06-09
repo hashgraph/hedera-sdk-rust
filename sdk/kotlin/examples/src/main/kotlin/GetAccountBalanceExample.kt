@@ -4,7 +4,7 @@ import com.hedera.hashgraph.sdk.AccountBalanceQuery
 import com.hedera.hashgraph.sdk.AccountId
 import com.hedera.hashgraph.sdk.Client
 
-fun main() {
+suspend fun main() {
     val client = Client.forTestnet()
 
     val response = AccountBalanceQuery(
