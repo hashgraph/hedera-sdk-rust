@@ -1,4 +1,5 @@
 plugins {
+    id("org.jetbrains.kotlin.jvm") version "1.5.31"
     `java-library`
 }
 
@@ -7,13 +8,20 @@ repositories {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_16
+    targetCompatibility = JavaVersion.VERSION_16
 }
 
 dependencies {
     implementation(rootProject)
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.3")
+    implementation("com.google.code.findbugs:jsr305:3.0.2")
+    implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
+    kotlinOptions {
+        jvmTarget = "16"
+    }
 }
 
 tasks.addRule("Pattern: run<Example>: Runs an example.") {
