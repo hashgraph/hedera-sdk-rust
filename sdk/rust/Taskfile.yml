@@ -43,6 +43,11 @@ tasks:
         cmds:
             - cargo test
 
+    example:
+        deps: ["build"]
+        cmds:
+            - cargo run --example {{.CLI_ARGS}}
+
     package:
         run: once
         sources:

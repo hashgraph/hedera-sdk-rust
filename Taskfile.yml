@@ -9,11 +9,16 @@ includes:
         taskfile: ./sdk/swift/Taskfile.yml
         dir: ./sdk/swift
 
+    java:
+        taskfile: ./sdk/java/Taskfile.yml
+        dir: ./sdk/java
+
 tasks:
     build:
         deps:
             - rust:build
             - swift:build
+            - java:build
 
     format:
         deps:

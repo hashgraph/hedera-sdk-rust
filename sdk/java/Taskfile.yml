@@ -1,0 +1,21 @@
+version: "3"
+
+includes:
+    ":rust":
+        taskfile: ../rust/Taskfile.yml
+        dir: ../rust
+
+tasks:
+    build:
+        deps: [":rust:build"]
+        cmds:
+            - ./gradlew build
+
+    lint:
+        cmds:
+            - ./gradlew clean build
+
+    example:
+        deps: [":rust:build"]
+        cmds:
+            - ./gradlew -q :examples:run{{.CLI_ARGS}}
