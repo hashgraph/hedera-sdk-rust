@@ -11,10 +11,6 @@ tasks:
         cmds:
             - ./gradlew build
 
-    lint:
-        cmds:
-            - ./gradlew clean build
-
     example:
         deps: [":rust:build"]
         cmds:
