@@ -17,10 +17,6 @@
             "name": "Swift"
         },
         {
-            "path": "sdk/java",
-            "name": "Java"
-        },
-        {
             "path": "sdk/js",
             "name": "JavaScript"
         },
@@ -28,10 +24,10 @@
             "path": "sdk/c",
             "name": "C"
         },
-	{
-	    "path": "sdk/kotlin",
-	    "name": "Kotlin"
-	}
+        {
+            "path": "sdk/kotlin",
+            "name": "Kotlin"
+        }
     ],
     "settings": {}
 }
