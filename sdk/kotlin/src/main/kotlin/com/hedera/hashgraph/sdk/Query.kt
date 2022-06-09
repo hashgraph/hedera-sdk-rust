@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.ObjectMapper
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
+import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -60,6 +60,6 @@ open class Query<Response> protected constructor(private val responseClass: Clas
 
     @JvmName("execute")
     fun executeBlocking(client: Client): Response {
-        return executeAsync(client).get()
+        return runBlocking { execute(client) }
     }
 }
