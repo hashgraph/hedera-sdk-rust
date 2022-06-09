@@ -31,6 +31,16 @@ tasks:
             - cp -v target/debug/libhedera.dylib ../java/src/main/resources/com/hedera/hashgraph/sdk/native/macos/aarch64/ 2> /dev/null || true
             - cp -v target/debug/hedera.dll ../java/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/ 2> /dev/null || true
 
+            # Package for Kotlin
+            - rm -rf ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native
+            - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/
+            - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/{amd64,aarch64}/
+            - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/
+            - cp -v target/debug/libhedera.so ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/ 2> /dev/null || true
+            - cp -v target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/amd64/ 2> /dev/null || true
+            - cp -v target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/aarch64/ 2> /dev/null || true
+            - cp -v target/debug/hedera.dll ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/ 2> /dev/null || true
+
     format:
         cmds:
             - cargo fmt
