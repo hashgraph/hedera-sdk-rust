@@ -6,12 +6,12 @@ import com.fasterxml.jackson.annotation.JsonProperty
 // TODO: Hbar
 // TODO: tokens
 @JsonIgnoreProperties("\$type")
-class AccountBalanceResponse {
+class AccountBalanceResponse(
     @JsonProperty
     @JvmField
-    val accountId: AccountId? = null
+    val accountId: AccountId,
 
     @JsonProperty
-    @JvmField
-    val balance: Long = 0
-}
+    @field:JvmField
+    val balance: Long
+)
