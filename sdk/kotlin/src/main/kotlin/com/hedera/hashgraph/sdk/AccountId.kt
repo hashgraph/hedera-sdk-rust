@@ -18,7 +18,7 @@ class AccountId(shard: Long, realm: Long, val num: Long) : AccountAddress(shard,
     companion object {
         @JvmStatic
         @JsonCreator
-        fun parse(s: String?): AccountId {
+        fun parse(s: String): AccountId {
             val shard = NativeLongByReference()
             val realm = NativeLongByReference()
             val num = NativeLongByReference()

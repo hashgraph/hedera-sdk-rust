@@ -14,12 +14,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * receipt (free), or can buy a more detailed record (not free).
  */
 // TODO: TransactionId
+// TODO: Hash
 @JsonIgnoreProperties("\$type")
 class TransactionResponse(
     /**
      * The account ID of the node that the transaction was submitted to.
      */
-    @JsonProperty
+    @JsonProperty("nodeAccountId")
     @JvmField
     val nodeAccountId: AccountId,
 
@@ -27,7 +28,7 @@ class TransactionResponse(
      * The client-generated transaction ID of the transaction that was submitted.
      * This can be used to look up the transaction in an explorer.
      */
-    @JsonProperty
+    @JsonProperty("transactionId")
     @JvmField
     val transactionId: String,
 
@@ -35,7 +36,7 @@ class TransactionResponse(
      * The client-generated SHA-384 hash of the transaction that was submitted.
      * This can be used to lookup the transaction in an explorer.
      */
-    @JsonProperty
+    @JsonProperty("transactionHash")
     @JvmField
     val transactionHash: String
 )
