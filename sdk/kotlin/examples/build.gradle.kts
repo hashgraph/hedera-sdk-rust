@@ -14,7 +14,6 @@ java {
 
 dependencies {
     implementation(rootProject)
-    implementation("com.google.code.findbugs:jsr305:3.0.2")
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
 }
 
