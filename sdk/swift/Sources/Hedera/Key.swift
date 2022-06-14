@@ -5,14 +5,14 @@ public enum Key {
 }
 
 extension Key: Encodable {
-    private enum KeyKeys: CodingKey {
+    private enum CodingKeys: CodingKey {
         case single
         case contractId
         case delegatableContractId
     }
 
     public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: KeyKeys.self)
+        var container = encoder.container(keyedBy: CodingKeys.self)
 
         switch self {
         case .single(let publicKey):
