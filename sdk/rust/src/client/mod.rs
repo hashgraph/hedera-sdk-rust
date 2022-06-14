@@ -44,6 +44,12 @@ impl Client {
         *self.payer_account_id.write() = Some(id);
     }
 
+    /// Gets the account that is, by default, paying for transactions and queries built with
+    /// this client.
+    pub fn payer_account_id(&self) -> Option<AccountId> {
+        self.payer_account_id.read().clone()
+    }
+
     /// Adds a signer that will, by default, sign for all transactions and queries built
     /// with this client.
     ///
