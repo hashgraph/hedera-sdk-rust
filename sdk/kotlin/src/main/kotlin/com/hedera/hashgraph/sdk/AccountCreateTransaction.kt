@@ -75,6 +75,15 @@ class AccountCreateTransaction(
     var declineStakingReward: Boolean = false,
 ) : Transaction() {
     /**
+     * Sets the key that must sign each transfer out of the account.
+     */
+    fun setKey(key: Key): AccountCreateTransaction {
+        this.key = key
+
+        return this
+    }
+
+    /**
      * Sets the initial number of Hbar to put into the account.
      */
     fun setInitialBalance(initialBalance: Long): AccountCreateTransaction {
