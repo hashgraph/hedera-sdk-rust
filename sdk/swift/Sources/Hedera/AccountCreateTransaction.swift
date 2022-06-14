@@ -3,10 +3,30 @@ import Foundation
 /// Create a new Hedera™ account.
 public final class AccountCreateTransaction: Transaction {
     /// Create a new `AccountCreateTransaction` ready for configuration.
-    public override init() {}
+    public override init(
+        key: Key? = nil,
+        initialBalance: UInt64 = 0,
+        receiverSignatureRequired: Bool = false,
+        autoRenewPeriod: TimeInterval? = nil,
+        accountMemo: String = "",
+        maxAutomaticTokenAssociations: UInt32 = 0,
+        stakedAccountId: AccountAddress? = nil,
+        stakedNodeId: UInt64? = nil,
+        declineStakingReward: Bool = false
+    ) {
+        self.key = key
+        self.initialBalance = initialBalance
+        self.receiverSignatureRequired = receiverSignatureRequired
+        self.autoRenewPeriod = autoRenewPeriod
+        self.accountMemo = accountMemo
+        self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = declineStakingReward
+    }
 
     /// The key that must sign each transfer out of the account.
-    public private(set) var key: Key?
+    public var key: Key?
 
     /// Sets the key that must sign each transfer out of the account.
     @discardableResult
@@ -18,7 +38,7 @@ public final class AccountCreateTransaction: Transaction {
 
     // TODO: Hbar
     /// The initial number of Hbar to put into the account.
-    public private(set) var initialBalance: UInt64 = 0
+    public var initialBalance: UInt64
 
     /// Sets the initial number of Hbar to put into the account.
     @discardableResult
@@ -29,7 +49,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// If true, this account's key must sign any transaction depositing into this account.
-    public private(set) var receiverSignatureRequired: Bool = false
+    public var receiverSignatureRequired: Bool
 
     /// Set to true to require this account to sign any transfer of hbars to this account.
     @discardableResult
@@ -40,7 +60,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// The period until the account will be charged to extend its expiration date.
-    public private(set) var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: TimeInterval?
 
     /// Sets the period until the account will be charged to extend its expiration date.
     @discardableResult
@@ -51,7 +71,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// The memo associated with the account.
-    public private(set) var accountMemo: String = ""
+    public var accountMemo: String
 
     /// Sets the memo associated with the account.
     @discardableResult
@@ -62,7 +82,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
-    public private(set) var maxAutomaticTokenAssociations: UInt32 = 0
+    public var maxAutomaticTokenAssociations: UInt32
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     @discardableResult
@@ -74,7 +94,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public private(set) var stakedAccountId: AccountAddress?
+    public var stakedAccountId: AccountAddress?
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
@@ -87,7 +107,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
-    public private(set) var stakedNodeId: UInt64?
+    public var stakedNodeId: UInt64?
 
     /// Sets the ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -99,7 +119,7 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// If true, the account declines receiving a staking reward. The default value is false.
-    public private(set) var declineStakingReward: Bool = false
+    public var declineStakingReward: Bool
 
     /// Set to true, the account declines receiving a staking reward. The default value is false.
     @discardableResult
