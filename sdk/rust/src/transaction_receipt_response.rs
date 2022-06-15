@@ -10,12 +10,10 @@ pub struct TransactionReceiptResponse {
     pub receipt: TransactionReceipt,
 
     /// The receipts of processing all transactions with the given id, in consensus time order.
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub duplicate_receipts: Vec<TransactionReceipt>,
 
     /// The receipts (if any) of all child transactions spawned by the transaction with the
     /// given top-level id, in consensus order.
-    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub child_receipts: Vec<TransactionReceipt>,
 }
 

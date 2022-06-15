@@ -141,6 +141,27 @@ internal open class CHedera {
         ): Error?
 
         /**
+         * Parse a Hedera `AccountAlias` from the passed string.
+         */
+        fun hedera_account_alias_from_string(
+            @In s: String,
+            @Out shard: NativeLongByReference,
+            @Out realm: NativeLongByReference,
+            @Out alias: PointerByReference
+        ): Error?
+
+        /**
+         * Parse a Hedera `AccountAddress` from the passed string.
+         */
+        fun hedera_account_address_from_string(
+            @In s: String,
+            @Out shard: NativeLongByReference,
+            @Out realm: NativeLongByReference,
+            @Out num: NativeLongByReference,
+            @Out alias: PointerByReference
+        ): Error?
+
+        /**
          * Generates a new Ed25519 private key.
          */
         fun hedera_private_key_generate_ed25519(): Pointer
