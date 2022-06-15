@@ -11,8 +11,6 @@
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::enum_glob_use)]
 
-extern crate core;
-
 #[macro_use]
 mod protobuf;
 
@@ -24,6 +22,7 @@ mod entity_id;
 mod error;
 mod execute;
 mod file;
+mod fraction;
 mod key;
 mod mirror_query;
 mod node_address;

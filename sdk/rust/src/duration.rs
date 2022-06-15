@@ -50,9 +50,12 @@ impl FromStr for Duration {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self {
-            seconds: s.parse::<i64>().unwrap_or_default(),
-        })
+        let seconds = s.parse::<i64>();
+
+        match seconds {
+            Ok(seconds) => Ok(Self{ seconds }),
+            Err(_) => Err(Error::basic_parse("expected an integer"))
+        }
     }
 }
 
