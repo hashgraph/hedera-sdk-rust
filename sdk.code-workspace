@@ -17,10 +17,6 @@
             "name": "Swift"
         },
         {
-            "path": "sdk/js",
-            "name": "JavaScript"
-        },
-        {
             "path": "sdk/c",
             "name": "C"
         },
