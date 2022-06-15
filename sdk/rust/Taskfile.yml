@@ -1,5 +1,7 @@
 version: "3"
 
+silent: true
+
 tasks:
     build:
         run: once
@@ -9,7 +11,7 @@ tasks:
             - src/**/*.rs
         cmds:
             # Build the Hedera Rust SDK (in debug mode)
-            - cargo build --message-format=short --features=ffi
+            - cmd: cargo build --message-format=short --features=ffi
 
             # Package for Swift
             - rm -rf ../swift/CHedera.xcframework/macos-*/
@@ -26,10 +28,17 @@ tasks:
             - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/
             - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/{amd64,aarch64}/
             - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/
-            - cp -v target/debug/libhedera.so ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/ 2> /dev/null || true
-            - cp -v target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/amd64/ 2> /dev/null || true
-            - cp -v target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/aarch64/ 2> /dev/null || true
-            - cp -v target/debug/hedera.dll ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.so ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/aarch64/ 2> /dev/null || true
+            - cp target/debug/hedera.dll ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/ 2> /dev/null || true
+
+            # Package for Go
+            - cp ../c/include/hedera.h ../go/native
+            - cp target/debug/libhedera.a ../go/native/linux/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.a ../go/native/macos/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.a ../go/native/macos/arm64/ 2> /dev/null || true
+            - cp target/debug/libhedera.a ../go/native/windows/amd64/ 2> /dev/null || true
 
     format:
         cmds:
