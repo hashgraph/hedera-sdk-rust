@@ -56,11 +56,16 @@ impl FromStr for Timestamp {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let split: Vec<&str> = s.split(".").collect();
-        Ok(Self {
-            seconds: split[0].parse::<i64>().unwrap_or_default(),
-            nanos: split[1].parse::<u32>().unwrap_or_default(),
-        })
+        let parts: Vec<&str> = s.split(".").collect();
+
+        if parts.len() == 2 {
+            Ok(Self {
+                seconds: parts[0].parse::<i64>().unwrap_or_default(),
+                nanos: parts[1].parse::<u32>().unwrap_or_default(),
+            })
+        } else {
+            Err(Error::basic_parse("expecting <seconds>.<nanos> (ex: 1654894440.960321483"))
+        }
     }
 }
 
