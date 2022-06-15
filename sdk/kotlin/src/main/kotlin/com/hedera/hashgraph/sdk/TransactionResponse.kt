@@ -2,6 +2,9 @@ package com.hedera.hashgraph.sdk
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.future.future
+import kotlinx.coroutines.runBlocking
 
 /**
  * Response from Transaction.execute.
@@ -39,4 +42,22 @@ class TransactionResponse(
     @JsonProperty("transactionHash")
     @JvmField
     val transactionHash: String
-)
+) {
+    /**
+     * Get the receipt of this transaction. Will wait for consensus.
+     */
+    suspend fun getReceipt(client: Client): TransactionReceipt {
+        return TransactionReceiptQuery(transactionId = transactionId).execute(client).receipt
+    }
+
+    /**
+     * Get the receipt of this transaction. Will wait for consensus.
+     */
+    @JvmName("getReceipt")
+    fun getReceiptBlocking(client: Client) = runBlocking { getReceipt(client) }
+
+    /**
+     * Get the receipt of this transaction. Will wait for consensus.
+     */
+    fun getReceiptAsync(client: Client) = GlobalScope.future { getReceipt(client) }
+}
