@@ -3,7 +3,7 @@ import Foundation
 /// Create a new Hedera™ account.
 public final class AccountCreateTransaction: Transaction {
     /// Create a new `AccountCreateTransaction` ready for configuration.
-    public override init(
+    public init(
         key: Key? = nil,
         initialBalance: UInt64 = 0,
         receiverSignatureRequired: Bool = false,
