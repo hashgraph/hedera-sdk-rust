@@ -228,9 +228,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenCreate(transaction) => transaction.execute(channel, request).await,
             Self::TokenDelete(transaction) => transaction.execute(channel, request).await,
             Self::TokenDissociate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenFeeScheduleUpdate(transaction) => {
-                transaction.execute(channel, request).await
-            }
+            Self::TokenFeeScheduleUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenPause(transaction) => transaction.execute(channel, request).await,
