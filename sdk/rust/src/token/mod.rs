@@ -5,6 +5,7 @@ mod token_burn_transaction;
 mod token_create_transaction;
 mod token_delete_transaction;
 mod token_dissociate_transaction;
+mod token_fee_schedule_update_transaction;
 mod token_freeze_transaction;
 mod token_grant_kyc_transaction;
 mod token_pause_transaction;
@@ -21,6 +22,7 @@ pub use token_burn_transaction::{TokenBurnTransaction, TokenBurnTransactionData}
 pub use token_create_transaction::{TokenCreateTransaction, TokenCreateTransactionData};
 pub use token_delete_transaction::{TokenDeleteTransaction, TokenDeleteTransactionData};
 pub use token_dissociate_transaction::{TokenDissociateTransaction, TokenDissociateTransactionData};
+pub use token_fee_schedule_update_transaction::{TokenFeeScheduleUpdateTransaction, TokenFeeScheduleUpdateTransactionData};
 pub use token_freeze_transaction::{TokenFreezeTransaction, TokenFreezeTransactionData};
 pub use token_grant_kyc_transaction::{TokenGrantKycTransaction, TokenGrantKycTransactionData};
 pub use token_pause_transaction::{TokenPauseTransaction, TokenPauseTransactionData};
