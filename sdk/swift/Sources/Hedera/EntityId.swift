@@ -7,6 +7,7 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, C
     /// The realm number (non-negative).
     public let realm: UInt64
 
+    /// The entity (account, file, contract, token, topic, or schedule) number (non-negative).
     public let num: UInt64
 
     public required init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {

@@ -1,0 +1,16 @@
+version: "3"
+
+includes:
+    ":rust":
+        taskfile: ../rust/Taskfile.yml
+        dir: ../rust
+
+tasks:
+    build:
+        deps: [":rust:build"]
+        cmds:
+            - dart analyze
+
+    format:
+        cmds:
+            - dart format --fix .
