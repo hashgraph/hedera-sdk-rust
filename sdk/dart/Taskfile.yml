@@ -6,9 +6,16 @@ includes:
         dir: ../rust
 
 tasks:
-    build:
-        deps: [":rust:build"]
+    prepare:
+        sources:
+            - pubspec.yaml
         cmds:
+            - dart pub get
+
+    build:
+        deps: [":rust:build", "prepare"]
+        cmds:
+            - dart run ffigen --config ffigen.yaml
             - dart analyze
 
     format:
