@@ -40,6 +40,9 @@ tasks:
             - cp target/debug/libhedera.a ../go/native/macos/arm64/ 2> /dev/null || true
             - cp target/debug/libhedera.a ../go/native/windows/amd64/ 2> /dev/null || true
 
+            # Package for Dart
+            - cp ../c/include/hedera.h ../dart/src/
+
     format:
         cmds:
             - cargo fmt

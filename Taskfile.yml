@@ -10,8 +10,8 @@ includes:
         dir: ./sdk/swift
 
     java:
-        taskfile: ./sdk/java/Taskfile.yml
-        dir: ./sdk/java
+        taskfile: ./sdk/kotlin/Taskfile.yml
+        dir: ./sdk/kotlin
 
     kotlin:
         taskfile: ./sdk/kotlin/Taskfile.yml
