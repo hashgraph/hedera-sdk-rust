@@ -23,6 +23,10 @@
         {
             "path": "sdk/kotlin",
             "name": "Kotlin"
+        },
+        {
+            "path": "sdk/dart",
+            "name": "Dart"
         }
     ],
     "settings": {}
