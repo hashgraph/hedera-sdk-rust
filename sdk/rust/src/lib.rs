@@ -21,7 +21,6 @@ mod entity_id;
 mod error;
 mod execute;
 mod file;
-mod fraction;
 mod key;
 mod mirror_query;
 mod node_address;
