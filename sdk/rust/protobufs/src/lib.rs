@@ -10,6 +10,9 @@ mod time_0_2;
 #[cfg(feature = "time_0_3")]
 mod time_0_3;
 
+#[cfg(feature = "fraction")]
+mod fraction;
+
 pub mod services {
     tonic::include_proto!("proto");
 }

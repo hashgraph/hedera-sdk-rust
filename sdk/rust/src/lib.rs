@@ -65,18 +65,7 @@ pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
 pub use token::{
-    TokenId,
-    TokenAssociateTransaction,
-    TokenBurnTransaction,
-    TokenDeleteTransaction,
-    TokenDissociateTransaction,
-    TokenFreezeTransaction,
-    TokenGrantKycTransaction,
-    TokenPauseTransaction,
-    TokenRevokeKycTransaction,
-    TokenUnfreezeTransaction,
-    TokenUnpauseTransaction,
-    TokenWipeTransaction,
+    TokenAssociateTransaction, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenDissociateTransaction, TokenFreezeTransaction, TokenGrantKycTransaction, TokenId, TokenPauseTransaction, TokenRevokeKycTransaction, TokenUnfreezeTransaction, TokenUnpauseTransaction, TokenWipeTransaction
 };
 pub use topic::{
     TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessage, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction
