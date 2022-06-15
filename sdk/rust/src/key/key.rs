@@ -2,6 +2,7 @@ use hedera_proto::services;
 
 use crate::{ContractId, Error, FromProtobuf, PublicKey, ToProtobuf};
 
+/// Any method that can be used to authorize an operation on Hedera.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Key {
