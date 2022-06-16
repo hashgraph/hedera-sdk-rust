@@ -24,6 +24,7 @@ use crate::token::{
     TokenFeeScheduleUpdateTransactionData,
     TokenFreezeTransactionData,
     TokenGrantKycTransactionData,
+    TokenMintTransactionData,
     TokenPauseTransactionData,
     TokenRevokeKycTransactionData,
     TokenUnfreezeTransactionData,
@@ -60,6 +61,7 @@ pub enum AnyTransactionData {
     TokenFeeScheduleUpdate(TokenFeeScheduleUpdateTransactionData),
     TokenFreeze(TokenFreezeTransactionData),
     TokenGrantKyc(TokenGrantKycTransactionData),
+    TokenMint(TokenMintTransactionData),
     TokenPause(TokenPauseTransactionData),
     TokenRevokeKyc(TokenRevokeKycTransactionData),
     TokenUnfreeze(TokenUnfreezeTransactionData),
@@ -138,6 +140,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
+            Self::TokenMint(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
             Self::TokenPause(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
@@ -197,6 +203,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenFeeScheduleUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenFreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenGrantKyc(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenMint(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenPause(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenRevokeKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUnfreeze(transaction) => transaction.default_max_transaction_fee(),
@@ -231,6 +238,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenFeeScheduleUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
+            Self::TokenMint(transaction) => transaction.execute(channel, request).await,
             Self::TokenPause(transaction) => transaction.execute(channel, request).await,
             Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenUnfreeze(transaction) => transaction.execute(channel, request).await,
