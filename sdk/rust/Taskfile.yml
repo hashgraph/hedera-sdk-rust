@@ -24,14 +24,14 @@ tasks:
             - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-arm64/Headers/
 
             # Package for Kotlin
-            - rm -rf ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native
-            - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/
-            - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/{amd64,aarch64}/
-            - mkdir -p ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/
-            - cp target/debug/libhedera.so ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/ 2> /dev/null || true
-            - cp target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/amd64/ 2> /dev/null || true
-            - cp target/debug/libhedera.dylib ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/macos/aarch64/ 2> /dev/null || true
-            - cp target/debug/hedera.dll ../kotlin/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/ 2> /dev/null || true
+            - rm -rf ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native
+            - mkdir -p ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/
+            - mkdir -p ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/macos/{amd64,aarch64}/
+            - mkdir -p ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/
+            - cp target/debug/libhedera.so ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/linux/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.dylib ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/macos/amd64/ 2> /dev/null || true
+            - cp target/debug/libhedera.dylib ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/macos/aarch64/ 2> /dev/null || true
+            - cp target/debug/hedera.dll ../kotlin/native/src/main/resources/com/hedera/hashgraph/sdk/native/windows/amd64/ 2> /dev/null || true
 
             # Package for Go
             - cp ../c/include/hedera.h ../go/native
