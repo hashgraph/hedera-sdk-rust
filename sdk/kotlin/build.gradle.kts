@@ -3,6 +3,9 @@ plugins {
     `java-library`
 }
 
+group = "com.hedera.hashgraph"
+version = "0.0.0"
+
 repositories {
     mavenCentral()
 }
@@ -13,6 +16,7 @@ java {
 }
 
 dependencies {
+    implementation(project("native"))
     implementation(platform("org.jetbrains.kotlin:kotlin-bom"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.2")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
