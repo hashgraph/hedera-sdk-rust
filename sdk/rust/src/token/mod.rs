@@ -8,6 +8,7 @@ mod token_dissociate_transaction;
 mod token_fee_schedule_update_transaction;
 mod token_freeze_transaction;
 mod token_grant_kyc_transaction;
+mod token_mint_transaction;
 mod token_pause_transaction;
 mod token_revoke_kyc_transaction;
 mod token_supply_type;
@@ -25,6 +26,7 @@ pub use token_dissociate_transaction::{TokenDissociateTransaction, TokenDissocia
 pub use token_fee_schedule_update_transaction::{TokenFeeScheduleUpdateTransaction, TokenFeeScheduleUpdateTransactionData};
 pub use token_freeze_transaction::{TokenFreezeTransaction, TokenFreezeTransactionData};
 pub use token_grant_kyc_transaction::{TokenGrantKycTransaction, TokenGrantKycTransactionData};
+pub use token_mint_transaction::{TokenMintTransaction, TokenMintTransactionData};
 pub use token_pause_transaction::{TokenPauseTransaction, TokenPauseTransactionData};
 pub use token_revoke_kyc_transaction::{TokenRevokeKycTransaction, TokenRevokeKycTransactionData};
 pub use token_unfreeze_transaction::{TokenUnfreezeTransaction, TokenUnfreezeTransactionData};
