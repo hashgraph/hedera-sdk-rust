@@ -112,10 +112,10 @@ impl ToTransactionDataProtobuf for TopicUpdateTransactionData {
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         let topic_id = self.topic_id.as_ref().map(TopicId::to_protobuf);
-        let expiration_time = self.expires_at.as_ref().map(OffsetDateTime::to_protobuf);
+        let expiration_time = self.expires_at.map(Into::into);
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let submit_key = self.submit_key.as_ref().map(Key::to_protobuf);
-        let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
+        let auto_renew_period = self.auto_renew_period.map(Into::into);
         let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
 
         services::transaction_body::Data::ConsensusUpdateTopic(
