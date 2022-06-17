@@ -40,7 +40,7 @@ pub type TokenCreateTransaction = Transaction<TokenCreateTransactionData>;
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct TokenCreateTransactionData {
     /// The publicly visible name of the token.
     name: String,
@@ -76,42 +76,37 @@ pub struct TokenCreateTransactionData {
     /// true, an account must be unfrozen before it can receive the token
     freeze_default: bool,
 
-    /// Sets the time at which the token should expire.
+    /// The time at which the token should expire.
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
     expires_at: Option<OffsetDateTime>,
 
     /// An account which will be automatically charged to renew the token's expiration, at
-    /// autoRenewPeriod interval
+    /// `auto_renew_period` interval.
     auto_renew_account_id: Option<AccountAddress>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
     #[serde_as(as = "Option<DurationSeconds<i64>>")]
     auto_renew_period: Option<Duration>,
 
-    /// The memo associated with the token (UTF-8 encoding max 100 bytes)
+    /// The memo associated with the token.
     token_memo: String,
 
-    /// IWA compatibility. Specifies the token type. Defaults to FUNGIBLE_COMMON
+    /// The token type. Defaults to FungibleCommon.
     token_type: TokenType,
 
-    /// IWA compatibility. Specifies the token supply type. Defaults to INFINITE
+    /// The token supply type. Defaults to Infinite.
     token_supply_type: TokenSupplyType,
 
-    /// IWA Compatibility. Depends on TokenSupplyType. For tokens of type FUNGIBLE_COMMON - the
-    /// maximum number of tokens that can be in circulation. For tokens of type NON_FUNGIBLE_UNIQUE -
-    /// the maximum number of NFTs (serial numbers) that can be minted. This field can never be
-    /// changed!
+    /// Sets the maximum number of tokens that can be in circulation.
     max_supply: u64,
 
-    /// The key which can change the token's custom fee schedule; must sign a TokenFeeScheduleUpdate
-    /// transaction
+    /// The key which can change the token's custom fee schedule.
     fee_schedule_key: Option<Key>,
 
-    /// The custom fees to be assessed during a CryptoTransfer that transfers units of this token
+    /// The custom fees to be assessed during a transfer.
     custom_fees: Vec<CustomFee>,
 
-    /// The Key which can pause and unpause the Token.
-    /// If Empty the token pause status defaults to PauseNotApplicable, otherwise Unpaused.
+    /// The key which can pause and unpause the token.
     pause_key: Option<Key>,
 }
 
