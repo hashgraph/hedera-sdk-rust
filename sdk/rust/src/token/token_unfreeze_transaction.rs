@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::{serde_as, skip_serializing_none};
+use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::{AccountId, TokenId, Transaction, TransactionId};
 
 /// Unfreezes transfers of the specified token for the account. Must be signed by the Token's freezeKey.
 ///
@@ -22,30 +22,25 @@ use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, Transact
 /// - If no Freeze Key is defined, the transaction will resolve to TOKEN_HAS_NO_FREEZE_KEY.
 pub type TokenUnfreezeTransaction = Transaction<TokenUnfreezeTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenUnfreezeTransactionData {
-    /// The account to be unfrozen
+    /// The account to be unfrozen.
     account_id: Option<AccountId>,
 
     /// The token for which this account will be unfrozen.
-    ///
-    /// If token does not exist, transaction results in INVALID_TOKEN_ID
     token_id: Option<TokenId>,
 }
 
 impl TokenUnfreezeTransaction {
-    /// Sets the account to be unfrozen
+    /// Sets the account to be unfrozen.
     pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
 
     /// Sets the token for which this account will be unfrozen.
-    ///
-    /// If token does not exist, transaction results in INVALID_TOKEN_ID
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
@@ -72,10 +67,9 @@ impl ToTransactionDataProtobuf for TokenUnfreezeTransactionData {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
-        services::transaction_body::Data::TokenUnfreeze(services::TokenUnfreezeAccountTransactionBody {
-            account,
-            token,
-        })
+        services::transaction_body::Data::TokenUnfreeze(
+            services::TokenUnfreezeAccountTransactionBody { account, token },
+        )
     }
 }
 

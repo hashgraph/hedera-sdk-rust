@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-use itertools::Itertools;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
+use itertools::Itertools;
 use serde_with::{serde_as, skip_serializing_none};
+use tonic::transport::Channel;
 
-use crate::{AccountId, TokenId, ToProtobuf, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::{AccountId, ToProtobuf, TokenId, Transaction, TransactionId};
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
 ///
@@ -31,9 +31,7 @@ pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
     account_id: Option<AccountId>,
 
-    /// The tokens to be associated with the provided account. In the case of NON_FUNGIBLE_UNIQUE
-    /// Type, once an account is associated, it can hold any number of NFTs (serial numbers) of that
-    /// account type.
+    /// The tokens to be associated with the provided account.
     token_ids: Vec<TokenId>,
 }
 
@@ -56,7 +54,7 @@ impl TransactionExecute for TokenAssociateTransactionData {
     async fn execute(
         &self,
         channel: Channel,
-        request: services::Transaction
+        request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         TokenServiceClient::new(channel).associate_tokens(request).await
     }
@@ -69,12 +67,11 @@ impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let tokens =
-            self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
+        let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
 
         services::transaction_body::Data::TokenAssociate(services::TokenAssociateTransactionBody {
             account,
-            tokens
+            tokens,
         })
     }
 }
