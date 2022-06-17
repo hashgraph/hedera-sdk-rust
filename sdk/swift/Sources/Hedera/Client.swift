@@ -20,22 +20,20 @@ public class Client {
     /// Gets the account that is, by default, paying for transactions and queries built with
     /// this client.
     public var payerAccountId: AccountId? {
-        get {
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
+        var shard: UInt64 = 0
+        var realm: UInt64 = 0
+        var num: UInt64 = 0
 
-            hedera_client_get_payer_account_id(ptr, &shard, &realm, &num)
+        hedera_client_get_payer_account_id(ptr, &shard, &realm, &num)
 
-            return AccountId(shard: shard, realm: realm, num: num)
-        }
+        return AccountId(shard: shard, realm: realm, num: num)
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with
     /// this client.
     public func setPayerAccountId(_ payerAccountId: AccountId) {
         hedera_client_set_payer_account_id(
-                ptr, payerAccountId.shard, payerAccountId.realm, payerAccountId.num)
+            ptr, payerAccountId.shard, payerAccountId.realm, payerAccountId.num)
     }
 
     /// Adds a signer that will, by default, sign for all transactions and queries built
