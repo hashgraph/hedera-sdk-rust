@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{skip_serializing_none};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
