@@ -9,27 +9,17 @@ use tonic::{Response, Status};
 use crate::account::{
     AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData
 };
+use crate::contract::{
+    ContractCreateTransactionData, ContractDeleteTransactionData, ContractUpdateTransactionData
+};
 use crate::file::{
     FileAppendTransactionData, FileCreateTransactionData, FileDeleteTransactionData, FileUpdateTransactionData
 };
+use crate::token::{
+    TokenAssociateTransactionData, TokenBurnTransactionData, TokenCreateTransactionData, TokenDeleteTransactionData, TokenDissociateTransactionData, TokenFeeScheduleUpdateTransactionData, TokenFreezeTransactionData, TokenGrantKycTransactionData, TokenMintTransactionData, TokenPauseTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeTransactionData, TokenUnpauseTransactionData, TokenWipeTransactionData
+};
 use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
-};
-use crate::token::{
-    TokenAssociateTransactionData,
-    TokenBurnTransactionData,
-    TokenCreateTransactionData,
-    TokenDeleteTransactionData,
-    TokenDissociateTransactionData,
-    TokenFeeScheduleUpdateTransactionData,
-    TokenFreezeTransactionData,
-    TokenGrantKycTransactionData,
-    TokenMintTransactionData,
-    TokenPauseTransactionData,
-    TokenRevokeKycTransactionData,
-    TokenUnfreezeTransactionData,
-    TokenUnpauseTransactionData,
-    TokenWipeTransactionData,
 };
 use crate::transaction::{ToTransactionDataProtobuf, TransactionBody, TransactionExecute};
 use crate::transfer_transaction::TransferTransactionData;
@@ -44,6 +34,9 @@ pub enum AnyTransactionData {
     AccountCreate(AccountCreateTransactionData),
     AccountUpdate(AccountUpdateTransactionData),
     AccountDelete(AccountDeleteTransactionData),
+    ContractCreate(ContractCreateTransactionData),
+    ContractUpdate(ContractUpdateTransactionData),
+    ContractDelete(ContractDeleteTransactionData),
     Transfer(TransferTransactionData),
     TopicCreate(TopicCreateTransactionData),
     TopicUpdate(TopicUpdateTransactionData),
@@ -89,6 +82,18 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::AccountDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::ContractCreate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::ContractUpdate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::ContractDelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -191,6 +196,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::ContractCreate(transaction) => transaction.default_max_transaction_fee(),
+            Self::ContractUpdate(transaction) => transaction.default_max_transaction_fee(),
+            Self::ContractDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::FileAppend(transaction) => transaction.default_max_transaction_fee(),
             Self::FileCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::FileUpdate(transaction) => transaction.default_max_transaction_fee(),
@@ -226,6 +234,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
             Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
             Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
+            Self::ContractCreate(transaction) => transaction.execute(channel, request).await,
+            Self::ContractUpdate(transaction) => transaction.execute(channel, request).await,
+            Self::ContractDelete(transaction) => transaction.execute(channel, request).await,
             Self::FileAppend(transaction) => transaction.execute(channel, request).await,
             Self::FileCreate(transaction) => transaction.execute(channel, request).await,
             Self::FileUpdate(transaction) => transaction.execute(channel, request).await,
@@ -235,7 +246,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenCreate(transaction) => transaction.execute(channel, request).await,
             Self::TokenDelete(transaction) => transaction.execute(channel, request).await,
             Self::TokenDissociate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenFeeScheduleUpdate(transaction) => transaction.execute(channel, request).await,
+            Self::TokenFeeScheduleUpdate(transaction) => {
+                transaction.execute(channel, request).await
+            }
             Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenMint(transaction) => transaction.execute(channel, request).await,
