@@ -42,55 +42,41 @@ pub type TokenCreateTransaction = Transaction<TokenCreateTransactionData>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenCreateTransactionData {
-    /// The publicly visible name of the token. The token name is specified as a Unicode string.
-    /// Its UTF-8 encoding cannot exceed 100 bytes, and cannot contain the 0 byte (NUL).
+    /// The publicly visible name of the token.
     name: String,
 
-    /// The publicly visible token symbol. The token symbol is specified as a Unicode string.
-    /// Its UTF-8 encoding cannot exceed 100 bytes, and cannot contain the 0 byte (NUL).
+    /// The publicly visible token symbol.
     symbol: String,
 
-    /// For tokens of type FUNGIBLE_COMMON - the number of decimal places a
-    /// token is divisible by. For tokens of type NON_FUNGIBLE_UNIQUE - value
-    /// must be 0
+    /// The number of decimal places a fungible token is divisible by.
     decimals: u32,
 
-    /// Specifies the initial supply of tokens to be put in circulation. The
-    /// initial supply is sent to the Treasury Account. The supply is in the
-    /// lowest denomination possible. In the case for NON_FUNGIBLE_UNIQUE Type
-    /// the value must be 0
+    /// The initial supply of fungible tokens to to mint to the treasury account.
     initial_supply: u64,
 
-    /// The account which will act as a treasury for the token. This account
-    /// will receive the specified initial supply or the newly minted NFTs in
-    /// the case for NON_FUNGIBLE_UNIQUE Type
+    /// The account which will act as a treasury for the token.
     treasury_account_id: Option<AccountAddress>,
 
-    /// The key which can perform update/delete operations on the token. If empty, the token can be
-    /// perceived as immutable (not being able to be updated/deleted)
+    /// The key which can perform update/delete operations on the token.
     admin_key: Option<Key>,
 
-    /// The key which can grant or revoke KYC of an account for the token's transactions. If empty,
-    /// KYC is not required, and KYC grant or revoke operations are not possible.
+    /// The key which can grant or revoke KYC of an account for the token's transactions.
     kyc_key: Option<Key>,
 
-    /// The key which can sign to freeze or unfreeze an account for token transactions. If empty,
-    /// freezing is not possible
+    /// The key which can sign to freeze or unfreeze an account for token transactions.
     freeze_key: Option<Key>,
 
-    /// The key which can wipe the token balance of an account. If empty, wipe is not possible
+    /// The key which can wipe the token balance of an account.
     wipe_key: Option<Key>,
 
-    /// The key which can change the supply of a token. The key is used to sign Token Mint/Burn
-    /// operations
+    /// The key which can change the supply of a token.
     supply_key: Option<Key>,
 
-    /// The default Freeze status (frozen or unfrozen) of Hedera accounts relative to this token. If
+    /// The default freeze status (frozen or unfrozen) of Hedera accounts relative to this token. If
     /// true, an account must be unfrozen before it can receive the token
     freeze_default: bool,
 
-    /// The epoch second at which the token should expire; if an auto-renew account and period are
-    /// specified, this is coerced to the current epoch second plus the autoRenewPeriod
+    /// Sets the time at which the token should expire.
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
     expires_at: Option<OffsetDateTime>,
 
