@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::skip_serializing_none;
+use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::{AccountId, TokenId, Transaction, TransactionId};
 
 /// Grants KYC to the account for the given token. Must be signed by the Token's kycKey.
 ///
@@ -21,30 +21,25 @@ use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, Transact
 /// - If no KYC Key is defined, the transaction will resolve to TOKEN_HAS_NO_KYC_KEY.
 pub type TokenGrantKycTransaction = Transaction<TokenGrantKycTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenGrantKycTransactionData {
-    /// The account to be KYCed
+    /// The account to be granted KYC.
     account_id: Option<AccountId>,
 
     /// The token for which this account will be granted KYC.
-    ///
-    /// If token does not exist, transaction results in INVALID_TOKEN_ID
     token_id: Option<TokenId>,
 }
 
 impl TokenGrantKycTransaction {
-    /// Sets the account to be KYCed
+    /// Sets the account to be granted KYC.
     pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
 
     /// Sets the token for which this account will be granted KYC.
-    ///
-    /// If token does not exist, transaction results in INVALID_TOKEN_ID
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
