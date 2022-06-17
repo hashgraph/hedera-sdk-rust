@@ -1,12 +1,12 @@
 use async_trait::async_trait;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::{serde_as, skip_serializing_none};
+use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::{AccountId, TokenId, Transaction, TransactionId};
 
 /// Wipes the provided amount of tokens from the specified Account. Must be signed by the Token's
 /// Wipe key.
@@ -49,13 +49,11 @@ pub struct TokenWipeTransactionData {
     /// The token for which the account will be wiped.
     token_id: Option<TokenId>,
 
-    /// Applicable to tokens of type FUNGIBLE_COMMON. The amount of tokens to wipe from the specified
-    /// account. Amount must be a positive non-zero number in the lowest denomination possible, not
-    /// bigger than the token balance of the account (0; balance].
+    /// The amount of a fungible token to wipe from the specified account.
     amount: Option<u64>,
 
-    /// Applicable to tokens of type NON_FUNGIBLE_UNIQUE. The list of serial numbers to be wiped.
-    serial_numbers: Vec<i64>,
+    /// The serial numbers of a non-fungible token to wipe from the specified account.
+    serial_numbers: Vec<u64>,
 }
 
 impl TokenWipeTransaction {
@@ -71,16 +69,14 @@ impl TokenWipeTransaction {
         self
     }
 
-    /// Applicable to tokens of type FUNGIBLE_COMMON. Sets the amount of tokens to wipe from the specified
-    /// account. Amount must be a positive non-zero number in the lowest denomination possible, not
-    /// bigger than the token balance of the account (0; balance].
+    /// Sets the amount of a fungible token to wipe from the specified account.
     pub fn amount(&mut self, amount: impl Into<u64>) -> &mut Self {
         self.body.data.amount = Some(amount.into());
         self
     }
 
-    /// Applicable to tokens of type NON_FUNGIBLE_UNIQUE. Sets the list of serial numbers to be wiped.
-    pub fn serial_numbers(&mut self, serial_numbers: impl IntoIterator<Item = i64>) -> &mut Self {
+    /// Sets the serial numbers of a non-fungible token to wipe from the specified account.
+    pub fn serial_numbers(&mut self, serial_numbers: impl IntoIterator<Item = u64>) -> &mut Self {
         self.body.data.serial_numbers = serial_numbers.into_iter().collect();
         self
     }
@@ -106,7 +102,7 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
         let amount = self.amount.clone().unwrap_or_default();
-        let serial_numbers = self.serial_numbers.clone();
+        let serial_numbers = self.serial_numbers.iter().map(|num| *num as i64).collect();
 
         services::transaction_body::Data::TokenWipe(services::TokenWipeAccountTransactionBody {
             account,
