@@ -47,7 +47,9 @@ pub use account::{
     AccountAddress, AccountAlias, AccountBalanceQuery, AccountBalanceResponse, AccountCreateTransaction, AccountDeleteTransaction, AccountId, AccountInfo, AccountInfoQuery, AccountUpdateTransaction
 };
 pub use client::Client;
-pub use contract::{ContractAddress, ContractEvmAddress, ContractId};
+pub use contract::{
+    ContractAddress, ContractBytecodeQuery, ContractBytecodeResponse, ContractCreateTransaction, ContractEvmAddress, ContractExecuteTransaction, ContractId, ContractUpdateTransaction
+};
 pub use entity_id::EntityId;
 pub use error::{Error, Result};
 pub use file::{
