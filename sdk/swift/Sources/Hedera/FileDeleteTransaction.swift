@@ -9,7 +9,7 @@ public final class FileDeleteTransaction: Transaction {
 
     /// The file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.
-    public private(set) var fileId: FileId?
+    public var fileId: FileId?
 
     /// Sets the file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.

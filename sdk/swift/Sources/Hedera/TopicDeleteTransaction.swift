@@ -12,7 +12,7 @@ public final class TopicDeleteTransaction: Transaction {
     public override init() {}
 
     /// The topic ID which is being deleted in this transaction.
-    public private(set) var topicId: TopicId?
+    public var topicId: TopicId?
 
     /// Sets the topic ID which is being deleted in this transaction.
     @discardableResult

@@ -6,7 +6,7 @@ public final class FileContentsQuery: Query<FileContentsResponse> {
     public override init() {}
 
     /// The file ID for which contents are requested.
-    public private(set) var fileId: FileId?
+    public var fileId: FileId?
 
     /// Sets the file ID for which contents are requested.
     @discardableResult

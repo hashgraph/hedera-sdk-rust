@@ -13,7 +13,7 @@ public final class TopicCreateTransaction: Transaction {
     public override init() {}
 
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
-    public private(set) var topicMemo: String = ""
+    public var topicMemo: String = ""
 
     /// Sets the short publicly visible memo about the topic.
     @discardableResult
@@ -24,7 +24,7 @@ public final class TopicCreateTransaction: Transaction {
     }
 
     /// Access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
-    public private(set) var adminKey: Key?
+    public var adminKey: Key?
 
     /// Sets the access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
     @discardableResult
@@ -35,7 +35,7 @@ public final class TopicCreateTransaction: Transaction {
     }
 
     /// Access control for `TopicMessageSubmitTransaction`.
-    public private(set) var submitKey: Key?
+    public var submitKey: Key?
 
     /// Sets the access control for `TopicMessageSubmitTransaction`.
     @discardableResult
@@ -48,7 +48,7 @@ public final class TopicCreateTransaction: Transaction {
     /// The initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time, if
     /// the `autoRenewAccountId` is configured.
-    public private(set) var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: TimeInterval?
 
     /// Sets the initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time.
@@ -60,7 +60,7 @@ public final class TopicCreateTransaction: Transaction {
     }
 
     /// Account to be used at the topic's expiration time to extend the life of the topic.
-    public private(set) var autoRenewAccountId: AccountId?
+    public var autoRenewAccountId: AccountId?
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.
     @discardableResult
