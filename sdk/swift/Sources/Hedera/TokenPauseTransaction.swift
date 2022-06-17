@@ -2,7 +2,7 @@
 public class TokenPauseTransaction: Transaction {
     /// Create a new `TokenPauseTransaction`.
     public init(
-            tokenId: TokenId? = nil
+        tokenId: TokenId? = nil
     ) {
         self.tokenId = tokenId
     }

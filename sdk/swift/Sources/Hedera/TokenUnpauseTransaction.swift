@@ -2,7 +2,7 @@
 public class TokenUnpauseTransaction: Transaction {
     /// Create a new `TokenUnpauseTransaction`.
     public init(
-            tokenId: TokenId? = nil
+        tokenId: TokenId? = nil
     ) {
         self.tokenId = tokenId
     }
