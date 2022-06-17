@@ -79,8 +79,10 @@ impl TokenMintTransaction {
     /// Sets the metadata to be added to the created token.
     ///
     /// Maximum allowed size of each metadata is 100 bytes
-    pub fn metadata(&mut self, metadata: impl Into<Vec<Vec<u8>>>) -> &mut Self {
-        self.body.data.metadata = metadata.into();
+    pub fn metadata<Bytes>(&mut self, metadata: impl IntoIterator<Item = Bytes>) -> &mut Self
+    where Bytes: AsRef<[u8]>
+    {
+        self.body.data.metadata = metadata.into_iter().map(|bytes| bytes.as_ref().to_vec()).collect();
         self
     }
 }
