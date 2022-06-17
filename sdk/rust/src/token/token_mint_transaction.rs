@@ -1,13 +1,13 @@
 use async_trait::async_trait;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::base64::Base64;
 use serde_with::{serde_as, skip_serializing_none};
+use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::{AccountId, TokenId, Transaction, TransactionId};
 
 /// Mints tokens to the Token's treasury Account.
 ///
@@ -34,55 +34,38 @@ pub type TokenMintTransaction = Transaction<TokenMintTransactionData>;
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenMintTransactionData {
-    /// The token for which to mint tokens. If token does not exist, transaction results in
-    /// `InvalidTokenId`
+    /// The token for which to mint tokens.
     token_id: Option<TokenId>,
 
-    /// Applicable to tokens of type [`FungibleCommon`][TokenType::FungibleCommon].
-    ///
-    /// The amount to mint to the Treasury Account.
-    /// 
-    /// Amount must be a positive non-zero number represented in the lowest denomination of the
-    /// token. The new supply must be lower than 2^63.
+    /// The amount of a fungible token to mint to the treasury account.
     amount: u64,
 
-    /// Applicable to tokens of type [`NonFungibleUnique`][TokenType::NonFungibleUnique].
-    ///
-    /// A list of metadata that are being created.
-    ///
-    /// Maximum allowed size of each metadata is 100 bytes
+    /// The list of metadata for a non-fungible token to mint to the treasury account.
     #[serde_as(as = "Vec<Base64>")]
     metadata: Vec<Vec<u8>>,
 }
 
 impl TokenMintTransaction {
-    /// Sets the token for which to mint tokens. If token does not exist, transaction results in
-    /// `InvalidTokenId`
+    /// Sets the token for which to mint tokens.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
     }
 
-    /// Applicable to tokens of type [`FungibleCommon`][TokenType::FungibleCommon].
-    ///
-    /// Sets the amount to mint to the Treasury Account.
-    ///
-    /// Amount must be a positive non-zero number represented in the lowest denomination of the
-    /// token. The new supply must be lower than 2^63.
+    /// Sets the amount of a fungible token to mint to the treasury account.
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.body.data.amount = amount;
         self
     }
 
-    /// Applicable to tokens of type [`NonFungibleUnique`][TokenType::NonFungibleUnique].
-    ///
-    /// Sets the metadata to be added to the created token.
-    ///
-    /// Maximum allowed size of each metadata is 100 bytes
+    /// Sets the list of metadata for a non-fungible token to mint to the treasury account.
     pub fn metadata<Bytes>(&mut self, metadata: impl IntoIterator<Item = Bytes>) -> &mut Self
-    where Bytes: AsRef<[u8]>
+    where
+        Bytes: AsRef<[u8]>,
     {
-        self.body.data.metadata = metadata.into_iter().map(|bytes| bytes.as_ref().to_vec()).collect();
+        self.body.data.metadata =
+            metadata.into_iter().map(|bytes| bytes.as_ref().to_vec()).collect();
+
         self
     }
 }
