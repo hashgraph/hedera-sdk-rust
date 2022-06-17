@@ -33,9 +33,11 @@ let package = Package(
     products: [
         .library(name: "Hedera", targets: ["Hedera"])
     ],
-    dependencies: [],
+    dependencies: [
+        .package(url: "https://github.com/objecthub/swift-numberkit.git", .upToNextMajor(from: "2.4.1"))
+    ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
-        .target(name: "Hedera", dependencies: ["CHedera"]),
+        .target(name: "Hedera", dependencies: ["CHedera", .product(name: "NumberKit", package: "swift-numberkit")]),
     ] + exampleTargets
 )
