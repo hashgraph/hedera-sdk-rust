@@ -10,7 +10,7 @@ use crate::account::{
     AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData
 };
 use crate::contract::{
-    ContractCreateTransactionData, ContractDeleteTransactionData, ContractUpdateTransactionData
+    ContractCreateTransactionData, ContractDeleteTransactionData, ContractExecuteTransactionData, ContractUpdateTransactionData
 };
 use crate::file::{
     FileAppendTransactionData, FileCreateTransactionData, FileDeleteTransactionData, FileUpdateTransactionData
@@ -37,6 +37,7 @@ pub enum AnyTransactionData {
     ContractCreate(ContractCreateTransactionData),
     ContractUpdate(ContractUpdateTransactionData),
     ContractDelete(ContractDeleteTransactionData),
+    ContractExecute(ContractExecuteTransactionData),
     Transfer(TransferTransactionData),
     TopicCreate(TopicCreateTransactionData),
     TopicUpdate(TopicUpdateTransactionData),
@@ -94,6 +95,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::ContractDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::ContractExecute(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -199,6 +204,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::ContractCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::ContractExecute(transaction) => transaction.default_max_transaction_fee(),
             Self::FileAppend(transaction) => transaction.default_max_transaction_fee(),
             Self::FileCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::FileUpdate(transaction) => transaction.default_max_transaction_fee(),
@@ -237,6 +243,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::ContractCreate(transaction) => transaction.execute(channel, request).await,
             Self::ContractUpdate(transaction) => transaction.execute(channel, request).await,
             Self::ContractDelete(transaction) => transaction.execute(channel, request).await,
+            Self::ContractExecute(transaction) => transaction.execute(channel, request).await,
             Self::FileAppend(transaction) => transaction.execute(channel, request).await,
             Self::FileCreate(transaction) => transaction.execute(channel, request).await,
             Self::FileUpdate(transaction) => transaction.execute(channel, request).await,
