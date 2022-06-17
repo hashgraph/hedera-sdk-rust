@@ -5,14 +5,14 @@ use tonic::transport::Channel;
 
 use super::ToQueryProtobuf;
 use crate::account::{AccountBalanceQueryData, AccountInfoQueryData};
-use crate::contract::ContractBytecodeQueryData;
+use crate::contract::{ContractBytecodeQueryData, ContractCallQueryData};
 use crate::file::FileContentsQueryData;
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
-    AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, FileContentsResponse, FromProtobuf, Query, Transaction, TransactionReceiptResponse
+    AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, FileContentsResponse, FromProtobuf, Query, Transaction, TransactionReceiptResponse
 };
 
 /// Any possible query that may be executed on the Hedera network.
@@ -26,6 +26,7 @@ pub enum AnyQueryData {
     TransactionReceipt(TransactionReceiptQueryData),
     FileContents(FileContentsQueryData),
     ContractBytecode(ContractBytecodeQueryData),
+    ContractCall(ContractCallQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -36,6 +37,7 @@ pub enum AnyQueryResponse {
     TransactionReceipt(TransactionReceiptResponse),
     FileContents(FileContentsResponse),
     ContractBytecode(ContractBytecodeResponse),
+    ContractCall(ContractCallResponse),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -46,6 +48,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::TransactionReceipt(data) => data.to_query_protobuf(header),
             Self::FileContents(data) => data.to_query_protobuf(header),
             Self::ContractBytecode(data) => data.to_query_protobuf(header),
+            Self::ContractCall(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -61,6 +64,7 @@ impl QueryExecute for AnyQueryData {
             Self::TransactionReceipt(query) => query.is_payment_required(),
             Self::FileContents(query) => query.is_payment_required(),
             Self::ContractBytecode(query) => query.is_payment_required(),
+            Self::ContractCall(query) => query.is_payment_required(),
         }
     }
 
@@ -75,6 +79,7 @@ impl QueryExecute for AnyQueryData {
             Self::TransactionReceipt(query) => query.execute(channel, request).await,
             Self::FileContents(query) => query.execute(channel, request).await,
             Self::ContractBytecode(query) => query.execute(channel, request).await,
+            Self::ContractCall(query) => query.execute(channel, request).await,
         }
     }
 
@@ -85,6 +90,7 @@ impl QueryExecute for AnyQueryData {
             Self::TransactionReceipt(query) => query.should_retry_pre_check(status),
             Self::FileContents(query) => query.should_retry_pre_check(status),
             Self::ContractBytecode(query) => query.should_retry_pre_check(status),
+            Self::ContractCall(query) => query.should_retry_pre_check(status),
         }
     }
 
@@ -95,6 +101,7 @@ impl QueryExecute for AnyQueryData {
             Self::TransactionReceipt(query) => query.should_retry(response),
             Self::FileContents(query) => query.should_retry(response),
             Self::ContractBytecode(query) => query.should_retry(response),
+            Self::ContractCall(query) => query.should_retry(response),
         }
     }
 }
@@ -121,6 +128,9 @@ impl FromProtobuf for AnyQueryResponse {
             }
             ContractGetBytecodeResponse(_) => {
                 Self::ContractBytecode(ContractBytecodeResponse::from_protobuf(response)?)
+            }
+            ContractCallLocal(_) => {
+                Self::ContractCall(ContractCallResponse::from_protobuf(response)?)
             }
 
             _ => todo!(),

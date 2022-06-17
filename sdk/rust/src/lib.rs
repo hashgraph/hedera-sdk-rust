@@ -48,7 +48,7 @@ pub use account::{
 };
 pub use client::Client;
 pub use contract::{
-    ContractAddress, ContractBytecodeQuery, ContractBytecodeResponse, ContractCreateTransaction, ContractEvmAddress, ContractExecuteTransaction, ContractId, ContractUpdateTransaction
+    ContractAddress, ContractBytecodeQuery, ContractBytecodeResponse, ContractCallResponse, ContractCreateTransaction, ContractEvmAddress, ContractExecuteTransaction, ContractFunctionResult, ContractId, ContractUpdateTransaction
 };
 pub use entity_id::EntityId;
 pub use error::{Error, Result};
