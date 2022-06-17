@@ -12,7 +12,7 @@ public class AccountUpdateTransaction: Transaction {
     public override init() {}
 
     /// The account ID which is being updated in this transaction.
-    public private(set) var accountId: AccountAddress?
+    public var accountId: AccountAddress?
 
     /// Sets the account ID which is being updated in this transaction.
     @discardableResult
@@ -23,7 +23,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// The new key.
-    public private(set) var key: Key?
+    public var key: Key?
 
     /// Sets the new key.
     @discardableResult
@@ -34,7 +34,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// If true, this account's key must sign any transaction depositing into this account.
-    public private(set) var receiverSignatureRequired: Bool?
+    public var receiverSignatureRequired: Bool?
 
     /// Set to true, this account's key must sign any transaction depositing into this account.
     @discardableResult
@@ -45,7 +45,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// The period until the account will be charged to extend its expiration date.
-    public private(set) var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: TimeInterval?
 
     /// Sets the period until the account will be charged to extend its expiration date.
     @discardableResult
@@ -56,7 +56,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public private(set) var expiresAt: Date?
+    public var expiresAt: Date?
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
@@ -67,7 +67,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// The memo associated with the account.
-    public private(set) var accountMemo: String?
+    public var accountMemo: String?
 
     /// Sets the memo associated with the account.
     @discardableResult
@@ -78,7 +78,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
-    public private(set) var maxAutomaticTokenAssociations: UInt32?
+    public var maxAutomaticTokenAssociations: UInt32?
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     @discardableResult
@@ -90,7 +90,7 @@ public class AccountUpdateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public private(set) var stakedAccountId: AccountAddress?
+    public var stakedAccountId: AccountAddress?
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
@@ -103,7 +103,7 @@ public class AccountUpdateTransaction: Transaction {
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
-    public private(set) var stakedNodeId: UInt64?
+    public var stakedNodeId: UInt64?
 
     /// Sets the ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -115,7 +115,7 @@ public class AccountUpdateTransaction: Transaction {
     }
 
     /// If true, the account declines receiving a staking reward. The default value is false.
-    public private(set) var declineStakingReward: Bool?
+    public var declineStakingReward: Bool?
 
     /// Set to true, the account declines receiving a staking reward. The default value is false.
     @discardableResult

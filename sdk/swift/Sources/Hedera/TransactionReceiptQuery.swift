@@ -6,7 +6,7 @@
 public class TransactionReceiptQuery: Query<TransactionReceiptResponse> {
     /// The ID of the transaction for which the receipt is being requested.
     // TODO: TransactionId
-    public private(set) var transactionId: String?
+    public var transactionId: String?
 
     /// Set the ID of the transaction for which the receipt is being requested.
     @discardableResult
@@ -17,7 +17,7 @@ public class TransactionReceiptQuery: Query<TransactionReceiptResponse> {
     }
 
     /// Whether receipts of processing duplicate transactions should be returned.
-    public private(set) var includeDuplicates: Bool = false
+    public var includeDuplicates: Bool = false
 
     /// Sets whether receipts of processing duplicate transactions should be returned.
     @discardableResult
@@ -29,7 +29,7 @@ public class TransactionReceiptQuery: Query<TransactionReceiptResponse> {
 
     /// Whether the response should include the receipts of any child transactions spawned by the
     /// top-level transaction with the given transaction.
-    public private(set) var includeChildren: Bool = false
+    public var includeChildren: Bool = false
 
     /// Sets whether the response should include the receipts of any child transactions spawned by the
     /// top-level transaction with the given transaction.

@@ -7,7 +7,7 @@ public class AccountInfoQuery: Query<AccountInfo> {
     public override init() {}
 
     /// The account ID for which information is requested.
-    public private(set) var accountId: AccountId?
+    public var accountId: AccountId?
 
     /// Sets the account ID for which information is requested.
     @discardableResult

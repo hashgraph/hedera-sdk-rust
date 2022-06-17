@@ -10,7 +10,7 @@ public class AccountDeleteTransaction: Transaction {
     public override init() {}
 
     /// The account ID which will receive all remaining hbars.
-    public private(set) var transferAccountId: AccountAddress?
+    public var transferAccountId: AccountAddress?
 
     /// Sets the account ID which will receive all remaining hbars.
     @discardableResult
@@ -21,7 +21,7 @@ public class AccountDeleteTransaction: Transaction {
     }
 
     /// The account ID which should be deleted.
-    public private(set) var deleteAccountId: AccountAddress?
+    public var deleteAccountId: AccountAddress?
 
     /// Sets the account ID which should be deleted.
     @discardableResult
