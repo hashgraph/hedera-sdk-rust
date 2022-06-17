@@ -4,8 +4,12 @@
 /// Information about it will continue to exist until it expires.
 ///
 public final class FileDeleteTransaction: Transaction {
-    /// Create a new `FileDeleteTransaction` ready for configuration.
-    public override init() {}
+    /// Create a new `FileDeleteTransaction`.
+    public init(
+        fileId: FileId? = nil
+    ) {
+        self.fileId = fileId
+    }
 
     /// The file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.
