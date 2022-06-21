@@ -15,6 +15,7 @@ mod token_supply_type;
 mod token_type;
 mod token_unfreeze_transaction;
 mod token_unpause_transaction;
+mod token_update_transaction;
 mod token_wipe_transaction;
 
 pub use token_id::TokenId;
@@ -31,4 +32,5 @@ pub use token_pause_transaction::{TokenPauseTransaction, TokenPauseTransactionDa
 pub use token_revoke_kyc_transaction::{TokenRevokeKycTransaction, TokenRevokeKycTransactionData};
 pub use token_unfreeze_transaction::{TokenUnfreezeTransaction, TokenUnfreezeTransactionData};
 pub use token_unpause_transaction::{TokenUnpauseTransaction, TokenUnpauseTransactionData};
+pub use token_update_transaction::{TokenUpdateTransaction, TokenUpdateTransactionData};
 pub use token_wipe_transaction::{TokenWipeTransaction, TokenWipeTransactionData};
