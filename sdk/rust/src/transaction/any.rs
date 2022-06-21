@@ -16,7 +16,7 @@ use crate::file::{
     FileAppendTransactionData, FileCreateTransactionData, FileDeleteTransactionData, FileUpdateTransactionData
 };
 use crate::token::{
-    TokenAssociateTransactionData, TokenBurnTransactionData, TokenCreateTransactionData, TokenDeleteTransactionData, TokenDissociateTransactionData, TokenFeeScheduleUpdateTransactionData, TokenFreezeTransactionData, TokenGrantKycTransactionData, TokenMintTransactionData, TokenPauseTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeTransactionData, TokenUnpauseTransactionData, TokenWipeTransactionData
+    TokenAssociateTransactionData, TokenBurnTransactionData, TokenCreateTransactionData, TokenDeleteTransactionData, TokenDissociateTransactionData, TokenFeeScheduleUpdateTransactionData, TokenFreezeTransactionData, TokenGrantKycTransactionData, TokenMintTransactionData, TokenPauseTransactionData, TokenRevokeKycTransactionData, TokenUnfreezeTransactionData, TokenUnpauseTransactionData, TokenUpdateTransactionData, TokenWipeTransactionData
 };
 use crate::topic::{
     TopicCreateTransactionData, TopicDeleteTransactionData, TopicMessageSubmitTransactionData, TopicUpdateTransactionData
@@ -60,6 +60,7 @@ pub enum AnyTransactionData {
     TokenRevokeKyc(TokenRevokeKycTransactionData),
     TokenUnfreeze(TokenUnfreezeTransactionData),
     TokenUnpause(TokenUnpauseTransactionData),
+    TokenUpdate(TokenUpdateTransactionData),
     TokenWipe(TokenWipeTransactionData),
 }
 
@@ -170,6 +171,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
+            Self::TokenUpdate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
             Self::TokenWipe(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
@@ -222,6 +227,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenRevokeKyc(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUnfreeze(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUnpause(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenWipe(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
@@ -263,6 +269,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
             Self::TokenUnfreeze(transaction) => transaction.execute(channel, request).await,
             Self::TokenUnpause(transaction) => transaction.execute(channel, request).await,
+            Self::TokenUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TokenWipe(transaction) => transaction.execute(channel, request).await,
             Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
