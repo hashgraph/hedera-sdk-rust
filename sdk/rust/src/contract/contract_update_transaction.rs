@@ -2,7 +2,8 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::base64::Base64;
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds, TimestampNanoSeconds};
 use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
 
@@ -15,14 +16,16 @@ pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct ContractUpdateTransactionData {
     contract_id: Option<ContractId>,
 
+    #[serde_as(as = "Option<TimestampNanoSeconds>")]
     expires_at: Option<OffsetDateTime>,
 
     admin_key: Option<Key>,
 
+    #[serde_as(as = "Option<DurationSeconds>")]
     auto_renew_period: Option<Duration>,
 
     contract_memo: Option<String>,
