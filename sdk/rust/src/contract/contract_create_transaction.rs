@@ -2,7 +2,8 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::base64::Base64;
+use serde_with::{serde_as, skip_serializing_none, DurationSeconds};
 use time::Duration;
 use tonic::transport::Channel;
 
@@ -15,8 +16,9 @@ pub type ContractCreateTransaction = Transaction<ContractCreateTransactionData>;
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct ContractCreateTransactionData {
+    #[serde_as(as = "Option<Base64>")]
     bytecode: Option<Vec<u8>>,
 
     bytecode_file_id: Option<FileId>,
@@ -28,8 +30,10 @@ pub struct ContractCreateTransactionData {
     // TODO: Hbar
     initial_balance: u64,
 
+    #[serde_as(as = "DurationSeconds<i64>")]
     auto_renew_period: Duration,
 
+    #[serde_as(as = "Base64")]
     constructor_parameters: Vec<u8>,
 
     contract_memo: String,
