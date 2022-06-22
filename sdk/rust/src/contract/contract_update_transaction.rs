@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use serde::{Deserialize, Serialize};
-use serde_with::base64::Base64;
 use serde_with::{serde_as, skip_serializing_none, DurationSeconds, TimestampNanoSeconds};
 use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
@@ -25,7 +24,7 @@ pub struct ContractUpdateTransactionData {
 
     admin_key: Option<Key>,
 
-    #[serde_as(as = "Option<DurationSeconds>")]
+    #[serde_as(as = "Option<DurationSeconds<i64>>")]
     auto_renew_period: Option<Duration>,
 
     contract_memo: Option<String>,
