@@ -25,7 +25,7 @@ impl Debug for NftId {
 
 impl Display for NftId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}/{}", self.token_id.shard, self.token_id.realm, self.token_id.num, self.serial_number)
+        write!(f, "{}/{}", self.token_id, self.serial_number)
     }
 }
 
@@ -73,6 +73,15 @@ impl FromStr for NftId {
             token_id: TokenId::from_str(parts[0])?,
             serial_number,
         })
+    }
+}
+
+impl From<(TokenId, i64)> for NftId {
+    fn from(tuple: (TokenId, i64)) -> Self {
+        Self {
+            token_id: tuple.0,
+            serial_number: tuple.1
+        }
     }
 }
 
@@ -130,6 +139,30 @@ mod tests {
 
         assert_eq!(nft_id_from_at_str.serial_number, 456);
         assert_eq!(nft_id_from_at_str.token_id.num, 123);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_can_create_from_a_tuple() -> anyhow::Result<()> {
+        let tuple = (TokenId::from(1), 123);
+
+        let nft_id_from_tuple = NftId::from(tuple);
+
+        assert_eq!(tuple.0, nft_id_from_tuple.token_id);
+        assert_eq!(tuple.1, nft_id_from_tuple.serial_number);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_can_create_by_using_into_on_tuple() -> anyhow::Result<()> {
+        let tuple = (TokenId::from(1), 123);
+
+        let nft_id_from_tuple: NftId = tuple.into();
+
+        assert_eq!(tuple.0, nft_id_from_tuple.token_id);
+        assert_eq!(tuple.1, nft_id_from_tuple.serial_number);
 
         Ok(())
     }
