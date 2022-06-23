@@ -4,7 +4,7 @@ use serde_with::base64::Base64;
 use serde_with::serde_as;
 use time::OffsetDateTime;
 
-use crate::{AccountAddress, AccountId, FromProtobuf, NftId};
+use crate::{AccountId, FromProtobuf, NftId};
 
 /// Response from [`TokenNftInfoQuery`][crate::TokenNftInfoQuery].
 #[serde_as]
@@ -15,7 +15,7 @@ pub struct TokenNftInfoResponse {
     pub nft_id: NftId,
 
     /// The current owner of the NFT.
-    pub account_id: AccountAddress,
+    pub account_id: AccountId,
 
     /// Effective consensus timestamp at which the NFT was minted.
     pub creation_time: OffsetDateTime,
@@ -28,7 +28,7 @@ pub struct TokenNftInfoResponse {
     // TODO pub ledger_id: LedgerId, --- also shows as todo in account_info.rs
 
     /// If an allowance is granted for the NFT, its corresponding spender account.
-    pub spender_id: AccountAddress,
+    pub spender_id: Option<AccountId>,
 }
 
 impl FromProtobuf for TokenNftInfoResponse {
@@ -46,15 +46,19 @@ impl FromProtobuf for TokenNftInfoResponse {
         let creation_time = nft.creation_time.unwrap();
         let metadata = nft.metadata;
         // TODO let ledger_id = nft.ledger_id;
-        let spender_id = pb_getf!(nft, spender_id);
+
+        let spender_id = nft.spender_id
+            .map(AccountId::from_protobuf)
+            .map(Result::ok)
+            .flatten();
 
         Ok(Self {
             nft_id: NftId::from_protobuf(nft_id)?,
-            account_id: AccountAddress::from(AccountId::from_protobuf(account_id)?),
+            account_id: AccountId::from_protobuf(account_id)?,
             creation_time: OffsetDateTime::from(creation_time),
             metadata,
             // TODO ledger_id: Ledger_Id::from_protobuf(ledger_id),
-            spender_id: AccountAddress::from(AccountId::from_protobuf(spender_id?)?)
+            spender_id
         })
     }
 }
