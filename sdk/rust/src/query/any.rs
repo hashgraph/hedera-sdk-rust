@@ -146,6 +146,7 @@ impl FromProtobuf for AnyQueryResponse {
                 Self::ContractCall(ContractCallResponse::from_protobuf(response)?)
             }
             ContractGetInfo(_) => Self::ContractInfo(ContractInfo::from_protobuf(response)?),
+            TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfoResponse::from_protobuf(response)?),
 
             _ => todo!(),
         })
