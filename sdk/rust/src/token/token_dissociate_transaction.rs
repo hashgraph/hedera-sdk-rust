@@ -6,7 +6,7 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::{serde_as, skip_serializing_none};
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, TokenId, Transaction, TransactionId};
+use crate::{AccountAddress, AccountId, TokenId, Transaction, TransactionId};
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
 
 /// Dissociates the provided account with the provided tokens. Must be signed by the provided
@@ -34,7 +34,7 @@ pub type TokenDissociateTransaction = Transaction<TokenDissociateTransactionData
 #[serde(rename_all = "camelCase")]
 pub struct TokenDissociateTransactionData {
     /// The account to be dissociated with the provided tokens.
-    account_id: Option<AccountId>,
+    account_id: Option<AccountAddress>,
 
     /// The tokens to be dissociated with the provided account.
     token_ids: Vec<TokenId>,
@@ -42,7 +42,7 @@ pub struct TokenDissociateTransactionData {
 
 impl TokenDissociateTransaction {
     /// Sets the account to be dissociated with the provided tokens.
-    pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -71,7 +71,7 @@ impl ToTransactionDataProtobuf for TokenDissociateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
         let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
 
         services::transaction_body::Data::TokenDissociate(services::TokenDissociateTransactionBody {
