@@ -6,7 +6,7 @@ use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, TokenId, Transaction, TransactionId};
+use crate::{AccountAddress, AccountId, TokenId, Transaction, TransactionId};
 
 /// Revokes KYC from the account for the given token.
 ///
@@ -29,7 +29,7 @@ pub type TokenRevokeKycTransaction = Transaction<TokenRevokeKycTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenRevokeKycTransactionData {
     /// The account to have their KYC revoked.
-    account_id: Option<AccountId>,
+    account_id: Option<AccountAddress>,
 
     /// The token for which this account will have their KYC revoked.
     token_id: Option<TokenId>,
@@ -37,7 +37,7 @@ pub struct TokenRevokeKycTransactionData {
 
 impl TokenRevokeKycTransaction {
     /// Sets the account to have their KYC revoked.
-    pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -66,7 +66,7 @@ impl ToTransactionDataProtobuf for TokenRevokeKycTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenRevokeKyc(services::TokenRevokeKycTransactionBody {
