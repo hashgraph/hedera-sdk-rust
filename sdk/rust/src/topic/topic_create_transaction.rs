@@ -7,7 +7,7 @@ use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, Key, Transaction, TransactionId};
+use crate::{AccountAddress, AccountId, Key, Transaction, TransactionId};
 
 /// Create a topic to be used for consensus.
 ///
@@ -41,7 +41,7 @@ pub struct TopicCreateTransactionData {
     auto_renew_period: Option<Duration>,
 
     /// Account to be used at the topic's expiration time to extend the life of the topic.
-    auto_renew_account_id: Option<AccountId>,
+    auto_renew_account_id: Option<AccountAddress>,
 }
 
 impl Default for TopicCreateTransactionData {
@@ -86,7 +86,7 @@ impl TopicCreateTransaction {
     }
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.
-    pub fn auto_renew_account_id(&mut self, id: impl Into<AccountId>) -> &mut Self {
+    pub fn auto_renew_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(id.into());
         self
     }
@@ -112,7 +112,7 @@ impl ToTransactionDataProtobuf for TopicCreateTransactionData {
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let submit_key = self.submit_key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
+        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountAddress::to_protobuf);
 
         services::transaction_body::Data::ConsensusCreateTopic(
             services::ConsensusCreateTopicTransactionBody {
