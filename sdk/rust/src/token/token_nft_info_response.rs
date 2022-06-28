@@ -49,8 +49,7 @@ impl FromProtobuf for TokenNftInfoResponse {
 
         let spender_id = nft.spender_id
             .map(AccountId::from_protobuf)
-            .map(Result::ok)
-            .flatten();
+            .transpose()?;
 
         Ok(Self {
             nft_id: NftId::from_protobuf(nft_id)?,
