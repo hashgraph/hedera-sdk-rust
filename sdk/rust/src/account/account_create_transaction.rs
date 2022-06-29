@@ -203,7 +203,7 @@ mod tests {
 
     // language=JSON
     const ACCOUNT_CREATE_EMPTY: &str = r#"{
-  "accountCreate": {}
+  "$type": "accountCreate"
 }"#;
 
     #[test]
