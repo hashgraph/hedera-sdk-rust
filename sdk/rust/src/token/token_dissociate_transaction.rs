@@ -86,3 +86,51 @@ impl From<TokenDissociateTransactionData> for AnyTransactionData {
         Self::TokenDissociate(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use assert_matches::assert_matches;
+    use crate::{AccountAddress, AccountId, TokenDissociateTransaction, TokenId};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_DISSOCIATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenDissociate",
+  "accountId": "0.0.1001",
+  "tokenIds": [
+    "0.0.1002",
+    "0.0.1003"
+  ]
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenDissociateTransaction::new();
+
+        transaction
+            .account_id(AccountId::from(1001))
+            .token_ids([
+                TokenId::from(1002),
+                TokenId::from(1003),
+            ]);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_DISSOCIATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_DISSOCIATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenDissociate(transaction) => transaction);
+
+        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(account_id, AccountId::from(1001));
+        assert_eq!(data.token_ids, [TokenId::from(1002), TokenId::from(1003)]);
+
+        Ok(())
+    }
+}
