@@ -196,3 +196,88 @@ impl From<AccountUpdateTransactionData> for AnyTransactionData {
         Self::AccountUpdate(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+    use assert_matches::assert_matches;
+    use time::{Duration, OffsetDateTime};
+    use crate::{AccountAddress, AccountId, AccountUpdateTransaction, Key, PublicKey};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // TODO write JSON fields
+    // language=JSON
+    const ACCOUNT_UPDATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "accountUpdate",
+  "accountId": "0.0.1001",
+  "key": {
+    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+  },
+  "receiverSignatureRequired": true,
+  "autoRenewPeriod": 7776000,
+  "expiresAt": 1656352251277559886,
+  "accountMemo": "An account memo",
+  "maxAutomaticTokenAssociations": 256,
+  "stakedAccountId": "0.0.1002",
+  "stakedNodeId": 7,
+  "declineStakingReward": false
+}"#;
+
+    const KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = AccountUpdateTransaction::new();
+
+        transaction
+            .account_id(AccountId::from(1001))
+            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .key(PublicKey::from_str(KEY)?)
+            .receiver_signature_required(true)
+            .auto_renew_period(Duration::days(90))
+            .account_memo("An account memo")
+            .max_automatic_token_associations(256)
+            .staked_account_id(AccountId::from(1002))
+            .staked_node_id(7)
+            .decline_staking_reward(false);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, ACCOUNT_UPDATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_UPDATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
+
+        //     .account_id(AccountId::from(1001))
+        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(account_id, AccountId::from(1001));
+        //     .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+        assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+        //     .key(PublicKey::from_str(KEY)?)
+        let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(key, PublicKey::from_str(KEY)?);
+        //     .receiver_signature_required(true)
+        assert_eq!(data.receiver_signature_required.unwrap(), true);
+        //     .auto_renew_period(Duration::days(90))
+        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+        //     .account_memo("An account memo")
+        assert_eq!(data.account_memo.unwrap(), "An account memo");
+        //     .max_automatic_token_associations(256)
+        assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
+        //     .staked_account_id(AccountId::from(1001))
+        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(staked_account_id, AccountId::from(1002));
+        //     .staked_node_id(7)
+        assert_eq!(data.staked_node_id.unwrap(), 7);
+        //     .decline_staking_reward(false);
+        assert_eq!(data.decline_staking_reward.unwrap(), false);
+
+        Ok(())
+    }
+}
