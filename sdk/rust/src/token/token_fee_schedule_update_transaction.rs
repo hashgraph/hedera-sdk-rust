@@ -78,3 +78,69 @@ impl From<TokenFeeScheduleUpdateTransactionData> for AnyTransactionData {
         Self::TokenFeeScheduleUpdate(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use assert_matches::assert_matches;
+    use crate::{AccountId, TokenFeeScheduleUpdateTransaction, TokenId};
+    use crate::token::custom_fees::{CustomFee, Fee, FixedFee};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenFeeScheduleUpdate",
+  "tokenId": "0.0.1001",
+  "customFees": [
+    {
+      "fee": {
+        "FixedFee": {
+          "amount": 1,
+          "denominating_token_id": "0.0.7"
+        }
+      },
+      "fee_collector_account_id": "0.0.8"
+    }
+  ]
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenFeeScheduleUpdateTransaction::new();
+
+        transaction
+            .token_id(TokenId::from(1001))
+            .custom_fees([CustomFee {
+                fee: Fee::FixedFee(
+                    FixedFee {
+                        amount: 1,
+                        denominating_token_id: TokenId::from(7)
+                    }
+                ),
+                fee_collector_account_id: AccountId::from(8)}]);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
+
+        assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
+        assert_eq!(data.custom_fees, [CustomFee {
+            fee: Fee::FixedFee(
+                FixedFee {
+                    amount: 1,
+                    denominating_token_id: TokenId::from(7)
+                }
+            ),
+            fee_collector_account_id: AccountId::from(8)}]);
+
+        Ok(())
+    }
+}

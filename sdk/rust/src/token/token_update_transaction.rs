@@ -258,3 +258,125 @@ impl From<TokenUpdateTransactionData> for AnyTransactionData {
         Self::TokenUpdate(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+    use assert_matches::assert_matches;
+    use time::{Duration, OffsetDateTime};
+    use crate::{AccountAddress, AccountId, Key, PublicKey, TokenId, TokenUpdateTransaction};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_UPDATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenUpdate",
+  "tokenId": "0.0.1001",
+  "name": "Pound",
+  "symbol": "LB",
+  "treasuryAccountId": "0.0.1002",
+  "adminKey": {
+    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+  },
+  "kycKey": {
+    "single": "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500"
+  },
+  "freezeKey": {
+    "single": "302a300506032b657003210004e540b5fba8fc1ee1cc5cc450019c578b36311733507fabf4f85bf2744583e7"
+  },
+  "wipeKey": {
+    "single": "302a300506032b657003210099f8981cad75fc7322bf5c89d5f4ce4f2af76b2a63780b22cbce1bfdfa237f4e"
+  },
+  "supplyKey": {
+    "single": "302a300506032b6570032100c80c04aaca1783aafbaf6eba462bac89236ec82ac4db31953329ffbfeacdb88b"
+  },
+  "autoRenewAccountId": "0.0.1003",
+  "autoRenewPeriod": 7776000,
+  "expiresAt": 1656352251277559886,
+  "tokenMemo": "A new memo",
+  "feeScheduleKey": {
+    "single": "302a300506032b65700321000cd029bfd4a818de944c21799f4b5f6b5616702d0495520c818d92488e5395fc"
+  },
+  "pauseKey": {
+    "single": "302a300506032b65700321008b020177031eae1e4a721c814b08a3ef2c3f473781a570e9daaf9f7ad27f8967"
+  }
+}"#;
+
+    const ADMIN_KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+    const KYC_KEY: &str = "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500";
+    const FREEZE_KEY: &str = "302a300506032b657003210004e540b5fba8fc1ee1cc5cc450019c578b36311733507fabf4f85bf2744583e7";
+    const WIPE_KEY: &str = "302a300506032b657003210099f8981cad75fc7322bf5c89d5f4ce4f2af76b2a63780b22cbce1bfdfa237f4e";
+    const SUPPLY_KEY: &str = "302a300506032b6570032100c80c04aaca1783aafbaf6eba462bac89236ec82ac4db31953329ffbfeacdb88b";
+    const FEE_SCHEDULE_KEY: &str = "302a300506032b65700321000cd029bfd4a818de944c21799f4b5f6b5616702d0495520c818d92488e5395fc";
+    const PAUSE_KEY: &str = "302a300506032b65700321008b020177031eae1e4a721c814b08a3ef2c3f473781a570e9daaf9f7ad27f8967";
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenUpdateTransaction::new();
+
+        transaction
+            .token_id(TokenId::from(1001))
+            .name("Pound")
+            .symbol("LB")
+            .treasury_account_id(AccountId::from(1002))
+            .admin_key(PublicKey::from_str(ADMIN_KEY)?)
+            .kyc_key(PublicKey::from_str(KYC_KEY)?)
+            .freeze_key(PublicKey::from_str(FREEZE_KEY)?)
+            .wipe_key(PublicKey::from_str(WIPE_KEY)?)
+            .supply_key(PublicKey::from_str(SUPPLY_KEY)?)
+            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .auto_renew_account_id(AccountId::from(1003))
+            .auto_renew_period(Duration::days(90))
+            .token_memo("A new memo")
+            .fee_schedule_key(PublicKey::from_str(FEE_SCHEDULE_KEY)?)
+            .pause_key(PublicKey::from_str(PAUSE_KEY)?);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_UPDATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_UPDATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenUpdate(transaction) => transaction);
+
+        assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
+        assert_eq!(data.name, "Pound");
+        assert_eq!(data.symbol, "LB");
+        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+        assert_eq!(data.token_memo, "A new memo");
+        assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+
+        let treasury_account_id = assert_matches!(data.treasury_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(treasury_account_id, AccountId::from(1002));
+
+        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(auto_renew_account_id, AccountId::from(1003));
+
+        let admin_key = assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+
+        let kyc_key = assert_matches!(data.kyc_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(kyc_key, PublicKey::from_str(KYC_KEY)?);
+
+        let freeze_key = assert_matches!(data.freeze_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(freeze_key, PublicKey::from_str(FREEZE_KEY)?);
+
+        let wipe_key = assert_matches!(data.wipe_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(wipe_key, PublicKey::from_str(WIPE_KEY)?);
+
+        let supply_key = assert_matches!(data.supply_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(supply_key, PublicKey::from_str(SUPPLY_KEY)?);
+
+        let fee_schedule_key = assert_matches!(data.fee_schedule_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(fee_schedule_key, PublicKey::from_str(FEE_SCHEDULE_KEY)?);
+
+        let pause_key = assert_matches!(data.pause_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(pause_key, PublicKey::from_str(PAUSE_KEY)?);
+
+        Ok(())
+    }
+}

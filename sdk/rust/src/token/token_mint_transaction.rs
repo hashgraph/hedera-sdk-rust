@@ -104,3 +104,51 @@ impl From<TokenMintTransactionData> for AnyTransactionData {
         Self::TokenMint(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use assert_matches::assert_matches;
+    use crate::{TokenId, TokenMintTransaction};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_MINT_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenMint",
+  "tokenId": "0.0.1981",
+  "amount": 8675309,
+  "metadata": [
+    "SmVubnkgSSd2ZSBnb3QgeW91ciBudW1iZXI="
+  ]
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenMintTransaction::new();
+
+        transaction
+            .token_id(TokenId::from(1981))
+            .amount(8675309)
+            .metadata(["Jenny I've got your number"]);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_MINT_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_MINT_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenMint(transaction) => transaction);
+
+        let bytes: Vec<u8> = "Jenny I've got your number".into();
+
+        assert_eq!(data.token_id.unwrap(), TokenId::from(1981));
+        assert_eq!(data.amount, 8675309);
+        assert_eq!(data.metadata, [bytes]);
+
+        Ok(())
+    }
+}
