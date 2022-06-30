@@ -48,7 +48,7 @@ pub use account::{
 };
 pub use client::Client;
 pub use contract::{
-    ContractAddress, ContractBytecodeQuery, ContractBytecodeResponse, ContractCallResponse, ContractCreateTransaction, ContractEvmAddress, ContractExecuteTransaction, ContractFunctionResult, ContractId, ContractUpdateTransaction
+    ContractAddress, ContractBytecodeQuery, ContractBytecodeResponse, ContractCallResponse, ContractCreateTransaction, ContractEvmAddress, ContractExecuteTransaction, ContractFunctionResult, ContractId, ContractInfo, ContractInfoQuery, ContractUpdateTransaction
 };
 pub use entity_id::EntityId;
 pub use error::{Error, Result};
@@ -67,7 +67,7 @@ pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
 pub use token::{
-    TokenAssociateTransaction, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenDissociateTransaction, TokenFeeScheduleUpdateTransaction, TokenFreezeTransaction, TokenGrantKycTransaction, TokenId, TokenMintTransaction, TokenPauseTransaction, TokenRevokeKycTransaction, TokenUnfreezeTransaction, TokenUnpauseTransaction, TokenWipeTransaction
+    NftId, TokenAssociateTransaction, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenDissociateTransaction, TokenFeeScheduleUpdateTransaction, TokenFreezeTransaction, TokenGrantKycTransaction, TokenId, TokenMintTransaction, TokenNftInfoResponse, TokenPauseTransaction, TokenRevokeKycTransaction, TokenUnfreezeTransaction, TokenUnpauseTransaction, TokenUpdateTransaction, TokenWipeTransaction
 };
 pub use topic::{
     TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessage, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction
