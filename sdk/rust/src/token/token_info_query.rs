@@ -41,7 +41,7 @@ impl ToQueryProtobuf for TokenInfoQueryData {
         services::Query {
             query: Some(services::query::Query::TokenGetInfo(services::TokenGetInfoQuery {
                 header: Some(header),
-                token_id,
+                token: token_id,
             })),
         }
     }

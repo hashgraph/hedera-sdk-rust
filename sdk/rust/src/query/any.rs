@@ -13,7 +13,7 @@ use crate::query::QueryExecute;
 use crate::token::TokenNftInfoQueryData;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
-use crate::{AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, ContractInfo, FileContentsResponse, FromProtobuf, Query, TokenNftInfoResponse, Transaction, TransactionReceiptResponse};
+use crate::{AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, ContractInfo, FileContentsResponse, FromProtobuf, Query, TokenNftInfoResponse, Transaction, TransactionReceiptResponse, TokenInfo};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -58,6 +58,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::ContractCall(data) => data.to_query_protobuf(header),
             Self::ContractInfo(data) => data.to_query_protobuf(header),
             Self::TokenNftInfo(data) => data.to_query_protobuf(header),
+            Self::TokenInfo(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -76,6 +77,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.is_payment_required(),
             Self::ContractInfo(query) => query.is_payment_required(),
             Self::TokenNftInfo(query) => query.is_payment_required(),
+            Self::TokenInfo(query) => query.is_payment_required(),
         }
     }
 
@@ -93,6 +95,8 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.execute(channel, request).await,
             Self::ContractInfo(query) => query.execute(channel, request).await,
             Self::TokenNftInfo(query) => query.execute(channel, request).await,
+            Self::TokenInfo(query) => query.execute(channel, request).await,
+
         }
     }
 
@@ -106,6 +110,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.should_retry_pre_check(status),
             Self::ContractInfo(query) => query.should_retry_pre_check(status),
             Self::TokenNftInfo(query) => query.should_retry_pre_check(status),
+            Self::TokenInfo(query) => query.should_retry_pre_check(status),
         }
     }
 
@@ -119,6 +124,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.should_retry(response),
             Self::ContractInfo(query) => query.should_retry(response),
             Self::TokenNftInfo(query) => query.should_retry(response),
+            Self::TokenInfo(query) => query.should_retry(response),
         }
     }
 }
