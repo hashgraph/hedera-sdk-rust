@@ -42,3 +42,5 @@ pub use token_unfreeze_transaction::{TokenUnfreezeTransaction, TokenUnfreezeTran
 pub use token_unpause_transaction::{TokenUnpauseTransaction, TokenUnpauseTransactionData};
 pub use token_update_transaction::{TokenUpdateTransaction, TokenUpdateTransactionData};
 pub use token_wipe_transaction::{TokenWipeTransaction, TokenWipeTransactionData};
+pub use token_info::TokenInfo;
+pub use token_info_query::{TokenInfoQuery, TokenInfoQueryData};

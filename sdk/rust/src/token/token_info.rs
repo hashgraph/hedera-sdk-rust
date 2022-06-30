@@ -1,6 +1,5 @@
-use crate::token::token_info::services::Timestamp;
 use hedera_proto::services;
-use time::{Duration};
+use time::{Duration, OffsetDateTime}; // timestamp
 use crate::AccountId;
 
 use crate::{TokenId, FromProtobuf, Key};
@@ -27,7 +26,7 @@ pub struct TokenInfo {
     pub deleted: bool,
     pub auto_renew_account: Option<AccountId>,
     pub auto_renew_period: Option<Duration>,
-    pub expiry: Option<Timestamp>,
+    pub expiry: Option<OffsetDateTime>,
     pub memo: String,
     pub token_type: i32,
     pub supply_type: i32,
@@ -78,7 +77,7 @@ impl FromProtobuf for TokenInfo {
             supply_type: info.supply_type as i32,
             max_supply: info.max_supply as i64,
             fee_schedule_key: info.fee_schedule_key.map(Key::from_protobuf).transpose()?,
-            custom_fees: info.custom_fees,
+            custom_fees: info.custom_fees.into_iter().map(CustomFee::from_protobuf).collect::<Result<Vec<_>, _>>()?, //test this
             pause_key: info.pause_key.map(Key::from_protobuf).transpose()?,
             pause_status: info.pause_status as i32,
             ledger_id: info.ledger_id,
