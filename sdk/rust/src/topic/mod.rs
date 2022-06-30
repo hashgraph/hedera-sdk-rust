@@ -5,6 +5,8 @@ mod topic_message;
 mod topic_message_query;
 mod topic_message_submit_transaction;
 mod topic_update_transaction;
+mod topic_info;
+mod topic_info_query;
 
 pub use topic_create_transaction::TopicCreateTransaction;
 pub(crate) use topic_create_transaction::TopicCreateTransactionData;
@@ -18,3 +20,6 @@ pub use topic_message_submit_transaction::TopicMessageSubmitTransaction;
 pub(crate) use topic_message_submit_transaction::TopicMessageSubmitTransactionData;
 pub use topic_update_transaction::TopicUpdateTransaction;
 pub(crate) use topic_update_transaction::TopicUpdateTransactionData;
+pub use topic_info_query::TopicInfoQuery;
+pub use topic_info_query::TopicInfoQueryData;
+pub use topic_info::TopicInfo;

@@ -80,3 +80,6 @@ pub use transaction_receipt_query::TransactionReceiptQuery;
 pub use transaction_receipt_response::TransactionReceiptResponse;
 pub use transaction_response::TransactionResponse;
 pub use transfer_transaction::TransferTransaction;
+pub use topic::TopicInfoQuery;
+pub use topic::TopicInfoQueryData;
+pub use topic::TopicInfo;

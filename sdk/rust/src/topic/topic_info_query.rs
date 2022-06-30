@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
-use hedera_proto::services::crypto_service_client::CryptoServiceClient;
+use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
 use crate::topic::TopicInfo;
@@ -56,7 +56,7 @@ impl QueryExecute for TopicInfoQueryData {
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).get_topic_info(request).await
+        ConsensusServiceClient::new(channel).get_topic_info(request).await
     }
 }
 
