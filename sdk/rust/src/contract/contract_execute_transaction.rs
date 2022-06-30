@@ -84,3 +84,66 @@ impl From<ContractExecuteTransactionData> for AnyTransactionData {
         Self::ContractExecute(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use assert_matches::assert_matches;
+    use crate::{ContractExecuteTransaction, ContractId};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
+  "$type": "contractExecute",
+  "contractId": "0.0.1001",
+  "gasLimit": 1000,
+  "value": 10,
+  "data": [
+    72,
+    101,
+    108,
+    108,
+    111,
+    44,
+    32,
+    119,
+    111,
+    114,
+    108,
+    100,
+    33
+  ]
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = ContractExecuteTransaction::new();
+
+        transaction
+            .contract_id(ContractId::from(1001))
+            .gas_limit(1000)
+            .value(10)
+            .data("Hello, world!".into());
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, CONTRACT_EXECUTE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_EXECUTE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractExecute(transaction) => transaction);
+
+        assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
+        assert_eq!(data.gas_limit, 1000);
+        assert_eq!(data.value, 10);
+        
+        let bytes: Vec<u8> = "Hello, world!".into();
+        assert_eq!(data.data, bytes);
+
+        Ok(())
+    }
+}

@@ -80,7 +80,6 @@ mod test {
     use crate::{AccountAddress, AccountDeleteTransaction, AccountId};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
-    // TODO write JSON fields
     // language=JSON
     const ACCOUNT_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "accountDelete",
