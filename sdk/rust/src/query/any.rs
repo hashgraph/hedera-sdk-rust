@@ -5,15 +5,16 @@ use tonic::transport::Channel;
 
 use super::ToQueryProtobuf;
 use crate::account::{AccountBalanceQueryData, AccountInfoQueryData};
-use crate::token::{TokenInfoQueryData};
 use crate::contract::{ContractBytecodeQueryData, ContractCallQueryData, ContractInfoQueryData};
 use crate::file::FileContentsQueryData;
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
-use crate::token::TokenNftInfoQueryData;
+use crate::token::{TokenInfoQueryData, TokenNftInfoQueryData};
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
-use crate::{AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, ContractInfo, FileContentsResponse, FromProtobuf, Query, TokenNftInfoResponse, Transaction, TransactionReceiptResponse, TokenInfo};
+use crate::{
+    AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, ContractInfo, FileContentsResponse, FromProtobuf, Query, TokenInfo, TokenNftInfoResponse, Transaction, TransactionReceiptResponse
+};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -30,7 +31,6 @@ pub enum AnyQueryData {
     TokenInfo(TokenInfoQueryData),
     ContractInfo(ContractInfoQueryData),
     TokenNftInfo(TokenNftInfoQueryData),
-
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -96,7 +96,6 @@ impl QueryExecute for AnyQueryData {
             Self::ContractInfo(query) => query.execute(channel, request).await,
             Self::TokenNftInfo(query) => query.execute(channel, request).await,
             Self::TokenInfo(query) => query.execute(channel, request).await,
-
         }
     }
 
@@ -156,7 +155,9 @@ impl FromProtobuf for AnyQueryResponse {
                 Self::ContractCall(ContractCallResponse::from_protobuf(response)?)
             }
             ContractGetInfo(_) => Self::ContractInfo(ContractInfo::from_protobuf(response)?),
-            TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfoResponse::from_protobuf(response)?),
+            TokenGetNftInfo(_) => {
+                Self::TokenNftInfo(TokenNftInfoResponse::from_protobuf(response)?)
+            }
 
             _ => todo!(),
         })

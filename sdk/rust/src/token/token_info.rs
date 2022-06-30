@@ -1,15 +1,13 @@
 use hedera_proto::services;
 use time::{Duration, OffsetDateTime}; // timestamp
-use crate::AccountId;
 
-use crate::{TokenId, FromProtobuf, Key};
 use crate::token::custom_fees::CustomFee;
+use crate::{AccountId, FromProtobuf, Key, TokenId};
 
 /// Response from [`TokenInfoQuery`][crate::TokenInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenInfo {
-
     pub token_id: TokenId,
     pub name: String,
     pub symbol: String,
@@ -43,8 +41,8 @@ impl FromProtobuf for TokenInfo {
 
     #[allow(deprecated)]
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
-        where
-            Self: Sized,
+    where
+        Self: Sized,
     {
         let response = pb_getv!(pb, TokenGetInfo, services::response::Response);
         let info = pb_getf!(response, token_info)?;
@@ -56,10 +54,7 @@ impl FromProtobuf for TokenInfo {
             symbol: info.symbol,
             decimals: info.decimals as u32,
             total_supply: info.total_supply as u64,
-            treasury: info
-                .treasury
-                .map(AccountId::from_protobuf)
-                .transpose()?,
+            treasury: info.treasury.map(AccountId::from_protobuf).transpose()?,
             admin_key: info.admin_key.map(Key::from_protobuf).transpose()?,
             kyc_key: info.kyc_key.map(Key::from_protobuf).transpose()?,
             freeze_key: info.freeze_key.map(Key::from_protobuf).transpose()?,
@@ -77,7 +72,11 @@ impl FromProtobuf for TokenInfo {
             supply_type: info.supply_type as i32,
             max_supply: info.max_supply as i64,
             fee_schedule_key: info.fee_schedule_key.map(Key::from_protobuf).transpose()?,
-            custom_fees: info.custom_fees.into_iter().map(CustomFee::from_protobuf).collect::<Result<Vec<_>, _>>()?, //test this
+            custom_fees: info
+                .custom_fees
+                .into_iter()
+                .map(CustomFee::from_protobuf)
+                .collect::<Result<Vec<_>, _>>()?, //test this
             pause_key: info.pause_key.map(Key::from_protobuf).transpose()?,
             pause_status: info.pause_status as i32,
             ledger_id: info.ledger_id,
