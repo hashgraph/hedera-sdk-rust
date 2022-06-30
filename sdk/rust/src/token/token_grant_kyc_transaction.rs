@@ -80,7 +80,7 @@ impl From<TokenGrantKycTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{AccountAddress, AccountId, TokenGrantKycTransaction, TokenId};
     use crate::transaction::{AnyTransaction, AnyTransactionData};

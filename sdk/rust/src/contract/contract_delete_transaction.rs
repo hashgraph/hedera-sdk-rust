@@ -96,7 +96,7 @@ impl From<ContractDeleteTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{AccountAddress, AccountId, ContractId};
     use crate::contract::ContractDeleteTransaction;

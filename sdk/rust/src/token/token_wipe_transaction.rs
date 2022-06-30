@@ -122,12 +122,11 @@ impl From<TokenWipeTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{AccountAddress, AccountId, TokenId, TokenWipeTransaction};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
-    // TODO write JSON fields
     // language=JSON
     const TOKEN_WIPE_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenWipe",

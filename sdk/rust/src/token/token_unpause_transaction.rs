@@ -68,7 +68,7 @@ impl From<TokenUnpauseTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{TokenId, TokenUnpauseTransaction};
     use crate::transaction::{AnyTransaction, AnyTransactionData};

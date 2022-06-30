@@ -62,3 +62,41 @@ impl From<FileDeleteTransactionData> for AnyTransactionData {
         Self::FileDelete(transaction)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use crate::{FileDeleteTransaction, FileId};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const FILE_DELETE_TRANSACTION_JSON: &str = r#"{
+  "$type": "fileDelete",
+  "fileId": "0.0.1001"
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = FileDeleteTransaction::new();
+
+        transaction
+            .file_id(FileId::from(1001));
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, FILE_DELETE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(FILE_DELETE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::FileDelete(transaction) => transaction);
+
+        assert_eq!(data.file_id.unwrap(), FileId::from(1001));
+
+        Ok(())
+    }
+}

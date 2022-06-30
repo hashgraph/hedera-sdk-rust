@@ -86,7 +86,7 @@ impl From<ContractExecuteTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{ContractExecuteTransaction, ContractId};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
