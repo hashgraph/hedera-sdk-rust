@@ -4,8 +4,8 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{TokenId, Query, ToProtobuf};
 use crate::token::token_info::TokenInfo;
+use crate::{Query, ToProtobuf, TokenId};
 
 /// Get all the information about an token, including the balance.
 ///
@@ -65,21 +65,19 @@ mod tests {
     use assert_matches::assert_matches;
 
     use crate::query::AnyQueryData;
-    use crate::{TokenId, TokenId, TokenInfoQuery, AnyQuery};
-    use crate::token::token_info_query::TokenInfoQuery;
+    use crate::{AnyQuery, TokenId, TokenInfoQuery};
 
     // language=JSON
     const TOKEN_INFO: &str = r#"{
   "$type": "tokenInfo",
-  "tokenId": "0.0.1001"
+  "tokenId": "0.0.1001",
+  "payment": {}
 }"#;
 
     #[test]
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut query = TokenInfoQuery::new();
-        query
-            .token_id(TokenId::from(1001))
-            .token_id(TokenId::from(6189));
+        query.token_id(TokenId::from(1001));
 
         let s = serde_json::to_string_pretty(&query)?;
         assert_eq!(s, TOKEN_INFO);
@@ -92,10 +90,7 @@ mod tests {
         let query: AnyQuery = serde_json::from_str(TOKEN_INFO)?;
 
         let data = assert_matches!(query.data, AnyQueryData::TokenInfo(query) => query);
-        let token_id =
-            assert_matches!(data.token_id, Some(TokenId::TokenId(id)) => id);
-
-        assert_eq!(token_id.num, 1001);
+        assert_eq!(data.token_id, Some(TokenId{shard:0, realm: 0, num: 1001}));
         Ok(())
     }
 }
