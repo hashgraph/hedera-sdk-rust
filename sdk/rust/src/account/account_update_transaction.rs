@@ -205,7 +205,6 @@ mod test {
     use crate::{AccountAddress, AccountId, AccountUpdateTransaction, Key, PublicKey};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
-    // TODO write JSON fields
     // language=JSON
     const ACCOUNT_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "accountUpdate",
@@ -254,28 +253,18 @@ mod test {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
 
-        //     .account_id(AccountId::from(1001))
         let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(account_id, AccountId::from(1001));
-        //     .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
         assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
-        //     .key(PublicKey::from_str(KEY)?)
         let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(key, PublicKey::from_str(KEY)?);
-        //     .receiver_signature_required(true)
         assert_eq!(data.receiver_signature_required.unwrap(), true);
-        //     .auto_renew_period(Duration::days(90))
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-        //     .account_memo("An account memo")
         assert_eq!(data.account_memo.unwrap(), "An account memo");
-        //     .max_automatic_token_associations(256)
         assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
-        //     .staked_account_id(AccountId::from(1001))
         let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(staked_account_id, AccountId::from(1002));
-        //     .staked_node_id(7)
         assert_eq!(data.staked_node_id.unwrap(), 7);
-        //     .decline_staking_reward(false);
         assert_eq!(data.decline_staking_reward.unwrap(), false);
 
         Ok(())

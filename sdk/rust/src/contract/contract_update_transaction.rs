@@ -176,3 +176,80 @@ impl From<ContractUpdateTransactionData> for AnyTransactionData {
         Self::ContractUpdate(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+    use assert_matches::assert_matches;
+    use time::{Duration, OffsetDateTime};
+    use crate::{AccountAddress, AccountId, ContractId, ContractUpdateTransaction, Key, PublicKey};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const CONTRACT_UPDATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "contractUpdate",
+  "contractId": "0.0.1001",
+  "expiresAt": 1656352251277559886,
+  "adminKey": {
+    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+  },
+  "autoRenewPeriod": 7776000,
+  "contractMemo": "A contract memo",
+  "maxAutomaticTokenAssociations": 1024,
+  "autoRenewAccountId": "0.0.1002",
+  "stakedAccountId": "0.0.1003",
+  "stakedNodeId": 7,
+  "declineStakingReward": true
+}"#;
+
+    const ADMIN_KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = ContractUpdateTransaction::new();
+
+        transaction
+            .contract_id(ContractId::from(1001))
+            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .admin_key(PublicKey::from_str(ADMIN_KEY)?)
+            .auto_renew_period(Duration::days(90))
+            .contract_memo("A contract memo")
+            .max_automatic_token_associations(1024)
+            .auto_renew_account_id(AccountId::from(1002))
+            .staked_account_id(AccountId::from(1003))
+            .staked_node_id(7)
+            .decline_staking_reward(true);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, CONTRACT_UPDATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_UPDATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractUpdate(transaction) => transaction);
+
+        assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
+        assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+        assert_eq!(data.contract_memo.unwrap(), "A contract memo");
+        assert_eq!(data.max_automatic_token_associations.unwrap(), 1024);
+        assert_eq!(data.staked_node_id.unwrap(), 7);
+        assert_eq!(data.decline_staking_reward.unwrap(), true);
+
+        let admin_key = assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+
+        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(auto_renew_account_id, AccountId::from(1002));
+
+        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(staked_account_id, AccountId::from(1003));
+
+        Ok(())
+    }
+}

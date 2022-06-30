@@ -233,3 +233,89 @@ impl From<ContractCreateTransactionData> for AnyTransactionData {
         Self::ContractCreate(transaction)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use std::str::FromStr;
+    use assert_matches::assert_matches;
+    use time::Duration;
+    use crate::{AccountAddress, AccountId, ContractCreateTransaction, FileId, Key, PublicKey};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const CONTRACT_CREATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "contractCreate",
+  "bytecode": "SGVsbG8sIHdvcmxkIQ==",
+  "bytecodeFileId": "0.0.1001",
+  "adminKey": {
+    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+  },
+  "gasLimit": 1000,
+  "initialBalance": 1000000,
+  "autoRenewPeriod": 7776000,
+  "constructorParameters": "BQoP",
+  "contractMemo": "A contract memo",
+  "maxAutomaticTokenAssociations": 512,
+  "autoRenewAccountId": "0.0.1002",
+  "stakedAccountId": "0.0.1003",
+  "stakedNodeId": 7,
+  "declineStakingReward": false
+}"#;
+
+    const ADMIN_KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = ContractCreateTransaction::new();
+
+        transaction
+            .bytecode("Hello, world!")
+            .bytecode_file_id(FileId::from(1001))
+            .admin_key(PublicKey::from_str(ADMIN_KEY)?)
+            .gas_limit(1000)
+            .initial_balance(1_000_000)
+            .auto_renew_period(Duration::days(90))
+            .constructor_parameters([ 5, 10, 15 ])
+            .contract_memo("A contract memo")
+            .max_automatic_token_associations(512)
+            .auto_renew_account_id(AccountId::from(1002))
+            .staked_account_id(AccountId::from(1003))
+            .staked_node_id(7)
+            .decline_staking_reward(false);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, CONTRACT_CREATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_CREATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
+
+        let bytes: Vec<u8> = "Hello, world!".into();
+        assert_eq!(data.bytecode.unwrap(), bytes);
+
+        assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
+        assert_eq!(data.gas_limit, 1000);
+        assert_eq!(data.initial_balance, 1_000_000);
+        assert_eq!(data.auto_renew_period, Duration::days(90));
+        assert_eq!(data.constructor_parameters, [5, 10, 15]);
+        assert_eq!(data.contract_memo, "A contract memo");
+        assert_eq!(data.max_automatic_token_associations, 512);
+        assert_eq!(data.staked_node_id.unwrap(), 7);
+        assert_eq!(data.decline_staking_reward, false);
+
+        let admin_key = assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(auto_renew_account_id, AccountId::from(1002));
+        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(staked_account_id, AccountId::from(1003));
+
+        Ok(())
+    }
+}
