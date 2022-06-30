@@ -71,3 +71,46 @@ impl From<FileAppendTransactionData> for AnyTransactionData {
         Self::FileAppend(transaction)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use crate::{FileAppendTransaction, FileId};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const FILE_APPEND_TRANSACTION_JSON: &str = r#"{
+  "$type": "fileAppend",
+  "fileId": "0.0.1001",
+  "contents": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = FileAppendTransaction::new();
+
+        transaction
+            .file_id(FileId::from(1001))
+            .contents("Appending these bytes to file 1001".into());
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, FILE_APPEND_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(FILE_APPEND_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::FileAppend(transaction) => transaction);
+
+        assert_eq!(data.file_id.unwrap(), FileId::from(1001));
+
+        let bytes: Vec<u8> = "Appending these bytes to file 1001".into();
+        assert_eq!(data.contents.unwrap(), bytes);
+
+        Ok(())
+    }
+}

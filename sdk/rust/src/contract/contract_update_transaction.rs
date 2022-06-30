@@ -178,7 +178,7 @@ impl From<ContractUpdateTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use std::str::FromStr;
     use assert_matches::assert_matches;
     use time::{Duration, OffsetDateTime};

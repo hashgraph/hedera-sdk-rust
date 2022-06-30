@@ -106,7 +106,7 @@ impl From<TokenMintTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{TokenId, TokenMintTransaction};
     use crate::transaction::{AnyTransaction, AnyTransactionData};

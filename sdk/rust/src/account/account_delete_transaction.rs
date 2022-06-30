@@ -75,7 +75,7 @@ impl From<AccountDeleteTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{AccountAddress, AccountDeleteTransaction, AccountId};
     use crate::transaction::{AnyTransaction, AnyTransactionData};

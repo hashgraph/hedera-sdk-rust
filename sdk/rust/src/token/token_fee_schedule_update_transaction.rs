@@ -80,7 +80,7 @@ impl From<TokenFeeScheduleUpdateTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{AccountId, TokenFeeScheduleUpdateTransaction, TokenId};
     use crate::token::custom_fees::{CustomFee, Fee, FixedFee};

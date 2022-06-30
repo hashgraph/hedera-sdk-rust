@@ -80,7 +80,7 @@ impl From<TokenUnfreezeTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{AccountAddress, AccountId, TokenId, TokenUnfreezeTransaction};
     use crate::transaction::{AnyTransaction, AnyTransactionData};

@@ -68,7 +68,7 @@ impl From<TokenDeleteTransactionData> for AnyTransactionData {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use assert_matches::assert_matches;
     use crate::{TokenDeleteTransaction, TokenId};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
