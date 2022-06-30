@@ -1,12 +1,12 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{skip_serializing_none};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, TokenId, Transaction, TransactionId};
+use crate::{AccountAddress, AccountId, TokenId, Transaction, TransactionId};
 
 /// Unfreezes transfers of the specified token for the account. Must be signed by the Token's freezeKey.
 ///
@@ -27,7 +27,7 @@ pub type TokenUnfreezeTransaction = Transaction<TokenUnfreezeTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenUnfreezeTransactionData {
     /// The account to be unfrozen.
-    account_id: Option<AccountId>,
+    account_id: Option<AccountAddress>,
 
     /// The token for which this account will be unfrozen.
     token_id: Option<TokenId>,
@@ -35,7 +35,7 @@ pub struct TokenUnfreezeTransactionData {
 
 impl TokenUnfreezeTransaction {
     /// Sets the account to be unfrozen.
-    pub fn account_id(&mut self, account_id: impl Into<AccountId>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -64,7 +64,7 @@ impl ToTransactionDataProtobuf for TokenUnfreezeTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenUnfreeze(
