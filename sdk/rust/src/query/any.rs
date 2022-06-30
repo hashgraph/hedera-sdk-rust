@@ -5,6 +5,7 @@ use tonic::transport::Channel;
 
 use super::ToQueryProtobuf;
 use crate::account::{AccountBalanceQueryData, AccountInfoQueryData};
+use crate::token::{TokenInfoQueryData};
 use crate::contract::{ContractBytecodeQueryData, ContractCallQueryData};
 use crate::file::FileContentsQueryData;
 use crate::query::payment_transaction::PaymentTransactionData;
@@ -27,6 +28,7 @@ pub enum AnyQueryData {
     FileContents(FileContentsQueryData),
     ContractBytecode(ContractBytecodeQueryData),
     ContractCall(ContractCallQueryData),
+    TokenInfo(TokenInfoQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -38,6 +40,7 @@ pub enum AnyQueryResponse {
     FileContents(FileContentsResponse),
     ContractBytecode(ContractBytecodeResponse),
     ContractCall(ContractCallResponse),
+    TokenInfo(TokenInfo),
 }
 
 impl ToQueryProtobuf for AnyQueryData {

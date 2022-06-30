@@ -16,6 +16,8 @@ mod token_type;
 mod token_unfreeze_transaction;
 mod token_unpause_transaction;
 mod token_wipe_transaction;
+mod token_info;
+mod token_info_query;
 
 pub use token_id::TokenId;
 pub use token_associate_transaction::{TokenAssociateTransaction, TokenAssociateTransactionData};
