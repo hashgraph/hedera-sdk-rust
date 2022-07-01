@@ -17,7 +17,7 @@ pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct FileCreateTransactionData {
     /// The memo associated with the file.
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -125,9 +125,14 @@ impl From<FileCreateTransactionData> for AnyTransactionData {
 mod tests {
     use std::str::FromStr;
     use assert_matches::assert_matches;
-    use time::OffsetDateTime;
+    use time::{Duration, OffsetDateTime};
     use crate::{FileCreateTransaction, Key, PublicKey};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const FILE_CREATE_EMPTY: &str = r#"{
+  "$type": "fileCreate"
+}"#;
 
     // language=JSON
     const FILE_CREATE_TRANSACTION_JSON: &str = r#"{
@@ -175,6 +180,15 @@ mod tests {
 
         let bytes: Vec<u8> = "Hello, world!".into();
         assert_eq!(data.contents.unwrap(), bytes);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize_empty() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(FILE_CREATE_EMPTY)?;
+
+        assert_matches!(transaction.body.data, AnyTransactionData::FileCreate(transaction) => transaction);
 
         Ok(())
     }

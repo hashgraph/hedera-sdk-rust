@@ -22,7 +22,7 @@ pub type TopicCreateTransaction = Transaction<TopicCreateTransactionData>;
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct TopicCreateTransactionData {
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -141,6 +141,11 @@ mod tests {
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
     // language=JSON
+    const TOPIC_CREATE_EMPTY: &str = r#"{
+  "$type": "topicCreate"
+}"#;
+
+    // language=JSON
     const TOPIC_CREATE_TRANSACTION_JSON: &str = r#"{
   "$type": "topicCreate",
   "topicMemo": "A topic memo",
@@ -192,6 +197,17 @@ mod tests {
 
         let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(auto_renew_account_id, AccountId::from(1001));
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize_empty() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_EMPTY)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
+
+        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
 
         Ok(())
     }
