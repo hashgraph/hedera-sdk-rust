@@ -243,6 +243,11 @@ mod tests {
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
     // language=JSON
+    const CONTRACT_CREATE_EMPTY: &str = r#"{
+  "$type": "contractCreate"
+}"#;
+
+    // language=JSON
     const CONTRACT_CREATE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractCreate",
   "bytecode": "SGVsbG8sIHdvcmxkIQ==",
@@ -315,6 +320,18 @@ mod tests {
         assert_eq!(auto_renew_account_id, AccountId::from(1002));
         let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(staked_account_id, AccountId::from(1003));
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize_empty() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_CREATE_EMPTY)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
+
+        assert_eq!(data.auto_renew_period, Duration::days(90));
+        assert_eq!(data.decline_staking_reward, false);
 
         Ok(())
     }

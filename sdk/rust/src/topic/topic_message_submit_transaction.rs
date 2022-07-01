@@ -147,6 +147,11 @@ mod tests {
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
     // language=JSON
+    const TOPIC_MESSAGE_SUBMIT_EMPTY: &str = r#"{
+  "$type": "topicMessageSubmit"
+}"#;
+
+    // language=JSON
     const TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON: &str = r#"{
   "$type": "topicMessageSubmit",
   "topicId": "0.0.1001",
@@ -186,6 +191,18 @@ mod tests {
         assert_eq!(data.initial_transaction_id.unwrap(), TransactionId::from_str("1001@1656352251.277559886")?);
         assert_eq!(data.chunk_total, 1);
         assert_eq!(data.chunk_number, 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize_empty() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOPIC_MESSAGE_SUBMIT_EMPTY)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
+
+        assert_eq!(data.chunk_number, 1);
+        assert_eq!(data.chunk_total, 1);
 
         Ok(())
     }

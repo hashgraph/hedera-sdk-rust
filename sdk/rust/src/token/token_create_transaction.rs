@@ -345,7 +345,7 @@ mod tests {
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
     // language=JSON
-    const EMPTY_TOKEN_CREATE_TRANSACTION_JSON: &str = r#"{
+    const TOKEN_CREATE_EMPTY: &str = r#"{
   "$type": "tokenCreate"
 }"#;
 
@@ -507,7 +507,7 @@ mod tests {
 
     #[test]
     fn it_should_deserialize_empty() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(EMPTY_TOKEN_CREATE_TRANSACTION_JSON)?;
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_CREATE_EMPTY)?;
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenCreate(transaction) => transaction);
 
