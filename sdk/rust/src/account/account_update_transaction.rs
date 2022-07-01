@@ -253,19 +253,22 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
 
-        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(account_id, AccountId::from(1001));
         assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
-        let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(key, PublicKey::from_str(KEY)?);
         assert_eq!(data.receiver_signature_required.unwrap(), true);
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
         assert_eq!(data.account_memo.unwrap(), "An account memo");
         assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
-        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(staked_account_id, AccountId::from(1002));
         assert_eq!(data.staked_node_id.unwrap(), 7);
         assert_eq!(data.decline_staking_reward.unwrap(), false);
+
+        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(account_id, AccountId::from(1001));
+
+        let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(key, PublicKey::from_str(KEY)?);
+
+        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(staked_account_id, AccountId::from(1002));
 
         Ok(())
     }

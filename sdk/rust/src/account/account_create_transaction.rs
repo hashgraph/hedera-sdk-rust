@@ -265,17 +265,19 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
 
-        let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(key, PublicKey::from_str(KEY)?);
         assert_eq!(data.initial_balance, 1000);
         assert_eq!(data.receiver_signature_required, true);
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
         assert_eq!(data.account_memo, "An account memo");
         assert_eq!(data.max_automatic_token_associations, 256);
-        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(staked_account_id, AccountId::from(1001));
         assert_eq!(data.staked_node_id.unwrap(), 7);
         assert_eq!(data.decline_staking_reward, false);
+
+        let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+        assert_eq!(key, PublicKey::from_str(KEY)?);
+
+        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(staked_account_id, AccountId::from(1001));
 
         Ok(())
     }

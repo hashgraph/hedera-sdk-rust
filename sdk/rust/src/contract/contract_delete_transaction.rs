@@ -133,11 +133,11 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractDelete(transaction) => transaction);
 
         assert_eq!(data.delete_contract_id.unwrap(), ContractId::from(1001));
+        assert_eq!(data.transfer_contract_id.unwrap(), ContractId::from(1003));
 
         let transfer_account_id = assert_matches!(data.transfer_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(transfer_account_id, AccountId::from(1002));
 
-        assert_eq!(data.transfer_contract_id.unwrap(), ContractId::from(1003));
 
         Ok(())
     }
