@@ -146,7 +146,6 @@ mod tests {
     use crate::{AccountAddress, AccountId, Key, PublicKey, TopicId, TopicUpdateTransaction};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
-    // TODO write JSON fields
     // language=JSON
     const TOPIC_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "topicUpdate",

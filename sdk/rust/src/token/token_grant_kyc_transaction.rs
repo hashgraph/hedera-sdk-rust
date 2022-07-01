@@ -113,9 +113,10 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenGrantKyc(transaction) => transaction);
 
+        assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
+
         let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(account_id, AccountId::from(1001));
-        assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
 
         Ok(())
     }

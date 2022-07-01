@@ -186,11 +186,12 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
 
         assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-        let bytes: Vec<u8> = "Message".into();
-        assert_eq!(data.message.unwrap(), bytes);
         assert_eq!(data.initial_transaction_id.unwrap(), TransactionId::from_str("1001@1656352251.277559886")?);
         assert_eq!(data.chunk_total, 1);
         assert_eq!(data.chunk_number, 1);
+
+        let bytes: Vec<u8> = "Message".into();
+        assert_eq!(data.message.unwrap(), bytes);
 
         Ok(())
     }

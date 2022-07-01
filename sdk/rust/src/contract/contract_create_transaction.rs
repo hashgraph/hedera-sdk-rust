@@ -301,9 +301,6 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
 
-        let bytes: Vec<u8> = "Hello, world!".into();
-        assert_eq!(data.bytecode.unwrap(), bytes);
-
         assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
         assert_eq!(data.gas_limit, 1000);
         assert_eq!(data.initial_balance, 1_000_000);
@@ -314,10 +311,15 @@ mod tests {
         assert_eq!(data.staked_node_id.unwrap(), 7);
         assert_eq!(data.decline_staking_reward, false);
 
+        let bytes: Vec<u8> = "Hello, world!".into();
+        assert_eq!(data.bytecode.unwrap(), bytes);
+
         let admin_key = assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+
         let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(auto_renew_account_id, AccountId::from(1002));
+
         let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(staked_account_id, AccountId::from(1003));
 

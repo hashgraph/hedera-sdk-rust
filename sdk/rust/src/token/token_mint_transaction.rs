@@ -143,10 +143,10 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenMint(transaction) => transaction);
 
-        let bytes: Vec<u8> = "Jenny I've got your number".into();
-
         assert_eq!(data.token_id.unwrap(), TokenId::from(1981));
         assert_eq!(data.amount, 8675309);
+
+        let bytes: Vec<u8> = "Jenny I've got your number".into();
         assert_eq!(data.metadata, [bytes]);
 
         Ok(())
