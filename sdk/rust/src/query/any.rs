@@ -9,9 +9,10 @@ use crate::contract::{ContractBytecodeQueryData, ContractCallQueryData, Contract
 use crate::file::{FileContentsQueryData, FileInfoQueryData};
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
+use crate::token::TokenNftInfoQueryData;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
-use crate::{AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, ContractInfo, FileContentsResponse, FileInfo, FromProtobuf, Query, Transaction, TransactionReceiptResponse};
+use crate::{AccountBalanceResponse, AccountInfo, ContractBytecodeResponse, ContractCallResponse, ContractInfo, FileContentsResponse, FromProtobuf, Query, TokenNftInfoResponse, Transaction, TransactionReceiptResponse, FileInfo};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -27,6 +28,7 @@ pub enum AnyQueryData {
     ContractBytecode(ContractBytecodeQueryData),
     ContractCall(ContractCallQueryData),
     ContractInfo(ContractInfoQueryData),
+    TokenNftInfo(TokenNftInfoQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -40,6 +42,7 @@ pub enum AnyQueryResponse {
     ContractBytecode(ContractBytecodeResponse),
     ContractCall(ContractCallResponse),
     ContractInfo(ContractInfo),
+    TokenNftInfo(TokenNftInfoResponse),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -53,6 +56,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::ContractBytecode(data) => data.to_query_protobuf(header),
             Self::ContractCall(data) => data.to_query_protobuf(header),
             Self::ContractInfo(data) => data.to_query_protobuf(header),
+            Self::TokenNftInfo(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -71,6 +75,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractBytecode(query) => query.is_payment_required(),
             Self::ContractCall(query) => query.is_payment_required(),
             Self::ContractInfo(query) => query.is_payment_required(),
+            Self::TokenNftInfo(query) => query.is_payment_required(),
         }
     }
 
@@ -88,6 +93,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractBytecode(query) => query.execute(channel, request).await,
             Self::ContractCall(query) => query.execute(channel, request).await,
             Self::ContractInfo(query) => query.execute(channel, request).await,
+            Self::TokenNftInfo(query) => query.execute(channel, request).await,
         }
     }
 
@@ -101,6 +107,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractBytecode(query) => query.should_retry_pre_check(status),
             Self::ContractCall(query) => query.should_retry_pre_check(status),
             Self::ContractInfo(query) => query.should_retry_pre_check(status),
+            Self::TokenNftInfo(query) => query.should_retry_pre_check(status),
         }
     }
 
@@ -114,6 +121,7 @@ impl QueryExecute for AnyQueryData {
             Self::ContractBytecode(query) => query.should_retry(response),
             Self::ContractCall(query) => query.should_retry(response),
             Self::ContractInfo(query) => query.should_retry(response),
+            Self::TokenNftInfo(query) => query.should_retry(response),
         }
     }
 }
@@ -145,6 +153,7 @@ impl FromProtobuf for AnyQueryResponse {
                 Self::ContractCall(ContractCallResponse::from_protobuf(response)?)
             }
             ContractGetInfo(_) => Self::ContractInfo(ContractInfo::from_protobuf(response)?),
+            TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfoResponse::from_protobuf(response)?),
 
             _ => todo!(),
         })

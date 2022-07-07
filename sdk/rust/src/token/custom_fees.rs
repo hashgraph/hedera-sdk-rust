@@ -227,7 +227,7 @@ impl ToProtobuf for RoyaltyFee {
 mod tests {
     use hedera_proto::services;
 
-    use crate::fraction::Fraction;
+    use fraction::Fraction;
     use crate::token::custom_fees::{CustomFee, Fee, FixedFee, FractionalFee, RoyaltyFee};
     use crate::{AccountId, FromProtobuf, ToProtobuf, TokenId};
 
@@ -341,7 +341,7 @@ mod tests {
         let net_of_transfers = true;
 
         let fractional_fee = FractionalFee {
-            fractional_amount: Fraction { numerator: 1, denominator: 2 },
+            fractional_amount: (1, 2).into(),
             minimum_amount,
             maximum_amount,
             net_of_transfers,
@@ -381,7 +381,7 @@ mod tests {
     #[test]
     fn royalty_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
         let fallback_fee = FixedFee { denominating_token_id: TokenId::from(1), amount: 1000 };
-        let exchange_value_fraction = Fraction { numerator: 1, denominator: 2 };
+        let exchange_value_fraction: Fraction = (1,2).into();
 
         let royalty_fee =
             RoyaltyFee { fallback_fee: fallback_fee.clone(), exchange_value_fraction };
@@ -391,7 +391,7 @@ mod tests {
         assert_eq!(royalty_fee_proto.fallback_fee, Some(fallback_fee.to_protobuf()));
         assert_eq!(
             royalty_fee_proto.exchange_value_fraction,
-            Some(exchange_value_fraction.to_protobuf())
+            Some(exchange_value_fraction.into())
         );
 
         Ok(())
@@ -417,8 +417,7 @@ mod tests {
         let royalty_fee = RoyaltyFee::from_protobuf(royalty_fee_proto).unwrap();
 
         assert_eq!(royalty_fee.fallback_fee.amount, amount);
-        assert_eq!(royalty_fee.exchange_value_fraction.numerator, numerator);
-        assert_eq!(royalty_fee.exchange_value_fraction.denominator, denominator);
+        assert_eq!(royalty_fee.exchange_value_fraction, Fraction::from((numerator, denominator)));
 
         Ok(())
     }

@@ -67,7 +67,7 @@ pub use schedule::ScheduleId;
 pub use signature::{Signature, SignaturePair};
 pub use signer::Signer;
 pub use token::{
-    TokenAssociateTransaction, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenDissociateTransaction, TokenFeeScheduleUpdateTransaction, TokenFreezeTransaction, TokenGrantKycTransaction, TokenId, TokenMintTransaction, TokenPauseTransaction, TokenRevokeKycTransaction, TokenUnfreezeTransaction, TokenUnpauseTransaction, TokenUpdateTransaction, TokenWipeTransaction
+    NftId, TokenAssociateTransaction, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenDissociateTransaction, TokenFeeScheduleUpdateTransaction, TokenFreezeTransaction, TokenGrantKycTransaction, TokenId, TokenMintTransaction, TokenNftInfoResponse, TokenPauseTransaction, TokenRevokeKycTransaction, TokenUnfreezeTransaction, TokenUnpauseTransaction, TokenUpdateTransaction, TokenWipeTransaction
 };
 pub use topic::{
     TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicMessage, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction
