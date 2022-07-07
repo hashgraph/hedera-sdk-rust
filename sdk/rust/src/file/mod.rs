@@ -5,6 +5,8 @@ mod file_create_transaction;
 mod file_delete_transaction;
 mod file_id;
 mod file_update_transaction;
+mod file_info;
+mod file_info_query;
 
 pub use file_append_transaction::FileAppendTransaction;
 pub(crate) use file_append_transaction::FileAppendTransactionData;
@@ -18,3 +20,6 @@ pub(crate) use file_delete_transaction::FileDeleteTransactionData;
 pub use file_id::FileId;
 pub use file_update_transaction::FileUpdateTransaction;
 pub(crate) use file_update_transaction::FileUpdateTransactionData;
+pub(crate) use file_info_query::FileInfoQueryData;
+pub use file_info_query::FileInfoQuery;
+pub use file_info::FileInfo;
