@@ -53,7 +53,7 @@ pub use contract::{
 pub use entity_id::EntityId;
 pub use error::{Error, Result};
 pub use file::{
-    FileAppendTransaction, FileContentsQuery, FileContentsResponse, FileCreateTransaction, FileDeleteTransaction, FileId, FileUpdateTransaction
+    FileAppendTransaction, FileContentsQuery, FileContentsResponse, FileInfoQuery, FileInfo, FileCreateTransaction, FileDeleteTransaction, FileId, FileUpdateTransaction
 };
 pub use hedera_proto::services::ResponseCodeEnum as Status;
 pub use key::{Key, PrivateKey, PublicKey};
