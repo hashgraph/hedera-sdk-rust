@@ -1,12 +1,14 @@
+use std::collections::HashMap;
 use std::ops::Not;
 
 use async_trait::async_trait;
+use itertools::Itertools;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, ToProtobuf, Transaction};
+use crate::{AccountAddress, TokenId, ToProtobuf, Transaction};
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
@@ -17,13 +19,15 @@ use crate::{AccountAddress, ToProtobuf, Transaction};
 ///
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
+type TokenTransferList = Vec<TokenTransfer>;
+
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferTransactionData {
     #[serde(default, skip_serializing_if = "Vec::is_empty", rename = "tinybarTransfers")]
     hbar_transfers: Vec<HbarTransfer>,
-    // TODO: token_transfers
-    // TODO: nft_transfers
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    token_transfers: TokenTransferList,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -31,6 +35,22 @@ struct HbarTransfer {
     account: AccountAddress,
     #[serde(default)]
     amount: i64,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct TokenTransfer {
+    token_id: TokenId,
+    transfers: Vec<HbarTransfer>,
+    nft_transfers: Vec<NftTransfer>,
+    expected_decimals: Option<u32>,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+struct NftTransfer {
+    sender: AccountAddress,
+    receiver: AccountAddress,
+    serial_number: u64,
+    is_approval: bool,
 }
 
 impl TransferTransaction {
@@ -48,6 +68,43 @@ impl TransferTransaction {
     ) -> &mut Self {
         self.hbar_transfer(sender, -(amount as i64));
         self.hbar_transfer(receiver, amount as i64);
+        self
+    }
+
+    pub fn token_transfer(&mut self, token_id: impl Into<TokenId>, account: impl Into<AccountAddress>, amount: i64) -> &mut Self {
+        let transfer = HbarTransfer { account: account.into(), amount };
+        let token_id = token_id.into();
+
+        if let Some(token_transfer) = self.body.data.token_transfers.iter_mut().find(|tx| tx.token_id == token_id) {
+            token_transfer.transfers.push(transfer);
+        } else {
+            let token_transfer = TokenTransfer { token_id, transfers: [transfer].into(), nft_transfers: Vec::new(), expected_decimals: None };
+            self.body.data.token_transfers.push(token_transfer);
+        }
+
+        self
+    }
+
+    #[allow(clippy::cast_possible_wrap)]
+    pub fn token_transfer_to(&mut self, token_id: impl Into<TokenId>, sender: impl Into<AccountAddress>, receiver: impl Into<AccountAddress>, amount: u64) -> &mut Self {
+        let token_id = token_id.into();
+        self.token_transfer(token_id, sender, -(amount as i64));
+        self.token_transfer(token_id, receiver, amount as i64);
+        self
+    }
+
+    // TODO use `NftId` here
+    pub fn nft_transfer_to(&mut self, token_id: impl Into<TokenId>, sender: impl Into<AccountAddress>, receiver: impl Into<AccountAddress>, serial_number: u64) -> &mut Self {
+        let transfer = NftTransfer { sender: sender.into(), receiver: receiver.into(), serial_number, is_approval: false };
+        let token_id = token_id.into();
+
+        if let Some(token_transfer) = self.body.data.token_transfers.iter_mut().find(|tx| tx.token_id == token_id) {
+            token_transfer.nft_transfers.push(transfer);
+        } else {
+            let token_transfer = TokenTransfer { token_id, transfers: Vec::new(), nft_transfers: [transfer].into(), expected_decimals: None };
+            self.body.data.token_transfers.push(token_transfer);
+        }
+
         self
     }
 }
@@ -76,6 +133,40 @@ impl ToProtobuf for HbarTransfer {
     }
 }
 
+impl ToProtobuf for TokenTransfer {
+    type Protobuf = services::TokenTransferList;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        Self::Protobuf {
+            token: Some(self.token_id.to_protobuf()),
+            transfers: self.transfers.iter().map(HbarTransfer::to_protobuf).collect_vec(),
+            nft_transfers: self.nft_transfers.iter().map(NftTransfer::to_protobuf).collect_vec(),
+            expected_decimals: None,
+        }
+    }
+}
+
+impl ToProtobuf for NftTransfer {
+    type Protobuf = services::NftTransfer;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        Self::Protobuf {
+            sender_account_id: Some(self.sender.to_protobuf()),
+            receiver_account_id: Some(self.receiver.to_protobuf()),
+            serial_number: self.serial_number as i64,
+            is_approval: self.is_approval,
+        }
+    }
+}
+
+impl ToProtobuf for TokenTransferList {
+    type Protobuf = Vec<services::TokenTransferList>;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        self.iter().map(TokenTransfer::to_protobuf).collect_vec()
+    }
+}
+
 impl ToTransactionDataProtobuf for TransferTransactionData {
     fn to_transaction_data_protobuf(
         &self,
@@ -86,9 +177,11 @@ impl ToTransactionDataProtobuf for TransferTransactionData {
             account_amounts: self.hbar_transfers.iter().map(HbarTransfer::to_protobuf).collect(),
         });
 
+        let token_transfers = self.token_transfers.to_protobuf();
+
         services::transaction_body::Data::CryptoTransfer(services::CryptoTransferTransactionBody {
             transfers,
-            token_transfers: Vec::new(),
+            token_transfers,
         })
     }
 }
@@ -99,6 +192,7 @@ impl From<TransferTransactionData> for AnyTransactionData {
     }
 }
 
+// TODO update tests
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
