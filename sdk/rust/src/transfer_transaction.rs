@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::ops::Not;
 
 use async_trait::async_trait;
@@ -8,7 +7,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, TokenId, ToProtobuf, Transaction};
+use crate::{AccountAddress, NftId, TokenId, ToProtobuf, Transaction};
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
@@ -40,8 +39,11 @@ struct HbarTransfer {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 struct TokenTransfer {
     token_id: TokenId,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     transfers: Vec<HbarTransfer>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     nft_transfers: Vec<NftTransfer>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     expected_decimals: Option<u32>,
 }
 
@@ -49,7 +51,7 @@ struct TokenTransfer {
 struct NftTransfer {
     sender: AccountAddress,
     receiver: AccountAddress,
-    serial_number: u64,
+    serial_number: i64,
     is_approval: bool,
 }
 
@@ -93,15 +95,14 @@ impl TransferTransaction {
         self
     }
 
-    // TODO use `NftId` here
-    pub fn nft_transfer_to(&mut self, token_id: impl Into<TokenId>, sender: impl Into<AccountAddress>, receiver: impl Into<AccountAddress>, serial_number: u64) -> &mut Self {
-        let transfer = NftTransfer { sender: sender.into(), receiver: receiver.into(), serial_number, is_approval: false };
-        let token_id = token_id.into();
+    pub fn nft_transfer_to(&mut self, nft_id: impl Into<NftId>, sender: impl Into<AccountAddress>, receiver: impl Into<AccountAddress>) -> &mut Self {
+        let nft_id = nft_id.into();
+        let transfer = NftTransfer { sender: sender.into(), receiver: receiver.into(), serial_number: nft_id.serial_number, is_approval: false };
 
-        if let Some(token_transfer) = self.body.data.token_transfers.iter_mut().find(|tx| tx.token_id == token_id) {
+        if let Some(token_transfer) = self.body.data.token_transfers.iter_mut().find(|tx| tx.token_id == nft_id.token_id) {
             token_transfer.nft_transfers.push(transfer);
         } else {
-            let token_transfer = TokenTransfer { token_id, transfers: Vec::new(), nft_transfers: [transfer].into(), expected_decimals: None };
+            let token_transfer = TokenTransfer { token_id: nft_id.token_id, transfers: Vec::new(), nft_transfers: [transfer].into(), expected_decimals: None };
             self.body.data.token_transfers.push(token_transfer);
         }
 
@@ -198,27 +199,66 @@ mod tests {
     use assert_matches::assert_matches;
 
     use crate::transaction::{AnyTransaction, AnyTransactionData};
-    use crate::{AccountId, TransferTransaction};
+    use crate::{AccountId, TokenId, TransferTransaction};
 
     // language=JSON
     const TRANSFER_HBAR: &str = r#"{
-  "transfer": {
-    "tinybarTransfers": [
-      {
-        "account": "0.0.1001",
-        "amount": 20
-      },
-      {
-        "account": "0.0.1002",
-        "amount": -20
-      }
-    ]
-  },
+  "$type": "transfer",
+  "tinybarTransfers": [
+    {
+      "account": "0.0.1001",
+      "amount": 20
+    },
+    {
+      "account": "0.0.1002",
+      "amount": -20
+    }
+  ],
+  "payerAccountId": "0.0.6189"
+}"#;
+
+    // language=JSON
+    const TRANSFER_TOKEN: &str = r#"{
+  "$type": "transfer",
+  "tokenTransfers": [
+    {
+      "token_id": "0.0.1001",
+      "transfers": [
+        {
+          "account": "0.0.1002",
+          "amount": 20
+        },
+        {
+          "account": "0.0.1003",
+          "amount": -20
+        }
+      ]
+    }
+  ],
+  "payerAccountId": "0.0.6189"
+}"#;
+
+    // language=JSON
+    const TRANSFER_NFT: &str = r#"{
+  "$type": "transfer",
+  "tokenTransfers": [
+    {
+      "token_id": "0.0.1001",
+      "nft_transfers": [
+        {
+          "sender": "0.0.1002",
+          "receiver": "0.0.1003",
+          "serial_number": 12345,
+          "is_approval": false
+        }
+      ]
+    }
+  ],
   "payerAccountId": "0.0.6189"
 }"#;
 
     #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
+    fn it_should_serialize_hbar_transfer() -> anyhow::Result<()> {
         let mut transaction = TransferTransaction::new();
         transaction
             .hbar_transfer(AccountId::from(1001), 20)
@@ -227,6 +267,33 @@ mod tests {
 
         let s = serde_json::to_string_pretty(&transaction)?;
         assert_eq!(s, TRANSFER_HBAR);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_serialize_token_transfer() -> anyhow::Result<()> {
+        let mut transaction = TransferTransaction::new();
+        transaction
+            .token_transfer(TokenId::from(1001), AccountId::from(1002), 20)
+            .token_transfer(TokenId::from(1001), AccountId::from(1003), -20)
+            .payer_account_id(AccountId::from(6189));
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+        assert_eq!(transaction_json, TRANSFER_TOKEN);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_serialize_nft_transfer() -> anyhow::Result<()> {
+        let mut transaction = TransferTransaction::new();
+        transaction
+            .nft_transfer_to((TokenId::from(1001), 12345), AccountId::from(1002), AccountId::from(1003))
+            .payer_account_id(AccountId::from(6189));
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+        assert_eq!(transaction_json, TRANSFER_NFT);
 
         Ok(())
     }
