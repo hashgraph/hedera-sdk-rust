@@ -125,7 +125,7 @@ impl From<FileCreateTransactionData> for AnyTransactionData {
 mod tests {
     use std::str::FromStr;
     use assert_matches::assert_matches;
-    use time::{Duration, OffsetDateTime};
+    use time::{OffsetDateTime};
     use crate::{FileCreateTransaction, Key, PublicKey};
     use crate::transaction::{AnyTransaction, AnyTransactionData};
 
