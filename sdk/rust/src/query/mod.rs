@@ -3,7 +3,13 @@ use time::Duration;
 use crate::execute::execute;
 use crate::query::cost::QueryCost;
 use crate::query::payment_transaction::PaymentTransaction;
-use crate::{AccountId, Client, Error, Signer, TransactionId};
+use crate::{
+    AccountId,
+    Client,
+    Error,
+    Signer,
+    TransactionId,
+};
 
 mod any;
 mod cost;
@@ -12,7 +18,10 @@ pub(super) mod payment_transaction;
 mod protobuf;
 
 pub(crate) use any::AnyQueryData;
-pub use any::{AnyQuery, AnyQueryResponse};
+pub use any::{
+    AnyQuery,
+    AnyQueryResponse,
+};
 pub(crate) use execute::QueryExecute;
 pub(crate) use protobuf::ToQueryProtobuf;
 

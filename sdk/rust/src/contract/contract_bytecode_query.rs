@@ -1,12 +1,24 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{ContractBytecodeResponse, ContractId, Query, ToProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    ContractBytecodeResponse,
+    ContractId,
+    Query,
+    ToProtobuf,
+};
 
 /// Get the runtime bytecode for a smart contract instance.
 pub type ContractBytecodeQuery = Query<ContractBytecodeQueryData>;

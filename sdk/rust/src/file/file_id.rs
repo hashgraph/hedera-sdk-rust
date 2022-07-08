@@ -1,10 +1,23 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{DeserializeFromStr, SerializeDisplay};
+use serde_with::{
+    DeserializeFromStr,
+    SerializeDisplay,
+};
 
-use crate::{EntityId, Error, FromProtobuf, ToProtobuf};
+use crate::{
+    EntityId,
+    Error,
+    FromProtobuf,
+    ToProtobuf,
+};
 
 /// The unique identifier for a file on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]

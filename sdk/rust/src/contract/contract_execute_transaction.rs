@@ -1,12 +1,27 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none};
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
 use tonic::transport::Channel;
 
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, ContractId, ToProtobuf, Transaction};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountId,
+    ContractId,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Call a function of the given smart contract instance.
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;

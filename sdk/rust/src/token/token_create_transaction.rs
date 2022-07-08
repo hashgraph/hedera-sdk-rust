@@ -2,16 +2,34 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use itertools::Itertools;
-use serde_with::{serde_as, skip_serializing_none, DurationSeconds, TimestampNanoSeconds};
-use time::{Duration, OffsetDateTime};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+    DurationSeconds,
+    TimestampNanoSeconds,
+};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::token::custom_fees::CustomFee;
 use crate::token::token_supply_type::TokenSupplyType;
 use crate::token::token_type::TokenType;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, AccountId, Key, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    Key,
+    Transaction,
+    TransactionId,
+};
 
 /// Create a new token.
 ///

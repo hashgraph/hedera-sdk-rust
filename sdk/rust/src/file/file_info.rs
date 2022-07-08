@@ -1,7 +1,11 @@
 use hedera_proto::services;
 use time::OffsetDateTime;
 
-use crate::{FileId, FromProtobuf, Key};
+use crate::{
+    FileId,
+    FromProtobuf,
+    Key,
+};
 
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
@@ -24,7 +28,6 @@ pub struct FileInfo {
 
     /// Memo associated with the file
     pub memo: String,
-
     // Ledger ID the response was returned from
     // TODO: pub ledger_id: LedgerId,
 }

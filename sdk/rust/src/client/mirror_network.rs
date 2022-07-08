@@ -2,7 +2,10 @@ use std::borrow::Cow;
 use std::time::Duration;
 
 use parking_lot::RwLock;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::{
+    Channel,
+    Endpoint,
+};
 
 pub(crate) const MAINNET: &str = "mainnet-public.mirrornode.hedera.com:443";
 

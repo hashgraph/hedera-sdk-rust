@@ -2,11 +2,25 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use itertools::Itertools;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
 use tonic::transport::Channel;
 
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, AccountAddress, ToProtobuf, TokenId, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    ToProtobuf,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
 ///

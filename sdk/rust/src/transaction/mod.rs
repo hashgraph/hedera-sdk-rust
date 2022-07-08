@@ -1,18 +1,35 @@
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{
+    Debug,
+    Formatter,
+};
 
-use serde_with::{serde_as, skip_serializing_none, DurationSeconds, FromInto};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+    DurationSeconds,
+    FromInto,
+};
 use time::Duration;
 
 use crate::execute::execute;
-use crate::{AccountId, Client, Signer, TransactionId, TransactionResponse};
+use crate::{
+    AccountId,
+    Client,
+    Signer,
+    TransactionId,
+    TransactionResponse,
+};
 
 mod any;
 mod execute;
 mod protobuf;
 
 pub use any::AnyTransaction;
-pub(crate) use any::{AnyTransactionBody, AnyTransactionData};
+pub(crate) use any::{
+    AnyTransactionBody,
+    AnyTransactionData,
+};
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 

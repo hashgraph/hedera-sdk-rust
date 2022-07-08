@@ -4,8 +4,16 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
 use crate::file::FileInfo; //ask about
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{FileId, Query, ToProtobuf}; //ask about
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    FileId,
+    Query,
+    ToProtobuf,
+}; //ask about
 
 /// Get all the information about a file.
 pub type FileInfoQuery = Query<FileInfoQueryData>; //ask about
@@ -62,7 +70,12 @@ mod tests {
     use assert_matches::assert_matches;
 
     use crate::query::AnyQueryData;
-    use crate::{AccountId, FileId, FileInfoQuery, AnyQuery};
+    use crate::{
+        AccountId,
+        AnyQuery,
+        FileId,
+        FileInfoQuery,
+    };
 
     // language=JSON
     const FILE_INFO: &str = r#"{
@@ -96,7 +109,7 @@ mod tests {
 
         let data = assert_matches!(query.data, AnyQueryData::FileInfo(query) => query);
 
-        assert_eq!(data.file_id, Some(FileId{shard:0, realm:0, num:1001}));
+        assert_eq!(data.file_id, Some(FileId { shard: 0, realm: 0, num: 1001 }));
         assert_eq!(query.payment.body.data.amount, Some(50));
         assert_eq!(query.payment.body.transaction_memo, "query payment");
         assert_eq!(query.payment.body.payer_account_id, Some(AccountId::from(6189)));
@@ -104,4 +117,3 @@ mod tests {
         Ok(())
     }
 }
-

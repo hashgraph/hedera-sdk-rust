@@ -1,9 +1,16 @@
 use hedera_proto::services;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use serde_with::base64::Base64;
 use serde_with::serde_as;
 
-use crate::{AccountId, ContractId, FromProtobuf};
+use crate::{
+    AccountId,
+    ContractId,
+    FromProtobuf,
+};
 
 // TODO: log info
 // TODO: state_changes

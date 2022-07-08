@@ -6,7 +6,13 @@ use rand::thread_rng;
 use tokio::time::sleep;
 use tonic::transport::Channel;
 
-use crate::{AccountId, Client, Error, Status, TransactionId};
+use crate::{
+    AccountId,
+    Client,
+    Error,
+    Status,
+    TransactionId,
+};
 
 #[async_trait]
 pub(crate) trait Execute {

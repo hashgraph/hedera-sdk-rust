@@ -1,7 +1,11 @@
 use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
-use crate::{AccountId, Status, TransactionId};
+use crate::{
+    AccountId,
+    Status,
+    TransactionId,
+};
 
 pub type Result<T> = StdResult<T, Error>;
 

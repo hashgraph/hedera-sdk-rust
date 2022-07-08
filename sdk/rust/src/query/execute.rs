@@ -7,8 +7,19 @@ use serde::Serialize;
 use tonic::transport::Channel;
 
 use crate::execute::Execute;
-use crate::query::{AnyQueryData, ToQueryProtobuf};
-use crate::{AccountId, Client, Error, FromProtobuf, Query, Status, TransactionId};
+use crate::query::{
+    AnyQueryData,
+    ToQueryProtobuf,
+};
+use crate::{
+    AccountId,
+    Client,
+    Error,
+    FromProtobuf,
+    Query,
+    Status,
+    TransactionId,
+};
 
 /// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]

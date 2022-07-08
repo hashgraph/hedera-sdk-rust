@@ -1,6 +1,9 @@
 use hedera_proto::services;
 
-use crate::{AccountId, FromProtobuf};
+use crate::{
+    AccountId,
+    FromProtobuf,
+};
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
