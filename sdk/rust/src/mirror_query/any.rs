@@ -1,12 +1,30 @@
 use async_trait::async_trait;
-use hedera_proto::{mirror, services};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use hedera_proto::{
+    mirror,
+    services,
+};
+use serde::{
+    Deserialize,
+    Deserializer,
+    Serialize,
+    Serializer,
+};
 use tonic::transport::Channel;
-use tonic::{Code, Status, Streaming};
+use tonic::{
+    Code,
+    Status,
+    Streaming,
+};
 
 use crate::mirror_query::MirrorQuerySubscribe;
 use crate::topic::TopicMessageQueryData;
-use crate::{FromProtobuf, MirrorQuery, NodeAddress, NodeAddressBookQueryData, TopicMessage};
+use crate::{
+    FromProtobuf,
+    MirrorQuery,
+    NodeAddress,
+    NodeAddressBookQueryData,
+    TopicMessage,
+};
 
 pub type AnyMirrorQuery = MirrorQuery<AnyMirrorQueryData>;
 

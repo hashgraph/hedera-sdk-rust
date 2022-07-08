@@ -1,10 +1,21 @@
 use async_trait::async_trait;
-use hedera_proto::{mirror, services};
+use hedera_proto::{
+    mirror,
+    services,
+};
 use mirror::network_service_client::NetworkServiceClient;
 use tonic::transport::Channel;
 
-use crate::mirror_query::{AnyMirrorQueryData, MirrorQuerySubscribe};
-use crate::{FileId, MirrorQuery, NodeAddress, ToProtobuf};
+use crate::mirror_query::{
+    AnyMirrorQueryData,
+    MirrorQuerySubscribe,
+};
+use crate::{
+    FileId,
+    MirrorQuery,
+    NodeAddress,
+    ToProtobuf,
+};
 
 /// Query for an address book and return its nodes.
 /// The nodes are returned in ascending order by node ID.

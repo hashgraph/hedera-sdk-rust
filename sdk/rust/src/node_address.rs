@@ -4,7 +4,10 @@ use hedera_proto::services;
 use serde_with::base64::Base64;
 use serde_with::serde_as;
 
-use crate::{AccountId, FromProtobuf};
+use crate::{
+    AccountId,
+    FromProtobuf,
+};
 
 /// The data about a node, including its service endpoints and the Hedera account to be paid for
 /// services provided by the node (that is, queries answered and transactions submitted.).

@@ -2,12 +2,22 @@ use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use parking_lot::RwLock;
-use tokio::sync::{OwnedRwLockReadGuard, RwLock as AsyncRwLock};
+use tokio::sync::{
+    OwnedRwLockReadGuard,
+    RwLock as AsyncRwLock,
+};
 use tokio::task::block_in_place;
 
 use self::mirror_network::MirrorNetwork;
-use crate::client::network::{Network, TESTNET};
-use crate::{AccountId, Signer, TransactionId};
+use crate::client::network::{
+    Network,
+    TESTNET,
+};
+use crate::{
+    AccountId,
+    Signer,
+    TransactionId,
+};
 
 mod mirror_network;
 mod network;

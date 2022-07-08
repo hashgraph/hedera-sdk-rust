@@ -2,13 +2,25 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use itertools::Itertools;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
 use crate::token::custom_fees::CustomFee;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, TokenId, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountId,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
 ///
@@ -66,10 +78,9 @@ impl ToTransactionDataProtobuf for TokenFeeScheduleUpdateTransactionData {
         let token_id = self.token_id.as_ref().map(TokenId::to_protobuf);
         let custom_fees = self.custom_fees.iter().map(CustomFee::to_protobuf).collect_vec();
 
-        services::transaction_body::Data::TokenFeeScheduleUpdate(services::TokenFeeScheduleUpdateTransactionBody {
-            token_id,
-            custom_fees
-        })
+        services::transaction_body::Data::TokenFeeScheduleUpdate(
+            services::TokenFeeScheduleUpdateTransactionBody { token_id, custom_fees },
+        )
     }
 }
 

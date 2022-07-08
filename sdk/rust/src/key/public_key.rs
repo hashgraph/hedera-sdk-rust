@@ -1,9 +1,23 @@
-use std::fmt::{self, Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
+use std::hash::{
+    Hash,
+    Hasher,
+};
 use std::str::FromStr;
 
-use pkcs8::der::{Decode, Encode};
-use serde_with::{DeserializeFromStr, SerializeDisplay};
+use pkcs8::der::{
+    Decode,
+    Encode,
+};
+use serde_with::{
+    DeserializeFromStr,
+    SerializeDisplay,
+};
 
 use crate::key::private_key::ED25519_OID;
 use crate::Error;

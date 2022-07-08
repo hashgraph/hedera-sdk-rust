@@ -5,8 +5,17 @@ use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, AccountId, ContractId, Transaction};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    ContractId,
+    Transaction,
+};
 
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
 /// a designated receiver.

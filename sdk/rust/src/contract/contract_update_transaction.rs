@@ -1,13 +1,35 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{Deserialize, Serialize};
-use serde_with::{serde_as, skip_serializing_none, DurationSeconds, TimestampNanoSeconds};
-use time::{Duration, OffsetDateTime};
+use serde::{
+    Deserialize,
+    Serialize,
+};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+    DurationSeconds,
+    TimestampNanoSeconds,
+};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, AccountId, ContractId, Key, ToProtobuf, Transaction};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    ContractId,
+    Key,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Updates the fields of a smart contract to the given values.
 pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;

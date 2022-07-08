@@ -5,8 +5,17 @@ use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, FileId, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountId,
+    FileId,
+    Transaction,
+    TransactionId,
+};
 
 /// Delete the given file.
 ///

@@ -3,13 +3,27 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use itertools::Itertools;
 use serde_with::base64::Base64;
-use serde_with::{serde_as, skip_serializing_none, TimestampNanoSeconds};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+    TimestampNanoSeconds,
+};
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountId, FileId, Key, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountId,
+    FileId,
+    Key,
+    Transaction,
+    TransactionId,
+};
 
 /// Modify the metadata and/or the contents of a file.
 ///

@@ -1,7 +1,13 @@
 use hedera_proto::services;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use crate::{ContractFunctionResult, FromProtobuf};
+use crate::{
+    ContractFunctionResult,
+    FromProtobuf,
+};
 
 /// Response from [`ContractCallQuery`][crate::ContractCallQuery].
 #[derive(Debug, Clone, Serialize, Deserialize)]

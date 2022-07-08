@@ -1,6 +1,9 @@
 use hedera_proto::services;
 
-use crate::{AccountId, TransactionId};
+use crate::{
+    AccountId,
+    TransactionId,
+};
 
 pub trait ToTransactionDataProtobuf: Send + Sync {
     fn to_transaction_data_protobuf(

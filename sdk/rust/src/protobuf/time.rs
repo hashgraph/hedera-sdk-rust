@@ -1,5 +1,8 @@
 use hedera_proto::services;
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 
 use crate::ToProtobuf;
 

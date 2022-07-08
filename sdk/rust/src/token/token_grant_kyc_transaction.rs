@@ -5,8 +5,18 @@ use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, AccountId, TokenId, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// Grants KYC to the account for the given token. Must be signed by the Token's kycKey.
 ///
