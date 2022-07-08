@@ -3,7 +3,12 @@ use std::str::FromStr;
 
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
-use crate::{AccountAddress, AccountAlias, AccountId, PublicKey};
+use crate::{
+    AccountAddress,
+    AccountAlias,
+    AccountId,
+    PublicKey,
+};
 
 /// Parse a Hedera `AccountAddress` from the passed string.
 #[no_mangle]

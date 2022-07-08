@@ -5,7 +5,10 @@ use std::str::FromStr;
 
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
-use crate::{PrivateKey, PublicKey};
+use crate::{
+    PrivateKey,
+    PublicKey,
+};
 
 /// Generates a new Ed25519 private key.
 #[no_mangle]

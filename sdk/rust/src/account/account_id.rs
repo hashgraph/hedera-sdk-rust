@@ -1,10 +1,24 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{DeserializeFromStr, SerializeDisplay};
+use serde_with::{
+    DeserializeFromStr,
+    SerializeDisplay,
+};
 
-use crate::{EntityId, Error, FromProtobuf, PublicKey, ToProtobuf};
+use crate::{
+    EntityId,
+    Error,
+    FromProtobuf,
+    PublicKey,
+    ToProtobuf,
+};
 
 /// The unique identifier for a cryptocurrency account on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Copy, Hash, PartialEq, Eq, Clone)]

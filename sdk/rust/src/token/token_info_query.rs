@@ -3,9 +3,17 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
 use crate::token::token_info::TokenInfo;
-use crate::{Query, ToProtobuf, TokenId};
+use crate::{
+    Query,
+    ToProtobuf,
+    TokenId,
+};
 
 /// Gets information about Token instance.
 ///
@@ -63,7 +71,11 @@ mod tests {
     use assert_matches::assert_matches;
 
     use crate::query::AnyQueryData;
-    use crate::{AnyQuery, TokenId, TokenInfoQuery};
+    use crate::{
+        AnyQuery,
+        TokenId,
+        TokenInfoQuery,
+    };
 
     // language=JSON
     const TOKEN_INFO: &str = r#"{
@@ -88,7 +100,7 @@ mod tests {
         let query: AnyQuery = serde_json::from_str(TOKEN_INFO)?;
 
         let data = assert_matches!(query.data, AnyQueryData::TokenInfo(query) => query);
-        assert_eq!(data.token_id, Some(TokenId{shard:0, realm: 0, num: 1001}));
+        assert_eq!(data.token_id, Some(TokenId { shard: 0, realm: 0, num: 1001 }));
         Ok(())
     }
 }

@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 
 use crate::error::BoxStdError;
-use crate::{PrivateKey, SignaturePair};
+use crate::{
+    PrivateKey,
+    SignaturePair,
+};
 
 #[async_trait]
 pub trait Signer: 'static + Send + Sync {

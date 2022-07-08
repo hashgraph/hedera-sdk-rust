@@ -4,8 +4,16 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::account::AccountInfo;
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{AccountAddress, Query, ToProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    AccountAddress,
+    Query,
+    ToProtobuf,
+};
 
 /// Get all the information about an account, including the balance.
 ///
@@ -65,7 +73,12 @@ mod tests {
     use assert_matches::assert_matches;
 
     use crate::query::AnyQueryData;
-    use crate::{AccountAddress, AccountId, AccountInfoQuery, AnyQuery};
+    use crate::{
+        AccountAddress,
+        AccountId,
+        AccountInfoQuery,
+        AnyQuery,
+    };
 
     // language=JSON
     const ACCOUNT_INFO: &str = r#"{

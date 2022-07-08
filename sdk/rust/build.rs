@@ -1,6 +1,11 @@
 use std::env;
 
-use cbindgen::{Config, EnumConfig, Language, RenameRule};
+use cbindgen::{
+    Config,
+    EnumConfig,
+    Language,
+    RenameRule,
+};
 
 fn main() -> anyhow::Result<()> {
     cbindgen::Builder::new()

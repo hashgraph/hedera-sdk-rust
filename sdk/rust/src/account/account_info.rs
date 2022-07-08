@@ -1,7 +1,14 @@
 use hedera_proto::services;
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 
-use crate::{AccountId, FromProtobuf, Key};
+use crate::{
+    AccountId,
+    FromProtobuf,
+    Key,
+};
 
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
