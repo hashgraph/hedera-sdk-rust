@@ -7,7 +7,7 @@ use tonic::transport::Channel;
 use tonic::{Response, Status};
 
 use crate::account::{
-    AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData
+    AccountCreateTransactionData, AccountDeleteTransactionData, AccountUpdateTransactionData, AccountDeleteAllowanceTransactionData
 };
 use crate::contract::{
     ContractCreateTransactionData, ContractDeleteTransactionData, ContractExecuteTransactionData, ContractUpdateTransactionData
@@ -34,6 +34,7 @@ pub enum AnyTransactionData {
     AccountCreate(AccountCreateTransactionData),
     AccountUpdate(AccountUpdateTransactionData),
     AccountDelete(AccountDeleteTransactionData),
+    AccountDeleteAllowance(AccountDeleteAllowanceTransactionData),
     ContractCreate(ContractCreateTransactionData),
     ContractUpdate(ContractUpdateTransactionData),
     ContractDelete(ContractDeleteTransactionData),
@@ -84,6 +85,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::AccountDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::AccountDeleteAllowance(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -206,6 +211,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::AccountDeleteAllowance(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -246,6 +252,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
             Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
             Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
+            Self::AccountDeleteAllowance(transaction) => transaction.execute(channel, request).await,
             Self::ContractCreate(transaction) => transaction.execute(channel, request).await,
             Self::ContractUpdate(transaction) => transaction.execute(channel, request).await,
             Self::ContractDelete(transaction) => transaction.execute(channel, request).await,
