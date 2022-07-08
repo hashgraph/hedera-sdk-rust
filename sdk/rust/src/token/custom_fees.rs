@@ -233,7 +233,6 @@ mod tests {
     use fraction::Fraction;
     use hedera_proto::services;
 
-    use crate::fraction::Fraction;
     use crate::token::custom_fees::{
         CustomFee,
         Fee,
