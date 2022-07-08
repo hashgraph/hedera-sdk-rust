@@ -1,13 +1,22 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{
+    AtomicI64,
+    Ordering,
+};
 use std::time::Duration;
 
 use parking_lot::RwLock;
 use time::OffsetDateTime;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::{
+    Channel,
+    Endpoint,
+};
 
-use crate::{AccountId, Error};
+use crate::{
+    AccountId,
+    Error,
+};
 
 pub(crate) const TESTNET: &[(u64, &[&str])] = &[
     (3, &["0.testnet.hedera.com", "34.94.106.61", "50.18.132.211", "138.91.142.219"]),

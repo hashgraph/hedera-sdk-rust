@@ -3,8 +3,17 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, Query, QueryExecute, ToQueryProtobuf};
-use crate::{TokenNftInfoResponse, NftId, ToProtobuf};
+use crate::query::{
+    AnyQueryData,
+    Query,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    NftId,
+    ToProtobuf,
+    TokenNftInfoResponse,
+};
 
 /// Applicable only to tokens of type `NonFungibleUnique`.
 ///
@@ -15,7 +24,7 @@ pub type TokenNftInfoQuery = Query<TokenNftInfoQueryData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenNftInfoQueryData {
     /// The ID of the NFT
-    nft_id: Option<NftId>
+    nft_id: Option<NftId>,
 }
 
 impl From<TokenNftInfoQueryData> for AnyQueryData {
@@ -40,7 +49,7 @@ impl ToQueryProtobuf for TokenNftInfoQueryData {
         services::Query {
             query: Some(services::query::Query::TokenGetNftInfo(services::TokenGetNftInfoQuery {
                 header: Some(header),
-                nft_id
+                nft_id,
             })),
         }
     }

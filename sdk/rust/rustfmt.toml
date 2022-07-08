@@ -1,5 +1,5 @@
 merge_derives = true
 imports_granularity = "Module"
-imports_layout = "Horizontal"
+imports_layout = "Vertical"
 group_imports = "StdExternalCrate"
 use_small_heuristics = "Max"

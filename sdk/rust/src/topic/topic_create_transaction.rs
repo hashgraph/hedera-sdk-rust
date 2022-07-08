@@ -1,13 +1,27 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
-use serde_with::{serde_as, skip_serializing_none, DurationSeconds};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+    DurationSeconds,
+};
 use time::Duration;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, AccountId, Key, Transaction, TransactionId};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    Key,
+    Transaction,
+    TransactionId,
+};
 
 /// Create a topic to be used for consensus.
 ///
@@ -112,7 +126,8 @@ impl ToTransactionDataProtobuf for TopicCreateTransactionData {
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let submit_key = self.submit_key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountAddress::to_protobuf);
+        let auto_renew_account_id =
+            self.auto_renew_account_id.as_ref().map(AccountAddress::to_protobuf);
 
         services::transaction_body::Data::ConsensusCreateTopic(
             services::ConsensusCreateTopicTransactionBody {

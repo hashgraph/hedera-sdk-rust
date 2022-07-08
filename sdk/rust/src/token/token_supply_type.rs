@@ -1,7 +1,13 @@
 use hedera_proto::services;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 
-use crate::{FromProtobuf, ToProtobuf};
+use crate::{
+    FromProtobuf,
+    ToProtobuf,
+};
 
 /// Possible token supply types.
 /// Can be used to restrict supply to a set maximum.
@@ -44,7 +50,10 @@ mod tests {
     use hedera_proto::services;
 
     use crate::token::token_supply_type::TokenSupplyType;
-    use crate::{FromProtobuf, ToProtobuf};
+    use crate::{
+        FromProtobuf,
+        ToProtobuf,
+    };
 
     #[test]
     fn it_can_convert_to_protobuf() -> anyhow::Result<()> {

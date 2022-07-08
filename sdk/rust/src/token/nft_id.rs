@@ -1,10 +1,23 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{DeserializeFromStr, SerializeDisplay};
+use serde_with::{
+    DeserializeFromStr,
+    SerializeDisplay,
+};
 
-use crate::{Error, FromProtobuf, TokenId, ToProtobuf};
+use crate::{
+    Error,
+    FromProtobuf,
+    ToProtobuf,
+    TokenId,
+};
 
 /// The unique identifier for a token on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
@@ -61,43 +74,42 @@ impl FromStr for NftId {
         } else if s.contains("@") {
             parts = s.split("@").collect();
         } else {
-            return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"))
+            return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"));
         }
 
         let serial_number = match parts[1].parse::<i64>() {
             Ok(serial_number) => serial_number,
-            Err(_) => return Err(Error::basic_parse("unexpected error - could not parse serial number"))
+            Err(_) => {
+                return Err(Error::basic_parse("unexpected error - could not parse serial number"))
+            }
         };
 
-        Ok(Self {
-            token_id: TokenId::from_str(parts[0])?,
-            serial_number,
-        })
+        Ok(Self { token_id: TokenId::from_str(parts[0])?, serial_number })
     }
 }
 
 impl From<(TokenId, i64)> for NftId {
     fn from(tuple: (TokenId, i64)) -> Self {
-        Self {
-            token_id: tuple.0,
-            serial_number: tuple.1
-        }
+        Self { token_id: tuple.0, serial_number: tuple.1 }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use hedera_proto::services;
+
     use crate::token::nft_id::NftId;
-    use crate::{FromProtobuf, TokenId, ToProtobuf};
+    use crate::{
+        FromProtobuf,
+        ToProtobuf,
+        TokenId,
+    };
 
     #[test]
     fn it_can_convert_to_protobuf() -> anyhow::Result<()> {
-        let nft_id = NftId {
-            token_id: TokenId::from(1),
-            serial_number: 1,
-        };
+        let nft_id = NftId { token_id: TokenId::from(1), serial_number: 1 };
 
         let nft_id_proto = nft_id.to_protobuf();
 
@@ -109,10 +121,8 @@ mod tests {
 
     #[test]
     fn it_can_create_from_protobuf() -> anyhow::Result<()> {
-        let nft_id_proto = services::NftId {
-            token_id: Some(TokenId::from(1).to_protobuf()),
-            serial_number: 1,
-        };
+        let nft_id_proto =
+            services::NftId { token_id: Some(TokenId::from(1).to_protobuf()), serial_number: 1 };
 
         let nft_id = NftId::from_protobuf(nft_id_proto.clone())?;
 

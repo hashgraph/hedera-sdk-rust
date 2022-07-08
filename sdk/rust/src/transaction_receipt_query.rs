@@ -3,8 +3,18 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{Query, Status, ToProtobuf, TransactionId, TransactionReceiptResponse};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    Query,
+    Status,
+    ToProtobuf,
+    TransactionId,
+    TransactionReceiptResponse,
+};
 
 /// Get the receipt of a transaction, given its transaction ID.
 ///

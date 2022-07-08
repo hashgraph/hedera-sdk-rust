@@ -1,13 +1,29 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{Deserialize, Serialize};
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use serde_with::base64::Base64;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{AccountAddress, ContractCallResponse, ContractId, Query, ToProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    AccountAddress,
+    ContractCallResponse,
+    ContractId,
+    Query,
+    ToProtobuf,
+};
 
 /// Call a function of the given smart contract instance.
 pub type ContractCallQuery = Query<ContractCallQueryData>;

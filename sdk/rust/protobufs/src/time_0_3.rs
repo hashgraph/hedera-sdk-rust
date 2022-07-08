@@ -1,4 +1,7 @@
-use time_0_3::{Duration, OffsetDateTime};
+use time_0_3::{
+    Duration,
+    OffsetDateTime,
+};
 
 impl From<super::services::Duration> for Duration {
     fn from(pb: super::services::Duration) -> Self {

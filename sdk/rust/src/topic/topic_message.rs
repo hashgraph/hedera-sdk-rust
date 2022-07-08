@@ -4,7 +4,10 @@ use serde_with::base64::Base64;
 use serde_with::serde_as;
 use time::OffsetDateTime;
 
-use crate::{FromProtobuf, TransactionId};
+use crate::{
+    FromProtobuf,
+    TransactionId,
+};
 
 #[serde_as]
 #[derive(Serialize, Clone, Debug)]

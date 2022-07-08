@@ -1,5 +1,11 @@
-use crate::ffi::signer::{AnySigner, Signer};
-use crate::{AccountId, Client};
+use crate::ffi::signer::{
+    AnySigner,
+    Signer,
+};
+use crate::{
+    AccountId,
+    Client,
+};
 
 /// Construct a Hedera client pre-configured for testnet access.
 #[no_mangle]
