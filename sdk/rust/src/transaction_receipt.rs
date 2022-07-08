@@ -2,10 +2,22 @@ use std::ops::Not;
 
 use hedera_proto::services;
 use serde_with::base64::Base64;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
 
 use crate::{
-    AccountId, ContractId, Error, FileId, FromProtobuf, ScheduleId, Status, TokenId, TopicId, TransactionId
+    AccountId,
+    ContractId,
+    Error,
+    FileId,
+    FromProtobuf,
+    ScheduleId,
+    Status,
+    TokenId,
+    TopicId,
+    TransactionId,
 };
 
 /// The summary of a transaction's result so far, if the transaction has reached consensus.

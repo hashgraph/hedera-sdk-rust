@@ -1,8 +1,16 @@
 use hedera_proto::services;
-use time::{Duration, OffsetDateTime}; // timestamp
+use time::{
+    Duration,
+    OffsetDateTime,
+}; // timestamp
 
 use crate::token::custom_fees::CustomFee;
-use crate::{AccountId, FromProtobuf, Key, TokenId};
+use crate::{
+    AccountId,
+    FromProtobuf,
+    Key,
+    TokenId,
+};
 
 /// Response from [`TokenInfoQuery`][crate::TokenInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
@@ -32,7 +40,7 @@ pub struct TokenInfo {
     pub fee_schedule_key: Option<Key>,
     pub custom_fees: Vec<CustomFee>,
     pub pause_key: Option<Key>,
-    pub pause_status: i32, //TODO: Option<PauseStatus>
+    pub pause_status: i32,  //TODO: Option<PauseStatus>
     pub ledger_id: Vec<u8>, //TODO: Option<LedgerId>
 }
 

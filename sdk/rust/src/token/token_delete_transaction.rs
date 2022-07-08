@@ -1,12 +1,24 @@
 use async_trait::async_trait;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
+use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, TokenId, Transaction, TransactionId};
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountId,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// Marks a token as deleted, though it will remain in the ledger.
 ///
@@ -56,7 +68,7 @@ impl ToTransactionDataProtobuf for TokenDeleteTransactionData {
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenDeletion(services::TokenDeleteTransactionBody {
-            token
+            token,
         })
     }
 }

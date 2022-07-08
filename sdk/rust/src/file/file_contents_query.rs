@@ -3,8 +3,17 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, Query, QueryExecute, ToQueryProtobuf};
-use crate::{FileContentsResponse, FileId, ToProtobuf};
+use crate::query::{
+    AnyQueryData,
+    Query,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    FileContentsResponse,
+    FileId,
+    ToProtobuf,
+};
 
 /// Get the contents of a file.
 pub type FileContentsQuery = Query<FileContentsQueryData>;

@@ -1,6 +1,9 @@
 use hedera_proto::services;
 
-use crate::{FromProtobuf, TransactionReceipt};
+use crate::{
+    FromProtobuf,
+    TransactionReceipt,
+};
 
 /// Response from [`TransactionReceiptQuery`][crate::TransactionReceiptQuery].
 #[derive(Debug, Clone, serde::Serialize)]

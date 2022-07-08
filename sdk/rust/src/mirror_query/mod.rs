@@ -2,7 +2,10 @@ mod any;
 mod subscribe;
 
 pub(crate) use any::AnyMirrorQueryData;
-pub use any::{AnyMirrorQuery, AnyMirrorQueryResponse};
+pub use any::{
+    AnyMirrorQuery,
+    AnyMirrorQueryResponse,
+};
 pub(crate) use subscribe::MirrorQuerySubscribe;
 
 /// A query that can be executed on the Hedera mirror network.

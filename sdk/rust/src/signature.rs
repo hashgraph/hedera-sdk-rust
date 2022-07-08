@@ -1,6 +1,9 @@
 use hedera_proto::services;
 
-use crate::{PublicKey, ToProtobuf};
+use crate::{
+    PublicKey,
+    ToProtobuf,
+};
 
 #[derive(Debug)]
 pub struct SignaturePair {

@@ -4,8 +4,19 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
-use crate::query::{AnyQueryData, Query, QueryExecute, ToQueryProtobuf};
-use crate::{AccountAddress, AccountBalanceResponse, AccountId, ContractAddress, ToProtobuf};
+use crate::query::{
+    AnyQueryData,
+    Query,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    AccountAddress,
+    AccountBalanceResponse,
+    AccountId,
+    ContractAddress,
+    ToProtobuf,
+};
 
 /// Get the balance of a cryptocurrency account.
 ///
@@ -102,7 +113,12 @@ mod tests {
 
     use crate::account::account_balance_query::AccountBalanceSource;
     use crate::query::AnyQueryData;
-    use crate::{AccountAddress, AccountBalanceQuery, AccountId, AnyQuery};
+    use crate::{
+        AccountAddress,
+        AccountBalanceQuery,
+        AccountId,
+        AnyQuery,
+    };
 
     // language=JSON
     const ACCOUNT_BALANCE: &str = r#"{

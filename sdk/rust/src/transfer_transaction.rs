@@ -5,8 +5,16 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, ToProtobuf, Transaction};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
@@ -103,8 +111,14 @@ impl From<TransferTransactionData> for AnyTransactionData {
 mod tests {
     use assert_matches::assert_matches;
 
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
-    use crate::{AccountId, TransferTransaction};
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountId,
+        TransferTransaction,
+    };
 
     // language=JSON
     const TRANSFER_HBAR: &str = r#"{

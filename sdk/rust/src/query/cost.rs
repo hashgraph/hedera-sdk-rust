@@ -2,10 +2,18 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
-use crate::execute::{execute, Execute};
+use crate::execute::{
+    execute,
+    Execute,
+};
 use crate::query::execute::response_header;
 use crate::query::QueryExecute;
-use crate::{AccountId, Client, Query, TransactionId};
+use crate::{
+    AccountId,
+    Client,
+    Query,
+    TransactionId,
+};
 
 pub(super) struct QueryCost<'a, D>(&'a Query<D>)
 where

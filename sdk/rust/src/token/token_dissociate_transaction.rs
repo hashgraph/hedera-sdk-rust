@@ -1,13 +1,26 @@
 use async_trait::async_trait;
-use itertools::Itertools;
-use tonic::transport::Channel;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{serde_as, skip_serializing_none};
+use itertools::Itertools;
+use serde_with::{
+    serde_as,
+    skip_serializing_none,
+};
+use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountAddress, AccountId, TokenId, Transaction, TransactionId};
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// Dissociates the provided account with the provided tokens. Must be signed by the provided
 /// Account's key.
@@ -74,10 +87,9 @@ impl ToTransactionDataProtobuf for TokenDissociateTransactionData {
         let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
         let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
 
-        services::transaction_body::Data::TokenDissociate(services::TokenDissociateTransactionBody {
-            account,
-            tokens,
-        })
+        services::transaction_body::Data::TokenDissociate(
+            services::TokenDissociateTransactionBody { account, tokens },
+        )
     }
 }
 
