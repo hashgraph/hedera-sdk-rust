@@ -24,7 +24,10 @@ use crate::file::{
 };
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
-use crate::token::TokenNftInfoQueryData;
+use crate::token::{
+    TokenInfoQueryData,
+    TokenNftInfoQueryData,
+};
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
@@ -37,6 +40,7 @@ use crate::{
     FileInfo,
     FromProtobuf,
     Query,
+    TokenInfo,
     TokenNftInfoResponse,
     Transaction,
     TransactionReceiptResponse,
@@ -55,6 +59,7 @@ pub enum AnyQueryData {
     FileInfo(FileInfoQueryData), //added
     ContractBytecode(ContractBytecodeQueryData),
     ContractCall(ContractCallQueryData),
+    TokenInfo(TokenInfoQueryData),
     ContractInfo(ContractInfoQueryData),
     TokenNftInfo(TokenNftInfoQueryData),
 }
@@ -69,6 +74,7 @@ pub enum AnyQueryResponse {
     FileInfo(FileInfo),
     ContractBytecode(ContractBytecodeResponse),
     ContractCall(ContractCallResponse),
+    TokenInfo(TokenInfo),
     ContractInfo(ContractInfo),
     TokenNftInfo(TokenNftInfoResponse),
 }
@@ -85,6 +91,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::ContractCall(data) => data.to_query_protobuf(header),
             Self::ContractInfo(data) => data.to_query_protobuf(header),
             Self::TokenNftInfo(data) => data.to_query_protobuf(header),
+            Self::TokenInfo(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -104,6 +111,8 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.is_payment_required(),
             Self::ContractInfo(query) => query.is_payment_required(),
             Self::TokenNftInfo(query) => query.is_payment_required(),
+            Self::TokenInfo(query) => query.is_payment_required(),
+            Self::TokenNftInfo(query) => query.is_payment_required(),
         }
     }
 
@@ -122,6 +131,8 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.execute(channel, request).await,
             Self::ContractInfo(query) => query.execute(channel, request).await,
             Self::TokenNftInfo(query) => query.execute(channel, request).await,
+            Self::TokenInfo(query) => query.execute(channel, request).await,
+            Self::TokenNftInfo(query) => query.execute(channel, request).await,
         }
     }
 
@@ -136,6 +147,8 @@ impl QueryExecute for AnyQueryData {
             Self::ContractCall(query) => query.should_retry_pre_check(status),
             Self::ContractInfo(query) => query.should_retry_pre_check(status),
             Self::TokenNftInfo(query) => query.should_retry_pre_check(status),
+            Self::TokenInfo(query) => query.should_retry_pre_check(status),
+            Self::TokenNftInfo(query) => query.should_retry_pre_check(status),
         }
     }
 
@@ -149,6 +162,8 @@ impl QueryExecute for AnyQueryData {
             Self::ContractBytecode(query) => query.should_retry(response),
             Self::ContractCall(query) => query.should_retry(response),
             Self::ContractInfo(query) => query.should_retry(response),
+            Self::TokenNftInfo(query) => query.should_retry(response),
+            Self::TokenInfo(query) => query.should_retry(response),
             Self::TokenNftInfo(query) => query.should_retry(response),
         }
     }

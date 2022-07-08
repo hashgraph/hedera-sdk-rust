@@ -126,6 +126,8 @@ pub use token::{
     TokenFreezeTransaction,
     TokenGrantKycTransaction,
     TokenId,
+    TokenInfo,
+    TokenInfoQuery,
     TokenMintTransaction,
     TokenNftInfoResponse,
     TokenPauseTransaction,
