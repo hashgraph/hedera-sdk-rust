@@ -1,7 +1,15 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
 
 use serde_with::SerializeDisplay;
-use sha2::{Digest, Sha384};
+use sha2::{
+    Digest,
+    Sha384,
+};
 
 #[derive(Copy, Clone, Hash, SerializeDisplay)]
 pub struct TransactionHash(pub [u8; 48]);

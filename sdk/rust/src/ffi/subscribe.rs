@@ -1,5 +1,8 @@
 use std::cell::RefCell;
-use std::ffi::{c_void, CString};
+use std::ffi::{
+    c_void,
+    CString,
+};
 use std::os::raw::c_char;
 use std::ptr::null;
 
@@ -9,7 +12,10 @@ use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
 use crate::ffi::runtime::RUNTIME;
 use crate::ffi::util::cstr_from_ptr;
-use crate::{AnyMirrorQuery, Client};
+use crate::{
+    AnyMirrorQuery,
+    Client,
+};
 
 thread_local! {
     static SUBSCRIBE_MESSAGE: RefCell<CString> = RefCell::new(CString::new("").unwrap());

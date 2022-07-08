@@ -1,5 +1,9 @@
 use std::env;
-use std::fs::{self, create_dir_all, read_dir};
+use std::fs::{
+    self,
+    create_dir_all,
+    read_dir,
+};
 use std::path::Path;
 
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";

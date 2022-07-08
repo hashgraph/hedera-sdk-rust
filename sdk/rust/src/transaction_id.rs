@@ -1,13 +1,32 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 
 use hedera_proto::services;
 use itertools::Itertools;
-use rand::{thread_rng, Rng};
-use serde_with::{DeserializeFromStr, SerializeDisplay};
-use time::{Duration, OffsetDateTime};
+use rand::{
+    thread_rng,
+    Rng,
+};
+use serde_with::{
+    DeserializeFromStr,
+    SerializeDisplay,
+};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 
-use crate::{AccountId, Error, FromProtobuf, ToProtobuf};
+use crate::{
+    AccountId,
+    Error,
+    FromProtobuf,
+    ToProtobuf,
+};
 
 /// The client-generated ID for a transaction.
 ///

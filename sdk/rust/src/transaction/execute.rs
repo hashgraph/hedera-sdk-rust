@@ -1,17 +1,30 @@
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{
+    AtomicU64,
+    Ordering,
+};
 
 use async_trait::async_trait;
 use hedera_proto::services;
 use prost::Message;
 use tonic::transport::Channel;
-use tonic::{Response, Status};
+use tonic::{
+    Response,
+    Status,
+};
 
 use crate::execute::Execute;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
-    AccountId, Client, Error, ToProtobuf, Transaction, TransactionHash, TransactionId, TransactionResponse
+    AccountId,
+    Client,
+    Error,
+    ToProtobuf,
+    Transaction,
+    TransactionHash,
+    TransactionId,
+    TransactionResponse,
 };
 
 #[async_trait]

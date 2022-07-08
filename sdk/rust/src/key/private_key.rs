@@ -1,16 +1,27 @@
 use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 use std::sync::Arc;
 
-use ed25519_dalek::{Keypair, Signer};
+use ed25519_dalek::{
+    Keypair,
+    Signer,
+};
 use k256::pkcs8::der::Encode;
 use once_cell::sync::Lazy;
 use pkcs8::der::Decode;
 use pkcs8::ObjectIdentifier;
 use rand::thread_rng;
 
-use crate::{Error, PublicKey, SignaturePair};
+use crate::{
+    Error,
+    PublicKey,
+    SignaturePair,
+};
 
 pub(super) const ED25519_OID: Lazy<ObjectIdentifier> = Lazy::new(|| "1.3.101.112".parse().unwrap());
 

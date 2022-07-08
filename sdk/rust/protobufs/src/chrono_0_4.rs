@@ -1,4 +1,9 @@
-use chrono_0_4::{DateTime, Duration, TimeZone, Utc};
+use chrono_0_4::{
+    DateTime,
+    Duration,
+    TimeZone,
+    Utc,
+};
 
 impl From<super::services::Duration> for Duration {
     fn from(pb: super::services::Duration) -> Self {

@@ -1,7 +1,12 @@
 use fraction::Fraction;
 use hedera_proto::services;
 
-use crate::{AccountId, FromProtobuf, ToProtobuf, TokenId};
+use crate::{
+    AccountId,
+    FromProtobuf,
+    ToProtobuf,
+    TokenId,
+};
 
 /// A transfer fee to assess during a CryptoTransfer that transfers units of the token to which the
 /// fee is attached. A custom fee may be either fixed or fractional, and must specify a fee collector
@@ -225,11 +230,22 @@ impl ToProtobuf for RoyaltyFee {
 
 #[cfg(test)]
 mod tests {
+    use fraction::Fraction;
     use hedera_proto::services;
 
-    use fraction::Fraction;
-    use crate::token::custom_fees::{CustomFee, Fee, FixedFee, FractionalFee, RoyaltyFee};
-    use crate::{AccountId, FromProtobuf, ToProtobuf, TokenId};
+    use crate::token::custom_fees::{
+        CustomFee,
+        Fee,
+        FixedFee,
+        FractionalFee,
+        RoyaltyFee,
+    };
+    use crate::{
+        AccountId,
+        FromProtobuf,
+        ToProtobuf,
+        TokenId,
+    };
 
     #[test]
     fn custom_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
@@ -381,7 +397,7 @@ mod tests {
     #[test]
     fn royalty_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
         let fallback_fee = FixedFee { denominating_token_id: TokenId::from(1), amount: 1000 };
-        let exchange_value_fraction: Fraction = (1,2).into();
+        let exchange_value_fraction: Fraction = (1, 2).into();
 
         let royalty_fee =
             RoyaltyFee { fallback_fee: fallback_fee.clone(), exchange_value_fraction };
@@ -389,10 +405,7 @@ mod tests {
         let royalty_fee_proto = royalty_fee.to_protobuf();
 
         assert_eq!(royalty_fee_proto.fallback_fee, Some(fallback_fee.to_protobuf()));
-        assert_eq!(
-            royalty_fee_proto.exchange_value_fraction,
-            Some(exchange_value_fraction.into())
-        );
+        assert_eq!(royalty_fee_proto.exchange_value_fraction, Some(exchange_value_fraction.into()));
 
         Ok(())
     }

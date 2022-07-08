@@ -1,10 +1,22 @@
-use std::fmt::{self, Debug, Display, Formatter};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{DeserializeFromStr, SerializeDisplay};
+use serde_with::{
+    DeserializeFromStr,
+    SerializeDisplay,
+};
 
-use crate::{EntityId, FromProtobuf, ToProtobuf};
+use crate::{
+    EntityId,
+    FromProtobuf,
+    ToProtobuf,
+};
 
 /// The unique identifier for a smart contract on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]

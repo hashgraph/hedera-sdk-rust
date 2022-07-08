@@ -10,7 +10,12 @@ use tokio::time::sleep;
 use tonic::transport::Channel;
 
 use crate::mirror_query::AnyMirrorQueryData;
-use crate::{Client, Error, FromProtobuf, MirrorQuery};
+use crate::{
+    Client,
+    Error,
+    FromProtobuf,
+    MirrorQuery,
+};
 
 #[async_trait]
 pub trait MirrorQuerySubscribe: 'static + Into<AnyMirrorQueryData> + Send + Sync + Clone {

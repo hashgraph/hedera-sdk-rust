@@ -5,8 +5,16 @@ use hedera_proto::mirror::ConsensusTopicQuery;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
-use crate::mirror_query::{AnyMirrorQueryData, MirrorQuerySubscribe};
-use crate::{MirrorQuery, ToProtobuf, TopicId, TopicMessage};
+use crate::mirror_query::{
+    AnyMirrorQueryData,
+    MirrorQuerySubscribe,
+};
+use crate::{
+    MirrorQuery,
+    ToProtobuf,
+    TopicId,
+    TopicMessage,
+};
 
 // TODO: test, test, and test
 // TODO: investigate failure scenarios
