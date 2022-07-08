@@ -18,9 +18,9 @@ use tonic::{
 
 use crate::account::{
     AccountCreateTransactionData,
+    AccountDeleteAllowanceTransactionData,
     AccountDeleteTransactionData,
     AccountUpdateTransactionData,
-    AccountDeleteAllowanceTransactionData,
 };
 use crate::contract::{
     ContractCreateTransactionData,
@@ -296,7 +296,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
             Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
             Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
-            Self::AccountDeleteAllowance(transaction) => transaction.execute(channel, request).await,
+            Self::AccountDeleteAllowance(transaction) => {
+                transaction.execute(channel, request).await
+            }
             Self::ContractCreate(transaction) => transaction.execute(channel, request).await,
             Self::ContractUpdate(transaction) => transaction.execute(channel, request).await,
             Self::ContractDelete(transaction) => transaction.execute(channel, request).await,
