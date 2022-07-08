@@ -7,9 +7,7 @@ use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
 use crate::token::token_info::TokenInfo;
 use crate::{Query, ToProtobuf, TokenId};
 
-/// Get all the information about an token, including the balance.
-///
-/// This does not get the list of token records.
+/// Gets information about Token instance.
 ///
 pub type TokenInfoQuery = Query<TokenInfoQueryData>;
 

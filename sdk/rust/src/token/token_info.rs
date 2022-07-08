@@ -32,8 +32,8 @@ pub struct TokenInfo {
     pub fee_schedule_key: Option<Key>,
     pub custom_fees: Vec<CustomFee>,
     pub pause_key: Option<Key>,
-    pub pause_status: i32,
-    pub ledger_id: Vec<u8>,
+    pub pause_status: i32, //TODO: Option<PauseStatus>
+    pub ledger_id: Vec<u8>, //TODO: Option<LedgerId>
 }
 
 impl FromProtobuf for TokenInfo {
