@@ -9,6 +9,8 @@ mod token_fee_schedule_update_transaction;
 mod token_freeze_transaction;
 mod token_grant_kyc_transaction;
 mod token_id;
+mod token_info;
+mod token_info_query;
 mod token_mint_transaction;
 mod token_nft_info_query;
 mod token_nft_info_response;
@@ -55,6 +57,11 @@ pub use token_grant_kyc_transaction::{
     TokenGrantKycTransactionData,
 };
 pub use token_id::TokenId;
+pub use token_info::TokenInfo;
+pub use token_info_query::{
+    TokenInfoQuery,
+    TokenInfoQueryData,
+};
 pub use token_mint_transaction::{
     TokenMintTransaction,
     TokenMintTransactionData,
