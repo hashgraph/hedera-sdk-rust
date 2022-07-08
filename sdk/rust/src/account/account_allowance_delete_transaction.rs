@@ -5,8 +5,17 @@ use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::transaction::{AnyTransactionData, ToTransactionDataProtobuf, TransactionExecute};
-use crate::{AccountAddress, AccountId, TokenId, Transaction};
+use crate::transaction::{
+    AnyTransactionData,
+    ToTransactionDataProtobuf,
+    TransactionExecute,
+};
+use crate::{
+    AccountAddress,
+    AccountId,
+    TokenId,
+    Transaction,
+};
 
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
 /// will remove the allowances granted to one or more specific non-fungible token serial numbers. Each owner account
@@ -34,7 +43,6 @@ pub struct NftRemoveAllowanceData {
 
     /// The list of serial numbers to remove allowances from.
     pub serial_numbers: Vec<i64>,
-
 }
 
 impl AccountDeleteAllowanceTransaction {
@@ -62,14 +70,11 @@ impl ToTransactionDataProtobuf for AccountDeleteAllowanceTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let nft_allowances = self
-            .nft_allowances
-            .iter()
-            .map(|allowance| allowance.to_protobuf())
-            .collect::<Vec<_>>();
-        services::transaction_body::Data::CryptoDeleteAllowance(services::CryptoDeleteAllowanceTransactionBody {
-            nft_allowances,
-        })
+        let nft_allowances =
+            self.nft_allowances.iter().map(|allowance| allowance.to_protobuf()).collect::<Vec<_>>();
+        services::transaction_body::Data::CryptoDeleteAllowance(
+            services::CryptoDeleteAllowanceTransactionBody { nft_allowances },
+        )
     }
 }
 
@@ -83,7 +88,7 @@ impl ToProtobuf for NftRemoveAllowanceData {
     type Protobuf = services::NftRemoveAllowance;
 
     fn to_protobuf(&self) -> Self::Protobuf {
-        Self::Protobuf{
+        Self::Protobuf {
             token_id: self.token_id.as_ref().map(|id| id.to_protobuf()),
             owner: self.owner.as_ref().map(|id| id.to_protobuf()),
             serial_numbers: self.serial_numbers.clone(),
