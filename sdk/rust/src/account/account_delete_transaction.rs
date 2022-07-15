@@ -25,7 +25,7 @@ pub type AccountDeleteTransaction = Transaction<AccountDeleteTransactionData>;
 
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct AccountDeleteTransactionData {
     /// The account ID which will receive all remaining hbars.
     pub transfer_account_id: Option<AccountAddress>,
@@ -85,8 +85,16 @@ impl From<AccountDeleteTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{AccountAddress, AccountDeleteTransaction, AccountId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountDeleteTransaction,
+        AccountId,
+    };
 
     // language=JSON
     const ACCOUNT_DELETE_TRANSACTION_JSON: &str = r#"{

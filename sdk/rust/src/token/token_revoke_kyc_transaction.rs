@@ -98,8 +98,17 @@ impl From<TokenRevokeKycTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{TokenId, TokenRevokeKycTransaction, AccountId, AccountAddress};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        TokenId,
+        TokenRevokeKycTransaction,
+    };
 
     // language=JSON
     const TOKEN_REVOKE_KYC_TRANSACTION_JSON: &str = r#"{
@@ -112,9 +121,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenRevokeKycTransaction::new();
 
-        transaction
-            .account_id(AccountId::from(1001))
-            .token_id(TokenId::from(1002));
+        transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 

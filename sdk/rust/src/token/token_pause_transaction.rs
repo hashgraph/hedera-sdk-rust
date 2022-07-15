@@ -81,8 +81,15 @@ impl From<TokenPauseTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{TokenId, TokenPauseTransaction};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        TokenId,
+        TokenPauseTransaction,
+    };
 
     // language=JSON
     const TOKEN_PAUSE_TRANSACTION_JSON: &str = r#"{
@@ -94,8 +101,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenPauseTransaction::new();
 
-        transaction
-            .token_id(TokenId::from(1001));
+        transaction.token_id(TokenId::from(1001));
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 

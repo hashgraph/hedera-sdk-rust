@@ -120,8 +120,15 @@ impl From<TokenMintTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{TokenId, TokenMintTransaction};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        TokenId,
+        TokenMintTransaction,
+    };
 
     // language=JSON
     const TOKEN_MINT_TRANSACTION_JSON: &str = r#"{

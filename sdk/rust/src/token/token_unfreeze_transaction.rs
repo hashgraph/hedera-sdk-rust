@@ -92,8 +92,17 @@ impl From<TokenUnfreezeTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{AccountAddress, AccountId, TokenId, TokenUnfreezeTransaction};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        TokenId,
+        TokenUnfreezeTransaction,
+    };
 
     // language=JSON
     const TOKEN_UNFREEZE_TRANSACTION_JSON: &str = r#"{
@@ -106,9 +115,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenUnfreezeTransaction::new();
 
-        transaction
-            .account_id(AccountId::from(1001))
-            .token_id(TokenId::from(1002));
+        transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 

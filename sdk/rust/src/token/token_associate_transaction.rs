@@ -99,8 +99,17 @@ impl From<TokenAssociateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{AccountAddress, AccountId, TokenAssociateTransaction, TokenId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        TokenAssociateTransaction,
+        TokenId,
+    };
 
     // language=JSON
     const TOKEN_ASSOCIATE_TRANSACTION_JSON: &str = r#"{
@@ -115,9 +124,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenAssociateTransaction::new();
 
-        transaction
-            .account_id(AccountId::from(1001))
-            .token_ids([TokenId::from(1002)]);
+        transaction.account_id(AccountId::from(1001)).token_ids([TokenId::from(1002)]);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 

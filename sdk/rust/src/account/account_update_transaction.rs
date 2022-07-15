@@ -217,10 +217,24 @@ impl From<AccountUpdateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use assert_matches::assert_matches;
-    use time::{Duration, OffsetDateTime};
-    use crate::{AccountAddress, AccountId, AccountUpdateTransaction, Key, PublicKey};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        AccountUpdateTransaction,
+        Key,
+        PublicKey,
+    };
 
     // language=JSON
     const ACCOUNT_UPDATE_TRANSACTION_JSON: &str = r#"{
@@ -239,7 +253,8 @@ mod tests {
   "declineStakingReward": false
 }"#;
 
-    const KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+    const KEY: &str =
+        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
     #[test]
     fn it_should_serialize() -> anyhow::Result<()> {
@@ -270,7 +285,10 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
 
-        assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+        assert_eq!(
+            data.expires_at.unwrap(),
+            OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+        );
         assert_eq!(data.receiver_signature_required.unwrap(), true);
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
         assert_eq!(data.account_memo.unwrap(), "An account memo");

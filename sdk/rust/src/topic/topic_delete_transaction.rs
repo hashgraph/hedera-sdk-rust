@@ -76,8 +76,15 @@ impl From<TopicDeleteTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{TopicDeleteTransaction, TopicId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        TopicDeleteTransaction,
+        TopicId,
+    };
 
     // language=JSON
     const TOPIC_DELETE_TRANSACTION_JSON: &str = r#"{
@@ -89,8 +96,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TopicDeleteTransaction::new();
 
-        transaction
-            .topic_id(TopicId::from(1001));
+        transaction.topic_id(TopicId::from(1001));
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 

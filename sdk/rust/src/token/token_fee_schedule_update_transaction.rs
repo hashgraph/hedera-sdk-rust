@@ -93,9 +93,21 @@ impl From<TokenFeeScheduleUpdateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{AccountId, TokenFeeScheduleUpdateTransaction, TokenId};
-    use crate::token::custom_fees::{CustomFee, Fee, FixedFee};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::token::custom_fees::{
+        CustomFee,
+        Fee,
+        FixedFee,
+    };
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountId,
+        TokenFeeScheduleUpdateTransaction,
+        TokenId,
+    };
 
     // language=JSON
     const TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON: &str = r#"{
@@ -118,16 +130,10 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenFeeScheduleUpdateTransaction::new();
 
-        transaction
-            .token_id(TokenId::from(1001))
-            .custom_fees([CustomFee {
-                fee: Fee::FixedFee(
-                    FixedFee {
-                        amount: 1,
-                        denominating_token_id: TokenId::from(7)
-                    }
-                ),
-                fee_collector_account_id: AccountId::from(8)}]);
+        transaction.token_id(TokenId::from(1001)).custom_fees([CustomFee {
+            fee: Fee::FixedFee(FixedFee { amount: 1, denominating_token_id: TokenId::from(7) }),
+            fee_collector_account_id: AccountId::from(8),
+        }]);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -138,19 +144,19 @@ mod tests {
 
     #[test]
     fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
+        let transaction: AnyTransaction =
+            serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
 
         assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
-        assert_eq!(data.custom_fees, [CustomFee {
-            fee: Fee::FixedFee(
-                FixedFee {
-                    amount: 1,
-                    denominating_token_id: TokenId::from(7)
-                }
-            ),
-            fee_collector_account_id: AccountId::from(8)}]);
+        assert_eq!(
+            data.custom_fees,
+            [CustomFee {
+                fee: Fee::FixedFee(FixedFee { amount: 1, denominating_token_id: TokenId::from(7) }),
+                fee_collector_account_id: AccountId::from(8)
+            }]
+        );
 
         Ok(())
     }

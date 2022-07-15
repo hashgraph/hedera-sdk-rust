@@ -255,10 +255,22 @@ impl From<ContractCreateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use assert_matches::assert_matches;
     use time::Duration;
-    use crate::{AccountAddress, AccountId, ContractCreateTransaction, FileId, Key, PublicKey};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        ContractCreateTransaction,
+        FileId,
+        Key,
+        PublicKey,
+    };
 
     // language=JSON
     const CONTRACT_CREATE_EMPTY: &str = r#"{
@@ -285,7 +297,8 @@ mod tests {
   "declineStakingReward": false
 }"#;
 
-    const ADMIN_KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+    const ADMIN_KEY: &str =
+        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
     #[test]
     fn it_should_serialize() -> anyhow::Result<()> {
@@ -298,7 +311,7 @@ mod tests {
             .gas_limit(1000)
             .initial_balance(1_000_000)
             .auto_renew_period(Duration::days(90))
-            .constructor_parameters([ 5, 10, 15 ])
+            .constructor_parameters([5, 10, 15])
             .contract_memo("A contract memo")
             .max_automatic_token_associations(512)
             .auto_renew_account_id(AccountId::from(1002))
@@ -332,7 +345,8 @@ mod tests {
         let bytes: Vec<u8> = "Hello, world!".into();
         assert_eq!(data.bytecode.unwrap(), bytes);
 
-        let admin_key = assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+        let admin_key =
+            assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
         let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);

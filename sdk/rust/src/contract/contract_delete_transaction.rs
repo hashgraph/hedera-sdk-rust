@@ -107,9 +107,17 @@ impl From<ContractDeleteTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{AccountAddress, AccountId, ContractId};
+
     use crate::contract::ContractDeleteTransaction;
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        ContractId,
+    };
 
     // language=JSON
     const CONTRACT_DELETE_TRANSACTION_JSON: &str = r#"{
@@ -146,7 +154,6 @@ mod tests {
 
         let transfer_account_id = assert_matches!(data.transfer_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
         assert_eq!(transfer_account_id, AccountId::from(1002));
-
 
         Ok(())
     }
