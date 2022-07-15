@@ -116,6 +116,12 @@ pub use signature::{
     SignaturePair,
 };
 pub use signer::Signer;
+pub use system::{
+    FreezeTransaction,
+    FreezeType,
+    SystemDeleteTransaction,
+    SystemUndeleteTransaction,
+};
 pub use token::{
     NftId,
     TokenAssociateTransaction,

@@ -35,6 +35,7 @@ use crate::file::{
     FileUpdateTransactionData,
 };
 use crate::system::{
+    FreezeTransactionData,
     SystemDeleteTransactionData,
     SystemUndeleteTransactionData,
 };
@@ -113,6 +114,7 @@ pub enum AnyTransactionData {
     TokenWipe(TokenWipeTransactionData),
     SystemDelete(SystemDeleteTransactionData),
     SystemUndelete(SystemUndeleteTransactionData),
+    Freeze(FreezeTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -257,6 +259,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::SystemUndelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
+
+            Self::Freeze(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
         }
     }
 }
@@ -299,6 +305,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TopicMessageSubmit(transaction) => transaction.default_max_transaction_fee(),
             Self::SystemDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::SystemUndelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::Freeze(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -346,6 +353,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::TopicMessageSubmit(transaction) => transaction.execute(channel, request).await,
             Self::SystemDelete(transaction) => transaction.execute(channel, request).await,
             Self::SystemUndelete(transaction) => transaction.execute(channel, request).await,
+            Self::Freeze(transaction) => transaction.execute(channel, request).await,
         }
     }
 }
