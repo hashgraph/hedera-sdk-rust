@@ -1,7 +1,6 @@
 use std::ops::Not;
 
 use async_trait::async_trait;
-use futures_util::StreamExt;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;

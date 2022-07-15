@@ -141,6 +141,7 @@ pub use topic::{
     TopicCreateTransaction,
     TopicDeleteTransaction,
     TopicId,
+    TopicInfo,
     TopicMessage,
     TopicMessageQuery,
     TopicMessageSubmitTransaction,
