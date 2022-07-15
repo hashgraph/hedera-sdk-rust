@@ -34,6 +34,10 @@ use crate::file::{
     FileDeleteTransactionData,
     FileUpdateTransactionData,
 };
+use crate::system::{
+    SystemDeleteTransactionData,
+    SystemUndeleteTransactionData,
+};
 use crate::token::{
     TokenAssociateTransactionData,
     TokenBurnTransactionData,
@@ -107,6 +111,8 @@ pub enum AnyTransactionData {
     TokenUnpause(TokenUnpauseTransactionData),
     TokenUpdate(TokenUpdateTransactionData),
     TokenWipe(TokenWipeTransactionData),
+    SystemDelete(SystemDeleteTransactionData),
+    SystemUndelete(SystemUndeleteTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -243,6 +249,14 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::TopicMessageSubmit(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
+
+            Self::SystemDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::SystemUndelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
         }
     }
 }
@@ -283,6 +297,8 @@ impl TransactionExecute for AnyTransactionData {
             Self::TopicUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TopicMessageSubmit(transaction) => transaction.default_max_transaction_fee(),
+            Self::SystemDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::SystemUndelete(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -328,6 +344,8 @@ impl TransactionExecute for AnyTransactionData {
             Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
             Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
             Self::TopicMessageSubmit(transaction) => transaction.execute(channel, request).await,
+            Self::SystemDelete(transaction) => transaction.execute(channel, request).await,
+            Self::SystemUndelete(transaction) => transaction.execute(channel, request).await,
         }
     }
 }
