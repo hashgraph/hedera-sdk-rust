@@ -1,6 +1,7 @@
 mod topic_create_transaction;
 mod topic_delete_transaction;
 mod topic_id;
+mod topic_info;
 mod topic_message;
 mod topic_message_query;
 mod topic_message_submit_transaction;
