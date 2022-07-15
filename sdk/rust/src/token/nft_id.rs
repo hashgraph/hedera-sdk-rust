@@ -27,7 +27,7 @@ pub struct NftId {
     pub token_id: TokenId,
 
     /// The unique identifier for this instance.
-    pub serial_number: i64,
+    pub serial_number: u64,
 }
 
 impl Debug for NftId {
@@ -48,7 +48,7 @@ impl FromProtobuf for NftId {
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
         Ok(Self {
             token_id: TokenId::from_protobuf(pb_getf!(pb, token_id)?)?,
-            serial_number: pb.serial_number,
+            serial_number: pb.serial_number as u64,
         })
     }
 }
@@ -59,7 +59,7 @@ impl ToProtobuf for NftId {
     fn to_protobuf(&self) -> Self::Protobuf {
         services::NftId {
             token_id: Some(self.token_id.to_protobuf()),
-            serial_number: self.serial_number,
+            serial_number: self.serial_number as i64,
         }
     }
 }
@@ -77,7 +77,7 @@ impl FromStr for NftId {
             return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"));
         }
 
-        let serial_number = match parts[1].parse::<i64>() {
+        let serial_number = match parts[1].parse::<u64>() {
             Ok(serial_number) => serial_number,
             Err(_) => {
                 return Err(Error::basic_parse("unexpected error - could not parse serial number"))
@@ -88,8 +88,8 @@ impl FromStr for NftId {
     }
 }
 
-impl From<(TokenId, i64)> for NftId {
-    fn from(tuple: (TokenId, i64)) -> Self {
+impl From<(TokenId, u64)> for NftId {
+    fn from(tuple: (TokenId, u64)) -> Self {
         Self { token_id: tuple.0, serial_number: tuple.1 }
     }
 }
