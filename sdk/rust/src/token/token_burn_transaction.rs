@@ -114,3 +114,51 @@ impl From<TokenBurnTransactionData> for AnyTransactionData {
         Self::TokenBurn(transaction)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use crate::{TokenBurnTransaction, TokenId};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_BURN_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenBurn",
+  "tokenId": "0.0.1002",
+  "amount": 100,
+  "serialNumbers": [
+    1,
+    2,
+    3
+  ]
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenBurnTransaction::new();
+
+        transaction
+            .token_id(TokenId::from(1002))
+            .amount(100u64)
+            .serial_numbers([1,2,3]);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_BURN_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_BURN_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenBurn(transaction) => transaction);
+
+        assert_eq!(data.token_id, Some(TokenId::from(1002)));
+        assert_eq!(data.amount, 100);
+        assert_eq!(data.serial_numbers, vec![1,2,3]);
+
+        Ok(())
+    }
+}

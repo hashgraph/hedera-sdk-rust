@@ -62,6 +62,7 @@ pub struct TokenWipeTransactionData {
     /// The token for which the account will be wiped.
     token_id: Option<TokenId>,
 
+    // TODO change type of `amount` from `Option<u64>` to `u64`
     /// The amount of a fungible token to wipe from the specified account.
     amount: Option<u64>,
 
@@ -82,6 +83,7 @@ impl TokenWipeTransaction {
         self
     }
 
+    // TODO remove `impl Into<_>`
     /// Sets the amount of a fungible token to wipe from the specified account.
     pub fn amount(&mut self, amount: impl Into<u64>) -> &mut Self {
         self.body.data.amount = Some(amount.into());
@@ -129,5 +131,58 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
 impl From<TokenWipeTransactionData> for AnyTransactionData {
     fn from(transaction: TokenWipeTransactionData) -> Self {
         Self::TokenWipe(transaction)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use crate::{AccountAddress, AccountId, TokenId, TokenWipeTransaction};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_WIPE_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenWipe",
+  "accountId": "0.0.1001",
+  "tokenId": "0.0.1002",
+  "amount": 123,
+  "serialNumbers": [
+    1,
+    2,
+    3
+  ]
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenWipeTransaction::new();
+
+        transaction
+            .account_id(AccountId::from(1001))
+            .token_id(TokenId::from(1002))
+            .amount(123u64)
+            .serial_numbers([1,2,3]);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_WIPE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_WIPE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenWipe(transaction) => transaction);
+
+        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(account_id, AccountId::from(1001));
+
+        assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
+        assert_eq!(data.amount.unwrap(), 123);
+        assert_eq!(data.serial_numbers, [1,2,3]);
+
+        Ok(())
     }
 }

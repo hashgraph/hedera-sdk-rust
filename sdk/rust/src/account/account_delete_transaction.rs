@@ -81,3 +81,47 @@ impl From<AccountDeleteTransactionData> for AnyTransactionData {
         Self::AccountDelete(transaction)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use crate::{AccountAddress, AccountDeleteTransaction, AccountId};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const ACCOUNT_DELETE_TRANSACTION_JSON: &str = r#"{
+  "$type": "accountDelete",
+  "transferAccountId": "0.0.1001",
+  "deleteAccountId": "0.0.1002"
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = AccountDeleteTransaction::new();
+
+        transaction
+            .transfer_account_id(AccountId::from(1001))
+            .delete_account_id(AccountId::from(1002));
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, ACCOUNT_DELETE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_DELETE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountDelete(transaction) => transaction);
+
+        let transfer_account_id = assert_matches!(data.transfer_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(transfer_account_id, AccountId::from(1001));
+
+        let delete_account_id = assert_matches!(data.delete_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(delete_account_id, AccountId::from(1002));
+
+        Ok(())
+    }
+}
