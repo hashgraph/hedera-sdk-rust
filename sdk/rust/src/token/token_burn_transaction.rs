@@ -118,8 +118,15 @@ impl From<TokenBurnTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{TokenBurnTransaction, TokenId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        TokenBurnTransaction,
+        TokenId,
+    };
 
     // language=JSON
     const TOKEN_BURN_TRANSACTION_JSON: &str = r#"{
@@ -137,10 +144,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenBurnTransaction::new();
 
-        transaction
-            .token_id(TokenId::from(1002))
-            .amount(100u64)
-            .serial_numbers([1,2,3]);
+        transaction.token_id(TokenId::from(1002)).amount(100u64).serial_numbers([1, 2, 3]);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -157,7 +161,7 @@ mod tests {
 
         assert_eq!(data.token_id, Some(TokenId::from(1002)));
         assert_eq!(data.amount, 100);
-        assert_eq!(data.serial_numbers, vec![1,2,3]);
+        assert_eq!(data.serial_numbers, vec![1, 2, 3]);
 
         Ok(())
     }

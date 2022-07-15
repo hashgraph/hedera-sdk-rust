@@ -103,8 +103,15 @@ impl From<ContractExecuteTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{ContractExecuteTransaction, ContractId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        ContractExecuteTransaction,
+        ContractId,
+    };
 
     // language=JSON
     const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
@@ -155,7 +162,7 @@ mod tests {
         assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
         assert_eq!(data.gas_limit, 1000);
         assert_eq!(data.value, 10);
-        
+
         let bytes: Vec<u8> = "Hello, world!".into();
         assert_eq!(data.data, bytes);
 

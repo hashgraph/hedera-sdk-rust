@@ -210,13 +210,20 @@ impl From<AccountCreateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use assert_matches::assert_matches;
     use time::Duration;
-    use crate::{AccountAddress, AccountCreateTransaction, AccountId, Key, PublicKey};
 
     use crate::transaction::{
         AnyTransaction,
         AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountCreateTransaction,
+        AccountId,
+        Key,
+        PublicKey,
     };
 
     // language=JSON
@@ -240,7 +247,8 @@ mod tests {
   "declineStakingReward": false
 }"#;
 
-    const KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+    const KEY: &str =
+        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
     #[test]
     fn it_should_deserialize_empty() -> anyhow::Result<()> {

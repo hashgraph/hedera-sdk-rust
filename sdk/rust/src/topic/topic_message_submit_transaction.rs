@@ -154,9 +154,18 @@ impl From<TopicMessageSubmitTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use assert_matches::assert_matches;
-    use crate::{TopicId, TopicMessageSubmitTransaction, TransactionId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        TopicId,
+        TopicMessageSubmitTransaction,
+        TransactionId,
+    };
 
     // language=JSON
     const TOPIC_MESSAGE_SUBMIT_EMPTY: &str = r#"{
@@ -193,12 +202,16 @@ mod tests {
 
     #[test]
     fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON)?;
+        let transaction: AnyTransaction =
+            serde_json::from_str(TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON)?;
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
 
         assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-        assert_eq!(data.initial_transaction_id.unwrap(), TransactionId::from_str("1001@1656352251.277559886")?);
+        assert_eq!(
+            data.initial_transaction_id.unwrap(),
+            TransactionId::from_str("1001@1656352251.277559886")?
+        );
         assert_eq!(data.chunk_total, 1);
         assert_eq!(data.chunk_number, 1);
 

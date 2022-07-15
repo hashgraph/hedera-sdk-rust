@@ -102,8 +102,17 @@ impl From<TokenDissociateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{AccountAddress, AccountId, TokenDissociateTransaction, TokenId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        TokenDissociateTransaction,
+        TokenId,
+    };
 
     // language=JSON
     const TOKEN_DISSOCIATE_TRANSACTION_JSON: &str = r#"{
@@ -121,10 +130,7 @@ mod tests {
 
         transaction
             .account_id(AccountId::from(1001))
-            .token_ids([
-                TokenId::from(1002),
-                TokenId::from(1003),
-            ]);
+            .token_ids([TokenId::from(1002), TokenId::from(1003)]);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 

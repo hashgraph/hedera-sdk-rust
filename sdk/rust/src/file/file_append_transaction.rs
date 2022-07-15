@@ -87,8 +87,15 @@ impl From<FileAppendTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use assert_matches::assert_matches;
-    use crate::{FileAppendTransaction, FileId};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        FileAppendTransaction,
+        FileId,
+    };
 
     // language=JSON
     const FILE_APPEND_TRANSACTION_JSON: &str = r#"{

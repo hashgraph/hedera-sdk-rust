@@ -150,10 +150,21 @@ impl From<TopicCreateTransactionData> for AnyTransactionData {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use assert_matches::assert_matches;
     use time::Duration;
-    use crate::{AccountAddress, AccountId, Key, PublicKey, TopicCreateTransaction};
-    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    use crate::transaction::{
+        AnyTransaction,
+        AnyTransactionData,
+    };
+    use crate::{
+        AccountAddress,
+        AccountId,
+        Key,
+        PublicKey,
+        TopicCreateTransaction,
+    };
 
     // language=JSON
     const TOPIC_CREATE_EMPTY: &str = r#"{
@@ -174,8 +185,10 @@ mod tests {
   "autoRenewAccountId": "0.0.1001"
 }"#;
 
-    const ADMIN_KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-    const SUBMIT_KEY: &str = "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500";
+    const ADMIN_KEY: &str =
+        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+    const SUBMIT_KEY: &str =
+        "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500";
 
     #[test]
     fn it_should_serialize() -> anyhow::Result<()> {
@@ -204,10 +217,12 @@ mod tests {
         assert_eq!(data.topic_memo, "A topic memo");
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
 
-        let admin_key = assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+        let admin_key =
+            assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
-        let submit_key = assert_matches!(data.submit_key.unwrap(), Key::Single(public_key) => public_key);
+        let submit_key =
+            assert_matches!(data.submit_key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(submit_key, PublicKey::from_str(SUBMIT_KEY)?);
 
         let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
