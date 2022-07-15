@@ -110,7 +110,12 @@ pub use query::{
     AnyQueryResponse,
     Query,
 };
-pub use schedule::ScheduleId;
+pub use schedule::{
+    ScheduleCreateTransaction,
+    ScheduleDeleteTransaction,
+    ScheduleId,
+    ScheduleSignTransaction,
+};
 pub use signature::{
     Signature,
     SignaturePair,
