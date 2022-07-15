@@ -4,7 +4,6 @@ use time::OffsetDateTime;
 use crate::{
     FileId,
     FromProtobuf,
-    Key,
 };
 
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].

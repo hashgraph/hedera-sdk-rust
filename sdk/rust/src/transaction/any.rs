@@ -34,6 +34,11 @@ use crate::file::{
     FileDeleteTransactionData,
     FileUpdateTransactionData,
 };
+use crate::schedule::{
+    ScheduleCreateTransactionData,
+    ScheduleDeleteTransactionData,
+    ScheduleSignTransactionData,
+};
 use crate::system::{
     FreezeTransactionData,
     SystemDeleteTransactionData,
@@ -115,6 +120,9 @@ pub enum AnyTransactionData {
     SystemDelete(SystemDeleteTransactionData),
     SystemUndelete(SystemUndeleteTransactionData),
     Freeze(FreezeTransactionData),
+    ScheduleCreate(ScheduleCreateTransactionData),
+    ScheduleSign(ScheduleSignTransactionData),
+    ScheduleDelete(ScheduleDeleteTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -263,6 +271,18 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::Freeze(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
+
+            Self::ScheduleCreate(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::ScheduleSign(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::ScheduleDelete(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
         }
     }
 }
@@ -306,6 +326,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::SystemDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::SystemUndelete(transaction) => transaction.default_max_transaction_fee(),
             Self::Freeze(transaction) => transaction.default_max_transaction_fee(),
+            Self::ScheduleCreate(transaction) => transaction.default_max_transaction_fee(),
+            Self::ScheduleSign(transaction) => transaction.default_max_transaction_fee(),
+            Self::ScheduleDelete(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -354,6 +377,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::SystemDelete(transaction) => transaction.execute(channel, request).await,
             Self::SystemUndelete(transaction) => transaction.execute(channel, request).await,
             Self::Freeze(transaction) => transaction.execute(channel, request).await,
+            Self::ScheduleCreate(transaction) => transaction.execute(channel, request).await,
+            Self::ScheduleSign(transaction) => transaction.execute(channel, request).await,
+            Self::ScheduleDelete(transaction) => transaction.execute(channel, request).await,
         }
     }
 }
