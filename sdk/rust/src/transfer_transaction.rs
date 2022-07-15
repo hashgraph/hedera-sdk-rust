@@ -122,18 +122,17 @@ mod tests {
 
     // language=JSON
     const TRANSFER_HBAR: &str = r#"{
-  "transfer": {
-    "tinybarTransfers": [
-      {
-        "account": "0.0.1001",
-        "amount": 20
-      },
-      {
-        "account": "0.0.1002",
-        "amount": -20
-      }
-    ]
-  },
+  "$type": "transfer",
+  "tinybarTransfers": [
+    {
+      "account": "0.0.1001",
+      "amount": 20
+    },
+    {
+      "account": "0.0.1002",
+      "amount": -20
+    }
+  ],
   "payerAccountId": "0.0.6189"
 }"#;
 

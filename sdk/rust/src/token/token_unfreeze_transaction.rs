@@ -88,3 +88,46 @@ impl From<TokenUnfreezeTransactionData> for AnyTransactionData {
         Self::TokenUnfreeze(transaction)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use crate::{AccountAddress, AccountId, TokenId, TokenUnfreezeTransaction};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const TOKEN_UNFREEZE_TRANSACTION_JSON: &str = r#"{
+  "$type": "tokenUnfreeze",
+  "accountId": "0.0.1001",
+  "tokenId": "0.0.1002"
+}"#;
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = TokenUnfreezeTransaction::new();
+
+        transaction
+            .account_id(AccountId::from(1001))
+            .token_id(TokenId::from(1002));
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, TOKEN_UNFREEZE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(TOKEN_UNFREEZE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenUnfreeze(transaction) => transaction);
+
+        assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
+
+        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
+        assert_eq!(account_id, AccountId::from(1001));
+
+        Ok(())
+    }
+}

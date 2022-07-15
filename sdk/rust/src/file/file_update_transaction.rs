@@ -134,3 +134,65 @@ impl From<FileUpdateTransactionData> for AnyTransactionData {
         Self::FileUpdate(transaction)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+    use assert_matches::assert_matches;
+    use time::OffsetDateTime;
+    use crate::{FileId, FileUpdateTransaction, Key, PublicKey};
+    use crate::transaction::{AnyTransaction, AnyTransactionData};
+
+    // language=JSON
+    const FILE_UPDATE_TRANSACTION_JSON: &str = r#"{
+  "$type": "fileUpdate",
+  "fileId": "0.0.1001",
+  "fileMemo": "File memo",
+  "keys": [
+    {
+      "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+    }
+  ],
+  "contents": "SGVsbG8sIHdvcmxkIQ==",
+  "expiresAt": 1656352251277559886
+}"#;
+
+    const SIGN_KEY: &str = "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
+
+    #[test]
+    fn it_should_serialize() -> anyhow::Result<()> {
+        let mut transaction = FileUpdateTransaction::new();
+
+        transaction
+            .file_id(FileId::from(1001))
+            .file_memo("File memo")
+            .keys([PublicKey::from_str(SIGN_KEY)?])
+            .contents("Hello, world!".into())
+            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+
+        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+        assert_eq!(transaction_json, FILE_UPDATE_TRANSACTION_JSON);
+
+        Ok(())
+    }
+
+    #[test]
+    fn it_should_deserialize() -> anyhow::Result<()> {
+        let transaction: AnyTransaction = serde_json::from_str(FILE_UPDATE_TRANSACTION_JSON)?;
+
+        let data = assert_matches!(transaction.body.data, AnyTransactionData::FileUpdate(transaction) => transaction);
+
+        assert_eq!(data.file_id.unwrap(), FileId::from(1001));
+        assert_eq!(data.file_memo.unwrap(), "File memo");
+        assert_eq!(data.expires_at.unwrap(), OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+
+        let sign_key = assert_matches!(data.keys.unwrap().remove(0), Key::Single(public_key) => public_key);
+        assert_eq!(sign_key, PublicKey::from_str(SIGN_KEY)?);
+
+        let bytes: Vec<u8> = "Hello, world!".into();
+        assert_eq!(data.contents.unwrap(), bytes);
+
+        Ok(())
+    }
+}

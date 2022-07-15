@@ -15,10 +15,10 @@ use crate::{
 #[repr(C)]
 pub struct CustomFee {
     /// The fee to be charged.
-    fee: Fee,
+    pub fee: Fee,
 
     /// The account to receive the custom fee
-    fee_collector_account_id: AccountId,
+    pub fee_collector_account_id: AccountId,
 }
 
 impl FromProtobuf for CustomFee {
