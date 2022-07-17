@@ -1,5 +1,5 @@
 /// Gets information about the Token instance.
-public class TokenInfoQuery: Query<TokenInfo> {
+public final class TokenInfoQuery: Query<TokenInfo> {
     /// Create a new `TokenInfoQuery`.
     public init(
         tokenId: TokenId? = nil

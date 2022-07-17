@@ -1,6 +1,6 @@
 import Foundation
 
-public class TokenInfo: Codable {
+public final class TokenInfo: Codable {
     /// The ID of the token for which information is requested.
     public let tokenId: TokenId
 
@@ -69,7 +69,7 @@ public class TokenInfo: Codable {
     public let maxSupply: UInt64
 
     /// The custom fees to be assessed during a transfer that transfers units of this token.
-    public let customFees: [CustomFee]
+    public let customFees: [AnyCustomFee]
 
     /// The Key which can pause and unpause the Token.
     public let pauseKey: Key?
