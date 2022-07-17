@@ -52,67 +52,236 @@ public class TokenCreateTransaction: Transaction {
     /// The publicly visible name of the token.
     public var name: String
 
+    /// Sets the publicly visible name of the token.
+    @discardableResult
+    public func name(_ name: String) -> Self {
+        self.name = name
+
+        return self
+    }
+
     /// The publicly visible token symbol.
     public var symbol: String
+
+    /// Sets the publicly visible token symbol.
+    @discardableResult
+    public func symbol(_ symbol: String) -> Self {
+        self.symbol = symbol
+
+        return self
+    }
 
     /// The number of decimal places a fungible token is divisible by.
     public var decimals: UInt32
 
+    /// Sets the number of decimal places a fungible token is divisible by.
+    @discardableResult
+    public func decimals(_ decimals: UInt32) -> Self {
+        self.decimals = decimals
+
+        return self
+    }
+
     /// The initial supply of fungible tokens to to mint to the treasury account.
     public var initialSupply: UInt64
+
+    /// Sets the initial supply of fungible tokens to to mint to the treasury account.
+    @discardableResult
+    public func initialSupply(_ initialSupply: UInt64) -> Self {
+        self.initialSupply = initialSupply
+
+        return self
+    }
 
     /// The account which will act as a treasury for the token.
     public var treasuryAccountId: AccountAddress?
 
+    /// Sets the account which will act as a treasury for the token.
+    @discardableResult
+    public func treasuryAccountId(_ treasuryAccountId: AccountAddress) -> Self {
+        self.treasuryAccountId = treasuryAccountId
+
+        return self
+    }
+
     /// The key which can perform update/delete operations on the token.
     public var adminKey: Key?
+
+    /// Sets the key which can perform update/delete operations on the token.
+    @discardableResult
+    public func adminKey(_ adminKey: Key) -> Self {
+        self.adminKey = adminKey
+
+        return self
+    }
 
     /// The key which can grant or revoke KYC of an account for the token's transactions.
     public var kycKey: Key?
 
+    /// Sets the key which can grant or revoke KYC of an account for the token's transactions.
+    @discardableResult
+    public func kycKey(_ kycKey: Key) -> Self {
+        self.kycKey = kycKey
+
+        return self
+    }
+
     /// The key which can sign to freeze or unfreeze an account for token transactions.
     public var freezeKey: Key?
+
+    /// Sets the key which can sign to freeze or unfreeze an account for token transactions.
+    @discardableResult
+    public func freezeKey(_ freezeKey: Key) -> Self {
+        self.freezeKey = freezeKey
+
+        return self
+    }
 
     /// The key which can wipe the token balance of an account.
     public var wipeKey: Key?
 
+    /// Sets the key which can wipe the token balance of an account.
+    @discardableResult
+    public func wipeKey(_ wipeKey: Key) -> Self {
+        self.wipeKey = wipeKey
+
+        return self
+    }
+
     /// The key which can change the supply of a token.
     public var supplyKey: Key?
+
+    /// Sets the key which can change the supply of a token.
+    @discardableResult
+    public func supplyKey(_ supplyKey: Key) -> Self {
+        self.supplyKey = supplyKey
+
+        return self
+    }
 
     /// The default freeze status (frozen or unfrozen) of Hedera accounts relative to this token. If
     /// true, an account must be unfrozen before it can receive the token.
     public var freezeDefault: Bool
 
+    /// Sets the default freeze status (frozen or unfrozen) of Hedera accounts relative to this token.
+    @discardableResult
+    public func freezeDefault(_ freezeDefault: Bool) -> Self {
+        self.freezeDefault = freezeDefault
+
+        return self
+    }
+
     /// The time at which the token should expire.
     public var expiresAt: Date?
+
+    /// Sets the time at which the token should expire.
+    @discardableResult
+    public func expiresAt(_ expiresAt: Date) -> Self {
+        self.expiresAt = expiresAt
+
+        return self
+    }
 
     /// An account which will be automatically charged to renew the token's expiration, at
     /// `autoRenewPeriod` interval.
     public var autoRenewAccountId: AccountAddress?
 
+    /// Sets the account which will be automatically charged to renew the token's expiration, at
+    /// `autoRenewPeriod` interval.
+    @discardableResult
+    public func autoRenewAccountId(_ autoRenewAccountId: AccountAddress) -> Self {
+        self.autoRenewAccountId = autoRenewAccountId
+
+        return self
+    }
+
     /// The interval at which the auto-renew account will be charged to extend the token's expiry.
     public var autoRenewPeriod: TimeInterval?
+
+    /// Sets the interval at which the auto-renew account will be charged to extend the token's expiry.
+    @discardableResult
+    public func autoRenewPeriod(_ autoRenewPeriod: TimeInterval) -> Self {
+        self.autoRenewPeriod = autoRenewPeriod
+
+        return self
+    }
 
     /// The memo associated with the token.
     public var tokenMemo: String
 
+    /// Sets the memo associated with the token.
+    @discardableResult
+    public func tokenMemo(_ tokenMemo: String) -> Self {
+        self.tokenMemo = tokenMemo
+
+        return self
+    }
+
     /// The token type. Defaults to FungibleCommon.
     public var tokenType: TokenType
+
+    /// Sets the token type.
+    @discardableResult
+    public func tokenType(_ tokenType: TokenType) -> Self {
+        self.tokenType = tokenType
+
+        return self
+    }
 
     /// The token supply type. Defaults to Infinite.
     public var tokenSupplyType: TokenSupplyType
 
-    /// Sets the maximum number of tokens that can be in circulation.
+    /// Sets the token supply type.
+    @discardableResult
+    public func tokenSupplyType(_ tokenSupplyType: TokenSupplyType) -> Self {
+        self.tokenSupplyType = tokenSupplyType
+
+        return self
+    }
+
+    /// The maximum number of tokens that can be in circulation.
     public var maxSupply: UInt64
+
+    /// Sets the maximum number of tokens that can be in circulation.
+    @discardableResult
+    public func maxSupply(_ maxSupply: UInt64) -> Self {
+        self.maxSupply = maxSupply
+
+        return self
+    }
 
     /// The key which can change the token's custom fee schedule.
     public var feeScheduleKey: Key?
 
+    /// Sets the key which can change the token's custom fee schedule.
+    @discardableResult
+    public func feeScheduleKey(_ feeScheduleKey: Key) -> Self {
+        self.feeScheduleKey = feeScheduleKey
+
+        return self
+    }
+
     /// The custom fees to be assessed during a transfer.
     public var customFees: [CustomFee]
 
+    /// Sets the custom fees to be assessed during a transfer.
+    @discardableResult
+    public func customFees(_ customFees: [CustomFee]) -> Self {
+        self.customFees = customFees
+
+        return self
+    }
+
     /// The key which can pause and unpause the token.
     public var pauseKey: Key?
+
+    /// Sets the key which can pause and unpause the token.
+    @discardableResult
+    public func pauseKey(_ pauseKey: Key) -> Self {
+        self.pauseKey = pauseKey
+
+        return self
+    }
 
     private enum CodingKeys: String, CodingKey {
         case name
