@@ -1,13 +1,90 @@
 import NumberKit
 
-/// A transfer fee to assess during a `TransferTransaction` that transfers units of the token to which the
-/// fee is attached.
+/// Holder for any concrete `CustomFee` for use in decoding.
+public enum AnyCustomFee: Codable {
+    case fixed(CustomFixedFee)
+    case fractional(CustomFractionalFee)
+    case royalty(CustomRoyaltyFee)
+
+    public init(_ fee: CustomFee) {
+        switch fee {
+        case let fixedFee as CustomFixedFee:
+            self = .fixed(fixedFee)
+
+        case let fractionalFee as CustomFractionalFee:
+            self = .fractional(fractionalFee)
+
+        case let royaltyFee as CustomRoyaltyFee:
+            self = .royalty(royaltyFee)
+
+        default:
+            fatalError("(BUG) unreachable: unexpected derived class of CustomFee")
+        }
+    }
+
+    public init(_ fixed: CustomFixedFee) {
+        self = .fixed(fixed)
+    }
+
+    public init(_ fractional: CustomFractionalFee) {
+        self = .fractional(fractional)
+    }
+
+    public init(_ royalty: CustomRoyaltyFee) {
+        self = .royalty(royalty)
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let type = try container.decode(String.self, forKey: .type)
+
+        switch type {
+        case "fixed":
+            self = .fixed(try CustomFixedFee(from: decoder))
+
+        case "royalty":
+            self = .royalty(try CustomRoyaltyFee(from: decoder))
+
+        case "fractional":
+            self = .fractional(try CustomFractionalFee(from: decoder))
+
+        default:
+            fatalError("unexpected variant for CustomFee: \(type)")
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .fixed(let fee):
+            try fee.encode(to: encoder)
+
+        case .fractional(let fee):
+            try fee.encode(to: encoder)
+
+        case .royalty(let fee):
+            try fee.encode(to: encoder)
+        }
+    }
+}
+
+/// A transfer fee to assess during a `TransferTransaction` that transfers units of
+/// the token to which the fee is attached.
 public class CustomFee: Encodable {
     /// Create a new `CustomFee`.
     internal init(
         feeCollectorAccountId: AccountAddress? = nil
     ) {
         self.feeCollectorAccountId = feeCollectorAccountId
+    }
+
+    internal init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        feeCollectorAccountId = try container.decode(AccountAddress.self, forKey: .feeCollectorAccountId)
     }
 
     /// The account to receive the custom fee.
@@ -39,7 +116,7 @@ public class CustomFee: Encodable {
 
 /// A fixed number of units (hbar or token) to assess as a fee during a `TransferTransaction` that transfers
 /// units of the token to which this fixed fee is attached.
-public class CustomFixedFee: CustomFee {
+public final class CustomFixedFee: CustomFee, Decodable {
     /// Create a new `CustomFixedFee`.
     public init(
         amount: UInt64 = 0,
@@ -50,6 +127,15 @@ public class CustomFixedFee: CustomFee {
         self.denominatingTokenId = denominatingTokenId
 
         super.init(feeCollectorAccountId: feeCollectorAccountId)
+    }
+
+    public override init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        amount = try container.decode(UInt64.self, forKey: .amount)
+        denominatingTokenId = try container.decodeIfPresent(TokenId.self, forKey: .denominatingTokenId)
+
+        try super.init(from: decoder)
     }
 
     /// The number of units to assess as a fee.
@@ -103,7 +189,7 @@ public class CustomFixedFee: CustomFee {
 ///
 /// The denomination is always in units of the token to which this fractional fee is attached.
 ///
-public class CustomFractionalFee: CustomFee {
+public final class CustomFractionalFee: CustomFee, Decodable {
     /// Create a new `CustomFractionalFee`.
     public init(
         amount: Rational<UInt64> = "1/1",
@@ -118,6 +204,17 @@ public class CustomFractionalFee: CustomFee {
         self.netOfTransfers = netOfTransfers
 
         super.init(feeCollectorAccountId: feeCollectorAccountId)
+    }
+
+    public override init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        amount = try container.decode(Rational<UInt64>.self, forKey: .amount)
+        minimumAmount = try container.decode(UInt64.self, forKey: .minimumAmount)
+        maximumAmount = try container.decode(UInt64.self, forKey: .maximumAmount)
+        netOfTransfers = try container.decode(Bool.self, forKey: .netOfTransfers)
+
+        try super.init(from: decoder)
     }
 
     /// The fraction of the transferred units to assess as a fee.
@@ -195,7 +292,7 @@ public class CustomFractionalFee: CustomFee {
 /// Defines the fraction of the fungible value exchanged for an NFT that the ledger
 /// should collect as a royalty.
 ///
-public class CustomRoyaltyFee: CustomFee {
+public final class CustomRoyaltyFee: CustomFee, Decodable {
     /// Create a new `CustomRoyaltyFee`.
     public init(
         exchangeValue: Rational<UInt64> = "1/1",
@@ -208,6 +305,16 @@ public class CustomRoyaltyFee: CustomFee {
         self.fallbackDenominatingTokenId = fallbackDenominatingTokenId
 
         super.init(feeCollectorAccountId: feeCollectorAccountId)
+    }
+
+    public override init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        exchangeValue = try container.decode(Rational<UInt64>.self, forKey: .exchangeValue)
+        fallbackAmount = try container.decodeIfPresent(UInt64.self, forKey: .fallbackAmount)
+        fallbackDenominatingTokenId = try container.decodeIfPresent(TokenId.self, forKey: .fallbackDenominatingTokenId)
+
+        try super.init(from: decoder)
     }
 
     /// The fraction of fungible value exchanged for an NFT to collect as royalty.
