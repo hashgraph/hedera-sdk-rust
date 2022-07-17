@@ -1,6 +1,6 @@
 import CHedera
 
-public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Codable, ExpressibleByStringLiteral {
+public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Equatable, Codable, ExpressibleByStringLiteral {
     /// The shard number (non-negative).
     public let shard: UInt64
 
@@ -50,6 +50,10 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, C
 
     public var description: String {
         "\(shard).\(realm).\(num)"
+    }
+
+    public static func ==(lhs: EntityId, rhs: EntityId) -> Bool {
+        lhs.num == rhs.num && lhs.shard == rhs.shard && lhs.realm == rhs.realm
     }
 }
 
