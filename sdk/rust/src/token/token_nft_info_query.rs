@@ -12,11 +12,9 @@ use crate::query::{
 use crate::{
     NftId,
     ToProtobuf,
-    TokenNftInfoResponse,
+    TokenNftInfo,
 };
 
-/// Applicable only to tokens of type `NonFungibleUnique`.
-///
 /// Gets info on an NFT for a given TokenID and serial number
 pub type TokenNftInfoQuery = Query<TokenNftInfoQueryData>;
 
@@ -57,7 +55,7 @@ impl ToQueryProtobuf for TokenNftInfoQueryData {
 
 #[async_trait]
 impl QueryExecute for TokenNftInfoQueryData {
-    type Response = TokenNftInfoResponse;
+    type Response = TokenNftInfo;
 
     async fn execute(
         &self,
