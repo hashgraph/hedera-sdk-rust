@@ -49,7 +49,7 @@ pub struct TopicInfo {
     /// `auto_renew_period` interval.
     pub auto_renew_account_id: Option<AccountId>,
 
-    /// The interval at which the auto-renew account will be charged to extend the topic's expiry
+    /// The interval at which the auto-renew account will be charged to extend the topic's expiry.
     pub auto_renew_period: Option<Duration>,
 }
 

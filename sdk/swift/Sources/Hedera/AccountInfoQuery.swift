@@ -3,7 +3,7 @@
 /// This does not get the list of account records.
 ///
 public class AccountInfoQuery: Query<AccountInfo> {
-    /// Create a new ``AccountInfoQuery`` ready for configuration and execution.
+    /// Create a new `AccountInfoQuery`.
     public override init() {}
 
     /// The account ID for which information is requested.
