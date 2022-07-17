@@ -37,21 +37,21 @@ pub type TokenFeeScheduleUpdateTransaction = Transaction<TokenFeeScheduleUpdateT
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenFeeScheduleUpdateTransactionData {
-    /// The token whose fee schedule is to be updated
+    /// The token whose fee schedule is to be updated.
     token_id: Option<TokenId>,
 
-    /// The new custom fees to be assessed during a transfer
+    /// The new custom fees to be assessed during a transfer.
     custom_fees: Vec<CustomFee>,
 }
 
 impl TokenFeeScheduleUpdateTransaction {
-    /// Sets the token whose fee schedule is to be updated
+    /// Sets the token whose fee schedule is to be updated.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
     }
 
-    /// Sets the new custom fees to be assessed during a transfer
+    /// Sets the new custom fees to be assessed during a transfer.
     pub fn custom_fees(&mut self, custom_fees: impl IntoIterator<Item = CustomFee>) -> &mut Self {
         self.body.data.custom_fees = custom_fees.into_iter().collect();
         self

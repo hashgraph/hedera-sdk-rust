@@ -24,6 +24,7 @@ use crate::file::{
 };
 use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
+use crate::schedule::ScheduleInfoQueryData;
 use crate::token::{
     TokenInfoQueryData,
     TokenNftInfoQueryData,
@@ -41,6 +42,7 @@ use crate::{
     FileInfo,
     FromProtobuf,
     Query,
+    ScheduleInfo,
     TokenInfo,
     TokenNftInfoResponse,
     TopicInfo,
@@ -58,13 +60,14 @@ pub enum AnyQueryData {
     AccountInfo(AccountInfoQueryData),
     TransactionReceipt(TransactionReceiptQueryData),
     FileContents(FileContentsQueryData),
-    FileInfo(FileInfoQueryData), //added
+    FileInfo(FileInfoQueryData),
     ContractBytecode(ContractBytecodeQueryData),
     ContractCall(ContractCallQueryData),
     TokenInfo(TokenInfoQueryData),
     ContractInfo(ContractInfoQueryData),
     TokenNftInfo(TokenNftInfoQueryData),
     TopicInfo(TopicInfoQueryData),
+    ScheduleInfo(ScheduleInfoQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -81,6 +84,7 @@ pub enum AnyQueryResponse {
     TopicInfo(TopicInfo),
     ContractInfo(ContractInfo),
     TokenNftInfo(TokenNftInfoResponse),
+    ScheduleInfo(ScheduleInfo),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -97,6 +101,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::TokenNftInfo(data) => data.to_query_protobuf(header),
             Self::TokenInfo(data) => data.to_query_protobuf(header),
             Self::TopicInfo(data) => data.to_query_protobuf(header),
+            Self::ScheduleInfo(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -118,6 +123,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenNftInfo(query) => query.is_payment_required(),
             Self::TokenInfo(query) => query.is_payment_required(),
             Self::TopicInfo(query) => query.is_payment_required(),
+            Self::ScheduleInfo(query) => query.is_payment_required(),
         }
     }
 
@@ -138,6 +144,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenNftInfo(query) => query.execute(channel, request).await,
             Self::TokenInfo(query) => query.execute(channel, request).await,
             Self::TopicInfo(query) => query.execute(channel, request).await,
+            Self::ScheduleInfo(query) => query.execute(channel, request).await,
         }
     }
 
@@ -154,6 +161,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenNftInfo(query) => query.should_retry_pre_check(status),
             Self::TokenInfo(query) => query.should_retry_pre_check(status),
             Self::TopicInfo(query) => query.should_retry_pre_check(status),
+            Self::ScheduleInfo(query) => query.should_retry_pre_check(status),
         }
     }
 
@@ -170,6 +178,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenNftInfo(query) => query.should_retry(response),
             Self::TokenInfo(query) => query.should_retry(response),
             Self::TopicInfo(query) => query.should_retry(response),
+            Self::ScheduleInfo(query) => query.should_retry(response),
         }
     }
 }
@@ -205,6 +214,7 @@ impl FromProtobuf for AnyQueryResponse {
                 Self::TokenNftInfo(TokenNftInfoResponse::from_protobuf(response)?)
             }
             ConsensusGetTopicInfo(_) => Self::TopicInfo(TopicInfo::from_protobuf(response)?),
+            ScheduleGetInfo(_) => Self::ScheduleInfo(ScheduleInfo::from_protobuf(response)?),
 
             _ => todo!(),
         })

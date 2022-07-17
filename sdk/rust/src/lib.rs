@@ -114,6 +114,8 @@ pub use schedule::{
     ScheduleCreateTransaction,
     ScheduleDeleteTransaction,
     ScheduleId,
+    ScheduleInfo,
+    ScheduleInfoQuery,
     ScheduleSignTransaction,
 };
 pub use signature::{
