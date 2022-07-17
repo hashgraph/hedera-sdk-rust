@@ -1,8 +1,13 @@
 use hedera_proto::services;
+use hedera_proto::services::{
+    TokenFreezeStatus,
+    TokenKycStatus,
+    TokenPauseStatus,
+};
 use time::{
     Duration,
     OffsetDateTime,
-}; // timestamp
+};
 
 use crate::token::custom_fees::CustomFee;
 use crate::{
@@ -10,38 +15,90 @@ use crate::{
     FromProtobuf,
     Key,
     TokenId,
+    TokenSupplyType,
+    TokenType,
 };
 
+// TODO: pub ledger_id: Vec<u8>,
 /// Response from [`TokenInfoQuery`][crate::TokenInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenInfo {
+    /// The ID of the token for which information is requested.
     pub token_id: TokenId,
+
+    /// Name of token.
     pub name: String,
+
+    /// Symbol of token.
     pub symbol: String,
+
+    /// The amount of decimal places that this token supports.
     pub decimals: u32,
+
+    /// Total Supply of token.
     pub total_supply: u64,
-    pub treasury: Option<AccountId>,
+
+    /// The ID of the account which is set as Treasury.
+    pub treasury_account_id: AccountId,
+
+    /// The key which can perform update/delete operations on the token.
     pub admin_key: Option<Key>,
+
+    /// The key which can grant or revoke KYC of an account for the token's transactions.
     pub kyc_key: Option<Key>,
+
+    /// The key which can freeze or unfreeze an account for token transactions.
     pub freeze_key: Option<Key>,
+
+    /// The key which can wipe token balance of an account.
     pub wipe_key: Option<Key>,
+
+    /// The key which can change the supply of a token.
     pub supply_key: Option<Key>,
-    pub default_freeze_status: i32,
-    pub default_kyc_status: i32,
-    pub deleted: bool,
-    pub auto_renew_account: Option<AccountId>,
-    pub auto_renew_period: Option<Duration>,
-    pub expiry: Option<OffsetDateTime>,
-    pub memo: String,
-    pub token_type: i32,
-    pub supply_type: i32,
-    pub max_supply: i64,
+
+    /// The key which can change the custom fees of the token.
     pub fee_schedule_key: Option<Key>,
+
+    /// The default Freeze status (not applicable, frozen or unfrozen)
+    pub default_freeze_status: Option<bool>,
+
+    /// The default KYC status (KycNotApplicable or Revoked) of Hedera accounts relative to this token.
+    pub default_kyc_status: Option<bool>,
+
+    /// Specifies whether the token was deleted or not.
+    pub is_deleted: bool,
+
+    /// An account which will be automatically charged to renew the token's expiration,
+    /// at autoRenewPeriod interval.
+    pub auto_renew_account_id: Option<AccountId>,
+
+    /// The interval at which the auto-renew account will be charged to extend the token's expiry
+    pub auto_renew_period: Option<Duration>,
+
+    /// The epoch second at which the token will expire
+    pub expiration_time: Option<OffsetDateTime>,
+
+    /// The memo associated with the token
+    pub token_memo: String,
+
+    /// The token type.
+    pub token_type: TokenType,
+
+    /// The token supply type
+    pub token_supply_type: TokenSupplyType,
+
+    /// The Maximum number of tokens that can be in circulation.
+    pub max_supply: u64,
+
+    /// The custom fees to be assessed during a transfer that transfers units of this token.
     pub custom_fees: Vec<CustomFee>,
+
+    /// The Key which can pause and unpause the Token.
     pub pause_key: Option<Key>,
-    pub pause_status: i32,  //TODO: Option<PauseStatus>
-    pub ledger_id: Vec<u8>, //TODO: Option<LedgerId>
+
+    /// Specifies whether the token is paused or not.
+    pub pause_status: Option<bool>,
 }
 
 impl FromProtobuf for TokenInfo {
@@ -54,7 +111,31 @@ impl FromProtobuf for TokenInfo {
     {
         let response = pb_getv!(pb, TokenGetInfo, services::response::Response);
         let info = pb_getf!(response, token_info)?;
+        let token_type = TokenType::from_protobuf(info.token_type())?;
+        let token_supply_type = TokenSupplyType::from_protobuf(info.supply_type())?;
         let token_id = pb_getf!(info, token_id)?;
+        let auto_renew_account_id =
+            info.auto_renew_account.clone().map(AccountId::from_protobuf).transpose()?;
+
+        let default_kyc_status = match info.default_kyc_status() {
+            TokenKycStatus::KycNotApplicable => None,
+            TokenKycStatus::Granted => Some(true),
+            TokenKycStatus::Revoked => Some(false),
+        };
+
+        let default_freeze_status = match info.default_freeze_status() {
+            TokenFreezeStatus::FreezeNotApplicable => None,
+            TokenFreezeStatus::Frozen => Some(true),
+            TokenFreezeStatus::Unfrozen => Some(false),
+        };
+
+        let pause_status = match info.pause_status() {
+            TokenPauseStatus::PauseNotApplicable => None,
+            TokenPauseStatus::Paused => Some(true),
+            TokenPauseStatus::Unpaused => Some(false),
+        };
+
+        let treasury_account_id = pb_getf!(info, treasury)?;
 
         Ok(Self {
             token_id: TokenId::from_protobuf(token_id)?,
@@ -62,23 +143,22 @@ impl FromProtobuf for TokenInfo {
             symbol: info.symbol,
             decimals: info.decimals as u32,
             total_supply: info.total_supply as u64,
-            treasury: info.treasury.map(AccountId::from_protobuf).transpose()?,
+            treasury_account_id: AccountId::from_protobuf(treasury_account_id)?,
             admin_key: info.admin_key.map(Key::from_protobuf).transpose()?,
             kyc_key: info.kyc_key.map(Key::from_protobuf).transpose()?,
             freeze_key: info.freeze_key.map(Key::from_protobuf).transpose()?,
             wipe_key: info.wipe_key.map(Key::from_protobuf).transpose()?,
             supply_key: info.supply_key.map(Key::from_protobuf).transpose()?,
-            default_freeze_status: info.default_freeze_status as i32,
-            default_kyc_status: info.default_kyc_status as i32,
-            deleted: info.deleted,
-            // FIXME
-            auto_renew_account: None,
-            auto_renew_period: None,
-            expiry: None,
-            memo: info.memo,
-            token_type: info.token_type as i32,
-            supply_type: info.supply_type as i32,
-            max_supply: info.max_supply as i64,
+            default_freeze_status,
+            default_kyc_status,
+            is_deleted: info.deleted,
+            auto_renew_account_id,
+            auto_renew_period: info.auto_renew_period.map(Into::into),
+            expiration_time: info.expiry.map(Into::into),
+            token_memo: info.memo,
+            token_type,
+            token_supply_type,
+            max_supply: info.max_supply as u64,
             fee_schedule_key: info.fee_schedule_key.map(Key::from_protobuf).transpose()?,
             custom_fees: info
                 .custom_fees
@@ -86,8 +166,7 @@ impl FromProtobuf for TokenInfo {
                 .map(CustomFee::from_protobuf)
                 .collect::<Result<Vec<_>, _>>()?, //test this
             pause_key: info.pause_key.map(Key::from_protobuf).transpose()?,
-            pause_status: info.pause_status as i32,
-            ledger_id: info.ledger_id,
+            pause_status,
         })
     }
 }

@@ -146,6 +146,8 @@ pub use token::{
     TokenNftInfoResponse,
     TokenPauseTransaction,
     TokenRevokeKycTransaction,
+    TokenSupplyType,
+    TokenType,
     TokenUnfreezeTransaction,
     TokenUnpauseTransaction,
     TokenUpdateTransaction,
