@@ -6,34 +6,153 @@
 /// account (a receiver). The amounts list must sum to zero.
 ///
 public final class TransferTransaction: Transaction {
-    private var hbarTransfers: [HbarTransfer] = []
+    private var transfers: [Transfer] = []
+    private var tokenTransfers: [TokenTransfer] = []
 
+    /// Create a new `TransferTransaction`.
     public override init() {
     }
 
+    /// Add a non-approved hbar transfer to the transaction.
     @discardableResult
-    public func hbarTransfer(account: AccountAddress, amount: Int64) -> Self {
-        hbarTransfers.append(HbarTransfer(account: account, amount: amount))
+    public func hbarTransfer(_ accountId: AccountAddress, _ amount: Int64) -> Self {
+        doHbarTransfer(accountId, amount, false)
+    }
+
+    /// Add an approved hbar transfer to the transaction.
+    @discardableResult
+    public func approvedHbarTransfer(_ accountId: AccountAddress, _ amount: Int64) -> Self {
+        doHbarTransfer(accountId, amount, true)
+    }
+
+    /// Add a non-approved token transfer to the transaction.
+    @discardableResult
+    public func tokenTransfer(_ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64) -> Self {
+        doTokenTransfer(tokenId, accountId, amount, false, nil)
+    }
+
+    /// Add an approved token transfer to the transaction.
+    @discardableResult
+    public func approvedTokenTransfer(_ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64) -> Self {
+        doTokenTransfer(tokenId, accountId, amount, true, nil)
+    }
+
+    /// Add a non-approved token transfer with decimals to the transaction.
+    @discardableResult
+    public func tokenTransferWithDecimals(_ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64, _ expectedDecimals: UInt32) -> Self {
+        doTokenTransfer(tokenId, accountId, amount, false, expectedDecimals)
+    }
+
+    /// Add an approved token transfer with decimals to the transaction.
+    @discardableResult
+    public func approvedTokenTransferWithDecimals(_ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64, _ expectedDecimals: UInt32) -> Self {
+        doTokenTransfer(tokenId, accountId, amount, false, expectedDecimals)
+    }
+
+    /// Add a non-approved nft transfer to the transaction.
+    @discardableResult
+    public func nftTransfer(_ nftId: NftId, _ senderAccountId: AccountAddress, _ receiverAccountId: AccountAddress) -> Self {
+        doNftTransfer(nftId, senderAccountId, receiverAccountId, false)
+    }
+
+    /// Add an approved nft transfer to the transaction.
+    @discardableResult
+    public func approvedNftTransfer(_ nftId: NftId, _ senderAccountId: AccountAddress, _ receiverAccountId: AccountAddress) -> Self {
+        doNftTransfer(nftId, senderAccountId, receiverAccountId, true)
+    }
+
+    private func doHbarTransfer(
+            _ accountId: AccountAddress,
+            _ amount: Int64,
+            _ approved: Bool
+    ) -> Self {
+        transfers.append(Transfer(accountId: accountId, amount: amount, isApproval: approved))
+
+        return self
+    }
+
+    private func doTokenTransfer(
+            _ tokenId: TokenId,
+            _ accountId: AccountAddress,
+            _ amount: Int64,
+            _ approved: Bool,
+            _ expectedDecimals: UInt32?
+    ) -> Self {
+        let transfer = Transfer(accountId: accountId, amount: amount, isApproval: approved)
+
+        if var tt = tokenTransfers.first(where: { (tt) in tt.tokenId == tokenId }) {
+            tt.expectedDecimals = expectedDecimals
+            tt.transfers.append(transfer)
+        } else {
+            tokenTransfers.append(TokenTransfer(
+                    tokenId: tokenId,
+                    transfers: [transfer],
+                    nftTransfers: [],
+                    expectedDecimals: expectedDecimals
+            ))
+        }
+
+        return self
+    }
+
+    private func doNftTransfer(
+            _ nftId: NftId,
+            _ senderAccountId: AccountAddress,
+            _ receiverAccountId: AccountAddress,
+            _ approved: Bool
+    ) -> Self {
+        let transfer = NftTransfer(
+                senderAccountId: senderAccountId,
+                receiverAccountId: receiverAccountId,
+                serialNumber: nftId.serialNumber,
+                isApproval: approved
+        )
+
+        if var tt = tokenTransfers.first(where: { (tt) in tt.tokenId == nftId.tokenId }) {
+            tt.nftTransfers.append(transfer)
+        } else {
+            tokenTransfers.append(TokenTransfer(
+                    tokenId: nftId.tokenId,
+                    transfers: [],
+                    nftTransfers: [transfer],
+                    expectedDecimals: nil
+            ))
+        }
 
         return self
     }
 
     private enum CodingKeys: String, CodingKey {
-        case tinybarTransfers
-        // TODO: case tokenTransfers
-        // TODO: case nftTransfers
+        case transfers
+        case tokenTransfers
     }
 
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encode(hbarTransfers, forKey: .tinybarTransfers)
+        try container.encode(transfers, forKey: .transfers)
+        try container.encode(tokenTransfers, forKey: .tokenTransfers)
 
         try super.encode(to: encoder)
     }
 }
 
-private struct HbarTransfer: Encodable {
-    let account: AccountAddress
+private struct Transfer: Encodable {
+    let accountId: AccountAddress
     let amount: Int64
+    let isApproval: Bool
+}
+
+private struct TokenTransfer: Encodable {
+    let tokenId: TokenId
+    var transfers: [Transfer]
+    var nftTransfers: [NftTransfer]
+    var expectedDecimals: UInt32?
+}
+
+private struct NftTransfer: Encodable {
+    let senderAccountId: AccountAddress
+    let receiverAccountId: AccountAddress
+    let serialNumber: UInt64
+    let isApproval: Bool
 }
