@@ -28,12 +28,12 @@ pub struct TokenNftInfo {
     /// Effective consensus timestamp at which the NFT was minted.
     pub creation_time: OffsetDateTime,
 
-    /// The unique metadata of the NFT
+    /// The unique metadata of the NFT.
     #[serde_as(as = "Base64")]
     pub metadata: Vec<u8>,
 
     /// If an allowance is granted for the NFT, its corresponding spender account.
-    pub spender_id: Option<AccountId>,
+    pub spender_account_id: Option<AccountId>,
 }
 
 impl FromProtobuf for TokenNftInfo {
@@ -50,14 +50,14 @@ impl FromProtobuf for TokenNftInfo {
         let account_id = pb_getf!(nft, account_id)?;
         let creation_time = nft.creation_time.unwrap();
         let metadata = nft.metadata;
-        let spender_id = nft.spender_id.map(AccountId::from_protobuf).transpose()?;
+        let spender_account_id = nft.spender_id.map(AccountId::from_protobuf).transpose()?;
 
         Ok(Self {
             nft_id: NftId::from_protobuf(nft_id)?,
             account_id: AccountId::from_protobuf(account_id)?,
             creation_time: OffsetDateTime::from(creation_time),
             metadata,
-            spender_id,
+            spender_account_id,
         })
     }
 }
