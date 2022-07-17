@@ -44,7 +44,7 @@ use crate::{
     Query,
     ScheduleInfo,
     TokenInfo,
-    TokenNftInfoResponse,
+    TokenNftInfo,
     TopicInfo,
     Transaction,
     TransactionReceiptResponse,
@@ -83,7 +83,7 @@ pub enum AnyQueryResponse {
     TokenInfo(TokenInfo),
     TopicInfo(TopicInfo),
     ContractInfo(ContractInfo),
-    TokenNftInfo(TokenNftInfoResponse),
+    TokenNftInfo(TokenNftInfo),
     ScheduleInfo(ScheduleInfo),
 }
 
@@ -210,9 +210,7 @@ impl FromProtobuf for AnyQueryResponse {
                 Self::ContractCall(ContractCallResponse::from_protobuf(response)?)
             }
             ContractGetInfo(_) => Self::ContractInfo(ContractInfo::from_protobuf(response)?),
-            TokenGetNftInfo(_) => {
-                Self::TokenNftInfo(TokenNftInfoResponse::from_protobuf(response)?)
-            }
+            TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
             ConsensusGetTopicInfo(_) => Self::TopicInfo(TopicInfo::from_protobuf(response)?),
             ScheduleGetInfo(_) => Self::ScheduleInfo(ScheduleInfo::from_protobuf(response)?),
 

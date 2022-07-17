@@ -13,11 +13,12 @@ use crate::{
     NftId,
 };
 
+// TODO pub ledger_id: LedgerId, --- also shows as todo in account_info.rs
 /// Response from [`TokenNftInfoQuery`][crate::TokenNftInfoQuery].
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct TokenNftInfoResponse {
+pub struct TokenNftInfo {
     /// The ID of the NFT.
     pub nft_id: NftId,
 
@@ -31,13 +32,11 @@ pub struct TokenNftInfoResponse {
     #[serde_as(as = "Base64")]
     pub metadata: Vec<u8>,
 
-    // /// The ledger ID the response was returned from.
-    // TODO pub ledger_id: LedgerId, --- also shows as todo in account_info.rs
     /// If an allowance is granted for the NFT, its corresponding spender account.
     pub spender_id: Option<AccountId>,
 }
 
-impl FromProtobuf for TokenNftInfoResponse {
+impl FromProtobuf for TokenNftInfo {
     type Protobuf = services::response::Response;
 
     fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
@@ -51,8 +50,6 @@ impl FromProtobuf for TokenNftInfoResponse {
         let account_id = pb_getf!(nft, account_id)?;
         let creation_time = nft.creation_time.unwrap();
         let metadata = nft.metadata;
-        // TODO let ledger_id = nft.ledger_id;
-
         let spender_id = nft.spender_id.map(AccountId::from_protobuf).transpose()?;
 
         Ok(Self {
@@ -60,7 +57,6 @@ impl FromProtobuf for TokenNftInfoResponse {
             account_id: AccountId::from_protobuf(account_id)?,
             creation_time: OffsetDateTime::from(creation_time),
             metadata,
-            // TODO ledger_id: Ledger_Id::from_protobuf(ledger_id),
             spender_id,
         })
     }

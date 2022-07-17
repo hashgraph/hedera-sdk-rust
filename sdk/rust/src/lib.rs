@@ -143,7 +143,7 @@ pub use token::{
     TokenInfo,
     TokenInfoQuery,
     TokenMintTransaction,
-    TokenNftInfoResponse,
+    TokenNftInfo,
     TokenPauseTransaction,
     TokenRevokeKycTransaction,
     TokenSupplyType,
