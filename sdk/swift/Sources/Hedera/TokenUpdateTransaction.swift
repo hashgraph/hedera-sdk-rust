@@ -205,21 +205,21 @@ public class TokenUpdateTransaction: Transaction {
     }
 
     private enum CodingKeys: String, CodingKey {
-            case tokenId
-            case name
-            case symbol
-            case treasuryAccountId
-            case adminKey
-            case kycKey
-            case freezeKey
-            case wipeKey
-            case supplyKey
-            case autoRenewAccountId
-            case autoRenewPeriod
-            case expiresAt
-            case tokenMemo
-            case feeScheduleKey
-            case pauseKey
+        case tokenId
+        case name
+        case symbol
+        case treasuryAccountId
+        case adminKey
+        case kycKey
+        case freezeKey
+        case wipeKey
+        case supplyKey
+        case autoRenewAccountId
+        case autoRenewPeriod
+        case expiresAt
+        case tokenMemo
+        case feeScheduleKey
+        case pauseKey
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -235,8 +235,8 @@ public class TokenUpdateTransaction: Transaction {
         try container.encodeIfPresent(wipeKey, forKey: .wipeKey)
         try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expiresAt, forKey: .expiresAt)
+        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
         try container.encode(tokenMemo, forKey: .tokenMemo)
         try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)
         try container.encodeIfPresent(pauseKey, forKey: .pauseKey)
