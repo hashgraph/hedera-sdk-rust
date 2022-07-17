@@ -79,6 +79,8 @@ pub use token_revoke_kyc_transaction::{
     TokenRevokeKycTransaction,
     TokenRevokeKycTransactionData,
 };
+pub use token_supply_type::TokenSupplyType;
+pub use token_type::TokenType;
 pub use token_unfreeze_transaction::{
     TokenUnfreezeTransaction,
     TokenUnfreezeTransactionData,
