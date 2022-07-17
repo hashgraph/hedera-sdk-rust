@@ -149,6 +149,15 @@ enum HederaError hedera_execute(const struct HederaClient *client,
                                 void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
+ * Parse a Hedera `NftId` from the passed string.
+ */
+enum HederaError hedera_nft_id_from_string(const char *s,
+                                           uint64_t *token_id_shard,
+                                           uint64_t *token_id_realm,
+                                           uint64_t *token_id_num,
+                                           uint64_t *serial_number);
+
+/**
  * Generates a new Ed25519 private key.
  */
 struct HederaPrivateKey *hedera_private_key_generate_ed25519(void);
