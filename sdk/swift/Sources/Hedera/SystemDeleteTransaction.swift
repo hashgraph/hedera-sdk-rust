@@ -4,9 +4,9 @@ import Foundation
 public class SystemDeleteTransaction: Transaction {
     /// Create a new `SystemDeleteTransaction`.
     public init(
-            fileId: FileId? = nil,
-            contractId: ContractId? = nil,
-            expirationTime: Date? = nil
+        fileId: FileId? = nil,
+        contractId: ContractId? = nil,
+        expirationTime: Date? = nil
     ) {
         self.fileId = fileId
         self.contractId = contractId

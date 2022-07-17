@@ -2,8 +2,8 @@
 public class TokenFeeScheduleUpdateTransaction: Transaction {
     /// Create a new `TokenFeeScheduleUpdateTransaction`.
     public init(
-            tokenId: TokenId? = nil,
-            customFees: [CustomFee] = []
+        tokenId: TokenId? = nil,
+        customFees: [CustomFee] = []
     ) {
         self.tokenId = tokenId
         self.customFees = customFees

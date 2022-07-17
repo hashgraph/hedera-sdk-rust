@@ -4,21 +4,21 @@ import Foundation
 public class TokenUpdateTransaction: Transaction {
     /// Create a new `TokenUpdateTransaction`.
     public init(
-            tokenId: TokenId? = nil,
-            name: String = "",
-            symbol: String = "",
-            treasuryAccountId: AccountAddress? = nil,
-            adminKey: Key? = nil,
-            kycKey: Key? = nil,
-            freezeKey: Key? = nil,
-            wipeKey: Key? = nil,
-            supplyKey: Key? = nil,
-            autoRenewAccountId: AccountAddress? = nil,
-            autoRenewPeriod: TimeInterval? = nil,
-            expiresAt: Date? = nil,
-            tokenMemo: String = "",
-            feeScheduleKey: Key? = nil,
-            pauseKey: Key? = nil
+        tokenId: TokenId? = nil,
+        name: String = "",
+        symbol: String = "",
+        treasuryAccountId: AccountAddress? = nil,
+        adminKey: Key? = nil,
+        kycKey: Key? = nil,
+        freezeKey: Key? = nil,
+        wipeKey: Key? = nil,
+        supplyKey: Key? = nil,
+        autoRenewAccountId: AccountAddress? = nil,
+        autoRenewPeriod: TimeInterval? = nil,
+        expiresAt: Date? = nil,
+        tokenMemo: String = "",
+        feeScheduleKey: Key? = nil,
+        pauseKey: Key? = nil
     ) {
         self.tokenId = tokenId
         self.name = name
