@@ -2,7 +2,7 @@
 public final class ScheduleDeleteTransaction: Transaction {
     /// Create a new `ScheduleDeleteTransaction`.
     public init(
-            scheduleId: ScheduleId? = nil
+        scheduleId: ScheduleId? = nil
     ) {
         self.scheduleId = scheduleId
     }

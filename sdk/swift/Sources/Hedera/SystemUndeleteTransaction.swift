@@ -4,8 +4,8 @@ import Foundation
 public class SystemUndeleteTransaction: Transaction {
     /// Create a new `SystemUndeleteTransaction`.
     public init(
-            fileId: FileId? = nil,
-            contractId: ContractId? = nil
+        fileId: FileId? = nil,
+        contractId: ContractId? = nil
     ) {
         self.fileId = fileId
         self.contractId = contractId

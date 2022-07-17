@@ -5,10 +5,10 @@ import Foundation
 public class FreezeTransaction: Transaction {
     /// Create a new `FreezeTransaction`.
     public init(
-            startTime: Date? = nil,
-            fileId: FileId? = nil,
-            fileHash: Data? = nil,
-            freezeType: FreezeType = .unknown
+        startTime: Date? = nil,
+        fileId: FileId? = nil,
+        fileHash: Data? = nil,
+        freezeType: FreezeType = .unknown
     ) {
         self.startTime = startTime
         self.fileId = fileId

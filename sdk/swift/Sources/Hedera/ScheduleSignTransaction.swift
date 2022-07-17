@@ -2,7 +2,7 @@
 public final class ScheduleSignTransaction: Transaction {
     /// Create a new `ScheduleSignTransaction`.
     public init(
-            scheduleId: ScheduleId? = nil
+        scheduleId: ScheduleId? = nil
     ) {
         self.scheduleId = scheduleId
     }
