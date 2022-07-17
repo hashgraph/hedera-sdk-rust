@@ -208,7 +208,7 @@ impl TokenUpdateTransaction {
         self
     }
 
-    /// Sets the new memo associated with the token (UTF-8 encoding max 100 bytes)
+    /// Sets the new memo associated with the token (UTF-8 encoding max 100 bytes).
     pub fn token_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.token_memo = memo.into();
         self
@@ -216,16 +216,16 @@ impl TokenUpdateTransaction {
 
     /// Sets the new key which can change the token's custom fee schedule.
     ///
-    /// If the token does not currently have a Fee Schedule key, transaction will resolve to
+    /// If the token does not currently have a fee schedule key, transaction will resolve to
     /// `TokenHasNoFeeScheduleKey`.
     pub fn fee_schedule_key(&mut self, fee_schedule_key: impl Into<Key>) -> &mut Self {
         self.body.data.fee_schedule_key = Some(fee_schedule_key.into());
         self
     }
 
-    /// Sets the new Key which can pause and unpause the Token.
+    /// Sets the new key which can pause and unpause the Token.
     ///
-    /// If the token does not currently have a Pause key, transaction will resolve to `TokenHasNoPauseKey`.
+    /// If the token does not currently have a pause key, transaction will resolve to `TokenHasNoPauseKey`.
     pub fn pause_key(&mut self, pause_key: impl Into<Key>) -> &mut Self {
         self.body.data.pause_key = Some(pause_key.into());
         self
