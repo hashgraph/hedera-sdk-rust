@@ -109,28 +109,11 @@ void hedera_client_free(struct HederaClient *client);
  * Sets the account that will, by default, be paying for transactions and queries built with
  * this client.
  */
-void hedera_client_set_payer_account_id(struct HederaClient *client,
-                                        uint64_t id_shard,
-                                        uint64_t id_realm,
-                                        uint64_t id_num);
-
-/**
- * Gets the account that is, by default, paying for transactions and queries built with
- * this client.
- */
-void hedera_client_get_payer_account_id(struct HederaClient *client,
-                                        uint64_t *id_shard,
-                                        uint64_t *id_realm,
-                                        uint64_t *id_num);
-
-/**
- * Adds a signer that will, by default, sign for all transactions and queries built
- * with this client.
- *
- * Takes ownership of the passed signer.
- *
- */
-void hedera_client_add_default_signer(struct HederaClient *client, struct HederaSigner *signer);
+void hedera_client_set_operator(struct HederaClient *client,
+                                uint64_t id_shard,
+                                uint64_t id_realm,
+                                uint64_t id_num,
+                                struct HederaPrivateKey *key);
 
 /**
  * Parse a Hedera `EntityId` from the passed string.

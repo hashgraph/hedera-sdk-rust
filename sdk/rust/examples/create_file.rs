@@ -5,10 +5,10 @@ use hedera::{AccountId, Client, FileCreateTransaction, PrivateKey};
 #[derive(Parser, Debug)]
 struct Args {
     #[clap(long, env)]
-    payer_account_id: AccountId,
+    operator_account_id: AccountId,
 
     #[clap(long, env)]
-    default_signer: PrivateKey,
+    operator_key: PrivateKey,
 }
 
 #[tokio::main]
@@ -18,14 +18,13 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::for_testnet();
 
-    client.set_payer_account_id(args.payer_account_id);
-    client.add_default_signer(args.default_signer);
+    client.set_operator(args.operator_account_id, args.operator_key);
 
     let receipt = FileCreateTransaction::new()
         .contents(&b"Hedera Hashgraph is great!"[..])
         .execute(&client)
         .await?
-        .get_successful_receipt(&client)
+        .get_receipt(&client)
         .await?;
 
     let new_file_id = assert_matches!(receipt.file_id, Some(id) => id);

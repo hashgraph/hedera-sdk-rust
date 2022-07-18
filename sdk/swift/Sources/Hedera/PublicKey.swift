@@ -1,7 +1,7 @@
 import CHedera
 
 /// A public key on the Hedera network.
-public final class PublicKey: LosslessStringConvertible, Codable {
+public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Codable {
     private let ptr: OpaquePointer
 
     internal init(_ ptr: OpaquePointer) {
@@ -17,6 +17,10 @@ public final class PublicKey: LosslessStringConvertible, Codable {
         }
 
         ptr = key!
+    }
+
+    public required convenience init(stringLiteral value: StringLiteralType) {
+        self.init(value)!
     }
 
     public required convenience init(from decoder: Decoder) throws {

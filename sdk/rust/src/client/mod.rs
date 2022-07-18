@@ -2,10 +2,7 @@ use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
 use parking_lot::RwLock;
-use tokio::sync::{
-    OwnedRwLockReadGuard,
-    RwLock as AsyncRwLock,
-};
+use tokio::sync::RwLock as AsyncRwLock;
 use tokio::task::block_in_place;
 
 use self::mirror_network::MirrorNetwork;
@@ -13,8 +10,11 @@ use crate::client::network::{
     Network,
     TESTNET,
 };
+use crate::error::BoxStdError;
 use crate::{
     AccountId,
+    PrivateKey,
+    SignaturePair,
     Signer,
     TransactionId,
 };
@@ -27,8 +27,8 @@ mod network;
 pub struct Client {
     network: Arc<Network>,
     mirror_network: Arc<MirrorNetwork>,
-    payer_account_id: Arc<RwLock<Option<AccountId>>>,
-    default_signers: Arc<AsyncRwLock<Vec<Box<dyn Signer>>>>,
+    operator_account_id: Arc<RwLock<Option<AccountId>>>,
+    operator_signer: Arc<AsyncRwLock<Option<Box<dyn Signer>>>>,
     max_transaction_fee: Arc<AtomicU64>,
 }
 
@@ -38,50 +38,42 @@ impl Client {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
-            payer_account_id: Arc::new(RwLock::new(None)),
+            operator_account_id: Arc::new(RwLock::new(None)),
+            operator_signer: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee: Arc::new(AtomicU64::new(0)),
-            default_signers: Arc::new(AsyncRwLock::new(Vec::with_capacity(1))),
         }
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with
     /// this client.
     ///
-    /// The payer account ID is used to generate the default transaction ID for all transactions
+    /// The operator account ID is used to generate the default transaction ID for all transactions
     /// executed with this client.
     ///
-    pub fn set_payer_account_id(&self, id: AccountId) {
-        *self.payer_account_id.write() = Some(id);
-    }
-
-    /// Gets the account that is, by default, paying for transactions and queries built with
-    /// this client.
-    pub fn payer_account_id(&self) -> Option<AccountId> {
-        self.payer_account_id.read().clone()
-    }
-
-    /// Adds a signer that will, by default, sign for all transactions and queries built
-    /// with this client.
+    /// The operator private key is used to sign all transactions executed by this client.
     ///
-    pub fn add_default_signer<S>(&self, signer: S)
-    where
-        S: Signer,
-    {
+    pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
+        *self.operator_account_id.write() = Some(id);
+
         block_in_place(|| {
-            self.default_signers.blocking_write().push(Box::new(signer));
+            *self.operator_signer.blocking_write() = Some(Box::new(key));
         });
     }
 
-    /// Removes all default signers from this client.
-    pub fn clear_default_signers(&self) {
-        block_in_place(|| {
-            self.default_signers.blocking_write().clear();
-        });
-    }
-
-    /// Generate a new transaction ID from the stored payer account ID, if present.
+    /// Generate a new transaction ID from the stored operator account ID, if present.
     pub(crate) fn generate_transaction_id(&self) -> Option<TransactionId> {
-        self.payer_account_id.read().map(TransactionId::generate)
+        self.operator_account_id.read().map(TransactionId::generate)
+    }
+
+    pub(crate) async fn sign_with_operator(
+        &self,
+        body_bytes: &[u8],
+    ) -> Result<SignaturePair, BoxStdError> {
+        if let Some(signer) = &*self.operator_signer.read().await {
+            signer.sign(body_bytes).await
+        } else {
+            unreachable!()
+        }
     }
 
     /// Gets a reference to the configured network.
@@ -97,10 +89,5 @@ impl Client {
     /// Gets the maximum transaction fee the paying account is willing to pay.
     pub(crate) fn max_transaction_fee(&self) -> &AtomicU64 {
         &self.max_transaction_fee
-    }
-
-    /// Gets a list of the default signers.
-    pub(crate) async fn default_signers(&self) -> OwnedRwLockReadGuard<Vec<Box<dyn Signer>>> {
-        Arc::clone(&self.default_signers).read_owned().await
     }
 }

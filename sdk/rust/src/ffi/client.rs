@@ -5,6 +5,7 @@ use crate::ffi::signer::{
 use crate::{
     AccountId,
     Client,
+    PrivateKey,
 };
 
 /// Construct a Hedera client pre-configured for testnet access.
@@ -27,54 +28,20 @@ pub extern "C" fn hedera_client_free(client: *mut Client) {
 /// Sets the account that will, by default, be paying for transactions and queries built with
 /// this client.
 #[no_mangle]
-pub extern "C" fn hedera_client_set_payer_account_id(
+pub extern "C" fn hedera_client_set_operator(
     client: *mut Client,
     id_shard: u64,
     id_realm: u64,
     id_num: u64,
+    key: *mut PrivateKey,
 ) {
     assert!(!client.is_null());
-
-    let client = unsafe { &*client };
-    client.set_payer_account_id(AccountId { shard: id_shard, realm: id_realm, num: id_num });
-}
-
-/// Gets the account that is, by default, paying for transactions and queries built with
-/// this client.
-#[no_mangle]
-pub extern "C" fn hedera_client_get_payer_account_id(
-    client: *mut Client,
-    id_shard: *mut u64,
-    id_realm: *mut u64,
-    id_num: *mut u64,
-) {
-    assert!(!client.is_null());
+    assert!(!key.is_null());
 
     let client = unsafe { &*client };
 
-    if let Some(payer_account_id) = client.payer_account_id() {
-        unsafe {
-            *id_shard = payer_account_id.shard;
-            *id_realm = payer_account_id.realm;
-            *id_num = payer_account_id.num;
-        }
-    }
-}
+    let key = unsafe { &*key };
+    let key = key.clone();
 
-/// Adds a signer that will, by default, sign for all transactions and queries built
-/// with this client.
-///
-/// Takes ownership of the passed signer.
-///
-#[no_mangle]
-pub extern "C" fn hedera_client_add_default_signer(client: *mut Client, signer: *mut Signer) {
-    assert!(!client.is_null());
-    assert!(!signer.is_null());
-
-    let client = unsafe { &*client };
-    let signer = unsafe { Box::from_raw(signer) };
-
-    match signer.0 {
-        AnySigner::PrivateKey(key) => client.add_default_signer(key),
-    }
+    client.set_operator(AccountId { shard: id_shard, realm: id_realm, num: id_num }, key);
 }
