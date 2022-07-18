@@ -27,18 +27,18 @@ public struct TransactionResponse: Decodable {
 
     /// Get the receipt of this transaction. Will wait for consensus.
     public func getReceipt(_ client: Client) async throws -> TransactionReceipt {
-        let receiptResponse = try await TransactionReceiptQuery()
+        let receipt = try await TransactionReceiptQuery()
             .transactionId(transactionId)
             // TODO: .nodeAccountIds([nodeAccountId])
             .execute(client)
 
-        return receiptResponse.receipt
+        return receipt
     }
 
     /// Get the _successful_ receipt of this transaction. Will wait for consensus.
     /// Will return a `receiptStatus` error for a failing receipt.
     public func getSuccessfulReceipt(_ client: Client) async throws -> TransactionReceipt {
-        let receipt = try await self.getReceipt(client)
+        let receipt = try await getReceipt(client)
 
         if receipt.status != "SUCCESS" {
             throw HError(

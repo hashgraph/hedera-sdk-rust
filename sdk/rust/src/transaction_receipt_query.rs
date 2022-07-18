@@ -13,7 +13,7 @@ use crate::{
     Status,
     ToProtobuf,
     TransactionId,
-    TransactionReceiptResponse,
+    TransactionReceipt,
 };
 
 /// Get the receipt of a transaction, given its transaction ID.
@@ -78,7 +78,7 @@ impl ToQueryProtobuf for TransactionReceiptQueryData {
 
 #[async_trait]
 impl QueryExecute for TransactionReceiptQueryData {
-    type Response = TransactionReceiptResponse;
+    type Response = TransactionReceipt;
 
     fn is_payment_required(&self) -> bool {
         false
