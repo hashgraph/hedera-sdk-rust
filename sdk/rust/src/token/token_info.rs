@@ -101,11 +101,9 @@ pub struct TokenInfo {
     pub pause_status: Option<bool>,
 }
 
-impl FromProtobuf for TokenInfo {
-    type Protobuf = services::response::Response;
-
+impl FromProtobuf<services::response::Response> for TokenInfo {
     #[allow(deprecated)]
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

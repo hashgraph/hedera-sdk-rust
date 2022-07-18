@@ -183,10 +183,8 @@ impl QueryExecute for AnyQueryData {
     }
 }
 
-impl FromProtobuf for AnyQueryResponse {
-    type Protobuf = services::response::Response;
-
-    fn from_protobuf(response: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::response::Response> for AnyQueryResponse {
+    fn from_protobuf(response: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

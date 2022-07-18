@@ -81,10 +81,8 @@ impl Display for TransactionId {
     }
 }
 
-impl FromProtobuf for TransactionId {
-    type Protobuf = services::TransactionId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::TransactionId> for TransactionId {
+    fn from_protobuf(pb: services::TransactionId) -> crate::Result<Self> {
         let account_id = pb_getf!(pb, account_id)?;
         let account_id = AccountId::from_protobuf(account_id)?;
 

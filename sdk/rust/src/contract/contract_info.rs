@@ -61,11 +61,9 @@ pub struct ContractInfo {
     pub max_automatic_token_associations: u32,
 }
 
-impl FromProtobuf for ContractInfo {
-    type Protobuf = services::response::Response;
-
+impl FromProtobuf<services::response::Response> for ContractInfo {
     #[allow(deprecated)]
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

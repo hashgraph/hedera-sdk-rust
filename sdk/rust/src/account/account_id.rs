@@ -53,10 +53,8 @@ impl ToProtobuf for AccountId {
     }
 }
 
-impl FromProtobuf for AccountId {
-    type Protobuf = services::AccountId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::AccountId> for AccountId {
+    fn from_protobuf(pb: services::AccountId) -> crate::Result<Self> {
         let account = pb_getf!(pb, account)?;
         let num = pb_getv!(account, AccountNum, services::account_id::Account);
 

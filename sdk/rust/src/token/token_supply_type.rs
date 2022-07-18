@@ -23,13 +23,11 @@ pub enum TokenSupplyType {
     Finite = 1,
 }
 
-impl FromProtobuf for TokenSupplyType {
-    type Protobuf = services::TokenSupplyType;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::TokenSupplyType> for TokenSupplyType {
+    fn from_protobuf(pb: services::TokenSupplyType) -> crate::Result<Self> {
         Ok(match pb {
-            Self::Protobuf::Infinite => Self::Infinite,
-            Self::Protobuf::Finite => Self::Finite,
+            services::TokenSupplyType::Infinite => Self::Infinite,
+            services::TokenSupplyType::Finite => Self::Finite,
         })
     }
 }

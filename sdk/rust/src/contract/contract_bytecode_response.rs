@@ -17,10 +17,8 @@ pub struct ContractBytecodeResponse {
     pub bytecode: Vec<u8>,
 }
 
-impl FromProtobuf for ContractBytecodeResponse {
-    type Protobuf = services::response::Response;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::response::Response> for ContractBytecodeResponse {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

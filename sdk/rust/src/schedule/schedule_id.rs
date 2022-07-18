@@ -39,10 +39,8 @@ impl Display for ScheduleId {
     }
 }
 
-impl FromProtobuf for ScheduleId {
-    type Protobuf = services::ScheduleId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::ScheduleId> for ScheduleId {
+    fn from_protobuf(pb: services::ScheduleId) -> crate::Result<Self> {
         Ok(Self {
             num: pb.schedule_num as u64,
             shard: pb.shard_num as u64,

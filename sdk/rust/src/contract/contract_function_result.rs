@@ -50,10 +50,8 @@ pub struct ContractFunctionResult {
     pub sender_id: Option<AccountId>,
 }
 
-impl FromProtobuf for ContractFunctionResult {
-    type Protobuf = services::ContractFunctionResult;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
+    fn from_protobuf(pb: services::ContractFunctionResult) -> crate::Result<Self>
     where
         Self: Sized,
     {

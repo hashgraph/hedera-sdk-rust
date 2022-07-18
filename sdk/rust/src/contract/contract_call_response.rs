@@ -16,10 +16,8 @@ pub struct ContractCallResponse {
     pub result: ContractFunctionResult,
 }
 
-impl FromProtobuf for ContractCallResponse {
-    type Protobuf = services::response::Response;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::response::Response> for ContractCallResponse {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

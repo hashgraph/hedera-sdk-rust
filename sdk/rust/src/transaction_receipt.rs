@@ -81,10 +81,8 @@ pub struct TransactionReceipt {
     pub serial_numbers: Vec<i64>,
 }
 
-impl FromProtobuf for TransactionReceipt {
-    type Protobuf = services::TransactionReceipt;
-
-    fn from_protobuf(receipt: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::TransactionReceipt> for TransactionReceipt {
+    fn from_protobuf(receipt: services::TransactionReceipt) -> crate::Result<Self>
     where
         Self: Sized,
     {

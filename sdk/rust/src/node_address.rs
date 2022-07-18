@@ -42,15 +42,11 @@ pub struct NodeAddress {
     pub description: String,
 }
 
-impl FromProtobuf for NodeAddress {
-    type Protobuf = services::NodeAddress;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::NodeAddress> for NodeAddress {
+    fn from_protobuf(pb: services::NodeAddress) -> crate::Result<Self>
     where
         Self: Sized,
     {
-        println!("NodeAddress.service_endpoint[0] = {:?}", pb.service_endpoint[0].ip_address_v4);
-
         let node_account_id = AccountId::from_protobuf(pb_getf!(pb, node_account_id)?)?;
 
         Ok(Self {

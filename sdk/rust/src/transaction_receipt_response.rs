@@ -20,10 +20,8 @@ pub struct TransactionReceiptResponse {
     pub child_receipts: Vec<TransactionReceipt>,
 }
 
-impl FromProtobuf for TransactionReceiptResponse {
-    type Protobuf = services::response::Response;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::response::Response> for TransactionReceiptResponse {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {
