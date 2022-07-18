@@ -40,10 +40,22 @@ public class TransactionReceiptQuery: Query<TransactionReceipt> {
         return self
     }
 
+    /// Whether the receipt status should be validated.
+    public var validateStatus: Bool = false
+
+    /// Sets whether the receipt status should be validated.
+    @discardableResult
+    public func validateStatus(_ validateStatus: Bool) -> Self {
+        self.validateStatus = validateStatus
+
+        return self
+    }
+
     private enum CodingKeys: String, CodingKey {
         case transactionId
         case includeChildren
         case includeDuplicates
+        case validateStatus
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -52,6 +64,7 @@ public class TransactionReceiptQuery: Query<TransactionReceipt> {
         try container.encode(transactionId, forKey: .transactionId)
         try container.encode(includeDuplicates, forKey: .includeDuplicates)
         try container.encode(includeChildren, forKey: .includeChildren)
+        try container.encode(validateStatus, forKey: .validateStatus)
 
         try super.encode(to: encoder)
     }

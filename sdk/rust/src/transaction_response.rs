@@ -1,8 +1,6 @@
 use crate::{
     AccountId,
     Client,
-    Error,
-    Status,
     TransactionHash,
     TransactionId,
     TransactionReceipt,
@@ -40,45 +38,15 @@ pub struct TransactionResponse {
 // TODO: get_record
 // TODO: get_successful_record
 impl TransactionResponse {
-    /// Get the receipt of this transaction. Will wait for consensus.
+    /// Get the receipt of this transaction.
+    /// Will wait for consensus.
+    /// Will return an `Error::ReceiptStatus` for a failing receipt.
     pub async fn get_receipt(&self, client: &Client) -> crate::Result<TransactionReceipt> {
         Ok(TransactionReceiptQuery::new()
             .transaction_id(self.transaction_id)
             .node_account_ids([self.node_account_id])
+            .validate_status(true)
             .execute(client)
             .await?)
-    }
-
-    /// Get the _successful_ receipt of this transaction. Will wait for consensus.
-    /// Will return an `Error::ReceiptStatus` for a failing receipt.
-    pub async fn get_successful_receipt(
-        &self,
-        client: &Client,
-    ) -> crate::Result<TransactionReceipt> {
-        let receipt = self.get_receipt(client).await?;
-
-        if receipt.status != Status::Success {
-            return Err(Error::ReceiptStatus {
-                transaction_id: self.transaction_id,
-                status: receipt.status,
-            });
-        }
-
-        Ok(receipt)
-    }
-
-    /// Wait for consensus to be reached for this transaction.
-    pub async fn wait_for_consensus(&self, client: &Client) -> crate::Result<&Self> {
-        let _ = self.get_receipt(client).await?;
-
-        Ok(self)
-    }
-
-    /// Wait for _successful_ consensus to be reached for this transaction.
-    /// Will return an `Error::ReceiptStatus` for a failing receipt from consensus.
-    pub async fn wait_for_successful_consensus(&self, client: &Client) -> crate::Result<&Self> {
-        let _ = self.get_successful_receipt(client).await?;
-
-        Ok(self)
     }
 }

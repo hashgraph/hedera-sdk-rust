@@ -18,7 +18,7 @@ public enum Program {
             .initialBalance(500_000_000)
             .execute(client)
 
-        let receipt = try await response.getSuccessfulReceipt(client)
+        let receipt = try await response.getReceipt(client)
         let newAccountId = receipt.accountId!
 
         print("account address = \(newAccountId)")
