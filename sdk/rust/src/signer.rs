@@ -24,6 +24,6 @@ impl Signer for PrivateKey {
 #[async_trait]
 impl Signer for Box<dyn Signer> {
     async fn sign(&self, message: &[u8]) -> Result<SignaturePair, BoxStdError> {
-        self.sign(message).await
+        self.as_ref().sign(message).await
     }
 }
