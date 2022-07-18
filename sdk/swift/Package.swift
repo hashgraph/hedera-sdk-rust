@@ -15,7 +15,7 @@ for name in [
     exampleTargets.append(
         .executableTarget(
             name: "\(name)Example",
-            dependencies: ["Hedera"],
+            dependencies: ["Hedera", .product(name: "SwiftDotenv", package: "swift-dotenv")],
             path: "Examples/\(name)",
             swiftSettings: [
                 .unsafeFlags([
@@ -34,7 +34,8 @@ let package = Package(
         .library(name: "Hedera", targets: ["Hedera"])
     ],
     dependencies: [
-        .package(url: "https://github.com/objecthub/swift-numberkit.git", .upToNextMajor(from: "2.4.1"))
+        .package(url: "https://github.com/objecthub/swift-numberkit.git", .upToNextMajor(from: "2.4.1")),
+        .package(url: "https://github.com/thebarndog/swift-dotenv.git", .upToNextMajor(from: "1.0.0")),
     ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
