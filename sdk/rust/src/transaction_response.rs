@@ -46,8 +46,7 @@ impl TransactionResponse {
             .transaction_id(self.transaction_id)
             .node_account_ids([self.node_account_id])
             .execute(client)
-            .await?
-            .receipt)
+            .await?)
     }
 
     /// Get the _successful_ receipt of this transaction. Will wait for consensus.

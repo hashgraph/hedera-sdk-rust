@@ -47,7 +47,7 @@ use crate::{
     TokenNftInfo,
     TopicInfo,
     Transaction,
-    TransactionReceiptResponse,
+    TransactionReceipt,
 };
 
 /// Any possible query that may be executed on the Hedera network.
@@ -75,7 +75,7 @@ pub enum AnyQueryData {
 pub enum AnyQueryResponse {
     AccountBalance(AccountBalanceResponse),
     AccountInfo(AccountInfo),
-    TransactionReceipt(TransactionReceiptResponse),
+    TransactionReceipt(TransactionReceipt),
     FileContents(FileContentsResponse),
     FileInfo(FileInfo),
     ContractBytecode(ContractBytecodeResponse),
@@ -192,7 +192,7 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
 
         Ok(match response {
             TransactionGetReceipt(_) => {
-                Self::TransactionReceipt(TransactionReceiptResponse::from_protobuf(response)?)
+                Self::TransactionReceipt(TransactionReceipt::from_protobuf(response)?)
             }
             CryptoGetInfo(_) => Self::AccountInfo(AccountInfo::from_protobuf(response)?),
             CryptogetAccountBalance(_) => {

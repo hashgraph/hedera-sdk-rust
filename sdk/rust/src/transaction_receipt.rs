@@ -21,6 +21,7 @@ use crate::{
 };
 
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
+/// Response from [`TransactionReceiptQuery`][crate::TransactionReceiptQuery].
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize)]
@@ -79,13 +80,21 @@ pub struct TransactionReceipt {
     /// In the receipt of a `TokenMintTransaction` for tokens of type `NonFungibleUnique`,
     /// the serial numbers of the newly created NFTs.
     pub serial_numbers: Vec<i64>,
+
+    /// The receipts of processing all transactions with the given id, in consensus time order.
+    pub duplicates: Vec<TransactionReceipt>,
+
+    /// The receipts (if any) of all child transactions spawned by the transaction with the
+    /// given top-level id, in consensus order.
+    pub children: Vec<TransactionReceipt>,
 }
 
-impl FromProtobuf<services::TransactionReceipt> for TransactionReceipt {
-    fn from_protobuf(receipt: services::TransactionReceipt) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
+impl TransactionReceipt {
+    fn from_protobuf(
+        receipt: services::TransactionReceipt,
+        duplicates: Vec<Self>,
+        children: Vec<Self>,
+    ) -> crate::Result<Self> {
         let status = if let Some(status) = Status::from_i32(receipt.status) {
             status
         } else {
@@ -120,6 +129,42 @@ impl FromProtobuf<services::TransactionReceipt> for TransactionReceipt {
             topic_id,
             token_id,
             schedule_id,
+            duplicates: Vec::new(),
+            children: Vec::new(),
         })
+    }
+}
+
+impl FromProtobuf<services::response::Response> for TransactionReceipt {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let pb = pb_getv!(pb, TransactionGetReceipt, services::response::Response);
+
+        let receipt = pb_getf!(pb, receipt)?;
+
+        let duplicates = pb
+            .duplicate_transaction_receipts
+            .into_iter()
+            .map(<TransactionReceipt as FromProtobuf<_>>::from_protobuf)
+            .collect::<crate::Result<_>>()?;
+
+        let children = pb
+            .child_transaction_receipts
+            .into_iter()
+            .map(<TransactionReceipt as FromProtobuf<_>>::from_protobuf)
+            .collect::<crate::Result<_>>()?;
+
+        Self::from_protobuf(receipt, duplicates, children)
+    }
+}
+
+impl FromProtobuf<services::TransactionReceipt> for TransactionReceipt {
+    fn from_protobuf(receipt: services::TransactionReceipt) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Self::from_protobuf(receipt, Vec::new(), Vec::new())
     }
 }
