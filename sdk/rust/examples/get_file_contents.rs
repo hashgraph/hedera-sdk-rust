@@ -4,10 +4,10 @@ use hedera::{AccountId, Client, FileContentsQuery, FileId, PrivateKey};
 #[derive(Parser, Debug)]
 struct Args {
     #[clap(long, env)]
-    payer_account_id: AccountId,
+    operator_account_id: AccountId,
 
     #[clap(long, env)]
-    default_signer: PrivateKey,
+    operator_key: PrivateKey,
 
     #[clap(long, env, default_value = "0.0.34945328")]
     file: FileId,
@@ -20,8 +20,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::for_testnet();
 
-    client.set_payer_account_id(args.payer_account_id);
-    client.add_default_signer(args.default_signer);
+    client.set_operator(args.operator_account_id, args.operator_key);
 
     let cr = FileContentsQuery::new()
         .file_id(args.file)

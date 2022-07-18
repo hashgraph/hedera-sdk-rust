@@ -1,7 +1,7 @@
 import CHedera
 
 /// A private key on the Hedera network.
-public final class PrivateKey: LosslessStringConvertible {
+public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     internal let ptr: OpaquePointer
 
     private init(_ ptr: OpaquePointer) {
@@ -17,6 +17,10 @@ public final class PrivateKey: LosslessStringConvertible {
         }
 
         ptr = key!
+    }
+
+    public required convenience init(stringLiteral value: StringLiteralType) {
+        self.init(value)!
     }
 
     deinit {

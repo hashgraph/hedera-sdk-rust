@@ -81,16 +81,12 @@ where
 
         let body_bytes = transaction_body.encode_to_vec();
 
-        let mut signatures = Vec::with_capacity(self.signers.len());
+        let mut signatures = Vec::with_capacity(1);
 
-        let default_signers = client.default_signers().await;
+        let operator_signature =
+            client.sign_with_operator(&body_bytes).await.map_err(Error::signature)?;
 
-        for signer in default_signers.iter().chain(&self.signers) {
-            // TODO: should we run the signers in parallel?
-            let signature = signer.sign(&body_bytes).await.map_err(Error::signature)?;
-
-            signatures.push(signature.to_protobuf());
-        }
+        signatures.push(operator_signature.to_protobuf());
 
         let signed_transaction = services::SignedTransaction {
             body_bytes,

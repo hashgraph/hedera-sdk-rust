@@ -5,10 +5,10 @@ use hedera::{AccountCreateTransaction, AccountId, Client, PrivateKey};
 #[derive(Parser, Debug)]
 struct Args {
     #[clap(long, env)]
-    payer_account_id: AccountId,
+    operator_account_id: AccountId,
 
     #[clap(long, env)]
-    default_signer: PrivateKey,
+    operator_key: PrivateKey,
 }
 
 #[tokio::main]
@@ -18,8 +18,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::for_testnet();
 
-    client.set_payer_account_id(args.payer_account_id);
-    client.add_default_signer(args.default_signer);
+    client.set_operator(args.operator_account_id, args.operator_key);
 
     let new_key = PrivateKey::generate_ed25519();
 
@@ -31,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
         .execute(&client)
         .await?;
 
-    let receipt = response.get_successful_receipt(&client).await?;
+    let receipt = response.get_receipt(&client).await?;
 
     let new_account_id = assert_matches!(receipt.account_id, Some(id) => id);
 
