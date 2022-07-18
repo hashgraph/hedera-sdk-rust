@@ -129,8 +129,8 @@ impl TransactionReceipt {
             topic_id,
             token_id,
             schedule_id,
-            duplicates: Vec::new(),
-            children: Vec::new(),
+            duplicates,
+            children,
         })
     }
 }

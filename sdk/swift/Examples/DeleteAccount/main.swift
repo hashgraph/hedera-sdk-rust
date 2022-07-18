@@ -14,6 +14,6 @@ public enum Program {
             .deleteAccountId("0.0.34952813")
             .execute(client)
 
-        try await response.waitForSuccessfulConsensus(client)
+        _ = try await response.getReceipt(client)
     }
 }

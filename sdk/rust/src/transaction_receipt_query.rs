@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
+use hedera_proto::services::response::Response;
 use tonic::transport::Channel;
 
 use crate::query::{
@@ -9,6 +10,8 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    Error,
+    FromProtobuf,
     Query,
     Status,
     ToProtobuf,
@@ -29,6 +32,7 @@ pub struct TransactionReceiptQueryData {
     transaction_id: Option<TransactionId>,
     include_children: bool,
     include_duplicates: bool,
+    validate_status: bool,
 }
 
 impl From<TransactionReceiptQueryData> for AnyQueryData {
@@ -55,6 +59,12 @@ impl TransactionReceiptQuery {
     /// Whether receipts of processing duplicate transactions should be returned.
     pub fn include_duplicates(&mut self, include: bool) -> &mut Self {
         self.data.include_duplicates = include;
+        self
+    }
+
+    /// Whether the receipt status should be validated.
+    pub fn validate_status(&mut self, validate: bool) -> &mut Self {
+        self.data.validate_status = validate;
         self
     }
 }
@@ -118,5 +128,19 @@ impl QueryExecute for TransactionReceiptQueryData {
         };
 
         matches!(receipt_status, Status::Unknown)
+    }
+
+    fn make_response(&self, response: Response) -> crate::Result<Self::Response> {
+        let receipt = <TransactionReceipt as FromProtobuf<_>>::from_protobuf(response)?;
+
+        if self.validate_status && receipt.status != Status::Success {
+            return Err(Error::ReceiptStatus {
+                // NOTE: it should be impossible to get here without a transaction ID set
+                transaction_id: self.transaction_id.unwrap(),
+                status: receipt.status,
+            });
+        }
+
+        Ok(receipt)
     }
 }
