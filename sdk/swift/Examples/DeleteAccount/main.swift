@@ -1,12 +1,13 @@
 import Hedera
+import SwiftDotenv
 
 @main
 public enum Program {
     public static func main() async throws {
+        let env = try Dotenv.load()
         let client = Client.forTestnet()
 
-        client.setOperator(
-            34_952_813, "302c020100300506032b65700420adceb87b3667f6909ab77d4016055590fe0328346f8430c4d6e4871fa2fec409")
+        client.setOperator(env.operatorAccountId, env.operatorKey)
 
         let response = try await AccountDeleteTransaction()
             .transferAccountId("0.0.6189")
@@ -14,5 +15,15 @@ public enum Program {
             .execute(client)
 
         _ = try await response.getReceipt(client)
+    }
+}
+
+extension Environment {
+    var operatorAccountId: AccountId {
+        AccountId(self["OPERATOR_ACCOUNT_ID"]!.stringValue)!
+    }
+
+    var operatorKey: PrivateKey {
+        PrivateKey(self["OPERATOR_KEY"]!.stringValue)!
     }
 }

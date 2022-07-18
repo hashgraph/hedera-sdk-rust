@@ -2,6 +2,24 @@
   "object": {
     "pins": [
       {
+        "package": "swift-collections",
+        "repositoryURL": "https://github.com/apple/swift-collections.git",
+        "state": {
+          "branch": null,
+          "revision": "48254824bb4248676bf7ce56014ff57b142b77eb",
+          "version": "1.0.2"
+        }
+      },
+      {
+        "package": "swift-dotenv",
+        "repositoryURL": "https://github.com/thebarndog/swift-dotenv.git",
+        "state": {
+          "branch": null,
+          "revision": "4a3a8affd8b02be23e3fc5151a5cbd1770456cfc",
+          "version": "1.2.0"
+        }
+      },
+      {
         "package": "NumberKit",
         "repositoryURL": "https://github.com/objecthub/swift-numberkit.git",
         "state": {
