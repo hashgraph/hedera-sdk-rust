@@ -42,10 +42,8 @@ impl Display for NftId {
     }
 }
 
-impl FromProtobuf for NftId {
-    type Protobuf = services::NftId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::NftId> for NftId {
+    fn from_protobuf(pb: services::NftId) -> crate::Result<Self> {
         Ok(Self {
             token_id: TokenId::from_protobuf(pb_getf!(pb, token_id)?)?,
             serial_number: pb.serial_number as u64,

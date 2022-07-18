@@ -53,10 +53,8 @@ pub struct TopicInfo {
     pub auto_renew_period: Option<Duration>,
 }
 
-impl FromProtobuf for TopicInfo {
-    type Protobuf = services::response::Response;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::response::Response> for TopicInfo {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

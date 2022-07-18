@@ -41,10 +41,8 @@ pub struct TopicMessage {
     pub chunk_total: u32,
 }
 
-impl FromProtobuf for TopicMessage {
-    type Protobuf = mirror::ConsensusTopicResponse;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<mirror::ConsensusTopicResponse> for TopicMessage {
+    fn from_protobuf(pb: mirror::ConsensusTopicResponse) -> crate::Result<Self>
     where
         Self: Sized,
     {

@@ -55,11 +55,9 @@ pub struct ScheduleInfo {
     pub deleted_at: Option<OffsetDateTime>,
 }
 
-impl FromProtobuf for ScheduleInfo {
-    type Protobuf = services::response::Response;
-
+impl FromProtobuf<services::response::Response> for ScheduleInfo {
     #[allow(deprecated)]
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

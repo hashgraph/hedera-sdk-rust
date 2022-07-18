@@ -39,10 +39,8 @@ impl Display for TopicId {
     }
 }
 
-impl FromProtobuf for TopicId {
-    type Protobuf = services::TopicId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::TopicId> for TopicId {
+    fn from_protobuf(pb: services::TopicId) -> crate::Result<Self> {
         Ok(Self {
             num: pb.topic_num as u64,
             shard: pb.shard_num as u64,

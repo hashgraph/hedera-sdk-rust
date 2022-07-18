@@ -21,10 +21,8 @@ pub struct CustomFee {
     pub fee_collector_account_id: AccountId,
 }
 
-impl FromProtobuf for CustomFee {
-    type Protobuf = services::CustomFee;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::CustomFee> for CustomFee {
+    fn from_protobuf(pb: services::CustomFee) -> crate::Result<Self> {
         let fee = Fee::from_protobuf(pb_getf!(pb, fee)?)?;
         let fee_collector_account_id =
             AccountId::from_protobuf(pb_getf!(pb, fee_collector_account_id)?)?;
@@ -58,18 +56,16 @@ pub enum Fee {
     RoyaltyFee(RoyaltyFee),
 }
 
-impl FromProtobuf for Fee {
-    type Protobuf = services::custom_fee::Fee;
+impl FromProtobuf<services::custom_fee::Fee> for Fee {
+    fn from_protobuf(pb: services::custom_fee::Fee) -> crate::Result<Self> {
+        use services::custom_fee::Fee as ProtoFee;
 
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
         match pb {
-            Self::Protobuf::FixedFee(fixed_fee) => {
-                Ok(Fee::FixedFee(FixedFee::from_protobuf(fixed_fee)?))
-            }
-            Self::Protobuf::FractionalFee(fractional_fee) => {
+            ProtoFee::FixedFee(fixed_fee) => Ok(Fee::FixedFee(FixedFee::from_protobuf(fixed_fee)?)),
+            ProtoFee::FractionalFee(fractional_fee) => {
                 Ok(Fee::FractionalFee(FractionalFee::from_protobuf(fractional_fee)?))
             }
-            Self::Protobuf::RoyaltyFee(royalty_fee) => {
+            ProtoFee::RoyaltyFee(royalty_fee) => {
                 Ok(Fee::RoyaltyFee(RoyaltyFee::from_protobuf(royalty_fee)?))
             }
         }
@@ -121,10 +117,8 @@ pub struct FixedFee {
     pub denominating_token_id: TokenId,
 }
 
-impl FromProtobuf for FixedFee {
-    type Protobuf = services::FixedFee;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::FixedFee> for FixedFee {
+    fn from_protobuf(pb: services::FixedFee) -> crate::Result<Self> {
         Ok(Self {
             amount: pb.amount,
             denominating_token_id: TokenId::from_protobuf(pb_getf!(pb, denominating_token_id)?)?,
@@ -164,10 +158,8 @@ pub struct FractionalFee {
     pub net_of_transfers: bool,
 }
 
-impl FromProtobuf for FractionalFee {
-    type Protobuf = services::FractionalFee;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::FractionalFee> for FractionalFee {
+    fn from_protobuf(pb: services::FractionalFee) -> crate::Result<Self> {
         Ok(Self {
             net_of_transfers: pb.net_of_transfers,
             maximum_amount: pb.maximum_amount,
@@ -206,10 +198,8 @@ pub struct RoyaltyFee {
     pub fallback_fee: FixedFee,
 }
 
-impl FromProtobuf for RoyaltyFee {
-    type Protobuf = services::RoyaltyFee;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::RoyaltyFee> for RoyaltyFee {
+    fn from_protobuf(pb: services::RoyaltyFee) -> crate::Result<Self> {
         Ok(Self {
             fallback_fee: FixedFee::from_protobuf(pb_getf!(pb, fallback_fee)?)?,
             exchange_value_fraction: pb.exchange_value_fraction.map(Into::into).unwrap_or_default(),

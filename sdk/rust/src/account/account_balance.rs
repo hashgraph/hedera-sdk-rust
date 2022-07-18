@@ -20,10 +20,8 @@ pub struct AccountBalanceResponse {
     // TODO: pub tokens: HashMap<TokenId, AccountTokenBalance>,
 }
 
-impl FromProtobuf for AccountBalanceResponse {
-    type Protobuf = services::response::Response;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::response::Response> for AccountBalanceResponse {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self> {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
         let account_id = pb_getf!(response, account_id)?;

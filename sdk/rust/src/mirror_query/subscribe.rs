@@ -23,7 +23,7 @@ pub trait MirrorQuerySubscribe: 'static + Into<AnyMirrorQueryData> + Send + Sync
 
     type GrpcMessage: Send;
 
-    type Message: Send + FromProtobuf<Protobuf = Self::GrpcMessage>;
+    type Message: Send + FromProtobuf<Self::GrpcMessage>;
 
     /// Return `true` to retry establishing the stream, up to a configurable maximum timeout.
     #[allow(unused_variables)]

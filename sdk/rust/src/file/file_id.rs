@@ -39,10 +39,8 @@ impl Display for FileId {
     }
 }
 
-impl FromProtobuf for FileId {
-    type Protobuf = services::FileId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::FileId> for FileId {
+    fn from_protobuf(pb: services::FileId) -> crate::Result<Self> {
         Ok(Self { num: pb.file_num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
     }
 }

@@ -26,7 +26,7 @@ use crate::{
 pub trait QueryExecute:
     Sync + Send + Into<AnyQueryData> + Clone + Debug + Serialize + DeserializeOwned + ToQueryProtobuf
 {
-    type Response: FromProtobuf<Protobuf = services::response::Response>;
+    type Response: FromProtobuf<services::response::Response>;
 
     /// Returns `true` if this query requires a payment to be submitted.
     fn is_payment_required(&self) -> bool {
@@ -54,7 +54,7 @@ pub trait QueryExecute:
         &self,
         response: services::response::Response,
     ) -> crate::Result<Self::Response> {
-        <Self::Response as FromProtobuf>::from_protobuf(response)
+        <Self::Response as FromProtobuf<services::response::Response>>::from_protobuf(response)
     }
 
     /// Execute the prepared query request against the provided GRPC channel.

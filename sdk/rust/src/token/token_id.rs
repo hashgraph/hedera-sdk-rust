@@ -40,10 +40,8 @@ impl Display for TokenId {
     }
 }
 
-impl FromProtobuf for TokenId {
-    type Protobuf = services::TokenId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::TokenId> for TokenId {
+    fn from_protobuf(pb: services::TokenId) -> crate::Result<Self> {
         Ok(Self {
             num: pb.token_num as u64,
             shard: pb.shard_num as u64,

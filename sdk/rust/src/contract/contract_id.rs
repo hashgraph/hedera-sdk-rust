@@ -39,10 +39,8 @@ impl Display for ContractId {
     }
 }
 
-impl FromProtobuf for ContractId {
-    type Protobuf = services::ContractId;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::ContractId> for ContractId {
+    fn from_protobuf(pb: services::ContractId) -> crate::Result<Self> {
         let contract = pb_getf!(pb, contract)?;
         let num = pb_getv!(contract, ContractNum, services::contract_id::Contract);
 

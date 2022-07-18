@@ -101,10 +101,8 @@ impl MirrorQuerySubscribe for AnyMirrorQueryData {
     }
 }
 
-impl FromProtobuf for AnyMirrorQueryMessage {
-    type Protobuf = AnyMirrorQueryGrpcMessage;
-
-    fn from_protobuf(message: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<AnyMirrorQueryGrpcMessage> for AnyMirrorQueryMessage {
+    fn from_protobuf(message: AnyMirrorQueryGrpcMessage) -> crate::Result<Self>
     where
         Self: Sized,
     {

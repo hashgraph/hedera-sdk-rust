@@ -32,13 +32,11 @@ pub enum TokenType {
     NonFungibleUnique = 1,
 }
 
-impl FromProtobuf for TokenType {
-    type Protobuf = services::TokenType;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self> {
+impl FromProtobuf<services::TokenType> for TokenType {
+    fn from_protobuf(pb: services::TokenType) -> crate::Result<Self> {
         Ok(match pb {
-            Self::Protobuf::FungibleCommon => Self::FungibleCommon,
-            Self::Protobuf::NonFungibleUnique => Self::NonFungibleUnique,
+            services::TokenType::FungibleCommon => Self::FungibleCommon,
+            services::TokenType::NonFungibleUnique => Self::NonFungibleUnique,
         })
     }
 }

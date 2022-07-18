@@ -31,11 +31,9 @@ pub struct FileInfo {
     // TODO: pub ledger_id: LedgerId,
 }
 
-impl FromProtobuf for FileInfo {
-    type Protobuf = services::response::Response;
-
+impl FromProtobuf<services::response::Response> for FileInfo {
     #[allow(deprecated)]
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {

@@ -56,10 +56,8 @@ impl From<ContractId> for Key {
     }
 }
 
-impl FromProtobuf for Key {
-    type Protobuf = services::Key;
-
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+impl FromProtobuf<services::Key> for Key {
+    fn from_protobuf(pb: services::Key) -> crate::Result<Self>
     where
         Self: Sized,
     {

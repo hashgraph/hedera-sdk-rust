@@ -87,11 +87,9 @@ pub struct AccountInfo {
     // TODO: pub staking: StakingInfo;
 }
 
-impl FromProtobuf for AccountInfo {
-    type Protobuf = services::response::Response;
-
+impl FromProtobuf<services::response::Response> for AccountInfo {
     #[allow(deprecated)]
-    fn from_protobuf(pb: Self::Protobuf) -> crate::Result<Self>
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {
