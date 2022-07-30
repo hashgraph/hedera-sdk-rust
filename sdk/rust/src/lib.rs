@@ -37,6 +37,8 @@ mod transaction_hash;
 mod transaction_id;
 mod transaction_receipt;
 mod transaction_receipt_query;
+mod transaction_record;
+mod transaction_record_query;
 mod transaction_response;
 mod transfer_transaction;
 
@@ -136,6 +138,7 @@ pub use system::{
 pub use token::{
     NftId,
     TokenAssociateTransaction,
+    TokenAssociation,
     TokenBurnTransaction,
     TokenCreateTransaction,
     TokenDeleteTransaction,
@@ -172,5 +175,8 @@ pub use transaction_hash::TransactionHash;
 pub use transaction_id::TransactionId;
 pub use transaction_receipt::TransactionReceipt;
 pub use transaction_receipt_query::TransactionReceiptQuery;
+pub use transaction_record::TransactionRecord;
+pub use transaction_record_query::TransactionRecordQuery;
+pub(crate) use transaction_record_query::TransactionRecordQueryData;
 pub use transaction_response::TransactionResponse;
 pub use transfer_transaction::TransferTransaction;
