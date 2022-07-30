@@ -10,7 +10,6 @@ use crate::{
     PublicKey,
     ScheduleId,
     TokenAssociation,
-    TransactionHash,
     TransactionId,
     TransactionReceipt,
 };
