@@ -23,6 +23,8 @@ mod execute;
 mod file;
 mod key;
 mod mirror_query;
+mod network_version_info;
+mod network_version_info_query;
 mod node_address;
 mod node_address_book_query;
 mod query;
@@ -104,6 +106,12 @@ pub use mirror_query::{
     AnyMirrorQueryResponse,
     MirrorQuery,
 };
+pub use network_version_info::{
+    NetworkVersionInfo,
+    SemanticVersion,
+};
+pub use network_version_info_query::NetworkVersionInfoQuery;
+pub(crate) use network_version_info_query::NetworkVersionInfoQueryData;
 pub use node_address::NodeAddress;
 pub use node_address_book_query::NodeAddressBookQuery;
 pub(crate) use node_address_book_query::NodeAddressBookQueryData;

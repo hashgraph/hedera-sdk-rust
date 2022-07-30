@@ -44,6 +44,8 @@ use crate::{
     FileContentsResponse,
     FileInfo,
     FromProtobuf,
+    NetworkVersionInfo,
+    NetworkVersionInfoQueryData,
     Query,
     ScheduleInfo,
     TokenInfo,
@@ -76,6 +78,7 @@ pub enum AnyQueryData {
     TokenNftInfo(TokenNftInfoQueryData),
     TopicInfo(TopicInfoQueryData),
     ScheduleInfo(ScheduleInfoQueryData),
+    NetworkVersionInfo(NetworkVersionInfoQueryData),
 }
 
 #[derive(Debug, serde::Serialize, Clone)]
@@ -96,6 +99,7 @@ pub enum AnyQueryResponse {
     ContractInfo(ContractInfo),
     TokenNftInfo(TokenNftInfo),
     ScheduleInfo(ScheduleInfo),
+    NetworkVersionInfo(NetworkVersionInfo),
 }
 
 impl ToQueryProtobuf for AnyQueryData {
@@ -116,6 +120,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::TokenInfo(data) => data.to_query_protobuf(header),
             Self::TopicInfo(data) => data.to_query_protobuf(header),
             Self::ScheduleInfo(data) => data.to_query_protobuf(header),
+            Self::NetworkVersionInfo(data) => data.to_query_protobuf(header),
         }
     }
 }
@@ -141,6 +146,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenInfo(query) => query.is_payment_required(),
             Self::TopicInfo(query) => query.is_payment_required(),
             Self::ScheduleInfo(query) => query.is_payment_required(),
+            Self::NetworkVersionInfo(query) => query.is_payment_required(),
         }
     }
 
@@ -165,6 +171,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenInfo(query) => query.execute(channel, request).await,
             Self::TopicInfo(query) => query.execute(channel, request).await,
             Self::ScheduleInfo(query) => query.execute(channel, request).await,
+            Self::NetworkVersionInfo(query) => query.execute(channel, request).await,
         }
     }
 
@@ -185,6 +192,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenInfo(query) => query.should_retry_pre_check(status),
             Self::TopicInfo(query) => query.should_retry_pre_check(status),
             Self::ScheduleInfo(query) => query.should_retry_pre_check(status),
+            Self::NetworkVersionInfo(query) => query.should_retry_pre_check(status),
         }
     }
 
@@ -205,6 +213,7 @@ impl QueryExecute for AnyQueryData {
             Self::TokenInfo(query) => query.should_retry(response),
             Self::TopicInfo(query) => query.should_retry(response),
             Self::ScheduleInfo(query) => query.should_retry(response),
+            Self::NetworkVersionInfo(query) => query.should_retry(response),
         }
     }
 }
@@ -246,7 +255,9 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
             TransactionGetRecord(_) => {
                 Self::TransactionRecord(TransactionRecord::from_protobuf(response)?)
             }
-            NetworkGetVersionInfo(_) => todo!(),
+            NetworkGetVersionInfo(_) => {
+                Self::NetworkVersionInfo(NetworkVersionInfo::from_protobuf(response)?)
+            }
             FileGetInfo(_) => Self::FileInfo(FileInfo::from_protobuf(response)?),
             TokenGetInfo(_) => Self::TokenInfo(TokenInfo::from_protobuf(response)?),
             TokenGetNftInfos(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
