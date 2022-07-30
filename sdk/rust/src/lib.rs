@@ -46,6 +46,8 @@ mod ffi;
 pub use account::{
     AccountAddress,
     AccountAlias,
+    AccountAllowanceApproveTransaction,
+    AccountAllowanceDeleteTransaction,
     AccountBalanceQuery,
     AccountBalanceResponse,
     AccountCreateTransaction,
