@@ -1,6 +1,7 @@
 mod custom_fees;
 mod nft_id;
 mod token_associate_transaction;
+mod token_association;
 mod token_burn_transaction;
 mod token_create_transaction;
 mod token_delete_transaction;
@@ -28,6 +29,7 @@ pub use token_associate_transaction::{
     TokenAssociateTransaction,
     TokenAssociateTransactionData,
 };
+pub use token_association::TokenAssociation;
 pub use token_burn_transaction::{
     TokenBurnTransaction,
     TokenBurnTransactionData,
