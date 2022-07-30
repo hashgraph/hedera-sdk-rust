@@ -12,6 +12,7 @@ use super::ToQueryProtobuf;
 use crate::account::{
     AccountBalanceQueryData,
     AccountInfoQueryData,
+    AccountStakersQueryData,
 };
 use crate::contract::{
     ContractBytecodeQueryData,
@@ -35,6 +36,7 @@ use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
     AccountBalanceResponse,
     AccountInfo,
+    AllProxyStakers,
     ContractBytecodeResponse,
     ContractCallResponse,
     ContractInfo,
@@ -58,6 +60,7 @@ pub type AnyQuery = Query<AnyQueryData>;
 pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
+    AccountStakers(AccountStakersQueryData),
     TransactionReceipt(TransactionReceiptQueryData),
     FileContents(FileContentsQueryData),
     FileInfo(FileInfoQueryData),
@@ -75,6 +78,7 @@ pub enum AnyQueryData {
 pub enum AnyQueryResponse {
     AccountBalance(AccountBalanceResponse),
     AccountInfo(AccountInfo),
+    AccountStakers(AllProxyStakers),
     TransactionReceipt(TransactionReceipt),
     FileContents(FileContentsResponse),
     FileInfo(FileInfo),
@@ -92,6 +96,7 @@ impl ToQueryProtobuf for AnyQueryData {
         match self {
             Self::AccountBalance(data) => data.to_query_protobuf(header),
             Self::AccountInfo(data) => data.to_query_protobuf(header),
+            Self::AccountStakers(data) => data.to_query_protobuf(header),
             Self::TransactionReceipt(data) => data.to_query_protobuf(header),
             Self::FileContents(data) => data.to_query_protobuf(header),
             Self::FileInfo(data) => data.to_query_protobuf(header),
@@ -114,6 +119,7 @@ impl QueryExecute for AnyQueryData {
         match self {
             Self::AccountInfo(query) => query.is_payment_required(),
             Self::AccountBalance(query) => query.is_payment_required(),
+            Self::AccountStakers(query) => query.is_payment_required(),
             Self::TransactionReceipt(query) => query.is_payment_required(),
             Self::FileContents(query) => query.is_payment_required(),
             Self::FileInfo(query) => query.is_payment_required(),
@@ -135,6 +141,7 @@ impl QueryExecute for AnyQueryData {
         match self {
             Self::AccountInfo(query) => query.execute(channel, request).await,
             Self::AccountBalance(query) => query.execute(channel, request).await,
+            Self::AccountStakers(query) => query.execute(channel, request).await,
             Self::TransactionReceipt(query) => query.execute(channel, request).await,
             Self::FileContents(query) => query.execute(channel, request).await,
             Self::FileInfo(query) => query.execute(channel, request).await,
@@ -152,6 +159,7 @@ impl QueryExecute for AnyQueryData {
         match self {
             Self::AccountInfo(query) => query.should_retry_pre_check(status),
             Self::AccountBalance(query) => query.should_retry_pre_check(status),
+            Self::AccountStakers(query) => query.should_retry_pre_check(status),
             Self::TransactionReceipt(query) => query.should_retry_pre_check(status),
             Self::FileContents(query) => query.should_retry_pre_check(status),
             Self::FileInfo(query) => query.should_retry_pre_check(status),
@@ -169,6 +177,7 @@ impl QueryExecute for AnyQueryData {
         match self {
             Self::AccountInfo(query) => query.should_retry(response),
             Self::AccountBalance(query) => query.should_retry(response),
+            Self::AccountStakers(query) => query.should_retry(response),
             Self::TransactionReceipt(query) => query.should_retry(response),
             Self::FileContents(query) => query.should_retry(response),
             Self::FileInfo(query) => query.should_retry(response),
@@ -211,8 +220,24 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
             TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
             ConsensusGetTopicInfo(_) => Self::TopicInfo(TopicInfo::from_protobuf(response)?),
             ScheduleGetInfo(_) => Self::ScheduleInfo(ScheduleInfo::from_protobuf(response)?),
-
-            _ => todo!(),
+            CryptoGetProxyStakers(_) => {
+                Self::AccountStakers(AllProxyStakers::from_protobuf(response)?)
+            }
+            CryptoGetAccountRecords(_) => todo!(),
+            TransactionGetRecord(_) => todo!(),
+            NetworkGetVersionInfo(_) => todo!(),
+            ContractGetRecordsResponse(_) => todo!(),
+            FileGetInfo(_) => Self::FileInfo(FileInfo::from_protobuf(response)?),
+            TokenGetInfo(_) => Self::TokenInfo(TokenInfo::from_protobuf(response)?),
+            TokenGetNftInfos(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
+            // Unimplemented on hedera services
+            TransactionGetFastRecord(_)
+            | CryptoGetLiveHash(_)
+            | GetBySolidityId(_)
+            | TokenGetAccountNftInfos(_)
+            | NetworkGetExecutionTime(_)
+            | AccountDetails(_)
+            | GetByKey(_) => unreachable!(),
         })
     }
 }

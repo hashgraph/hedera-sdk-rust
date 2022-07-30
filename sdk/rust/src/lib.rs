@@ -55,7 +55,10 @@ pub use account::{
     AccountId,
     AccountInfo,
     AccountInfoQuery,
+    AccountStakersQuery,
     AccountUpdateTransaction,
+    AllProxyStakers,
+    ProxyStaker,
 };
 pub use client::Client;
 pub use contract::{
