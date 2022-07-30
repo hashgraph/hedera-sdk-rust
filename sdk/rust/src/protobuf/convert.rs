@@ -9,3 +9,15 @@ pub trait FromProtobuf<Protobuf> {
     where
         Self: Sized;
 }
+
+impl<T, P> FromProtobuf<Vec<P>> for Vec<T>
+where
+    T: FromProtobuf<P>,
+{
+    fn from_protobuf(pb: Vec<P>) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        pb.into_iter().map(T::from_protobuf).collect::<crate::Result<Vec<_>>>()
+    }
+}

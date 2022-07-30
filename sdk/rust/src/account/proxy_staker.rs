@@ -27,11 +27,7 @@ impl FromProtobuf<services::response::Response> for AllProxyStakers {
         let response = pb_getv!(pb, CryptoGetProxyStakers, services::response::Response);
         let stakers = pb_getf!(response, stakers)?;
 
-        stakers
-            .proxy_staker
-            .into_iter()
-            .map(ProxyStaker::from_protobuf)
-            .collect::<crate::Result<Vec<_>>>()
+        AllProxyStakers::from_protobuf(stakers.proxy_staker)
     }
 }
 

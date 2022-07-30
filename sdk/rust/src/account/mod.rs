@@ -7,6 +7,7 @@ mod account_delete_transaction;
 mod account_id;
 mod account_info;
 mod account_info_query;
+mod account_records_query;
 mod account_stakers_query;
 mod account_update_transaction;
 mod proxy_staker;
@@ -30,6 +31,8 @@ pub use account_id::{
 pub use account_info::AccountInfo;
 pub use account_info_query::AccountInfoQuery;
 pub(crate) use account_info_query::AccountInfoQueryData;
+pub use account_records_query::AccountRecordsQuery;
+pub(crate) use account_records_query::AccountRecordsQueryData;
 pub use account_stakers_query::AccountStakersQuery;
 pub(crate) use account_stakers_query::AccountStakersQueryData;
 pub use account_update_transaction::AccountUpdateTransaction;

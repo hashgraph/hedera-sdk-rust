@@ -12,6 +12,7 @@ use super::ToQueryProtobuf;
 use crate::account::{
     AccountBalanceQueryData,
     AccountInfoQueryData,
+    AccountRecordsQueryData,
     AccountStakersQueryData,
 };
 use crate::contract::{
@@ -63,6 +64,7 @@ pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
     AccountStakers(AccountStakersQueryData),
+    AccountRecords(AccountRecordsQueryData),
     TransactionReceipt(TransactionReceiptQueryData),
     TransactionRecord(TransactionRecordQueryData),
     FileContents(FileContentsQueryData),
@@ -82,6 +84,7 @@ pub enum AnyQueryResponse {
     AccountBalance(AccountBalanceResponse),
     AccountInfo(AccountInfo),
     AccountStakers(AllProxyStakers),
+    AccountRecords(Vec<TransactionRecord>),
     TransactionReceipt(TransactionReceipt),
     TransactionRecord(TransactionRecord),
     FileContents(FileContentsResponse),
@@ -101,6 +104,7 @@ impl ToQueryProtobuf for AnyQueryData {
             Self::AccountBalance(data) => data.to_query_protobuf(header),
             Self::AccountInfo(data) => data.to_query_protobuf(header),
             Self::AccountStakers(data) => data.to_query_protobuf(header),
+            Self::AccountRecords(data) => data.to_query_protobuf(header),
             Self::TransactionReceipt(data) => data.to_query_protobuf(header),
             Self::TransactionRecord(data) => data.to_query_protobuf(header),
             Self::FileContents(data) => data.to_query_protobuf(header),
@@ -125,6 +129,7 @@ impl QueryExecute for AnyQueryData {
             Self::AccountInfo(query) => query.is_payment_required(),
             Self::AccountBalance(query) => query.is_payment_required(),
             Self::AccountStakers(query) => query.is_payment_required(),
+            Self::AccountRecords(query) => query.is_payment_required(),
             Self::TransactionReceipt(query) => query.is_payment_required(),
             Self::TransactionRecord(query) => query.is_payment_required(),
             Self::FileContents(query) => query.is_payment_required(),
@@ -148,6 +153,7 @@ impl QueryExecute for AnyQueryData {
             Self::AccountInfo(query) => query.execute(channel, request).await,
             Self::AccountBalance(query) => query.execute(channel, request).await,
             Self::AccountStakers(query) => query.execute(channel, request).await,
+            Self::AccountRecords(query) => query.execute(channel, request).await,
             Self::TransactionReceipt(query) => query.execute(channel, request).await,
             Self::TransactionRecord(query) => query.execute(channel, request).await,
             Self::FileContents(query) => query.execute(channel, request).await,
@@ -167,6 +173,7 @@ impl QueryExecute for AnyQueryData {
             Self::AccountInfo(query) => query.should_retry_pre_check(status),
             Self::AccountBalance(query) => query.should_retry_pre_check(status),
             Self::AccountStakers(query) => query.should_retry_pre_check(status),
+            Self::AccountRecords(query) => query.should_retry_pre_check(status),
             Self::TransactionReceipt(query) => query.should_retry_pre_check(status),
             Self::TransactionRecord(query) => query.should_retry_pre_check(status),
             Self::FileContents(query) => query.should_retry_pre_check(status),
@@ -186,6 +193,7 @@ impl QueryExecute for AnyQueryData {
             Self::AccountInfo(query) => query.should_retry(response),
             Self::AccountBalance(query) => query.should_retry(response),
             Self::AccountStakers(query) => query.should_retry(response),
+            Self::AccountRecords(query) => query.should_retry(response),
             Self::TransactionReceipt(query) => query.should_retry(response),
             Self::TransactionRecord(query) => query.should_retry(response),
             Self::FileContents(query) => query.should_retry(response),
@@ -232,12 +240,13 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
             CryptoGetProxyStakers(_) => {
                 Self::AccountStakers(AllProxyStakers::from_protobuf(response)?)
             }
-            CryptoGetAccountRecords(_) => todo!(),
+            CryptoGetAccountRecords(_) => {
+                Self::AccountRecords(Vec::<TransactionRecord>::from_protobuf(response)?)
+            }
             TransactionGetRecord(_) => {
                 Self::TransactionRecord(TransactionRecord::from_protobuf(response)?)
             }
             NetworkGetVersionInfo(_) => todo!(),
-            ContractGetRecordsResponse(_) => todo!(),
             FileGetInfo(_) => Self::FileInfo(FileInfo::from_protobuf(response)?),
             TokenGetInfo(_) => Self::TokenInfo(TokenInfo::from_protobuf(response)?),
             TokenGetNftInfos(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
@@ -247,6 +256,7 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
             | GetBySolidityId(_)
             | TokenGetAccountNftInfos(_)
             | NetworkGetExecutionTime(_)
+            | ContractGetRecordsResponse(_)
             | AccountDetails(_)
             | GetByKey(_) => unreachable!(),
         })
