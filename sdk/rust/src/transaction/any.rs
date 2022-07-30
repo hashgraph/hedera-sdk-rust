@@ -17,8 +17,9 @@ use tonic::{
 };
 
 use crate::account::{
+    AccountAllowanceApproveTransactionData,
+    AccountAllowanceDeleteTransactionData,
     AccountCreateTransactionData,
-    AccountDeleteAllowanceTransactionData,
     AccountDeleteTransactionData,
     AccountUpdateTransactionData,
 };
@@ -88,7 +89,8 @@ pub enum AnyTransactionData {
     AccountCreate(AccountCreateTransactionData),
     AccountUpdate(AccountUpdateTransactionData),
     AccountDelete(AccountDeleteTransactionData),
-    AccountDeleteAllowance(AccountDeleteAllowanceTransactionData),
+    AccountAllowanceApprove(AccountAllowanceApproveTransactionData),
+    AccountAllowanceDelete(AccountAllowanceDeleteTransactionData),
     ContractCreate(ContractCreateTransactionData),
     ContractUpdate(ContractUpdateTransactionData),
     ContractDelete(ContractDeleteTransactionData),
@@ -148,7 +150,11 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
-            Self::AccountDeleteAllowance(transaction) => {
+            Self::AccountAllowanceApprove(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
+
+            Self::AccountAllowanceDelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
 
@@ -295,7 +301,8 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountDelete(transaction) => transaction.default_max_transaction_fee(),
-            Self::AccountDeleteAllowance(transaction) => transaction.default_max_transaction_fee(),
+            Self::AccountAllowanceApprove(transaction) => transaction.default_max_transaction_fee(),
+            Self::AccountAllowanceDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::ContractDelete(transaction) => transaction.default_max_transaction_fee(),
@@ -342,7 +349,10 @@ impl TransactionExecute for AnyTransactionData {
             Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
             Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
             Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
-            Self::AccountDeleteAllowance(transaction) => {
+            Self::AccountAllowanceApprove(transaction) => {
+                transaction.execute(channel, request).await
+            }
+            Self::AccountAllowanceDelete(transaction) => {
                 transaction.execute(channel, request).await
             }
             Self::ContractCreate(transaction) => transaction.execute(channel, request).await,
