@@ -1,6 +1,6 @@
 // TODO: exchangeRate
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
-public struct TransactionReceipt: Decodable {
+public struct TransactionReceipt: Codable {
     // TODO: enum Status
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
     /// the associated transaction did not have a valid payer signature.
