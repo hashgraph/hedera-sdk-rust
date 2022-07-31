@@ -9,7 +9,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     NftId,
     ToProtobuf,
@@ -45,8 +44,8 @@ impl AccountAllowanceApproveTransaction {
     /// Approves the hbar allowance.
     pub fn approve_hbar_allowance(
         &mut self,
-        owner_account_id: impl Into<AccountAddress>,
-        spender_account_id: impl Into<AccountAddress>,
+        owner_account_id: AccountId,
+        spender_account_id: AccountId,
         amount: u64,
     ) -> &mut Self {
         self.body.data.hbar_allowances.push(HbarAllowance {
@@ -62,8 +61,8 @@ impl AccountAllowanceApproveTransaction {
     pub fn approve_token_allowance(
         &mut self,
         token_id: TokenId,
-        owner_account_id: impl Into<AccountAddress>,
-        spender_account_id: impl Into<AccountAddress>,
+        owner_account_id: AccountId,
+        spender_account_id: AccountId,
         amount: u64,
     ) -> &mut Self {
         self.body.data.token_allowances.push(TokenAllowance {
@@ -80,8 +79,8 @@ impl AccountAllowanceApproveTransaction {
     pub fn approve_token_nft_allowance(
         &mut self,
         nft_id: impl Into<NftId>,
-        owner_account_id: impl Into<AccountAddress>,
-        spender_account_id: impl Into<AccountAddress>,
+        owner_account_id: AccountId,
+        spender_account_id: AccountId,
     ) -> &mut Self {
         let nft_id = nft_id.into();
         let owner_account_id = owner_account_id.into();
@@ -112,8 +111,8 @@ impl AccountAllowanceApproveTransaction {
     pub fn approve_token_nft_allowance_all_serials(
         &mut self,
         token_id: TokenId,
-        owner_account_id: impl Into<AccountAddress>,
-        spender_account_id: impl Into<AccountAddress>,
+        owner_account_id: AccountId,
+        spender_account_id: AccountId,
     ) -> &mut Self {
         let owner_account_id = owner_account_id.into();
         let spender_account_id = spender_account_id.into();
@@ -135,10 +134,10 @@ impl AccountAllowanceApproveTransaction {
 #[serde(rename_all = "camelCase")]
 struct HbarAllowance {
     /// The account ID of the hbar owner (ie. the grantor of the allowance).
-    owner_account_id: AccountAddress,
+    owner_account_id: AccountId,
 
     /// The account ID of the spender of the hbar allowance.
-    spender_account_id: AccountAddress,
+    spender_account_id: AccountId,
 
     /// The amount of the spender's allowance, in tinybars.
     amount: u64,
@@ -151,10 +150,10 @@ struct TokenAllowance {
     token_id: TokenId,
 
     /// The account ID of the token owner (ie. the grantor of the allowance).
-    owner_account_id: AccountAddress,
+    owner_account_id: AccountId,
 
     /// The account ID of the spender of the token allowance.
-    spender_account_id: AccountAddress,
+    spender_account_id: AccountId,
 
     /// The amount of the spender's token allowance.
     amount: u64,
@@ -167,10 +166,10 @@ struct NftAllowance {
     token_id: TokenId,
 
     /// The account ID of the token owner (ie. the grantor of the allowance).
-    owner_account_id: AccountAddress,
+    owner_account_id: AccountId,
 
     /// The account ID of the spender of the token allowance.
-    spender_account_id: AccountAddress,
+    spender_account_id: AccountId,
 
     /// The list of serial numbers that the spender is permitted to transfer.
     serial_numbers: Vec<i64>,
@@ -181,7 +180,7 @@ struct NftAllowance {
 
     /// The account ID of the spender who is granted approvedForAll allowance and granting
     /// approval on an NFT serial to another spender.
-    delegating_spender_account_id: Option<AccountAddress>,
+    delegating_spender_account_id: Option<AccountId>,
 }
 
 #[async_trait]

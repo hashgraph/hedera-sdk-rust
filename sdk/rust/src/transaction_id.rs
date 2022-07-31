@@ -34,7 +34,7 @@ use crate::{
 /// right after creating it, for instantiating a smart contract with bytecode in a file just created,
 /// and internally by the network for detecting when duplicate transactions are submitted.
 ///
-#[derive(Copy, Clone, Eq, PartialEq, Hash, SerializeDisplay, DeserializeFromStr)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, SerializeDisplay, DeserializeFromStr)]
 pub struct TransactionId {
     /// The account that pays for this transaction.
     pub account_id: AccountId,

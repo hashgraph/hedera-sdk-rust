@@ -41,6 +41,7 @@ pkcs8 = "0.9.0"
 async-stream = "0.3.3"
 futures-core = "0.3.21"
 fraction = { version = "0.10.0", features = ["with-serde-support"] }
+either = { version = "1.7.0", features = ["serde"] }
 
 [dev-dependencies]
 anyhow = "1.0.57"

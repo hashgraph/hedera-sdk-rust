@@ -14,7 +14,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     TokenId,
     Transaction,
@@ -57,7 +56,7 @@ pub type TokenWipeTransaction = Transaction<TokenWipeTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenWipeTransactionData {
     /// The account to be wiped.
-    account_id: Option<AccountAddress>,
+    account_id: Option<AccountId>,
 
     /// The token for which the account will be wiped.
     token_id: Option<TokenId>,
@@ -72,7 +71,7 @@ pub struct TokenWipeTransactionData {
 
 impl TokenWipeTransaction {
     /// Sets the account to be wiped.
-    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -114,7 +113,7 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
         let amount = self.amount.clone().unwrap_or_default();
         let serial_numbers = self.serial_numbers.iter().map(|num| *num as i64).collect();
@@ -143,7 +142,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         TokenId,
         TokenWipeTransaction,
@@ -185,9 +183,7 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenWipe(transaction) => transaction);
 
-        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(account_id, AccountId::from(1001));
-
+        assert_eq!(data.account_id, Some(AccountId::from(1001)));
         assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
         assert_eq!(data.amount.unwrap(), 123);
         assert_eq!(data.serial_numbers, [1, 2, 3]);

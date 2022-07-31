@@ -20,7 +20,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     Key,
     TokenId,
@@ -64,7 +63,7 @@ pub struct TokenUpdateTransactionData {
     symbol: String,
 
     /// The account which will act as a treasury for the token.
-    treasury_account_id: Option<AccountAddress>,
+    treasury_account_id: Option<AccountId>,
 
     /// The key which can perform update/delete operations on the token.
     admin_key: Option<Key>,
@@ -83,7 +82,7 @@ pub struct TokenUpdateTransactionData {
 
     /// An account which will be automatically charged to renew the token's expiration, at
     /// autoRenewPeriod interval
-    auto_renew_account_id: Option<AccountAddress>,
+    auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
     #[serde_as(as = "Option<DurationSeconds<i64>>")]
@@ -133,10 +132,7 @@ impl TokenUpdateTransaction {
     ///
     /// If successful, the token balance held in the previous treasury account is transferred to the
     /// new one.
-    pub fn treasury_account_id(
-        &mut self,
-        treasury_account_id: impl Into<AccountAddress>,
-    ) -> &mut Self {
+    pub fn treasury_account_id(&mut self, treasury_account_id: AccountId) -> &mut Self {
         self.body.data.treasury_account_id = Some(treasury_account_id.into());
         self
     }
@@ -182,10 +178,7 @@ impl TokenUpdateTransaction {
     }
 
     /// Sets the new account which will be automatically charged to renew the token's expiration.
-    pub fn auto_renew_account_id(
-        &mut self,
-        auto_renew_account_id: impl Into<AccountAddress>,
-    ) -> &mut Self {
+    pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(auto_renew_account_id.into());
         self
     }
@@ -253,17 +246,14 @@ impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
             token: self.token_id.as_ref().map(TokenId::to_protobuf),
             name: self.name.clone(),
             symbol: self.symbol.clone(),
-            treasury: self.treasury_account_id.as_ref().map(AccountAddress::to_protobuf),
+            treasury: self.treasury_account_id.as_ref().map(AccountId::to_protobuf),
             admin_key: self.admin_key.as_ref().map(Key::to_protobuf),
             kyc_key: self.kyc_key.as_ref().map(Key::to_protobuf),
             freeze_key: self.freeze_key.as_ref().map(Key::to_protobuf),
             wipe_key: self.wipe_key.as_ref().map(Key::to_protobuf),
             supply_key: self.supply_key.as_ref().map(Key::to_protobuf),
             expiry: self.expires_at.map(Into::into),
-            auto_renew_account: self
-                .auto_renew_account_id
-                .as_ref()
-                .map(AccountAddress::to_protobuf),
+            auto_renew_account: self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf),
             auto_renew_period: self.auto_renew_period.map(Into::into),
             memo: Some(self.token_memo.clone()),
             fee_schedule_key: self.fee_schedule_key.as_ref().map(Key::to_protobuf),
@@ -293,7 +283,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         Key,
         PublicKey,
@@ -394,11 +383,8 @@ mod tests {
             OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
         );
 
-        let treasury_account_id = assert_matches!(data.treasury_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(treasury_account_id, AccountId::from(1002));
-
-        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(auto_renew_account_id, AccountId::from(1003));
+        assert_eq!(data.treasury_account_id, Some(AccountId::from(1002)));
+        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1003)));
 
         let admin_key =
             assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);

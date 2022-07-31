@@ -11,7 +11,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     ContractId,
     Transaction,
@@ -28,7 +27,7 @@ pub type ContractDeleteTransaction = Transaction<ContractDeleteTransactionData>;
 pub struct ContractDeleteTransactionData {
     pub delete_contract_id: Option<ContractId>,
 
-    pub transfer_account_id: Option<AccountAddress>,
+    pub transfer_account_id: Option<AccountId>,
 
     pub transfer_contract_id: Option<ContractId>,
 }
@@ -41,7 +40,7 @@ impl ContractDeleteTransaction {
     }
 
     /// Sets the account ID which will receive all remaining hbars.
-    pub fn transfer_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn transfer_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.transfer_account_id = Some(id.into());
         self
     }
@@ -114,7 +113,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         ContractId,
     };
@@ -151,9 +149,7 @@ mod tests {
 
         assert_eq!(data.delete_contract_id.unwrap(), ContractId::from(1001));
         assert_eq!(data.transfer_contract_id.unwrap(), ContractId::from(1003));
-
-        let transfer_account_id = assert_matches!(data.transfer_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(transfer_account_id, AccountId::from(1002));
+        assert_eq!(data.transfer_account_id, Some(AccountId::from(1002)));
 
         Ok(())
     }

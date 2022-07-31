@@ -15,7 +15,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     TokenId,
     Transaction,
@@ -47,7 +46,7 @@ pub type TokenDissociateTransaction = Transaction<TokenDissociateTransactionData
 #[serde(rename_all = "camelCase")]
 pub struct TokenDissociateTransactionData {
     /// The account to be dissociated with the provided tokens.
-    account_id: Option<AccountAddress>,
+    account_id: Option<AccountId>,
 
     /// The tokens to be dissociated with the provided account.
     token_ids: Vec<TokenId>,
@@ -55,7 +54,7 @@ pub struct TokenDissociateTransactionData {
 
 impl TokenDissociateTransaction {
     /// Sets the account to be dissociated with the provided tokens.
-    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -84,7 +83,7 @@ impl ToTransactionDataProtobuf for TokenDissociateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
 
         services::transaction_body::Data::TokenDissociate(
@@ -108,7 +107,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         TokenDissociateTransaction,
         TokenId,
@@ -146,9 +144,7 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenDissociate(transaction) => transaction);
 
         assert_eq!(data.token_ids, [TokenId::from(1002), TokenId::from(1003)]);
-
-        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(account_id, AccountId::from(1001));
+        assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
         Ok(())
     }

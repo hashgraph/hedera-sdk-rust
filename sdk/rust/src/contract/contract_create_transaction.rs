@@ -20,7 +20,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     FileId,
     Key,
@@ -58,9 +57,9 @@ pub struct ContractCreateTransactionData {
 
     max_automatic_token_associations: u32,
 
-    auto_renew_account_id: Option<AccountAddress>,
+    auto_renew_account_id: Option<AccountId>,
 
-    staked_account_id: Option<AccountAddress>,
+    staked_account_id: Option<AccountId>,
 
     staked_node_id: Option<u64>,
 
@@ -145,14 +144,14 @@ impl ContractCreateTransaction {
 
     /// Sets the account to be used at the contract's expiration time to extend the
     /// life of the contract.
-    pub fn auto_renew_account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn auto_renew_account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(account_id.into());
         self
     }
 
     /// Set the ID of the account to which this contract is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub fn staked_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
         self
     }
@@ -190,8 +189,7 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
     ) -> services::transaction_body::Data {
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.into();
-        let auto_renew_account_id =
-            self.auto_renew_account_id.as_ref().map(AccountAddress::to_protobuf);
+        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
 
         let initcode_source = match (&self.bytecode, &self.bytecode_file_id) {
             (_, Some(file_id)) => {
@@ -264,7 +262,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         ContractCreateTransaction,
         FileId,
@@ -349,11 +346,8 @@ mod tests {
             assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
-        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(auto_renew_account_id, AccountId::from(1002));
-
-        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(staked_account_id, AccountId::from(1003));
+        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
+        assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
 
         Ok(())
     }

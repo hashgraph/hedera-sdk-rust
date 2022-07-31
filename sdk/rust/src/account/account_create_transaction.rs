@@ -16,7 +16,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     Key,
     Transaction,
@@ -61,7 +60,7 @@ pub struct AccountCreateTransactionData {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub staked_account_id: Option<AccountAddress>,
+    pub staked_account_id: Option<AccountId>,
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -126,7 +125,7 @@ impl AccountCreateTransaction {
 
     /// Set the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub fn staked_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
         self
     }
@@ -219,7 +218,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountCreateTransaction,
         AccountId,
         Key,
@@ -298,10 +296,9 @@ mod tests {
         assert_eq!(data.decline_staking_reward, false);
 
         let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(key, PublicKey::from_str(KEY)?);
 
-        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(staked_account_id, AccountId::from(1001));
+        assert_eq!(key, PublicKey::from_str(KEY)?);
+        assert_eq!(data.staked_account_id, Some(AccountId::from(1001)));
 
         Ok(())
     }

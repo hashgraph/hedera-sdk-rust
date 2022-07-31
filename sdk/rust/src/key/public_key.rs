@@ -23,10 +23,10 @@ use crate::key::private_key::ED25519_OID;
 use crate::Error;
 
 /// A public key on the Hedera network.
-#[derive(Clone, Eq, PartialEq, SerializeDisplay, DeserializeFromStr)]
+#[derive(Clone, Eq, Copy, PartialEq, SerializeDisplay, DeserializeFromStr)]
 pub struct PublicKey(PublicKeyData);
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, Copy, PartialEq)]
 enum PublicKeyData {
     Ed25519(ed25519_dalek::PublicKey),
     EcdsaSecp256k1(k256::ecdsa::VerifyingKey),
