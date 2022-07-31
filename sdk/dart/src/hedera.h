@@ -1,7 +1,7 @@
 #ifndef _HEDERA_H
 #define _HEDERA_H
 
-/* Generated with cbindgen:0.23.0 */
+/* Generated with cbindgen:0.24.3 */
 
 #include <stdarg.h>
 #include <stdbool.h>
