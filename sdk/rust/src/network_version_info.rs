@@ -17,6 +17,7 @@ pub struct SemanticVersion {
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NetworkVersionInfo {
     /// Version of the protobuf schema in use by the network.
     pub protobuf_version: SemanticVersion,
