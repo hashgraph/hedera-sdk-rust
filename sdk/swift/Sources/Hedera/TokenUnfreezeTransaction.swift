@@ -2,7 +2,7 @@
 public class TokenUnfreezeTransaction: Transaction {
     /// Create a new `TokenUnfreezeTransaction`.
     public init(
-        accountId: AccountAddress? = nil,
+        accountId: AccountId? = nil,
         tokenId: TokenId? = nil
     ) {
         self.accountId = accountId
@@ -10,11 +10,11 @@ public class TokenUnfreezeTransaction: Transaction {
     }
 
     /// The account to be unfrozen.
-    public var accountId: AccountAddress?
+    public var accountId: AccountId?
 
     /// Sets the account to be unfrozen.
     @discardableResult
-    public func accountId(_ accountId: AccountAddress?) -> Self {
+    public func accountId(_ accountId: AccountId?) -> Self {
         self.accountId = accountId
 
         return self

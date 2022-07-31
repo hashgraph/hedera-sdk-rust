@@ -59,10 +59,6 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, E
     }
 }
 
-/// The unique identifier for a cryptocurrency account on Hedera.
-public final class AccountId: EntityId {
-}
-
 /// The unique identifier for a file on Hedera.
 public final class FileId: EntityId {
 }

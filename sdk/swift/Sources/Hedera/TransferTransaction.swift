@@ -15,32 +15,32 @@ public final class TransferTransaction: Transaction {
 
     /// Add a non-approved hbar transfer to the transaction.
     @discardableResult
-    public func hbarTransfer(_ accountId: AccountAddress, _ amount: Int64) -> Self {
+    public func hbarTransfer(_ accountId: AccountId, _ amount: Int64) -> Self {
         doHbarTransfer(accountId, amount, false)
     }
 
     /// Add an approved hbar transfer to the transaction.
     @discardableResult
-    public func approvedHbarTransfer(_ accountId: AccountAddress, _ amount: Int64) -> Self {
+    public func approvedHbarTransfer(_ accountId: AccountId, _ amount: Int64) -> Self {
         doHbarTransfer(accountId, amount, true)
     }
 
     /// Add a non-approved token transfer to the transaction.
     @discardableResult
-    public func tokenTransfer(_ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64) -> Self {
+    public func tokenTransfer(_ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64) -> Self {
         doTokenTransfer(tokenId, accountId, amount, false, nil)
     }
 
     /// Add an approved token transfer to the transaction.
     @discardableResult
-    public func approvedTokenTransfer(_ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64) -> Self {
+    public func approvedTokenTransfer(_ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64) -> Self {
         doTokenTransfer(tokenId, accountId, amount, true, nil)
     }
 
     /// Add a non-approved token transfer with decimals to the transaction.
     @discardableResult
     public func tokenTransferWithDecimals(
-        _ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64, _ expectedDecimals: UInt32
+        _ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64, _ expectedDecimals: UInt32
     ) -> Self {
         doTokenTransfer(tokenId, accountId, amount, false, expectedDecimals)
     }
@@ -48,14 +48,14 @@ public final class TransferTransaction: Transaction {
     /// Add an approved token transfer with decimals to the transaction.
     @discardableResult
     public func approvedTokenTransferWithDecimals(
-        _ tokenId: TokenId, _ accountId: AccountAddress, _ amount: Int64, _ expectedDecimals: UInt32
+        _ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64, _ expectedDecimals: UInt32
     ) -> Self {
         doTokenTransfer(tokenId, accountId, amount, false, expectedDecimals)
     }
 
     /// Add a non-approved nft transfer to the transaction.
     @discardableResult
-    public func nftTransfer(_ nftId: NftId, _ senderAccountId: AccountAddress, _ receiverAccountId: AccountAddress)
+    public func nftTransfer(_ nftId: NftId, _ senderAccountId: AccountId, _ receiverAccountId: AccountId)
         -> Self
     {
         doNftTransfer(nftId, senderAccountId, receiverAccountId, false)
@@ -64,13 +64,13 @@ public final class TransferTransaction: Transaction {
     /// Add an approved nft transfer to the transaction.
     @discardableResult
     public func approvedNftTransfer(
-        _ nftId: NftId, _ senderAccountId: AccountAddress, _ receiverAccountId: AccountAddress
+        _ nftId: NftId, _ senderAccountId: AccountId, _ receiverAccountId: AccountId
     ) -> Self {
         doNftTransfer(nftId, senderAccountId, receiverAccountId, true)
     }
 
     private func doHbarTransfer(
-        _ accountId: AccountAddress,
+        _ accountId: AccountId,
         _ amount: Int64,
         _ approved: Bool
     ) -> Self {
@@ -81,7 +81,7 @@ public final class TransferTransaction: Transaction {
 
     private func doTokenTransfer(
         _ tokenId: TokenId,
-        _ accountId: AccountAddress,
+        _ accountId: AccountId,
         _ amount: Int64,
         _ approved: Bool,
         _ expectedDecimals: UInt32?
@@ -106,8 +106,8 @@ public final class TransferTransaction: Transaction {
 
     private func doNftTransfer(
         _ nftId: NftId,
-        _ senderAccountId: AccountAddress,
-        _ receiverAccountId: AccountAddress,
+        _ senderAccountId: AccountId,
+        _ receiverAccountId: AccountId,
         _ approved: Bool
     ) -> Self {
         let transfer = NftTransfer(
@@ -148,7 +148,7 @@ public final class TransferTransaction: Transaction {
 }
 
 private struct Transfer: Encodable {
-    let accountId: AccountAddress
+    let accountId: AccountId
     let amount: Int64
     let isApproval: Bool
 }
@@ -161,8 +161,8 @@ private struct TokenTransfer: Encodable {
 }
 
 private struct NftTransfer: Encodable {
-    let senderAccountId: AccountAddress
-    let receiverAccountId: AccountAddress
+    let senderAccountId: AccountId
+    let receiverAccountId: AccountId
     let serialNumber: UInt64
     let isApproval: Bool
 }

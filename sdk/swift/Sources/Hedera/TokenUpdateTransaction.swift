@@ -7,13 +7,13 @@ public class TokenUpdateTransaction: Transaction {
         tokenId: TokenId? = nil,
         name: String = "",
         symbol: String = "",
-        treasuryAccountId: AccountAddress? = nil,
+        treasuryAccountId: AccountId? = nil,
         adminKey: Key? = nil,
         kycKey: Key? = nil,
         freezeKey: Key? = nil,
         wipeKey: Key? = nil,
         supplyKey: Key? = nil,
-        autoRenewAccountId: AccountAddress? = nil,
+        autoRenewAccountId: AccountId? = nil,
         autoRenewPeriod: TimeInterval? = nil,
         expiresAt: Date? = nil,
         tokenMemo: String = "",
@@ -71,11 +71,11 @@ public class TokenUpdateTransaction: Transaction {
     }
 
     /// The account which will act as a treasury for the token.
-    public var treasuryAccountId: AccountAddress?
+    public var treasuryAccountId: AccountId?
 
     /// Sets the account which will act as a treasury for the token.
     @discardableResult
-    public func treasuryAccountId(_ treasuryAccountId: AccountAddress) -> Self {
+    public func treasuryAccountId(_ treasuryAccountId: AccountId) -> Self {
         self.treasuryAccountId = treasuryAccountId
 
         return self
@@ -137,11 +137,11 @@ public class TokenUpdateTransaction: Transaction {
     }
 
     /// The new account which will be automatically charged to renew the token's expiration.
-    public var autoRenewAccountId: AccountAddress?
+    public var autoRenewAccountId: AccountId?
 
     /// Sets the new account which will be automatically charged to renew the token's expiration.
     @discardableResult
-    public func autoRenewAccountId(_ autoRenewAccountId: AccountAddress) -> Self {
+    public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
         self.autoRenewAccountId = autoRenewAccountId
 
         return self

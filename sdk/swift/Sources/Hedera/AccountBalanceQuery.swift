@@ -7,22 +7,22 @@
 public class AccountBalanceQuery: Query<AccountBalanceResponse> {
     /// Create a new `AccountBalanceQuery` ready for configuration.
     public init(
-        accountId: AccountAddress? = nil,
-        contractId: AccountAddress? = nil
+        accountId: AccountId? = nil,
+        contractId: AccountId? = nil
     ) {
         self.accountId = accountId
         self.contractId = contractId
     }
 
     /// The account ID for which information is requested.
-    public var accountId: AccountAddress?
+    public var accountId: AccountId?
 
     /// Sets the account ID for which information is requested.
     ///
     /// This is mutually exclusive with `contractId`.
     ///
     @discardableResult
-    public func accountId(_ accountId: AccountAddress) -> Self {
+    public func accountId(_ accountId: AccountId) -> Self {
         self.accountId = accountId
         contractId = nil
 
@@ -31,7 +31,7 @@ public class AccountBalanceQuery: Query<AccountBalanceResponse> {
 
     /// The contract ID for which information is requested.
     // TODO: Use ContractIdOrEvmAddress
-    public var contractId: AccountAddress?
+    public var contractId: AccountId?
 
     /// Sets the contract ID for which information is requested.
     ///
@@ -39,7 +39,7 @@ public class AccountBalanceQuery: Query<AccountBalanceResponse> {
     ///
     // TODO: Use ContractIdOrEvmAddress
     @discardableResult
-    public func contractId(_ contractId: AccountAddress) -> Self {
+    public func contractId(_ contractId: AccountId) -> Self {
         self.contractId = contractId
         accountId = nil
 

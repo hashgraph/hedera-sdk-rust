@@ -10,7 +10,7 @@ public final class AccountCreateTransaction: Transaction {
         autoRenewPeriod: TimeInterval? = nil,
         accountMemo: String = "",
         maxAutomaticTokenAssociations: UInt32 = 0,
-        stakedAccountId: AccountAddress? = nil,
+        stakedAccountId: AccountId? = nil,
         stakedNodeId: UInt64? = nil,
         declineStakingReward: Bool = false
     ) {
@@ -94,12 +94,12 @@ public final class AccountCreateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public var stakedAccountId: AccountAddress?
+    public var stakedAccountId: AccountId?
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
     @discardableResult
-    public func stakedAccountId(_ stakedAccountId: AccountAddress) -> Self {
+    public func stakedAccountId(_ stakedAccountId: AccountId) -> Self {
         self.stakedAccountId = stakedAccountId
 
         return self
