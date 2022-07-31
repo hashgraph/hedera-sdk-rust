@@ -19,13 +19,19 @@ use crate::query::{
 };
 use crate::{
     AccountId,
-    ContractCallResponse,
+    ContractFunctionResult,
     ContractId,
     Query,
     ToProtobuf,
 };
 
 /// Call a function of the given smart contract instance.
+/// It will consume the entire given amount of gas.
+/// 
+/// This is performed locally on the particular node that the client is communicating with.
+/// It cannot change the state of the contract instance (and so, cannot spend
+/// anything from the instance's cryptocurrency account).
+///
 pub type ContractCallQuery = Query<ContractCallQueryData>;
 
 #[serde_as]
@@ -33,14 +39,18 @@ pub type ContractCallQuery = Query<ContractCallQueryData>;
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ContractCallQueryData {
-    contract_id: Option<ContractId>,
+    /// The contract instance to call.
+    pub contract_id: Option<ContractId>,
 
-    gas_limit: u64,
+    /// The amount of gas to use for the call.
+    pub gas: u64,
 
+    /// The function parameters as their raw bytes.
     #[serde_as(as = "Base64")]
-    data: Vec<u8>,
+    pub function_parameters: Vec<u8>,
 
-    sender_id: Option<AccountId>,
+    /// The sender for this transaction.
+    pub sender_account_id: Option<AccountId>,
 }
 
 impl ContractCallQuery {
@@ -50,21 +60,21 @@ impl ContractCallQuery {
         self
     }
 
-    /// Sets the gas limit for this call.
-    pub fn gas_limit(&mut self, gas: u64) -> &mut Self {
-        self.data.gas_limit = gas;
+    /// Sets the amount of gas to use for the call.
+    pub fn gas(&mut self, gas: u64) -> &mut Self {
+        self.data.gas = gas;
         self
     }
 
-    /// Sets the data for this transaction.
-    pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
-        self.data.data = data;
+    /// Sets the function parameters as their raw bytes.
+    pub fn function_parameters(&mut self, data: Vec<u8>) -> &mut Self {
+        self.data.function_parameters = data;
         self
     }
 
     /// Sets the sender for this transaction.
-    pub fn sender_id(&mut self, sender_id: AccountId) -> &mut Self {
-        self.data.sender_id = Some(sender_id.into());
+    pub fn sender_account_id(&mut self, sender_account_id: AccountId) -> &mut Self {
+        self.data.sender_account_id = Some(sender_account_id.into());
         self
     }
 }
@@ -79,15 +89,15 @@ impl From<ContractCallQueryData> for AnyQueryData {
 impl ToQueryProtobuf for ContractCallQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
         let contract_id = self.contract_id.as_ref().map(|id| id.to_protobuf());
-        let sender_id = self.sender_id.as_ref().map(|id| id.to_protobuf());
+        let sender_id = self.sender_account_id.as_ref().map(|id| id.to_protobuf());
 
         services::Query {
             query: Some(services::query::Query::ContractCallLocal(
                 #[allow(deprecated)]
                 services::ContractCallLocalQuery {
                     contract_id,
-                    gas: self.gas_limit as i64,
-                    function_parameters: self.data.clone(),
+                    gas: self.gas as i64,
+                    function_parameters: self.function_parameters.clone(),
                     max_result_size: 0,
                     header: Some(header),
                     sender_id,
@@ -99,7 +109,7 @@ impl ToQueryProtobuf for ContractCallQueryData {
 
 #[async_trait]
 impl QueryExecute for ContractCallQueryData {
-    type Response = ContractCallResponse;
+    type Response = ContractFunctionResult;
 
     async fn execute(
         &self,

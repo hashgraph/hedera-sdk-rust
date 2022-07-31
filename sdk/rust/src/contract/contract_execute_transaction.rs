@@ -23,7 +23,16 @@ use crate::{
     Transaction,
 };
 
-/// Call a function of the given smart contract instance.
+/// Call a function of the given smart contract instance, giving it 
+/// parameters as its inputs.
+/// 
+/// It can use the given amount of gas, and any unspent gas will 
+/// be refunded to the paying account.
+/// 
+/// If this function stores information, it is charged gas to store it.
+/// There is a fee in hbars to maintain that storage until the expiration time, 
+/// and that fee is added as part of the transaction fee.
+/// 
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;
 
 #[serde_as]
@@ -31,34 +40,41 @@ pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ContractExecuteTransactionData {
+    /// The contract instance to call.
     contract_id: Option<ContractId>,
-    gas_limit: u64,
-    value: u64,
-    data: Vec<u8>,
+
+    /// The maximum amount of gas to use for the call.
+    gas: u64,
+
+    /// The number of hbars sent with this function call.
+    payable_amount: u64,
+
+    /// The function parameters as their raw bytes.
+    function_parameters: Vec<u8>,
 }
 
 impl ContractExecuteTransaction {
-    /// Sets the contract to call.
+    /// Sets the contract instance to call.
     pub fn contract_id(&mut self, contract_id: ContractId) -> &mut Self {
         self.body.data.contract_id = Some(contract_id);
         self
     }
 
-    /// Sets the gas limit for this transaction.
-    pub fn gas_limit(&mut self, gas: u64) -> &mut Self {
-        self.body.data.gas_limit = gas;
+    /// Sets the maximum amount of gas to use for the call.
+    pub fn gas(&mut self, gas: u64) -> &mut Self {
+        self.body.data.gas = gas;
         self
     }
 
-    /// Sets the value (in HBAR) for this transaction.
-    pub fn value(&mut self, value: u64) -> &mut Self {
-        self.body.data.value = value;
+    /// Sets the number of hbars sent with this function call.
+    pub fn payable_amount(&mut self, amount: u64) -> &mut Self {
+        self.body.data.payable_amount = amount;
         self
     }
 
-    /// Sets the data for this transaction.
-    pub fn data(&mut self, data: Vec<u8>) -> &mut Self {
-        self.body.data.data = data;
+    /// Sets the function parameters as their raw bytes.
+    pub fn function_parameters(&mut self, data: Vec<u8>) -> &mut Self {
+        self.body.data.function_parameters = data;
         self
     }
 }
@@ -85,10 +101,10 @@ impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
         services::transaction_body::Data::ContractCall(
             #[allow(deprecated)]
             services::ContractCallTransactionBody {
-                gas: self.gas_limit as i64,
-                amount: self.value as i64,
+                gas: self.gas as i64,
+                amount: self.payable_amount as i64,
                 contract_id,
-                function_parameters: self.data.clone(),
+                function_parameters: self.function_parameters.clone(),
             },
         )
     }
@@ -118,8 +134,8 @@ mod tests {
   "$type": "contractExecute",
   "contractId": "0.0.1001",
   "gasLimit": 1000,
-  "value": 10,
-  "data": [
+  "payableAmount": 10,
+  "functionParameters": [
     72,
     101,
     108,
@@ -142,9 +158,9 @@ mod tests {
 
         transaction
             .contract_id(ContractId::from(1001))
-            .gas_limit(1000)
-            .value(10)
-            .data("Hello, world!".into());
+            .gas(1000)
+            .payable_amount(10)
+            .function_parameters("Hello, world!".into());
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -160,11 +176,11 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractExecute(transaction) => transaction);
 
         assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
-        assert_eq!(data.gas_limit, 1000);
-        assert_eq!(data.value, 10);
+        assert_eq!(data.gas, 1000);
+        assert_eq!(data.payable_amount, 10);
 
         let bytes: Vec<u8> = "Hello, world!".into();
-        assert_eq!(data.data, bytes);
+        assert_eq!(data.function_parameters, bytes);
 
         Ok(())
     }

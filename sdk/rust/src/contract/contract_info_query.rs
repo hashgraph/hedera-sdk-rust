@@ -15,8 +15,9 @@ use crate::query::{
 };
 use crate::{
     ContractId,
+    ContractInfo,
     Query,
-    ToProtobuf, ContractInfo,
+    ToProtobuf,
 };
 
 /// Get information about a smart contract instance.

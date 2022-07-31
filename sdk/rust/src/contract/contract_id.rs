@@ -75,6 +75,12 @@ impl ToProtobuf for ContractId {
     }
 }
 
+impl From<[u8; 20]> for ContractId {
+    fn from(address: [u8; 20]) -> Self {
+        Self { num: 0, shard: 0, realm: 0, evm_address: Some(address) }
+    }
+}
+
 impl From<u64> for ContractId {
     fn from(num: u64) -> Self {
         Self { num, shard: 0, realm: 0, evm_address: None }
