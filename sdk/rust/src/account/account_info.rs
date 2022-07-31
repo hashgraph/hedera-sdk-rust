@@ -8,8 +8,10 @@ use crate::{
     AccountId,
     FromProtobuf,
     Key,
+    PublicKey,
 };
 
+// TODO: pub ledger_id: LedgerId,
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,32 +36,18 @@ pub struct AccountInfo {
 
     /// The key for the account, which must sign in order to transfer_transaction out, or to modify the
     /// account in any way other than extending its expiration date.
-    // TODO: serde
-    #[serde(skip)]
     pub key: Key,
 
     /// Current balance of the referenced account.
     // TODO: use Hbar type
     pub balance: u64,
 
-    /// The threshold amount, in hbars, at which a record is created of any
-    /// transaction that decreases the balance of this account by more than the threshold.
-    // TODO: use Hbar type
-    #[deprecated]
-    pub send_record_threshold: u64,
-
-    /// The threshold amount, in hbars, at which a record is created of any
-    /// transaction that increases the balance of this account by more than the threshold.
-    // TODO: use Hbar type
-    #[deprecated]
-    pub receive_record_threshold: u64,
-
     /// If true, no transaction can transfer_transaction to this account unless signed by
     /// this account's key.
     pub receiver_signature_required: bool,
 
     /// The TimeStamp time at which this account is set to expire.
-    pub expires_at: Option<OffsetDateTime>,
+    pub expiration_time: Option<OffsetDateTime>,
 
     /// The duration for expiration time will extend every this many seconds.
     pub auto_renew_period: Option<Duration>,
@@ -77,10 +65,7 @@ pub struct AccountInfo {
     pub max_automatic_token_associations: u32,
 
     /// The alias of this account.
-    pub alias: Option<Vec<u8>>, // TODO: Option<PublicKey>,
-    //
-    // The ledger ID
-    // TODO: pub ledger_id: LedgerId,
+    pub alias: Option<PublicKey>,
     /// The ethereum transaction nonce associated with this account.
     pub ethereum_nonce: u64,
     //
@@ -104,6 +89,10 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
             .transpose()?
             .filter(|id| id.num > 0);
 
+        // TODO: alias
+        // let alias =
+        //     if info.alias.is_empty() { Some(PublicKey::from_protobuf(&info.alias)?) } else { None };
+
         Ok(Self {
             account_id: AccountId::from_protobuf(account_id)?,
             contract_account_id: info.contract_account_id,
@@ -111,21 +100,14 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
             #[allow(deprecated)]
             proxy_account_id,
             proxy_received: info.proxy_received as u64,
-            // FIXME: key
             key: Key::from_protobuf(key)?,
             balance: info.balance as u64,
-            send_record_threshold: info.generate_send_record_threshold,
-            #[allow(deprecated)]
-            receive_record_threshold: info.generate_receive_record_threshold,
             receiver_signature_required: info.receiver_sig_required,
-            // FIXME: expires_at
-            expires_at: None,
-            // FIXME: auto_renew_period
-            auto_renew_period: None,
+            expiration_time: info.expiration_time.map(Into::into),
+            auto_renew_period: info.auto_renew_period.map(Into::into),
             memo: info.memo,
             owned_nfts: info.owned_nfts as u64,
             max_automatic_token_associations: info.max_automatic_token_associations as u32,
-            // FIXME: alias
             alias: None,
             ethereum_nonce: info.ethereum_nonce as u64,
         })
