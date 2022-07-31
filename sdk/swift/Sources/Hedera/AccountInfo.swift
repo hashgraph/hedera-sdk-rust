@@ -1,6 +1,7 @@
 import Foundation
 
 // TODO: stakingInfo
+/// Response from `AccountInfoQuery`.
 public final class AccountInfo: Codable {
     /// The account that is being referenced.
     public let accountId: AccountId
