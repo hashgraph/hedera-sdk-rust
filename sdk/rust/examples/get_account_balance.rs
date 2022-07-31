@@ -11,7 +11,7 @@ async fn main() -> anyhow::Result<()> {
         .execute(&client)
         .await?;
 
-    println!("balance = {}", ab.balance);
+    println!("balance = {}", ab.hbars);
 
     Ok(())
 }
