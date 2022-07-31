@@ -5,7 +5,7 @@
 /// additional information.
 ///
 public class AccountBalanceQuery: Query<AccountBalanceResponse> {
-    /// Create a new `AccountBalanceQuery` ready for configuration.
+    /// Create a new `AccountBalanceQuery`.
     public init(
         accountId: AccountId? = nil,
         contractId: AccountId? = nil

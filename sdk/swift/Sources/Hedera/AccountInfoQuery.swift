@@ -2,9 +2,13 @@
 ///
 /// This does not get the list of account records.
 ///
-public class AccountInfoQuery: Query<AccountInfo> {
+public final class AccountInfoQuery: Query<AccountInfo> {
     /// Create a new `AccountInfoQuery`.
-    public override init() {}
+    public init(
+        accountId: AccountId? = nil
+    ) {
+        self.accountId = accountId
+    }
 
     /// The account ID for which information is requested.
     public var accountId: AccountId?

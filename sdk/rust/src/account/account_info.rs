@@ -25,16 +25,12 @@ pub struct AccountInfo {
 
     /// If true, then this account has been deleted, it will disappear when it expires, and all
     /// transactions for it will fail except the transaction to extend its expiration date.
-    pub deleted: bool,
-
-    /// The account ID of the account to which this is proxy staked.
-    #[deprecated]
-    pub proxy_account_id: Option<AccountId>,
+    pub is_deleted: bool,
 
     /// The total number of hbars proxy staked to this account.
     pub proxy_received: u64, // TODO: Hbar
 
-    /// The key for the account, which must sign in order to transfer_transaction out, or to modify the
+    /// The key for the account, which must sign in order to transfer out, or to modify the
     /// account in any way other than extending its expiration date.
     pub key: Key,
 
@@ -42,21 +38,18 @@ pub struct AccountInfo {
     // TODO: use Hbar type
     pub balance: u64,
 
-    /// If true, no transaction can transfer_transaction to this account unless signed by
+    /// If true, no transaction can transfer to this account unless signed by
     /// this account's key.
-    pub receiver_signature_required: bool,
+    pub is_receiver_signature_required: bool,
 
     /// The TimeStamp time at which this account is set to expire.
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The duration for expiration time will extend every this many seconds.
     pub auto_renew_period: Option<Duration>,
-    //
-    // All tokens related to this account.
-    // TODO: pub token_relationships: HashMap<TokenId, TokenRelationship>,
-    //
+
     /// The memo associated with the account.
-    pub memo: String,
+    pub account_memo: String,
 
     /// The number of NFTs owned by this account
     pub owned_nfts: u64,
@@ -73,7 +66,6 @@ pub struct AccountInfo {
 }
 
 impl FromProtobuf<services::response::Response> for AccountInfo {
-    #[allow(deprecated)]
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
@@ -83,12 +75,6 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
         let key = pb_getf!(info, key)?;
         let account_id = pb_getf!(info, account_id)?;
 
-        let proxy_account_id = info
-            .proxy_account_id
-            .map(AccountId::from_protobuf)
-            .transpose()?
-            .filter(|id| id.num > 0);
-
         // TODO: alias
         // let alias =
         //     if info.alias.is_empty() { Some(PublicKey::from_protobuf(&info.alias)?) } else { None };
@@ -96,20 +82,18 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
         Ok(Self {
             account_id: AccountId::from_protobuf(account_id)?,
             contract_account_id: info.contract_account_id,
-            deleted: info.deleted,
-            #[allow(deprecated)]
-            proxy_account_id,
+            is_deleted: info.deleted,
             proxy_received: info.proxy_received as u64,
             key: Key::from_protobuf(key)?,
             balance: info.balance as u64,
-            receiver_signature_required: info.receiver_sig_required,
             expiration_time: info.expiration_time.map(Into::into),
             auto_renew_period: info.auto_renew_period.map(Into::into),
-            memo: info.memo,
+            account_memo: info.memo,
             owned_nfts: info.owned_nfts as u64,
             max_automatic_token_associations: info.max_automatic_token_associations as u32,
             alias: None,
             ethereum_nonce: info.ethereum_nonce as u64,
+            is_receiver_signature_required: info.receiver_sig_required,
         })
     }
 }
