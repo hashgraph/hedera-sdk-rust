@@ -42,7 +42,7 @@ pub struct ContractCreateTransactionData {
 
     admin_key: Option<Key>,
 
-    gas_limit: u64,
+    gas: u64,
 
     // TODO: Hbar
     initial_balance: u64,
@@ -72,7 +72,7 @@ impl Default for ContractCreateTransactionData {
             bytecode: None,
             bytecode_file_id: None,
             admin_key: None,
-            gas_limit: 0,
+            gas: 0,
             initial_balance: 0,
             auto_renew_period: Duration::days(90),
             constructor_parameters: Vec::new(),
@@ -106,8 +106,8 @@ impl ContractCreateTransaction {
     }
 
     /// Sets the gas limit to deploy the smart contract.
-    pub fn gas_limit(&mut self, gas: u64) -> &mut Self {
-        self.body.data.gas_limit = gas;
+    pub fn gas(&mut self, gas: u64) -> &mut Self {
+        self.body.data.gas = gas;
         self
     }
 
@@ -225,7 +225,7 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
             #[allow(deprecated)]
             services::ContractCreateTransactionBody {
                 admin_key,
-                gas: self.gas_limit as i64,
+                gas: self.gas as i64,
                 initial_balance: self.initial_balance as i64,
                 proxy_account_id: None,
                 auto_renew_period: Some(auto_renew_period),
@@ -282,7 +282,7 @@ mod tests {
   "adminKey": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
   },
-  "gasLimit": 1000,
+  "gas": 1000,
   "initialBalance": 1000000,
   "autoRenewPeriod": 7776000,
   "constructorParameters": "BQoP",
@@ -305,7 +305,7 @@ mod tests {
             .bytecode("Hello, world!")
             .bytecode_file_id(FileId::from(1001))
             .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-            .gas_limit(1000)
+            .gas(1000)
             .initial_balance(1_000_000)
             .auto_renew_period(Duration::days(90))
             .constructor_parameters([5, 10, 15])
@@ -330,7 +330,7 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
 
         assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
-        assert_eq!(data.gas_limit, 1000);
+        assert_eq!(data.gas, 1000);
         assert_eq!(data.initial_balance, 1_000_000);
         assert_eq!(data.auto_renew_period, Duration::days(90));
         assert_eq!(data.constructor_parameters, [5, 10, 15]);
