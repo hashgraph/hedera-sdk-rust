@@ -8,6 +8,8 @@ use tokio::task::block_in_place;
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::{
     Network,
+    MAINNET,
+    PREVIEWNET,
     TESTNET,
 };
 use crate::error::BoxStdError;
@@ -33,11 +35,33 @@ pub struct Client {
 }
 
 impl Client {
+    /// Construct a Hedera client pre-configured for mainnet access.
+    pub fn for_mainnet() -> Self {
+        Self {
+            network: Arc::new(Network::from_static(MAINNET)),
+            mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::MAINNET])),
+            operator_account_id: Arc::new(RwLock::new(None)),
+            operator_signer: Arc::new(AsyncRwLock::new(None)),
+            max_transaction_fee: Arc::new(AtomicU64::new(0)),
+        }
+    }
+
     /// Construct a Hedera client pre-configured for testnet access.
     pub fn for_testnet() -> Self {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
+            operator_account_id: Arc::new(RwLock::new(None)),
+            operator_signer: Arc::new(AsyncRwLock::new(None)),
+            max_transaction_fee: Arc::new(AtomicU64::new(0)),
+        }
+    }
+
+    /// Construct a Hedera client pre-configured for previewnet access.
+    pub fn for_previewnet() -> Self {
+        Self {
+            network: Arc::new(Network::from_static(PREVIEWNET)),
+            mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::PREVIEWNET])),
             operator_account_id: Arc::new(RwLock::new(None)),
             operator_signer: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee: Arc::new(AtomicU64::new(0)),

@@ -3,12 +3,7 @@ use std::str::FromStr;
 
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
-use crate::{
-    AccountAlias,
-    AccountId,
-    NftId,
-    PublicKey,
-};
+use crate::NftId;
 
 /// Parse a Hedera `NftId` from the passed string.
 #[no_mangle]

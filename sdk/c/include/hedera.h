@@ -47,15 +47,6 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
-/**
- * An opaque signer that can sign Hedera transactions.
- *
- * Intended to be a temporary object that is generalized and passed into
- * a function accepting a `HederaSigner*`. Failure to do so will result in
- * a memory of leak.
- */
-typedef struct HederaSigner HederaSigner;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -88,9 +79,19 @@ enum HederaError hedera_account_id_from_string(const char *s,
                                                struct HederaPublicKey **id_alias);
 
 /**
+ * Construct a Hedera client pre-configured for mainnet access.
+ */
+struct HederaClient *hedera_client_for_mainnet(void);
+
+/**
  * Construct a Hedera client pre-configured for testnet access.
  */
 struct HederaClient *hedera_client_for_testnet(void);
+
+/**
+ * Construct a Hedera client pre-configured for previewnet access.
+ */
+struct HederaClient *hedera_client_for_previewnet(void);
 
 /**
  * Release memory associated with the previously-opened Hedera client.
@@ -176,11 +177,6 @@ const char *hedera_public_key_to_string(struct HederaPublicKey *key);
  * Releases memory associated with the public key.
  */
 void hedera_public_key_free(struct HederaPublicKey *key);
-
-/**
- * Create an opaque signer from a `HederaPrivateKey`.
- */
-struct HederaSigner *hedera_signer_private_key(struct HederaPrivateKey *key);
 
 /**
  * Subscribe with this request against the provided client of the Hedera network.
