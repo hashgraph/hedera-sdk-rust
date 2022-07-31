@@ -10,7 +10,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    AccountAddress,
+    AccountId,
     Query,
     ToProtobuf,
 };
@@ -24,7 +24,7 @@ pub type AccountInfoQuery = Query<AccountInfoQueryData>;
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountInfoQueryData {
-    account_id: Option<AccountAddress>,
+    account_id: Option<AccountId>,
 }
 
 impl From<AccountInfoQueryData> for AnyQueryData {
@@ -36,7 +36,7 @@ impl From<AccountInfoQueryData> for AnyQueryData {
 
 impl AccountInfoQuery {
     /// Sets the account ID for which information is requested.
-    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.data.account_id = Some(id.into());
         self
     }
@@ -74,7 +74,6 @@ mod tests {
 
     use crate::query::AnyQueryData;
     use crate::{
-        AccountAddress,
         AccountId,
         AccountInfoQuery,
         AnyQuery,
@@ -111,8 +110,7 @@ mod tests {
         let query: AnyQuery = serde_json::from_str(ACCOUNT_INFO)?;
 
         let data = assert_matches!(query.data, AnyQueryData::AccountInfo(query) => query);
-        let account_id =
-            assert_matches!(data.account_id, Some(AccountAddress::AccountId(id)) => id);
+        let account_id = assert_matches!(data.account_id, Some(id) => id);
 
         assert_eq!(account_id.num, 1001);
         assert_eq!(query.payment.body.data.amount, Some(50));

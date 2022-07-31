@@ -48,8 +48,6 @@ mod transfer_transaction;
 mod ffi;
 
 pub use account::{
-    AccountAddress,
-    AccountAlias,
     AccountAllowanceApproveTransaction,
     AccountAllowanceDeleteTransaction,
     AccountBalanceQuery,
@@ -66,12 +64,10 @@ pub use account::{
 };
 pub use client::Client;
 pub use contract::{
-    ContractAddress,
     ContractBytecodeQuery,
     ContractBytecodeResponse,
     ContractCallResponse,
     ContractCreateTransaction,
-    ContractEvmAddress,
     ContractExecuteTransaction,
     ContractFunctionResult,
     ContractId,

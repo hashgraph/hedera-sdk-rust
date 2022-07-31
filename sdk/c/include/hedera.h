@@ -79,21 +79,13 @@ int32_t hedera_error_grpc_status(void);
 int32_t hedera_error_pre_check_status(void);
 
 /**
- * Parse a Hedera `AccountAddress` from the passed string.
+ * Parse a Hedera `AccountId` from the passed string.
  */
-enum HederaError hedera_account_address_from_string(const char *s,
-                                                    uint64_t *id_shard,
-                                                    uint64_t *id_realm,
-                                                    uint64_t *id_num,
-                                                    struct HederaPublicKey **id_alias);
-
-/**
- * Parse a Hedera `AccountAlias` from the passed string.
- */
-enum HederaError hedera_account_alias_from_string(const char *s,
-                                                  uint64_t *id_shard,
-                                                  uint64_t *id_realm,
-                                                  struct HederaPublicKey **id_alias);
+enum HederaError hedera_account_id_from_string(const char *s,
+                                               uint64_t *id_shard,
+                                               uint64_t *id_realm,
+                                               uint64_t *id_num,
+                                               struct HederaPublicKey **id_alias);
 
 /**
  * Construct a Hedera client pre-configured for testnet access.

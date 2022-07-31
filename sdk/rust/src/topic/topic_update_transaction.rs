@@ -20,7 +20,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     Key,
     TopicId,
@@ -62,7 +61,7 @@ pub struct TopicUpdateTransactionData {
     auto_renew_period: Option<Duration>,
 
     /// Optional account to be used at the topic's expiration time to extend the life of the topic.
-    auto_renew_account_id: Option<AccountAddress>,
+    auto_renew_account_id: Option<AccountId>,
 }
 
 impl TopicUpdateTransaction {
@@ -107,7 +106,7 @@ impl TopicUpdateTransaction {
     }
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.
-    pub fn auto_renew_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(id.into());
         self
     }
@@ -135,8 +134,7 @@ impl ToTransactionDataProtobuf for TopicUpdateTransactionData {
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let submit_key = self.submit_key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.map(Into::into);
-        let auto_renew_account_id =
-            self.auto_renew_account_id.as_ref().map(AccountAddress::to_protobuf);
+        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
 
         services::transaction_body::Data::ConsensusUpdateTopic(
             services::ConsensusUpdateTopicTransactionBody {
@@ -173,7 +171,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         Key,
         PublicKey,
@@ -244,8 +241,7 @@ mod tests {
             assert_matches!(data.submit_key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(submit_key, PublicKey::from_str(SUBMIT_KEY)?);
 
-        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(auto_renew_account_id, AccountId::from(1001));
+        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1001)));
 
         Ok(())
     }

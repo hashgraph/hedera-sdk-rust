@@ -11,7 +11,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     TokenId,
     Transaction,
@@ -36,7 +35,7 @@ pub type TokenGrantKycTransaction = Transaction<TokenGrantKycTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenGrantKycTransactionData {
     /// The account to be granted KYC.
-    account_id: Option<AccountAddress>,
+    account_id: Option<AccountId>,
 
     /// The token for which this account will be granted KYC.
     token_id: Option<TokenId>,
@@ -44,7 +43,7 @@ pub struct TokenGrantKycTransactionData {
 
 impl TokenGrantKycTransaction {
     /// Sets the account to be granted KYC.
-    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -73,7 +72,7 @@ impl ToTransactionDataProtobuf for TokenGrantKycTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenGrantKyc(services::TokenGrantKycTransactionBody {
@@ -98,7 +97,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         TokenGrantKycTransaction,
         TokenId,
@@ -131,9 +129,7 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenGrantKyc(transaction) => transaction);
 
         assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
-
-        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(account_id, AccountId::from(1001));
+        assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
         Ok(())
     }

@@ -11,7 +11,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     Transaction,
 };
@@ -28,21 +27,21 @@ pub type AccountDeleteTransaction = Transaction<AccountDeleteTransactionData>;
 #[serde(default, rename_all = "camelCase")]
 pub struct AccountDeleteTransactionData {
     /// The account ID which will receive all remaining hbars.
-    pub transfer_account_id: Option<AccountAddress>,
+    pub transfer_account_id: Option<AccountId>,
 
     /// The account ID which should be deleted.
-    pub delete_account_id: Option<AccountAddress>,
+    pub delete_account_id: Option<AccountId>,
 }
 
 impl AccountDeleteTransaction {
     /// Sets the account ID which should be deleted.
-    pub fn delete_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn delete_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.delete_account_id = Some(id.into());
         self
     }
 
     /// Sets the account ID which will receive all remaining hbars.
-    pub fn transfer_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn transfer_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.transfer_account_id = Some(id.into());
         self
     }
@@ -65,9 +64,8 @@ impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let delete_account_id = self.delete_account_id.as_ref().map(AccountAddress::to_protobuf);
-        let transfer_account_id =
-            self.transfer_account_id.as_ref().map(AccountAddress::to_protobuf);
+        let delete_account_id = self.delete_account_id.as_ref().map(AccountId::to_protobuf);
+        let transfer_account_id = self.transfer_account_id.as_ref().map(AccountId::to_protobuf);
 
         services::transaction_body::Data::CryptoDelete(services::CryptoDeleteTransactionBody {
             delete_account_id,
@@ -91,7 +89,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountDeleteTransaction,
         AccountId,
     };
@@ -124,11 +121,8 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountDelete(transaction) => transaction);
 
-        let transfer_account_id = assert_matches!(data.transfer_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(transfer_account_id, AccountId::from(1001));
-
-        let delete_account_id = assert_matches!(data.delete_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(delete_account_id, AccountId::from(1002));
+        assert_eq!(data.transfer_account_id, Some(AccountId::from(1001)));
+        assert_eq!(data.delete_account_id, Some(AccountId::from(1002)));
 
         Ok(())
     }

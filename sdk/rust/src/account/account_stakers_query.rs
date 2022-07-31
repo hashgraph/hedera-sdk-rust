@@ -9,7 +9,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    AccountAddress,
+    AccountId,
     AllProxyStakers,
     Query,
     ToProtobuf,
@@ -22,7 +22,7 @@ pub type AccountStakersQuery = Query<AccountStakersQueryData>;
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountStakersQueryData {
-    account_id: Option<AccountAddress>,
+    account_id: Option<AccountId>,
 }
 
 impl From<AccountStakersQueryData> for AnyQueryData {
@@ -34,7 +34,7 @@ impl From<AccountStakersQueryData> for AnyQueryData {
 
 impl AccountStakersQuery {
     /// Sets the account ID for which the records should be retrieved.
-    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.data.account_id = Some(id.into());
         self
     }

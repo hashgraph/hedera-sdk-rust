@@ -10,7 +10,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     NftId,
     TokenId,
@@ -37,7 +36,7 @@ pub struct NftRemoveAllowance {
     pub token_id: TokenId,
 
     /// The account ID that owns token.
-    pub owner_account_id: AccountAddress,
+    pub owner_account_id: AccountId,
 
     /// The list of serial numbers to remove allowances from.
     pub serial_numbers: Vec<i64>,
@@ -48,7 +47,7 @@ impl AccountAllowanceDeleteTransaction {
     pub fn delete_all_token_nft_allowances(
         &mut self,
         nft_id: NftId,
-        owner_account_id: impl Into<AccountAddress>,
+        owner_account_id: AccountId,
     ) -> &mut Self {
         let owner_account_id = owner_account_id.into();
 

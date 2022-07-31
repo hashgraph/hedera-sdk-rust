@@ -11,7 +11,7 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
+    AccountId,
     NftId,
     ToProtobuf,
     TokenId,
@@ -35,8 +35,9 @@ pub struct TransferTransactionData {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Transfer {
-    account_id: AccountAddress,
+    account_id: AccountId,
 
     #[serde(default)]
     amount: i64,
@@ -61,9 +62,10 @@ struct TokenTransfer {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct NftTransfer {
-    sender_account_id: AccountAddress,
-    receiver_account_id: AccountAddress,
+    sender_account_id: AccountId,
+    receiver_account_id: AccountId,
 
     #[serde(default)]
     serial_number: u64,
@@ -76,7 +78,7 @@ impl TransferTransaction {
     fn _token_transfer(
         &mut self,
         token_id: TokenId,
-        account_id: impl Into<AccountAddress>,
+        account_id: AccountId,
         amount: i64,
         approved: bool,
         expected_decimals: Option<u32>,
@@ -104,7 +106,7 @@ impl TransferTransaction {
     pub fn token_transfer(
         &mut self,
         token_id: TokenId,
-        account_id: impl Into<AccountAddress>,
+        account_id: AccountId,
         amount: i64,
     ) -> &mut Self {
         self._token_transfer(token_id, account_id, amount, false, None)
@@ -114,7 +116,7 @@ impl TransferTransaction {
     pub fn approved_token_transfer(
         &mut self,
         token_id: TokenId,
-        account_id: impl Into<AccountAddress>,
+        account_id: AccountId,
         amount: i64,
     ) -> &mut Self {
         self._token_transfer(token_id, account_id, amount, true, None)
@@ -124,7 +126,7 @@ impl TransferTransaction {
     pub fn token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
-        account_id: impl Into<AccountAddress>,
+        account_id: AccountId,
         amount: i64,
         expected_decimals: u32,
     ) -> &mut Self {
@@ -135,7 +137,7 @@ impl TransferTransaction {
     pub fn approved_token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
-        account_id: impl Into<AccountAddress>,
+        account_id: AccountId,
         amount: i64,
         expected_decimals: u32,
     ) -> &mut Self {
@@ -145,8 +147,8 @@ impl TransferTransaction {
     fn _nft_transfer(
         &mut self,
         nft_id: NftId,
-        sender_account_id: impl Into<AccountAddress>,
-        receiver_account_id: impl Into<AccountAddress>,
+        sender_account_id: AccountId,
+        receiver_account_id: AccountId,
         approved: bool,
     ) -> &mut Self {
         let NftId { token_id, serial_number } = nft_id;
@@ -177,8 +179,8 @@ impl TransferTransaction {
     pub fn approved_nft_transfer(
         &mut self,
         nft_id: impl Into<NftId>,
-        sender_account_id: impl Into<AccountAddress>,
-        receiver_account_id: impl Into<AccountAddress>,
+        sender_account_id: AccountId,
+        receiver_account_id: AccountId,
     ) -> &mut Self {
         self._nft_transfer(nft_id.into(), sender_account_id, receiver_account_id, true)
     }
@@ -187,15 +189,15 @@ impl TransferTransaction {
     pub fn nft_transfer(
         &mut self,
         nft_id: impl Into<NftId>,
-        sender_account_id: impl Into<AccountAddress>,
-        receiver_account_id: impl Into<AccountAddress>,
+        sender_account_id: AccountId,
+        receiver_account_id: AccountId,
     ) -> &mut Self {
         self._nft_transfer(nft_id.into(), sender_account_id, receiver_account_id, false)
     }
 
     pub fn _hbar_transfer(
         &mut self,
-        account_id: impl Into<AccountAddress>,
+        account_id: AccountId,
         amount: i64,
         approved: bool,
     ) -> &mut Self {
@@ -209,20 +211,12 @@ impl TransferTransaction {
     }
 
     /// Add a non-approved hbar transfer to the transaction.
-    pub fn hbar_transfer(
-        &mut self,
-        account_id: impl Into<AccountAddress>,
-        amount: i64,
-    ) -> &mut Self {
+    pub fn hbar_transfer(&mut self, account_id: AccountId, amount: i64) -> &mut Self {
         self._hbar_transfer(account_id, amount, false)
     }
 
     /// Add an approved hbar transfer to the transaction.
-    pub fn approved_hbar_transfer(
-        &mut self,
-        account_id: impl Into<AccountAddress>,
-        amount: i64,
-    ) -> &mut Self {
+    pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: i64) -> &mut Self {
         self._hbar_transfer(account_id, amount, false)
     }
 }
@@ -323,14 +317,17 @@ mod tests {
   "$type": "transfer",
   "transfers": [
     {
-      "account": "0.0.1001",
-      "amount": 20
+      "accountId": "0.0.1001",
+      "amount": 20,
+      "isApproval": false
     },
     {
-      "account": "0.0.1002",
-      "amount": -20
+      "accountId": "0.0.1002",
+      "amount": -20,
+      "isApproval": false
     }
   ],
+  "tokenTransfers": [],
   "payerAccountId": "0.0.6189"
 }"#;
 
@@ -354,10 +351,10 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::Transfer(transaction) => transaction);
 
-        assert_eq!(data.hbar_transfers.len(), 2);
+        assert_eq!(data.transfers.len(), 2);
 
-        assert_eq!(data.hbar_transfers[0].amount, 20);
-        assert_eq!(data.hbar_transfers[1].amount, -20);
+        assert_eq!(data.transfers[0].amount, 20);
+        assert_eq!(data.transfers[1].amount, -20);
 
         Ok(())
     }

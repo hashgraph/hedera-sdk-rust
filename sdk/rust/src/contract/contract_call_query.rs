@@ -18,7 +18,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    AccountAddress,
+    AccountId,
     ContractCallResponse,
     ContractId,
     Query,
@@ -40,7 +40,7 @@ pub struct ContractCallQueryData {
     #[serde_as(as = "Base64")]
     data: Vec<u8>,
 
-    sender_id: Option<AccountAddress>,
+    sender_id: Option<AccountId>,
 }
 
 impl ContractCallQuery {
@@ -63,7 +63,7 @@ impl ContractCallQuery {
     }
 
     /// Sets the sender for this transaction.
-    pub fn sender_id(&mut self, sender_id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn sender_id(&mut self, sender_id: AccountId) -> &mut Self {
         self.data.sender_id = Some(sender_id.into());
         self
     }

@@ -20,7 +20,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     Key,
     Transaction,
@@ -44,7 +43,7 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct AccountUpdateTransactionData {
     /// The account ID which is being updated in this transaction.
-    pub account_id: Option<AccountAddress>,
+    pub account_id: Option<AccountId>,
 
     /// The new key.
     pub key: Option<Key>,
@@ -71,7 +70,7 @@ pub struct AccountUpdateTransactionData {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub staked_account_id: Option<AccountAddress>,
+    pub staked_account_id: Option<AccountId>,
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -83,7 +82,7 @@ pub struct AccountUpdateTransactionData {
 
 impl AccountUpdateTransaction {
     /// Set the account ID which is being updated.
-    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(id.into());
         self
     }
@@ -126,7 +125,7 @@ impl AccountUpdateTransaction {
 
     /// Set the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub fn staked_account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.staked_account_id = Some(id.into());
         self
     }
@@ -162,7 +161,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let account_id = self.account_id.as_ref().map(AccountAddress::to_protobuf);
+        let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
         let key = self.key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
         let expiration_time = self.expires_at.as_ref().map(OffsetDateTime::to_protobuf);
@@ -229,7 +228,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         AccountUpdateTransaction,
         Key,
@@ -295,15 +293,11 @@ mod tests {
         assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
         assert_eq!(data.staked_node_id.unwrap(), 7);
         assert_eq!(data.decline_staking_reward.unwrap(), false);
-
-        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(account_id, AccountId::from(1001));
+        assert_eq!(data.account_id, Some(AccountId::from(1001)));
+        assert_eq!(data.staked_account_id, Some(AccountId::from(1002)));
 
         let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
         assert_eq!(key, PublicKey::from_str(KEY)?);
-
-        let staked_account_id = assert_matches!(data.staked_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(staked_account_id, AccountId::from(1002));
 
         Ok(())
     }

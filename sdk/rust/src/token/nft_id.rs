@@ -111,7 +111,7 @@ mod tests {
 
         let nft_id_proto = nft_id.to_protobuf();
 
-        assert_eq!(nft_id.serial_number, nft_id_proto.serial_number);
+        assert_eq!(nft_id.serial_number, nft_id_proto.serial_number as u64);
         assert_eq!(nft_id.token_id.to_protobuf(), nft_id_proto.token_id.unwrap());
 
         Ok(())
@@ -124,7 +124,7 @@ mod tests {
 
         let nft_id = NftId::from_protobuf(nft_id_proto.clone())?;
 
-        assert_eq!(nft_id.serial_number, nft_id_proto.serial_number);
+        assert_eq!(nft_id.serial_number, nft_id_proto.serial_number as u64);
         assert_eq!(nft_id.token_id, TokenId::from_protobuf(nft_id_proto.token_id.unwrap())?);
 
         Ok(())

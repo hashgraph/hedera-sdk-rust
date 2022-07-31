@@ -1,5 +1,5 @@
 use clap::Parser;
-use hedera::{AccountAddress, AccountId, Client, PrivateKey, TransferTransaction};
+use hedera::{AccountId, Client, PrivateKey, TransferTransaction};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -13,7 +13,7 @@ struct Args {
     sender: Option<AccountId>,
 
     #[clap(long, default_value = "0.0.1001")]
-    receiver: AccountAddress,
+    receiver: AccountId,
 
     #[clap(long, default_value = "1000")]
     amount: i64,
@@ -28,7 +28,7 @@ async fn main() -> anyhow::Result<()> {
 
     client.set_operator(args.operator_account_id, args.operator_key);
 
-    let sender = args.sender.unwrap_or(args.payer_account_id);
+    let sender = args.sender.unwrap_or(args.operator_account_id);
 
     let _ = TransferTransaction::new()
         .hbar_transfer(sender, -args.amount)

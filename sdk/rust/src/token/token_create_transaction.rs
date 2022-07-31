@@ -24,7 +24,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     Key,
     Transaction,
@@ -73,7 +72,7 @@ pub struct TokenCreateTransactionData {
     initial_supply: u64,
 
     /// The account which will act as a treasury for the token.
-    treasury_account_id: Option<AccountAddress>,
+    treasury_account_id: Option<AccountId>,
 
     /// The key which can perform update/delete operations on the token.
     admin_key: Option<Key>,
@@ -100,7 +99,7 @@ pub struct TokenCreateTransactionData {
 
     /// An account which will be automatically charged to renew the token's expiration, at
     /// `auto_renew_period` interval.
-    auto_renew_account_id: Option<AccountAddress>,
+    auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
     #[serde_as(as = "Option<DurationSeconds<i64>>")]
@@ -186,10 +185,7 @@ impl TokenCreateTransaction {
     }
 
     /// Sets the account which will act as a treasury for the token.
-    pub fn treasury_account_id(
-        &mut self,
-        treasury_account_id: impl Into<AccountAddress>,
-    ) -> &mut Self {
+    pub fn treasury_account_id(&mut self, treasury_account_id: AccountId) -> &mut Self {
         self.body.data.treasury_account_id = Some(treasury_account_id.into());
         self
     }
@@ -240,10 +236,7 @@ impl TokenCreateTransaction {
     }
 
     /// Sets the account which will be automatically charged to renew the token's expiration.
-    pub fn auto_renew_account_id(
-        &mut self,
-        auto_renew_account_id: impl Into<AccountAddress>,
-    ) -> &mut Self {
+    pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(auto_renew_account_id.into());
         self
     }
@@ -320,7 +313,7 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
             symbol: self.symbol.clone(),
             decimals: self.decimals,
             initial_supply: self.initial_supply,
-            treasury: self.treasury_account_id.as_ref().map(AccountAddress::to_protobuf),
+            treasury: self.treasury_account_id.as_ref().map(AccountId::to_protobuf),
             admin_key: self.admin_key.as_ref().map(Key::to_protobuf),
             kyc_key: self.kyc_key.as_ref().map(Key::to_protobuf),
             freeze_key: self.freeze_key.as_ref().map(Key::to_protobuf),
@@ -328,10 +321,7 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
             supply_key: self.supply_key.as_ref().map(Key::to_protobuf),
             freeze_default: self.freeze_default,
             expiry: self.expires_at.map(Into::into),
-            auto_renew_account: self
-                .auto_renew_account_id
-                .as_ref()
-                .map(AccountAddress::to_protobuf),
+            auto_renew_account: self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf),
             auto_renew_period: self.auto_renew_period.map(Into::into),
             memo: self.token_memo.clone(),
             token_type: self.token_type.to_protobuf().into(),
@@ -372,7 +362,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         Key,
         PublicKey,
@@ -459,7 +448,7 @@ mod tests {
             .symbol("LB")
             .decimals(9)
             .initial_supply(1_000_000_000)
-            .treasury_account_id(AccountAddress::from_str("0.0.1001")?)
+            .treasury_account_id(AccountId::from_str("0.0.1001")?)
             .admin_key(PublicKey::from_str(ADMIN_KEY)?)
             .kyc_key(PublicKey::from_str(KYC_KEY)?)
             .freeze_key(PublicKey::from_str(FREEZE_KEY)?)
@@ -467,7 +456,7 @@ mod tests {
             .supply_key(PublicKey::from_str(SUPPLY_KEY)?)
             .freeze_default(false)
             .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
-            .auto_renew_account_id(AccountAddress::from_str("0.0.1002")?)
+            .auto_renew_account_id(AccountId::from_str("0.0.1002")?)
             .auto_renew_period(Duration::days(90))
             .token_memo("A memo")
             .token_type(TokenType::FungibleCommon)
@@ -507,12 +496,8 @@ mod tests {
         assert_eq!(data.token_type, TokenType::FungibleCommon);
         assert_eq!(data.token_supply_type, TokenSupplyType::Finite);
         assert_eq!(data.max_supply, 1_000_000_000);
-
-        let treasury_account_id = assert_matches!(data.treasury_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(treasury_account_id, AccountId::from(1001));
-
-        let auto_renew_account_id = assert_matches!(data.auto_renew_account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(auto_renew_account_id, AccountId::from(1002));
+        assert_eq!(data.treasury_account_id, Some(AccountId::from(1001)));
+        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
 
         let admin_key =
             assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);

@@ -4,7 +4,6 @@ use std::str::FromStr;
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
 use crate::{
-    AccountAddress,
     AccountAlias,
     AccountId,
     NftId,

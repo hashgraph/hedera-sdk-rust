@@ -11,10 +11,9 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    AccountAddress,
     AccountBalanceResponse,
     AccountId,
-    ContractAddress,
+    ContractId,
     ToProtobuf,
 };
 
@@ -34,7 +33,7 @@ pub struct AccountBalanceQueryData {
 
 impl Default for AccountBalanceQueryData {
     fn default() -> Self {
-        Self { source: AccountBalanceSource::AccountId(AccountId::from(0).into()) }
+        Self { source: AccountBalanceSource::AccountId(AccountId::from(0)) }
     }
 }
 
@@ -48,8 +47,8 @@ impl From<AccountBalanceQueryData> for AnyQueryData {
 #[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 enum AccountBalanceSource {
-    AccountId(AccountAddress),
-    ContractId(ContractAddress),
+    AccountId(AccountId),
+    ContractId(ContractId),
 }
 
 impl AccountBalanceQuery {
@@ -57,7 +56,7 @@ impl AccountBalanceQuery {
     ///
     /// This is mutually exclusive with [`contract_id`](#method.contract_id).
     ///
-    pub fn account_id(&mut self, id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.data.source = AccountBalanceSource::AccountId(id.into());
         self
     }
@@ -66,7 +65,7 @@ impl AccountBalanceQuery {
     ///
     /// This is mutually exclusive with [`account_id`](#method.account_id).
     ///
-    pub fn contract_id(&mut self, id: ContractAddress) -> &mut Self {
+    pub fn contract_id(&mut self, id: ContractId) -> &mut Self {
         self.data.source = AccountBalanceSource::ContractId(id.into());
         self
     }
@@ -114,7 +113,6 @@ mod tests {
     use crate::account::account_balance_query::AccountBalanceSource;
     use crate::query::AnyQueryData;
     use crate::{
-        AccountAddress,
         AccountBalanceQuery,
         AccountId,
         AnyQuery,
@@ -143,7 +141,6 @@ mod tests {
 
         let data = assert_matches!(query.data, AnyQueryData::AccountBalance(query) => query);
         let source = assert_matches!(data.source, AccountBalanceSource::AccountId(id) => id);
-        let source = assert_matches!(source, AccountAddress::AccountId(id) => id);
 
         assert_eq!(source.num, 1001);
 

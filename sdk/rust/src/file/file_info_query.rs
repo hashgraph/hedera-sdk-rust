@@ -3,7 +3,6 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
-use crate::file::FileInfo; //ask about
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -11,23 +10,24 @@ use crate::query::{
 };
 use crate::{
     FileId,
+    FileInfo,
     Query,
     ToProtobuf,
-}; //ask about
+};
 
 /// Get all the information about a file.
-pub type FileInfoQuery = Query<FileInfoQueryData>; //ask about
+pub type FileInfoQuery = Query<FileInfoQueryData>;
 
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FileInfoQueryData {
-    file_id: Option<FileId>, //ask about (used to be AccountAddress)
+    file_id: Option<FileId>,
 }
 
 impl From<FileInfoQueryData> for AnyQueryData {
     #[inline]
     fn from(data: FileInfoQueryData) -> Self {
-        Self::FileInfo(data) //ask about (used to be AccountInfo)
+        Self::FileInfo(data)
     }
 }
 

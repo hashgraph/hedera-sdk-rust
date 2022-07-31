@@ -11,7 +11,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountAddress,
     AccountId,
     TokenId,
     Transaction,
@@ -37,7 +36,7 @@ pub type TokenUnfreezeTransaction = Transaction<TokenUnfreezeTransactionData>;
 #[serde(rename_all = "camelCase")]
 pub struct TokenUnfreezeTransactionData {
     /// The account to be unfrozen.
-    account_id: Option<AccountAddress>,
+    account_id: Option<AccountId>,
 
     /// The token for which this account will be unfrozen.
     token_id: Option<TokenId>,
@@ -45,7 +44,7 @@ pub struct TokenUnfreezeTransactionData {
 
 impl TokenUnfreezeTransaction {
     /// Sets the account to be unfrozen.
-    pub fn account_id(&mut self, account_id: impl Into<AccountAddress>) -> &mut Self {
+    pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id.into());
         self
     }
@@ -74,7 +73,7 @@ impl ToTransactionDataProtobuf for TokenUnfreezeTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountAddress::to_protobuf);
+        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenUnfreeze(
@@ -98,7 +97,6 @@ mod tests {
         AnyTransactionData,
     };
     use crate::{
-        AccountAddress,
         AccountId,
         TokenId,
         TokenUnfreezeTransaction,
@@ -131,9 +129,7 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenUnfreeze(transaction) => transaction);
 
         assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
-
-        let account_id = assert_matches!(data.account_id.unwrap(), AccountAddress::AccountId(account_id) => account_id);
-        assert_eq!(account_id, AccountId::from(1001));
+        assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
         Ok(())
     }
