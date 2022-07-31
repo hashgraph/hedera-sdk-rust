@@ -14,8 +14,8 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    ContractBytecodeResponse,
     ContractId,
+    FromProtobuf,
     Query,
     ToProtobuf,
 };
@@ -60,7 +60,7 @@ impl ToQueryProtobuf for ContractBytecodeQueryData {
 
 #[async_trait]
 impl QueryExecute for ContractBytecodeQueryData {
-    type Response = ContractBytecodeResponse;
+    type Response = Vec<u8>;
 
     async fn execute(
         &self,
@@ -68,5 +68,16 @@ impl QueryExecute for ContractBytecodeQueryData {
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         SmartContractServiceClient::new(channel).contract_get_bytecode(request).await
+    }
+}
+
+impl FromProtobuf<services::response::Response> for Vec<u8> {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let pb = pb_getv!(pb, ContractGetBytecodeResponse, services::response::Response);
+        
+        Ok(pb.bytecode)
     }
 }

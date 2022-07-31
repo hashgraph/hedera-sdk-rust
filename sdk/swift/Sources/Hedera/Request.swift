@@ -6,6 +6,8 @@ public protocol Request: Encodable {
     associatedtype Response: Decodable
 
     func execute(_ client: Client) async throws -> Response
+
+    func decodeResponse(_ responseBytes: Data) throws -> Response
 }
 
 extension Request {
@@ -38,9 +40,11 @@ extension Request {
             }
         }
 
-        // decode the response as the generic output type of this query types
-        let response = try JSONDecoder().decode(Response.self, from: responseBytes)
+        return try decodeResponse(responseBytes)
+    }
 
-        return response
+    public func decodeResponse(_ responseBytes: Data) throws -> Response {
+        // decode the response as the generic output type of this query types
+        try JSONDecoder().decode(Response.self, from: responseBytes)
     }
 }
