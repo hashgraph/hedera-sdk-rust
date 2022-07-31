@@ -1,5 +1,5 @@
 /// Burns tokens from the token's treasury account.
-public class TokenBurnTransaction: Transaction {
+public final class TokenBurnTransaction: Transaction {
     /// Create a new `TokenBurnTransaction`.
     public init(
         tokenId: TokenId? = nil,

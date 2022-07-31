@@ -1,5 +1,5 @@
 /// Revokes KYC from the account for the given token.
-public class TokenRevokeKycTransaction: Transaction {
+public final class TokenRevokeKycTransaction: Transaction {
     /// Create a new `TokenRevokeKycTransaction`.
     public init(
         accountId: AccountId? = nil,

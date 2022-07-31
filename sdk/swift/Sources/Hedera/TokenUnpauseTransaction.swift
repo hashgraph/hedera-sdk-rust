@@ -1,5 +1,5 @@
 /// Unpauses a previously paused token.
-public class TokenUnpauseTransaction: Transaction {
+public final class TokenUnpauseTransaction: Transaction {
     /// Create a new `TokenUnpauseTransaction`.
     public init(
         tokenId: TokenId? = nil

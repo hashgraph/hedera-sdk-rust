@@ -1,7 +1,7 @@
 import CHedera
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
-public class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable {
+public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable {
     /// The (non-fungible) token of which this NFT is an instance.
     public let tokenId: TokenId
 

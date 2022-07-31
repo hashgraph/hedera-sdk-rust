@@ -1,7 +1,7 @@
 import Foundation
 
 /// Create a new token.
-public class TokenCreateTransaction: Transaction {
+public final class TokenCreateTransaction: Transaction {
     /// Create a new `TokenCreateTransaction`.
     public init(
         name: String = "",

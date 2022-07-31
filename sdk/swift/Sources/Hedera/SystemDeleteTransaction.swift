@@ -1,7 +1,7 @@
 import Foundation
 
 /// Delete a file or smart contract - can only be done with a Hedera admin.
-public class SystemDeleteTransaction: Transaction {
+public final class SystemDeleteTransaction: Transaction {
     /// Create a new `SystemDeleteTransaction`.
     public init(
         fileId: FileId? = nil,

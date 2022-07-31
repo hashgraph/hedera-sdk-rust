@@ -4,6 +4,8 @@ import Foundation
 public class Query<Response: Decodable>: Request {
     public typealias Response = Response
 
+    internal init() {}
+
     private var payment: PaymentTransaction = PaymentTransaction()
 
     /// Set the account IDs of the nodes that this query may be submitted to.

@@ -1,5 +1,5 @@
 /// Wipes the provided amount of tokens from the specified account.
-public class TokenWipeTransaction: Transaction {
+public final class TokenWipeTransaction: Transaction {
     /// Create a new `TokenWipeTransaction`.
     public init(
         tokenId: TokenId? = nil,

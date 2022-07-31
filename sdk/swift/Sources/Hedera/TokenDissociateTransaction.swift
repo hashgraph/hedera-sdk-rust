@@ -2,7 +2,7 @@
 ///
 /// Must be signed by the provided account's key.
 ///
-public class TokenDissociateTransaction: Transaction {
+public final class TokenDissociateTransaction: Transaction {
     /// Create a new `TokenDissociateTransaction`.
     public init(
         accountId: AccountId? = nil,

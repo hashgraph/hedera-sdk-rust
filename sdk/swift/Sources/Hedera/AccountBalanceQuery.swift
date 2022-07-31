@@ -4,7 +4,7 @@
 /// than `AccountInfoQuery`, which returns the balance plus
 /// additional information.
 ///
-public class AccountBalanceQuery: Query<AccountBalanceResponse> {
+public final class AccountBalanceQuery: Query<AccountBalanceResponse> {
     /// Create a new `AccountBalanceQuery`.
     public init(
         accountId: AccountId? = nil,

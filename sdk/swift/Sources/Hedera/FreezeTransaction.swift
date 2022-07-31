@@ -2,7 +2,7 @@ import Foundation
 
 /// Set the freezing period in which the platform will stop creating
 /// events and accepting transactions.
-public class FreezeTransaction: Transaction {
+public final class FreezeTransaction: Transaction {
     /// Create a new `FreezeTransaction`.
     public init(
         startTime: Date? = nil,
