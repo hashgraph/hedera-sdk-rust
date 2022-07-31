@@ -1,17 +1,31 @@
-use crate::ffi::signer::{
-    AnySigner,
-    Signer,
-};
 use crate::{
     AccountId,
     Client,
     PrivateKey,
 };
 
+/// Construct a Hedera client pre-configured for mainnet access.
+#[no_mangle]
+pub extern "C" fn hedera_client_for_mainnet() -> *mut Client {
+    let client = Client::for_mainnet();
+    let client = Box::into_raw(Box::new(client));
+
+    client
+}
+
 /// Construct a Hedera client pre-configured for testnet access.
 #[no_mangle]
 pub extern "C" fn hedera_client_for_testnet() -> *mut Client {
     let client = Client::for_testnet();
+    let client = Box::into_raw(Box::new(client));
+
+    client
+}
+
+/// Construct a Hedera client pre-configured for previewnet access.
+#[no_mangle]
+pub extern "C" fn hedera_client_for_previewnet() -> *mut Client {
+    let client = Client::for_previewnet();
     let client = Box::into_raw(Box::new(client));
 
     client
@@ -43,5 +57,8 @@ pub extern "C" fn hedera_client_set_operator(
     let key = unsafe { &*key };
     let key = key.clone();
 
-    client.set_operator(AccountId { shard: id_shard, realm: id_realm, num: id_num }, key);
+    client.set_operator(
+        AccountId { shard: id_shard, realm: id_realm, num: id_num, alias: None },
+        key,
+    );
 }

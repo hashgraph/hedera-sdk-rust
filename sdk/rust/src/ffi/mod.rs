@@ -10,6 +10,5 @@ mod nft_id;
 mod private_key;
 mod public_key;
 mod runtime;
-mod signer;
 mod subscribe;
 mod util;
