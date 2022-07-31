@@ -2,7 +2,9 @@ use hedera_proto::services;
 use serde_with::{
     serde_as,
     skip_serializing_none,
+    TimestampNanoSeconds,
 };
+use serde_with::base64::Base64;
 use time::OffsetDateTime;
 
 use crate::{
@@ -27,9 +29,11 @@ pub struct TransactionRecord {
 
     /// The hash of the Transaction that executed (not the hash of any Transaction that failed for
     /// having a duplicate TransactionID).
+    #[serde_as(as = "Base64")]
     pub transaction_hash: Vec<u8>,
 
     /// The consensus timestamp.
+    #[serde_as(as = "TimestampNanoSeconds")]
     pub consensus_timestamp: OffsetDateTime,
 
     /// The ID of the transaction this record represents.
@@ -52,6 +56,7 @@ pub struct TransactionRecord {
 
     /// In the record of an internal transaction, the consensus timestamp of the user
     /// transaction that spawned it.
+    #[serde_as(as = "Option<TimestampNanoSeconds>")]
     pub parent_consensus_timestamp: Option<OffsetDateTime>,
 
     /// In the record of an internal CryptoCreate transaction triggered by a user
