@@ -38,7 +38,7 @@ use crate::{
     AccountBalance,
     AccountInfo,
     AllProxyStakers,
-    ContractCallResponse,
+    ContractFunctionResult,
     ContractInfo,
     FileContentsResponse,
     FileInfo,
@@ -92,7 +92,7 @@ pub enum AnyQueryResponse {
     FileContents(FileContentsResponse),
     FileInfo(FileInfo),
     ContractBytecode(Vec<u8>),
-    ContractCall(ContractCallResponse),
+    ContractCall(ContractFunctionResult),
     TokenInfo(TokenInfo),
     TopicInfo(TopicInfo),
     ContractInfo(ContractInfo),
@@ -239,7 +239,7 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
                 Self::ContractBytecode(Vec::<u8>::from_protobuf(response)?)
             }
             ContractCallLocal(_) => {
-                Self::ContractCall(ContractCallResponse::from_protobuf(response)?)
+                Self::ContractCall(ContractFunctionResult::from_protobuf(response)?)
             }
             ContractGetInfo(_) => Self::ContractInfo(ContractInfo::from_protobuf(response)?),
             TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),

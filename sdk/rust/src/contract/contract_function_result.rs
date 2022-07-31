@@ -13,41 +13,43 @@ use crate::{
 };
 
 // TODO: log info
-// TODO: state_changes
-// TODO: evm_address
 /// The result returned by a call to a smart contract function.
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ContractFunctionResult {
     /// The smart contract instance whose function was called.
     pub contract_id: ContractId,
 
-    /// The result returned by the function.
+    /// The new contract's 20-byte EVM address.
+    pub evm_address: Option<ContractId>,
+
+    /// The raw bytes returned by the function.
     #[serde_as(as = "Base64")]
-    pub result: Vec<u8>,
+    pub bytes: Vec<u8>,
 
     /// Message if there was an error during smart contract execution.
-    pub error_message: String,
+    pub error_message: Option<String>,
 
     /// Bloom filter for record.
+    #[serde_as(as = "Base64")]
     pub bloom: Vec<u8>,
 
     /// Units of gas used to execute contract.
     pub gas_used: u64,
 
     /// The amount of gas available for the call.
-    pub gas_limit: u64,
+    pub gas: u64,
 
-    /// Number of tinybars sent (the function must be payable if this is nonzero).
-    pub value: u64,
+    /// Number of HBAR sent (the function must be payable if this is nonzero).
+    pub hbar_amount: u64,
 
     /// The parameters passed into the contract call.
     #[serde_as(as = "Base64")]
-    pub data: Vec<u8>,
+    pub contract_function_parameters_bytes: Vec<u8>,
 
     /// The account that is the "sender." If not present it is the accountId from the transactionId.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sender_id: Option<AccountId>,
+    pub sender_account_id: Option<AccountId>,
 }
 
 impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
@@ -58,19 +60,39 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
         let contract_id = pb_getf!(pb, contract_id)?;
         let contract_id = ContractId::from_protobuf(contract_id)?;
 
-        let sender_id =
+        let sender_account_id =
             pb.sender_id.map(|sender_id| AccountId::from_protobuf(sender_id)).transpose()?;
+
+        let evm_address = pb
+            .evm_address
+            .and_then(|address| <[u8; 20]>::try_from(address).ok())
+            .map(ContractId::from);
 
         Ok(Self {
             contract_id,
-            result: pb.contract_call_result,
-            error_message: pb.error_message,
+            bytes: pb.contract_call_result,
+            error_message: if pb.error_message.is_empty() { None } else { Some(pb.error_message) },
             bloom: pb.bloom,
             gas_used: pb.gas_used as u64,
-            gas_limit: pb.gas as u64,
-            value: pb.amount as u64,
-            data: pb.function_parameters,
-            sender_id,
+            gas: pb.gas as u64,
+            hbar_amount: pb.amount as u64,
+            contract_function_parameters_bytes: pb.function_parameters,
+            sender_account_id,
+            evm_address,
         })
+    }
+}
+
+impl FromProtobuf<services::response::Response> for ContractFunctionResult {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let pb = pb_getv!(pb, ContractCallLocal, services::response::Response);
+
+        let result = pb_getf!(pb, function_result)?;
+        let result = ContractFunctionResult::from_protobuf(result)?;
+
+        Ok(result)
     }
 }

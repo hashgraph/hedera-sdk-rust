@@ -77,7 +77,7 @@ impl FromProtobuf<services::response::Response> for Vec<u8> {
         Self: Sized,
     {
         let pb = pb_getv!(pb, ContractGetBytecodeResponse, services::response::Response);
-        
+
         Ok(pb.bytecode)
     }
 }

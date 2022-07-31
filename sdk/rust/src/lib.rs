@@ -50,8 +50,8 @@ mod ffi;
 pub use account::{
     AccountAllowanceApproveTransaction,
     AccountAllowanceDeleteTransaction,
-    AccountBalanceQuery,
     AccountBalance,
+    AccountBalanceQuery,
     AccountCreateTransaction,
     AccountDeleteTransaction,
     AccountId,
@@ -65,7 +65,6 @@ pub use account::{
 pub use client::Client;
 pub use contract::{
     ContractBytecodeQuery,
-    ContractCallResponse,
     ContractCreateTransaction,
     ContractExecuteTransaction,
     ContractFunctionResult,
