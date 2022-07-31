@@ -6,6 +6,7 @@ use crate::{
     FromProtobuf,
 };
 
+// TODO: pub ledger_id: LedgerId,
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -28,7 +29,6 @@ pub struct FileInfo {
     /// Memo associated with the file
     pub memo: String,
     // Ledger ID the response was returned from
-    // TODO: pub ledger_id: LedgerId,
 }
 
 impl FromProtobuf<services::response::Response> for FileInfo {
@@ -39,20 +39,23 @@ impl FromProtobuf<services::response::Response> for FileInfo {
     {
         let response = pb_getv!(pb, FileGetInfo, services::response::Response);
         let info = pb_getf!(response, file_info)?;
-        let keys = pb_getf!(info, keys)?;
         let file_id = pb_getf!(info, file_id)?;
+
+        // TODO: KeyList
+        // let keys = info
+        //     .keys
+        //     .unwrap_or_default()
+        //     .keys
+        //     .into_iter()
+        //     .map(Key::from_protobuf)
+        //     .collect::<crate::Result<Vec<_>>>()?;
 
         Ok(Self {
             file_id: FileId::from_protobuf(file_id)?,
             size: info.size as u64,
-            // FIXME: expires_at
-            expires_at: None,
+            expires_at: info.expiration_time.map(Into::into),
             deleted: info.deleted,
-            // TODO: KeyList
-            // keys: KeyList::from_protobuf(keys)?,
             memo: info.memo,
-            // FIXME: ledger_id (not present in account_info.rs)
-            // TODO: ledger_id
         })
     }
 }
