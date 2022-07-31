@@ -16,7 +16,7 @@ pub use account_allowance_approve_transaction::AccountAllowanceApproveTransactio
 pub(crate) use account_allowance_approve_transaction::AccountAllowanceApproveTransactionData;
 pub use account_allowance_delete_transaction::AccountAllowanceDeleteTransaction;
 pub(crate) use account_allowance_delete_transaction::AccountAllowanceDeleteTransactionData;
-pub use account_balance::AccountBalanceResponse;
+pub use account_balance::AccountBalance;
 pub use account_balance_query::AccountBalanceQuery;
 pub(crate) use account_balance_query::AccountBalanceQueryData;
 pub use account_create_transaction::AccountCreateTransaction;

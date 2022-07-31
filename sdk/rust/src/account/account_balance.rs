@@ -8,19 +8,16 @@ use crate::{
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct AccountBalanceResponse {
+pub struct AccountBalance {
     /// The account that is being referenced.
     pub account_id: AccountId,
 
     /// Current balance of the referenced account.
     // TODO: use Hbar type
-    pub balance: u64,
-    //
-    // Current balance of each token possessed by the referenced account.
-    // TODO: pub tokens: HashMap<TokenId, AccountTokenBalance>,
+    pub hbars: u64,
 }
 
-impl FromProtobuf<services::response::Response> for AccountBalanceResponse {
+impl FromProtobuf<services::response::Response> for AccountBalance {
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self> {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
@@ -29,6 +26,6 @@ impl FromProtobuf<services::response::Response> for AccountBalanceResponse {
 
         let balance = response.balance;
 
-        Ok(Self { account_id, balance })
+        Ok(Self { account_id, hbars: balance })
     }
 }
