@@ -8,7 +8,7 @@ public class TokenCreateTransaction: Transaction {
         symbol: String = "",
         decimals: UInt32 = 0,
         initialSupply: UInt64 = 0,
-        treasuryAccountId: AccountAddress? = nil,
+        treasuryAccountId: AccountId? = nil,
         adminKey: Key? = nil,
         kycKey: Key? = nil,
         freezeKey: Key? = nil,
@@ -16,7 +16,7 @@ public class TokenCreateTransaction: Transaction {
         supplyKey: Key? = nil,
         freezeDefault: Bool = false,
         expiresAt: Date? = nil,
-        autoRenewAccountId: AccountAddress? = nil,
+        autoRenewAccountId: AccountId? = nil,
         autoRenewPeriod: TimeInterval? = nil,
         tokenMemo: String = "",
         tokenType: TokenType = .fungibleCommon,
@@ -94,11 +94,11 @@ public class TokenCreateTransaction: Transaction {
     }
 
     /// The account which will act as a treasury for the token.
-    public var treasuryAccountId: AccountAddress?
+    public var treasuryAccountId: AccountId?
 
     /// Sets the account which will act as a treasury for the token.
     @discardableResult
-    public func treasuryAccountId(_ treasuryAccountId: AccountAddress) -> Self {
+    public func treasuryAccountId(_ treasuryAccountId: AccountId) -> Self {
         self.treasuryAccountId = treasuryAccountId
 
         return self
@@ -184,12 +184,12 @@ public class TokenCreateTransaction: Transaction {
 
     /// An account which will be automatically charged to renew the token's expiration, at
     /// `autoRenewPeriod` interval.
-    public var autoRenewAccountId: AccountAddress?
+    public var autoRenewAccountId: AccountId?
 
     /// Sets the account which will be automatically charged to renew the token's expiration, at
     /// `autoRenewPeriod` interval.
     @discardableResult
-    public func autoRenewAccountId(_ autoRenewAccountId: AccountAddress) -> Self {
+    public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
         self.autoRenewAccountId = autoRenewAccountId
 
         return self

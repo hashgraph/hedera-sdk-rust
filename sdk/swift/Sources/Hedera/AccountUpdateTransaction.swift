@@ -12,11 +12,11 @@ public class AccountUpdateTransaction: Transaction {
     public override init() {}
 
     /// The account ID which is being updated in this transaction.
-    public var accountId: AccountAddress?
+    public var accountId: AccountId?
 
     /// Sets the account ID which is being updated in this transaction.
     @discardableResult
-    public func accountId(_ accountId: AccountAddress) -> Self {
+    public func accountId(_ accountId: AccountId) -> Self {
         self.accountId = accountId
 
         return self
@@ -90,12 +90,12 @@ public class AccountUpdateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public var stakedAccountId: AccountAddress?
+    public var stakedAccountId: AccountId?
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
     @discardableResult
-    public func stakedAccountId(_ stakedAccountId: AccountAddress) -> Self {
+    public func stakedAccountId(_ stakedAccountId: AccountId) -> Self {
         self.stakedAccountId = stakedAccountId
 
         return self

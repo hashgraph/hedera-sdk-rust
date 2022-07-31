@@ -5,7 +5,7 @@
 public class TokenDissociateTransaction: Transaction {
     /// Create a new `TokenDissociateTransaction`.
     public init(
-        accountId: AccountAddress? = nil,
+        accountId: AccountId? = nil,
         tokenIds: [TokenId] = []
     ) {
         self.accountId = accountId
@@ -13,11 +13,11 @@ public class TokenDissociateTransaction: Transaction {
     }
 
     /// The account to be dissociated with the provided tokens.
-    public var accountId: AccountAddress?
+    public var accountId: AccountId?
 
     /// Sets the account to be dissociated with the provided tokens.
     @discardableResult
-    public func accountId(_ accountId: AccountAddress?) -> Self {
+    public func accountId(_ accountId: AccountId?) -> Self {
         self.accountId = accountId
 
         return self

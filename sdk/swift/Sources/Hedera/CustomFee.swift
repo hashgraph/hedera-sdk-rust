@@ -76,7 +76,7 @@ public enum AnyCustomFee: Codable {
 public class CustomFee: Encodable {
     /// Create a new `CustomFee`.
     internal init(
-        feeCollectorAccountId: AccountAddress? = nil
+        feeCollectorAccountId: AccountId? = nil
     ) {
         self.feeCollectorAccountId = feeCollectorAccountId
     }
@@ -84,15 +84,15 @@ public class CustomFee: Encodable {
     internal init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        feeCollectorAccountId = try container.decode(AccountAddress.self, forKey: .feeCollectorAccountId)
+        feeCollectorAccountId = try container.decode(AccountId.self, forKey: .feeCollectorAccountId)
     }
 
     /// The account to receive the custom fee.
-    public var feeCollectorAccountId: AccountAddress?
+    public var feeCollectorAccountId: AccountId?
 
     /// Sets the account to receive the custom fee.
     @discardableResult
-    public func feeCollectorAccountId(_ feeCollectorAccountId: AccountAddress) -> Self {
+    public func feeCollectorAccountId(_ feeCollectorAccountId: AccountId) -> Self {
         self.feeCollectorAccountId = feeCollectorAccountId
 
         return self
@@ -121,7 +121,7 @@ public final class CustomFixedFee: CustomFee, Decodable {
     public init(
         amount: UInt64 = 0,
         denominatingTokenId: TokenId? = nil,
-        feeCollectorAccountId: AccountAddress? = nil
+        feeCollectorAccountId: AccountId? = nil
     ) {
         self.amount = amount
         self.denominatingTokenId = denominatingTokenId
@@ -196,7 +196,7 @@ public final class CustomFractionalFee: CustomFee, Decodable {
         minimumAmount: UInt64 = 0,
         maximumAmount: UInt64 = 0,
         netOfTransfers: Bool = false,
-        feeCollectorAccountId: AccountAddress? = nil
+        feeCollectorAccountId: AccountId? = nil
     ) {
         self.amount = amount
         self.minimumAmount = minimumAmount
@@ -298,7 +298,7 @@ public final class CustomRoyaltyFee: CustomFee, Decodable {
         exchangeValue: Rational<UInt64> = "1/1",
         fallbackAmount: UInt64? = nil,
         fallbackDenominatingTokenId: TokenId? = nil,
-        feeCollectorAccountId: AccountAddress? = nil
+        feeCollectorAccountId: AccountId? = nil
     ) {
         self.exchangeValue = exchangeValue
         self.fallbackAmount = fallbackAmount

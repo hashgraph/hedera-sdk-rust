@@ -2,7 +2,7 @@
 public class TokenRevokeKycTransaction: Transaction {
     /// Create a new `TokenRevokeKycTransaction`.
     public init(
-        accountId: AccountAddress? = nil,
+        accountId: AccountId? = nil,
         tokenId: TokenId? = nil
     ) {
         self.accountId = accountId
@@ -10,11 +10,11 @@ public class TokenRevokeKycTransaction: Transaction {
     }
 
     /// The account to have their KYC revoked.
-    public var accountId: AccountAddress?
+    public var accountId: AccountId?
 
     /// Sets the account to have their KYC revoked.
     @discardableResult
-    public func accountId(_ accountId: AccountAddress?) -> Self {
+    public func accountId(_ accountId: AccountId?) -> Self {
         self.accountId = accountId
 
         return self
