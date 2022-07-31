@@ -51,7 +51,7 @@ pub use account::{
     AccountAllowanceApproveTransaction,
     AccountAllowanceDeleteTransaction,
     AccountBalanceQuery,
-    AccountBalanceResponse,
+    AccountBalance,
     AccountCreateTransaction,
     AccountDeleteTransaction,
     AccountId,

@@ -11,7 +11,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    AccountBalanceResponse,
+    AccountBalance,
     AccountId,
     ContractId,
     ToProtobuf,
@@ -91,7 +91,7 @@ impl ToQueryProtobuf for AccountBalanceQueryData {
 
 #[async_trait]
 impl QueryExecute for AccountBalanceQueryData {
-    type Response = AccountBalanceResponse;
+    type Response = AccountBalance;
 
     fn is_payment_required(&self) -> bool {
         false

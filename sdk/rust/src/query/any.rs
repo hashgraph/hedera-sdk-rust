@@ -35,7 +35,7 @@ use crate::topic::TopicInfoQueryData;
 use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
-    AccountBalanceResponse,
+    AccountBalance,
     AccountInfo,
     AllProxyStakers,
     ContractBytecodeResponse,
@@ -84,7 +84,7 @@ pub enum AnyQueryData {
 #[derive(Debug, serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyQueryResponse {
-    AccountBalance(AccountBalanceResponse),
+    AccountBalance(AccountBalance),
     AccountInfo(AccountInfo),
     AccountStakers(AllProxyStakers),
     AccountRecords(Vec<TransactionRecord>),
@@ -231,7 +231,7 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
             }
             CryptoGetInfo(_) => Self::AccountInfo(AccountInfo::from_protobuf(response)?),
             CryptogetAccountBalance(_) => {
-                Self::AccountBalance(AccountBalanceResponse::from_protobuf(response)?)
+                Self::AccountBalance(AccountBalance::from_protobuf(response)?)
             }
             FileGetContents(_) => {
                 Self::FileContents(FileContentsResponse::from_protobuf(response)?)
