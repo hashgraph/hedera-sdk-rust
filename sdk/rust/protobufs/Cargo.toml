@@ -8,15 +8,15 @@ edition = "2021"
 server = []
 
 [dependencies]
-prost = "0.10.1"
-prost-types = "0.10.1"
-tonic = { version = "0.7.1", features = [ "compression" ] }
-serde = { version = "1.0.136", features = [ "derive" ], optional = true }
+prost = "0.11.0"
+prost-types = "0.11.0"
+tonic = "0.8.0"
+serde = { version = "1.0.136", features = ["derive"], optional = true }
 chrono_0_4 = { version = "0.4.19", optional = true, package = "chrono" }
 time_0_2 = { version = "0.2.27", optional = true, package = "time" }
 time_0_3 = { version = "0.3.9", optional = true, package = "time" }
-fraction = { version = "0.10.0", optional = true }
+fraction = { version = "0.11.0", optional = true }
 
 [build-dependencies]
 anyhow = "1.0.55"
-tonic-build = { version = "0.7.0", features = ["compression"] }
+tonic-build = "0.8.0"
