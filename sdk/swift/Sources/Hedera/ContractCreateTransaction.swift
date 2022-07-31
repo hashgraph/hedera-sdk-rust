@@ -182,7 +182,7 @@ public final class ContractCreateTransaction: Transaction {
         case bytecode
         case bytecodeFileId
         case adminKey
-        case gasLimit
+        case gas
         case initialBalance
         case autoRenewPeriod
         case constructorParameters
@@ -200,7 +200,7 @@ public final class ContractCreateTransaction: Transaction {
         try container.encodeIfPresent(bytecode?.base64EncodedString(), forKey: .bytecode)
         try container.encodeIfPresent(bytecodeFileId, forKey: .bytecodeFileId)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encode(gas, forKey: .gasLimit)
+        try container.encode(gas, forKey: .gas)
         try container.encode(initialBalance, forKey: .initialBalance)
         try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
         try container.encodeIfPresent(constructorParameters?.base64EncodedString(), forKey: .constructorParameters)

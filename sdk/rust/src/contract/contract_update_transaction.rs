@@ -41,7 +41,7 @@ pub struct ContractUpdateTransactionData {
     contract_id: Option<ContractId>,
 
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
-    expires_at: Option<OffsetDateTime>,
+    expiration_time: Option<OffsetDateTime>,
 
     admin_key: Option<Key>,
 
@@ -68,15 +68,15 @@ impl ContractUpdateTransaction {
         self
     }
 
-    /// Sets the admin key.
+    /// Sets the new admin key.
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.body.data.admin_key = Some(key.into());
         self
     }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
-    pub fn expires_at(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(at);
+    pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
+        self.body.data.expiration_time = Some(at);
         self
     }
 
@@ -144,7 +144,7 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
         let contract_id = self.contract_id.as_ref().map(ContractId::to_protobuf);
-        let expiration_time = self.expires_at.map(Into::into);
+        let expiration_time = self.expiration_time.map(Into::into);
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.map(Into::into);
         let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
@@ -223,7 +223,7 @@ mod tests {
     const CONTRACT_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractUpdate",
   "contractId": "0.0.1001",
-  "expiresAt": 1656352251277559886,
+  "expirationTime": 1656352251277559886,
   "adminKey": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
   },
@@ -245,7 +245,7 @@ mod tests {
 
         transaction
             .contract_id(ContractId::from(1001))
-            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
             .admin_key(PublicKey::from_str(ADMIN_KEY)?)
             .auto_renew_period(Duration::days(90))
             .contract_memo("A contract memo")
@@ -270,7 +270,7 @@ mod tests {
 
         assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
         assert_eq!(
-            data.expires_at.unwrap(),
+            data.expiration_time.unwrap(),
             OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
         );
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
