@@ -1,5 +1,5 @@
 /// Get all the information about a schedule.
-public class ScheduleInfoQuery: Query<ScheduleInfo> {
+public final class ScheduleInfoQuery: Query<ScheduleInfo> {
     /// Create a new `ScheduleInfoQuery`.
     public init(
         scheduleId: ScheduleId? = nil

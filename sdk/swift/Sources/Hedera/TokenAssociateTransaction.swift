@@ -2,7 +2,7 @@
 ///
 /// Must be signed by the provided account's key.
 ///
-public class TokenAssociateTransaction: Transaction {
+public final class TokenAssociateTransaction: Transaction {
     /// Create a new `TokenAssociateTransaction`.
     public init(
         accountId: AccountId? = nil,

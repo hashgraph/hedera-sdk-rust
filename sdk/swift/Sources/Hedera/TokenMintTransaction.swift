@@ -1,7 +1,7 @@
 import Foundation
 
 /// Mint tokens to the token's treasury account.
-public class TokenMintTransaction: Transaction {
+public final class TokenMintTransaction: Transaction {
     /// Create a new `TokenMintTransaction`.
     public init(
         tokenId: TokenId? = nil,

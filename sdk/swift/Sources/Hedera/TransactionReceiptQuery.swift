@@ -3,7 +3,7 @@
 /// Once a transaction reaches consensus, then information about whether it succeeded or failed
 /// will be available until the end of the receipt period.
 ///
-public class TransactionReceiptQuery: Query<TransactionReceipt> {
+public final class TransactionReceiptQuery: Query<TransactionReceipt> {
     /// The ID of the transaction for which the receipt is being requested.
     // TODO: TransactionId
     public var transactionId: String?

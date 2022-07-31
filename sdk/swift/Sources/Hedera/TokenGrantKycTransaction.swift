@@ -1,5 +1,5 @@
 /// Grants KYC to the account for the given token.
-public class TokenGrantKycTransaction: Transaction {
+public final class TokenGrantKycTransaction: Transaction {
     /// Create a new `TokenGrantKycTransaction`.
     public init(
         accountId: AccountId? = nil,

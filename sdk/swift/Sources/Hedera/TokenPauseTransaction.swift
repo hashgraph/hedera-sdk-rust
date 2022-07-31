@@ -1,5 +1,5 @@
 /// Pauses the token from being involved in any kind of transaction until it is unpaused.
-public class TokenPauseTransaction: Transaction {
+public final class TokenPauseTransaction: Transaction {
     /// Create a new `TokenPauseTransaction`.
     public init(
         tokenId: TokenId? = nil

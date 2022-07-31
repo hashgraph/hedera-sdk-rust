@@ -5,7 +5,7 @@ import Foundation
 /// It will remain in the ledger, marked as deleted, until it expires.
 /// Transfers into it a deleted account will fail.
 ///
-public class AccountDeleteTransaction: Transaction {
+public final class AccountDeleteTransaction: Transaction {
     /// Create a new `AccountDeleteTransaction` ready for configuration.
     public override init() {}
 

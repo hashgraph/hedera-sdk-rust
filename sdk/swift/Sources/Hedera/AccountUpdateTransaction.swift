@@ -7,7 +7,7 @@ import Foundation
 /// the transaction is changing the key field, then the transaction must be
 /// signed by both the old key (from before the change) and the new key.
 ///
-public class AccountUpdateTransaction: Transaction {
+public final class AccountUpdateTransaction: Transaction {
     /// Create a new `AccountCreateTransaction` ready for configuration.
     public override init() {}
 

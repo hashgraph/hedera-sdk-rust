@@ -1,7 +1,7 @@
 import Foundation
 
 /// Undelete a file or smart contract that was deleted by SystemDelete.
-public class SystemUndeleteTransaction: Transaction {
+public final class SystemUndeleteTransaction: Transaction {
     /// Create a new `SystemUndeleteTransaction`.
     public init(
         fileId: FileId? = nil,

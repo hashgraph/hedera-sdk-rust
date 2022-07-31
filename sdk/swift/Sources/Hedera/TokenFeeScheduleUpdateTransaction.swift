@@ -1,5 +1,5 @@
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
-public class TokenFeeScheduleUpdateTransaction: Transaction {
+public final class TokenFeeScheduleUpdateTransaction: Transaction {
     /// Create a new `TokenFeeScheduleUpdateTransaction`.
     public init(
         tokenId: TokenId? = nil,

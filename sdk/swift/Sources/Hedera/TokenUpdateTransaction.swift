@@ -1,7 +1,7 @@
 import Foundation
 
 /// At consensus, updates an already created token to the given values.
-public class TokenUpdateTransaction: Transaction {
+public final class TokenUpdateTransaction: Transaction {
     /// Create a new `TokenUpdateTransaction`.
     public init(
         tokenId: TokenId? = nil,

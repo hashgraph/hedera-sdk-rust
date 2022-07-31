@@ -1,5 +1,5 @@
 /// Retrieve the latest state of a topic.
-public class TopicInfoQuery: Query<TopicInfo> {
+public final class TopicInfoQuery: Query<TopicInfo> {
     /// Create a new `TopicInfoQuery`.
     public init(
         topicId: TopicId? = nil

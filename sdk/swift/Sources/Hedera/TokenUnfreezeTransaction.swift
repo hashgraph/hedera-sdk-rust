@@ -1,5 +1,5 @@
 /// Unfreezes transfers of the specified token for the account.
-public class TokenUnfreezeTransaction: Transaction {
+public final class TokenUnfreezeTransaction: Transaction {
     /// Create a new `TokenUnfreezeTransaction`.
     public init(
         accountId: AccountId? = nil,
