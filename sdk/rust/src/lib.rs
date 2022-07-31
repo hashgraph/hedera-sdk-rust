@@ -65,7 +65,6 @@ pub use account::{
 pub use client::Client;
 pub use contract::{
     ContractBytecodeQuery,
-    ContractBytecodeResponse,
     ContractCallResponse,
     ContractCreateTransaction,
     ContractExecuteTransaction,

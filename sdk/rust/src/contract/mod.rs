@@ -1,5 +1,4 @@
 mod contract_bytecode_query;
-mod contract_bytecode_response;
 mod contract_call_query;
 mod contract_call_response;
 mod contract_create_transaction;
@@ -13,7 +12,6 @@ mod contract_update_transaction;
 
 pub use contract_bytecode_query::ContractBytecodeQuery;
 pub(crate) use contract_bytecode_query::ContractBytecodeQueryData;
-pub use contract_bytecode_response::ContractBytecodeResponse;
 pub use contract_call_query::ContractCallQuery;
 pub(crate) use contract_call_query::ContractCallQueryData;
 pub use contract_call_response::ContractCallResponse;

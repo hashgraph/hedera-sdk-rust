@@ -14,10 +14,9 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
-    ContractBytecodeResponse,
     ContractId,
     Query,
-    ToProtobuf,
+    ToProtobuf, ContractInfo,
 };
 
 /// Get information about a smart contract instance.
@@ -61,7 +60,7 @@ impl ToQueryProtobuf for ContractInfoQueryData {
 
 #[async_trait]
 impl QueryExecute for ContractInfoQueryData {
-    type Response = ContractBytecodeResponse;
+    type Response = ContractInfo;
 
     async fn execute(
         &self,
