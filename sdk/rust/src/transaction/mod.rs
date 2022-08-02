@@ -150,28 +150,12 @@ where
         self
     }
 
-    /// Sets the account that will be paying for this transaction.
-    pub fn payer_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.payer_account_id = Some(id);
-        self
-    }
-
     /// Set an explicit transaction ID to use to identify this transaction.
     ///
     /// Overrides payer account defined on this transaction or on the client.
     ///
     pub fn transaction_id(&mut self, id: TransactionId) -> &mut Self {
         self.body.transaction_id = Some(id);
-        self
-    }
-
-    /// Adds the signer to the list of signers that will sign this transaction before sending
-    /// to the network.
-    pub fn signer<S>(&mut self, signer: &S) -> &mut Self
-    where
-        S: Signer + Clone,
-    {
-        self.signers.push(Box::new(signer.clone()));
         self
     }
 }

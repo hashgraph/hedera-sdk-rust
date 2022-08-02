@@ -118,12 +118,6 @@ where
         self
     }
 
-    /// Sets the account that will be paying for this query.
-    pub fn payer_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.payment.payer_account_id(id);
-        self
-    }
-
     /// Set an explicit transaction ID to use to identify the payment transaction
     /// on this query.
     ///
@@ -131,16 +125,6 @@ where
     ///
     pub fn payment_transaction_id(&mut self, id: TransactionId) -> &mut Self {
         self.payment.transaction_id(id);
-        self
-    }
-
-    /// Adds the signer to the list of signers that will sign the payment transaction before sending
-    /// to the network.
-    pub fn payment_signer<S>(&mut self, signer: &S) -> &mut Self
-    where
-        S: Signer + Clone,
-    {
-        self.payment.signer(signer);
         self
     }
 }

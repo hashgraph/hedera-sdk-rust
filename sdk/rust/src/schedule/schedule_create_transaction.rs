@@ -92,12 +92,12 @@ impl ScheduleCreateTransaction {
         self
     }
 
-    // /// Sets the id of the account to be charged the service fee for the scheduled transaction at
-    // /// the consensus time that it executes (if ever).
-    // TODO: pub fn payer_account_id(&mut self, id: AccountId) -> &mut Self {
-    //     self.body.data.payer_account_id = Some(id);
-    //     self
-    // }
+    /// Sets the id of the account to be charged the service fee for the scheduled transaction at
+    /// the consensus time that it executes (if ever).
+    pub fn payer_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.payer_account_id = Some(id);
+        self
+    }
 
     /// Sets the memo for the schedule entity.
     pub fn schedule_memo(&mut self, memo: impl Into<String>) -> &mut Self {
