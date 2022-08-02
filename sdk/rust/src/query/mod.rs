@@ -7,7 +7,6 @@ use crate::{
     AccountId,
     Client,
     Error,
-    Signer,
     TransactionId,
 };
 
