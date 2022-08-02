@@ -19,6 +19,7 @@ mod client;
 mod contract;
 mod entity_id;
 mod error;
+mod ethereum_transaction;
 mod execute;
 mod file;
 mod key;
@@ -78,6 +79,7 @@ pub use error::{
     Error,
     Result,
 };
+pub use ethereum_transaction::EthereumTransaction;
 pub use file::{
     FileAppendTransaction,
     FileContentsQuery,

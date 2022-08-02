@@ -29,6 +29,7 @@ use crate::contract::{
     ContractExecuteTransactionData,
     ContractUpdateTransactionData,
 };
+use crate::ethereum_transaction::EthereumTransactionData;
 use crate::file::{
     FileAppendTransactionData,
     FileCreateTransactionData,
@@ -125,6 +126,7 @@ pub enum AnyTransactionData {
     ScheduleCreate(ScheduleCreateTransactionData),
     ScheduleSign(ScheduleSignTransactionData),
     ScheduleDelete(ScheduleDeleteTransactionData),
+    Ethereum(EthereumTransactionData),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -289,6 +291,10 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::ScheduleDelete(transaction) => {
                 transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
             }
+
+            Self::Ethereum(transaction) => {
+                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+            }
         }
     }
 }
@@ -336,6 +342,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::ScheduleCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::ScheduleSign(transaction) => transaction.default_max_transaction_fee(),
             Self::ScheduleDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::Ethereum(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -390,6 +397,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::ScheduleCreate(transaction) => transaction.execute(channel, request).await,
             Self::ScheduleSign(transaction) => transaction.execute(channel, request).await,
             Self::ScheduleDelete(transaction) => transaction.execute(channel, request).await,
+            Self::Ethereum(transaction) => transaction.execute(channel, request).await,
         }
     }
 }
