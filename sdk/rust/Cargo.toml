@@ -41,6 +41,8 @@ pkcs8 = "0.9.0"
 async-stream = "0.3.3"
 futures-core = "0.3.21"
 fraction = { version = "0.11.0", features = ["with-serde-support"] }
+pbkdf2 = "0.11.0"
+hmac = "0.12.1"
 either = { version = "1.7.0", features = ["serde"] }
 base64 = "0.13.0"
 
