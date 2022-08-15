@@ -45,6 +45,7 @@ pbkdf2 = "0.11.0"
 hmac = "0.12.1"
 either = { version = "1.7.0", features = ["serde"] }
 base64 = "0.13.0"
+sha3 = "0.10.2"
 
 [dev-dependencies]
 anyhow = "1.0.57"

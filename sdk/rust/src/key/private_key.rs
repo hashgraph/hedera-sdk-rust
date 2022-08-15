@@ -38,6 +38,7 @@ use hmac::{
     Hmac,
     Mac,
 };
+use k256::ecdsa::signature::DigestSigner;
 use k256::pkcs8::der::Encode;
 use pkcs8::der::Decode;
 use pkcs8::{
@@ -49,6 +50,7 @@ use rand::{
     Rng,
 };
 use sha2::Sha512;
+use sha3::Digest;
 
 use crate::{
     Error,
@@ -242,7 +244,10 @@ impl PrivateKey {
 
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => SignaturePair::ed25519(key.sign(message), public),
-            PrivateKeyData::EcdsaSecp256k1(_key) => todo!(),
+            PrivateKeyData::EcdsaSecp256k1(key) => SignaturePair::ecdsa_secp256k1(
+                key.sign_digest(sha3::Keccak256::new_with_prefix(message)),
+                public,
+            ),
         }
     }
 
@@ -382,6 +387,37 @@ mod tests {
         assert_eq!(pk.algorithm().oid, k256::Secp256k1::OID);
 
         assert_eq!(pk.to_string(), S);
+    }
+
+    #[test]
+    fn ed25519_sign() {
+        let private_key = PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10",
+        )
+        .unwrap();
+
+        let signature = private_key.sign(b"hello, world").signature;
+        expect![[r#"
+            Signature::Ed25519(9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07)
+        "#]]
+        .assert_debug_eq(&signature);
+    }
+
+    #[test]
+    fn ecdsa_secp_256_k1_sign() {
+        let private_key = PrivateKey::from_str(
+            "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"
+        )
+        .unwrap();
+
+        // notice that this doesn't match other impls
+        // this is to avoid signature malleability.
+        // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0032.mediawiki
+        let signature = private_key.sign(b"hello world").signature;
+        expect![[r#"
+            Signature::EcdsaSecp256k1(f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851)
+        "#]]
+        .assert_debug_eq(&signature);
     }
 
     #[test]
