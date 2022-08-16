@@ -113,6 +113,11 @@ enum PrivateKeyData {
 }
 
 impl PrivateKey {
+    #[cfg(test)]
+    pub(crate) fn debug_pretty(&self) -> &impl Debug {
+        &*self.0
+    }
+
     /// Generates a new Ed25519 private key.
     #[must_use]
     pub fn generate_ed25519() -> Self {
@@ -329,6 +334,40 @@ impl PrivateKey {
             PrivateKeyData::EcdsaSecp256k1(_) => todo!(),
         }
     }
+
+    pub fn from_mnemonic(
+        mnemonic: &crate::Mnemonic,
+        passphrase: &str,
+    ) -> Result<PrivateKey, Error> {
+        let seed = mnemonic.to_seed(passphrase);
+
+        let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(b"ed25519 seed")
+            .expect("hmac can take a seed of any size")
+            .chain_update(&seed)
+            .finalize()
+            .into_bytes()
+            .into();
+
+        // todo: use `split_array_ref` when that's stable.
+        let (left, right) = {
+            let (left, right) = output.split_at(32);
+            let left: [u8; 32] = left.try_into().unwrap();
+            let right: [u8; 32] = right.try_into().unwrap();
+            (left, right)
+        };
+
+        let data = ed25519_dalek::SecretKey::from_bytes(&left).unwrap();
+        let data = ed25519_dalek::Keypair { public: (&data).into(), secret: data };
+        let data = PrivateKeyData::Ed25519(data);
+
+        let mut key = Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, right)));
+
+        for index in [44, 3030, 0, 0] {
+            key = key.derive(index)?
+        }
+
+        Ok(key)
+    }
 }
 
 impl Debug for PrivateKey {
@@ -351,10 +390,8 @@ impl FromStr for PrivateKey {
     }
 }
 
-// TODO: from_mnemonic
 // TODO: derive (!) - secp256k1
 // TODO: legacy_derive (!) - secp256k1
-// TODO: sign_message
 // TODO: sign_transaction
 
 #[cfg(test)]
