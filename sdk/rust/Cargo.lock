@@ -701,6 +701,7 @@ dependencies = [
  "itertools",
  "k256",
  "log",
+ "num-bigint",
  "once_cell",
  "parking_lot",
  "paste",
