@@ -1,18 +1,9 @@
-# Hedera™ SDK
+# Hedera™ SDK Rust
 
 > The SDK for interacting with Hedera Hashgraph: the official distributed
 > consensus platform built using the hashgraph consensus algorithm for fast,
 > fair and secure transactions. Hedera enables and empowers developers to
 > build an entirely new class of decentralized applications.
-
-Hedera offers support for **C**, **Node.js**, **Python**, **Rust**, **Go**, 
-**Java**, **Android**, **iOS**, **React Native**, **JavaScript**, and 
-**Swift**.
-
-All libraries utilize a common core developed in **Rust** to ensure consistency 
-and stability of the implementation. This does mean that to _build_ a library
-you will need a working Rust compiler. Normal usage of a library does _not_
-require Rust (except for the Rust library of course).
 
 <sub>Maintained with ❤️ by <a href="https://launchbadge.com" target="_blank">LaunchBadge</a>, <a href="https://www.swirlds.com/" target="_blank">Swirlds Labs</a>, and the Hedera community</sub>
 
