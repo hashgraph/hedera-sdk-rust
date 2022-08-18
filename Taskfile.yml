@@ -9,24 +9,11 @@ includes:
         taskfile: ./sdk/swift/Taskfile.yml
         dir: ./sdk/swift
 
-    java:
-        taskfile: ./sdk/kotlin/Taskfile.yml
-        dir: ./sdk/kotlin
-
-    kotlin:
-        taskfile: ./sdk/kotlin/Taskfile.yml
-        dir: ./sdk/kotlin
-
-    dart:
-        taskfile: ./sdk/dart/Taskfile.yml
-        dir: ./sdk/dart
-
 tasks:
     build:
         deps:
             - rust:build
             - swift:build
-            - kotlin:build
 
     format:
         deps:
