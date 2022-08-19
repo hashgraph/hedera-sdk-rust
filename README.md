@@ -7,6 +7,8 @@
 
 <sub>Maintained with ❤️ by <a href="https://launchbadge.com" target="_blank">LaunchBadge</a>, <a href="https://www.swirlds.com/" target="_blank">Swirlds Labs</a>, and the Hedera community</sub>
 
+## SDK IS NOT READY FOR PRODUCTION USE. IT IS CURRENTLY STILL UNDER DEVELOPEMENT. 
+
 ## Community and Support
 
 If you have any questions on the Hedera SDK or Hedera more generally,
@@ -17,14 +19,20 @@ community Discord:
   <img alt="" src="https://user-images.githubusercontent.com/753919/167244200-b95cd3a6-6256-4eaf-b9b4-f1f192341485.png" height="60">
 </a>
 
+
+## Contributing
+
+Contributions are welcome. Please see the
+[contributing guide](https://github.com/hashgraph/.github/blob/main/CONTRIBUTING.md)
+to see how you can get involved.
+
+## Code of Conduct
+
+This project is governed by the
+[Contributor Covenant Code of Conduct](https://github.com/hashgraph/.github/blob/main/CODE_OF_CONDUCT.md). By
+participating, you are expected to uphold this code of conduct. Please report unacceptable behavior
+to [oss@hedera.com](mailto:oss@hedera.com).
+
 ## License
 
-Licensed under Apache License,
-Version 2.0 – see [LICENSE](LICENSE)
-or [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0).
-
-## Contribution
-
-Unless you explicitly state otherwise, any contribution intentionally submitted
-for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
-licensed as above, without any additional terms or conditions.
+[Apache License 2.0](LICENSE)
