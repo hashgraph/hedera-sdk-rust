@@ -27,7 +27,6 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use itertools::Itertools;
 use rand::{
     thread_rng,
     Rng,
@@ -111,7 +110,7 @@ impl FromProtobuf<services::TransactionId> for TransactionId {
         Ok(Self {
             account_id,
             valid_start: valid_start.into(),
-            nonce: (pb.nonce != 0).then(|| pb.nonce),
+            nonce: (pb.nonce != 0).then_some(pb.nonce),
             scheduled: pb.scheduled,
         })
     }
@@ -134,10 +133,8 @@ impl FromStr for TransactionId {
         };
 
         let valid_start = if let Some(valid_start_s) = parts.next() {
-            let (seconds_s, nanos_s) = valid_start_s
-                .splitn(2, '.')
-                .next_tuple()
-                .ok_or_else(|| Error::basic_parse(EXPECTED))?;
+            let (seconds_s, nanos_s) =
+                valid_start_s.split_once('.').ok_or_else(|| Error::basic_parse(EXPECTED))?;
 
             let seconds = i64::from_str(seconds_s).map_err(Error::basic_parse)?;
             let nanos = i64::from_str(nanos_s).map_err(Error::basic_parse)?;
@@ -159,7 +156,7 @@ impl FromStr for TransactionId {
             }
         }
 
-        Ok(Self { scheduled, nonce, valid_start, account_id })
+        Ok(Self { account_id, valid_start, nonce, scheduled })
     }
 }
 

@@ -87,10 +87,10 @@ impl FromStr for NftId {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str>;
-        if s.contains("/") {
-            parts = s.split("/").collect();
-        } else if s.contains("@") {
-            parts = s.split("@").collect();
+        if s.contains('/') {
+            parts = s.split('/').collect();
+        } else if s.contains('@') {
+            parts = s.split('@').collect();
         } else {
             return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"));
         }

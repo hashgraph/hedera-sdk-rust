@@ -153,7 +153,7 @@ impl TokenUpdateTransaction {
     /// If successful, the token balance held in the previous treasury account is transferred to the
     /// new one.
     pub fn treasury_account_id(&mut self, treasury_account_id: AccountId) -> &mut Self {
-        self.body.data.treasury_account_id = Some(treasury_account_id.into());
+        self.body.data.treasury_account_id = Some(treasury_account_id);
         self
     }
 
@@ -199,7 +199,7 @@ impl TokenUpdateTransaction {
 
     /// Sets the new account which will be automatically charged to renew the token's expiration.
     pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(auto_renew_account_id.into());
+        self.body.data.auto_renew_account_id = Some(auto_renew_account_id);
         self
     }
 
@@ -215,7 +215,7 @@ impl TokenUpdateTransaction {
     /// If the new expiration time is earlier than the current expiration time, transaction
     /// will resolve to `InvalidExpirationTime`.
     pub fn expires_at(&mut self, expires_at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(expires_at.into());
+        self.body.data.expires_at = Some(expires_at);
         self.body.data.auto_renew_period = None;
 
         self

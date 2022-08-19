@@ -57,7 +57,7 @@ impl From<AccountInfoQueryData> for AnyQueryData {
 impl AccountInfoQuery {
     /// Sets the account ID for which information is requested.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
-        self.data.account_id = Some(id.into());
+        self.data.account_id = Some(id);
         self
     }
 }

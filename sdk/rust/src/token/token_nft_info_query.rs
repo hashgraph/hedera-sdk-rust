@@ -35,7 +35,7 @@ use crate::{
     TokenNftInfo,
 };
 
-/// Gets info on an NFT for a given TokenID and serial number.
+/// Gets info on an NFT for a given `TokenID` and serial number.
 pub type TokenNftInfoQuery = Query<TokenNftInfoQueryData>;
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize, Debug)]

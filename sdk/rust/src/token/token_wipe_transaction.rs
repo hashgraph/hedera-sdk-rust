@@ -50,23 +50,23 @@ use crate::{
 /// Token A has 2 decimals. In order to wipe 100 tokens from account, one must provide amount of 10000.
 /// In order to wipe 100.55 tokens, one must provide amount of 10055.
 ///
-/// - If the provided account is not found, the transaction will resolve to INVALID_ACCOUNT_ID.
-/// - If the provided account has been deleted, the transaction will resolve to ACCOUNT_DELETED.
-/// - If the provided token is not found, the transaction will resolve to INVALID_TOKEN_ID.
-/// - If the provided token has been deleted, the transaction will resolve to TOKEN_WAS_DELETED.
+/// - If the provided account is not found, the transaction will resolve to `INVALID_ACCOUNT_ID`.
+/// - If the provided account has been deleted, the transaction will resolve to `ACCOUNT_DELETED`.
+/// - If the provided token is not found, the transaction will resolve to `INVALID_TOKEN_ID`.
+/// - If the provided token has been deleted, the transaction will resolve to `TOKEN_WAS_DELETED`.
 /// - If an Association between the provided token and account is not found, the transaction will
-/// resolve to TOKEN_NOT_ASSOCIATED_TO_ACCOUNT.
-/// - If Wipe Key is not present in the Token, transaction results in TOKEN_HAS_NO_WIPE_KEY.
+/// resolve to `TOKEN_NOT_ASSOCIATED_TO_ACCOUNT`.
+/// - If Wipe Key is not present in the Token, transaction results in `TOKEN_HAS_NO_WIPE_KEY`.
 /// - If the provided account is the Token's Treasury Account, transaction results in
-/// CANNOT_WIPE_TOKEN_TREASURY_ACCOUNT
-/// - If both amount and serialNumbers get filled, a INVALID_TRANSACTION_BODY response code will be
+/// `CANNOT_WIPE_TOKEN_TREASURY_ACCOUNT`
+/// - If both amount and serialNumbers get filled, a `INVALID_TRANSACTION_BODY` response code will be
 /// returned.
-/// - If neither the amount nor the serialNumbers get filled, a INVALID_WIPING_AMOUNT response code
+/// - If neither the amount nor the serialNumbers get filled, a `INVALID_WIPING_AMOUNT` response code
 /// will be returned.
-/// - If the serialNumbers list contains a non-positive integer as a serial number, a INVALID_NFT_ID
+/// - If the serialNumbers list contains a non-positive integer as a serial number, a `INVALID_NFT_ID`
 /// response code will be returned.
 /// - If the serialNumbers' list count is greater than the batch size limit global dynamic property, a
-/// BATCH_SIZE_LIMIT_EXCEEDED response code will be returned.
+/// `BATCH_SIZE_LIMIT_EXCEEDED` response code will be returned.
 ///
 pub type TokenWipeTransaction = Transaction<TokenWipeTransactionData>;
 
@@ -92,7 +92,7 @@ pub struct TokenWipeTransactionData {
 impl TokenWipeTransaction {
     /// Sets the account to be wiped.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(account_id.into());
+        self.body.data.account_id = Some(account_id);
         self
     }
 
@@ -135,12 +135,12 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
     ) -> services::transaction_body::Data {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
-        let amount = self.amount.clone().unwrap_or_default();
+        let amount = self.amount.unwrap_or_default();
         let serial_numbers = self.serial_numbers.iter().map(|num| *num as i64).collect();
 
         services::transaction_body::Data::TokenWipe(services::TokenWipeAccountTransactionBody {
-            account,
             token,
+            account,
             amount,
             serial_numbers,
         })

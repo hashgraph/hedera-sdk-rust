@@ -165,14 +165,14 @@ impl ContractCreateTransaction {
     /// Sets the account to be used at the contract's expiration time to extend the
     /// life of the contract.
     pub fn auto_renew_account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(account_id.into());
+        self.body.data.auto_renew_account_id = Some(account_id);
         self
     }
 
     /// Set the ID of the account to which this contract is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id.into());
+        self.body.data.staked_account_id = Some(id);
         self
     }
 

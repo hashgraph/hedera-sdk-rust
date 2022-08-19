@@ -46,9 +46,9 @@ use crate::{
 ///
 /// The operation is idempotent - becomes a no-op if the Token is already unpaused.
 ///
-/// - If the provided token is not found, the transaction will resolve to INVALID_TOKEN_ID.
-/// - If the provided token has been deleted, the transaction will resolve to TOKEN_WAS_DELETED.
-/// - If no Pause Key is defined, the transaction will resolve to TOKEN_HAS_NO_PAUSE_KEY.
+/// - If the provided token is not found, the transaction will resolve to `INVALID_TOKEN_ID`.
+/// - If the provided token has been deleted, the transaction will resolve to `TOKEN_WAS_DELETED`.
+/// - If no Pause Key is defined, the transaction will resolve to `TOKEN_HAS_NO_PAUSE_KEY`.
 pub type TokenUnpauseTransaction = Transaction<TokenUnpauseTransactionData>;
 
 #[serde_as]
