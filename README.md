@@ -1,4 +1,4 @@
-# Hedera™ SDK Rust
+# Hedera™ SDK Core
 
 > The SDK for interacting with Hedera Hashgraph: the official distributed
 > consensus platform built using the hashgraph consensus algorithm for fast,
