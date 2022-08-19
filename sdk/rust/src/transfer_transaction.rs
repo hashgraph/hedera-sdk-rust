@@ -103,7 +103,7 @@ impl TransferTransaction {
         approved: bool,
         expected_decimals: Option<u32>,
     ) -> &mut Self {
-        let transfer = Transfer { account_id: account_id.into(), amount, is_approval: approved };
+        let transfer = Transfer { account_id, amount, is_approval: approved };
 
         if let Some(tt) =
             self.body.data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id)
@@ -174,8 +174,8 @@ impl TransferTransaction {
         let NftId { token_id, serial_number } = nft_id;
         let transfer = NftTransfer {
             serial_number,
-            sender_account_id: sender_account_id.into(),
-            receiver_account_id: receiver_account_id.into(),
+            sender_account_id,
+            receiver_account_id,
             is_approval: approved,
         };
 
@@ -221,11 +221,7 @@ impl TransferTransaction {
         amount: i64,
         approved: bool,
     ) -> &mut Self {
-        self.body.data.transfers.push(Transfer {
-            account_id: account_id.into(),
-            amount,
-            is_approval: approved,
-        });
+        self.body.data.transfers.push(Transfer { account_id, amount, is_approval: approved });
 
         self
     }

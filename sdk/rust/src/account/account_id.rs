@@ -75,7 +75,7 @@ impl ToProtobuf for AccountId {
             shard_num: self.shard as i64,
             account: Some(match &self.alias {
                 None => services::account_id::Account::AccountNum(self.num as i64),
-                Some(alias) => services::account_id::Account::Alias(alias.to_bytes_raw().to_vec()),
+                Some(alias) => services::account_id::Account::Alias(alias.to_bytes_raw()),
             }),
         }
     }

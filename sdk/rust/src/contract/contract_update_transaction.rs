@@ -121,14 +121,14 @@ impl ContractUpdateTransaction {
     /// Sets the account to be used at the contract's expiration time to extend the
     /// life of the contract.
     pub fn auto_renew_account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(account_id.into());
+        self.body.data.auto_renew_account_id = Some(account_id);
         self
     }
 
     /// Set the ID of the account to which this contract is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id.into());
+        self.body.data.staked_account_id = Some(id);
         self
     }
 
@@ -183,12 +183,10 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
             _ => None,
         };
 
-        let memo_field = match self.contract_memo.clone() {
-            Some(memo) => {
-                Some(services::contract_update_transaction_body::MemoField::MemoWrapper(memo))
-            }
-            None => None,
-        };
+        let memo_field = self
+            .contract_memo
+            .clone()
+            .map(services::contract_update_transaction_body::MemoField::MemoWrapper);
 
         services::transaction_body::Data::ContractUpdateInstance(
             #[allow(deprecated)]

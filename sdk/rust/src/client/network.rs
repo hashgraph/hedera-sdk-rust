@@ -158,7 +158,7 @@ impl Network {
 
             map.insert(node_account_id, i);
             nodes.push(node_account_id);
-            addresses.push(address.into_iter().map(|address| Cow::Borrowed(*address)).collect());
+            addresses.push(address.iter().map(|address| Cow::Borrowed(*address)).collect());
             channels.push(RwLock::new(None));
             healthy.push(AtomicI64::new(0));
         }
@@ -169,7 +169,7 @@ impl Network {
     pub(crate) fn node_indexes_for_ids(&self, ids: &[AccountId]) -> crate::Result<Vec<usize>> {
         let mut indexes = Vec::new();
         for id in ids {
-            indexes.push(self.map.get(id).copied().ok_or_else(|| Error::NodeAccountUnknown(*id))?);
+            indexes.push(self.map.get(id).copied().ok_or(Error::NodeAccountUnknown(*id))?);
         }
 
         Ok(indexes)
@@ -206,14 +206,12 @@ impl Network {
 
         let endpoints = addresses.iter().map(|address| {
             let uri = format!("tcp://{}:50211", address);
-            let endpoint = Endpoint::from_shared(uri)
+            Endpoint::from_shared(uri)
                 .unwrap()
                 .keep_alive_timeout(Duration::from_secs(10))
                 .keep_alive_while_idle(true)
                 .tcp_keepalive(Some(Duration::from_secs(10)))
-                .connect_timeout(Duration::from_secs(10));
-
-            endpoint
+                .connect_timeout(Duration::from_secs(10))
         });
 
         let channel = Channel::balance_list(endpoints);

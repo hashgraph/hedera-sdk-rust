@@ -56,13 +56,13 @@ pub struct AccountDeleteTransactionData {
 impl AccountDeleteTransaction {
     /// Sets the account ID which should be deleted.
     pub fn delete_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.delete_account_id = Some(id.into());
+        self.body.data.delete_account_id = Some(id);
         self
     }
 
     /// Sets the account ID which will receive all remaining hbars.
     pub fn transfer_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.transfer_account_id = Some(id.into());
+        self.body.data.transfer_account_id = Some(id);
         self
     }
 }
@@ -88,8 +88,8 @@ impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
         let transfer_account_id = self.transfer_account_id.as_ref().map(AccountId::to_protobuf);
 
         services::transaction_body::Data::CryptoDelete(services::CryptoDeleteTransactionBody {
-            delete_account_id,
             transfer_account_id,
+            delete_account_id,
         })
     }
 }

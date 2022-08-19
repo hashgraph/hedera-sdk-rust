@@ -55,13 +55,13 @@ pub struct ContractDeleteTransactionData {
 impl ContractDeleteTransaction {
     /// Sets the contract ID which should be deleted.
     pub fn delete_contract_id(&mut self, id: ContractId) -> &mut Self {
-        self.body.data.delete_contract_id = Some(id.into());
+        self.body.data.delete_contract_id = Some(id);
         self
     }
 
     /// Sets the account ID which will receive all remaining hbars.
     pub fn transfer_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.transfer_account_id = Some(id.into());
+        self.body.data.transfer_account_id = Some(id);
         self
     }
 

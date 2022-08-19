@@ -141,7 +141,7 @@ impl TransactionReceipt {
                 .topic_running_hash
                 .is_empty()
                 .not()
-                .then(|| receipt.topic_running_hash),
+                .then_some(receipt.topic_running_hash),
             scheduled_transaction_id,
             account_id,
             file_id,

@@ -55,7 +55,7 @@ impl From<AccountStakersQueryData> for AnyQueryData {
 impl AccountStakersQuery {
     /// Sets the account ID for which the records should be retrieved.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
-        self.data.account_id = Some(id.into());
+        self.data.account_id = Some(id);
         self
     }
 }

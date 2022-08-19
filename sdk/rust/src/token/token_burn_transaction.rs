@@ -50,18 +50,18 @@ use crate::{
 ///
 /// For non-fungible tokens the transaction body accepts serialNumbers list of integers as a parameter.
 ///
-/// - If no Supply Key is defined, the transaction will resolve to TOKEN_HAS_NO_SUPPLY_KEY.
+/// - If no Supply Key is defined, the transaction will resolve to `TOKEN_HAS_NO_SUPPLY_KEY`.
 ///
-/// - If neither the amount nor the serialNumbers get filled, a INVALID_TOKEN_BURN_AMOUNT response code
+/// - If neither the amount nor the serialNumbers get filled, a `INVALID_TOKEN_BURN_AMOUNT` response code
 /// will be returned.
 ///
-/// - If both amount and serialNumbers get filled, a INVALID_TRANSACTION_BODY response code will be
+/// - If both amount and serialNumbers get filled, a `INVALID_TRANSACTION_BODY` response code will be
 /// returned.
 ///
 /// - If the serialNumbers' list count is greater than the batch size limit global dynamic property, a
-/// BATCH_SIZE_LIMIT_EXCEEDED response code will be returned.
+/// `BATCH_SIZE_LIMIT_EXCEEDED` response code will be returned.
 ///
-/// - If the serialNumbers list contains a non-positive integer as a serial number, a INVALID_NFT_ID
+/// - If the serialNumbers list contains a non-positive integer as a serial number, a `INVALID_NFT_ID`
 /// response code will be returned.
 pub type TokenBurnTransaction = Transaction<TokenBurnTransactionData>;
 

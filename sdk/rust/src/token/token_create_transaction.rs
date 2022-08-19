@@ -206,7 +206,7 @@ impl TokenCreateTransaction {
 
     /// Sets the account which will act as a treasury for the token.
     pub fn treasury_account_id(&mut self, treasury_account_id: AccountId) -> &mut Self {
-        self.body.data.treasury_account_id = Some(treasury_account_id.into());
+        self.body.data.treasury_account_id = Some(treasury_account_id);
         self
     }
 
@@ -249,7 +249,7 @@ impl TokenCreateTransaction {
 
     /// Sets the time at which the token should expire.
     pub fn expires_at(&mut self, expires_at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(expires_at.into());
+        self.body.data.expires_at = Some(expires_at);
         self.body.data.auto_renew_period = None;
 
         self
@@ -257,7 +257,7 @@ impl TokenCreateTransaction {
 
     /// Sets the account which will be automatically charged to renew the token's expiration.
     pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(auto_renew_account_id.into());
+        self.body.data.auto_renew_account_id = Some(auto_renew_account_id);
         self
     }
 
