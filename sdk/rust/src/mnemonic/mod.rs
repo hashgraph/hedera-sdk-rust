@@ -66,6 +66,7 @@ static BIP39_WORD_LIST: Lazy<Vec<&'static str>> = Lazy::new(|| {
 static LEGACY_WORD_LIST: Lazy<Vec<&'static str>> =
     Lazy::new(|| LEGACY.split_whitespace().collect());
 
+///  `BIP-39` 24-word mnemonic phrase compatible with the Android and iOS mobile wallets.
 pub struct Mnemonic(MnemonicData);
 
 // pretend to be the API we want to show
@@ -79,17 +80,27 @@ impl fmt::Debug for Mnemonic {
 }
 
 impl Mnemonic {
-    pub fn words(&self) -> &[String] {
+    // todo(sr): before release, try to find a better internal representation
+    // lets not expose this until we know what the final signature should be
+    fn words(&self) -> &[String] {
         match &self.0 {
             MnemonicData::V1(it) => it.words(),
             MnemonicData::V2V3(it) => it.words(),
         }
     }
 
+    /// Returns `true` if `self` is a legacy mnemonic.
     pub fn is_legacy(&self) -> bool {
         matches!(&self.0, MnemonicData::V1(_))
     }
 
+    // todo(sr): Not too happy abotu requiring a `Vec<String>`
+    /// Constructs a `Mnemonic` from a 24-word list.
+    ///
+    /// # Errors
+    /// * if the mnemonic has an invalid length.
+    /// * if the mnemonic uses invalid words.
+    /// * if the mnemonic has an invalid checksum.
     pub fn from_words(words: Vec<String>) -> crate::Result<Self> {
         let words = match words.try_into() {
             Ok(words) => return Ok(Self(MnemonicData::V1(MnemonicV1 { words: Box::new(words) }))),
@@ -145,15 +156,18 @@ impl Mnemonic {
         Ok(mnemonic)
     }
 
+    /// Generate a new 12 word `Mnemonic` from the BIP-39 standard English word list.
     pub fn generate_12() -> Self {
         Self(MnemonicV2V3::generate_12().into())
     }
 
+    /// Generate a new 24 word `Mnemonic` from the BIP-39 standard English word list.
     pub fn generate_24() -> Self {
         Self(MnemonicV2V3::generate_24().into())
     }
 
-    pub fn to_legacy_private_key(&self) -> Result<PrivateKey, Error> {
+    /// Recover a [`PrivateKey`] from this `Mnemonic`.
+    pub fn to_legacy_private_key(&self) -> crate::Result<PrivateKey> {
         let entropy = match &self.0 {
             MnemonicData::V1(it) => it.to_entropy()?,
             MnemonicData::V2V3(it) => it.to_legacy_entropy()?,
@@ -162,7 +176,8 @@ impl Mnemonic {
         PrivateKey::from_bytes(&entropy)
     }
 
-    pub fn to_private_key(&self, passphrase: &str) -> Result<PrivateKey, Error> {
+    /// Recover a [`PrivateKey`] from this `Mnemonic`.
+    pub fn to_private_key(&self, passphrase: &str) -> crate::Result<PrivateKey> {
         match &self.0 {
             MnemonicData::V1(_) if !passphrase.is_empty() => {
                 Err(Error::MnemonicEntropy(MnemonicEntropyError::LegacyWithPassphrase))
@@ -503,6 +518,7 @@ mod tests {
             "alone fever slush dune"
         );
 
+        // replace words in `MNEMONIC` one at a time.
         for i in 0..12 {
             let mut words: Vec<_> = MNEMONIC.split_whitespace().map(str::to_owned).collect();
             words[i] = "lorum".to_owned();
