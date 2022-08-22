@@ -153,7 +153,7 @@ mod tests {
     const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractExecute",
   "contractId": "0.0.1001",
-  "gasLimit": 1000,
+  "gas": 1000,
   "payableAmount": 10,
   "functionParameters": [
     72,
