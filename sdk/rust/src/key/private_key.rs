@@ -256,6 +256,7 @@ impl PrivateKey {
         }
     }
 
+    /// Derives a child key based on `index`.
     pub fn derive(&self, index: i32) -> crate::Result<Self> {
         const HARDEND_MASK: u32 = 1 << 31;
         let index = index as u32;
@@ -335,6 +336,7 @@ impl PrivateKey {
         }
     }
 
+    /// Recover a private key from a generated mnemonic phrase and a passphrase.
     pub fn from_mnemonic(
         mnemonic: &crate::Mnemonic,
         passphrase: &str,
