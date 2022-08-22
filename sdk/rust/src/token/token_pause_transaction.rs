@@ -47,9 +47,9 @@ use crate::{
 /// Once executed the Token is marked as paused and will be not able to be a part of any transaction.
 /// The operation is idempotent - becomes a no-op if the Token is already Paused.
 ///
-/// - If the provided token is not found, the transaction will resolve to INVALID_TOKEN_ID.
-/// - If the provided token has been deleted, the transaction will resolve to TOKEN_WAS_DELETED.
-/// - If no Pause Key is defined, the transaction will resolve to TOKEN_HAS_NO_PAUSE_KEY.
+/// - If the provided token is not found, the transaction will resolve to `INVALID_TOKEN_ID`.
+/// - If the provided token has been deleted, the transaction will resolve to `TOKEN_WAS_DELETED`.
+/// - If no Pause Key is defined, the transaction will resolve to `TOKEN_HAS_NO_PAUSE_KEY`.
 pub type TokenPauseTransaction = Transaction<TokenPauseTransactionData>;
 
 #[serde_as]

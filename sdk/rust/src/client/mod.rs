@@ -56,6 +56,7 @@ pub struct Client {
 
 impl Client {
     /// Construct a Hedera client pre-configured for mainnet access.
+    #[must_use]
     pub fn for_mainnet() -> Self {
         Self {
             network: Arc::new(Network::from_static(MAINNET)),
@@ -67,6 +68,7 @@ impl Client {
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
+    #[must_use]
     pub fn for_testnet() -> Self {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),
@@ -78,6 +80,7 @@ impl Client {
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
+    #[must_use]
     pub fn for_previewnet() -> Self {
         Self {
             network: Arc::new(Network::from_static(PREVIEWNET)),

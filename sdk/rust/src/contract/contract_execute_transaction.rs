@@ -43,16 +43,16 @@ use crate::{
     Transaction,
 };
 
-/// Call a function of the given smart contract instance, giving it 
+/// Call a function of the given smart contract instance, giving it
 /// parameters as its inputs.
-/// 
-/// It can use the given amount of gas, and any unspent gas will 
+///
+/// It can use the given amount of gas, and any unspent gas will
 /// be refunded to the paying account.
-/// 
+///
 /// If this function stores information, it is charged gas to store it.
-/// There is a fee in hbars to maintain that storage until the expiration time, 
+/// There is a fee in hbars to maintain that storage until the expiration time,
 /// and that fee is added as part of the transaction fee.
-/// 
+///
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;
 
 #[serde_as]

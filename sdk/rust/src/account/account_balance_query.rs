@@ -77,7 +77,7 @@ impl AccountBalanceQuery {
     /// This is mutually exclusive with [`contract_id`](#method.contract_id).
     ///
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
-        self.data.source = AccountBalanceSource::AccountId(id.into());
+        self.data.source = AccountBalanceSource::AccountId(id);
         self
     }
 
@@ -86,7 +86,7 @@ impl AccountBalanceQuery {
     /// This is mutually exclusive with [`account_id`](#method.account_id).
     ///
     pub fn contract_id(&mut self, id: ContractId) -> &mut Self {
-        self.data.source = AccountBalanceSource::ContractId(id.into());
+        self.data.source = AccountBalanceSource::ContractId(id);
         self
     }
 }

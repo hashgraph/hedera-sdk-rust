@@ -120,7 +120,7 @@ impl TopicCreateTransaction {
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(id.into());
+        self.body.data.auto_renew_account_id = Some(id);
         self
     }
 }

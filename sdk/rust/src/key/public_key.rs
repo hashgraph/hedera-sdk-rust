@@ -61,10 +61,12 @@ impl PublicKey {
         Self(PublicKeyData::EcdsaSecp256k1(key))
     }
 
+    #[must_use]
     pub fn is_ed25519(&self) -> bool {
         matches!(&self.0, PublicKeyData::Ed25519(_))
     }
 
+    #[must_use]
     pub fn is_ecdsa_secp256k1(&self) -> bool {
         matches!(&self.0, PublicKeyData::EcdsaSecp256k1(_))
     }
@@ -112,7 +114,7 @@ impl PublicKey {
             return Self::from_bytes_ecdsa_secp256k1(info.subject_public_key);
         }
 
-        if info.algorithm.oid == "1.3.101.112".parse().unwrap() {
+        if info.algorithm.oid == ED25519_OID {
             return Self::from_bytes_ed25519(info.subject_public_key);
         }
 
@@ -120,6 +122,7 @@ impl PublicKey {
     }
 
     /// Return this private key, serialized as bytes.
+    #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(64);
 
@@ -152,7 +155,7 @@ impl PublicKey {
         pkcs8::AlgorithmIdentifier {
             parameters: None,
             oid: match self.0 {
-                PublicKeyData::Ed25519(_) => *ED25519_OID,
+                PublicKeyData::Ed25519(_) => ED25519_OID,
                 PublicKeyData::EcdsaSecp256k1(_) => k256::elliptic_curve::ALGORITHM_OID,
             },
         }
@@ -168,7 +171,7 @@ impl PublicKey {
 
 impl Debug for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 
@@ -199,5 +202,3 @@ impl FromStr for PublicKey {
 // TODO: to_protobuf
 // TODO: verify_message
 // TODO: verify_transaction
-// TODO: is_ed25519
-// TODO: is_ecsda

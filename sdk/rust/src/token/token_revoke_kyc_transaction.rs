@@ -46,13 +46,13 @@ use crate::{
 ///
 /// Once executed the Account is marked as KYC Revoked.
 ///
-/// - If the provided account is not found, the transaction will resolve to INVALID_ACCOUNT_ID.
-/// - If the provided account has been deleted, the transaction will resolve to ACCOUNT_DELETED.
-/// - If the provided token is not found, the transaction will resolve to INVALID_TOKEN_ID.
-/// - If the provided token has been deleted, the transaction will resolve to TOKEN_WAS_DELETED.
+/// - If the provided account is not found, the transaction will resolve to `INVALID_ACCOUNT_ID`.
+/// - If the provided account has been deleted, the transaction will resolve to `ACCOUNT_DELETED`.
+/// - If the provided token is not found, the transaction will resolve to `INVALID_TOKEN_ID`.
+/// - If the provided token has been deleted, the transaction will resolve to `TOKEN_WAS_DELETED`.
 /// - If an Association between the provided token and account is not found, the transaction will
-/// resolve to TOKEN_NOT_ASSOCIATED_TO_ACCOUNT.
-/// - If no KYC Key is defined, the transaction will resolve to TOKEN_HAS_NO_KYC_KEY.
+/// resolve to `TOKEN_NOT_ASSOCIATED_TO_ACCOUNT`.
+/// - If no KYC Key is defined, the transaction will resolve to `TOKEN_HAS_NO_KYC_KEY`.
 pub type TokenRevokeKycTransaction = Transaction<TokenRevokeKycTransactionData>;
 
 #[serde_as]
@@ -70,7 +70,7 @@ pub struct TokenRevokeKycTransactionData {
 impl TokenRevokeKycTransaction {
     /// Sets the account to have their KYC revoked.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(account_id.into());
+        self.body.data.account_id = Some(account_id);
         self
     }
 
@@ -102,8 +102,8 @@ impl ToTransactionDataProtobuf for TokenRevokeKycTransactionData {
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenRevokeKyc(services::TokenRevokeKycTransactionBody {
-            account,
             token,
+            account,
         })
     }
 }

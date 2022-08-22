@@ -62,11 +62,11 @@ impl TransactionResponse {
     /// Will wait for consensus.
     /// Will return an `Error::ReceiptStatus` for a failing receipt.
     pub async fn get_receipt(&self, client: &Client) -> crate::Result<TransactionReceipt> {
-        Ok(TransactionReceiptQuery::new()
+        TransactionReceiptQuery::new()
             .transaction_id(self.transaction_id)
             .node_account_ids([self.node_account_id])
             .validate_status(true)
             .execute(client)
-            .await?)
+            .await
     }
 }

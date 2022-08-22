@@ -42,13 +42,13 @@ use crate::{
 /// Once executed the Account is marked as Unfrozen and will be able to receive or send tokens.
 /// The operation is idempotent.
 ///
-/// - If the provided account is not found, the transaction will resolve to INVALID_ACCOUNT_ID.
-/// - If the provided account has been deleted, the transaction will resolve to ACCOUNT_DELETED.
-/// - If the provided token is not found, the transaction will resolve to INVALID_TOKEN_ID.
-/// - If the provided token has been deleted, the transaction will resolve to TOKEN_WAS_DELETED.
+/// - If the provided account is not found, the transaction will resolve to `INVALID_ACCOUNT_ID`.
+/// - If the provided account has been deleted, the transaction will resolve to `ACCOUNT_DELETED`.
+/// - If the provided token is not found, the transaction will resolve to `INVALID_TOKEN_ID`.
+/// - If the provided token has been deleted, the transaction will resolve to `TOKEN_WAS_DELETED`.
 /// - If an Association between the provided token and account is not found, the transaction will
-/// resolve to TOKEN_NOT_ASSOCIATED_TO_ACCOUNT.
-/// - If no Freeze Key is defined, the transaction will resolve to TOKEN_HAS_NO_FREEZE_KEY.
+/// resolve to `TOKEN_NOT_ASSOCIATED_TO_ACCOUNT`.
+/// - If no Freeze Key is defined, the transaction will resolve to `TOKEN_HAS_NO_FREEZE_KEY`.
 pub type TokenUnfreezeTransaction = Transaction<TokenUnfreezeTransactionData>;
 
 #[skip_serializing_none]
@@ -65,7 +65,7 @@ pub struct TokenUnfreezeTransactionData {
 impl TokenUnfreezeTransaction {
     /// Sets the account to be unfrozen.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(account_id.into());
+        self.body.data.account_id = Some(account_id);
         self
     }
 
@@ -97,7 +97,7 @@ impl ToTransactionDataProtobuf for TokenUnfreezeTransactionData {
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::transaction_body::Data::TokenUnfreeze(
-            services::TokenUnfreezeAccountTransactionBody { account, token },
+            services::TokenUnfreezeAccountTransactionBody { token, account },
         )
     }
 }

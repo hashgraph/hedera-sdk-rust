@@ -69,8 +69,8 @@ impl AccountAllowanceApproveTransaction {
         amount: u64,
     ) -> &mut Self {
         self.body.data.hbar_allowances.push(HbarAllowance {
-            spender_account_id: spender_account_id.into(),
-            owner_account_id: owner_account_id.into(),
+            owner_account_id,
+            spender_account_id,
             amount,
         });
 
@@ -87,8 +87,8 @@ impl AccountAllowanceApproveTransaction {
     ) -> &mut Self {
         self.body.data.token_allowances.push(TokenAllowance {
             token_id,
-            spender_account_id: spender_account_id.into(),
-            owner_account_id: owner_account_id.into(),
+            owner_account_id,
+            spender_account_id,
             amount,
         });
 
@@ -103,8 +103,8 @@ impl AccountAllowanceApproveTransaction {
         spender_account_id: AccountId,
     ) -> &mut Self {
         let nft_id = nft_id.into();
-        let owner_account_id = owner_account_id.into();
-        let spender_account_id = spender_account_id.into();
+        let owner_account_id = owner_account_id;
+        let spender_account_id = spender_account_id;
 
         if let Some(allowance) = self.body.data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id
@@ -134,8 +134,8 @@ impl AccountAllowanceApproveTransaction {
         owner_account_id: AccountId,
         spender_account_id: AccountId,
     ) -> &mut Self {
-        let owner_account_id = owner_account_id.into();
-        let spender_account_id = spender_account_id.into();
+        let owner_account_id = owner_account_id;
+        let spender_account_id = spender_account_id;
 
         self.body.data.nft_allowances.push(NftAllowance {
             approved_for_all: Some(true),

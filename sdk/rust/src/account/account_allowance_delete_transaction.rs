@@ -39,7 +39,7 @@ use crate::{
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
 /// will remove the allowances granted to one or more specific non-fungible token serial numbers. Each owner account
 /// listed as wiping an allowance must sign the transaction. Hbar and fungible token allowances
-/// can be removed by setting the amount to zero in [AccountAllowanceApproveTransaction].
+/// can be removed by setting the amount to zero in [`AccountAllowanceApproveTransaction`].
 ///
 pub type AccountAllowanceDeleteTransaction = Transaction<AccountAllowanceDeleteTransactionData>;
 
@@ -69,7 +69,7 @@ impl AccountAllowanceDeleteTransaction {
         nft_id: NftId,
         owner_account_id: AccountId,
     ) -> &mut Self {
-        let owner_account_id = owner_account_id.into();
+        let owner_account_id = owner_account_id;
 
         if let Some(allowance) = self.body.data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id && allowance.owner_account_id == owner_account_id
@@ -80,7 +80,7 @@ impl AccountAllowanceDeleteTransaction {
                 token_id: nft_id.token_id,
                 serial_numbers: vec![nft_id.serial_number as i64],
                 owner_account_id,
-            })
+            });
         }
 
         self

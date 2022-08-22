@@ -105,7 +105,7 @@ impl ScheduleCreateTransaction {
         self
     }
 
-    /// Sets if the transaction will be evaluated for execution at expiration_time instead
+    /// Sets if the transaction will be evaluated for execution at `expiration_time` instead
     /// of when all required signatures are received.
     pub fn wait_for_expiry(&mut self, wait: bool) -> &mut Self {
         self.body.data.wait_for_expiry = wait;
@@ -125,7 +125,7 @@ impl ScheduleCreateTransaction {
         self
     }
 
-    /// Sets the Hedera key which can be used to sign a ScheduleDelete and remove the schedule.
+    /// Sets the Hedera key which can be used to sign a `ScheduleDelete` and remove the schedule.
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.body.data.admin_key = Some(key.into());
         self
@@ -151,6 +151,8 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
     ) -> transaction_body::Data {
         let body = self.scheduled_transaction.as_ref().map(|scheduled| {
             let data = scheduled.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+
+            #[allow(clippy::match_same_arms)]
             let data = match data {
                 transaction_body::Data::ConsensusCreateTopic(data) => {
                     Some(schedulable_transaction_body::Data::ConsensusCreateTopic(data))

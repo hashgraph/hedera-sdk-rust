@@ -91,15 +91,13 @@ impl MirrorQuerySubscribe for AnyMirrorQueryData {
 
     async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, Status> {
         match self {
-            Self::NodeAddressBook(query) => query
-                .subscribe(channel)
-                .await
-                .map(|response| AnyMirrorQueryGrpcStream::NodeAddressBook(response)),
+            Self::NodeAddressBook(query) => {
+                query.subscribe(channel).await.map(AnyMirrorQueryGrpcStream::NodeAddressBook)
+            }
 
-            Self::TopicMessage(query) => query
-                .subscribe(channel)
-                .await
-                .map(|response| AnyMirrorQueryGrpcStream::TopicMessage(response)),
+            Self::TopicMessage(query) => {
+                query.subscribe(channel).await.map(AnyMirrorQueryGrpcStream::TopicMessage)
+            }
         }
     }
 

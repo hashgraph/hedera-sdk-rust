@@ -43,7 +43,7 @@ pub(crate) trait Execute {
     /// Additional context returned from each call to `make_request`. Upon
     /// a successful request, the associated response context is passed to
     /// `make_response`.
-    type Context;
+    type Context: Send;
 
     type Response;
 
@@ -109,7 +109,7 @@ pub(crate) trait Execute {
 
 pub(crate) async fn execute<E>(client: &Client, executable: &E) -> crate::Result<E::Response>
 where
-    E: Execute,
+    E: Execute + Sync,
 {
     // the overall timeout for the backoff starts measuring from here
 

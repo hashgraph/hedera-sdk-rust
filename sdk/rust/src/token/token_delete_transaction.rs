@@ -45,10 +45,10 @@ use crate::{
 /// The operation must be signed by the specified Admin Key of the Token.
 ///
 /// Once deleted update, mint, burn, wipe, freeze, unfreeze, grant kyc, revoke
-/// kyc and token transfer transactions will resolve to TOKEN_WAS_DELETED.
+/// kyc and token transfer transactions will resolve to `TOKEN_WAS_DELETED`.
 ///
-/// - If admin key is not set, Transaction will result in TOKEN_IS_IMMUTABlE.
-/// - If invalid token is specified, transaction will result in INVALID_TOKEN_ID
+/// - If admin key is not set, Transaction will result in `TOKEN_IS_IMMUTABlE`.
+/// - If invalid token is specified, transaction will result in `INVALID_TOKEN_ID`
 pub type TokenDeleteTransaction = Transaction<TokenDeleteTransactionData>;
 
 #[serde_as]
