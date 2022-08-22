@@ -134,17 +134,16 @@ impl QueryExecute for TransactionReceiptQueryData {
         // extract the receipt status from the receipt
         // without altering or freeing the memory from the response
 
-        let receipt_status = loop {
-            if let Some(services::response::Response::TransactionGetReceipt(r)) = &response.response
-            {
-                if let Some(receipt) = &r.receipt {
-                    if let Some(status) = Status::from_i32(receipt.status) {
-                        break status;
-                    }
-                }
-            }
+        let receipt_status = {
+            let r = match &response.response {
+                Some(services::response::Response::TransactionGetReceipt(r)) => r,
+                _ => return false,
+            };
 
-            return false;
+            match r.receipt.as_ref().and_then(|it| Status::from_i32(it.status)) {
+                Some(receipt_status) => receipt_status,
+                None => return false,
+            }
         };
 
         matches!(receipt_status, Status::Unknown)

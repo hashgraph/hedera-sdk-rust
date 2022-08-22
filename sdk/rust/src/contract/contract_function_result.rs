@@ -80,8 +80,7 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
         let contract_id = pb_getf!(pb, contract_id)?;
         let contract_id = ContractId::from_protobuf(contract_id)?;
 
-        let sender_account_id =
-            pb.sender_id.map(|sender_id| AccountId::from_protobuf(sender_id)).transpose()?;
+        let sender_account_id = pb.sender_id.map(AccountId::from_protobuf).transpose()?;
 
         let evm_address = pb
             .evm_address

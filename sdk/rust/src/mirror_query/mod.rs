@@ -43,6 +43,7 @@ where
     D: MirrorQuerySubscribe + Default,
 {
     /// Create a new query ready for configuration and execution.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

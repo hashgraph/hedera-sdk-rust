@@ -47,7 +47,7 @@ use crate::{
 
 /// Call a function of the given smart contract instance.
 /// It will consume the entire given amount of gas.
-/// 
+///
 /// This is performed locally on the particular node that the client is communicating with.
 /// It cannot change the state of the contract instance (and so, cannot spend
 /// anything from the instance's cryptocurrency account).
@@ -94,7 +94,7 @@ impl ContractCallQuery {
 
     /// Sets the sender for this transaction.
     pub fn sender_account_id(&mut self, sender_account_id: AccountId) -> &mut Self {
-        self.data.sender_account_id = Some(sender_account_id.into());
+        self.data.sender_account_id = Some(sender_account_id);
         self
     }
 }

@@ -58,14 +58,12 @@ impl MirrorNetwork {
 
         let endpoints = self.addresses.iter().map(|address| {
             let uri = format!("tcp://{}", address);
-            let endpoint = Endpoint::from_shared(uri)
+            Endpoint::from_shared(uri)
                 .unwrap()
                 .keep_alive_timeout(Duration::from_secs(10))
                 .keep_alive_while_idle(true)
                 .tcp_keepalive(Some(Duration::from_secs(10)))
-                .connect_timeout(Duration::from_secs(10));
-
-            endpoint
+                .connect_timeout(Duration::from_secs(10))
         });
 
         let channel = Channel::balance_list(endpoints);

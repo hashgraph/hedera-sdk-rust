@@ -70,7 +70,7 @@ impl EthereumTransaction {
     /// Sets a file ID to find the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     ///
     /// For large transactions (for example contract create) this should be used to
-    /// set the FileId of an HFS file containing the callData
+    /// set the [`FileId`] of an HFS file containing the callData
     /// of the ethereumData. The data in the ethereumData will be re-written with
     /// the callData element as a zero length string with the original contents in
     /// the referenced file at time of execution. The ethereumData will need to be

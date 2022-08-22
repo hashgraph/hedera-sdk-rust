@@ -146,7 +146,7 @@ impl AccountCreateTransaction {
     /// Set the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id.into());
+        self.body.data.staked_account_id = Some(id);
         self
     }
 

@@ -32,7 +32,6 @@ use ed25519_dalek::{
     Signer,
 };
 use k256::pkcs8::der::Encode;
-use once_cell::sync::Lazy;
 use pkcs8::der::Decode;
 use pkcs8::ObjectIdentifier;
 use rand::thread_rng;
@@ -43,7 +42,7 @@ use crate::{
     SignaturePair,
 };
 
-pub(super) const ED25519_OID: Lazy<ObjectIdentifier> = Lazy::new(|| "1.3.101.112".parse().unwrap());
+pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
 
 /// A private key on the Hedera network.
 #[derive(Clone)]
@@ -56,6 +55,7 @@ enum PrivateKeyData {
 
 impl PrivateKey {
     /// Generates a new Ed25519 private key.
+    #[must_use]
     pub fn generate_ed25519() -> Self {
         let data = ed25519_dalek::Keypair::generate(&mut thread_rng());
         let data = PrivateKeyData::Ed25519(data);
@@ -64,6 +64,7 @@ impl PrivateKey {
     }
 
     /// Generates a new ECDSA(secp256k1) private key.
+    #[must_use]
     pub fn generate_ecdsa_secp256k1() -> Self {
         let data = k256::ecdsa::SigningKey::random(&mut thread_rng());
         let data = PrivateKeyData::EcdsaSecp256k1(data);
@@ -72,6 +73,7 @@ impl PrivateKey {
     }
 
     /// Gets the public key which corresponds to this private key.
+    #[must_use]
     pub fn public_key(&self) -> PublicKey {
         match &*self.0 {
             PrivateKeyData::Ed25519(key) => PublicKey::ed25519(key.public),
@@ -121,7 +123,7 @@ impl PrivateKey {
             return Self::from_bytes_ecdsa_secp256k1(info.private_key);
         }
 
-        if info.algorithm.oid == "1.3.101.112".parse().unwrap() {
+        if info.algorithm.oid == ED25519_OID {
             return Self::from_bytes_ed25519(info.private_key);
         }
 
@@ -129,6 +131,7 @@ impl PrivateKey {
     }
 
     /// Return this private key, serialized as bytes.
+    #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         let info = pkcs8::PrivateKeyInfo {
             algorithm: self.algorithm(),
@@ -153,7 +156,7 @@ impl PrivateKey {
         pkcs8::AlgorithmIdentifier {
             parameters: None,
             oid: match &*self.0 {
-                PrivateKeyData::Ed25519(_) => *ED25519_OID,
+                PrivateKeyData::Ed25519(_) => ED25519_OID,
                 PrivateKeyData::EcdsaSecp256k1(_) => k256::elliptic_curve::ALGORITHM_OID,
             },
         }
