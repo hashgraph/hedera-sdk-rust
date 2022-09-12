@@ -48,6 +48,6 @@ impl Debug for LedgerId {
 
 impl Display for LedgerId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(&self.0))
+        f.pad(&base64::encode(&self.0))
     }
 }

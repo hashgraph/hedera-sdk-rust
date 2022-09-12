@@ -20,7 +20,6 @@
 
 import Foundation
 
-// TODO: stakingInfo
 /// Response from `AccountInfoQuery`.
 public final class AccountInfo: Codable {
     /// The account that is being referenced.
@@ -68,4 +67,10 @@ public final class AccountInfo: Codable {
 
     /// The ethereum transaction nonce associated with this account.
     public let ethereumNonce: UInt64
+
+    /// The ledger ID the response was returned from.
+    public let ledgerId: LedgerId
+
+    /// Staking metadata for this account.
+    public let staking: StakingInfo?
 }
