@@ -28,7 +28,7 @@ public final class AccountBalanceQuery: Query<AccountBalanceResponse> {
     /// Create a new `AccountBalanceQuery`.
     public init(
         accountId: AccountId? = nil,
-        contractId: AccountId? = nil
+        contractId: ContractId? = nil
     ) {
         self.accountId = accountId
         self.contractId = contractId
@@ -50,16 +50,14 @@ public final class AccountBalanceQuery: Query<AccountBalanceResponse> {
     }
 
     /// The contract ID for which information is requested.
-    // TODO: Use ContractIdOrEvmAddress
-    public var contractId: AccountId?
+    public var contractId: ContractId?
 
     /// Sets the contract ID for which information is requested.
     ///
     /// This is mutually exclusive with `accountId`.
     ///
-    // TODO: Use ContractIdOrEvmAddress
     @discardableResult
-    public func contractId(_ contractId: AccountId) -> Self {
+    public func contractId(_ contractId: ContractId) -> Self {
         self.contractId = contractId
         accountId = nil
 

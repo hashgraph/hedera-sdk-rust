@@ -35,16 +35,14 @@ public final class AccountInfo: Codable {
     public let isDeleted: Bool
 
     /// The total number of HBARs proxy staked to this account.
-    // TODO: use Hbar type
-    public let proxyReceived: UInt64
+    public let proxyReceived: Hbar
 
     /// The key for the account, which must sign in order to transfer out, or to modify the
     /// account in any way other than extending its expiration date.
     public let key: Key
 
     /// Current balance of the referenced account.
-    // TODO: use Hbar type
-    public let balance: UInt64
+    public let balance: Hbar
 
     /// If true, no transaction can transfer to this account unless signed by
     /// this account's key.

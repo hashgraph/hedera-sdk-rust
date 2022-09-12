@@ -24,6 +24,5 @@ public final class AccountBalanceResponse: Codable {
     public let accountId: AccountId
 
     /// Current balance of the referenced account.
-    // TODO: use Hbar type
-    public let hbars: UInt64
+    public let hbars: Hbar
 }

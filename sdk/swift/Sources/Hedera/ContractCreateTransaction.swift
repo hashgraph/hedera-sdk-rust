@@ -28,7 +28,7 @@ public final class ContractCreateTransaction: Transaction {
         bytecodeFileId: FileId? = nil,
         adminKey: Key? = nil,
         gas: UInt64 = 0,
-        initialBalance: UInt64 = 0,
+        initialBalance: Hbar = 0,
         autoRenewPeriod: TimeInterval? = nil,
         constructorParameters: Data? = nil,
         contractMemo: String = "",
@@ -99,12 +99,12 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
-    public var initialBalance: UInt64
+    public var initialBalance: Hbar
 
     /// Sets the initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
     @discardableResult
-    public func initialBalance(_ initialBalance: UInt64) -> Self {
+    public func initialBalance(_ initialBalance: Hbar) -> Self {
         self.initialBalance = initialBalance
 
         return self

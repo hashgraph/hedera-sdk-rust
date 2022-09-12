@@ -47,9 +47,8 @@ public final class ContractInfo: Codable {
     /// The memo associated with the contract.
     public let contractMemo: String
 
-    // TODO: Use Hbar type
     /// The current balance, in tinybars.
-    public let balance: UInt64
+    public let balance: Hbar
 
     /// Whether the contract has been deleted.
     public let isDeleted: Bool

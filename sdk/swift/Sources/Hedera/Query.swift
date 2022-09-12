@@ -45,8 +45,7 @@ public class Query<Response: Decodable>: Request {
     /// The client will submit exactly this amount for the payment of this query. Hedera
     /// will not return any remainder (over the actual cost for this query).
     ///
-    // TODO: Use Hbar
-    public func paymentAmount(_ amount: UInt64) -> Self {
+    public func paymentAmount(_ amount: Hbar) -> Self {
         self.payment.amount = amount
 
         return self
@@ -65,8 +64,7 @@ public class Query<Response: Decodable>: Request {
     ///
     /// Set to `None` to allow unlimited payment amounts.
     ///
-    // TODO: Use Hbar
-    public func maxPaymentAmount(_ maxAmount: UInt64?) -> Self {
+    public func maxPaymentAmount(_ maxAmount: Hbar?) -> Self {
         self.payment.maxAmount = maxAmount
 
         return self
@@ -87,8 +85,7 @@ public class Query<Response: Decodable>: Request {
     ///
     /// Defaults to 1 hbar.
     ///
-    // TODO: Use Hbar
-    public func maxPaymentTransactionFee(_ maxPaymentTransactionFee: UInt64) -> Self {
+    public func maxPaymentTransactionFee(_ maxPaymentTransactionFee: Hbar) -> Self {
         self.payment.maxTransactionFee = maxPaymentTransactionFee
 
         return self
