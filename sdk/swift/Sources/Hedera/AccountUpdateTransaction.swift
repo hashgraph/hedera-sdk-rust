@@ -76,12 +76,12 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public var expiresAt: Date?
+    public var expirationTime: Date?
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
-    public func expiresAt(_ expiresAt: Date) -> Self {
-        self.expiresAt = expiresAt
+    public func expirationTime(_ expirationTime: Date) -> Self {
+        self.expirationTime = expirationTime
 
         return self
     }
@@ -150,7 +150,7 @@ public final class AccountUpdateTransaction: Transaction {
         case key
         case accountMemo
         case autoRenewPeriod
-        case expiresAt
+        case expirationTime
         case maxAutomaticTokenAssociations
         case stakedAccountId
         case stakedNodeId
@@ -163,7 +163,7 @@ public final class AccountUpdateTransaction: Transaction {
         try container.encodeIfPresent(key, forKey: .key)
         try container.encodeIfPresent(accountMemo, forKey: .accountMemo)
         try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
         try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
         try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
         try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)

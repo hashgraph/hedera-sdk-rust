@@ -77,7 +77,7 @@ pub struct AccountUpdateTransactionData {
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
-    pub expires_at: Option<OffsetDateTime>,
+    pub expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the account.
     pub account_memo: Option<String>,
@@ -108,8 +108,8 @@ impl AccountUpdateTransaction {
     }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
-    pub fn expires_at(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(at);
+    pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
+        self.body.data.expiration_time = Some(at);
         self
     }
 
@@ -184,7 +184,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
         let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
         let key = self.key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let expiration_time = self.expires_at.as_ref().map(OffsetDateTime::to_protobuf);
+        let expiration_time = self.expiration_time.as_ref().map(OffsetDateTime::to_protobuf);
 
         let receiver_signature_required = self.receiver_signature_required.map(|required| {
             services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
@@ -280,7 +280,7 @@ mod tests {
 
         transaction
             .account_id(AccountId::from(1001))
-            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
             .key(PublicKey::from_str(KEY)?)
             .receiver_signature_required(true)
             .auto_renew_period(Duration::days(90))
@@ -304,7 +304,7 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
 
         assert_eq!(
-            data.expires_at.unwrap(),
+            data.expiration_time.unwrap(),
             OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
         );
         assert_eq!(data.receiver_signature_required.unwrap(), true);
