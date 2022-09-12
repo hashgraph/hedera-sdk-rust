@@ -46,6 +46,7 @@ mod ethereum_transaction;
 mod execute;
 mod file;
 mod key;
+mod ledger_id;
 mod mirror_query;
 mod network_version_info;
 mod network_version_info_query;
@@ -55,6 +56,7 @@ mod query;
 mod schedule;
 mod signature;
 mod signer;
+mod staking_info;
 mod system;
 mod token;
 mod topic;
@@ -120,6 +122,7 @@ pub use key::{
     PrivateKey,
     PublicKey,
 };
+pub use ledger_id::LedgerId;
 pub use mirror_query::{
     AnyMirrorQuery,
     AnyMirrorQueryResponse,
@@ -156,6 +159,7 @@ pub use signature::{
     SignaturePair,
 };
 pub use signer::Signer;
+pub use staking_info::StakingInfo;
 pub use system::{
     FreezeTransaction,
     FreezeType,

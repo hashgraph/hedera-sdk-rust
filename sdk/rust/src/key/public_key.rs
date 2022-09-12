@@ -222,10 +222,10 @@ impl FromProtobuf<services::Key> for PublicKey {
 
         match pb.key {
             Some(Ed25519(bytes)) => PublicKey::from_bytes_ed25519(&bytes),
-            Some(ContractId(id)) => {
+            Some(ContractId(_)) => {
                 Err(Error::from_protobuf("unexpected unsupported Contract ID key in single key"))
             }
-            Some(DelegatableContractId(id)) => Err(Error::from_protobuf(
+            Some(DelegatableContractId(_)) => Err(Error::from_protobuf(
                 "unexpected unsupported Delegatable Contract ID key in single key",
             )),
             Some(Rsa3072(_)) => {
