@@ -65,8 +65,8 @@ public final class AccountInfo: Codable {
     /// The maximum number of tokens that an Account can be implicitly associated with.
     public let maxAutomaticTokenAssociations: UInt32
 
-    /// The alias of this account.
-    public let alias: PublicKey?
+    /// The public key which aliases to this account.
+    public let aliasKey: PublicKey?
 
     /// The ethereum transaction nonce associated with this account.
     public let ethereumNonce: UInt64
