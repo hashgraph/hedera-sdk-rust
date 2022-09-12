@@ -31,7 +31,7 @@ public enum Program {
 
         let response = try await AccountDeleteTransaction()
             .transferAccountId("0.0.6189")
-            .deleteAccountId("0.0.34952813")
+            .accountId("0.0.34952813")
             .execute(client)
 
         _ = try await response.getReceipt(client)
