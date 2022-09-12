@@ -41,7 +41,7 @@ public final class AccountAllowanceApproveTransaction: Transaction {
     public func approveHbarAllowance(
         _ ownerAccountId: AccountId,
         _ spenderAccountId: AccountId,
-        _ amount: UInt64
+        _ amount: Hbar
     ) -> Self {
         hbarAllowances.append(
             HbarAllowance(
@@ -138,7 +138,7 @@ public final class AccountAllowanceApproveTransaction: Transaction {
 private struct HbarAllowance: Codable {
     let ownerAccountId: AccountId
     let spenderAccountId: AccountId
-    let amount: UInt64
+    let amount: Hbar
 }
 
 private struct TokenAllowance: Codable {

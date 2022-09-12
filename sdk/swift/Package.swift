@@ -1,3 +1,5 @@
+// swift-tools-version:5.5
+
 /*
  * ‌
  * Hedera Swift SDK
@@ -18,7 +20,6 @@
  * ‍
  */
 
-// swift-tools-version:5.5
 import PackageDescription
 
 // collect example targets

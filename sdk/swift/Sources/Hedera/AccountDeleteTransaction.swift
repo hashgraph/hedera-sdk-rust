@@ -41,26 +41,26 @@ public final class AccountDeleteTransaction: Transaction {
     }
 
     /// The account ID which should be deleted.
-    public var deleteAccountId: AccountId?
+    public var accountId: AccountId?
 
     /// Sets the account ID which should be deleted.
     @discardableResult
-    public func deleteAccountId(_ deleteAccountId: AccountId) -> Self {
-        self.deleteAccountId = deleteAccountId
+    public func accountId(_ accountId: AccountId) -> Self {
+        self.accountId = accountId
 
         return self
     }
 
     private enum CodingKeys: String, CodingKey {
         case transferAccountId
-        case deleteAccountId
+        case accountId
     }
 
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
-        try container.encodeIfPresent(deleteAccountId, forKey: .deleteAccountId)
+        try container.encodeIfPresent(accountId, forKey: .accountId)
 
         try super.encode(to: encoder)
     }

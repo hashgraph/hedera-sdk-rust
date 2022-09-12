@@ -666,6 +666,7 @@ dependencies = [
  "async-stream",
  "async-trait",
  "backoff",
+ "base64",
  "cbindgen",
  "clap",
  "dotenv",

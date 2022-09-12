@@ -30,17 +30,22 @@ use std::hash::{
 };
 use std::str::FromStr;
 
+use hedera_proto::services;
 use pkcs8::der::{
     Decode,
     Encode,
 };
+use prost::Message;
 use serde_with::{
     DeserializeFromStr,
     SerializeDisplay,
 };
 
 use crate::key::private_key::ED25519_OID;
-use crate::Error;
+use crate::{
+    Error,
+    FromProtobuf,
+};
 
 /// A public key on the Hedera network.
 #[derive(Clone, Eq, Copy, PartialEq, SerializeDisplay, DeserializeFromStr)]
@@ -69,6 +74,16 @@ impl PublicKey {
     #[must_use]
     pub fn is_ecdsa_secp256k1(&self) -> bool {
         matches!(&self.0, PublicKeyData::EcdsaSecp256k1(_))
+    }
+
+    pub(crate) fn from_alias_bytes(bytes: &[u8]) -> crate::Result<Option<Self>> {
+        if !bytes.is_empty() {
+            Ok(Some(PublicKey::from_protobuf(
+                services::Key::decode(bytes).map_err(|err| Error::from_protobuf(err))?,
+            )?))
+        } else {
+            Ok(None)
+        }
     }
 
     /// Parse a `PublicKey` from a sequence of bytes.
@@ -195,6 +210,37 @@ impl FromStr for PublicKey {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Self::from_bytes(&hex::decode(s).map_err(Error::key_parse)?)
+    }
+}
+
+impl FromProtobuf<services::Key> for PublicKey {
+    fn from_protobuf(pb: services::Key) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        use services::key::Key::*;
+
+        match pb.key {
+            Some(Ed25519(bytes)) => PublicKey::from_bytes_ed25519(&bytes),
+            Some(ContractId(_)) => {
+                Err(Error::from_protobuf("unexpected unsupported Contract ID key in single key"))
+            }
+            Some(DelegatableContractId(_)) => Err(Error::from_protobuf(
+                "unexpected unsupported Delegatable Contract ID key in single key",
+            )),
+            Some(Rsa3072(_)) => {
+                Err(Error::from_protobuf("unexpected unsupported RSA-3072 key in single key"))
+            }
+            Some(Ecdsa384(_)) => {
+                Err(Error::from_protobuf("unexpected unsupported ECDSA-384 key in single key"))
+            }
+            Some(ThresholdKey(_)) => {
+                Err(Error::from_protobuf("unexpected threshold key as single key"))
+            }
+            Some(KeyList(_)) => Err(Error::from_protobuf("unexpected key list as single key")),
+            Some(EcdsaSecp256k1(bytes)) => PublicKey::from_bytes_ecdsa_secp256k1(&bytes),
+            None => Err(Error::from_protobuf("unexpected empty key in single key")),
+        }
     }
 }
 

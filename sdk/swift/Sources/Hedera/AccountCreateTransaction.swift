@@ -25,7 +25,7 @@ public final class AccountCreateTransaction: Transaction {
     /// Create a new `AccountCreateTransaction` ready for configuration.
     public init(
         key: Key? = nil,
-        initialBalance: UInt64 = 0,
+        initialBalance: Hbar = 0,
         receiverSignatureRequired: Bool = false,
         autoRenewPeriod: TimeInterval? = nil,
         accountMemo: String = "",
@@ -56,13 +56,12 @@ public final class AccountCreateTransaction: Transaction {
         return self
     }
 
-    // TODO: Hbar
     /// The initial number of Hbar to put into the account.
-    public var initialBalance: UInt64
+    public var initialBalance: Hbar
 
     /// Sets the initial number of Hbar to put into the account.
     @discardableResult
-    public func initialBalance(_ initialBalance: UInt64) -> Self {
+    public func initialBalance(_ initialBalance: Hbar) -> Self {
         self.initialBalance = initialBalance
 
         return self
