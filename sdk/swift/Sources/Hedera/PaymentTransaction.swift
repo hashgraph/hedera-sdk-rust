@@ -22,9 +22,9 @@ import Foundation
 
 internal final class PaymentTransaction: Codable {
     internal var nodeAccountIds: [AccountId]?
-    internal var amount: UInt64?
-    internal var maxAmount: UInt64?
-    internal var maxTransactionFee: UInt64?
+    internal var amount: Hbar?
+    internal var maxAmount: Hbar?
+    internal var maxTransactionFee: Hbar?
     internal var transactionMemo: String?
     internal var payerAccountId: AccountId?
     internal var transactionId: String?

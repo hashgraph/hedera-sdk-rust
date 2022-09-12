@@ -50,13 +50,13 @@ pub struct AccountDeleteTransactionData {
     pub transfer_account_id: Option<AccountId>,
 
     /// The account ID which should be deleted.
-    pub delete_account_id: Option<AccountId>,
+    pub account_id: Option<AccountId>,
 }
 
 impl AccountDeleteTransaction {
     /// Sets the account ID which should be deleted.
-    pub fn delete_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.delete_account_id = Some(id);
+    pub fn account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.account_id = Some(id);
         self
     }
 
@@ -84,12 +84,12 @@ impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let delete_account_id = self.delete_account_id.as_ref().map(AccountId::to_protobuf);
+        let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
         let transfer_account_id = self.transfer_account_id.as_ref().map(AccountId::to_protobuf);
 
         services::transaction_body::Data::CryptoDelete(services::CryptoDeleteTransactionBody {
             transfer_account_id,
-            delete_account_id,
+            delete_account_id: account_id,
         })
     }
 }
@@ -117,16 +117,14 @@ mod tests {
     const ACCOUNT_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "accountDelete",
   "transferAccountId": "0.0.1001",
-  "deleteAccountId": "0.0.1002"
+  "accountId": "0.0.1002"
 }"#;
 
     #[test]
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = AccountDeleteTransaction::new();
 
-        transaction
-            .transfer_account_id(AccountId::from(1001))
-            .delete_account_id(AccountId::from(1002));
+        transaction.transfer_account_id(AccountId::from(1001)).account_id(AccountId::from(1002));
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -142,7 +140,7 @@ mod tests {
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountDelete(transaction) => transaction);
 
         assert_eq!(data.transfer_account_id, Some(AccountId::from(1001)));
-        assert_eq!(data.delete_account_id, Some(AccountId::from(1002)));
+        assert_eq!(data.account_id, Some(AccountId::from(1002)));
 
         Ok(())
     }

@@ -43,7 +43,7 @@ public struct TransactionRecord: Codable {
     public let transactionMemo: String
 
     /// The actual transaction fee charged.
-    public let transactionFee: UInt64
+    public let transactionFee: Hbar
 
     /// Reference to the scheduled transaction ID that this transaction record represents.
     public let scheduleRef: ScheduleId?
@@ -79,7 +79,7 @@ public struct TransactionRecord: Codable {
         consensusTimestamp = Date(unixTimestampNanos: try container.decode(UInt64.self, forKey: .consensusTimestamp))
         transactionId = try container.decode(String.self, forKey: .transactionId)
         transactionMemo = try container.decode(String.self, forKey: .transactionMemo)
-        transactionFee = try container.decode(UInt64.self, forKey: .transactionFee)
+        transactionFee = try container.decode(Hbar.self, forKey: .transactionFee)
         scheduleRef = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleRef)
         automaticTokenAssociations = try container.decode([TokenAssociation].self, forKey: .automaticTokenAssociations)
 

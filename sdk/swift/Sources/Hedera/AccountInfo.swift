@@ -20,7 +20,6 @@
 
 import Foundation
 
-// TODO: stakingInfo
 /// Response from `AccountInfoQuery`.
 public final class AccountInfo: Codable {
     /// The account that is being referenced.
@@ -35,16 +34,14 @@ public final class AccountInfo: Codable {
     public let isDeleted: Bool
 
     /// The total number of HBARs proxy staked to this account.
-    // TODO: use Hbar type
-    public let proxyReceived: UInt64
+    public let proxyReceived: Hbar
 
     /// The key for the account, which must sign in order to transfer out, or to modify the
     /// account in any way other than extending its expiration date.
     public let key: Key
 
     /// Current balance of the referenced account.
-    // TODO: use Hbar type
-    public let balance: UInt64
+    public let balance: Hbar
 
     /// If true, no transaction can transfer to this account unless signed by
     /// this account's key.
@@ -65,9 +62,15 @@ public final class AccountInfo: Codable {
     /// The maximum number of tokens that an Account can be implicitly associated with.
     public let maxAutomaticTokenAssociations: UInt32
 
-    /// The alias of this account.
-    public let alias: PublicKey?
+    /// The public key which aliases to this account.
+    public let aliasKey: PublicKey?
 
     /// The ethereum transaction nonce associated with this account.
     public let ethereumNonce: UInt64
+
+    /// The ledger ID the response was returned from.
+    public let ledgerId: LedgerId
+
+    /// Staking metadata for this account.
+    public let staking: StakingInfo?
 }

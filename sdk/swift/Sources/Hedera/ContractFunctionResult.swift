@@ -44,8 +44,7 @@ public struct ContractFunctionResult: Codable {
     public let gas: UInt64
 
     /// Number of HBAR sent (the function must be payable if this is nonzero).
-    // TODO: Use Hbar type
-    public let hbarAmount: UInt64
+    public let hbarAmount: Hbar
 
     /// The parameters passed into the contract call.
     public let contractFunctionParametersBytes: Data
@@ -64,7 +63,7 @@ public struct ContractFunctionResult: Codable {
         bloom = Data(base64Encoded: try container.decode(String.self, forKey: .bloom))!
         gasUsed = try container.decode(UInt64.self, forKey: .gasUsed)
         gas = try container.decode(UInt64.self, forKey: .gas)
-        hbarAmount = try container.decode(UInt64.self, forKey: .hbarAmount)
+        hbarAmount = try container.decode(Hbar.self, forKey: .hbarAmount)
         contractFunctionParametersBytes = Data(base64Encoded: try container.decode(String.self, forKey: .contractFunctionParametersBytes))!
         bytes = Data(base64Encoded: try container.decode(String.self, forKey: .bytes))!
         senderAccountId = try container.decodeIfPresent(AccountId.self, forKey: .senderAccountId)

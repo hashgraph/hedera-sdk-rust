@@ -35,7 +35,7 @@ public final class ContractExecuteTransaction: Transaction {
     public init(
         contractId: ContractId? = nil,
         gas: UInt64 = 0,
-        payableAmount: UInt64 = 0,
+        payableAmount: Hbar = 0,
         functionParameters: Data? = nil
     ) {
         self.contractId = contractId
@@ -67,11 +67,11 @@ public final class ContractExecuteTransaction: Transaction {
     }
 
     /// The number of hbars sent with this function call.
-    public var payableAmount: UInt64
+    public var payableAmount: Hbar
 
     /// Set the number of hbars sent with this function call.
     @discardableResult
-    public func payableAmount(_ payableAmount: UInt64) -> Self {
+    public func payableAmount(_ payableAmount: Hbar) -> Self {
         self.payableAmount = payableAmount
 
         return self

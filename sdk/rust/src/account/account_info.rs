@@ -28,7 +28,9 @@ use crate::{
     AccountId,
     FromProtobuf,
     Key,
+    LedgerId,
     PublicKey,
+    StakingInfo,
 };
 
 // TODO: pub ledger_id: LedgerId,
@@ -78,11 +80,16 @@ pub struct AccountInfo {
     pub max_automatic_token_associations: u32,
 
     /// The alias of this account.
-    pub alias: Option<PublicKey>,
+    pub alias_key: Option<PublicKey>,
+
     /// The ethereum transaction nonce associated with this account.
     pub ethereum_nonce: u64,
-    //
-    // TODO: pub staking: StakingInfo;
+
+    /// The ledger ID the response was returned from.
+    pub ledger_id: LedgerId,
+
+    /// Staking metadata for this account.
+    pub staking: Option<StakingInfo>,
 }
 
 impl FromProtobuf<services::response::Response> for AccountInfo {
@@ -94,12 +101,13 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
         let info = pb_getf!(response, account_info)?;
         let key = pb_getf!(info, key)?;
         let account_id = pb_getf!(info, account_id)?;
-
-        // TODO: alias
-        // let alias =
-        //     if info.alias.is_empty() { Some(PublicKey::from_protobuf(&info.alias)?) } else { None };
+        let alias_key = PublicKey::from_alias_bytes(&*info.alias)?;
+        let ledger_id = LedgerId(info.ledger_id);
+        let staking = info.staking_info.map(|info| StakingInfo::from_protobuf(info)).transpose()?;
 
         Ok(Self {
+            ledger_id,
+            staking,
             account_id: AccountId::from_protobuf(account_id)?,
             contract_account_id: info.contract_account_id,
             is_deleted: info.deleted,
@@ -111,7 +119,7 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
             account_memo: info.memo,
             owned_nfts: info.owned_nfts as u64,
             max_automatic_token_associations: info.max_automatic_token_associations as u32,
-            alias: None,
+            alias_key,
             ethereum_nonce: info.ethereum_nonce as u64,
             is_receiver_signature_required: info.receiver_sig_required,
         })
