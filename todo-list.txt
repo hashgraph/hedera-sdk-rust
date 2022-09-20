@@ -1,0 +1,173 @@
+[X] Transaction
+ - [ ] from_bytes()
+ - [ ] to_bytes()
+ - [ ] from_scheduled_transaction()
+ - [ ] schedule()
+ - [ ] get_transaction_hash()
+ - [ ] get_transaction_hash_per_node()
+ - [ ] regenerate_transaction_id
+ - [ ] sign() (weirdly, signers is present, but doesn't do anything?)
+ - [ ] sign_with()
+ - [ ] sign_with_operator()
+ - [ ] add_signature()
+ - [ ] get_signatures()
+ - [ ] freeze()
+ - [ ] freeze_with()
+[X] AccountAllowanceApproveTransaction
+[X] AccountAllowanceDeleteTransaction
+[X] AccountBalanceQuery
+[X] AccountCreateTransaction
+ - [ ] Alias key?
+[X] AccountDeleteTransaction
+[X] AccountId
+ - [ ] checksum support
+ - [ ] When serialized, aliasKey should NOT be the raw bytes of the key, 
+       instead should be bytes of the serialized key _protobuf_ (yes, it's confusing).
+ - [ ] aliasEvmAddress
+ - [ ] to/from_bytes()
+[ ] AccountInfoFlow
+ - [ ] verifySignature()
+ - [ ] verifyTransactionSignature()
+[X] AccountInfoQuery
+ - [ ] ledger_id
+[X] AccountRecordsQuery
+[X] AccountStakersQuery
+[X] AccountUpdateTransaction
+[X] AddressBookQuery
+[X] Client (present, but almost nothing of the public interface that exists in other SDKs is present)
+ - [ ] The whole dang public interface: https://github.com/hashgraph/hedera-sdk-reference/blob/main/reference/core/Client.md
+ - [ ] autoValidateChecksums: https://github.com/hashgraph/hedera-sdk-java/blob/main/examples/src/main/java/ValidateChecksumExample.java
+[X] ContractByteCodeQuery
+[X] ContractCallQuery
+[ ] ContractCreateFlow
+[X] ContractCreateTransaction
+[X] ContractDeleteTransaction
+[X] ContractExecuteTransaction
+[ ] ContractFunctionParameters
+[X] ContractFunctionResult
+[ ] ContractFunctionSelector
+[X] ContractId
+ - [ ] checksum support
+ - [ ] to/from_bytes()
+[X] ContractInfoQuery
+ - [ ] ledger_id
+ - [ ] staking_info
+[X] ContractUpdateTransaction
+[X] EthereumTransaction
+[ ] EthereumFlow
+[X] FileAppendTransaction
+ - [ ] Automatic chunking for larger contents 
+[X] FileContentsQuery
+[X] FileCreateTransaction
+ - [ ] expiration_time is named inconsistently
+[X] FileDeleteTransaction
+[X] FileId
+ - [ ] checksum support
+ - [ ] to/from_bytes()
+[X] FileInfoQuery
+ - [ ] ledger_id
+ - [ ] keys
+[X] FileUpdateTransaction
+ - [ ] expiration_time is named inconsistently
+[X] FreezeTransaction
+[ ] Hbar
+[X] Key
+ - [ ] keylist
+ - [ ] threshold key
+[ ] KeyList
+[X] PrivateKey
+ - [/] from_bytes_der() (from_bytes_pkcs8_der() exists, but is not public)
+ - [/] from_string() (implements FromStr, but doesn't have the specific variants listed below)
+ - [ ] from_string_der()
+ - [ ] from_string_ed25519()
+ - [ ] from_string_ecdsa()
+ - [ ] from_mnemonic()
+ - [ ] from_pem()
+ - [ ] derive()
+ - [ ] legacy_derive()
+ - [X] sign(message)
+ - [ ] sign_transaction()
+ - [X] to_bytes()
+ - [ ] to_bytes_der()
+ - [X] to_bytes_raw()
+ - [/] to_string() (implements Display, but doesn't have the specific variants listed below)
+ - [ ] to_string_der()
+ - [ ] to_string_raw()
+ - [ ] to_account_id()
+ - [ ] is_ed35519()
+ - [ ] is_ecdsa()
+[X] PublicKey
+ - [/] from_bytes_der() (from_bytes_pkcs8_der() exists, but is not public)
+ - [/] from_string() (implements FromStr, but doesn't have the specific variants listed below)
+ - [ ] from_string_der()
+ - [ ] from_string_ed25519()
+ - [ ] from_string_ecdsa()
+ - [ ] verify(message)
+ - [ ] verify_transaction()
+ - [/] to_string() (implements Display, but doesn't have the specific variants listed below)
+ - [ ] to_string_der()
+ - [ ] to_string_raw()
+ - [ ] to_account_id()
+[X] LedgerId
+ - [ ] from_string()
+ - [ ] from_bytes()
+ - [ ] to_string() (implements Display, but does not sugar ledger IDs with known names)
+[ ] Mnemonic
+[X] NetworkVersionInfoQuery
+[X] NftId
+ - [ ] checksum support
+ - [ ] to/from_bytes()
+[ ] Pem
+[ ] PrngTransaction
+[X] ScheduleCreateTransaction
+[X] ScheduleDeleteTransaction
+[X] ScheduleId
+ - [ ] checksum support
+ - [ ] to/from_bytes()
+[X] ScheduleInfoQuery
+ - [ ] ledger_id
+ - [ ] scheduled_transaction
+[X] ScheduleSignTransaction
+[X] SystemDeleteTransaction
+[X] SystemUndeleteTransaction 
+[X] TokenAssociateTransaction
+[X] TokenBurnTransaction
+[X] TokenCreateTransaction
+ - [ ] expiration_time is named inconsistently
+[X] TokenDeleteTransaction
+[X] TokenDissociateTransaction
+[X] TokenFeeScheduleUpdateTransaction
+[X] TokenFreezeTransaction
+[X] TokenGrantKycTransaction
+[X] TokenId
+ - [ ] checksum support
+ - [ ] to/from_bytes()
+[X] TokenInfoQuery
+ - [ ] ledger_id
+[X] TokenPauseTransaction
+[X] TokenRevokeKycTransaction
+[X] TokenUnfreezeTransaction
+[X] TokenUnpauseTransaction
+[X] TokenUpdateTransaction
+ - [ ] expiration_time is named inconsistently
+[X] TokenWipeTransaction
+[X] TopicCreateTransaction
+[X] TopicDeleteTransaction
+[X] TopicId
+ - [ ] checksum support
+ - [ ] to/from_bytes()
+[X] TopicInfoQuery
+ - [ ] ledger_id
+[X] TopicMessageQuery
+[X] TopicMessageSubmitTransaction
+ - [ ] Automatic chunking for larger contents 
+[X] TopicUpdateTransaction
+ - [ ] expiration_time is named inconsistently
+[X] TransactionId
+ - [ ] to/from_bytes()
+[X] TransactionReceiptQuery
+ - [ ] exchange_rate
+[X] TransactionRecordQuery
+ - [ ] bunch of missing fields (refer to TODOs)
+[X] TransferTransaction
+ - [ ] transfers must be sorted on serialization
