@@ -83,8 +83,8 @@
  - [ ] from_string_ecdsa()
  - [ ] from_mnemonic()
  - [ ] from_pem()
- - [ ] derive()
- - [ ] legacy_derive()
+ - [X] derive()
+ - [X] legacy_derive()
  - [X] sign(message)
  - [ ] sign_transaction()
  - [X] to_bytes()
@@ -112,7 +112,7 @@
  - [ ] from_string()
  - [ ] from_bytes()
  - [ ] to_string() (implements Display, but does not sugar ledger IDs with known names)
-[ ] Mnemonic
+[X] Mnemonic
 [X] NetworkVersionInfoQuery
 [X] NftId
  - [ ] checksum support
