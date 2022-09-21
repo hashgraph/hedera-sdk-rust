@@ -1,0 +1,22 @@
+{
+    // this is still neccessary for VSCode users for as long as Swift and C are here.
+    "folders": [
+        {
+            "path": ".",
+            "name": "Hedera SDK"
+        },
+        {
+            "path": "sdk/rust",
+            "name": "Rust"
+        },
+        {
+            "path": "sdk/swift",
+            "name": "Swift"
+        },
+        {
+            "path": "sdk/c",
+            "name": "C"
+        }
+    ],
+    "settings": {}
+}
