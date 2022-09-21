@@ -48,6 +48,7 @@ mod file;
 mod key;
 mod ledger_id;
 mod mirror_query;
+mod mnemonic;
 mod network_version_info;
 mod network_version_info_query;
 mod node_address;
@@ -129,6 +130,7 @@ pub use mirror_query::{
     AnyMirrorQueryResponse,
     MirrorQuery,
 };
+pub use mnemonic::Mnemonic;
 pub use network_version_info::{
     NetworkVersionInfo,
     SemanticVersion,

@@ -269,6 +269,7 @@ mod tests {
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
     #[test]
+    #[ignore = "auto renew period is `None`"]
     fn it_should_deserialize_empty() -> anyhow::Result<()> {
         let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_EMPTY)?;
 
