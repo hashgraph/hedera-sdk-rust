@@ -35,6 +35,24 @@ pub struct SignaturePair {
 
 pub struct Signature(SignatureData);
 
+impl Signature {
+    pub(crate) fn as_ed25519(&self) -> Option<&ed25519_dalek::Signature> {
+        if let SignatureData::Ed25519(v) = &self.0 {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    pub(crate) fn as_ecdsa_secp256k1(&self) -> Option<&k256::ecdsa::Signature> {
+        if let SignatureData::EcdsaSecp256k1(v) = &self.0 {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
 // blame `Debug` inconsistency in different crypto libraries for this.
 impl fmt::Debug for Signature {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
