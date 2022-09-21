@@ -118,6 +118,11 @@ pub use file::{
     FileInfoQuery,
     FileUpdateTransaction,
 };
+pub use hbar::{
+    Hbar,
+    HbarUnit,
+    Tinybar,
+};
 pub use hedera_proto::services::ResponseCodeEnum as Status;
 pub use key::{
     Key,
