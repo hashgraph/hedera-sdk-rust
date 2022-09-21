@@ -83,8 +83,8 @@
  - [X] from_string_ecdsa()
  - [X] from_mnemonic()
  - [ ] from_pem()
- - [/] derive() (ed25519 only, so far)
- - [/] legacy_derive() (ed25519 only, so far)
+ - [X] derive() (ed25519 only so far. Ecdsa doesn't exist in Java though)
+ - [X] legacy_derive() (ed25519 only so far. Ecdsa doesn't exist in Java though)
  - [X] sign(message)
  - [ ] sign_transaction()
  - [X] to_bytes()
@@ -93,7 +93,7 @@
  - [X] to_string()
  - [X] to_string_der()
  - [X] to_string_raw()
- - [ ] to_account_id()
+ - [X] to_account_id()
  - [X] is_ed35519()
  - [X] is_ecdsa()
 [X] PublicKey
@@ -107,7 +107,7 @@
  - [X] to_string() (implements Display, but doesn't have the specific variants listed below)
  - [X] to_string_der()
  - [X] to_string_raw()
- - [ ] to_account_id()
+ - [X] to_account_id()
 [X] LedgerId
  - [ ] from_string()
  - [ ] from_bytes()

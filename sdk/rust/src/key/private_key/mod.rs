@@ -58,7 +58,7 @@ use sha3::Digest;
 use crate::{
     Error,
     PublicKey,
-    SignaturePair,
+    SignaturePair, AccountId,
 };
 
 pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
@@ -271,6 +271,12 @@ impl PrivateKey {
     #[must_use]
     pub fn to_string_raw(&self) -> String {
         hex::encode(self.to_bytes_raw())
+    }
+
+    #[inline(always)]
+    #[must_use]
+    pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
+        self.public_key().to_account_id(shard, realm)
     }
 
     fn algorithm(&self) -> pkcs8::AlgorithmIdentifier<'_> {
