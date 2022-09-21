@@ -72,6 +72,7 @@ mod transfer_transaction;
 
 #[cfg(feature = "ffi")]
 mod ffi;
+mod hbar;
 
 pub use account::{
     AccountAllowanceApproveTransaction,
