@@ -1,6 +1,7 @@
 use std::str::FromStr;
 use std::sync::Arc;
 
+use assert_matches::assert_matches;
 use expect_test::expect;
 use hex_literal::hex;
 use pkcs8::AssociatedOid;
@@ -9,6 +10,7 @@ use super::{
     PrivateKey,
     PrivateKeyDataWrapper,
 };
+use crate::Error;
 
 #[test]
 fn ed25519_from_str() {
@@ -146,4 +148,37 @@ fn ed25519_derive_2() {
             }
         "#]]
     .assert_debug_eq(&child_key.0);
+}
+
+#[test]
+fn ed25519_from_pem() {
+    const PEM: &[u8] = br#"-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEINtIS4KOZLLY8SzjwKDpOguMznrxu485yXcyOUSCU44Q
+-----END PRIVATE KEY-----"#;
+
+    let pk = PrivateKey::from_pem(PEM).unwrap();
+
+    assert_eq!(pk.to_string(), "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10");
+}
+
+#[test]
+fn ecdsa_secp_256_k1_from_pem() {
+    const PEM: &[u8] = br#"-----BEGIN PRIVATE KEY-----
+MDACAQAwBwYFK4EEAAoEIgQgh3bGuDGhthrBDawDBKKEPeRxb1SxkZu5GiaF0P4/
+MEg=
+-----END PRIVATE KEY-----"#;
+
+    let pk = PrivateKey::from_pem(PEM).unwrap();
+
+    assert_eq!(pk.to_string(), "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+}
+
+#[test]
+fn ed25519_from_pem_invalid_type_label() {
+    // extra `S` in the type label
+    const PEM: &[u8] = br#"-----BEGIN PRIVATE KEYS-----
+MC4CAQAwBQYDK2VwBCIEINtIS4KOZLLY8SzjwKDpOguMznrxu485yXcyOUSCU44Q
+-----END PRIVATE KEYS-----"#;
+
+    assert_matches!(PrivateKey::from_pem(PEM), Err(Error::KeyParse(_)));
 }
