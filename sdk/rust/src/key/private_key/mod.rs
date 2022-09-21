@@ -56,9 +56,10 @@ use sha2::Sha512;
 use sha3::Digest;
 
 use crate::{
+    AccountId,
     Error,
     PublicKey,
-    SignaturePair, AccountId,
+    SignaturePair,
 };
 
 pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
@@ -230,7 +231,7 @@ impl PrivateKey {
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes_der(&self) -> Vec<u8> {
         let mut inner = Vec::with_capacity(34);
 
         pkcs8::der::asn1::OctetStringRef::new(&self.to_bytes_raw())
@@ -250,9 +251,13 @@ impl PrivateKey {
         buf
     }
 
+    /// Return this `PrivateKey`, serialized as bytes.
     #[must_use]
-    pub fn to_bytes_der(&self) -> Vec<u8> {
-        self.to_bytes()
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match &self.0.data {
+            PrivateKeyData::Ed25519(_) => self.to_bytes_raw().as_slice().to_vec(),
+            PrivateKeyData::EcdsaSecp256k1(_) => self.to_bytes_der(),
+        }
     }
 
     fn to_bytes_raw(&self) -> [u8; 32] {
@@ -428,7 +433,7 @@ impl Debug for PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(self.to_bytes()))
+        f.pad(&hex::encode(self.to_bytes_der()))
     }
 }
 
