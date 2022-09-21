@@ -67,6 +67,12 @@ pub enum Error {
     #[error("failed to parse a key: {0}")]
     KeyParse(BoxStdError),
 
+    #[error("failed to parse a mnemonic: {reason}")]
+    MnemonicParse { reason: MnemonicParseError, mnemonic: crate::Mnemonic },
+
+    #[error("failed to convert a mnemonic to entropy: {0}")]
+    MnemonicEntropy(MnemonicEntropyError),
+
     #[error("client must be configured with a payer account or requests must be given an explicit transaction id")]
     NoPayerAccountOrTransactionId,
 
@@ -111,4 +117,29 @@ impl Error {
     pub(crate) fn signature<E: Into<BoxStdError>>(error: E) -> Self {
         Self::Signature(error.into())
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum MnemonicParseError {
+    #[error("bad length: expected `12` or `24` words, found `{0}`")]
+    BadLength(usize),
+
+    #[error("unknown words at indecies: `{0:?}`")]
+    UnknownWords(Vec<usize>),
+
+    #[error("checksum mismatch: expected `{expected:02x}`, found `{actual:02x}`")]
+    ChecksumMismatch { expected: u8, actual: u8 },
+}
+
+// todo: find a better name before release.
+#[derive(Debug, thiserror::Error)]
+pub enum MnemonicEntropyError {
+    #[error("bad length: expected `{expected}` words, found {actual} words")]
+    BadLength { expected: usize, actual: usize },
+
+    #[error("checksum mismatch: expected `{expected:02x}`, found `{actual:02x}`")]
+    ChecksumMismatch { expected: u8, actual: u8 },
+
+    #[error("used a passphrase with a legacy mnemonic")]
+    LegacyWithPassphrase,
 }
