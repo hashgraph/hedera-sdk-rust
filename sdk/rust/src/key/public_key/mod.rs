@@ -48,6 +48,7 @@ use serde_with::{
 
 use crate::key::private_key::ED25519_OID;
 use crate::{
+    AccountId,
     Error,
     FromProtobuf,
 };
@@ -238,6 +239,11 @@ impl PublicKey {
     #[must_use]
     pub fn to_string_raw(&self) -> String {
         hex::encode(self.to_bytes_raw())
+    }
+
+    #[must_use]
+    pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
+        AccountId { shard, realm, alias: Some(*self), num: 0 }
     }
 
     pub fn verify(&self, msg: &[u8], signature: &crate::Signature) -> crate::Result<()> {
