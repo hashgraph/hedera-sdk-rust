@@ -181,11 +181,20 @@ impl PublicKey {
         )
     }
 
-    /// Return this private key, serialized as bytes.
+    /// Return this `PublicKey`, serialized as bytes.
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match &self.0 {
+            PublicKeyData::Ed25519(_) => self.to_bytes_raw(),
+            PublicKeyData::EcdsaSecp256k1(_) => self.to_bytes_der(),
+        }
+    }
+
+    /// Return this `PublicKey`, serialized as bytes.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn to_bytes(self) -> Vec<u8> {
+    pub fn to_bytes_der(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(64);
 
         match &self.0 {
@@ -280,7 +289,7 @@ impl Debug for PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(self.to_bytes()))
+        f.pad(&hex::encode(self.to_bytes_der()))
     }
 }
 
