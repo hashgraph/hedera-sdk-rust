@@ -155,7 +155,7 @@ impl PrivateKey {
             return Self::from_bytes_ed25519(bytes);
         }
 
-        Self::from_bytes_pkcs8_der(bytes)
+        Self::from_bytes_der(bytes)
     }
 
     /// Parse a Ed25519 `PrivateKey` from a sequence of bytes.
@@ -163,7 +163,7 @@ impl PrivateKey {
         let data = if bytes.len() == 32 || bytes.len() == 64 {
             ed25519_dalek::SecretKey::from_bytes(&bytes[..32]).map_err(Error::key_parse)?
         } else {
-            return Self::from_bytes_pkcs8_der(bytes);
+            return Self::from_bytes_der(bytes);
         };
 
         let data = Keypair { public: (&data).into(), secret: data };
@@ -177,13 +177,13 @@ impl PrivateKey {
             // not DER encoded, raw bytes for key
             k256::ecdsa::SigningKey::from_bytes(bytes).map_err(Error::key_parse)?
         } else {
-            return Self::from_bytes_pkcs8_der(bytes);
+            return Self::from_bytes_der(bytes);
         };
 
         Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::EcdsaSecp256k1(data)))))
     }
 
-    fn from_bytes_pkcs8_der(bytes: &[u8]) -> crate::Result<Self> {
+    pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::PrivateKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
 
@@ -203,6 +203,24 @@ impl PrivateKey {
         }
 
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
+    }
+
+    pub fn from_str_der(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_der(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ed25519(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    pub fn from_str_ecdsa_secp256k1(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ecdsa_secp256k1(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
     }
 
     /// Return this private key, serialized as bytes.
@@ -229,11 +247,27 @@ impl PrivateKey {
         buf
     }
 
+    #[must_use]
+    pub fn to_bytes_der(&self) -> Vec<u8> {
+        self.to_bytes()
+    }
+
     fn to_bytes_raw(&self) -> [u8; 32] {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => key.secret.to_bytes(),
             PrivateKeyData::EcdsaSecp256k1(key) => key.to_bytes().into(),
         }
+    }
+
+    #[must_use]
+    #[inline(always)]
+    pub fn to_string_der(&self) -> String {
+        self.to_string()
+    }
+
+    #[must_use]
+    pub fn to_string_raw(&self) -> String {
+        hex::encode(self.to_bytes_raw())
     }
 
     fn algorithm(&self) -> pkcs8::AlgorithmIdentifier<'_> {
@@ -393,7 +427,7 @@ impl FromStr for PrivateKey {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::from_bytes(&hex::decode(s).map_err(Error::key_parse)?)
+        Self::from_bytes(&hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?)
     }
 }
 

@@ -30,6 +30,11 @@ use std::hash::{
 };
 use std::str::FromStr;
 
+use ed25519_dalek::ed25519::signature::DigestVerifier;
+use ed25519_dalek::{
+    Digest,
+    Verifier,
+};
 use hedera_proto::services;
 use pkcs8::der::{
     Decode,
@@ -117,7 +122,7 @@ impl PublicKey {
             return Self::from_bytes_ecdsa_secp256k1(bytes);
         }
 
-        Self::from_bytes_pkcs8_der(bytes)
+        Self::from_bytes_der(bytes)
     }
 
     /// Parse a Ed25519 `PublicKey` from a sequence of bytes.
@@ -125,7 +130,7 @@ impl PublicKey {
         let data = if bytes.len() == 32 {
             ed25519_dalek::PublicKey::from_bytes(bytes).map_err(Error::key_parse)?
         } else {
-            return Self::from_bytes_pkcs8_der(bytes);
+            return Self::from_bytes_der(bytes);
         };
 
         Ok(Self::ed25519(data))
@@ -136,13 +141,13 @@ impl PublicKey {
         let data = if bytes.len() == 33 {
             k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes).map_err(Error::key_parse)?
         } else {
-            return Self::from_bytes_pkcs8_der(bytes);
+            return Self::from_bytes_der(bytes);
         };
 
         Ok(Self::ecdsa_secp256k1(data))
     }
 
-    fn from_bytes_pkcs8_der(bytes: &[u8]) -> crate::Result<Self> {
+    pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::SubjectPublicKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
 
@@ -155,6 +160,24 @@ impl PublicKey {
         }
 
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
+    }
+
+    pub fn from_str_der(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_der(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ed25519(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    pub fn from_str_ecdsa_secp256k1(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ecdsa_secp256k1(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
     }
 
     /// Return this private key, serialized as bytes.
@@ -205,6 +228,42 @@ impl PublicKey {
             PublicKeyData::EcdsaSecp256k1(key) => key.to_bytes().as_slice().to_vec(),
         }
     }
+
+    #[must_use]
+    #[inline(always)]
+    pub fn to_string_der(&self) -> String {
+        self.to_string()
+    }
+
+    #[must_use]
+    pub fn to_string_raw(&self) -> String {
+        hex::encode(self.to_bytes_raw())
+    }
+
+    pub fn verify(&self, msg: &[u8], signature: &crate::Signature) -> crate::Result<()> {
+        match &self.0 {
+            PublicKeyData::Ed25519(key) => {
+                // todo: figure out what the signature actually was if it wasn't ed25519
+                // technically it'll always be ecdsa-secp256k1 but that is annoyingly not future proof.
+                let signature = signature
+                    .as_ed25519()
+                    .ok_or_else(|| "Expected Ed25519 signature".to_owned())
+                    .map_err(crate::Error::signature_verify)?;
+
+                key.verify(msg, signature).map_err(crate::Error::signature_verify)
+            }
+            PublicKeyData::EcdsaSecp256k1(key) => {
+                // todo: see above comment on ed25519 signatures
+                let signature = signature
+                    .as_ecdsa_secp256k1()
+                    .ok_or_else(|| "Expected Ecdsa-Secp256k1 signature".to_owned())
+                    .map_err(crate::Error::signature_verify)?;
+
+                key.verify_digest(sha3::Keccak256::new_with_prefix(msg), signature)
+                    .map_err(crate::Error::signature_verify)
+            }
+        }
+    }
 }
 
 impl Debug for PublicKey {
@@ -223,7 +282,7 @@ impl FromStr for PublicKey {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::from_bytes(&hex::decode(s).map_err(Error::key_parse)?)
+        Self::from_bytes(&hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?)
     }
 }
 
@@ -258,7 +317,5 @@ impl FromProtobuf<services::Key> for PublicKey {
     }
 }
 
-// TODO: from_protobuf
 // TODO: to_protobuf
-// TODO: verify_message
 // TODO: verify_transaction
