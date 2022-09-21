@@ -82,7 +82,7 @@
  - [X] from_string_ed25519()
  - [X] from_string_ecdsa()
  - [X] from_mnemonic()
- - [ ] from_pem()
+ - [X] from_pem()
  - [X] derive() (ed25519 only so far. Ecdsa doesn't exist in Java though)
  - [X] legacy_derive() (ed25519 only so far. Ecdsa doesn't exist in Java though)
  - [X] sign(message)

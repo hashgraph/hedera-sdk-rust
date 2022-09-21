@@ -227,6 +227,18 @@ impl PrivateKey {
         )
     }
 
+    pub fn from_pem(pem: &[u8]) -> crate::Result<Self> {
+        let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
+
+        if type_label != "PRIVATE KEY" {
+            return Err(Error::key_parse(format!(
+                "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
+            )));
+        }
+
+        Self::from_bytes_der(&der)
+    }
+
     /// Return this private key, serialized as bytes.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
