@@ -37,6 +37,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Hbar,
     Key,
     Transaction,
 };
@@ -59,8 +60,7 @@ pub struct AccountCreateTransactionData {
     pub key: Option<Key>,
 
     /// The initial number of Hbar to put into the account.
-    // TODO: Hbar
-    pub initial_balance: u64,
+    pub initial_balance: Hbar,
 
     /// If true, this account's key must sign any transaction depositing into this account.
     pub receiver_signature_required: bool,
@@ -94,7 +94,7 @@ impl Default for AccountCreateTransactionData {
     fn default() -> Self {
         Self {
             key: None,
-            initial_balance: 0,
+            initial_balance: Hbar::ZERO,
             receiver_signature_required: false,
             auto_renew_period: Some(Duration::days(90)),
             account_memo: String::new(),
@@ -114,7 +114,7 @@ impl AccountCreateTransaction {
     }
 
     /// Set the initial amount to transfer into this account.
-    pub fn initial_balance(&mut self, balance: u64) -> &mut Self {
+    pub fn initial_balance(&mut self, balance: Hbar) -> &mut Self {
         self.body.data.initial_balance = balance;
         self
     }
@@ -202,7 +202,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
             #[allow(deprecated)]
             services::CryptoCreateTransactionBody {
                 key,
-                initial_balance: self.initial_balance,
+                initial_balance: self.initial_balance.to_tinybars() as u64,
                 proxy_account_id: None,
                 send_record_threshold: i64::MAX as u64,
                 receive_record_threshold: i64::MAX as u64,
@@ -240,6 +240,7 @@ mod tests {
     use crate::{
         AccountCreateTransaction,
         AccountId,
+        Hbar,
         Key,
         PublicKey,
     };
@@ -255,7 +256,7 @@ mod tests {
   "key": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
   },
-  "initialBalance": 1000,
+  "initialBalance": "1000 tℏ",
   "receiverSignatureRequired": true,
   "autoRenewPeriod": 7776000,
   "accountMemo": "An account memo",
@@ -286,7 +287,7 @@ mod tests {
 
         transaction
             .key(PublicKey::from_str(KEY)?)
-            .initial_balance(1000)
+            .initial_balance(Hbar::from_tinybars(1000))
             .receiver_signature_required(true)
             .auto_renew_period(Duration::days(90))
             .account_memo("An account memo")
@@ -308,7 +309,7 @@ mod tests {
 
         let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
 
-        assert_eq!(data.initial_balance, 1000);
+        assert_eq!(data.initial_balance.to_tinybars(), 1000);
         assert_eq!(data.receiver_signature_required, true);
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
         assert_eq!(data.account_memo, "An account memo");

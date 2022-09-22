@@ -39,6 +39,7 @@ use crate::transaction::{
 use crate::{
     AccountId,
     ContractId,
+    Hbar,
     ToProtobuf,
     Transaction,
 };
@@ -67,7 +68,7 @@ pub struct ContractExecuteTransactionData {
     gas: u64,
 
     /// The number of hbars sent with this function call.
-    payable_amount: u64,
+    payable_amount: Hbar,
 
     /// The function parameters as their raw bytes.
     function_parameters: Vec<u8>,
@@ -87,7 +88,7 @@ impl ContractExecuteTransaction {
     }
 
     /// Sets the number of hbars sent with this function call.
-    pub fn payable_amount(&mut self, amount: u64) -> &mut Self {
+    pub fn payable_amount(&mut self, amount: Hbar) -> &mut Self {
         self.body.data.payable_amount = amount;
         self
     }
@@ -122,7 +123,7 @@ impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
             #[allow(deprecated)]
             services::ContractCallTransactionBody {
                 gas: self.gas as i64,
-                amount: self.payable_amount as i64,
+                amount: self.payable_amount.to_tinybars(),
                 contract_id,
                 function_parameters: self.function_parameters.clone(),
             },
@@ -147,6 +148,7 @@ mod tests {
     use crate::{
         ContractExecuteTransaction,
         ContractId,
+        Hbar,
     };
 
     // language=JSON
@@ -154,7 +156,7 @@ mod tests {
   "$type": "contractExecute",
   "contractId": "0.0.1001",
   "gas": 1000,
-  "payableAmount": 10,
+  "payableAmount": "10 tℏ",
   "functionParameters": [
     72,
     101,
@@ -179,7 +181,7 @@ mod tests {
         transaction
             .contract_id(ContractId::from(1001))
             .gas(1000)
-            .payable_amount(10)
+            .payable_amount(Hbar::from_tinybars(10))
             .function_parameters("Hello, world!".into());
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
@@ -197,7 +199,7 @@ mod tests {
 
         assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
         assert_eq!(data.gas, 1000);
-        assert_eq!(data.payable_amount, 10);
+        assert_eq!(data.payable_amount.to_tinybars(), 10);
 
         let bytes: Vec<u8> = "Hello, world!".into();
         assert_eq!(data.function_parameters, bytes);

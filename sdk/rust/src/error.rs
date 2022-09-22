@@ -23,6 +23,7 @@ use std::result::Result as StdResult;
 
 use crate::{
     AccountId,
+    Hbar,
     Status,
     TransactionId,
 };
@@ -77,7 +78,7 @@ pub enum Error {
     NoPayerAccountOrTransactionId,
 
     #[error("cost of {query_cost} without explicit payment is greater than the maximum allowed payment of {max_query_payment}")]
-    MaxQueryPaymentExceeded { query_cost: u64, max_query_payment: u64 },
+    MaxQueryPaymentExceeded { query_cost: Hbar, max_query_payment: Hbar },
 
     #[error("node account `{0}` was not found in the configured network")]
     NodeAccountUnknown(AccountId),

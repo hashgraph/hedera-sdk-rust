@@ -23,6 +23,7 @@ use hedera_proto::services;
 use crate::{
     AccountId,
     FromProtobuf,
+    Hbar,
 };
 
 /// Response from [`AccountStakersQuery`][crate::AccountStakersQuery].
@@ -36,7 +37,7 @@ pub struct ProxyStaker {
     pub account_id: AccountId,
 
     /// The number of hbars that are currently proxy staked.
-    pub amount: u64,
+    pub amount: Hbar,
 }
 
 impl FromProtobuf<services::response::Response> for AllProxyStakers {
@@ -58,6 +59,9 @@ impl FromProtobuf<services::ProxyStaker> for ProxyStaker {
     {
         let account_id = pb_getf!(pb, account_id)?;
 
-        Ok(Self { account_id: AccountId::from_protobuf(account_id)?, amount: pb.amount as u64 })
+        Ok(Self {
+            account_id: AccountId::from_protobuf(account_id)?,
+            amount: Hbar::from_tinybars(pb.amount),
+        })
     }
 }

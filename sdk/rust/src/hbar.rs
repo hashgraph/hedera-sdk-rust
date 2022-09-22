@@ -1,4 +1,8 @@
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 
 use derive_more::{
@@ -19,8 +23,6 @@ use serde_with::{
 };
 
 use crate::Error;
-
-// TODO: add tests
 
 pub type Tinybar = i64;
 
@@ -102,6 +104,7 @@ impl FromStr for HbarUnit {
 #[derive(
     SerializeDisplay,
     DeserializeFromStr,
+    Default,
     Copy,
     Clone,
     Hash,
@@ -126,10 +129,16 @@ impl Hbar {
     pub const MAX: Hbar = Hbar::from_tinybars(50_000_000_000 * 100_000_000);
     pub const MIN: Hbar = Hbar::from_tinybars(-50_000_000_000 * 100_000_000);
 
+    #[must_use]
     pub const fn from_tinybars(tinybars: Tinybar) -> Self {
         Hbar(tinybars)
     }
 
+    /// # Panics
+    ///
+    /// Panics if the caller specifies an amount of [`Tinybar`](HbarUnit::Tinybar) that
+    /// overflows the `i64` which underlies [`Hbar`].
+    #[must_use]
     pub fn from_unit<T>(amount: T, unit: HbarUnit) -> Self
     where
         T: Into<Decimal>,
@@ -139,18 +148,22 @@ impl Hbar {
         Hbar::from_tinybars(amount_tinybars.to_i64().unwrap())
     }
 
-    pub fn to_tinybars(self) -> Tinybar {
+    #[must_use]
+    pub const fn to_tinybars(self) -> Tinybar {
         self.0
     }
 
+    #[must_use]
     pub fn to(self, unit: HbarUnit) -> Decimal {
         Decimal::from(self.to_tinybars()) / Decimal::from(unit.tinybars())
     }
 
+    #[must_use]
     pub fn get_value(self) -> Decimal {
         self.to(HbarUnit::Hbar)
     }
 
+    #[must_use]
     pub fn negated(self) -> Self {
         -self
     }
@@ -188,7 +201,7 @@ impl FromStr for Hbar {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (amount, unit) = s.split_once(" ").unwrap_or((s, "ℏ"));
+        let (amount, unit) = s.split_once(' ').unwrap_or((s, "ℏ"));
         let amount: Decimal = amount.parse().map_err(Error::basic_parse)?;
         let unit = HbarUnit::from_str(unit)?;
         Ok(Hbar::from_unit(amount, unit))
@@ -197,20 +210,25 @@ impl FromStr for Hbar {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
 
     use rust_decimal::Decimal;
-    use crate::{Hbar, HbarUnit};
+
+    use crate::{
+        Hbar,
+        HbarUnit,
+    };
 
     #[test]
     fn it_can_parse() {
-        assert_eq!(Hbar::from_tinybars(10), "10 tℏ".parse().unwrap());
-        assert_eq!(Hbar::from_unit(11, HbarUnit::Microbar), "11 μℏ".parse().unwrap());
-        assert_eq!(Hbar::from_unit(12, HbarUnit::Millibar), "12 mℏ".parse().unwrap());
-        assert_eq!(Hbar::from_unit(13, HbarUnit::Hbar), "13 ℏ".parse().unwrap());
-        assert_eq!(Hbar::from_unit(14, HbarUnit::Kilobar), "14 kℏ".parse().unwrap());
-        assert_eq!(Hbar::from_unit(15, HbarUnit::Megabar), "15 Mℏ".parse().unwrap());
-        assert_eq!(Hbar::from_unit(16, HbarUnit::Gigabar), "16 Gℏ".parse().unwrap());
-        assert_eq!(Hbar::from(Decimal::from(17)), "17".parse().unwrap());
+        assert_eq!(Hbar::from_str("10 tℏ").unwrap(), Hbar::from_tinybars(10));
+        assert_eq!(Hbar::from_str("11 μℏ").unwrap(), Hbar::from_unit(11, HbarUnit::Microbar));
+        assert_eq!(Hbar::from_str("12 mℏ").unwrap(), Hbar::from_unit(12, HbarUnit::Millibar));
+        assert_eq!(Hbar::from_str("13 ℏ").unwrap(), Hbar::from_unit(13, HbarUnit::Hbar));
+        assert_eq!(Hbar::from_str("14 kℏ").unwrap(), Hbar::from_unit(14, HbarUnit::Kilobar));
+        assert_eq!(Hbar::from_str("15 Mℏ").unwrap(), Hbar::from_unit(15, HbarUnit::Megabar));
+        assert_eq!(Hbar::from_str("16 Gℏ").unwrap(), Hbar::from_unit(16, HbarUnit::Gigabar));
+        assert_eq!(Hbar::from_str("17").unwrap(), Hbar::from(Decimal::from(17)));
     }
 
     #[test]
@@ -234,7 +252,7 @@ mod tests {
         let three = Hbar::from_tinybars(3);
         let one = Hbar::from_tinybars(1);
 
-        assert_eq!(ten*2 - ten/2 + three, Hbar::from_tinybars(10*2 - 10/2 + 3));
+        assert_eq!((ten * 2) - (ten / 2) + three, Hbar::from_tinybars((10 * 2) - (10 / 2) + 3));
 
         let mut m = three;
         m *= 2;
@@ -245,5 +263,6 @@ mod tests {
         assert_eq!(m.to_tinybars(), 4);
         m -= one;
         assert_eq!(m.to_tinybars(), 3);
+        assert_eq!((-m).to_tinybars(), -3);
     }
 }
