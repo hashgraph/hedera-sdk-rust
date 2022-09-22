@@ -141,16 +141,16 @@ pub struct FixedFee {
 impl FixedFee {
     #[must_use]
     pub fn from_hbar(amount: Hbar) -> Self {
-        Self { amount: amount.to_tinybars(), denominating_token_id: TokenId::from(0) }
+        Self {
+            amount: amount.to_tinybars(),
+            denominating_token_id: TokenId { shard: 0, realm: 0, num: 0 },
+        }
     }
 
     #[must_use]
-    pub fn to_hbar(self) -> Option<Hbar> {
-        if self.denominating_token_id == TokenId::from(0) {
-            Some(Hbar::from_tinybars(self.amount))
-        } else {
-            None
-        }
+    pub fn get_hbar(&self) -> Option<Hbar> {
+        (self.denominating_token_id == TokenId { shard: 0, realm: 0, num: 0 })
+            .then(|| Hbar::from_tinybars(self.amount))
     }
 }
 
