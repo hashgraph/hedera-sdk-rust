@@ -24,6 +24,7 @@ use hedera_proto::services;
 use crate::{
     AccountId,
     FromProtobuf,
+    Hbar,
     ToProtobuf,
     TokenId,
 };
@@ -135,6 +136,22 @@ pub struct FixedFee {
     /// The denomination of the fee; taken as hbar if left unset and, in a TokenCreate, taken as the id
     /// of the newly created token if set to the sentinel value of 0.0.0
     pub denominating_token_id: TokenId,
+}
+
+impl FixedFee {
+    #[must_use]
+    pub fn from_hbar(amount: Hbar) -> Self {
+        Self { amount: amount.to_tinybars(), denominating_token_id: TokenId::from(0) }
+    }
+
+    #[must_use]
+    pub fn to_hbar(self) -> Option<Hbar> {
+        if self.denominating_token_id == TokenId::from(0) {
+            Some(Hbar::from_tinybars(self.amount))
+        } else {
+            None
+        }
+    }
 }
 
 impl FromProtobuf<services::FixedFee> for FixedFee {

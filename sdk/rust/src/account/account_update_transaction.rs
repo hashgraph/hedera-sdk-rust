@@ -263,7 +263,7 @@ mod tests {
   },
   "receiverSignatureRequired": true,
   "autoRenewPeriod": 7776000,
-  "expiresAt": 1656352251277559886,
+  "expirationTime": 1656352251277559886,
   "accountMemo": "An account memo",
   "maxAutomaticTokenAssociations": 256,
   "stakedAccountId": "0.0.1002",

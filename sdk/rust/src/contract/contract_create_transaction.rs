@@ -42,6 +42,7 @@ use crate::transaction::{
 use crate::{
     AccountId,
     FileId,
+    Hbar,
     Key,
     ToProtobuf,
     Transaction,
@@ -64,8 +65,7 @@ pub struct ContractCreateTransactionData {
 
     gas: u64,
 
-    // TODO: Hbar
-    initial_balance: u64,
+    initial_balance: Hbar,
 
     #[serde_as(as = "DurationSeconds<i64>")]
     auto_renew_period: Duration,
@@ -93,7 +93,7 @@ impl Default for ContractCreateTransactionData {
             bytecode_file_id: None,
             admin_key: None,
             gas: 0,
-            initial_balance: 0,
+            initial_balance: Hbar::ZERO,
             auto_renew_period: Duration::days(90),
             constructor_parameters: Vec::new(),
             contract_memo: String::new(),
@@ -133,7 +133,7 @@ impl ContractCreateTransaction {
 
     /// Sets the initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
-    pub fn initial_balance(&mut self, balance: u64) -> &mut Self {
+    pub fn initial_balance(&mut self, balance: Hbar) -> &mut Self {
         self.body.data.initial_balance = balance;
         self
     }
@@ -246,7 +246,7 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
             services::ContractCreateTransactionBody {
                 admin_key,
                 gas: self.gas as i64,
-                initial_balance: self.initial_balance as i64,
+                initial_balance: self.initial_balance.to_tinybars(),
                 proxy_account_id: None,
                 auto_renew_period: Some(auto_renew_period),
                 constructor_parameters: self.constructor_parameters.clone(),
@@ -275,6 +275,7 @@ mod tests {
     use std::str::FromStr;
 
     use assert_matches::assert_matches;
+    use rust_decimal::Decimal;
     use time::Duration;
 
     use crate::transaction::{
@@ -285,6 +286,7 @@ mod tests {
         AccountId,
         ContractCreateTransaction,
         FileId,
+        Hbar,
         Key,
         PublicKey,
     };
@@ -303,7 +305,7 @@ mod tests {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
   },
   "gas": 1000,
-  "initialBalance": 1000000,
+  "initialBalance": "0.01 ℏ",
   "autoRenewPeriod": 7776000,
   "constructorParameters": "BQoP",
   "contractMemo": "A contract memo",
@@ -326,7 +328,7 @@ mod tests {
             .bytecode_file_id(FileId::from(1001))
             .admin_key(PublicKey::from_str(ADMIN_KEY)?)
             .gas(1000)
-            .initial_balance(1_000_000)
+            .initial_balance(Hbar::from_tinybars(1_000_000))
             .auto_renew_period(Duration::days(90))
             .constructor_parameters([5, 10, 15])
             .contract_memo("A contract memo")
@@ -351,7 +353,7 @@ mod tests {
 
         assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
         assert_eq!(data.gas, 1000);
-        assert_eq!(data.initial_balance, 1_000_000);
+        assert_eq!(data.initial_balance.to_tinybars(), 1_000_000);
         assert_eq!(data.auto_renew_period, Duration::days(90));
         assert_eq!(data.constructor_parameters, [5, 10, 15]);
         assert_eq!(data.contract_memo, "A contract memo");

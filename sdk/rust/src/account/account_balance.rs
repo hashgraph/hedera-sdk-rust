@@ -23,6 +23,8 @@ use hedera_proto::services;
 use crate::{
     AccountId,
     FromProtobuf,
+    Hbar,
+    Tinybar,
 };
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
@@ -33,8 +35,7 @@ pub struct AccountBalance {
     pub account_id: AccountId,
 
     /// Current balance of the referenced account.
-    // TODO: use Hbar type
-    pub hbars: u64,
+    pub hbars: Hbar,
 }
 
 impl FromProtobuf<services::response::Response> for AccountBalance {
@@ -44,7 +45,7 @@ impl FromProtobuf<services::response::Response> for AccountBalance {
         let account_id = pb_getf!(response, account_id)?;
         let account_id = AccountId::from_protobuf(account_id)?;
 
-        let balance = response.balance;
+        let balance = Hbar::from_tinybars(response.balance as Tinybar);
 
         Ok(Self { account_id, hbars: balance })
     }

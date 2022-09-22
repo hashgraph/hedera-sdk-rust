@@ -9,6 +9,7 @@ use time::OffsetDateTime;
 use crate::{
     AccountId,
     FromProtobuf,
+    Hbar,
 };
 
 #[serde_as]
@@ -25,10 +26,10 @@ pub struct StakingInfo {
     pub stake_period_start: Option<OffsetDateTime>,
 
     /// The amount in Hbar that will be received in the next reward situation.
-    pub pending_reward: u64,
+    pub pending_reward: Hbar,
 
     /// The total of balance of all accounts staked to this account or contract.
-    pub staked_to_me: u64,
+    pub staked_to_me: Hbar,
 
     /// The account to which this account or contract is staking.
     pub staked_account_id: Option<AccountId>,
@@ -60,8 +61,8 @@ impl FromProtobuf<services::StakingInfo> for StakingInfo {
         Ok(Self {
             decline_staking_reward: pb.decline_reward,
             stake_period_start: pb.stake_period_start.map(Into::into),
-            pending_reward: pb.pending_reward as u64,
-            staked_to_me: pb.staked_to_me as u64,
+            pending_reward: Hbar::from_tinybars(pb.pending_reward),
+            staked_to_me: Hbar::from_tinybars(pb.staked_to_me),
             staked_account_id,
             staked_node_id,
         })

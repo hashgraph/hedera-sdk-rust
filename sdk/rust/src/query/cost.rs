@@ -31,7 +31,9 @@ use crate::query::QueryExecute;
 use crate::{
     AccountId,
     Client,
+    Hbar,
     Query,
+    Tinybar,
     TransactionId,
 };
 
@@ -58,7 +60,7 @@ where
 
     type GrpcResponse = services::Response;
 
-    type Response = u64;
+    type Response = Hbar;
 
     type Context = ();
 
@@ -103,7 +105,7 @@ where
         _node_account_id: AccountId,
         _transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response> {
-        Ok(response_header(&response.response)?.cost)
+        Ok(Hbar::from_tinybars(response_header(&response.response)?.cost as Tinybar))
     }
 
     fn make_error_pre_check(
@@ -130,7 +132,7 @@ where
     D: QueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
-    pub async fn execute(&mut self, client: &Client) -> crate::Result<u64> {
+    pub async fn execute(&mut self, client: &Client) -> crate::Result<Hbar> {
         execute(client, self).await
     }
 }

@@ -27,6 +27,7 @@ use crate::{
     AccountId,
     Client,
     Error,
+    Hbar,
     TransactionId,
 };
 
@@ -85,8 +86,7 @@ where
     /// The client will submit exactly this amount for the payment of this query. Hedera
     /// will not return any remainder (over the actual cost for this query).
     ///
-    // TODO: Use Hbar
-    pub fn payment_amount(&mut self, amount: u64) -> &mut Self {
+    pub fn payment_amount(&mut self, amount: Hbar) -> &mut Self {
         self.payment.body.data.amount = Some(amount);
         self
     }
@@ -104,8 +104,7 @@ where
     ///
     /// Set to `None` to allow unlimited payment amounts.
     ///
-    // TODO: Use Hbar
-    pub fn max_payment_amount(&mut self, max: impl Into<Option<u64>>) -> &mut Self {
+    pub fn max_payment_amount(&mut self, max: impl Into<Option<Hbar>>) -> &mut Self {
         self.payment.body.data.max_amount = max.into();
         self
     }
@@ -124,8 +123,7 @@ where
     ///
     /// Defaults to 1 hbar.
     ///
-    // TODO: Use Hbar
-    pub fn max_payment_transaction_fee(&mut self, fee: u64) -> &mut Self {
+    pub fn max_payment_transaction_fee(&mut self, fee: Hbar) -> &mut Self {
         self.payment.max_transaction_fee(fee);
         self
     }
