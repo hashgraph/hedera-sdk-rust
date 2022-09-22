@@ -29,11 +29,11 @@ use crate::{
     AccountId,
     FromProtobuf,
     Key,
+    LedgerId,
     ScheduleId,
     TransactionId,
 };
 
-// TODO: ledger_id
 // TODO: scheduled_transaction
 /// Response from [`ScheduleInfoQuery`][crate::ScheduleInfoQuery].
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,6 +73,9 @@ pub struct ScheduleInfo {
 
     /// The time the schedule transaction was deleted.
     pub deleted_at: Option<OffsetDateTime>,
+
+    /// The ledger ID the response was returned from
+    pub ledger_id: LedgerId,
 }
 
 impl FromProtobuf<services::response::Response> for ScheduleInfo {
@@ -87,6 +90,7 @@ impl FromProtobuf<services::response::Response> for ScheduleInfo {
         let creator_account_id = pb_getf!(info, creator_account_id)?;
         let payer_account_id = info.payer_account_id.map(AccountId::from_protobuf).transpose()?;
         let admin_key = info.admin_key.map(Key::from_protobuf).transpose()?;
+        let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
         let scheduled_transaction_id =
             TransactionId::from_protobuf(pb_getf!(info, scheduled_transaction_id)?)?;
@@ -123,6 +127,7 @@ impl FromProtobuf<services::response::Response> for ScheduleInfo {
             scheduled_transaction_id,
             signatories,
             wait_for_expiry: info.wait_for_expiry,
+            ledger_id,
         })
     }
 }

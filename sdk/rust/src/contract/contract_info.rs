@@ -34,9 +34,9 @@ use crate::{
     ContractId,
     FromProtobuf,
     Key,
+    LedgerId,
 };
 
-// TODO: ledger_id
 // TODO: staking_info
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -78,6 +78,9 @@ pub struct ContractInfo {
 
     /// The maximum number of tokens that a contract can be implicitly associated with.
     pub max_automatic_token_associations: u32,
+
+    /// The ledger ID the response was returned from
+    pub ledger_id: LedgerId,
 }
 
 impl FromProtobuf<services::response::Response> for ContractInfo {
@@ -95,6 +98,7 @@ impl FromProtobuf<services::response::Response> for ContractInfo {
         let auto_renew_account_id =
             info.auto_renew_account_id.map(AccountId::from_protobuf).transpose()?;
         let admin_key = info.admin_key.map(Key::from_protobuf).transpose()?;
+        let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
         Ok(Self {
             contract_id: ContractId::from_protobuf(contract_id)?,
@@ -109,6 +113,7 @@ impl FromProtobuf<services::response::Response> for ContractInfo {
             max_automatic_token_associations: info.max_automatic_token_associations as u32,
             admin_key,
             storage: info.storage as u64,
+            ledger_id,
         })
     }
 }

@@ -34,12 +34,12 @@ use crate::{
     AccountId,
     FromProtobuf,
     Key,
+    LedgerId,
     TokenId,
     TokenSupplyType,
     TokenType,
 };
 
-// TODO: pub ledger_id: Vec<u8>,
 /// Response from [`TokenInfoQuery`][crate::TokenInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -119,6 +119,9 @@ pub struct TokenInfo {
 
     /// Specifies whether the token is paused or not.
     pub pause_status: Option<bool>,
+
+    /// The ledger ID the response was returned from
+    pub ledger_id: LedgerId,
 }
 
 impl FromProtobuf<services::response::Response> for TokenInfo {
@@ -154,6 +157,7 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
         };
 
         let treasury_account_id = pb_getf!(info, treasury)?;
+        let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
         Ok(Self {
             token_id: TokenId::from_protobuf(token_id)?,
@@ -185,6 +189,7 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
                 .collect::<Result<Vec<_>, _>>()?, //test this
             pause_key: info.pause_key.map(Key::from_protobuf).transpose()?,
             pause_status,
+            ledger_id,
         })
     }
 }

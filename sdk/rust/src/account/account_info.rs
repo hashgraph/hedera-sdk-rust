@@ -33,7 +33,6 @@ use crate::{
     StakingInfo,
 };
 
-// TODO: pub ledger_id: LedgerId,
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -102,7 +101,7 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
         let key = pb_getf!(info, key)?;
         let account_id = pb_getf!(info, account_id)?;
         let alias_key = PublicKey::from_alias_bytes(&*info.alias)?;
-        let ledger_id = LedgerId(info.ledger_id);
+        let ledger_id = LedgerId::from_bytes(info.ledger_id);
         let staking = info.staking_info.map(|info| StakingInfo::from_protobuf(info)).transpose()?;
 
         Ok(Self {
