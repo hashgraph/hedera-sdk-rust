@@ -100,6 +100,7 @@ pub enum AnyQueryData {
     NetworkVersionInfo(NetworkVersionInfoQueryData),
 }
 
+// todo: strategically box fields of variants, rather than the entire structs.
 #[derive(Debug, serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyQueryResponse {
@@ -108,12 +109,12 @@ pub enum AnyQueryResponse {
     AccountStakers(AllProxyStakers),
     AccountRecords(Vec<TransactionRecord>),
     TransactionReceipt(TransactionReceipt),
-    TransactionRecord(TransactionRecord),
+    TransactionRecord(Box<TransactionRecord>),
     FileContents(FileContentsResponse),
     FileInfo(FileInfo),
     ContractBytecode(Vec<u8>),
     ContractCall(ContractFunctionResult),
-    TokenInfo(TokenInfo),
+    TokenInfo(Box<TokenInfo>),
     TopicInfo(TopicInfo),
     ContractInfo(ContractInfo),
     TokenNftInfo(TokenNftInfo),
@@ -262,7 +263,6 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
                 Self::ContractCall(ContractFunctionResult::from_protobuf(response)?)
             }
             ContractGetInfo(_) => Self::ContractInfo(ContractInfo::from_protobuf(response)?),
-            TokenGetNftInfo(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
             ConsensusGetTopicInfo(_) => Self::TopicInfo(TopicInfo::from_protobuf(response)?),
             ScheduleGetInfo(_) => Self::ScheduleInfo(ScheduleInfo::from_protobuf(response)?),
             CryptoGetProxyStakers(_) => {
@@ -272,14 +272,16 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
                 Self::AccountRecords(Vec::<TransactionRecord>::from_protobuf(response)?)
             }
             TransactionGetRecord(_) => {
-                Self::TransactionRecord(TransactionRecord::from_protobuf(response)?)
+                Self::TransactionRecord(Box::new(TransactionRecord::from_protobuf(response)?))
             }
             NetworkGetVersionInfo(_) => {
                 Self::NetworkVersionInfo(NetworkVersionInfo::from_protobuf(response)?)
             }
             FileGetInfo(_) => Self::FileInfo(FileInfo::from_protobuf(response)?),
-            TokenGetInfo(_) => Self::TokenInfo(TokenInfo::from_protobuf(response)?),
-            TokenGetNftInfos(_) => Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?),
+            TokenGetInfo(_) => Self::TokenInfo(Box::new(TokenInfo::from_protobuf(response)?)),
+            TokenGetNftInfo(_) | TokenGetNftInfos(_) => {
+                Self::TokenNftInfo(TokenNftInfo::from_protobuf(response)?)
+            }
             // Unimplemented on hedera services
             TransactionGetFastRecord(_)
             | CryptoGetLiveHash(_)

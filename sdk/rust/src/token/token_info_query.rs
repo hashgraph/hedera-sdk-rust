@@ -62,7 +62,7 @@ impl TokenInfoQuery {
 
 impl ToQueryProtobuf for TokenInfoQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let token_id = self.token_id.as_ref().map(|id| id.to_protobuf());
+        let token_id = self.token_id.as_ref().map(TokenId::to_protobuf);
 
         services::Query {
             query: Some(services::query::Query::TokenGetInfo(services::TokenGetInfoQuery {

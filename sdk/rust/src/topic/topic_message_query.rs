@@ -24,6 +24,7 @@ use hedera_proto::mirror::consensus_service_client::ConsensusServiceClient;
 use hedera_proto::mirror::ConsensusTopicQuery;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
+use tonic::Response;
 
 use crate::mirror_query::{
     AnyMirrorQueryData,
@@ -117,7 +118,7 @@ impl MirrorQuerySubscribe for TopicMessageQueryData {
         ConsensusServiceClient::new(channel)
             .subscribe_topic(request)
             .await
-            .map(|response| response.into_inner())
+            .map(Response::into_inner)
     }
 
     async fn message(

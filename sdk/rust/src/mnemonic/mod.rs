@@ -50,7 +50,7 @@ const LEGACY: &str = include_str!("legacy-english.txt");
 // `is_sorted` is unstable.
 // this is just lifted from the stdlib impl.
 fn is_sorted<T: PartialOrd>(vs: &[T]) -> bool {
-    vs.windows(2).all(|w| w[0].partial_cmp(&w[1]).map(|o| o != Ordering::Greater).unwrap_or(false))
+    vs.windows(2).all(|w| w[0].partial_cmp(&w[1]).map_or(false, |o| o != Ordering::Greater))
 }
 
 // sadly can't do this with a const.
@@ -90,6 +90,7 @@ impl Mnemonic {
     }
 
     /// Returns `true` if `self` is a legacy mnemonic.
+    #[must_use]
     pub fn is_legacy(&self) -> bool {
         matches!(&self.0, MnemonicData::V1(_))
     }
@@ -157,11 +158,13 @@ impl Mnemonic {
     }
 
     /// Generate a new 12 word `Mnemonic` from the BIP-39 standard English word list.
+    #[must_use]
     pub fn generate_12() -> Self {
         Self(MnemonicV2V3::generate_12().into())
     }
 
     /// Generate a new 24 word `Mnemonic` from the BIP-39 standard English word list.
+    #[must_use]
     pub fn generate_24() -> Self {
         Self(MnemonicV2V3::generate_24().into())
     }
@@ -231,6 +234,8 @@ struct MnemonicV1 {
 }
 
 impl MnemonicV1 {
+    // clippy bug.
+    #[allow(clippy::explicit_auto_deref)]
     fn words(&self) -> &[String] {
         &*self.words
     }
@@ -241,8 +246,7 @@ impl MnemonicV1 {
                 .iter()
                 .enumerate()
                 .find_map(|(idx, w2)| (w == w2).then_some(idx))
-                .map(|it| it as i32)
-                .unwrap_or(-1)
+                .map_or(-1, |it| it as i32)
         });
 
         let data = convert_radix(indecies, 4096, 256, 33);
@@ -293,7 +297,7 @@ impl MnemonicV2V3 {
         let mut words = Vec::with_capacity((entropy.len() * 8 + 1) / 11);
 
         for byte in entropy {
-            buffer = (buffer << 8) | byte as u32;
+            buffer = (buffer << 8) | u32::from(byte);
             offset += 8;
             if offset >= 11 {
                 let index = (buffer >> (offset - 11) & 0x7ff) as usize;
@@ -388,7 +392,7 @@ fn convert_radix<I: IntoIterator<Item = i32>>(
     to_length: usize,
 ) -> Vec<i32> {
     let mut buf = BigInt::from(0);
-    let from_radix = BigInt::from(from_radix as i64);
+    let from_radix = BigInt::from(i64::from(from_radix));
 
     for num in nums {
         buf *= &from_radix;
@@ -397,7 +401,7 @@ fn convert_radix<I: IntoIterator<Item = i32>>(
 
     let mut out = vec![0; to_length];
 
-    let to_radix = BigInt::from(to_radix as i64);
+    let to_radix = BigInt::from(i64::from(to_radix));
 
     for out in out.iter_mut().rev() {
         let rem;
@@ -410,7 +414,7 @@ fn convert_radix<I: IntoIterator<Item = i32>>(
 
 fn words_to_entropy_and_checksum<T: AsRef<str>>(words: &[T]) -> (Vec<u8>, u8) {
     let indecies: Vec<_> = words
-        .into_iter()
+        .iter()
         .map(T::as_ref)
         .map(|it| BIP39_WORD_LIST.binary_search(&it).unwrap() as u16)
         .collect();
@@ -428,9 +432,9 @@ fn incecies_to_entropy_and_checksum(indecies: &[u16]) -> (Vec<u8>, u8) {
     for index in indecies {
         assert!(*index <= 0x7ff);
 
-        buf = (buf << 11) | *index as u32;
+        buf = (buf << 11) | u32::from(*index);
         offset += 11;
-        while !(offset < 8) {
+        while offset >= 8 {
             // we want to truncate.
             let byte = (buf >> (offset - 8)) as u8;
             output.push(byte);

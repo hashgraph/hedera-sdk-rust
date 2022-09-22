@@ -61,7 +61,7 @@ impl FileInfoQuery {
 
 impl ToQueryProtobuf for FileInfoQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let file_id = self.file_id.as_ref().map(|id| id.to_protobuf());
+        let file_id = self.file_id.as_ref().map(FileId::to_protobuf);
 
         services::Query {
             query: Some(services::query::Query::FileGetInfo(services::FileGetInfoQuery {
