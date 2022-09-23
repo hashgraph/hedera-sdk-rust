@@ -151,6 +151,8 @@ pub enum AnyTransactionData {
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
+    // not really anything I can do about this
+    #[allow(clippy::too_many_lines)]
     fn to_transaction_data_protobuf(
         &self,
         node_account_id: AccountId,

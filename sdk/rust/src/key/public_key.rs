@@ -48,14 +48,36 @@ use crate::{
 };
 
 /// A public key on the Hedera network.
-#[derive(Clone, Eq, Copy, PartialEq, SerializeDisplay, DeserializeFromStr)]
+#[derive(Clone, Eq, Copy, Hash, PartialEq, SerializeDisplay, DeserializeFromStr)]
 pub struct PublicKey(PublicKeyData);
 
-#[derive(Clone, Eq, Copy, PartialEq)]
+#[derive(Clone, Copy)]
 enum PublicKeyData {
     Ed25519(ed25519_dalek::PublicKey),
     EcdsaSecp256k1(k256::ecdsa::VerifyingKey),
 }
+
+impl Hash for PublicKeyData {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        match &self {
+            PublicKeyData::Ed25519(key) => key.to_bytes().hash(state),
+            PublicKeyData::EcdsaSecp256k1(key) => key.to_bytes().hash(state),
+        }
+    }
+}
+
+impl PartialEq for PublicKeyData {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Ed25519(l0), Self::Ed25519(r0)) => l0 == r0,
+            (Self::EcdsaSecp256k1(l0), Self::EcdsaSecp256k1(r0)) => l0 == r0,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for PublicKeyData {}
 
 impl PublicKey {
     pub(super) fn ed25519(key: ed25519_dalek::PublicKey) -> Self {
@@ -77,13 +99,12 @@ impl PublicKey {
     }
 
     pub(crate) fn from_alias_bytes(bytes: &[u8]) -> crate::Result<Option<Self>> {
-        if !bytes.is_empty() {
-            Ok(Some(PublicKey::from_protobuf(
-                services::Key::decode(bytes).map_err(|err| Error::from_protobuf(err))?,
-            )?))
-        } else {
-            Ok(None)
+        if bytes.is_empty() {
+            return Ok(None);
         }
+        Ok(Some(PublicKey::from_protobuf(
+            services::Key::decode(bytes).map_err(Error::from_protobuf)?,
+        )?))
     }
 
     /// Parse a `PublicKey` from a sequence of bytes.
@@ -137,8 +158,10 @@ impl PublicKey {
     }
 
     /// Return this private key, serialized as bytes.
+    // panic should be impossible (`unreachable`)
+    #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(64);
 
         match &self.0 {
@@ -176,7 +199,7 @@ impl PublicKey {
         }
     }
 
-    pub(crate) fn to_bytes_raw(&self) -> Vec<u8> {
+    pub(crate) fn to_bytes_raw(self) -> Vec<u8> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => key.to_bytes().as_slice().to_vec(),
             PublicKeyData::EcdsaSecp256k1(key) => key.to_bytes().as_slice().to_vec(),
@@ -193,15 +216,6 @@ impl Debug for PublicKey {
 impl Display for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.pad(&hex::encode(self.to_bytes()))
-    }
-}
-
-impl Hash for PublicKey {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match &self.0 {
-            PublicKeyData::Ed25519(key) => key.to_bytes().hash(state),
-            PublicKeyData::EcdsaSecp256k1(key) => key.to_bytes().hash(state),
-        }
     }
 }
 

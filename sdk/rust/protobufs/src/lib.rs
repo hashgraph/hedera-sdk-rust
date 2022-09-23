@@ -33,14 +33,20 @@ mod time_0_3;
 #[cfg(feature = "fraction")]
 mod fraction;
 
+// fixme: Do this, just, don't warn 70 times in generated code.
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub mod services {
     tonic::include_proto!("proto");
 }
 
+// fixme: Do this, just, don't warn 70 times in generated code.
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub mod mirror {
     tonic::include_proto!("mirror/com.hedera.mirror.api.proto");
 }
 
+// fixme: Do this, just, don't warn 70 times in generated code.
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub mod streams {
     tonic::include_proto!("streams/proto");
 }

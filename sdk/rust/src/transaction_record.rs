@@ -124,11 +124,8 @@ impl TransactionRecord {
         let schedule_ref = record.schedule_ref.map(ScheduleId::from_protobuf).transpose()?;
         let parent_consensus_timestamp = record.parent_consensus_timestamp.map(Into::into);
 
-        let alias_key = if !record.alias.is_empty() {
-            Some(PublicKey::from_bytes(&record.alias)?)
-        } else {
-            None
-        };
+        let alias_key =
+            (!record.alias.is_empty()).then(|| PublicKey::from_bytes(&record.alias)).transpose()?;
 
         let automatic_token_associations = record
             .automatic_token_associations
