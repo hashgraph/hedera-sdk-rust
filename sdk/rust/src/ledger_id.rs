@@ -32,6 +32,7 @@ impl LedgerId {
         Self(vec![2])
     }
 
+    #[must_use]
     pub fn from_bytes(bytes: Vec<u8>) -> Self {
         Self(bytes)
     }
@@ -56,8 +57,14 @@ impl LedgerId {
         self.is_mainnet() || self.is_previewnet() || self.is_testnet()
     }
 
-    pub const fn to_bytes(&self) -> &Vec<u8> {
-        &self.0
+    #[must_use]
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_slice()
+    }
+
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.0.clone()
     }
 }
 
@@ -76,7 +83,7 @@ impl Display for LedgerId {
         } else if self.is_previewnet() {
             f.write_str("previewnet")
         } else {
-            f.write_str(&hex::encode(self.to_bytes()))
+            f.write_str(&hex::encode(self.as_bytes()))
         }
     }
 }
@@ -129,6 +136,6 @@ mod tests {
     #[test]
     fn it_can_to_bytes() {
         let bytes = vec![0x00, 0xFF, 0x00, 0xFF];
-        assert_eq!(LedgerId::from_bytes(bytes.clone()).to_bytes(), &bytes);
+        assert_eq!(LedgerId::from_bytes(bytes.clone()).as_bytes(), &bytes);
     }
 }
