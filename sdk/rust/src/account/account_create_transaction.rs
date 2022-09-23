@@ -256,7 +256,7 @@ mod tests {
   "key": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
   },
-  "initialBalance": "1000 tℏ",
+  "initialBalance": 1000,
   "receiverSignatureRequired": true,
   "autoRenewPeriod": 7776000,
   "accountMemo": "An account memo",

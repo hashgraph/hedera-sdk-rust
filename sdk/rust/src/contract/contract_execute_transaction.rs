@@ -156,7 +156,7 @@ mod tests {
   "$type": "contractExecute",
   "contractId": "0.0.1001",
   "gas": 1000,
-  "payableAmount": "10 tℏ",
+  "payableAmount": 10,
   "functionParameters": [
     72,
     101,
