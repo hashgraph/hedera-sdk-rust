@@ -145,6 +145,8 @@ impl TransactionExecute for ScheduleCreateTransactionData {
 }
 
 impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
+    // not really anything I can do about this
+    #[allow(clippy::too_many_lines)]
     fn to_transaction_data_protobuf(
         &self,
         node_account_id: AccountId,

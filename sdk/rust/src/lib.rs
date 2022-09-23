@@ -33,6 +33,7 @@
 #![allow(clippy::cast_possible_wrap)]
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_sign_loss)]
+#![allow(clippy::enum_variant_names)]
 
 #[macro_use]
 mod protobuf;

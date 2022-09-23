@@ -18,6 +18,7 @@
  * ‍
  */
 
+#[allow(clippy::module_inception)]
 mod key;
 mod private_key;
 mod public_key;

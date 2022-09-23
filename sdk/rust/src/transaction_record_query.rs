@@ -88,7 +88,7 @@ impl TransactionRecordQuery {
 
 impl ToQueryProtobuf for TransactionRecordQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let transaction_id = self.transaction_id.as_ref().map(|id| id.to_protobuf());
+        let transaction_id = self.transaction_id.as_ref().map(TransactionId::to_protobuf);
 
         services::Query {
             query: Some(services::query::Query::TransactionGetRecord(

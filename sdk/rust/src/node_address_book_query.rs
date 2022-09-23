@@ -25,6 +25,7 @@ use hedera_proto::{
 };
 use mirror::network_service_client::NetworkServiceClient;
 use tonic::transport::Channel;
+use tonic::Response;
 
 use crate::mirror_query::{
     AnyMirrorQueryData,
@@ -93,10 +94,7 @@ impl MirrorQuerySubscribe for NodeAddressBookQueryData {
         let file_id = self.file_id.to_protobuf();
         let request = mirror::AddressBookQuery { file_id: Some(file_id), limit: self.limit as i32 };
 
-        NetworkServiceClient::new(channel)
-            .get_nodes(request)
-            .await
-            .map(|response| response.into_inner())
+        NetworkServiceClient::new(channel).get_nodes(request).await.map(Response::into_inner)
     }
 
     async fn message(
