@@ -97,6 +97,7 @@ use crate::transaction::{
 use crate::transfer_transaction::TransferTransactionData;
 use crate::{
     AccountId,
+    Hbar,
     Transaction,
     TransactionId,
 };
@@ -323,7 +324,7 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
 
 #[async_trait]
 impl TransactionExecute for AnyTransactionData {
-    fn default_max_transaction_fee(&self) -> u64 {
+    fn default_max_transaction_fee(&self) -> Hbar {
         match self {
             Self::Transfer(transaction) => transaction.default_max_transaction_fee(),
             Self::AccountCreate(transaction) => transaction.default_max_transaction_fee(),
@@ -444,7 +445,7 @@ pub(crate) struct AnyTransactionBody<D> {
     transaction_valid_duration: Option<Duration>,
 
     #[serde(default)]
-    max_transaction_fee: Option<u64>,
+    max_transaction_fee: Option<Hbar>,
 
     #[serde(default, skip_serializing_if = "String::is_empty")]
     transaction_memo: String,

@@ -29,8 +29,10 @@ use time::OffsetDateTime;
 
 use crate::{
     FromProtobuf,
+    Hbar,
     PublicKey,
     ScheduleId,
+    Tinybar,
     TokenAssociation,
     TransactionId,
     TransactionReceipt,
@@ -63,7 +65,7 @@ pub struct TransactionRecord {
     pub transaction_memo: String,
 
     /// The actual transaction fee charged.
-    pub transaction_fee: u64,
+    pub transaction_fee: Hbar,
 
     /// Reference to the scheduled transaction ID that this transaction record represents.
     pub schedule_ref: Option<ScheduleId>,
@@ -137,7 +139,7 @@ impl TransactionRecord {
             consensus_timestamp: consensus_timestamp.into(),
             transaction_id: TransactionId::from_protobuf(transaction_id)?,
             transaction_memo: record.memo,
-            transaction_fee: record.transaction_fee,
+            transaction_fee: Hbar::from_tinybars(record.transaction_fee as Tinybar),
             schedule_ref,
             automatic_token_associations,
             parent_consensus_timestamp,

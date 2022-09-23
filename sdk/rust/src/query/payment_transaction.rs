@@ -31,6 +31,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Hbar,
     ToProtobuf,
     Transaction,
     TransactionId,
@@ -42,8 +43,8 @@ pub type PaymentTransaction = Transaction<PaymentTransactionData>;
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PaymentTransactionData {
-    pub(crate) amount: Option<u64>,
-    pub(crate) max_amount: Option<u64>,
+    pub(crate) amount: Option<Hbar>,
+    pub(crate) max_amount: Option<Hbar>,
 }
 
 #[async_trait]
@@ -73,12 +74,12 @@ impl ToTransactionDataProtobuf for PaymentTransactionData {
                 account_amounts: vec![
                     services::AccountAmount {
                         account_id: Some(node_account_id.to_protobuf()),
-                        amount: amount as i64,
+                        amount: amount.to_tinybars(),
                         is_approval: false,
                     },
                     services::AccountAmount {
                         account_id: Some(transaction_id.account_id.to_protobuf()),
-                        amount: -(amount as i64),
+                        amount: -(amount.to_tinybars()),
                         is_approval: false,
                     },
                 ],

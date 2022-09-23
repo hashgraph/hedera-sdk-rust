@@ -32,6 +32,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Hbar,
     NftId,
     ToProtobuf,
     TokenId,
@@ -218,21 +219,25 @@ impl TransferTransaction {
     pub fn _hbar_transfer(
         &mut self,
         account_id: AccountId,
-        amount: i64,
+        amount: Hbar,
         approved: bool,
     ) -> &mut Self {
-        self.body.data.transfers.push(Transfer { account_id, amount, is_approval: approved });
+        self.body.data.transfers.push(Transfer {
+            account_id,
+            amount: amount.to_tinybars(),
+            is_approval: approved,
+        });
 
         self
     }
 
     /// Add a non-approved hbar transfer to the transaction.
-    pub fn hbar_transfer(&mut self, account_id: AccountId, amount: i64) -> &mut Self {
+    pub fn hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
         self._hbar_transfer(account_id, amount, false)
     }
 
     /// Add an approved hbar transfer to the transaction.
-    pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: i64) -> &mut Self {
+    pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
         self._hbar_transfer(account_id, amount, false)
     }
 }

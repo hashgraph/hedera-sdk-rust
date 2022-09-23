@@ -40,6 +40,8 @@ use crate::{
     AccountId,
     Client,
     Error,
+    Hbar,
+    HbarUnit,
     ToProtobuf,
     Transaction,
     TransactionHash,
@@ -49,8 +51,8 @@ use crate::{
 
 #[async_trait]
 pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> {
-    fn default_max_transaction_fee(&self) -> u64 {
-        2 * 100_000_000 // 2 hbar
+    fn default_max_transaction_fee(&self) -> Hbar {
+        Hbar::from_unit(2, HbarUnit::Hbar)
     }
 
     async fn execute(
@@ -179,7 +181,7 @@ where
             // no max has been set on the *transaction*
             // check if there is a global max set on the client
             match client_max_transaction_fee.load(Ordering::Relaxed) {
-                max if max > 1 => max,
+                max if max > 1 => Hbar::from_tinybars(max as i64),
 
                 // no max has been set on the client either
                 // fallback to the hard-coded default for this transaction type
@@ -199,7 +201,7 @@ where
             memo: self.body.transaction_memo.clone(),
             node_account_id: Some(node_account_id.to_protobuf()),
             generate_record: false,
-            transaction_fee: max_transaction_fee,
+            transaction_fee: max_transaction_fee.to_tinybars() as u64,
         }
     }
 }

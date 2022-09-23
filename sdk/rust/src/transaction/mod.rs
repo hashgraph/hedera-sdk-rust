@@ -36,6 +36,7 @@ use crate::execute::execute;
 use crate::{
     AccountId,
     Client,
+    Hbar,
     Signer,
     TransactionId,
     TransactionResponse,
@@ -87,7 +88,7 @@ where
     #[serde_as(as = "Option<DurationSeconds<i64>>")]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
-    pub(crate) max_transaction_fee: Option<u64>,
+    pub(crate) max_transaction_fee: Option<Hbar>,
 
     #[serde(skip_serializing_if = "String::is_empty")]
     pub(crate) transaction_memo: String,
@@ -160,7 +161,7 @@ where
     }
 
     /// Set the maximum transaction fee the paying account is willing to pay.
-    pub fn max_transaction_fee(&mut self, fee: u64) -> &mut Self {
+    pub fn max_transaction_fee(&mut self, fee: Hbar) -> &mut Self {
         self.body.max_transaction_fee = Some(fee);
         self
     }

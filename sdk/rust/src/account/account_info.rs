@@ -27,10 +27,12 @@ use time::{
 use crate::{
     AccountId,
     FromProtobuf,
+    Hbar,
     Key,
     LedgerId,
     PublicKey,
     StakingInfo,
+    Tinybar,
 };
 
 // TODO: pub ledger_id: LedgerId,
@@ -50,15 +52,14 @@ pub struct AccountInfo {
     pub is_deleted: bool,
 
     /// The total number of hbars proxy staked to this account.
-    pub proxy_received: u64, // TODO: Hbar
+    pub proxy_received: Hbar,
 
     /// The key for the account, which must sign in order to transfer out, or to modify the
     /// account in any way other than extending its expiration date.
     pub key: Key,
 
     /// Current balance of the referenced account.
-    // TODO: use Hbar type
-    pub balance: u64,
+    pub balance: Hbar,
 
     /// If true, no transaction can transfer to this account unless signed by
     /// this account's key.
@@ -111,9 +112,9 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
             account_id: AccountId::from_protobuf(account_id)?,
             contract_account_id: info.contract_account_id,
             is_deleted: info.deleted,
-            proxy_received: info.proxy_received as u64,
+            proxy_received: Hbar::from_tinybars(info.proxy_received),
             key: Key::from_protobuf(key)?,
-            balance: info.balance as u64,
+            balance: Hbar::from_tinybars(info.balance as Tinybar),
             expiration_time: info.expiration_time.map(Into::into),
             auto_renew_period: info.auto_renew_period.map(Into::into),
             account_memo: info.memo,
