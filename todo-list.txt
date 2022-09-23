@@ -70,7 +70,7 @@
 [X] FileUpdateTransaction
  - [ ] expiration_time is named inconsistently
 [X] FreezeTransaction
-[ ] Hbar
+[X] Hbar
 [X] Key
  - [ ] keylist
  - [ ] threshold key

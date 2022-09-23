@@ -51,7 +51,7 @@ pub struct Client {
     mirror_network: Arc<MirrorNetwork>,
     operator_account_id: Arc<RwLock<Option<AccountId>>>,
     operator_signer: Arc<AsyncRwLock<Option<Box<dyn Signer>>>>,
-    max_transaction_fee: Arc<AtomicU64>,
+    max_transaction_fee_tinybar: Arc<AtomicU64>,
 }
 
 impl Client {
@@ -63,7 +63,7 @@ impl Client {
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::MAINNET])),
             operator_account_id: Arc::new(RwLock::new(None)),
             operator_signer: Arc::new(AsyncRwLock::new(None)),
-            max_transaction_fee: Arc::new(AtomicU64::new(0)),
+            max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -75,7 +75,7 @@ impl Client {
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
             operator_account_id: Arc::new(RwLock::new(None)),
             operator_signer: Arc::new(AsyncRwLock::new(None)),
-            max_transaction_fee: Arc::new(AtomicU64::new(0)),
+            max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -87,7 +87,7 @@ impl Client {
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::PREVIEWNET])),
             operator_account_id: Arc::new(RwLock::new(None)),
             operator_signer: Arc::new(AsyncRwLock::new(None)),
-            max_transaction_fee: Arc::new(AtomicU64::new(0)),
+            max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -135,6 +135,6 @@ impl Client {
 
     /// Gets the maximum transaction fee the paying account is willing to pay.
     pub(crate) fn max_transaction_fee(&self) -> &AtomicU64 {
-        &self.max_transaction_fee
+        &self.max_transaction_fee_tinybar
     }
 }

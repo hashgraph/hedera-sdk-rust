@@ -19,7 +19,7 @@
  */
 
 use clap::Parser;
-use hedera::{AccountId, Client, PrivateKey, TransferTransaction};
+use hedera::{AccountId, Client, Hbar, PrivateKey, TransferTransaction};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -35,8 +35,8 @@ struct Args {
     #[clap(long, default_value = "0.0.1001")]
     receiver: AccountId,
 
-    #[clap(long, default_value = "1000")]
-    amount: i64,
+    #[clap(long, default_value = "10 μℏ")]
+    amount: Hbar,
 }
 
 #[tokio::main]

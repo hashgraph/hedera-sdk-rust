@@ -40,6 +40,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Hbar,
     Key,
     Transaction,
     TransactionId,
@@ -78,7 +79,7 @@ struct SchedulableTransactionBody {
     data: Box<AnyTransactionData>,
 
     #[serde(default)]
-    max_transaction_fee: Option<u64>,
+    max_transaction_fee: Option<Hbar>,
 
     #[serde(default, skip_serializing_if = "String::is_empty")]
     transaction_memo: String,
@@ -299,7 +300,8 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
                 // FIXME: does not use the client to default the max transaction fee
                 transaction_fee: scheduled
                     .max_transaction_fee
-                    .unwrap_or_else(|| scheduled.data.default_max_transaction_fee()),
+                    .unwrap_or_else(|| scheduled.data.default_max_transaction_fee())
+                    .to_tinybars() as u64,
             }
         });
 

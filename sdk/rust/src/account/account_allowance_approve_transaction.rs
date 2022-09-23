@@ -30,6 +30,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Hbar,
     NftId,
     ToProtobuf,
     TokenId,
@@ -66,7 +67,7 @@ impl AccountAllowanceApproveTransaction {
         &mut self,
         owner_account_id: AccountId,
         spender_account_id: AccountId,
-        amount: u64,
+        amount: Hbar,
     ) -> &mut Self {
         self.body.data.hbar_allowances.push(HbarAllowance {
             owner_account_id,
@@ -159,8 +160,8 @@ struct HbarAllowance {
     /// The account ID of the spender of the hbar allowance.
     spender_account_id: AccountId,
 
-    /// The amount of the spender's allowance, in tinybars.
-    amount: u64,
+    /// The amount of the spender's allowance.
+    amount: Hbar,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -251,7 +252,7 @@ impl ToProtobuf for HbarAllowance {
         Self::Protobuf {
             owner: Some(self.owner_account_id.to_protobuf()),
             spender: Some(self.spender_account_id.to_protobuf()),
-            amount: self.amount as i64,
+            amount: self.amount.to_tinybars(),
         }
     }
 }

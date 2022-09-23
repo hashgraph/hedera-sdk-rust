@@ -22,6 +22,7 @@ async-stream = "0.3.3"
 async-trait = "0.1.53"
 backoff = "0.4.0"
 base64 = "0.13.0"
+derive_more = "0.99.17"
 ed25519-dalek = { version = "1.0.1", features = ["rand", "serde"] }
 either = { version = "1.7.0", features = ["serde"] }
 fraction = { version = "0.11.0", features = ["with-serde-support"] }
@@ -46,6 +47,7 @@ pbkdf2 = "0.11.0"
 pkcs8 = "0.9.0"
 prost = "0.11.0"
 rand = "0.8.5"
+rust_decimal = "1.26.1"
 serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.79"
 serde_with = { version = "2.0.0", features = ["hex", "base64", "time_0_3"] }
