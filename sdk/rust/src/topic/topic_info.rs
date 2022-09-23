@@ -33,10 +33,10 @@ use crate::{
     AccountId,
     FromProtobuf,
     Key,
+    LedgerId,
     TopicId,
 };
 
-// TODO: ledgerId
 /// Response from [`TopicInfoQuery`][crate::TopicInfoQuery].
 #[serde_as]
 #[derive(Debug, Clone, serde::Serialize)]
@@ -71,6 +71,9 @@ pub struct TopicInfo {
 
     /// The interval at which the auto-renew account will be charged to extend the topic's expiry.
     pub auto_renew_period: Option<Duration>,
+
+    /// The ledger ID the response was returned from
+    pub ledger_id: LedgerId,
 }
 
 impl FromProtobuf<services::response::Response> for TopicInfo {
@@ -87,6 +90,7 @@ impl FromProtobuf<services::response::Response> for TopicInfo {
         let auto_renew_period = info.auto_renew_period.map(Into::into);
         let auto_renew_account_id =
             info.auto_renew_account.map(AccountId::from_protobuf).transpose()?;
+        let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
         Ok(Self {
             topic_id: TopicId::from_protobuf(topic_id)?,
@@ -98,6 +102,7 @@ impl FromProtobuf<services::response::Response> for TopicInfo {
             sequence_number: info.sequence_number,
             expiration_time,
             topic_memo: info.memo,
+            ledger_id,
         })
     }
 }

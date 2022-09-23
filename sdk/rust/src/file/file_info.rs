@@ -24,9 +24,9 @@ use time::OffsetDateTime;
 use crate::{
     FileId,
     FromProtobuf,
+    LedgerId,
 };
 
-// TODO: pub ledger_id: LedgerId,
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -48,6 +48,9 @@ pub struct FileInfo {
 
     /// Memo associated with the file.
     pub file_memo: String,
+
+    /// The ledger ID the response was returned from
+    pub ledger_id: LedgerId,
 }
 
 impl FromProtobuf<services::response::Response> for FileInfo {
@@ -59,6 +62,7 @@ impl FromProtobuf<services::response::Response> for FileInfo {
         let response = pb_getv!(pb, FileGetInfo, services::response::Response);
         let info = pb_getf!(response, file_info)?;
         let file_id = pb_getf!(info, file_id)?;
+        let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
         // TODO: KeyList
         // let keys = info
@@ -75,6 +79,7 @@ impl FromProtobuf<services::response::Response> for FileInfo {
             expiration_time: info.expiration_time.map(Into::into),
             is_deleted: info.deleted,
             file_memo: info.memo,
+            ledger_id,
         })
     }
 }
