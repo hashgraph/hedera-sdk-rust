@@ -97,9 +97,7 @@ impl FromProtobuf<services::Key> for Key {
             }
             Some(ThresholdKey(_)) => todo!(),
             Some(KeyList(_)) => todo!(),
-            Some(EcdsaSecp256k1(bytes)) => {
-                Ok(Self::Single(PublicKey::from_bytes_ecdsa_secp256k1(&bytes)?))
-            }
+            Some(EcdsaSecp256k1(bytes)) => Ok(Self::Single(PublicKey::from_bytes_ecdsa(&bytes)?)),
             None => Err(Error::from_protobuf("unexpected empty key in Key")),
         }
     }

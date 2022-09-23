@@ -90,7 +90,7 @@ impl Debug for PrivateKeyDataWrapper {
         #[derive(Debug)]
         enum Algorithm {
             Ed25519,
-            EcdsaSecp256k1,
+            Ecdsa,
         }
 
         let (algorithm, key) = match &self.data {
@@ -98,9 +98,7 @@ impl Debug for PrivateKeyDataWrapper {
                 (Algorithm::Ed25519, hex::encode(key.secret.as_bytes()))
             }
 
-            PrivateKeyData::EcdsaSecp256k1(key) => {
-                (Algorithm::EcdsaSecp256k1, hex::encode(&key.to_bytes()))
-            }
+            PrivateKeyData::Ecdsa(key) => (Algorithm::Ecdsa, hex::encode(&key.to_bytes())),
         };
 
         f.debug_struct("PrivateKeyData")
@@ -113,7 +111,7 @@ impl Debug for PrivateKeyDataWrapper {
 
 enum PrivateKeyData {
     Ed25519(ed25519_dalek::Keypair),
-    EcdsaSecp256k1(k256::ecdsa::SigningKey),
+    Ecdsa(k256::ecdsa::SigningKey),
 }
 
 impl PrivateKey {
@@ -122,7 +120,7 @@ impl PrivateKey {
         &*self.0
     }
 
-    /// Generates a new Ed25519 private key.
+    /// Generates a new Ed25519 `PrivateKey`.
     #[must_use]
     pub fn generate_ed25519() -> Self {
         let mut csprng = thread_rng();
@@ -135,21 +133,21 @@ impl PrivateKey {
         Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, chain_code)))
     }
 
-    /// Generates a new ECDSA(secp256k1) private key.
+    /// Generates a new ECDSA(secp256k1) `PrivateKey`.
     #[must_use]
-    pub fn generate_ecdsa_secp256k1() -> Self {
+    pub fn generate_ecdsa() -> Self {
         let data = k256::ecdsa::SigningKey::random(&mut thread_rng());
-        let data = PrivateKeyData::EcdsaSecp256k1(data);
+        let data = PrivateKeyData::Ecdsa(data);
 
         Self(Arc::new(PrivateKeyDataWrapper::new(data)))
     }
 
-    /// Gets the public key which corresponds to this private key.
+    /// Gets the `[PublicKey]` which corresponds to this `PrivateKey`.
     #[must_use]
     pub fn public_key(&self) -> PublicKey {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => PublicKey::ed25519(key.public),
-            PrivateKeyData::EcdsaSecp256k1(key) => PublicKey::ecdsa_secp256k1(key.verifying_key()),
+            PrivateKeyData::Ecdsa(key) => PublicKey::ecdsa(key.verifying_key()),
         }
     }
 
@@ -176,7 +174,7 @@ impl PrivateKey {
     }
 
     /// Parse a ECDSA(secp256k1) `PrivateKey` from a sequence of bytes.
-    pub fn from_bytes_ecdsa_secp256k1(bytes: &[u8]) -> crate::Result<Self> {
+    pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 32 {
             // not DER encoded, raw bytes for key
             k256::ecdsa::SigningKey::from_bytes(bytes).map_err(Error::key_parse)?
@@ -184,14 +182,14 @@ impl PrivateKey {
             return Self::from_bytes_der(bytes);
         };
 
-        Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::EcdsaSecp256k1(data)))))
+        Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::Ecdsa(data)))))
     }
 
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::PrivateKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
 
-        // PrivateKey is an `OctetString`, and the private keys we all support are `OctetStrings`.
+        // PrivateKey is an `OctetString`, and the `PrivateKey`s we all support are `OctetStrings`.
         // So, we, awkwardly, have an `OctetString` containing an `OctetString` containing our key material.
         let inner = pkcs8::der::asn1::OctetStringRef::from_der(info.private_key)
             .map_err(|err| Error::key_parse(err.to_string()))?;
@@ -199,7 +197,7 @@ impl PrivateKey {
         let inner = inner.as_bytes();
 
         if info.algorithm.oid == k256::Secp256k1::OID {
-            return Self::from_bytes_ecdsa_secp256k1(inner);
+            return Self::from_bytes_ecdsa(inner);
         }
 
         if info.algorithm.oid == ED25519_OID {
@@ -221,8 +219,8 @@ impl PrivateKey {
         )
     }
 
-    pub fn from_str_ecdsa_secp256k1(s: &str) -> crate::Result<Self> {
-        Self::from_bytes_ecdsa_secp256k1(
+    pub fn from_str_ecdsa(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ecdsa(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
@@ -239,7 +237,7 @@ impl PrivateKey {
         Self::from_bytes_der(&der)
     }
 
-    /// Return this private key, serialized as bytes.
+    /// Return this `PrivateKey`, serialized as bytes.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
@@ -268,14 +266,14 @@ impl PrivateKey {
     pub fn to_bytes(&self) -> Vec<u8> {
         match &self.0.data {
             PrivateKeyData::Ed25519(_) => self.to_bytes_raw().as_slice().to_vec(),
-            PrivateKeyData::EcdsaSecp256k1(_) => self.to_bytes_der(),
+            PrivateKeyData::Ecdsa(_) => self.to_bytes_der(),
         }
     }
 
     fn to_bytes_raw(&self) -> [u8; 32] {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => key.secret.to_bytes(),
-            PrivateKeyData::EcdsaSecp256k1(key) => key.to_bytes().into(),
+            PrivateKeyData::Ecdsa(key) => key.to_bytes().into(),
         }
     }
 
@@ -301,7 +299,7 @@ impl PrivateKey {
             parameters: None,
             oid: match &self.0.data {
                 PrivateKeyData::Ed25519(_) => ED25519_OID,
-                PrivateKeyData::EcdsaSecp256k1(_) => k256::Secp256k1::OID,
+                PrivateKeyData::Ecdsa(_) => k256::Secp256k1::OID,
             },
         }
     }
@@ -311,7 +309,7 @@ impl PrivateKey {
 
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => SignaturePair::ed25519(key.sign(message), public),
-            PrivateKeyData::EcdsaSecp256k1(key) => SignaturePair::ecdsa_secp256k1(
+            PrivateKeyData::Ecdsa(key) => SignaturePair::ecdsa(
                 key.sign_digest(sha3::Keccak256::new_with_prefix(message)),
                 public,
             ),
@@ -355,13 +353,13 @@ impl PrivateKey {
 
                 Ok(Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, chain_code))))
             }
-            PrivateKeyData::EcdsaSecp256k1(_) => todo!(),
+            PrivateKeyData::Ecdsa(_) => todo!(),
         }
     }
 
     // todo: what do we do about i32?
     // It's basically just a cast to support them, but, unlike Java, operator overloading doesn't exist.
-    /// Derive a private key based on the `index`.
+    /// Derive a `PrivateKey` based on the `index`.
     // ⚠️ unaudited cryptography ⚠️
     pub fn legacy_derive(&self, index: i64) -> crate::Result<Self> {
         match &self.0.data {
@@ -394,11 +392,11 @@ impl PrivateKey {
             }
 
             // need to add an error variant, key derivation doesn't exist for Ecdsa keys in Java impl.
-            PrivateKeyData::EcdsaSecp256k1(_) => todo!(),
+            PrivateKeyData::Ecdsa(_) => todo!(),
         }
     }
 
-    /// Recover a private key from a generated mnemonic phrase and a passphrase.
+    /// Recover a `PrivateKey` from a generated mnemonic phrase and a passphrase.
     // this is specifically for the two `try_into`s which depend on `split_array_ref`.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
@@ -439,7 +437,7 @@ impl PrivateKey {
 
 impl Debug for PrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 

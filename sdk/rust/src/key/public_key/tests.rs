@@ -39,7 +39,7 @@ fn ed25519_from_str() {
 }
 
 #[test]
-fn ecdsa_secp256k1_from_str() {
+fn ecdsa_from_str() {
     const PK: &str = "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588";
 
     let pk = PublicKey::from_str(PK).unwrap();
@@ -71,7 +71,7 @@ fn ed25519_from_str_variants() {
 }
 
 #[test]
-fn eecdsa_secp_256_k1_from_str_variants() {
+fn ecdsa_from_str_variants() {
     pk_from_str_variants("302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
 }
 
@@ -94,7 +94,7 @@ fn ed25519_verify() {
 }
 
 #[test]
-fn ecdsa_secp_256_k1_verify() {
+fn ecdsa_verify() {
     let pk = PublicKey::from_str(
   "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
   )
@@ -103,7 +103,7 @@ fn ecdsa_secp_256_k1_verify() {
     // notice that this doesn't match other impls
     // this is to avoid signature malleability.
     // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0032.mediawiki
-    let signature = Signature::ecdsa_secp256k1(
+    let signature = Signature::ecdsa(
         k256::ecdsa::Signature::from_str(concat!(
             "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c",
             "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
@@ -138,13 +138,13 @@ fn ed25519_verify_bad_signature() {
 }
 
 #[test]
-fn ecdsa_secp_256_k1_verify_bad_signature() {
+fn ecdsa_verify_bad_signature() {
     let pk = PublicKey::from_str(
   "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
   )
   .unwrap();
 
-    let signature = Signature::ecdsa_secp256k1(
+    let signature = Signature::ecdsa(
         k256::ecdsa::Signature::from_str(concat!(
             "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c",
             "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563850"
@@ -158,13 +158,13 @@ fn ecdsa_secp_256_k1_verify_bad_signature() {
 }
 
 #[test]
-fn ed25519_verify_error_ecdsa_secp_256_k1() {
+fn ed25519_verify_error_ecdsa() {
     let pk = PublicKey::from_str(
         "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
     )
     .unwrap();
 
-    let signature = Signature::ecdsa_secp256k1(
+    let signature = Signature::ecdsa(
         k256::ecdsa::Signature::from_str(concat!(
             "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c",
             "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
@@ -178,7 +178,7 @@ fn ed25519_verify_error_ecdsa_secp_256_k1() {
 }
 
 #[test]
-fn ecdsa_secp_256_k1_verify_error_ed25519() {
+fn ecdsa_verify_error_ed25519() {
     let pk = PublicKey::from_str(
   "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
   )
@@ -194,6 +194,6 @@ fn ecdsa_secp_256_k1_verify_error_ed25519() {
 
     let err = assert_matches!(pk.verify(b"hello world", &signature), Err(e) => e);
 
-    expect!["failed to verify a signature: Expected Ecdsa-Secp256k1 signature"]
+    expect!["failed to verify a signature: Expected Ecdsa signature"]
         .assert_eq(&err.to_string());
 }

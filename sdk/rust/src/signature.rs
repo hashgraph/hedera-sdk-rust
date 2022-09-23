@@ -36,6 +36,14 @@ pub struct SignaturePair {
 pub struct Signature(SignatureData);
 
 impl Signature {
+    pub(crate) fn ed25519(signature: ed25519_dalek::Signature) -> Self {
+        Self(SignatureData::Ed25519(signature))
+    }
+
+    pub(crate) fn ecdsa(signature: k256::ecdsa::Signature) -> Self {
+        Self(SignatureData::Ecdsa(signature))
+    }
+
     pub(crate) fn as_ed25519(&self) -> Option<&ed25519_dalek::Signature> {
         if let SignatureData::Ed25519(v) = &self.0 {
             Some(v)
@@ -44,8 +52,8 @@ impl Signature {
         }
     }
 
-    pub(crate) fn as_ecdsa_secp256k1(&self) -> Option<&k256::ecdsa::Signature> {
-        if let SignatureData::EcdsaSecp256k1(v) = &self.0 {
+    pub(crate) fn as_ecdsa(&self) -> Option<&k256::ecdsa::Signature> {
+        if let SignatureData::Ecdsa(v) = &self.0 {
             Some(v)
         } else {
             None
@@ -60,8 +68,8 @@ impl fmt::Debug for Signature {
             SignatureData::Ed25519(signature) => {
                 write!(f, "Signature::Ed25519({})", hex::encode(signature.to_bytes()))
             }
-            SignatureData::EcdsaSecp256k1(signature) => {
-                write!(f, "Signature::EcdsaSecp256k1({})", hex::encode(signature.to_vec()))
+            SignatureData::Ecdsa(signature) => {
+                write!(f, "Signature::Ecdsa({})", hex::encode(signature.to_vec()))
             }
         }
     }
@@ -70,16 +78,16 @@ impl fmt::Debug for Signature {
 #[derive(Debug)]
 enum SignatureData {
     Ed25519(ed25519_dalek::Signature),
-    EcdsaSecp256k1(k256::ecdsa::Signature),
+    Ecdsa(k256::ecdsa::Signature),
 }
 
 impl SignaturePair {
     pub(crate) fn ed25519(signature: ed25519_dalek::Signature, public: PublicKey) -> Self {
-        Self { public, signature: Signature(SignatureData::Ed25519(signature)) }
+        Self { public, signature: Signature::ed25519(signature) }
     }
 
-    pub(crate) fn ecdsa_secp256k1(signature: k256::ecdsa::Signature, public: PublicKey) -> Self {
-        Self { public, signature: Signature(SignatureData::EcdsaSecp256k1(signature)) }
+    pub(crate) fn ecdsa(signature: k256::ecdsa::Signature, public: PublicKey) -> Self {
+        Self { public, signature: Signature::ecdsa(signature) }
     }
 }
 
@@ -91,7 +99,7 @@ impl ToProtobuf for SignaturePair {
             SignatureData::Ed25519(signature) => {
                 services::signature_pair::Signature::Ed25519(signature.to_bytes().to_vec())
             }
-            SignatureData::EcdsaSecp256k1(signature) => {
+            SignatureData::Ecdsa(signature) => {
                 services::signature_pair::Signature::EcdsaSecp256k1(signature.to_vec())
             }
         };
