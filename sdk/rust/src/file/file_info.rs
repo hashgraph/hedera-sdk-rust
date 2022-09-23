@@ -27,7 +27,6 @@ use crate::{
     LedgerId,
 };
 
-// TODO: pub ledger_id: LedgerId,
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
