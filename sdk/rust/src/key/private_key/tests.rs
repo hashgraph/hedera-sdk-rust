@@ -21,7 +21,7 @@ fn ed25519_from_str() {
 }
 
 #[test]
-fn ecdsa_secp_256_k1_from_str() {
+fn ecdsa_from_str() {
     const S: &str = "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048";
     let pk = PrivateKey::from_str(S).unwrap();
 
@@ -45,7 +45,7 @@ fn ed25519_sign() {
 }
 
 #[test]
-fn ecdsa_secp_256_k1_sign() {
+fn ecdsa_sign() {
     let private_key = PrivateKey::from_str(
         "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"
     )
@@ -56,8 +56,8 @@ fn ecdsa_secp_256_k1_sign() {
     // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0032.mediawiki
     let signature = private_key.sign(b"hello world").signature;
     expect![[r#"
-            Signature::EcdsaSecp256k1(f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851)
-        "#]]
+        Signature::Ecdsa(f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851)
+    "#]]
     .assert_debug_eq(&signature);
 }
 
@@ -162,7 +162,7 @@ MC4CAQAwBQYDK2VwBCIEINtIS4KOZLLY8SzjwKDpOguMznrxu485yXcyOUSCU44Q
 }
 
 #[test]
-fn ecdsa_secp_256_k1_from_pem() {
+fn ecdsa_from_pem() {
     const PEM: &[u8] = br#"-----BEGIN PRIVATE KEY-----
 MDACAQAwBwYFK4EEAAoEIgQgh3bGuDGhthrBDawDBKKEPeRxb1SxkZu5GiaF0P4/
 MEg=
