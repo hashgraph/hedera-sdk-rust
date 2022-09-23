@@ -17,6 +17,10 @@ use derive_more::{
     SubAssign,
 };
 use rust_decimal::prelude::*;
+use serde::{
+    Deserialize,
+    Serialize,
+};
 use serde_with::{
     DeserializeFromStr,
     SerializeDisplay,
@@ -102,8 +106,8 @@ impl FromStr for HbarUnit {
 }
 
 #[derive(
-    SerializeDisplay,
-    DeserializeFromStr,
+    Serialize,
+    Deserialize,
     Default,
     Copy,
     Clone,

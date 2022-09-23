@@ -305,7 +305,7 @@ mod tests {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
   },
   "gas": 1000,
-  "initialBalance": "0.01 ℏ",
+  "initialBalance": 1000000,
   "autoRenewPeriod": 7776000,
   "constructorParameters": "BQoP",
   "contractMemo": "A contract memo",
