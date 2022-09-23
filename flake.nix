@@ -31,6 +31,7 @@
                   cargo-outdated
                   cargo-edit
                   cmake
+                  protobuf
                 ];
             };
         }
