@@ -101,9 +101,9 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
         let info = pb_getf!(response, account_info)?;
         let key = pb_getf!(info, key)?;
         let account_id = pb_getf!(info, account_id)?;
-        let alias_key = PublicKey::from_alias_bytes(&*info.alias)?;
+        let alias_key = PublicKey::from_alias_bytes(&info.alias)?;
         let ledger_id = LedgerId(info.ledger_id);
-        let staking = info.staking_info.map(|info| StakingInfo::from_protobuf(info)).transpose()?;
+        let staking = info.staking_info.map(StakingInfo::from_protobuf).transpose()?;
 
         Ok(Self {
             ledger_id,

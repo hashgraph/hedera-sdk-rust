@@ -72,6 +72,8 @@ where
 #[skip_serializing_none]
 #[derive(Debug, Default, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
+// fires because of `serde_as`
+#[allow(clippy::type_repetition_in_bounds)]
 pub(crate) struct TransactionBody<D>
 where
     D: TransactionExecute,

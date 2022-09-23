@@ -212,7 +212,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 realm_id: None,
                 new_realm_admin_key: None,
                 memo: self.account_memo.clone(),
-                max_automatic_token_associations: self.max_automatic_token_associations as i32,
+                max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
                 decline_reward: self.decline_staking_reward,
                 staked_id,
             },

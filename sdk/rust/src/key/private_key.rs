@@ -206,6 +206,8 @@ impl PrivateKey {
     }
 
     /// Return this private key, serialized as bytes.
+    // panic should be impossible (`unreachable`)
+    #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut inner = Vec::with_capacity(34);
@@ -287,7 +289,7 @@ impl PrivateKey {
                 // this is exactly 32 bytes
                 let chain_code: [u8; 32] = right.try_into().unwrap();
 
-                let data = ed25519_dalek::SecretKey::from_bytes(&left).unwrap();
+                let data = ed25519_dalek::SecretKey::from_bytes(left).unwrap();
                 let data = Keypair { public: (&data).into(), secret: data };
                 let data = PrivateKeyData::Ed25519(data);
 
@@ -307,10 +309,10 @@ impl PrivateKey {
                 let entropy = key.secret.as_bytes();
                 let mut seed = Vec::with_capacity(entropy.len() + 8);
 
-                seed.extend_from_slice(&*entropy);
+                seed.extend_from_slice(entropy);
 
                 let i1: i32 = match index {
-                    0xffffffffff => 0xff,
+                    0x00ff_ffff_ffff => 0xff,
                     0.. => 0,
                     _ => -1,
                 };
@@ -337,6 +339,9 @@ impl PrivateKey {
     }
 
     /// Recover a private key from a generated mnemonic phrase and a passphrase.
+    // this is specifically for the two `try_into`s which depend on `split_array_ref`.
+    // panic should be impossible (`unreachable`)
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_mnemonic(
         mnemonic: &crate::Mnemonic,
         passphrase: &str,
@@ -365,7 +370,7 @@ impl PrivateKey {
         let mut key = Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, right)));
 
         for index in [44, 3030, 0, 0] {
-            key = key.derive(index)?
+            key = key.derive(index)?;
         }
 
         Ok(key)
