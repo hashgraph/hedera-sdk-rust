@@ -732,6 +732,7 @@ dependencies = [
  "parking_lot",
  "paste",
  "pbkdf2",
+ "pem-rfc7468",
  "pkcs8",
  "pretty_env_logger",
  "prost",
@@ -1165,6 +1166,15 @@ dependencies = [
  "hmac",
  "password-hash",
  "sha2",
+]
+
+[[package]]
+name = "pem-rfc7468"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24d159833a9105500e0398934e205e0773f0b27529557134ecfc51c27646adac"
+dependencies = [
+ "base64ct",
 ]
 
 [[package]]

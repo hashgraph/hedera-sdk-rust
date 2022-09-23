@@ -33,7 +33,7 @@ fn main() {
     // Generate a ECDSA(secp256k1) key
     // This is recommended for better compatibility with Ethereum
 
-    let private = PrivateKey::generate_ecdsa_secp256k1();
+    let private = PrivateKey::generate_ecdsa();
     let public = private.public_key();
 
     println!("ecdsa(secp256k1) private = {private}");

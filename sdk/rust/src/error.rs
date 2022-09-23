@@ -92,6 +92,9 @@ pub enum Error {
     #[error("failed to sign request: {0}")]
     Signature(BoxStdError),
 
+    #[error("failed to verify a signature: {0}")]
+    SignatureVerify(BoxStdError),
+
     #[cfg(feature = "ffi")]
     #[error("failed to parse a request from JSON: {0}")]
     RequestParse(BoxStdError),
@@ -117,6 +120,10 @@ impl Error {
 
     pub(crate) fn signature<E: Into<BoxStdError>>(error: E) -> Self {
         Self::Signature(error.into())
+    }
+
+    pub(crate) fn signature_verify(error: impl Into<BoxStdError>) -> Self {
+        Self::SignatureVerify(error.into())
     }
 }
 

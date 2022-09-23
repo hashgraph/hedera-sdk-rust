@@ -30,6 +30,11 @@ use std::hash::{
 };
 use std::str::FromStr;
 
+use ed25519_dalek::ed25519::signature::DigestVerifier;
+use ed25519_dalek::{
+    Digest,
+    Verifier,
+};
 use hedera_proto::services;
 use pkcs8::der::{
     Decode,
@@ -43,9 +48,13 @@ use serde_with::{
 
 use crate::key::private_key::ED25519_OID;
 use crate::{
+    AccountId,
     Error,
     FromProtobuf,
 };
+
+#[cfg(test)]
+mod tests;
 
 /// A public key on the Hedera network.
 #[derive(Clone, Eq, Copy, Hash, PartialEq, SerializeDisplay, DeserializeFromStr)]
@@ -54,7 +63,7 @@ pub struct PublicKey(PublicKeyData);
 #[derive(Clone, Copy)]
 enum PublicKeyData {
     Ed25519(ed25519_dalek::PublicKey),
-    EcdsaSecp256k1(k256::ecdsa::VerifyingKey),
+    Ecdsa(k256::ecdsa::VerifyingKey),
 }
 
 impl Hash for PublicKeyData {
@@ -62,7 +71,7 @@ impl Hash for PublicKeyData {
         core::mem::discriminant(self).hash(state);
         match &self {
             PublicKeyData::Ed25519(key) => key.to_bytes().hash(state),
-            PublicKeyData::EcdsaSecp256k1(key) => key.to_bytes().hash(state),
+            PublicKeyData::Ecdsa(key) => key.to_bytes().hash(state),
         }
     }
 }
@@ -71,7 +80,7 @@ impl PartialEq for PublicKeyData {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Ed25519(l0), Self::Ed25519(r0)) => l0 == r0,
-            (Self::EcdsaSecp256k1(l0), Self::EcdsaSecp256k1(r0)) => l0 == r0,
+            (Self::Ecdsa(l0), Self::Ecdsa(r0)) => l0 == r0,
             _ => false,
         }
     }
@@ -84,8 +93,8 @@ impl PublicKey {
         Self(PublicKeyData::Ed25519(key))
     }
 
-    pub(super) fn ecdsa_secp256k1(key: k256::ecdsa::VerifyingKey) -> Self {
-        Self(PublicKeyData::EcdsaSecp256k1(key))
+    pub(super) fn ecdsa(key: k256::ecdsa::VerifyingKey) -> Self {
+        Self(PublicKeyData::Ecdsa(key))
     }
 
     #[must_use]
@@ -94,8 +103,8 @@ impl PublicKey {
     }
 
     #[must_use]
-    pub fn is_ecdsa_secp256k1(&self) -> bool {
-        matches!(&self.0, PublicKeyData::EcdsaSecp256k1(_))
+    pub fn is_ecdsa(&self) -> bool {
+        matches!(&self.0, PublicKeyData::Ecdsa(_))
     }
 
     pub(crate) fn from_alias_bytes(bytes: &[u8]) -> crate::Result<Option<Self>> {
@@ -114,10 +123,10 @@ impl PublicKey {
         }
 
         if bytes.len() == 33 {
-            return Self::from_bytes_ecdsa_secp256k1(bytes);
+            return Self::from_bytes_ecdsa(bytes);
         }
 
-        Self::from_bytes_pkcs8_der(bytes)
+        Self::from_bytes_der(bytes)
     }
 
     /// Parse a Ed25519 `PublicKey` from a sequence of bytes.
@@ -125,29 +134,29 @@ impl PublicKey {
         let data = if bytes.len() == 32 {
             ed25519_dalek::PublicKey::from_bytes(bytes).map_err(Error::key_parse)?
         } else {
-            return Self::from_bytes_pkcs8_der(bytes);
+            return Self::from_bytes_der(bytes);
         };
 
         Ok(Self::ed25519(data))
     }
 
     /// Parse a ECDSA(secp256k1) `PublicKey` from a sequence of bytes.
-    pub fn from_bytes_ecdsa_secp256k1(bytes: &[u8]) -> crate::Result<Self> {
+    pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 33 {
             k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes).map_err(Error::key_parse)?
         } else {
-            return Self::from_bytes_pkcs8_der(bytes);
+            return Self::from_bytes_der(bytes);
         };
 
-        Ok(Self::ecdsa_secp256k1(data))
+        Ok(Self::ecdsa(data))
     }
 
-    fn from_bytes_pkcs8_der(bytes: &[u8]) -> crate::Result<Self> {
+    pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::SubjectPublicKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
 
         if info.algorithm.oid == k256::elliptic_curve::ALGORITHM_OID {
-            return Self::from_bytes_ecdsa_secp256k1(info.subject_public_key);
+            return Self::from_bytes_ecdsa(info.subject_public_key);
         }
 
         if info.algorithm.oid == ED25519_OID {
@@ -157,11 +166,38 @@ impl PublicKey {
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
-    /// Return this private key, serialized as bytes.
+    pub fn from_str_der(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_der(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ed25519(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    pub fn from_str_ecdsa(s: &str) -> crate::Result<Self> {
+        Self::from_bytes_ecdsa(
+            &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
+        )
+    }
+
+    /// Return this `PublicKey`, serialized as bytes.
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        match &self.0 {
+            PublicKeyData::Ed25519(_) => self.to_bytes_raw(),
+            PublicKeyData::Ecdsa(_) => self.to_bytes_der(),
+        }
+    }
+
+    /// Return this `PublicKey`, serialized as bytes.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn to_bytes(self) -> Vec<u8> {
+    pub fn to_bytes_der(&self) -> Vec<u8> {
         let mut buf = Vec::with_capacity(64);
 
         match &self.0 {
@@ -175,7 +211,7 @@ impl PublicKey {
                 info.encode_to_vec(&mut buf).unwrap();
             }
 
-            PublicKeyData::EcdsaSecp256k1(key) => {
+            PublicKeyData::Ecdsa(key) => {
                 let key = key.to_bytes();
                 let info = pkcs8::SubjectPublicKeyInfo {
                     algorithm: self.algorithm(),
@@ -194,7 +230,7 @@ impl PublicKey {
             parameters: None,
             oid: match self.0 {
                 PublicKeyData::Ed25519(_) => ED25519_OID,
-                PublicKeyData::EcdsaSecp256k1(_) => k256::elliptic_curve::ALGORITHM_OID,
+                PublicKeyData::Ecdsa(_) => k256::elliptic_curve::ALGORITHM_OID,
             },
         }
     }
@@ -202,7 +238,48 @@ impl PublicKey {
     pub(crate) fn to_bytes_raw(self) -> Vec<u8> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => key.to_bytes().as_slice().to_vec(),
-            PublicKeyData::EcdsaSecp256k1(key) => key.to_bytes().as_slice().to_vec(),
+            PublicKeyData::Ecdsa(key) => key.to_bytes().as_slice().to_vec(),
+        }
+    }
+
+    #[must_use]
+    #[inline(always)]
+    pub fn to_string_der(&self) -> String {
+        self.to_string()
+    }
+
+    #[must_use]
+    pub fn to_string_raw(&self) -> String {
+        hex::encode(self.to_bytes_raw())
+    }
+
+    #[must_use]
+    pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
+        AccountId { shard, realm, alias: Some(*self), num: 0 }
+    }
+
+    pub fn verify(&self, msg: &[u8], signature: &crate::Signature) -> crate::Result<()> {
+        match &self.0 {
+            PublicKeyData::Ed25519(key) => {
+                // todo: figure out what the signature actually was if it wasn't ed25519
+                // technically it'll always be ecdsa-secp256k1 but that is annoyingly not future proof.
+                let signature = signature
+                    .as_ed25519()
+                    .ok_or_else(|| "Expected Ed25519 signature".to_owned())
+                    .map_err(crate::Error::signature_verify)?;
+
+                key.verify(msg, signature).map_err(crate::Error::signature_verify)
+            }
+            PublicKeyData::Ecdsa(key) => {
+                // todo: see above comment on ed25519 signatures
+                let signature = signature
+                    .as_ecdsa()
+                    .ok_or_else(|| "Expected Ecdsa signature".to_owned())
+                    .map_err(crate::Error::signature_verify)?;
+
+                key.verify_digest(sha3::Keccak256::new_with_prefix(msg), signature)
+                    .map_err(crate::Error::signature_verify)
+            }
         }
     }
 }
@@ -215,7 +292,7 @@ impl Debug for PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(self.to_bytes()))
+        f.pad(&hex::encode(self.to_bytes_der()))
     }
 }
 
@@ -223,7 +300,7 @@ impl FromStr for PublicKey {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Self::from_bytes(&hex::decode(s).map_err(Error::key_parse)?)
+        Self::from_bytes(&hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?)
     }
 }
 
@@ -252,13 +329,11 @@ impl FromProtobuf<services::Key> for PublicKey {
                 Err(Error::from_protobuf("unexpected threshold key as single key"))
             }
             Some(KeyList(_)) => Err(Error::from_protobuf("unexpected key list as single key")),
-            Some(EcdsaSecp256k1(bytes)) => PublicKey::from_bytes_ecdsa_secp256k1(&bytes),
+            Some(EcdsaSecp256k1(bytes)) => PublicKey::from_bytes_ecdsa(&bytes),
             None => Err(Error::from_protobuf("unexpected empty key in single key")),
         }
     }
 }
 
-// TODO: from_protobuf
 // TODO: to_protobuf
-// TODO: verify_message
 // TODO: verify_transaction
