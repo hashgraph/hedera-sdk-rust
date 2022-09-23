@@ -29,7 +29,7 @@
  - [ ] verifySignature()
  - [ ] verifyTransactionSignature()
 [X] AccountInfoQuery
- - [ ] ledger_id
+ - [X] ledger_id
 [X] AccountRecordsQuery
 [X] AccountStakersQuery
 [X] AccountUpdateTransaction
@@ -50,7 +50,7 @@
  - [ ] checksum support
  - [ ] to/from_bytes()
 [X] ContractInfoQuery
- - [ ] ledger_id
+ - [X] ledger_id
  - [ ] staking_info
 [X] ContractUpdateTransaction
 [X] EthereumTransaction
@@ -65,7 +65,7 @@
  - [ ] checksum support
  - [ ] to/from_bytes()
 [X] FileInfoQuery
- - [ ] ledger_id
+ - [X] ledger_id
  - [ ] keys
 [X] FileUpdateTransaction
  - [ ] expiration_time is named inconsistently
@@ -109,9 +109,9 @@
  - [ ] to_string_raw()
  - [ ] to_account_id()
 [X] LedgerId
- - [ ] from_string()
- - [ ] from_bytes()
- - [ ] to_string() (implements Display, but does not sugar ledger IDs with known names)
+ - [X] from_string()
+ - [X] from_bytes()
+ - [X] to_string() (implements Display, but does not sugar ledger IDs with known names)
 [X] Mnemonic
 [X] NetworkVersionInfoQuery
 [X] NftId
@@ -125,7 +125,7 @@
  - [ ] checksum support
  - [ ] to/from_bytes()
 [X] ScheduleInfoQuery
- - [ ] ledger_id
+ - [X] ledger_id
  - [ ] scheduled_transaction
 [X] ScheduleSignTransaction
 [X] SystemDeleteTransaction
@@ -143,7 +143,7 @@
  - [ ] checksum support
  - [ ] to/from_bytes()
 [X] TokenInfoQuery
- - [ ] ledger_id
+ - [X] ledger_id
 [X] TokenPauseTransaction
 [X] TokenRevokeKycTransaction
 [X] TokenUnfreezeTransaction
@@ -157,7 +157,7 @@
  - [ ] checksum support
  - [ ] to/from_bytes()
 [X] TopicInfoQuery
- - [ ] ledger_id
+ - [X] ledger_id
 [X] TopicMessageQuery
 [X] TopicMessageSubmitTransaction
  - [ ] Automatic chunking for larger contents 
