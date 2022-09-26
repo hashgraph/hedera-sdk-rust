@@ -18,5 +18,7 @@
             "name": "C"
         }
     ],
-    "settings": {}
+    "settings": {
+        "git.alwaysSignOff": true
+    }
 }
