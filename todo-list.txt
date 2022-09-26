@@ -24,7 +24,8 @@
  - [ ] When serialized, aliasKey should NOT be the raw bytes of the key, 
        instead should be bytes of the serialized key _protobuf_ (yes, it's confusing).
  - [ ] aliasEvmAddress
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [ ] AccountInfoFlow
  - [ ] verifySignature()
  - [ ] verifyTransactionSignature()
@@ -48,7 +49,8 @@
 [ ] ContractFunctionSelector
 [X] ContractId
  - [ ] checksum support
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [X] ContractInfoQuery
  - [X] ledger_id
  - [ ] staking_info
@@ -63,7 +65,8 @@
 [X] FileDeleteTransaction
 [X] FileId
  - [ ] checksum support
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [X] FileInfoQuery
  - [X] ledger_id
  - [ ] keys
@@ -116,14 +119,16 @@
 [X] NetworkVersionInfoQuery
 [X] NftId
  - [ ] checksum support
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [ ] Pem
 [ ] PrngTransaction
 [X] ScheduleCreateTransaction
 [X] ScheduleDeleteTransaction
 [X] ScheduleId
  - [ ] checksum support
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [X] ScheduleInfoQuery
  - [X] ledger_id
  - [ ] scheduled_transaction
@@ -141,7 +146,8 @@
 [X] TokenGrantKycTransaction
 [X] TokenId
  - [ ] checksum support
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [X] TokenInfoQuery
  - [X] ledger_id
 [X] TokenPauseTransaction
@@ -155,7 +161,8 @@
 [X] TopicDeleteTransaction
 [X] TopicId
  - [ ] checksum support
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [X] TopicInfoQuery
  - [X] ledger_id
 [X] TopicMessageQuery
@@ -164,7 +171,8 @@
 [X] TopicUpdateTransaction
  - [ ] expiration_time is named inconsistently
 [X] TransactionId
- - [ ] to/from_bytes()
+ - [X] to_bytes()
+ - [X] from_bytes()
 [X] TransactionReceiptQuery
  - [ ] exchange_rate
 [X] TransactionRecordQuery
