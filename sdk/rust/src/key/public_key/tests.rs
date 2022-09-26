@@ -194,6 +194,5 @@ fn ecdsa_verify_error_ed25519() {
 
     let err = assert_matches!(pk.verify(b"hello world", &signature), Err(e) => e);
 
-    expect!["failed to verify a signature: Expected Ecdsa signature"]
-        .assert_eq(&err.to_string());
+    expect!["failed to verify a signature: Expected Ecdsa signature"].assert_eq(&err.to_string());
 }

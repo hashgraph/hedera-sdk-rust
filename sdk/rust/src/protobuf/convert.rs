@@ -18,16 +18,38 @@
  * ‍
  */
 
+use crate::Error;
+
 pub trait ToProtobuf: Send + Sync {
     type Protobuf;
 
     fn to_protobuf(&self) -> Self::Protobuf;
+
+    /// Convert [`Self`] to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    fn to_bytes(&self) -> Vec<u8>
+    where
+        Self::Protobuf: prost::Message,
+    {
+        use prost::Message as _;
+        self.to_protobuf().encode_to_vec()
+    }
 }
 
 pub trait FromProtobuf<Protobuf> {
     fn from_protobuf(pb: Protobuf) -> crate::Result<Self>
     where
         Self: Sized;
+
+    // fixme(sr): I'm not happy with this doc comment.
+    /// Create a new `Self` from the given `bytes`.
+    fn from_bytes(bytes: &[u8]) -> crate::Result<Self>
+    where
+        Self: Sized,
+        Protobuf: prost::Message + Default,
+    {
+        Protobuf::decode(bytes).map_err(Error::from_protobuf).and_then(Self::from_protobuf)
+    }
 }
 
 impl<T, P> FromProtobuf<Vec<P>> for Vec<T>
