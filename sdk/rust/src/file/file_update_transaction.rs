@@ -74,7 +74,7 @@ pub struct FileUpdateTransactionData {
 
     /// The time at which this file should expire.
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
-    expires_at: Option<OffsetDateTime>,
+    expiration_time: Option<OffsetDateTime>,
 }
 
 impl FileUpdateTransaction {
@@ -108,8 +108,8 @@ impl FileUpdateTransaction {
     }
 
     /// Sets the time at which this file should expire.
-    pub fn expires_at(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(at);
+    pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
+        self.body.data.expiration_time = Some(at);
         self
     }
 }
@@ -132,7 +132,7 @@ impl ToTransactionDataProtobuf for FileUpdateTransactionData {
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         let file_id = self.file_id.as_ref().map(FileId::to_protobuf);
-        let expiration_time = self.expires_at.as_ref().map(OffsetDateTime::to_protobuf);
+        let expiration_time = self.expiration_time.as_ref().map(OffsetDateTime::to_protobuf);
 
         let keys =
             self.keys.as_deref().unwrap_or_default().iter().map(Key::to_protobuf).collect_vec();
@@ -184,7 +184,7 @@ mod tests {
     }
   ],
   "contents": "SGVsbG8sIHdvcmxkIQ==",
-  "expiresAt": 1656352251277559886
+  "expirationTime": 1656352251277559886
 }"#;
 
     const SIGN_KEY: &str =
@@ -199,7 +199,7 @@ mod tests {
             .file_memo("File memo")
             .keys([PublicKey::from_str(SIGN_KEY)?])
             .contents("Hello, world!".into())
-            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -217,7 +217,7 @@ mod tests {
         assert_eq!(data.file_id.unwrap(), FileId::from(1001));
         assert_eq!(data.file_memo.unwrap(), "File memo");
         assert_eq!(
-            data.expires_at.unwrap(),
+            data.expiration_time.unwrap(),
             OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
         );
 

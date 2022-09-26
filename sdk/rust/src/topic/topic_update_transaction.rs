@@ -63,7 +63,7 @@ pub struct TopicUpdateTransactionData {
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
-    expires_at: Option<OffsetDateTime>,
+    expiration_time: Option<OffsetDateTime>,
 
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
     topic_memo: Option<String>,
@@ -92,8 +92,8 @@ impl TopicUpdateTransaction {
     }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
-    pub fn expires_at(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(at);
+    pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
+        self.body.data.expiration_time = Some(at);
         self
     }
 
@@ -150,7 +150,7 @@ impl ToTransactionDataProtobuf for TopicUpdateTransactionData {
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         let topic_id = self.topic_id.as_ref().map(TopicId::to_protobuf);
-        let expiration_time = self.expires_at.map(Into::into);
+        let expiration_time = self.expiration_time.map(Into::into);
         let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
         let submit_key = self.submit_key.as_ref().map(Key::to_protobuf);
         let auto_renew_period = self.auto_renew_period.map(Into::into);
@@ -202,7 +202,7 @@ mod tests {
     const TOPIC_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "topicUpdate",
   "topicId": "0.0.1001",
-  "expiresAt": 1656352251277559886,
+  "expirationTime": 1656352251277559886,
   "topicMemo": "A topic memo",
   "adminKey": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
@@ -225,7 +225,7 @@ mod tests {
 
         transaction
             .topic_id(TopicId::from(1001))
-            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
             .topic_memo("A topic memo")
             .admin_key(PublicKey::from_str(ADMIN_KEY)?)
             .submit_key(PublicKey::from_str(SUBMIT_KEY)?)
@@ -247,7 +247,7 @@ mod tests {
 
         assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
         assert_eq!(
-            data.expires_at.unwrap(),
+            data.expiration_time.unwrap(),
             OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
         );
         assert_eq!(data.topic_memo.unwrap(), "A topic memo");
