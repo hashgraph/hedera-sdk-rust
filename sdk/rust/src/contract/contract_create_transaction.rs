@@ -275,7 +275,6 @@ mod tests {
     use std::str::FromStr;
 
     use assert_matches::assert_matches;
-    use rust_decimal::Decimal;
     use time::Duration;
 
     use crate::transaction::{

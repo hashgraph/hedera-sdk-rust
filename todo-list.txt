@@ -59,7 +59,7 @@
  - [ ] Automatic chunking for larger contents 
 [X] FileContentsQuery
 [X] FileCreateTransaction
- - [ ] expiration_time is named inconsistently
+ - [X] expiration_time is named inconsistently
 [X] FileDeleteTransaction
 [X] FileId
  - [ ] checksum support
@@ -68,7 +68,7 @@
  - [X] ledger_id
  - [ ] keys
 [X] FileUpdateTransaction
- - [ ] expiration_time is named inconsistently
+ - [X] expiration_time is named inconsistently
 [X] FreezeTransaction
 [X] Hbar
 [X] Key
@@ -133,7 +133,7 @@
 [X] TokenAssociateTransaction
 [X] TokenBurnTransaction
 [X] TokenCreateTransaction
- - [ ] expiration_time is named inconsistently
+ - [X] expiration_time is named inconsistently
 [X] TokenDeleteTransaction
 [X] TokenDissociateTransaction
 [X] TokenFeeScheduleUpdateTransaction
@@ -149,7 +149,7 @@
 [X] TokenUnfreezeTransaction
 [X] TokenUnpauseTransaction
 [X] TokenUpdateTransaction
- - [ ] expiration_time is named inconsistently
+ - [X] expiration_time is named inconsistently
 [X] TokenWipeTransaction
 [X] TopicCreateTransaction
 [X] TopicDeleteTransaction
@@ -162,7 +162,7 @@
 [X] TopicMessageSubmitTransaction
  - [ ] Automatic chunking for larger contents 
 [X] TopicUpdateTransaction
- - [ ] expiration_time is named inconsistently
+ - [X] expiration_time is named inconsistently
 [X] TransactionId
  - [ ] to/from_bytes()
 [X] TransactionReceiptQuery

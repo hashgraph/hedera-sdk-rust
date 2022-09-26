@@ -115,7 +115,7 @@ pub struct TokenCreateTransactionData {
 
     /// The time at which the token should expire.
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
-    expires_at: Option<OffsetDateTime>,
+    expiration_time: Option<OffsetDateTime>,
 
     /// An account which will be automatically charged to renew the token's expiration, at
     /// `auto_renew_period` interval.
@@ -161,7 +161,7 @@ impl Default for TokenCreateTransactionData {
             wipe_key: None,
             supply_key: None,
             freeze_default: false,
-            expires_at: None,
+            expiration_time: None,
             auto_renew_account_id: None,
             auto_renew_period: Some(Duration::days(90)),
             token_memo: String::new(),
@@ -248,8 +248,8 @@ impl TokenCreateTransaction {
     }
 
     /// Sets the time at which the token should expire.
-    pub fn expires_at(&mut self, expires_at: OffsetDateTime) -> &mut Self {
-        self.body.data.expires_at = Some(expires_at);
+    pub fn expiration_time(&mut self, expiration_time: OffsetDateTime) -> &mut Self {
+        self.body.data.expiration_time = Some(expiration_time);
         self.body.data.auto_renew_period = None;
 
         self
@@ -340,7 +340,7 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
             wipe_key: self.wipe_key.as_ref().map(Key::to_protobuf),
             supply_key: self.supply_key.as_ref().map(Key::to_protobuf),
             freeze_default: self.freeze_default,
-            expiry: self.expires_at.map(Into::into),
+            expiry: self.expiration_time.map(Into::into),
             auto_renew_account: self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf),
             auto_renew_period: self.auto_renew_period.map(Into::into),
             memo: self.token_memo.clone(),
@@ -418,7 +418,7 @@ mod tests {
     "single": "302a300506032b6570032100c80c04aaca1783aafbaf6eba462bac89236ec82ac4db31953329ffbfeacdb88b"
   },
   "freezeDefault": false,
-  "expiresAt": 1656352251277559886,
+  "expirationTime": 1656352251277559886,
   "autoRenewAccountId": "0.0.1002",
   "autoRenewPeriod": 7776000,
   "tokenMemo": "A memo",
@@ -475,7 +475,7 @@ mod tests {
             .wipe_key(PublicKey::from_str(WIPE_KEY)?)
             .supply_key(PublicKey::from_str(SUPPLY_KEY)?)
             .freeze_default(false)
-            .expires_at(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
             .auto_renew_account_id(AccountId::from_str("0.0.1002")?)
             .auto_renew_period(Duration::days(90))
             .token_memo("A memo")
@@ -508,7 +508,7 @@ mod tests {
         assert_eq!(data.initial_supply, 1_000_000_000);
         assert_eq!(data.freeze_default, false);
         assert_eq!(
-            data.expires_at.unwrap(),
+            data.expiration_time.unwrap(),
             OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
         );
         assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
