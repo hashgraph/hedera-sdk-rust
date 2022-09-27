@@ -28,8 +28,12 @@ use serde_with::{
 
 use crate::Error;
 
+/// Type alias for `i64` representing `tinybar`
 pub type Tinybar = i64;
 
+/// Common units of hbar; for the most part they follow SI prefix conventions.
+///
+/// See the [Hedera Documentation](https://docs.hedera.com/guides/docs/sdks/hbars#hbar-units).
 #[repr(i64)]
 #[derive(Debug, SerializeDisplay, Copy, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
 pub enum HbarUnit {
@@ -61,11 +65,14 @@ pub enum HbarUnit {
 }
 
 impl HbarUnit {
+    /// Returns the the value of `self` as `Tinybar`.
     #[must_use]
     pub const fn tinybars(self) -> Tinybar {
         self as Tinybar
     }
 
+    // fixme: don't like this doc.
+    /// Returns a `str` representing the appropriate symbol for `self`.
     #[must_use]
     pub const fn symbol(self) -> &'static str {
         match self {
@@ -166,7 +173,7 @@ impl Hbar {
     /// # Panics
     ///
     /// * if `amount * unit.tinybars()` would overflow a i64.
-    /// * if `amount * unit.tinybars()` is less than [`Self::MIN`](crate::Hbar::MIN)
+    /// * if `amount * unit.tinybars()` is less than [`Self::MIN`](Hbar::MIN)
     ///
     /// # Examples
     ///
@@ -175,19 +182,6 @@ impl Hbar {
     /// use hedera::HbarUnit;
     /// let value = Hbar::from_unit(20, HbarUnit::Millibar);
     /// assert_eq!(value.to_string(), "0.02 ℏ");
-    /// ```
-    ///
-    /// ## Overflow
-    /// ```should_panic
-    /// use hedera::Hbar;
-    /// use hedera::HbarUnit;
-    /// let value = Hbar::from_unit(200, HbarUnit::Gigabar);
-    /// ```
-    /// ## Underflow
-    /// ```should_panic
-    /// use hedera::Hbar;
-    /// use hedera::HbarUnit;
-    /// let value = Hbar::from_unit(-200, HbarUnit::Gigabar);
     /// ```
     #[must_use]
     #[track_caller]
@@ -231,7 +225,7 @@ impl Hbar {
         self.to(HbarUnit::Hbar)
     }
 
-    /// Returns [`-self`](std::ops::neg).
+    /// Returns [`-self`](std::ops::Neg::neg).
     #[must_use]
     pub fn negated(self) -> Self {
         -self
