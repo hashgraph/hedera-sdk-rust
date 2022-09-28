@@ -51,7 +51,6 @@ pub struct TransactionResponse {
     /// The client-generated SHA-384 hash of the transaction that was submitted.
     ///
     /// This can be used to lookup the transaction in an explorer.
-    ///
     pub transaction_hash: TransactionHash,
 }
 

@@ -18,6 +18,9 @@
  * ‍
  */
 
+// todo: more indepth documentation
+//! Hedera Rust SDK.
+
 #![warn(deprecated_in_future)]
 #![warn(future_incompatible)]
 #![warn(rust_2018_compatibility)]
@@ -27,6 +30,7 @@
 #![warn(clippy::multiple_crate_versions)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::future_not_send)]
+#![warn(missing_docs)]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::missing_errors_doc)]
 #![allow(clippy::enum_glob_use)]
@@ -87,6 +91,7 @@ pub use account::{
     AccountId,
     AccountInfo,
     AccountInfoQuery,
+    AccountRecordsQuery,
     AccountStakersQuery,
     AccountUpdateTransaction,
     AllProxyStakers,
@@ -95,6 +100,7 @@ pub use account::{
 pub use client::Client;
 pub use contract::{
     ContractBytecodeQuery,
+    ContractCallQuery,
     ContractCreateTransaction,
     ContractExecuteTransaction,
     ContractFunctionResult,
@@ -106,6 +112,8 @@ pub use contract::{
 pub use entity_id::EntityId;
 pub use error::{
     Error,
+    MnemonicEntropyError,
+    MnemonicParseError,
     Result,
 };
 pub use ethereum_transaction::EthereumTransaction;
@@ -192,6 +200,7 @@ pub use token::{
     TokenInfoQuery,
     TokenMintTransaction,
     TokenNftInfo,
+    TokenNftInfoQuery,
     TokenPauseTransaction,
     TokenRevokeKycTransaction,
     TokenSupplyType,
@@ -206,6 +215,7 @@ pub use topic::{
     TopicDeleteTransaction,
     TopicId,
     TopicInfo,
+    TopicInfoQuery,
     TopicMessage,
     TopicMessageQuery,
     TopicMessageSubmitTransaction,

@@ -46,6 +46,7 @@ use crate::{
     TopicMessage,
 };
 
+/// Represents any possible query to the mirror network.
 pub type AnyMirrorQuery = MirrorQuery<AnyMirrorQueryData>;
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
@@ -55,6 +56,7 @@ pub enum AnyMirrorQueryData {
     TopicMessage(TopicMessageQueryData),
 }
 
+/// Represents the response of any possible query to the mirror network.
 pub type AnyMirrorQueryResponse = Vec<AnyMirrorQueryMessage>;
 
 #[derive(Debug, serde::Serialize, Clone)]

@@ -42,8 +42,13 @@ use crate::{
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct ScheduleId {
+    /// A non-negative number identifying the shard containing this schedule.
     pub shard: u64,
+
+    /// A non-negative number identifying the realm within the shard containing this schedule.
     pub realm: u64,
+
+    /// A non-negative number identifying the entity within the realm containing this schedule.
     pub num: u64,
 }
 

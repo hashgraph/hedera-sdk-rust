@@ -62,10 +62,13 @@ pub struct TransactionId {
     ///
     /// When a transaction is submitted there is additionally a validDuration (defaults to 120s)
     /// and together they define a time window that a transaction may be processed in.
-    ///
     pub valid_start: OffsetDateTime,
 
+    /// Nonce for this transaction.
     pub nonce: Option<i32>,
+
+    // fixme(sr): citation needed, unsure this is accurate.
+    /// `true` if the transaction is `scheduled`.
     pub scheduled: bool,
 }
 

@@ -42,8 +42,13 @@ use crate::{
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct TopicId {
+    /// A non-negative number identifying the shard containing this topic.
     pub shard: u64,
+
+    /// A non-negative number identifying the realm within the shard containing this topic.
     pub realm: u64,
+
+    /// A non-negative number identifying the entity within the realm containing this topic.
     pub num: u64,
 }
 

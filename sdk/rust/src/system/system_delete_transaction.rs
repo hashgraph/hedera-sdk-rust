@@ -42,9 +42,10 @@ use crate::{
     Transaction,
 };
 
+/// Delete a file or smart contract - can only be done with by a Hedera admin.
 pub type SystemDeleteTransaction = Transaction<SystemDeleteTransactionData>;
 
-/// Delete a file or smart contract - can only be done with a Hedera admin.
+/// Delete a file or smart contract - can only be done with by a Hedera admin.
 ///
 /// When it is deleted, it immediately disappears from the system as seen by the user,
 /// but is still stored internally until the expiration time, at which time it

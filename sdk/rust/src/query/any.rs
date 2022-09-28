@@ -101,24 +101,56 @@ pub enum AnyQueryData {
 }
 
 // todo: strategically box fields of variants, rather than the entire structs.
+/// Common response type for *all* queries.
 #[derive(Debug, serde::Serialize, Clone)]
 #[serde(rename_all = "camelCase", tag = "$type")]
 pub enum AnyQueryResponse {
+    /// Response from [`AccountBalanceQuery`](crate::AccountBalanceQuery).
     AccountBalance(AccountBalance),
+
+    /// Response from [`AccountInfoQuery`](crate::AccountInfoQuery).
     AccountInfo(AccountInfo),
+
+    /// Response from [`AccountStakersQuery`](crate::AccountStakersQuery).
     AccountStakers(AllProxyStakers),
+
+    /// Response from [`AccountRecordsQuery`](crate::AccountRecordsQuery).
     AccountRecords(Vec<TransactionRecord>),
+
+    /// Response from [`TransactionReceiptQuery`](crate::TransactionReceiptQuery).
     TransactionReceipt(TransactionReceipt),
+
+    /// Response from [`TransactionRecordQuery`](crate::TransactionRecordQuery).
     TransactionRecord(Box<TransactionRecord>),
+
+    /// Response from [`FileContentsQuery`](crate::FileContentsQuery).
     FileContents(FileContentsResponse),
+
+    /// Response from [`FileInfoQuery`](crate::FileInfoQuery).
     FileInfo(FileInfo),
+
+    /// Response from [`ContractBytecodeQuery`](crate::ContractBytecodeQuery).
     ContractBytecode(Vec<u8>),
+
+    /// Response from [`ContractCallQuery`](crate::ContractCallQuery).
     ContractCall(ContractFunctionResult),
+
+    /// Response from [`TokenInfoQuery`](crate::TokenInfoQuery).
     TokenInfo(Box<TokenInfo>),
+
+    /// Response from [`TopicInfoQuery`](crate::TopicInfoQuery).
     TopicInfo(TopicInfo),
+
+    /// Response from [`ContractInfoQuery`](crate::ContractInfoQuery).
     ContractInfo(ContractInfo),
+
+    /// Response from [`TokenNftInfoQuery`](crate::TokenNftInfoQuery).
     TokenNftInfo(TokenNftInfo),
+
+    /// Response from [`ScheduleInfoQuery`](crate::ScheduleInfoQuery).
     ScheduleInfo(ScheduleInfo),
+
+    /// Response from [`NetworkVersionInfoQuery`](crate::NetworkVersionInfoQuery).
     NetworkVersionInfo(NetworkVersionInfo),
 }
 
