@@ -31,6 +31,9 @@ use sha2::{
     Sha384,
 };
 
+/// The client-generated SHA-384 hash of a transaction that was submitted.
+///
+/// This can be used to lookup the transaction in an explorer.
 #[derive(Copy, Clone, Hash, SerializeDisplay)]
 pub struct TransactionHash(pub [u8; 48]);
 

@@ -22,7 +22,7 @@ use hedera_proto::services;
 
 use crate::FromProtobuf;
 
-/// Hedera follows semantic versioning for both the HAPI protobufs and
+/// Hedera follows [semantic versioning](https://semver.org) for both the HAPI protobufs and
 /// the Services software.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SemanticVersion {
@@ -36,6 +36,7 @@ pub struct SemanticVersion {
     pub patch: u32,
 }
 
+/// Versions of Hedera Services, and the protobuf schema.
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NetworkVersionInfo {

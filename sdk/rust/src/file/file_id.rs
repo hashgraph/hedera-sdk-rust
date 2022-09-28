@@ -43,8 +43,13 @@ use crate::{
 /// The unique identifier for a file on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 pub struct FileId {
+    /// The shard number.
     pub shard: u64,
+
+    /// The realm number.
     pub realm: u64,
+
+    /// The file number.
     pub num: u64,
 }
 

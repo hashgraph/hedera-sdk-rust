@@ -32,8 +32,14 @@ use crate::{
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Key {
+    // todo(sr): not happy with any of these (fix before merge)
+    /// A single public key.
     Single(PublicKey),
+
+    /// A contract ID.
     ContractId(ContractId),
+
+    /// A delegatable contract ID.
     DelegatableContractId(ContractId),
     // TODO: KeyList
     // TODO: ThresholdKey

@@ -97,11 +97,13 @@ impl PublicKey {
         Self(PublicKeyData::Ecdsa(key))
     }
 
+    /// Returns `true` if the public key is `Ed25519`.
     #[must_use]
     pub fn is_ed25519(&self) -> bool {
         matches!(&self.0, PublicKeyData::Ed25519(_))
     }
 
+    /// Returns `true` if the public key data is `Ecdsa`.
     #[must_use]
     pub fn is_ecdsa(&self) -> bool {
         matches!(&self.0, PublicKeyData::Ecdsa(_))
@@ -151,6 +153,7 @@ impl PublicKey {
         Ok(Self::ecdsa(data))
     }
 
+    /// Parse a `PublicKey` from a sequence of der encoded bytes.
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::SubjectPublicKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
@@ -166,18 +169,28 @@ impl PublicKey {
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
+    /// Decodes `self` from a der encoded `str`
+    ///
+    /// Optionally strips a `0x` prefix.
+    /// See [`from_bytes_der`](Self::from_bytes_der)
     pub fn from_str_der(s: &str) -> crate::Result<Self> {
         Self::from_bytes_der(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a Ed25519 `PublicKey` from a string containing the raw key material.
+    ///
+    /// Optionally strips a `0x` prefix.
     pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ed25519(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a ECDSA(secp256k1) `PublicKey` from a string containing the raw key material.
+    ///
+    /// Optionally strips a `0x` prefix.
     pub fn from_str_ecdsa(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ecdsa(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
@@ -185,6 +198,9 @@ impl PublicKey {
     }
 
     /// Return this `PublicKey`, serialized as bytes.
+    ///
+    /// If this is an ed25519 public key, this is equivalent to [`to_bytes_raw`](Self::to_bytes_raw)
+    /// If this is an ecdsa public key, this is equivalent to [`to_bytes_der`](Self::to_bytes_der)
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         match &self.0 {
@@ -193,7 +209,7 @@ impl PublicKey {
         }
     }
 
-    /// Return this `PublicKey`, serialized as bytes.
+    /// Return this `PublicKey`, serialized as der-encoded bytes.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
@@ -242,22 +258,37 @@ impl PublicKey {
         }
     }
 
+    /// DER encodes self, then hex encodes the result.
     #[must_use]
-    #[inline(always)]
     pub fn to_string_der(&self) -> String {
-        self.to_string()
+        hex::encode(self.to_bytes_der())
     }
 
+    /// Returns the raw bytes of `self` after hex encoding.
     #[must_use]
     pub fn to_string_raw(&self) -> String {
         hex::encode(self.to_bytes_raw())
     }
 
+    /// Creates an [`AccountId`] with the given `shard`, `realm`, and `self` as an [`alias`](AccountId::alias).
+    ///
+    /// # Examples
+    ///
+    /// FIXME: this is 100% broken (but it's not this function's fault).
+    /// ```,no_run
+    /// use hedera::PublicKey;
+    ///
+    /// let key: PublicKey = "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7".parse().unwrap();
+    ///
+    /// let account_id = key.to_account_id(0, 0);
+    /// assert_eq!(account_id.to_string(), "0.0.<todo>");
+    /// ```
     #[must_use]
     pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
         AccountId { shard, realm, alias: Some(*self), num: 0 }
     }
 
+    /// Verify a `signature` on a `msg` with this public key.
     pub fn verify(&self, msg: &[u8], signature: &crate::Signature) -> crate::Result<()> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => {
@@ -292,7 +323,7 @@ impl Debug for PublicKey {
 
 impl Display for PublicKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(self.to_bytes_der()))
+        f.pad(&self.to_string_der())
     }
 }
 

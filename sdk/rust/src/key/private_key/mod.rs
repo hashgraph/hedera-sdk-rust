@@ -185,6 +185,7 @@ impl PrivateKey {
         Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::Ecdsa(data)))))
     }
 
+    /// Parse a `PrivateKey` from a sequence of der encoded bytes.
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::PrivateKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
@@ -207,24 +208,32 @@ impl PrivateKey {
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
+    /// Parse a `PrivateKey` from a der encoded string.
     pub fn from_str_der(s: &str) -> crate::Result<Self> {
         Self::from_bytes_der(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a Ed25519 `PrivateKey` from a string containing the raw key material.
+    ///
+    /// Optionally strips a `0x` prefix.
     pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ed25519(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a ECDSA(secp256k1) `PrivateKey` from a string containing the raw key material.
+    ///
+    /// Optionally strips a `0x` prefix.
     pub fn from_str_ecdsa(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ecdsa(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a `PrivateKey` from [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded bytes.
     pub fn from_pem(pem: &[u8]) -> crate::Result<Self> {
         let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
 
@@ -262,6 +271,9 @@ impl PrivateKey {
     }
 
     /// Return this `PrivateKey`, serialized as bytes.
+    ///
+    /// If this is an ed25519 private key, this is equivalent to [`to_bytes_raw`](Self::to_bytes_raw)
+    /// If this is an ecdsa private key, this is equivalent to [`to_bytes_der`](Self::to_bytes_der)
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         match &self.0.data {
@@ -277,17 +289,31 @@ impl PrivateKey {
         }
     }
 
+    /// DER encodes self, then hex encodes the result.
     #[must_use]
-    #[inline(always)]
     pub fn to_string_der(&self) -> String {
-        self.to_string()
+        hex::encode(self.to_bytes_der())
     }
 
+    /// Returns the raw bytes of `self` after hex encoding.
     #[must_use]
     pub fn to_string_raw(&self) -> String {
         hex::encode(self.to_bytes_raw())
     }
 
+    /// Creates an [`AccountId`] with the given `shard`, `realm`, and `self.public_key()` as an [`alias`](AccountId::alias).
+    ///
+    /// # Examples
+    ///
+    /// FIXME: this is 100% broken (but it's not this function's fault).
+    /// ```,no_run
+    /// use hedera::PublicKey;
+    ///
+    /// let key: PublicKey = "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7".parse().unwrap();
+    ///
+    /// let account_id = key.to_account_id(0, 0);
+    /// assert_eq!(account_id.to_string(), "0.0.<todo>");
+    /// ```
     #[inline(always)]
     #[must_use]
     pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
@@ -443,7 +469,7 @@ impl Debug for PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(self.to_bytes_der()))
+        f.pad(&self.to_string_der())
     }
 }
 

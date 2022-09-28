@@ -183,7 +183,7 @@ impl Mnemonic {
     pub fn to_private_key(&self, passphrase: &str) -> crate::Result<PrivateKey> {
         match &self.0 {
             MnemonicData::V1(_) if !passphrase.is_empty() => {
-                Err(Error::MnemonicEntropy(MnemonicEntropyError::LegacyWithPassphrase))
+                Err(Error::from(MnemonicEntropyError::LegacyWithPassphrase))
             }
             MnemonicData::V1(it) => PrivateKey::from_bytes(&it.to_entropy()?),
             MnemonicData::V2V3(_) => PrivateKey::from_mnemonic(self, passphrase),
@@ -261,7 +261,7 @@ impl MnemonicV1 {
         let crc2 = crc8(data);
         // checksum mismatch
         if *crc != crc2 {
-            return Err(Error::MnemonicEntropy(MnemonicEntropyError::ChecksumMismatch {
+            return Err(Error::from(MnemonicEntropyError::ChecksumMismatch {
                 expected: crc2,
                 actual: *crc,
             }));
@@ -328,7 +328,7 @@ impl MnemonicV2V3 {
     fn to_legacy_entropy(&self) -> crate::Result<Vec<u8>> {
         // error here where we'll have more context than `PrivateKey::from_bytes`.
         if self.words.len() != 24 {
-            return Err(Error::MnemonicEntropy(MnemonicEntropyError::BadLength {
+            return Err(Error::from(MnemonicEntropyError::BadLength {
                 expected: 24,
                 actual: self.words.len(),
             }));
@@ -342,7 +342,7 @@ impl MnemonicV2V3 {
             if self.words.len() == 12 { expected_checksum & 0xf0 } else { expected_checksum };
 
         if expected_checksum != actual_checksum {
-            return Err(Error::MnemonicEntropy(MnemonicEntropyError::ChecksumMismatch {
+            return Err(Error::from(MnemonicEntropyError::ChecksumMismatch {
                 expected: expected_checksum,
                 actual: actual_checksum,
             }));

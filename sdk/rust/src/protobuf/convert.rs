@@ -20,12 +20,15 @@
 
 use crate::Error;
 
+/// Convert to a `hedera_protobufs` type.
 pub trait ToProtobuf: Send + Sync {
+    /// The protobuf output.
     type Protobuf;
 
+    /// Convert from [`self`](Self) to [`Self::Protobuf`].
     fn to_protobuf(&self) -> Self::Protobuf;
 
-    /// Convert [`Self`] to a protobuf-encoded [`Vec<u8>`].
+    /// Convert [`self`](Self) to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     fn to_bytes(&self) -> Vec<u8>
     where
@@ -36,7 +39,9 @@ pub trait ToProtobuf: Send + Sync {
     }
 }
 
+/// Convert from a `hedera_protobufs` type.
 pub trait FromProtobuf<Protobuf> {
+    /// Attempt to convert from [`Protobuf`] to `Self`.
     fn from_protobuf(pb: Protobuf) -> crate::Result<Self>
     where
         Self: Sized;
@@ -60,6 +65,6 @@ where
     where
         Self: Sized,
     {
-        pb.into_iter().map(T::from_protobuf).collect::<crate::Result<Vec<_>>>()
+        pb.into_iter().map(T::from_protobuf).collect()
     }
 }
