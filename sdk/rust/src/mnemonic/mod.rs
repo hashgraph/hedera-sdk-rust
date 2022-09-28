@@ -95,7 +95,7 @@ impl Mnemonic {
         matches!(&self.0, MnemonicData::V1(_))
     }
 
-    // todo(sr): Not too happy abotu requiring a `Vec<String>`
+    // todo(sr): Not too happy about requiring a `Vec<String>`
     /// Constructs a `Mnemonic` from a 24-word list.
     ///
     /// # Errors
@@ -170,6 +170,11 @@ impl Mnemonic {
     }
 
     /// Recover a [`PrivateKey`] from this `Mnemonic`.
+    ///
+    /// # Errors
+    /// Under certain circumstances, this function will return a [`Error::MnemonicEntropy`].
+    /// - [`MnemonicEntropyError::ChecksumMismatch`] if the computed checksum doesn't match the actual checksum.
+    /// - [`MnemonicEntropyError::BadLength`] if this is a v2 legacy mnemonic and doesn't have `24` words.
     pub fn to_legacy_private_key(&self) -> crate::Result<PrivateKey> {
         let entropy = match &self.0 {
             MnemonicData::V1(it) => it.to_entropy()?,
@@ -180,13 +185,22 @@ impl Mnemonic {
     }
 
     /// Recover a [`PrivateKey`] from this `Mnemonic`.
+    ///
+    /// # Errors
+    /// Under certain circumstances, this function will return a [`Error::MnemonicEntropy`].
+    /// - [`MnemonicEntropyError::LegacyWithPassphrase`] if this is a legacy private key, and the passphrase isn't empty.
+    /// - [`MnemonicEntropyError::ChecksumMismatch`] if this is a legacy private key,
+    ///   and the `Mnemonic`'s checksum doesn't match up with the computed one.
     pub fn to_private_key(&self, passphrase: &str) -> crate::Result<PrivateKey> {
         match &self.0 {
             MnemonicData::V1(_) if !passphrase.is_empty() => {
                 Err(Error::from(MnemonicEntropyError::LegacyWithPassphrase))
             }
-            MnemonicData::V1(it) => PrivateKey::from_bytes(&it.to_entropy()?),
-            MnemonicData::V2V3(_) => PrivateKey::from_mnemonic(self, passphrase),
+            MnemonicData::V1(it) => Ok(PrivateKey::from_bytes(&it.to_entropy()?).expect(
+                "BUG: invariant broken - V1 mnemonic should always have exactly enough entropy",
+            )),
+            // known unfixable bug: `PrivateKey::from_mnemonic` can be called with a legacy private key.
+            MnemonicData::V2V3(_) => Ok(PrivateKey::from_mnemonic(self, passphrase)),
         }
     }
 

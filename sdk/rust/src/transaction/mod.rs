@@ -188,6 +188,8 @@ where
     D: TransactionExecute,
 {
     /// Execute this transaction against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
         execute(client, self).await
     }

@@ -151,6 +151,8 @@ where
     D: QueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<D::Response> {
         if self.payment.body.data.amount.is_none() && self.data.is_payment_required() {
             // payment is required but none was specified, query the cost

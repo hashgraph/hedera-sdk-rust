@@ -41,13 +41,19 @@ pub trait ToProtobuf: Send + Sync {
 
 /// Convert from a `hedera_protobufs` type.
 pub trait FromProtobuf<Protobuf> {
-    /// Attempt to convert from [`Protobuf`] to `Self`.
+    /// Attempt to convert from `Protobuf` to `Self`.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     fn from_protobuf(pb: Protobuf) -> crate::Result<Self>
     where
         Self: Sized;
 
     // fixme(sr): I'm not happy with this doc comment.
     /// Create a new `Self` from the given `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`] if `Protobuf` fails to decode from the bytes.
+    /// - If [`from_protobuf`](Self::from_protobuf) would fail.
     fn from_bytes(bytes: &[u8]) -> crate::Result<Self>
     where
         Self: Sized,
