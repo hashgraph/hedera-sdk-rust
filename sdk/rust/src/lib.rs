@@ -21,24 +21,26 @@
 // todo: more indepth documentation
 //! Hedera Rust SDK.
 
-#![warn(deprecated_in_future)]
-#![warn(future_incompatible)]
-#![warn(rust_2018_compatibility)]
-#![warn(rust_2018_idioms)]
-#![warn(absolute_paths_not_starting_with_crate)]
-#![warn(clippy::cargo_common_metadata)]
-#![warn(clippy::multiple_crate_versions)]
-#![warn(clippy::pedantic)]
-#![warn(clippy::future_not_send)]
-#![warn(missing_docs)]
-#![allow(clippy::module_name_repetitions)]
-#![allow(clippy::missing_errors_doc)]
-#![allow(clippy::enum_glob_use)]
-#![allow(clippy::cast_possible_wrap)]
-#![allow(clippy::cast_possible_truncation)]
-#![allow(clippy::cast_sign_loss)]
-#![allow(clippy::enum_variant_names)]
-#![allow(clippy::inline_always)]
+#![warn(
+    absolute_paths_not_starting_with_crate,
+    deprecated_in_future,
+    future_incompatible,
+    missing_docs,
+    clippy::cargo_common_metadata,
+    clippy::future_not_send,
+    clippy::missing_errors_doc,
+    clippy::multiple_crate_versions,
+    clippy::pedantic
+)]
+#![allow(
+    clippy::cast_possible_wrap,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::enum_glob_use,
+    clippy::enum_variant_names,
+    clippy::inline_always,
+    clippy::module_name_repetitions
+)]
 
 #[macro_use]
 mod protobuf;

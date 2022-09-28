@@ -59,7 +59,10 @@ pub struct TransactionResponse {
 impl TransactionResponse {
     /// Get the receipt of this transaction.
     /// Will wait for consensus.
-    /// Will return an `Error::ReceiptStatus` for a failing receipt.
+    ///
+    /// # Errors
+    /// - [`Error::ReceiptStatus`](crate::Error::ReceiptStatus) for a failing receipt.
+    /// fixme: is that it? Surely there are more situations.
     pub async fn get_receipt(&self, client: &Client) -> crate::Result<TransactionReceipt> {
         TransactionReceiptQuery::new()
             .transaction_id(self.transaction_id)

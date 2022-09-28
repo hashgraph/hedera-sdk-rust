@@ -119,6 +119,9 @@ impl PublicKey {
     }
 
     /// Parse a `PublicKey` from a sequence of bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PublicKey`.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         if bytes.len() == 32 {
             return Self::from_bytes_ed25519(bytes);
@@ -131,7 +134,10 @@ impl PublicKey {
         Self::from_bytes_der(bytes)
     }
 
-    /// Parse a Ed25519 `PublicKey` from a sequence of bytes.
+    /// Parse a Ed25519 `PublicKey` from a sequence of bytes.   
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ed25519 `PublicKey`.
     pub fn from_bytes_ed25519(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 32 {
             ed25519_dalek::PublicKey::from_bytes(bytes).map_err(Error::key_parse)?
@@ -143,6 +149,9 @@ impl PublicKey {
     }
 
     /// Parse a ECDSA(secp256k1) `PublicKey` from a sequence of bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ECDSA(secp256k1) `PublicKey`.
     pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 33 {
             k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes).map_err(Error::key_parse)?
@@ -154,6 +163,9 @@ impl PublicKey {
     }
 
     /// Parse a `PublicKey` from a sequence of der encoded bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PublicKey`.
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::SubjectPublicKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
@@ -173,6 +185,9 @@ impl PublicKey {
     ///
     /// Optionally strips a `0x` prefix.
     /// See [`from_bytes_der`](Self::from_bytes_der)
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `s` cannot be parsed into a `PublicKey`.
     pub fn from_str_der(s: &str) -> crate::Result<Self> {
         Self::from_bytes_der(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
@@ -182,6 +197,9 @@ impl PublicKey {
     /// Parse a Ed25519 `PublicKey` from a string containing the raw key material.
     ///
     /// Optionally strips a `0x` prefix.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `s` cannot be parsed into a ed25519 `PublicKey`.
     pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ed25519(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
@@ -191,6 +209,9 @@ impl PublicKey {
     /// Parse a ECDSA(secp256k1) `PublicKey` from a string containing the raw key material.
     ///
     /// Optionally strips a `0x` prefix.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `s` cannot be parsed into a Ecdsa(secp256k1) `PublicKey`.
     pub fn from_str_ecdsa(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ecdsa(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
@@ -289,6 +310,10 @@ impl PublicKey {
     }
 
     /// Verify a `signature` on a `msg` with this public key.
+    ///
+    /// # Errors
+    /// - [`Error::SignatureVerify`] if the signature algorithm doesn't match this `PublicKey`.
+    /// - [`Error::SignatureVerify`] if the signature is invalid for this `PublicKey`.
     pub fn verify(&self, msg: &[u8], signature: &crate::Signature) -> crate::Result<()> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => {
@@ -297,19 +322,19 @@ impl PublicKey {
                 let signature = signature
                     .as_ed25519()
                     .ok_or_else(|| "Expected Ed25519 signature".to_owned())
-                    .map_err(crate::Error::signature_verify)?;
+                    .map_err(Error::signature_verify)?;
 
-                key.verify(msg, signature).map_err(crate::Error::signature_verify)
+                key.verify(msg, signature).map_err(Error::signature_verify)
             }
             PublicKeyData::Ecdsa(key) => {
                 // todo: see above comment on ed25519 signatures
                 let signature = signature
                     .as_ecdsa()
                     .ok_or_else(|| "Expected Ecdsa signature".to_owned())
-                    .map_err(crate::Error::signature_verify)?;
+                    .map_err(Error::signature_verify)?;
 
                 key.verify_digest(sha3::Keccak256::new_with_prefix(msg), signature)
-                    .map_err(crate::Error::signature_verify)
+                    .map_err(Error::signature_verify)
             }
         }
     }
