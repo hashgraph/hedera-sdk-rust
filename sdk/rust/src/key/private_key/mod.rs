@@ -223,7 +223,7 @@ impl PrivateKey {
     /// Parse a `PrivateKey` from a der encoded string.
     ///
     /// Optionally strips a `0x` prefix.
-    /// See [`from_bytes_der`](self::from_bytes_der).
+    /// See [`from_bytes_der`](Self::from_bytes_der).
     ///
     /// # Errors
     /// - [`Error::KeyParse`] if `s` cannot be parsed into a `PrivateKey`.
@@ -249,7 +249,7 @@ impl PrivateKey {
     /// Parse a ECDSA(secp256k1) `PrivateKey` from a string containing the raw key material.
     ///
     /// Optionally strips a `0x` prefix.
-    /// See: [`frobytestr_ecdsa`](Self::frobytestr_ecdsa).
+    /// See: [`from_str_ecdsa`](Self::from_str_ecdsa).
     ///
     /// # Errors
     /// - [`Error::KeyParse`] if `s` cannot be parsed into a ECDSA(secp256k1) `PrivateKey`.
