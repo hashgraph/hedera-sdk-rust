@@ -38,17 +38,17 @@ use crate::{
     ToProtobuf,
 };
 
-/// The unique identifier for a schedule on Hedera.
+/// The unique identifier for a scheduled transaction on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 #[repr(C)]
 pub struct ScheduleId {
-    /// A non-negative number identifying the shard containing this schedule.
+    /// A non-negative number identifying the shard containing this scheduled transaction.
     pub shard: u64,
 
-    /// A non-negative number identifying the realm within the shard containing this schedule.
+    /// A non-negative number identifying the realm within the shard containing this scheduled transaction.
     pub realm: u64,
 
-    /// A non-negative number identifying the entity within the realm containing this schedule.
+    /// A non-negative number identifying the entity within the realm containing this scheduled transaction.
     pub num: u64,
 }
 
