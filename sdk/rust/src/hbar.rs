@@ -65,14 +65,25 @@ pub enum HbarUnit {
 }
 
 impl HbarUnit {
-    /// Returns the the value of `self` as `Tinybar`.
+    /// Returns the the value of `self` in `Tinybar`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use hedera::HbarUnit;
+    /// assert_eq!(HbarUnit::Microbar.tinybars(), 100);
+    /// ```
     #[must_use]
     pub const fn tinybars(self) -> Tinybar {
         self as Tinybar
     }
 
-    // fixme: don't like this doc.
-    /// Returns a `str` representing the appropriate symbol for `self`.
+    /// Returns a `str` containing the symbol for `self`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use hedera::HbarUnit;
+    /// assert_eq!(HbarUnit::Millibar.symbol(), "mℏ");
+    /// ```
     #[must_use]
     pub const fn symbol(self) -> &'static str {
         match self {
@@ -173,7 +184,6 @@ impl Hbar {
     /// # Panics
     ///
     /// * if `amount * unit.tinybars()` would overflow a i64.
-    /// * if `amount * unit.tinybars()` is less than [`Self::MIN`](Hbar::MIN)
     ///
     /// # Examples
     ///
