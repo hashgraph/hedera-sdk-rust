@@ -12,11 +12,13 @@ use crate::{
     Hbar,
 };
 
+// todo(sr): is this right?
+/// Info related to account/contract staking settings.
 #[serde_as]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StakingInfo {
-    /// If true, the contract declines receiving a staking reward. The default value is false.
+    /// If `true`, the contract declines receiving a staking reward. The default value is `false`.
     pub decline_staking_reward: bool,
 
     /// The staking period during which either the staking settings for this account or contract changed (such as starting
@@ -25,7 +27,7 @@ pub struct StakingInfo {
     #[serde_as(as = "Option<TimestampNanoSeconds>")]
     pub stake_period_start: Option<OffsetDateTime>,
 
-    /// The amount in Hbar that will be received in the next reward situation.
+    /// The amount in `Hbar` that will be received in the next reward situation.
     pub pending_reward: Hbar,
 
     /// The total of balance of all accounts staked to this account or contract.

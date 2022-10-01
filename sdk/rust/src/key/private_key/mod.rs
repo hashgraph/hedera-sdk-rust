@@ -142,7 +142,7 @@ impl PrivateKey {
         Self(Arc::new(PrivateKeyDataWrapper::new(data)))
     }
 
-    /// Gets the `[PublicKey]` which corresponds to this `PrivateKey`.
+    /// Gets the [`PublicKey`] which corresponds to this `PrivateKey`.
     #[must_use]
     pub fn public_key(&self) -> PublicKey {
         match &self.0.data {
@@ -152,6 +152,9 @@ impl PrivateKey {
     }
 
     /// Parse a `PrivateKey` from a sequence of bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PublicKey`.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         if bytes.len() == 32 || bytes.len() == 64 {
             return Self::from_bytes_ed25519(bytes);
@@ -161,6 +164,9 @@ impl PrivateKey {
     }
 
     /// Parse a Ed25519 `PrivateKey` from a sequence of bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ed25519 `PrivateKey`.
     pub fn from_bytes_ed25519(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 32 || bytes.len() == 64 {
             ed25519_dalek::SecretKey::from_bytes(&bytes[..32]).map_err(Error::key_parse)?
@@ -174,6 +180,9 @@ impl PrivateKey {
     }
 
     /// Parse a ECDSA(secp256k1) `PrivateKey` from a sequence of bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ECDSA(secp256k1) `PrivateKey`.
     pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 32 {
             // not DER encoded, raw bytes for key
@@ -185,6 +194,10 @@ impl PrivateKey {
         Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::Ecdsa(data)))))
     }
 
+    /// Parse a `PrivateKey` from a sequence of der encoded bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PrivateKey`.
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
         let info = pkcs8::PrivateKeyInfo::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
@@ -207,24 +220,51 @@ impl PrivateKey {
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
+    /// Parse a `PrivateKey` from a der encoded string.
+    ///
+    /// Optionally strips a `0x` prefix.
+    /// See [`from_bytes_der`](Self::from_bytes_der).
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `s` cannot be parsed into a `PrivateKey`.
     pub fn from_str_der(s: &str) -> crate::Result<Self> {
         Self::from_bytes_der(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a Ed25519 `PrivateKey` from a string containing the raw key material.
+    ///
+    /// Optionally strips a `0x` prefix.
+    /// See: [`from_bytes_ed25519`](Self::from_bytes_ed25519).
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `s` cannot be parsed into a ed25519 `PrivateKey`.
     pub fn from_str_ed25519(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ed25519(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a ECDSA(secp256k1) `PrivateKey` from a string containing the raw key material.
+    ///
+    /// Optionally strips a `0x` prefix.
+    /// See: [`from_str_ecdsa`](Self::from_str_ecdsa).
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `s` cannot be parsed into a ECDSA(secp256k1) `PrivateKey`.
     pub fn from_str_ecdsa(s: &str) -> crate::Result<Self> {
         Self::from_bytes_ecdsa(
             &hex::decode(s.strip_prefix("0x").unwrap_or(s)).map_err(Error::key_parse)?,
         )
     }
 
+    /// Parse a `PrivateKey` from [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded bytes.
+    ///
+    /// # Errors
+    /// - [`Error::KeyParse`] if `pem` is not valid PEM.
+    /// - [`Error::KeyParse`] if the type label (BEGIN XYZ) is not `PRIVATE KEY`.
+    /// - [`Error::KeyParse`] if the data contained inside the PEM is not a valid `PrivateKey`.
     pub fn from_pem(pem: &[u8]) -> crate::Result<Self> {
         let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
 
@@ -262,6 +302,9 @@ impl PrivateKey {
     }
 
     /// Return this `PrivateKey`, serialized as bytes.
+    ///
+    /// If this is an ed25519 private key, this is equivalent to [`to_bytes_raw`](Self::to_bytes_raw)
+    /// If this is an ecdsa private key, this is equivalent to [`to_bytes_der`](Self::to_bytes_der)
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         match &self.0.data {
@@ -277,17 +320,31 @@ impl PrivateKey {
         }
     }
 
+    /// DER encodes self, then hex encodes the result.
     #[must_use]
-    #[inline(always)]
     pub fn to_string_der(&self) -> String {
-        self.to_string()
+        hex::encode(self.to_bytes_der())
     }
 
+    /// Returns the raw bytes of `self` after hex encoding.
     #[must_use]
     pub fn to_string_raw(&self) -> String {
         hex::encode(self.to_bytes_raw())
     }
 
+    /// Creates an [`AccountId`] with the given `shard`, `realm`, and `self.public_key()` as an [`alias`](AccountId::alias).
+    ///
+    /// # Examples
+    ///
+    /// FIXME: this is 100% broken (but it's not this function's fault).
+    /// ```,no_run
+    /// use hedera::PublicKey;
+    ///
+    /// let key: PublicKey = "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7".parse().unwrap();
+    ///
+    /// let account_id = key.to_account_id(0, 0);
+    /// assert_eq!(account_id.to_string(), "0.0.<todo>");
+    /// ```
     #[inline(always)]
     #[must_use]
     pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
@@ -317,6 +374,10 @@ impl PrivateKey {
     }
 
     /// Derives a child key based on `index`.
+    ///
+    /// # Errors
+    /// todo: (what error variant) if this is an Ecdsa key (unsupported operation)
+    /// todo: (what error variant) if this key has no `chain_code` (key is not derivable)
     pub fn derive(&self, index: i32) -> crate::Result<Self> {
         const HARDEND_MASK: u32 = 1 << 31;
         let index = index as u32;
@@ -360,6 +421,9 @@ impl PrivateKey {
     // todo: what do we do about i32?
     // It's basically just a cast to support them, but, unlike Java, operator overloading doesn't exist.
     /// Derive a `PrivateKey` based on the `index`.
+    ///
+    /// # Errors
+    /// - <todo: what error variant> if this is an Ecdsa key (unsupported operation)
     // ⚠️ unaudited cryptography ⚠️
     pub fn legacy_derive(&self, index: i64) -> crate::Result<Self> {
         match &self.0.data {
@@ -398,12 +462,11 @@ impl PrivateKey {
 
     /// Recover a `PrivateKey` from a generated mnemonic phrase and a passphrase.
     // this is specifically for the two `try_into`s which depend on `split_array_ref`.
-    // panic should be impossible (`unreachable`)
+    // There *is* a 3rd unwrap for a "key is not derivable" error, but we construct a key that _is_ derivable.
+    // Any panic would indicate a bug in this crate or a dependency of it, not in user code.
     #[allow(clippy::missing_panics_doc)]
-    pub fn from_mnemonic(
-        mnemonic: &crate::Mnemonic,
-        passphrase: &str,
-    ) -> Result<PrivateKey, Error> {
+    #[must_use]
+    pub fn from_mnemonic(mnemonic: &crate::Mnemonic, passphrase: &str) -> PrivateKey {
         let seed = mnemonic.to_seed(passphrase);
 
         let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(b"ed25519 seed")
@@ -428,10 +491,10 @@ impl PrivateKey {
         let mut key = Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, right)));
 
         for index in [44, 3030, 0, 0] {
-            key = key.derive(index)?;
+            key = key.derive(index).expect("BUG: we set the chain code earlier in this function");
         }
 
-        Ok(key)
+        key
     }
 }
 
@@ -443,7 +506,7 @@ impl Debug for PrivateKey {
 
 impl Display for PrivateKey {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.pad(&hex::encode(self.to_bytes_der()))
+        f.pad(&self.to_string_der())
     }
 }
 

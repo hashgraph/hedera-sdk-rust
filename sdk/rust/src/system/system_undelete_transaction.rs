@@ -37,9 +37,10 @@ use crate::{
     Transaction,
 };
 
+/// Undelete a file or smart contract that was deleted by a [`SystemDeleteTransaction`](crate::SystemDeleteTransaction).
 pub type SystemUndeleteTransaction = Transaction<SystemUndeleteTransactionData>;
 
-/// Undelete a file or smart contract that was deleted by `SystemDelete`.
+/// Undelete a file or smart contract that was deleted by  [`SystemDeleteTransaction`](crate::SystemDeleteTransaction).
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct SystemUndeleteTransactionData {

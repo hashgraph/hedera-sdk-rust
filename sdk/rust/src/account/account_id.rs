@@ -41,12 +41,19 @@ use crate::{
 };
 
 // TODO: checksum
-/// The unique identifier for a cryptocurrency account on Hedera.
+/// A unique identifier for a cryptocurrency account on Hedera.
 #[derive(SerializeDisplay, Copy, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
 pub struct AccountId {
+    /// A non-negative number identifying the shard containing this account.
     pub shard: u64,
+
+    /// A non-negative number identifying the realm within the shard containing this account.
     pub realm: u64,
+
+    /// A non-negative number identifying the entity within the realm containing this account.
     pub num: u64,
+
+    /// An alias for `num` if the account was created from a public key directly.
     pub alias: Option<PublicKey>,
 }
 

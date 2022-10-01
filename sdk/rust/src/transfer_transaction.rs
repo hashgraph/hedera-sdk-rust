@@ -216,12 +216,7 @@ impl TransferTransaction {
         self._nft_transfer(nft_id.into(), sender_account_id, receiver_account_id, false)
     }
 
-    pub fn _hbar_transfer(
-        &mut self,
-        account_id: AccountId,
-        amount: Hbar,
-        approved: bool,
-    ) -> &mut Self {
+    fn _hbar_transfer(&mut self, account_id: AccountId, amount: Hbar, approved: bool) -> &mut Self {
         self.body.data.transfers.push(Transfer {
             account_id,
             amount: amount.to_tinybars(),
@@ -238,7 +233,7 @@ impl TransferTransaction {
 
     /// Add an approved hbar transfer to the transaction.
     pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
-        self._hbar_transfer(account_id, amount, false)
+        self._hbar_transfer(account_id, amount, true)
     }
 }
 

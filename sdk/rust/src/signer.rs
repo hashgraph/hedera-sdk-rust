@@ -26,8 +26,13 @@ use crate::{
     SignaturePair,
 };
 
+// todo(sr): not happy with this comment.
+/// Represents the capability to sign a message.
 #[async_trait]
 pub trait Signer: 'static + Send + Sync {
+    /// Attempt to sign the `message`.
+    ///
+    /// When signing is succesful, returns a `SignaturePair`.
     async fn sign(&self, message: &[u8]) -> Result<SignaturePair, BoxStdError>;
 }
 

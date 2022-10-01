@@ -20,12 +20,15 @@
 
 use crate::Error;
 
+/// Convert to a `hedera_protobufs` type.
 pub trait ToProtobuf: Send + Sync {
+    /// The protobuf output.
     type Protobuf;
 
+    /// Convert from [`self`](Self) to [`Self::Protobuf`].
     fn to_protobuf(&self) -> Self::Protobuf;
 
-    /// Convert [`Self`] to a protobuf-encoded [`Vec<u8>`].
+    /// Convert [`self`](Self) to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     fn to_bytes(&self) -> Vec<u8>
     where
@@ -36,13 +39,21 @@ pub trait ToProtobuf: Send + Sync {
     }
 }
 
+/// Convert from a `hedera_protobufs` type.
 pub trait FromProtobuf<Protobuf> {
+    /// Attempt to convert from `Protobuf` to `Self`.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     fn from_protobuf(pb: Protobuf) -> crate::Result<Self>
     where
         Self: Sized;
 
     // fixme(sr): I'm not happy with this doc comment.
     /// Create a new `Self` from the given `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`] if `Protobuf` fails to decode from the bytes.
+    /// - If [`from_protobuf`](Self::from_protobuf) would fail.
     fn from_bytes(bytes: &[u8]) -> crate::Result<Self>
     where
         Self: Sized,
@@ -60,6 +71,6 @@ where
     where
         Self: Sized,
     {
-        pb.into_iter().map(T::from_protobuf).collect::<crate::Result<Vec<_>>>()
+        pb.into_iter().map(T::from_protobuf).collect()
     }
 }

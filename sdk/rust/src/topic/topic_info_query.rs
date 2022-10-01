@@ -36,7 +36,6 @@ use crate::{
 };
 
 /// Retrieve the latest state of a topic.
-///
 pub type TopicInfoQuery = Query<TopicInfoQueryData>;
 
 #[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]

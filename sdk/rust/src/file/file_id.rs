@@ -27,7 +27,6 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use prost::Message;
 use serde_with::{
     DeserializeFromStr,
     SerializeDisplay,
@@ -43,22 +42,14 @@ use crate::{
 /// The unique identifier for a file on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 pub struct FileId {
+    /// The shard number.
     pub shard: u64,
+
+    /// The realm number.
     pub realm: u64,
+
+    /// The file number.
     pub num: u64,
-}
-
-impl FileId {
-    /// Create a new `FileId` from the given `bytes`.
-    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        services::FileId::decode(bytes).map_err(Error::from_protobuf).and_then(Self::from_protobuf)
-    }
-
-    /// Convert [`Self`] to a protobuf-encoded [`Vec<u8>`].
-    #[must_use]
-    pub fn to_bytes(&self) -> Vec<u8> {
-        self.to_protobuf().encode_to_vec()
-    }
 }
 
 impl Debug for FileId {

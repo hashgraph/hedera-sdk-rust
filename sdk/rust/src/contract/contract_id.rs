@@ -39,12 +39,23 @@ use crate::{
 };
 
 // TODO: checksum
-/// The unique identifier for a smart contract on Hedera.
+/// A unique identifier for a smart contract on Hedera.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 pub struct ContractId {
+    /// A non-negative number identifying the shard containing this contract instance.
     pub shard: u64,
+
+    /// A non-negative number identifying the realm within the shard containing this contract instance.
     pub realm: u64,
+
+    /// A non-negative number identifying the entity within the realm containing this contract instance.
+    ///
+    /// Note: Exactly one of `evm_address` and `num` must exist.
     pub num: u64,
+
+    /// EVM address identifying the entity within the realm containing this contract instance.
+    ///
+    /// Note: Exactly one of `evm_address` and `num` must exist.
     pub evm_address: Option<[u8; 20]>,
 }
 

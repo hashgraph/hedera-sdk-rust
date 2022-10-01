@@ -28,76 +28,163 @@ use crate::{
     TransactionId,
 };
 
+/// `Result<T, Error>`
 pub type Result<T> = StdResult<T, Error>;
 
 pub(crate) type BoxStdError = Box<dyn StdError + Send + Sync + 'static>;
 
 /// Represents any possible error from a fallible function in the Hedera SDK.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum Error {
+    /// Request timed out.
     #[error("failed to complete request within the maximum time allowed; most recent attempt failed with: {0}")]
-    TimedOut(Box<Error>),
+    TimedOut(#[source] Box<Error>),
 
+    /// GRPC status code was an error.
     #[error("grpc: {0}")]
     GrpcStatus(#[from] tonic::Status),
 
+    /// Failed to parse an SDK type from a protobuf response.
     #[error("failed to create a SDK type from a protobuf response: {0}")]
-    FromProtobuf(BoxStdError),
+    FromProtobuf(#[source] BoxStdError),
 
+    /// A transaction failed pre-check.
+    ///
+    /// The transaction had the ID `transaction_id`.
+    ///
+    /// Caused by `status` being an error.
     #[error("transaction `{transaction_id}` failed pre-check with status `{status:?}`")]
-    TransactionPreCheckStatus { status: Status, transaction_id: TransactionId },
+    TransactionPreCheckStatus {
+        /// The status that caused the [`Transaction`](crate::Transaction) to fail pre-check.
+        status: Status,
+        /// The `TransactionId` of the failed [`Transaction`](crate::Transaction) .
+        transaction_id: TransactionId,
+    },
 
+    /// A transaction failed pre-check.
+    ///
+    /// The transaction had no `transaction_id`.
+    ///
+    /// Caused by `status` being an error.
     #[error("transaction without transaction id failed pre-check with status `{status:?}`")]
-    TransactionNoIdPreCheckStatus { status: Status },
+    TransactionNoIdPreCheckStatus {
+        /// The `Status` that caused the [`Transaction`](crate::Transaction) to fail pre-check.
+        status: Status,
+    },
 
+    /// A [`Query`](crate::Query) for `transaction_id` failed pre-check.
+    ///
+    /// Caused by `status` being an error.
     #[error("query for transaction `{transaction_id}` failed pre-check with status `{status:?}`")]
-    QueryPreCheckStatus { status: Status, transaction_id: TransactionId },
+    QueryPreCheckStatus {
+        /// The `Status` that caused the [`Query`](crate::Query) to fail pre-check.
+        status: Status,
+        /// The associated transaction's ID.
+        transaction_id: TransactionId,
+    },
 
+    /// A [`Query`](crate::Query) failed pre-check.
+    ///
+    /// The query had an associated `PaymentTransaction` with ID `transaction_id`.
+    ///
+    /// Caused by `status` being an error.
     #[error(
-    "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
+        "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
     )]
-    QueryPaymentPreCheckStatus { status: Status, transaction_id: TransactionId },
+    QueryPaymentPreCheckStatus {
+        /// The `Status` that caused the [`Query`](crate::Query) to fail pre-check.
+        status: Status,
+        /// The associated `PaymentTransaction`'s `TransactionId`.
+        transaction_id: TransactionId,
+    },
 
+    /// A [`Query`](crate::Query) failed pre-check.
+    ///
+    /// The query had no `PaymentTransaction`.
+    ///
+    /// Caused by `status` being an error.
     #[error("query with no payment transaction failed pre-check with status `{status:?}`")]
-    QueryNoPaymentPreCheckStatus { status: Status },
+    QueryNoPaymentPreCheckStatus {
+        /// The `Status` that caused the [`Query`](crate::Query) to fail pre-check.
+        status: Status,
+    },
 
-    /// Failed to parse a basic type from string (ex. AccountId, ContractId, TransactionId, etc.).
+    /// Failed to parse a basic type from string
+    /// (ex. [`AccountId`](crate::AccountId), [`ContractId`](crate::ContractId), [`TransactionId`](crate::TransactionId), etc.).
     #[error("failed to parse: {0}")]
-    BasicParse(BoxStdError),
+    BasicParse(#[source] BoxStdError),
 
+    /// Failed to parse a [`PublicKey`](crate::PublicKey) or [`PrivateKey`](crate::PrivateKey).
     #[error("failed to parse a key: {0}")]
-    KeyParse(BoxStdError),
+    KeyParse(#[source] BoxStdError),
 
+    /// Failed to parse a [`Mnemonic`](crate::Mnemonic) due to the given `reason`.
+    ///
+    /// the `Mnemonic` is provided because invalid `Mnemonics`
+    /// can technically still provide valid [`PrivateKeys`](crate::PrivateKey).
     #[error("failed to parse a mnemonic: {reason}")]
-    MnemonicParse { reason: MnemonicParseError, mnemonic: crate::Mnemonic },
+    MnemonicParse {
+        /// This error's source.
+        #[source]
+        reason: MnemonicParseError,
+        /// The `Mnemonic` in question.
+        mnemonic: crate::Mnemonic,
+    },
 
+    /// An error occurred while attempting to convert a [`Mnemonic`](crate::Mnemonic) to a [`PrivateKey`](crate::PrivateKey)
     #[error("failed to convert a mnemonic to entropy: {0}")]
-    MnemonicEntropy(MnemonicEntropyError),
+    MnemonicEntropy(#[from] MnemonicEntropyError),
 
+    /// The [`Client`](crate::Client) had no payer account (operator)
+    /// and the attempted request had no explicit [`TransactionId`].
     #[error("client must be configured with a payer account or requests must be given an explicit transaction id")]
     NoPayerAccountOrTransactionId,
 
+    /// Cost of a [`Query`](crate::Query) is more expensive than `max_query_payment`.
+    ///
+    /// The actual cost of the `Query` is `query_cost`.
     #[error("cost of {query_cost} without explicit payment is greater than the maximum allowed payment of {max_query_payment}")]
-    MaxQueryPaymentExceeded { query_cost: Hbar, max_query_payment: Hbar },
+    MaxQueryPaymentExceeded {
+        /// the configured maximum query payment.
+        max_query_payment: Hbar,
 
+        /// How much the query actually cost.
+        query_cost: Hbar,
+    },
+
+    /// The associated node account was not found in the network.
     #[error("node account `{0}` was not found in the configured network")]
     NodeAccountUnknown(AccountId),
 
+    /// Received an unrecognized status code from the Hedera Network.
+    ///
+    /// This can happen when the SDK is outdated, try updating your SDK.
     #[error("received unrecognized status code: {0}, try updating your SDK")]
     ResponseStatusUnrecognized(i32),
 
+    // fixme(sr): Citation needed (unsure if this is accurate).
+    /// Getting the receipt for `transaction_id` failed with `status`.
     #[error("receipt for transaction `{transaction_id}` failed with status `{status:?}`")]
-    ReceiptStatus { status: Status, transaction_id: TransactionId },
+    ReceiptStatus {
+        /// The Error's status code.
+        status: Status,
+        /// The [`Transaction`](crate::Transaction)'s ID.
+        transaction_id: TransactionId,
+    },
 
-    #[error("failed to sign request: {0}")]
-    Signature(BoxStdError),
+    /// Failed to sign a message.
+    #[error("failed to sign message: {0}")]
+    Signature(#[source] BoxStdError),
 
+    /// Failed to verify a signature.
     #[error("failed to verify a signature: {0}")]
-    SignatureVerify(BoxStdError),
+    SignatureVerify(#[source] BoxStdError),
 
+    /// Failed to parse a request from JSON.
     #[cfg(feature = "ffi")]
     #[error("failed to parse a request from JSON: {0}")]
-    RequestParse(BoxStdError),
+    RequestParse(#[source] BoxStdError),
 }
 
 impl Error {
@@ -127,27 +214,52 @@ impl Error {
     }
 }
 
+/// Failed to parse a mnemonic.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum MnemonicParseError {
+    /// The [`Mnemonic`](crate::Mnemonic) contains an unexpected length.
     #[error("bad length: expected `12` or `24` words, found `{0}`")]
     BadLength(usize),
 
+    /// The [`Mnemonic`](crate::Mnemonic) contains words that aren't in the wordlist.
     #[error("unknown words at indecies: `{0:?}`")]
     UnknownWords(Vec<usize>),
 
+    /// The [`Mnemonic`](crate::Mnemonic) has an invalid checksum.
     #[error("checksum mismatch: expected `{expected:02x}`, found `{actual:02x}`")]
-    ChecksumMismatch { expected: u8, actual: u8 },
+    ChecksumMismatch {
+        /// The checksum that was expected.
+        expected: u8,
+        /// The checksum that was actually found.
+        actual: u8,
+    },
 }
 
+/// Failed to convert a [`Mnemonic`](crate::Mnemonic) to a [`PrivateKey`](crate::PrivateKey)
 // todo: find a better name before release.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum MnemonicEntropyError {
+    /// Encountered a [`Mnemonic`](crate::Mnemonic) of unexpected length.
     #[error("bad length: expected `{expected}` words, found {actual} words")]
-    BadLength { expected: usize, actual: usize },
+    BadLength {
+        /// The number of words that were expected (12, 22, or 24)
+        expected: usize,
+        /// The number of words that were actually found.
+        actual: usize,
+    },
 
+    /// The [`Mnemonic`](crate::Mnemonic) has an invalid checksum.
     #[error("checksum mismatch: expected `{expected:02x}`, found `{actual:02x}`")]
-    ChecksumMismatch { expected: u8, actual: u8 },
+    ChecksumMismatch {
+        /// The checksum that was expected.
+        expected: u8,
+        /// The checksum that was actually found.
+        actual: u8,
+    },
 
+    /// Used a passphrase with a legacy [`Mnemonic`](crate::Mnemonic).
     #[error("used a passphrase with a legacy mnemonic")]
     LegacyWithPassphrase,
 }

@@ -29,6 +29,7 @@ use crate::{
     TransactionId,
 };
 
+/// Topic message records.
 #[serde_as]
 #[derive(Serialize, Clone, Debug)]
 pub struct TopicMessage {

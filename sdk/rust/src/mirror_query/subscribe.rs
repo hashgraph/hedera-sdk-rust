@@ -64,6 +64,8 @@ where
     D: MirrorQuerySubscribe,
 {
     /// Execute this query against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<Vec<D::Message>> {
         self.subscribe(client).try_collect().await
     }
