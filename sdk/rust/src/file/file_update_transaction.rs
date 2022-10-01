@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use itertools::Itertools;
 use serde_with::base64::Base64;
 use serde_with::{
     serde_as,
@@ -103,7 +102,7 @@ impl FileUpdateTransaction {
     /// can sign to delete the file.
     ///
     pub fn keys<K: Into<Key>>(&mut self, keys: impl IntoIterator<Item = K>) -> &mut Self {
-        self.body.data.keys = Some(keys.into_iter().map_into().collect());
+        self.body.data.keys = Some(keys.into_iter().map(Into::into).collect());
         self
     }
 
@@ -134,8 +133,7 @@ impl ToTransactionDataProtobuf for FileUpdateTransactionData {
         let file_id = self.file_id.as_ref().map(FileId::to_protobuf);
         let expiration_time = self.expiration_time.as_ref().map(OffsetDateTime::to_protobuf);
 
-        let keys =
-            self.keys.as_deref().unwrap_or_default().iter().map(Key::to_protobuf).collect_vec();
+        let keys = self.keys.as_deref().unwrap_or_default().iter().map(Key::to_protobuf).collect();
 
         let keys = services::KeyList { keys };
 
