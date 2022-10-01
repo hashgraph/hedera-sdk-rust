@@ -131,6 +131,9 @@ impl<D> Transaction<D>
 where
     D: Default + TransactionExecute,
 {
+    /// Create a new default transaction.
+    ///
+    /// Does the same thing as [`default`](Self::default)
     #[inline]
     #[must_use]
     pub fn new() -> Self {
@@ -145,7 +148,6 @@ where
     /// Set the account IDs of the nodes that this transaction may be submitted to.
     ///
     /// Defaults to the full list of nodes configured on the client.
-    ///
     pub fn node_account_ids(&mut self, ids: impl IntoIterator<Item = AccountId>) -> &mut Self {
         self.body.node_account_ids = Some(ids.into_iter().collect());
         self
@@ -154,7 +156,6 @@ where
     /// Sets the duration that this transaction is valid for, once finalized and signed.
     ///
     /// Defaults to 120 seconds (or two minutes).
-    ///
     pub fn transaction_valid_duration(&mut self, duration: Duration) -> &mut Self {
         self.body.transaction_valid_duration = Some(duration);
         self
@@ -176,7 +177,6 @@ where
     /// Set an explicit transaction ID to use to identify this transaction.
     ///
     /// Overrides payer account defined on this transaction or on the client.
-    ///
     pub fn transaction_id(&mut self, id: TransactionId) -> &mut Self {
         self.body.transaction_id = Some(id);
         self
@@ -188,6 +188,8 @@ where
     D: TransactionExecute,
 {
     /// Execute this transaction against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
         execute(client, self).await
     }

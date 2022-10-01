@@ -39,8 +39,8 @@ use crate::{
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
 /// will remove the allowances granted to one or more specific non-fungible token serial numbers. Each owner account
 /// listed as wiping an allowance must sign the transaction. Hbar and fungible token allowances
-/// can be removed by setting the amount to zero in [`AccountAllowanceApproveTransaction`].
-///
+/// can be removed by setting the amount to zero in
+/// [`AccountAllowanceApproveTransaction`](crate::AccountAllowanceApproveTransaction).
 pub type AccountAllowanceDeleteTransaction = Transaction<AccountAllowanceDeleteTransactionData>;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

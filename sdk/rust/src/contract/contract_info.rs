@@ -38,6 +38,7 @@ use crate::{
 };
 
 // TODO: staking_info
+/// Current information on a smart contract instance.
 #[serde_as]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContractInfo {

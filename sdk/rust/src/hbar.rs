@@ -28,8 +28,12 @@ use serde_with::{
 
 use crate::Error;
 
+/// Type alias for `i64` representing `tinybar`
 pub type Tinybar = i64;
 
+/// Common units of hbar; for the most part they follow SI prefix conventions.
+///
+/// See the [Hedera Documentation](https://docs.hedera.com/guides/docs/sdks/hbars#hbar-units).
 #[repr(i64)]
 #[derive(Debug, SerializeDisplay, Copy, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
 pub enum HbarUnit {
@@ -61,11 +65,25 @@ pub enum HbarUnit {
 }
 
 impl HbarUnit {
+    /// Returns the the value of `self` in `Tinybar`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use hedera::HbarUnit;
+    /// assert_eq!(HbarUnit::Microbar.tinybars(), 100);
+    /// ```
     #[must_use]
     pub const fn tinybars(self) -> Tinybar {
         self as Tinybar
     }
 
+    /// Returns a `str` containing the symbol for `self`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use hedera::HbarUnit;
+    /// assert_eq!(HbarUnit::Millibar.symbol(), "mℏ");
+    /// ```
     #[must_use]
     pub const fn symbol(self) -> &'static str {
         match self {
@@ -105,6 +123,7 @@ impl FromStr for HbarUnit {
     }
 }
 
+/// A quantity of `hbar`.
 #[derive(
     Serialize,
     Deserialize,
@@ -129,44 +148,94 @@ impl FromStr for HbarUnit {
 pub struct Hbar(i64);
 
 impl Hbar {
+    /// A constant value of `0 ℏ`.
     pub const ZERO: Hbar = Hbar::from_tinybars(0);
-    pub const MAX: Hbar = Hbar::from_tinybars(50_000_000_000 * 100_000_000);
-    pub const MIN: Hbar = Hbar::from_tinybars(-50_000_000_000 * 100_000_000);
 
+    /// The minimum allowable amount of hbar `-50 Gℏ`
+    pub const MIN: Hbar = Self::from_integer_unit(-50, HbarUnit::Gigabar);
+
+    /// The maximum allowable amount of hbar `50 Gℏ`.
+    pub const MAX: Self = Self::from_integer_unit(50, HbarUnit::Gigabar);
+
+    /// Convert from `tinybars` to `Hbar`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use hedera::Hbar;
+    /// let hbar = Hbar::from_tinybars(250);
+    /// assert_eq!(hbar.to_string(), "250 tℏ");
+    /// ```
     #[must_use]
     pub const fn from_tinybars(tinybars: Tinybar) -> Self {
+        // todo: `debug_assert!` or `assert!` in range?
         Hbar(tinybars)
     }
 
+    /// Helper for things like `20 Gℏ -> Hbar`.
+    const fn from_integer_unit(amount: i64, unit: HbarUnit) -> Self {
+        Self::from_tinybars(amount * unit.tinybars())
+    }
+
+    // fixme(sr): poor wording on `Truncates...`
+    /// Convert from `amount` in `unit` to `Hbar`.
+    ///
+    /// Truncates `amount` to the nearest tinybar if the resulting `Hbar` is not an integer amount of tinybar.
+    ///
     /// # Panics
     ///
-    /// Panics if the caller specifies an amount of [`Tinybar`](HbarUnit::Tinybar) that
-    /// overflows the `i64` which underlies [`Hbar`].
+    /// * if `amount * unit.tinybars()` would overflow a i64.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hedera::Hbar;
+    /// use hedera::HbarUnit;
+    /// let value = Hbar::from_unit(20, HbarUnit::Millibar);
+    /// assert_eq!(value.to_string(), "0.02 ℏ");
+    /// ```
     #[must_use]
+    #[track_caller]
     pub fn from_unit<T>(amount: T, unit: HbarUnit) -> Self
     where
         T: Into<Decimal>,
     {
         let unit_tinybars: Decimal = unit.tinybars().into();
-        let amount_tinybars = amount.into() * unit_tinybars;
+        let amount_tinybars = amount.into().checked_mul(unit_tinybars).unwrap();
+
         Hbar::from_tinybars(amount_tinybars.to_i64().unwrap())
     }
 
+    /// Returns the value of `self` in `Tinybar`s.
     #[must_use]
     pub const fn to_tinybars(self) -> Tinybar {
         self.0
     }
 
+    /// Returns `self` as `Decimal` `unit`s.
     #[must_use]
     pub fn to(self, unit: HbarUnit) -> Decimal {
         Decimal::from(self.to_tinybars()) / Decimal::from(unit.tinybars())
     }
 
+    /// Returns `self` as `Decimal` hbars.
+    ///
+    /// # Examples
+    /// ```
+    /// use rust_decimal::Decimal;
+    /// use hedera::Hbar;
+    /// # use std::str::FromStr;
+    /// let value: Hbar = "20 mℏ".parse().unwrap();
+    ///
+    /// let value_decimal: Decimal = "0.02".parse().unwrap();
+    ///
+    /// assert_eq!(value.get_value(), value_decimal);
+    /// ```
     #[must_use]
     pub fn get_value(self) -> Decimal {
         self.to(HbarUnit::Hbar)
     }
 
+    /// Returns [`-self`](std::ops::Neg::neg).
     #[must_use]
     pub fn negated(self) -> Self {
         -self

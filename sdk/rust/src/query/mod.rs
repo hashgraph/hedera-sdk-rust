@@ -97,7 +97,7 @@ where
     /// the client will first request the cost of the given query from the node it will be
     /// submitted to and attach a payment for that amount from the operator account on the client.
     ///
-    /// If the returned value is greater than this value, a [`MaxQueryPaymentExceeded`] error
+    /// If the returned value is greater than this value, a [`MaxQueryPaymentExceeded`](crate::Error::MaxQueryPaymentExceeded) error
     /// will be returned.
     ///
     /// Defaults to the maximum payment amount configured on the client.
@@ -151,6 +151,8 @@ where
     D: QueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<D::Response> {
         if self.payment.body.data.amount.is_none() && self.data.is_payment_required() {
             // payment is required but none was specified, query the cost

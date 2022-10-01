@@ -34,14 +34,16 @@ use serde_with::{
 
 use crate::Error;
 
+/// The ID of an entity on the Hedera network.
 #[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
 pub struct EntityId {
-    /// The shard number (non-negative).
+    /// A non-negative number identifying the shard containing this entity.
     pub shard: u64,
 
-    /// The realm number (non-negative).
+    /// A non-negative number identifying the realm within the shard containing this entity.
     pub realm: u64,
 
+    /// A non-negative number identifying the entity within the realm containing this entity.
     pub num: u64,
 }
 

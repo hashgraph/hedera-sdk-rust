@@ -27,12 +27,14 @@ use crate::{
     ToProtobuf,
 };
 
+/// [`Signature`] + [`PublicKey`] pair.
 #[derive(Debug)]
 pub struct SignaturePair {
     pub(crate) signature: Signature,
     pub(crate) public: PublicKey,
 }
 
+/// A signature produced by a [`PrivateKey`](crate::PrivateKey)
 pub struct Signature(SignatureData);
 
 impl Signature {

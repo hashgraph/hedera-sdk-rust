@@ -23,6 +23,8 @@ use serde::{
     Serialize,
 };
 
+// todo(sr): Not happy with this doc.
+/// What type of freeze should be executed?
 #[derive(Serialize, Default, Deserialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
 #[serde(rename_all = "camelCase")]
 #[repr(C)]

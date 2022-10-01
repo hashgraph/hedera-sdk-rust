@@ -52,11 +52,11 @@ use crate::{
 
 /// Create a new token.
 ///
-/// After the token is created, the [`TokenId`] for it is in the receipt.
+/// After the token is created, the [`TokenId`](crate::TokenId) for it is in the receipt.
 ///
 /// The specified treasury account receives the initial supply of tokens, as well as the tokens
-/// from a [`TokenMintTransaction`] once executed. The balance of the treasury account is
-/// decreased when a [`TokenBurnTransaction`] is executed.
+/// from a [`TokenMintTransaction`](crate::TokenMintTransaction) once executed.
+/// The balance of the treasury account is decreased when a [`TokenBurnTransaction`](crate::TokenBurnTransaction) is executed.
 ///
 /// The `initial_supply` is in the lowest denomination of the token (like a tinybar, not an hbar).
 ///

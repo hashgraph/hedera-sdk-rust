@@ -31,7 +31,7 @@ use crate::{
 
 /// Possible token supply types.
 /// Can be used to restrict supply to a set maximum.
-/// Defaults to [`Infinite`].
+/// Defaults to [`Infinite`](Self::Infinite).
 #[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 #[repr(C)]
