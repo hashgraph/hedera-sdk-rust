@@ -67,6 +67,9 @@ pub enum Error {
     ReceiptStatus,
     Signature,
     RequestParse,
+    MnemonicParse,
+    MnemonicEntropy,
+    SignatureVerify,
 }
 
 impl Error {
@@ -91,6 +94,9 @@ impl Error {
             crate::Error::ReceiptStatus { .. } => Self::ReceiptStatus,
             crate::Error::Signature(_) => Self::Signature,
             crate::Error::RequestParse(_) => Self::RequestParse,
+            crate::Error::MnemonicParse { .. } => Self::MnemonicParse,
+            crate::Error::MnemonicEntropy(_) => Self::MnemonicEntropy,
+            crate::Error::SignatureVerify(_) => Self::SignatureVerify,
         };
 
         set_last_error(error);
