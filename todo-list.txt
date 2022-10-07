@@ -13,6 +13,9 @@
  - [ ] get_signatures()
  - [ ] freeze()
  - [ ] freeze_with()
+ - [ ] min/max backoff
+ - [ ] max attempts
+ - [ ] request/response listener
 [X] AccountAllowanceApproveTransaction
 [X] AccountAllowanceDeleteTransaction
 [X] AccountBalanceQuery
@@ -38,6 +41,8 @@
 [X] Client (present, but almost nothing of the public interface that exists in other SDKs is present)
  - [ ] The whole dang public interface: https://github.com/hashgraph/hedera-sdk-reference/blob/main/reference/core/Client.md
  - [ ] autoValidateChecksums: https://github.com/hashgraph/hedera-sdk-java/blob/main/examples/src/main/java/ValidateChecksumExample.java
+ - [ ] min/max backoff
+ - [ ] max attempts
 [X] ContractByteCodeQuery
 [X] ContractCallQuery
 [ ] ContractCreateFlow
@@ -123,6 +128,10 @@
  - [X] from_bytes()
 [ ] Pem
 [ ] PrngTransaction
+[X] Query
+  - [ ] min/max backoff
+  - [ ] max attempts
+  - [ ] request/response listener
 [X] ScheduleCreateTransaction
 [X] ScheduleDeleteTransaction
 [X] ScheduleId
