@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use itertools::Itertools;
 use serde_with::{
     serde_as,
     skip_serializing_none,
@@ -348,7 +347,7 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
             supply_type: self.token_supply_type.to_protobuf().into(),
             max_supply: self.max_supply as i64,
             fee_schedule_key: self.fee_schedule_key.as_ref().map(Key::to_protobuf),
-            custom_fees: self.custom_fees.iter().map(CustomFee::to_protobuf).collect_vec(),
+            custom_fees: self.custom_fees.iter().map(CustomFee::to_protobuf).collect(),
             pause_key: self.pause_key.as_ref().map(Key::to_protobuf),
         })
     }

@@ -32,7 +32,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let _ = dotenv::dotenv();
+    let _ = dotenvy::dotenv();
     let args = Args::parse();
 
     let client = Client::for_testnet();

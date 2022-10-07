@@ -72,12 +72,10 @@ impl FromStr for EntityId {
         let parts: Vec<u64> =
             s.splitn(3, '.').map(u64::from_str).try_collect().map_err(Error::basic_parse)?;
 
-        if parts.len() == 1 {
-            Ok(Self::from(parts[0]))
-        } else if parts.len() == 3 {
-            Ok(Self { shard: parts[0], realm: parts[1], num: parts[2] })
-        } else {
-            Err(Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`)"))
+        match *parts.as_slice() {
+            [num] => Ok(Self::from(num)),
+            [shard, realm, num] => Ok(Self { shard, realm, num }),
+            _ => Err(Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`)")),
         }
     }
 }

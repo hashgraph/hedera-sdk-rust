@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use itertools::Itertools;
 use serde_with::{
     serde_as,
     skip_serializing_none,
@@ -100,7 +99,7 @@ impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect_vec();
+        let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect();
 
         services::transaction_body::Data::TokenAssociate(services::TokenAssociateTransactionBody {
             account,
