@@ -42,7 +42,7 @@ pub extern "C" fn hedera_private_key_generate_ed25519() -> *mut PrivateKey {
 /// Generates a new ECDSA(secp256k1) private key.
 #[no_mangle]
 pub extern "C" fn hedera_private_key_generate_ecdsa_secp256k1() -> *mut PrivateKey {
-    let key = PrivateKey::generate_ecdsa_secp256k1();
+    let key = PrivateKey::generate_ecdsa();
     let key = Box::into_raw(Box::new(key));
 
     key
