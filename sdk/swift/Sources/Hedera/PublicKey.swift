@@ -53,9 +53,11 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     public var description: String {
         let descriptionBytes = hedera_public_key_to_string(ptr)
-        let description = String(validatingUTF8: descriptionBytes!)!
+        return String.init(hString: descriptionBytes!)
+    }
 
-        return description
+    public func toAccountId(shard: UInt64, realm: UInt64) -> AccountId {
+        AccountId.init(shard: shard, realm: realm, alias: self)
     }
 
     public func encode(to encoder: Encoder) throws {

@@ -28,27 +28,24 @@ use crate::{
 #[no_mangle]
 pub extern "C" fn hedera_client_for_mainnet() -> *mut Client {
     let client = Client::for_mainnet();
-    let client = Box::into_raw(Box::new(client));
 
-    client
+    Box::into_raw(Box::new(client))
 }
 
 /// Construct a Hedera client pre-configured for testnet access.
 #[no_mangle]
 pub extern "C" fn hedera_client_for_testnet() -> *mut Client {
     let client = Client::for_testnet();
-    let client = Box::into_raw(Box::new(client));
 
-    client
+    Box::into_raw(Box::new(client))
 }
 
 /// Construct a Hedera client pre-configured for previewnet access.
 #[no_mangle]
 pub extern "C" fn hedera_client_for_previewnet() -> *mut Client {
     let client = Client::for_previewnet();
-    let client = Box::into_raw(Box::new(client));
 
-    client
+    Box::into_raw(Box::new(client))
 }
 
 /// Release memory associated with the previously-opened Hedera client.

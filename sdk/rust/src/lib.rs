@@ -21,6 +21,7 @@
 // todo: more indepth documentation
 //! Hedera Rust SDK.
 
+#![forbid(unsafe_op_in_unsafe_fn)]
 #![warn(
     absolute_paths_not_starting_with_crate,
     deprecated_in_future,

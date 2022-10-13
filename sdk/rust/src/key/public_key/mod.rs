@@ -272,7 +272,9 @@ impl PublicKey {
         }
     }
 
-    pub(crate) fn to_bytes_raw(self) -> Vec<u8> {
+    /// Return this `PublicKey`, serialized as bytes.
+    #[must_use]
+    pub fn to_bytes_raw(self) -> Vec<u8> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => key.to_bytes().as_slice().to_vec(),
             PublicKeyData::Ecdsa(key) => key.to_bytes().as_slice().to_vec(),
