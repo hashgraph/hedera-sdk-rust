@@ -22,13 +22,13 @@
 mod error;
 
 mod account_id;
+mod c_util;
 mod callback;
 mod client;
 mod entity_id;
 mod execute;
+mod key;
 mod nft_id;
-mod private_key;
-mod public_key;
 mod runtime;
 mod subscribe;
 mod util;

@@ -44,8 +44,8 @@ thread_local! {
 #[derive(serde::Deserialize)]
 #[serde(untagged)]
 enum AnyRequest {
-    Transaction(AnyTransaction),
-    Query(AnyQuery),
+    Transaction(Box<AnyTransaction>),
+    Query(Box<AnyQuery>),
     MirrorQuery(AnyMirrorQuery),
 }
 
