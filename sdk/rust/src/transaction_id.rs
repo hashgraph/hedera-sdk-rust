@@ -60,7 +60,7 @@ pub struct TransactionId {
 
     /// The time from when this transaction is valid.
     ///
-    /// When a transaction is submitted there is additionally a 
+    /// When a transaction is submitted there is additionally a
     /// [`valid_duration`](crate::Transaction::transaction_valid_duration) (defaults to 120s)
     /// and together they define a time window that a transaction may be processed in.
     pub valid_start: OffsetDateTime,

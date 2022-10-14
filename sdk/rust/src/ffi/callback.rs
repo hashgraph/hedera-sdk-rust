@@ -37,7 +37,7 @@ impl<T> Callback<T> {
     }
 
     pub(super) fn call(&self, err: Error, value: T) {
-        (self.handle)(self.context, err, value)
+        (self.handle)(self.context, err, value);
     }
 }
 

@@ -35,8 +35,7 @@ public enum Program {
 
         // Generate a ECDSA(secp256k1) key
         // This is recommended for better compatibility with Ethereum
-
-        keyPrivate = PrivateKey.generateEcdsaSecp256k1()
+        keyPrivate = PrivateKey.generateEcdsa()
         keyPublic = keyPrivate.publicKey
 
         print("ecdsa(secp256k1) private = \(keyPrivate)")

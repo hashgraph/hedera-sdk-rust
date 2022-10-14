@@ -66,7 +66,7 @@ pub enum HbarUnit {
 
 impl HbarUnit {
     /// Returns the the value of `self` in `Tinybar`.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use hedera::HbarUnit;
@@ -78,7 +78,7 @@ impl HbarUnit {
     }
 
     /// Returns a `str` containing the symbol for `self`.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use hedera::HbarUnit;
