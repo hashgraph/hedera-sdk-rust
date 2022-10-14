@@ -20,7 +20,7 @@
 
 import Foundation
 
-public struct LedgerId: ExpressibleByStringLiteral, Equatable, Codable, CustomStringConvertible {
+public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable, CustomStringConvertible {
     public static let mainnet = LedgerId(Data([0]))
 
     public static let testnet = LedgerId(Data([1]))
