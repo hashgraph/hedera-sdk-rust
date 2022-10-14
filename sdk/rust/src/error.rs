@@ -119,6 +119,15 @@ pub enum Error {
     #[error("failed to parse a key: {0}")]
     KeyParse(#[source] BoxStdError),
 
+    /// Failed to derive a [`PrivateKey`](crate::PrivateKey) from another `PrivateKey`.
+    ///
+    /// Examples of when this can happen (non-exhaustive):
+    /// - [`PrivateKey::derive`](fn@crate::PrivateKey::derive) when the `PrivateKey` doesn't have a chain code.
+    /// - [`PrivateKey::derive`](fn@crate::PrivateKey::derive)
+    ///   or [`PrivateKey::legacy_derive`](fn@crate::PrivateKey::legacy_derive) on an `Ecsda` key.
+    #[error("Failed to derive a key: {0}")]
+    KeyDerive(#[source] BoxStdError),
+
     /// Failed to parse a [`Mnemonic`](crate::Mnemonic) due to the given `reason`.
     ///
     /// the `Mnemonic` is provided because invalid `Mnemonics`
@@ -194,6 +203,10 @@ impl Error {
 
     pub(crate) fn key_parse<E: Into<BoxStdError>>(error: E) -> Self {
         Self::KeyParse(error.into())
+    }
+
+    pub(crate) fn key_derive<E: Into<BoxStdError>>(error: E) -> Self {
+        Self::KeyDerive(error.into())
     }
 
     pub(crate) fn basic_parse<E: Into<BoxStdError>>(error: E) -> Self {

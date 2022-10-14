@@ -154,7 +154,7 @@ impl PrivateKey {
     /// Parse a `PrivateKey` from a sequence of bytes.
     ///
     /// # Errors
-    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PublicKey`.
+    /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PrivateKey`.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         if bytes.len() == 32 || bytes.len() == 64 {
             return Self::from_bytes_ed25519(bytes);
@@ -277,14 +277,14 @@ impl PrivateKey {
         Self::from_bytes_der(&der)
     }
 
-    /// Return this `PrivateKey`, serialized as bytes.
+    /// Return this `PrivateKey`, serialized as der encoded bytes.
     // panic should be impossible (`unreachable`)
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
     pub fn to_bytes_der(&self) -> Vec<u8> {
         let mut inner = Vec::with_capacity(34);
 
-        pkcs8::der::asn1::OctetStringRef::new(&self.to_bytes_raw())
+        pkcs8::der::asn1::OctetStringRef::new(&self.to_bytes_raw_internal())
             .unwrap()
             .encode_to_vec(&mut inner)
             .unwrap();
@@ -308,12 +308,19 @@ impl PrivateKey {
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         match &self.0.data {
-            PrivateKeyData::Ed25519(_) => self.to_bytes_raw().as_slice().to_vec(),
+            PrivateKeyData::Ed25519(_) => self.to_bytes_raw(),
             PrivateKeyData::Ecdsa(_) => self.to_bytes_der(),
         }
     }
 
-    fn to_bytes_raw(&self) -> [u8; 32] {
+    /// Return this `PrivateKey`, serialized as bytes.
+    #[must_use]
+    pub fn to_bytes_raw(&self) -> Vec<u8> {
+        self.to_bytes_raw_internal().as_slice().to_vec()
+    }
+
+    #[must_use]
+    fn to_bytes_raw_internal(&self) -> [u8; 32] {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => key.secret.to_bytes(),
             PrivateKeyData::Ecdsa(key) => key.to_bytes().into(),
@@ -329,21 +336,20 @@ impl PrivateKey {
     /// Returns the raw bytes of `self` after hex encoding.
     #[must_use]
     pub fn to_string_raw(&self) -> String {
-        hex::encode(self.to_bytes_raw())
+        hex::encode(self.to_bytes_raw_internal())
     }
 
     /// Creates an [`AccountId`] with the given `shard`, `realm`, and `self.public_key()` as an [`alias`](AccountId::alias).
     ///
     /// # Examples
     ///
-    /// FIXME: this is 100% broken (but it's not this function's fault).
-    /// ```,no_run
-    /// use hedera::PublicKey;
+    /// ```
+    /// use hedera::PrivateKey;
     ///
-    /// let key: PublicKey = "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7".parse().unwrap();
+    /// let key: PrivateKey = "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048".parse().unwrap();
     ///
     /// let account_id = key.to_account_id(0, 0);
-    /// assert_eq!(account_id.to_string(), "0.0.<todo>");
+    /// assert_eq!(account_id.to_string(), "0.0.3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
     /// ```
     #[inline(always)]
     #[must_use]
@@ -361,6 +367,47 @@ impl PrivateKey {
         }
     }
 
+    /// Returns `true` if `self` is an Ed25519 `PrivateKey`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use hedera::PrivateKey;
+    /// let sk = PrivateKey::generate_ed25519();
+    /// 
+    /// assert!(sk.is_ed25519());
+    /// ```
+    /// ```
+    /// use hedera::PrivateKey
+    /// let sk = PrivateKey::generate_ecdsa();
+    /// 
+    /// assert!(!sk.is_ed25519());
+    /// ```
+    #[must_use]
+    pub fn is_ed25519(&self) -> bool {
+        matches!(self.0.data, PrivateKeyData::Ed25519(_))
+    }
+
+
+    /// Returns `true` if this is an ECDSA(secp256k1) `PrivateKey`.
+    /// 
+    /// # Examples
+    /// ```
+    /// use hedera::PrivateKey
+    /// let sk = PrivateKey::generate_ecdsa();
+    /// 
+    /// assert!(sk.is_ecdsa());
+    /// ```
+    /// ```
+    /// use hedera::PrivateKey;
+    /// let sk = PrivateKey::generate_ed25519();
+    /// 
+    /// assert!(!sk.is_ecdsa());
+    /// ```
+    #[must_use]
+    pub fn is_ecdsa(&self) -> bool {
+        matches!(self.0.data, PrivateKeyData::Ecdsa(_))
+    }
+
     pub(crate) fn sign(&self, message: &[u8]) -> SignaturePair {
         let public = self.public_key();
 
@@ -376,16 +423,18 @@ impl PrivateKey {
     /// Derives a child key based on `index`.
     ///
     /// # Errors
-    /// todo: (what error variant) if this is an Ecdsa key (unsupported operation)
-    /// todo: (what error variant) if this key has no `chain_code` (key is not derivable)
+    /// - [`Error::KeyDerive`] if this is an Ecdsa key (unsupported operation)
+    /// - [`Error::KeyDerive`] if this key has no `chain_code` (key is not derivable)
+    // this is specifically for the two `try_into`s which depend on `split_array_ref`.
+    // Any panic would indicate a bug in this crate or a dependency of it, not in user code.
+    #[allow(clippy::missing_panics_doc)]
     pub fn derive(&self, index: i32) -> crate::Result<Self> {
         const HARDEND_MASK: u32 = 1 << 31;
         let index = index as u32;
 
         let chain_code = match &self.0.chain_code {
             Some(chain_code) => chain_code,
-            // Key is not derivable
-            None => todo!(),
+            None => return Err(Error::key_derive("key is underivable")),
         };
 
         match &self.0.data {
@@ -414,16 +463,18 @@ impl PrivateKey {
 
                 Ok(Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, chain_code))))
             }
-            PrivateKeyData::Ecdsa(_) => todo!(),
+            PrivateKeyData::Ecdsa(_) => {
+                Err(Error::key_derive("Ecdsa private keys don't currently support derivation"))
+            }
         }
     }
 
     // todo: what do we do about i32?
     // It's basically just a cast to support them, but, unlike Java, operator overloading doesn't exist.
-    /// Derive a `PrivateKey` based on the `index`.
+    /// Derive a `PrivateKey` based on `index`.
     ///
     /// # Errors
-    /// - <todo: what error variant> if this is an Ecdsa key (unsupported operation)
+    /// - [`Error::KeyDerive`] if this is an Ecdsa key (unsupported operation)
     // ⚠️ unaudited cryptography ⚠️
     pub fn legacy_derive(&self, index: i64) -> crate::Result<Self> {
         match &self.0.data {
@@ -455,8 +506,9 @@ impl PrivateKey {
                 Self::from_bytes_ed25519(&mat)
             }
 
-            // need to add an error variant, key derivation doesn't exist for Ecdsa keys in Java impl.
-            PrivateKeyData::Ecdsa(_) => todo!(),
+            PrivateKeyData::Ecdsa(_) => {
+                Err(Error::key_derive("Ecdsa private keys don't currently support derivation"))
+            }
         }
     }
 

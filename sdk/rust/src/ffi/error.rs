@@ -21,6 +21,7 @@
 use std::cell::RefCell;
 use std::ffi::CString;
 use std::os::raw::c_char;
+use std::ptr;
 
 thread_local! {
     static LAST_ERROR: RefCell<Option<crate::Error>> = RefCell::new(None);
@@ -42,7 +43,7 @@ macro_rules! ffi_try {
 pub(crate) fn set_last_error(error: crate::Error) {
     LAST_ERROR.with(|slot| {
         slot.borrow_mut().replace(error);
-    })
+    });
 }
 
 /// Represents any possible result from a fallible function in the Hedera SDK.
@@ -60,6 +61,7 @@ pub enum Error {
     QueryNoPaymentPreCheckStatus,
     BasicParse,
     KeyParse,
+    KeyDerive,
     NoPayerAccountOrTransactionId,
     MaxQueryPaymentExceeded,
     NodeAccountUnknown,
@@ -87,6 +89,7 @@ impl Error {
             crate::Error::QueryNoPaymentPreCheckStatus { .. } => Self::QueryNoPaymentPreCheckStatus,
             crate::Error::BasicParse(_) => Self::BasicParse,
             crate::Error::KeyParse(_) => Self::KeyParse,
+            crate::Error::KeyDerive(_) => Self::KeyDerive,
             crate::Error::NoPayerAccountOrTransactionId => Self::NoPayerAccountOrTransactionId,
             crate::Error::MaxQueryPaymentExceeded { .. } => Self::MaxQueryPaymentExceeded,
             crate::Error::NodeAccountUnknown(_) => Self::NodeAccountUnknown,
@@ -105,18 +108,22 @@ impl Error {
     }
 }
 
-/// Returns English-language text that describes the last error. Undefined if there has been
+/// Returns English-language text that describes the last error. `null` if there has been
 /// no last error.
+///
+/// Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
+///
+/// # Safety
+/// - the length of the returned string must not be modified.
+/// - the returned string must NOT be freed with `free`.
 #[no_mangle]
-pub extern "C" fn hedera_error_message() -> *const c_char {
-    LAST_ERROR_MESSAGE.with(|message| {
-        LAST_ERROR.with(|error| {
-            if let Some(error) = &*error.borrow() {
-                *message.borrow_mut() = CString::new(error.to_string()).unwrap();
-            }
-        });
+pub extern "C" fn hedera_error_message() -> *mut c_char {
+    LAST_ERROR.with(|error| {
+        if let Some(error) = &*error.borrow() {
+            return CString::new(error.to_string()).unwrap().into_raw();
+        }
 
-        message.borrow().as_ptr()
+        ptr::null_mut()
     })
 }
 
@@ -125,10 +132,8 @@ pub extern "C" fn hedera_error_message() -> *const c_char {
 #[no_mangle]
 pub extern "C" fn hedera_error_grpc_status() -> i32 {
     LAST_ERROR.with(|error| {
-        if let Some(error) = &*error.borrow() {
-            if let crate::Error::GrpcStatus(status) = error {
-                return status.code() as i32;
-            }
+        if let Some(crate::Error::GrpcStatus(status)) = &*error.borrow() {
+            return status.code() as i32;
         }
 
         // NOTE: -1 is an unlikely sentinel value for if this error wasn't a GrpcStatus
