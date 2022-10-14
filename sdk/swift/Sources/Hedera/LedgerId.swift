@@ -20,12 +20,20 @@
 
 import Foundation
 
-public struct LedgerId: Equatable, Codable, CustomStringConvertible {
+public struct LedgerId: ExpressibleByStringLiteral, Equatable, Codable, CustomStringConvertible {
     public static let mainnet = LedgerId(Data([0]))
 
     public static let testnet = LedgerId(Data([1]))
 
     public static let previewnet = LedgerId(Data([2]))
+
+    public static func fromBytes(_ bytes: Data) -> Self {
+        Self.init(bytes)
+    }
+
+    public static func fromString(_ description: Data) -> Self? {
+        Self.init(description)
+    }
 
     public init(_ bytes: Data) {
         self.bytes = bytes
@@ -35,14 +43,25 @@ public struct LedgerId: Equatable, Codable, CustomStringConvertible {
         self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
+    public init(stringLiteral value: StringLiteralType) {
+        self.init(value)!
+    }
+
     public init?(_ description: String) {
-        let bytes = Data(base64Encoded: description)
-
-        if (bytes == nil) {
-            return nil
+        switch description {
+        case "mainnet":
+            self = Self.mainnet
+            return
+        case "testnet":
+            self = Self.testnet
+            return
+        case "previewnet":
+            self = Self.previewnet
+            return
+        default:
+            guard let bytes = Data(hexEncoded: description) else { return nil }
+            self.bytes = bytes
         }
-
-        self.bytes = bytes!
     }
 
     private let bytes: Data
@@ -70,7 +89,22 @@ public struct LedgerId: Equatable, Codable, CustomStringConvertible {
     }
 
     public var description: String {
-        bytes.base64EncodedString()
+        if isMainnet() {
+            return "mainnet"
+        }
+
+        if isTestnet() {
+            return "testnet"
+        }
+
+        if isPreviewnet() {
+            return "previewnet"
+        }
+
+        return bytes.hexStringEncoded()
     }
 
+    public func toString() -> String {
+        description
+    }
 }
