@@ -113,10 +113,10 @@ impl AccountAllowanceApproveTransaction {
                 && allowance.spender_account_id == spender_account_id
                 && allowance.approved_for_all.is_none()
         }) {
-            allowance.serial_numbers.push(nft_id.serial_number as i64);
+            allowance.serials.push(nft_id.serial as i64);
         } else {
             self.body.data.nft_allowances.push(NftAllowance {
-                serial_numbers: vec![nft_id.serial_number as i64],
+                serials: vec![nft_id.serial as i64],
                 token_id: nft_id.token_id,
                 spender_account_id,
                 owner_account_id,
@@ -144,7 +144,7 @@ impl AccountAllowanceApproveTransaction {
             spender_account_id,
             owner_account_id,
             token_id,
-            serial_numbers: Vec::new(),
+            serials: Vec::new(),
         });
 
         self
@@ -193,7 +193,7 @@ struct NftAllowance {
     spender_account_id: AccountId,
 
     /// The list of serial numbers that the spender is permitted to transfer.
-    serial_numbers: Vec<i64>,
+    serials: Vec<i64>,
 
     /// If true, the spender has access to all of the owner's NFT units of type tokenId (currently
     /// owned and any in the future).
@@ -278,7 +278,7 @@ impl ToProtobuf for NftAllowance {
             token_id: Some(self.token_id.to_protobuf()),
             owner: Some(self.owner_account_id.to_protobuf()),
             spender: Some(self.spender_account_id.to_protobuf()),
-            serial_numbers: self.serial_numbers.clone(),
+            serial_numbers: self.serials.clone(),
             approved_for_all: self.approved_for_all,
             delegating_spender: self
                 .delegating_spender_account_id

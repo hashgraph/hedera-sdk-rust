@@ -36,13 +36,13 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         if var allowance = nftAllowances.first(where: { (allowance) in
             allowance.tokenId == nftId.tokenId && allowance.ownerAccountId == ownerAccountId
         }) {
-            allowance.serialNumbers.append(nftId.serialNumber)
+            allowance.serials.append(nftId.serial)
         } else {
             nftAllowances.append(
                 NftRemoveAllowance(
                     tokenId: nftId.tokenId,
                     ownerAccountId: ownerAccountId,
-                    serialNumbers: [nftId.serialNumber]
+                    serials: [nftId.serial]
                 ))
         }
 
@@ -65,5 +65,5 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
 private struct NftRemoveAllowance: Encodable {
     let tokenId: TokenId
     let ownerAccountId: AccountId
-    var serialNumbers: [UInt64]
+    var serials: [UInt64]
 }

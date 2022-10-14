@@ -26,27 +26,27 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
     public let tokenId: TokenId
 
     /// The unique identifier for this instance.
-    public let serialNumber: UInt64
+    public let serial: UInt64
 
-    /// Create a new `NftId` from the passed `tokenId` and `serialNumber`.
-    public init(tokenId: TokenId, serialNumber: UInt64) {
+    /// Create a new `NftId` from the passed `tokenId` and `serial`.
+    public init(tokenId: TokenId, serial: UInt64) {
         self.tokenId = tokenId
-        self.serialNumber = serialNumber
+        self.serial = serial
     }
 
     public required convenience init?(_ description: String) {
         var shard: UInt64 = 0
         var realm: UInt64 = 0
         var num: UInt64 = 0
-        var serialNumber: UInt64 = 0
+        var serial: UInt64 = 0
 
-        let err = hedera_nft_id_from_string(description, &shard, &realm, &num, &serialNumber)
+        let err = hedera_nft_id_from_string(description, &shard, &realm, &num, &serial)
 
         if err != HEDERA_ERROR_OK {
             return nil
         }
 
-        self.init(tokenId: TokenId(shard: shard, realm: realm, num: num), serialNumber: serialNumber)
+        self.init(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
     }
 
     public required convenience init(stringLiteral value: StringLiteralType) {
@@ -64,10 +64,10 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
     }
 
     public static func == (lhs: NftId, rhs: NftId) -> Bool {
-        lhs.serialNumber == rhs.serialNumber && lhs.tokenId == rhs.tokenId
+        lhs.serial == rhs.serial && lhs.tokenId == rhs.tokenId
     }
 
     public var description: String {
-        "\(tokenId)/\(serialNumber)"
+        "\(tokenId)/\(serial)"
     }
 }
