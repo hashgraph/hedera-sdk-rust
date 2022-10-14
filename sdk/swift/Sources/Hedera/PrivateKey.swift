@@ -21,10 +21,19 @@
 import CHedera
 import Foundation
 
+private typealias unsafeFromBytesFunc = @convention(c) (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?) -> HederaError
+
+// safety: `hedera_bytes_free` needs to be called so...
+// perf: might as well enable use of the no copy constructor.
+private let unsafeCHederaBytesFree: Data.Deallocator = .custom {
+    (buf, size) in
+    hedera_bytes_free(buf, size)
+}
+
 /// A private key on the Hedera network.
 public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     internal let ptr: OpaquePointer
-    
+
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }
@@ -45,11 +54,11 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         PublicKey(hedera_private_key_get_public_key(ptr))
     }
 
-    public static func fromBytes(bytes: Data) throws -> Self {
+    private static func unsafeFromAnyBytes(_ bytes: Data, _ f: unsafeFromBytesFunc) throws -> Self {
         let ptr = try bytes.withUnsafeBytes {
             (pointer: UnsafeRawBufferPointer) in
             var key = OpaquePointer(bitPattern: 0)
-            let err = hedera_private_key_from_bytes(pointer.baseAddress, pointer.count, &key)
+            let err = f(pointer.bindMemory(to: UInt8.self).baseAddress, pointer.count, &key)
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!
@@ -61,53 +70,23 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return Self(ptr)
     }
 
-    public static func fromBytesEd25519(bytes: Data) throws -> Self {
-        let ptr = try ed25519Bytes.withUnsafeBytes {
-            (pointer: UnsafeRawBufferPointer) in
-            var key = OpaquePointer(bitPattern: 0)
-            let err = hedera_private_key_from_bytes_ed25519(pointer.baseAddress, pointer.count, &key)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
-
-            return key!
-        }
-
-        return Self(ptr)
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes)
     }
 
-    public static func fromBytesEcdsa(bytes: Data) throws -> Self {
-        let ptr = try ecdsaBytes.withUnsafeBytes {
-            (pointer: UnsafeRawBufferPointer) in
-            var key = OpaquePointer(bitPattern: 0)
-            let err = hedera_private_key_from_bytes_ecdsa(pointer.baseAddress, pointer.count, &key);
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
-
-            return key!
-        }
-
-        return Self(ptr)
+    public static func fromBytesEd25519(_ bytes: Data) throws -> Self {
+        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_ed25519)
     }
 
-    public static func fromDer(bytes: Data) throws {
-        ptr = try der.withUnsafeBytes {
-            (pointer: UnsafeRawBufferPointer) in
-            var key = OpaquePointer(bitPattern: 0)
-            let err = hedera_private_key_from_bytes_der(pointer.baseAddress, pointer.count, &key);
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
-
-            return key!
-        }
+    public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
+        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_ed25519)
     }
 
-    public static func fromString(description: String) throws -> Self {
+    public static func fromBytesDer(_ bytes: Data) throws -> Self {
+        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_ed25519)
+    }
+
+    public static func fromString(_ description: String) throws -> Self {
         var key = OpaquePointer(bitPattern: 0)
         let err = hedera_private_key_from_string(description, &key)
 
@@ -133,9 +112,9 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         self.init(value)!
     }
 
-    public static func fromStringDer(description: String) throws -> Self {
+    public static func fromStringDer(_ description: String) throws -> Self {
         var key = OpaquePointer(bitPattern: 0)
-        let err = hedera_private_key_from_string_der(derString, &key)
+        let err = hedera_private_key_from_string_der(description, &key)
 
         if err != HEDERA_ERROR_OK {
             throw HError(err)!
@@ -144,9 +123,9 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return Self(key!)
     }
 
-    public static func fromStringEd25519(description: String) throws -> Self {
+    public static func fromStringEd25519(_ description: String) throws -> Self {
         var key = OpaquePointer(bitPattern: 0)
-        let err = hedera_private_key_from_string_ed25519(ed25519String, &key)
+        let err = hedera_private_key_from_string_ed25519(description, &key)
 
         if err != HEDERA_ERROR_OK {
             throw HError(err)!
@@ -155,9 +134,9 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return Self(key!)
     }
 
-    public static func fromStringEcdsa(description: String) throws -> Self {
+    public static func fromStringEcdsa(_ description: String) throws -> Self {
         var key = OpaquePointer(bitPattern: 0)
-        let err = hedera_private_key_from_string_ecdsa(ecdsaString, &key)
+        let err = hedera_private_key_from_string_ecdsa(description, &key)
 
         if err != HEDERA_ERROR_OK {
             throw HError(err)!
@@ -167,7 +146,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     /// Parse a `PrivateKey` from [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded bytes.
-    public static func fromPem(pem: String) throws -> Self {
+    public static func fromPem(_ pem: String) throws -> Self {
         var key = OpaquePointer(bitPattern: 0)
         let err = hedera_private_key_from_pem(pem, &key)
 
@@ -182,36 +161,21 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_private_key_to_bytes_der(ptr, &buf)
 
-        // safety: this deallocator is needed.
-        // perf: might as well use the no-copy ctor.
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .custom {
-            (buf, size) in
-            hedera_bytes_free(buf, size)
-        })
+        return Data(bytesNoCopy: buf!, count: size, deallocator: unsafeCHederaBytesFree)
     }
 
-    public static func toBytes() -> Data {
+    public func toBytes() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_private_key_to_bytes(ptr, &buf)
 
-        // safety: this deallocator is needed.
-        // perf: might as well use the no-copy ctor.
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .custom {
-            (buf, size) in
-            hedera_bytes_free(buf, size)
-        })
+        return Data(bytesNoCopy: buf!, count: size, deallocator: unsafeCHederaBytesFree)
     }
 
     public func toBytesRaw() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_private_key_to_bytes_raw(ptr, &buf)
 
-        // safety: this deallocator is needed.
-        // perf: might as well use the no-copy ctor.
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .custom {
-            (buf, size) in
-            hedera_bytes_free(buf, size)
-        })
+        return Data(bytesNoCopy: buf!, count: size, deallocator: unsafeCHederaBytesFree)
     }
 
     public var description: String {
@@ -234,7 +198,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public func toAccountId(shard: UInt64, realm: UInt64) -> AccountId {
-        publicKey.toAccountId(shard: shard, realm: realm)
+        getPublicKey().toAccountId(shard: shard, realm: realm)
     }
 
     public func isEd25519() -> Bool {

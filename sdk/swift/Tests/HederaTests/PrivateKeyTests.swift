@@ -61,7 +61,7 @@ final class PrivateKeyTests: XCTestCase {
                         MC4CAQAwBQYDK2VwBCIEINtIS4KOZLLY8SzjwKDpOguMznrxu485yXcyOUSCU44Q
                         -----END PRIVATE KEY-----
                         """
-        let sk = try PrivateKey(pem: pemString);
+        let sk = try PrivateKey.fromPem(pemString);
 
         XCTAssertEqual(sk.description, "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10")
     }
@@ -74,7 +74,7 @@ final class PrivateKeyTests: XCTestCase {
                     -----END PRIVATE KEY-----
                     """
 
-        let sk = try PrivateKey(pem: pemString)
+        let sk = try PrivateKey.fromPem(pemString)
 
         XCTAssertEqual(sk.description, "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
     }
@@ -87,9 +87,8 @@ final class PrivateKeyTests: XCTestCase {
                         -----END PRIVATE KEY-----
                         """
 
-        XCTAssertThrowsError(try PrivateKey(pem: pemString)) { error in
+        XCTAssertThrowsError(try PrivateKey.fromPem(pemString)) { error in
             XCTAssertEqual((error as! HError).kind, HError.ErrorKind.keyParse)
         }
-
     }
 }
