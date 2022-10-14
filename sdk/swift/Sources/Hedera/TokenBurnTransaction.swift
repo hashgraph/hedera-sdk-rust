@@ -64,6 +64,14 @@ public final class TokenBurnTransaction: Transaction {
         return self
     }
 
+    /// Add a serial number to the list of serial numbers.
+    @discardableResult
+    public func addSerial(_ serial: UInt64) -> Self {
+        serials.append(serial)
+
+        return self
+    }
+
     private enum CodingKeys: String, CodingKey {
         case tokenId
         case amount
