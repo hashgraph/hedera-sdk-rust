@@ -81,14 +81,14 @@ public final class AccountAllowanceApproveTransaction: Transaction {
             allowance.tokenId == nftId.tokenId && allowance.spenderAccountId == spenderAccountId
                 && allowance.ownerAccountId == ownerAccountId && allowance.approvedForAll == nil
         }) {
-            allowance.serialNumbers.append(nftId.serialNumber)
+            allowance.serials.append(nftId.serial)
         } else {
             nftAllowances.append(
                 NftAllowance(
                     tokenId: nftId.tokenId,
                     ownerAccountId: ownerAccountId,
                     spenderAccountId: spenderAccountId,
-                    serialNumbers: [nftId.serialNumber],
+                    serials: [nftId.serial],
                     approvedForAll: nil,
                     delegatingSpenderAccountId: nil
                 ))
@@ -110,7 +110,7 @@ public final class AccountAllowanceApproveTransaction: Transaction {
                 tokenId: tokenId,
                 ownerAccountId: ownerAccountId,
                 spenderAccountId: spenderAccountId,
-                serialNumbers: [],
+                serials: [],
                 approvedForAll: true,
                 delegatingSpenderAccountId: nil
             ))
@@ -152,7 +152,7 @@ private struct NftAllowance: Codable {
     let tokenId: TokenId
     let ownerAccountId: AccountId
     let spenderAccountId: AccountId
-    var serialNumbers: [UInt64]
+    var serials: [UInt64]
     let approvedForAll: Bool?
     let delegatingSpenderAccountId: AccountId?
 }

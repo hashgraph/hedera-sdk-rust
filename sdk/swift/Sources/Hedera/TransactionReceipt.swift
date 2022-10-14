@@ -72,7 +72,7 @@ public struct TransactionReceipt: Codable {
 
     /// In the receipt of a `TokenMintTransaction` for tokens of type `NonFungibleUnique`,
     /// the serial numbers of the newly created NFTs.
-    public let serialNumbers: [UInt64]?
+    public let serials: [UInt64]?
 
     /// The receipts of processing all transactions with the given id, in consensus time order.
     public let duplicates: [TransactionReceipt]
