@@ -12,7 +12,7 @@ use crate::ffi::util::cstr_from_ptr;
 mod private;
 mod public;
 
-/// Parse a `PrivateKey` with the given function.
+/// Parse a `key` with the given function.
 ///
 /// Internal function to reduce boilerplate.
 ///
