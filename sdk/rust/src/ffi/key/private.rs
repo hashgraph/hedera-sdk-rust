@@ -399,10 +399,10 @@ pub unsafe extern "C" fn hedera_private_key_to_string_raw(key: *mut PrivateKey) 
 // the wording is a little confusing because it says "which is implementation defined"
 // but it means that Rust `bool` == c17 `bool` == "something"
 /// Returns `true` if `key` is an Ed25519 `PrivateKey`.
-/// 
+///
 /// # Safety
 /// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
-/// 
+///
 /// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
 #[no_mangle]
 pub unsafe extern "C" fn hedera_private_key_is_ed25519(key: *mut PrivateKey) -> bool {
@@ -413,10 +413,10 @@ pub unsafe extern "C" fn hedera_private_key_is_ed25519(key: *mut PrivateKey) -> 
 }
 
 /// Returns `true` if `key` is an ECDSA(secp256k1) `PrivateKey`.
-/// 
+///
 /// # Safety
 /// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
-/// 
+///
 /// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
 #[no_mangle]
 pub unsafe extern "C" fn hedera_private_key_is_ecdsa(key: *mut PrivateKey) -> bool {
@@ -425,8 +425,6 @@ pub unsafe extern "C" fn hedera_private_key_is_ecdsa(key: *mut PrivateKey) -> bo
 
     key.is_ecdsa()
 }
-
-
 
 /// Derives a child key based on `index`.
 ///
@@ -465,7 +463,7 @@ pub unsafe extern "C" fn hedera_private_key_derive(
 /// # Safety
 /// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
 /// - `derived` must be a pointer that is valid for writes according to the [*Rust* pointer rules].
-/// 
+///
 /// # Errors
 /// - [`Error::KeyDerive`] if this is an Ecdsa key (unsupported operation)
 ///  
@@ -474,7 +472,7 @@ pub unsafe extern "C" fn hedera_private_key_derive(
 pub unsafe extern "C" fn hedera_private_key_legacy_derive(
     key: *mut PrivateKey,
     index: i64,
-    derived: *mut *mut PrivateKey
+    derived: *mut *mut PrivateKey,
 ) -> Error {
     assert!(!derived.is_null());
 
@@ -489,7 +487,7 @@ pub unsafe extern "C" fn hedera_private_key_legacy_derive(
     }
 
     Error::Ok
-}   
+}
 
 /// Releases memory associated with the private key.
 #[no_mangle]

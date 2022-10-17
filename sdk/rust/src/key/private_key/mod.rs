@@ -349,7 +349,7 @@ impl PrivateKey {
     /// let key: PrivateKey = "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048".parse().unwrap();
     ///
     /// let account_id = key.to_account_id(0, 0);
-    /// assert_eq!(account_id.to_string(), "0.0.3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048");
+    /// assert_eq!(account_id.to_string(), "0.0.302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
     /// ```
     #[inline(always)]
     #[must_use]
@@ -368,18 +368,18 @@ impl PrivateKey {
     }
 
     /// Returns `true` if `self` is an Ed25519 `PrivateKey`.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use hedera::PrivateKey;
     /// let sk = PrivateKey::generate_ed25519();
-    /// 
+    ///
     /// assert!(sk.is_ed25519());
     /// ```
     /// ```
-    /// use hedera::PrivateKey
+    /// use hedera::PrivateKey;
     /// let sk = PrivateKey::generate_ecdsa();
-    /// 
+    ///
     /// assert!(!sk.is_ed25519());
     /// ```
     #[must_use]
@@ -387,20 +387,19 @@ impl PrivateKey {
         matches!(self.0.data, PrivateKeyData::Ed25519(_))
     }
 
-
     /// Returns `true` if this is an ECDSA(secp256k1) `PrivateKey`.
-    /// 
+    ///
     /// # Examples
     /// ```
-    /// use hedera::PrivateKey
+    /// use hedera::PrivateKey;
     /// let sk = PrivateKey::generate_ecdsa();
-    /// 
+    ///
     /// assert!(sk.is_ecdsa());
     /// ```
     /// ```
     /// use hedera::PrivateKey;
     /// let sk = PrivateKey::generate_ed25519();
-    /// 
+    ///
     /// assert!(!sk.is_ecdsa());
     /// ```
     #[must_use]
