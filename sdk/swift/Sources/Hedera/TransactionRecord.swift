@@ -84,8 +84,7 @@ public struct TransactionRecord: Codable {
         automaticTokenAssociations = try container.decode([TokenAssociation].self, forKey: .automaticTokenAssociations)
 
         if let parentConsensusTimestampNanos = try container.decodeIfPresent(
-            UInt64.self, forKey: .parentConsensusTimestamp)
-        {
+            UInt64.self, forKey: .parentConsensusTimestamp) {
             parentConsensusTimestamp = Date(unixTimestampNanos: parentConsensusTimestampNanos)
         } else {
             parentConsensusTimestamp = nil
