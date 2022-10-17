@@ -503,7 +503,7 @@ enum HederaError hedera_nft_id_from_string(const char *s,
                                            uint64_t *token_id_shard,
                                            uint64_t *token_id_realm,
                                            uint64_t *token_id_num,
-                                           uint64_t *serial_number);
+                                           uint64_t *serial);
 
 /**
  * Subscribe with this request against the provided client of the Hedera network.

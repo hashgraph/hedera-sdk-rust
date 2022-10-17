@@ -99,7 +99,7 @@ pub struct TransactionReceipt {
 
     /// In the receipt of a `TokenMintTransaction` for tokens of type `NonFungibleUnique`,
     /// the serial numbers of the newly created NFTs.
-    pub serial_numbers: Vec<i64>,
+    pub serials: Vec<i64>,
 
     /// The receipts of processing all transactions with the given id, in consensus time order.
     pub duplicates: Vec<TransactionReceipt>,
@@ -134,7 +134,7 @@ impl TransactionReceipt {
         Ok(Self {
             status,
             new_total_supply: receipt.new_total_supply,
-            serial_numbers: receipt.serial_numbers,
+            serials: receipt.serial_numbers,
             topic_running_hash_version: receipt.topic_running_hash_version,
             topic_sequence_number: receipt.topic_sequence_number,
             topic_running_hash: receipt

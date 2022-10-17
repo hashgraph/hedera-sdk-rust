@@ -89,7 +89,7 @@ struct NftTransfer {
     receiver_account_id: AccountId,
 
     #[serde(default)]
-    serial_number: u64,
+    serial: u64,
 
     #[serde(default)]
     is_approval: bool,
@@ -172,9 +172,9 @@ impl TransferTransaction {
         receiver_account_id: AccountId,
         approved: bool,
     ) -> &mut Self {
-        let NftId { token_id, serial_number } = nft_id;
+        let NftId { token_id, serial } = nft_id;
         let transfer = NftTransfer {
-            serial_number,
+            serial,
             sender_account_id,
             receiver_account_id,
             is_approval: approved,
@@ -284,7 +284,7 @@ impl ToProtobuf for NftTransfer {
         services::NftTransfer {
             sender_account_id: Some(self.sender_account_id.to_protobuf()),
             receiver_account_id: Some(self.receiver_account_id.to_protobuf()),
-            serial_number: self.serial_number as i64,
+            serial_number: self.serial as i64,
             is_approval: self.is_approval,
         }
     }

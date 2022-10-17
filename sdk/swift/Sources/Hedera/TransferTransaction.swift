@@ -133,7 +133,7 @@ public final class TransferTransaction: Transaction {
         let transfer = NftTransfer(
             senderAccountId: senderAccountId,
             receiverAccountId: receiverAccountId,
-            serialNumber: nftId.serialNumber,
+            serial: nftId.serial,
             isApproval: approved
         )
 
@@ -183,6 +183,6 @@ private struct TokenTransfer: Encodable {
 private struct NftTransfer: Encodable {
     let senderAccountId: AccountId
     let receiverAccountId: AccountId
-    let serialNumber: UInt64
+    let serial: UInt64
     let isApproval: Bool
 }

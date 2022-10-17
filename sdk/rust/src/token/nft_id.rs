@@ -47,7 +47,7 @@ pub struct NftId {
     pub token_id: TokenId,
 
     /// The unique identifier for this instance.
-    pub serial_number: u64,
+    pub serial: u64,
 }
 
 impl Debug for NftId {
@@ -58,7 +58,7 @@ impl Debug for NftId {
 
 impl Display for NftId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}/{}", self.token_id, self.serial_number)
+        write!(f, "{}/{}", self.token_id, self.serial)
     }
 }
 
@@ -66,7 +66,7 @@ impl FromProtobuf<services::NftId> for NftId {
     fn from_protobuf(pb: services::NftId) -> crate::Result<Self> {
         Ok(Self {
             token_id: TokenId::from_protobuf(pb_getf!(pb, token_id)?)?,
-            serial_number: pb.serial_number as u64,
+            serial: pb.serial_number as u64,
         })
     }
 }
@@ -77,7 +77,7 @@ impl ToProtobuf for NftId {
     fn to_protobuf(&self) -> Self::Protobuf {
         services::NftId {
             token_id: Some(self.token_id.to_protobuf()),
-            serial_number: self.serial_number as i64,
+            serial_number: self.serial as i64,
         }
     }
 }
@@ -95,20 +95,15 @@ impl FromStr for NftId {
             return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"));
         }
 
-        let serial_number = match parts[1].parse::<u64>() {
-            Ok(serial_number) => serial_number,
-            Err(_) => {
-                return Err(Error::basic_parse("unexpected error - could not parse serial number"))
-            }
-        };
+        let serial = parts[1].parse().map_err(|_| Error::basic_parse("unexpected error - could not parse serial number"))?;
 
-        Ok(Self { token_id: TokenId::from_str(parts[0])?, serial_number })
+        Ok(Self { token_id: TokenId::from_str(parts[0])?, serial })
     }
 }
 
 impl From<(TokenId, u64)> for NftId {
     fn from(tuple: (TokenId, u64)) -> Self {
-        Self { token_id: tuple.0, serial_number: tuple.1 }
+        Self { token_id: tuple.0, serial: tuple.1 }
     }
 }
 
@@ -127,11 +122,11 @@ mod tests {
 
     #[test]
     fn it_can_convert_to_protobuf() -> anyhow::Result<()> {
-        let nft_id = NftId { token_id: TokenId::from(1), serial_number: 1 };
+        let nft_id = NftId { token_id: TokenId::from(1), serial: 1 };
 
         let nft_id_proto = nft_id.to_protobuf();
 
-        assert_eq!(nft_id.serial_number, nft_id_proto.serial_number as u64);
+        assert_eq!(nft_id.serial, nft_id_proto.serial_number as u64);
         assert_eq!(nft_id.token_id.to_protobuf(), nft_id_proto.token_id.unwrap());
 
         Ok(())
@@ -144,7 +139,7 @@ mod tests {
 
         let nft_id = NftId::from_protobuf(nft_id_proto.clone())?;
 
-        assert_eq!(nft_id.serial_number, nft_id_proto.serial_number as u64);
+        assert_eq!(nft_id.serial, nft_id_proto.serial_number as u64);
         assert_eq!(nft_id.token_id, TokenId::from_protobuf(nft_id_proto.token_id.unwrap())?);
 
         Ok(())
@@ -157,7 +152,7 @@ mod tests {
 
         let nft_id_from_slash_str = NftId::from_str(nft_id_slash_str)?;
 
-        assert_eq!(nft_id_from_slash_str.serial_number, 456);
+        assert_eq!(nft_id_from_slash_str.serial, 456);
         assert_eq!(nft_id_from_slash_str.token_id.num, 123);
 
         // Test '@' format parsing
@@ -165,7 +160,7 @@ mod tests {
 
         let nft_id_from_at_str = NftId::from_str(nft_id_at_str)?;
 
-        assert_eq!(nft_id_from_at_str.serial_number, 456);
+        assert_eq!(nft_id_from_at_str.serial, 456);
         assert_eq!(nft_id_from_at_str.token_id.num, 123);
 
         Ok(())
@@ -178,7 +173,7 @@ mod tests {
         let nft_id_from_tuple = NftId::from(tuple);
 
         assert_eq!(tuple.0, nft_id_from_tuple.token_id);
-        assert_eq!(tuple.1, nft_id_from_tuple.serial_number);
+        assert_eq!(tuple.1, nft_id_from_tuple.serial);
 
         Ok(())
     }
@@ -190,7 +185,7 @@ mod tests {
         let nft_id_from_tuple: NftId = tuple.into();
 
         assert_eq!(tuple.0, nft_id_from_tuple.token_id);
-        assert_eq!(tuple.1, nft_id_from_tuple.serial_number);
+        assert_eq!(tuple.1, nft_id_from_tuple.serial);
 
         Ok(())
     }

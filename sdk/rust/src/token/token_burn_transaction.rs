@@ -48,20 +48,20 @@ use crate::{
 /// Token A has 2 decimals. In order to burn 100 tokens, one must provide amount of 10000. In order
 /// to burn 100.55 tokens, one must provide amount of 10055.
 ///
-/// For non-fungible tokens the transaction body accepts serialNumbers list of integers as a parameter.
+/// For non-fungible tokens the transaction body accepts a `serials` list of integers as a parameter.
 ///
 /// - If no Supply Key is defined, the transaction will resolve to `TOKEN_HAS_NO_SUPPLY_KEY`.
 ///
-/// - If neither the amount nor the serialNumbers get filled, a `INVALID_TOKEN_BURN_AMOUNT` response code
+/// - If neither the amount nor the `serials` get filled, a `INVALID_TOKEN_BURN_AMOUNT` response code
 /// will be returned.
 ///
-/// - If both amount and serialNumbers get filled, a `INVALID_TRANSACTION_BODY` response code will be
+/// - If both amount and `serials` get filled, a `INVALID_TRANSACTION_BODY` response code will be
 /// returned.
 ///
-/// - If the serialNumbers' list count is greater than the batch size limit global dynamic property, a
+/// - If the `serials` list count is greater than the batch size limit global dynamic property, a
 /// `BATCH_SIZE_LIMIT_EXCEEDED` response code will be returned.
 ///
-/// - If the serialNumbers list contains a non-positive integer as a serial number, a `INVALID_NFT_ID`
+/// - If the `serials` list contains a non-positive integer as a serial number, a `INVALID_NFT_ID`
 /// response code will be returned.
 pub type TokenBurnTransaction = Transaction<TokenBurnTransactionData>;
 
@@ -77,7 +77,7 @@ pub struct TokenBurnTransactionData {
     amount: u64,
 
     /// The serial numbers of a non-fungible token to burn from the treasury account.
-    serial_numbers: Vec<i64>,
+    serials: Vec<i64>,
 }
 
 impl TokenBurnTransaction {
@@ -94,8 +94,8 @@ impl TokenBurnTransaction {
     }
 
     /// Sets the serial numbers of a non-fungible token to burn from the treasury account.
-    pub fn serial_numbers(&mut self, serial_numbers: impl IntoIterator<Item = i64>) -> &mut Self {
-        self.body.data.serial_numbers = serial_numbers.into_iter().collect();
+    pub fn serials(&mut self, serials: impl IntoIterator<Item = i64>) -> &mut Self {
+        self.body.data.serials = serials.into_iter().collect();
         self
     }
 }
@@ -119,7 +119,7 @@ impl ToTransactionDataProtobuf for TokenBurnTransactionData {
     ) -> services::transaction_body::Data {
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
         let amount = self.amount;
-        let serial_numbers = self.serial_numbers.clone();
+        let serial_numbers = self.serials.clone();
 
         services::transaction_body::Data::TokenBurn(services::TokenBurnTransactionBody {
             token,
@@ -153,7 +153,7 @@ mod tests {
   "$type": "tokenBurn",
   "tokenId": "0.0.1002",
   "amount": 100,
-  "serialNumbers": [
+  "serials": [
     1,
     2,
     3
@@ -164,7 +164,7 @@ mod tests {
     fn it_should_serialize() -> anyhow::Result<()> {
         let mut transaction = TokenBurnTransaction::new();
 
-        transaction.token_id(TokenId::from(1002)).amount(100u64).serial_numbers([1, 2, 3]);
+        transaction.token_id(TokenId::from(1002)).amount(100u64).serials([1, 2, 3]);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -181,7 +181,7 @@ mod tests {
 
         assert_eq!(data.token_id, Some(TokenId::from(1002)));
         assert_eq!(data.amount, 100);
-        assert_eq!(data.serial_numbers, vec![1, 2, 3]);
+        assert_eq!(data.serials, vec![1, 2, 3]);
 
         Ok(())
     }
