@@ -368,18 +368,18 @@ impl PrivateKey {
     }
 
     /// Returns `true` if `self` is an Ed25519 `PrivateKey`.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use hedera::PrivateKey;
     /// let sk = PrivateKey::generate_ed25519();
-    /// 
+    ///
     /// assert!(sk.is_ed25519());
     /// ```
     /// ```
     /// use hedera::PrivateKey
     /// let sk = PrivateKey::generate_ecdsa();
-    /// 
+    ///
     /// assert!(!sk.is_ed25519());
     /// ```
     #[must_use]
@@ -387,20 +387,19 @@ impl PrivateKey {
         matches!(self.0.data, PrivateKeyData::Ed25519(_))
     }
 
-
     /// Returns `true` if this is an ECDSA(secp256k1) `PrivateKey`.
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use hedera::PrivateKey
     /// let sk = PrivateKey::generate_ecdsa();
-    /// 
+    ///
     /// assert!(sk.is_ecdsa());
     /// ```
     /// ```
     /// use hedera::PrivateKey;
     /// let sk = PrivateKey::generate_ed25519();
-    /// 
+    ///
     /// assert!(!sk.is_ecdsa());
     /// ```
     #[must_use]
