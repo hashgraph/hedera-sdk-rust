@@ -20,7 +20,8 @@
 
 import Foundation
 
-public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable, CustomStringConvertible {
+public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable,
+        CustomStringConvertible {
     public static let mainnet = LedgerId(Data([0]))
 
     public static let testnet = LedgerId(Data([1]))
@@ -59,7 +60,10 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
             self = Self.previewnet
             return
         default:
-            guard let bytes = Data(hexEncoded: description) else { return nil }
+            guard let bytes = Data(hexEncoded: description) else {
+                return nil
+            }
+
             self.bytes = bytes
         }
     }
@@ -78,7 +82,7 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         self == Self.previewnet
     }
 
-    public static func ==(lhs: Self, rhs: Self) -> Bool {
+    public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bytes == rhs.bytes
     }
 

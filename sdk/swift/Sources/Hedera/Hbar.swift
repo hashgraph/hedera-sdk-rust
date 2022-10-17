@@ -84,7 +84,8 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
     }
 }
 
-public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Equatable {
+public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLiteral,
+        ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Equatable {
     /// A constant value of zero hbars.
     public static let zero: Hbar = 0
 
@@ -96,12 +97,17 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
 
     /// Create a new Hbar of the specified, possibly fractional value.
     public init(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws {
-        guard amount.isFinite else { throw NSError(domain: "Amount must be a finite decimal number", code: 0) }
+        guard amount.isFinite else {
+            throw NSError(domain: "Amount must be a finite decimal number", code: 0)
+        }
 
-        let tinybars = amount * Decimal(unit.rawValue);
+        let tinybars = amount * Decimal(unit.rawValue)
 
-        if (!(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0))) {
-            throw NSError(domain: "Amount and Unit combination results in a fractional value for tinybar.  Ensure tinybar value is a whole number.", code: 0)
+        if !(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0)) {
+            throw NSError(
+                    domain: "Amount and Unit combination results in a fractional value for tinybar. Ensure tinybar value is a whole number.",
+                    code: 0
+            )
         }
 
         self.tinybars = NSDecimalNumber(decimal: tinybars).int64Value
@@ -112,10 +118,12 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public init(integerLiteral value: IntegerLiteralType) {
+        // swiftlint:disable force_try
         try! self.init(Decimal(value))
     }
 
     public init(floatLiteral value: FloatLiteralType) {
+        // swiftlint:disable force_try
         try! self.init(Decimal(value))
     }
 
@@ -123,7 +131,7 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
         let parts = description.split(separator: " ", maxSplits: 1)
 
         // fixme: how to make this look nicer?
-        let unit: HbarUnit;
+        let unit: HbarUnit
         if parts.count == 1 {
             unit = HbarUnit.hbar
         } else {
@@ -142,7 +150,10 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public init?(_ description: String) {
-        guard let hbar = try? Self.fromString(description) else { return nil }
+        guard let hbar = try? Self.fromString(description) else {
+            return nil
+        }
+
         tinybars = hbar.tinybars
     }
 

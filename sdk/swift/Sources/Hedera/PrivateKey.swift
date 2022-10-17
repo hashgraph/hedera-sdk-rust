@@ -21,12 +21,11 @@
 import CHedera
 import Foundation
 
-private typealias unsafeFromBytesFunc = @convention(c) (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?) -> HederaError
+private typealias UnsafeFromBytesFunc = @convention(c) (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?) -> HederaError
 
 // safety: `hedera_bytes_free` needs to be called so...
 // perf: might as well enable use of the no copy constructor.
-private let unsafeCHederaBytesFree: Data.Deallocator = .custom {
-    (buf, size) in
+private let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
     hedera_bytes_free(buf, size)
 }
 
@@ -48,17 +47,15 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         self.init(hedera_private_key_generate_ecdsa())
     }
 
-
     /// Gets the ``PublicKey`` which corresponds to this private key.
     public func getPublicKey() -> PublicKey {
         PublicKey(hedera_private_key_get_public_key(ptr))
     }
 
-    private static func unsafeFromAnyBytes(_ bytes: Data, _ f: unsafeFromBytesFunc) throws -> Self {
-        let ptr = try bytes.withUnsafeBytes {
-            (pointer: UnsafeRawBufferPointer) in
+    private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
+        let ptr = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
             var key = OpaquePointer(bitPattern: 0)
-            let err = f(pointer.bindMemory(to: UInt8.self).baseAddress, pointer.count, &key)
+            let err = chederaCallback(pointer.bindMemory(to: UInt8.self).baseAddress, pointer.count, &key)
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!
