@@ -148,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn it_can_parse_from_str() -> anyhow::Result<()> {
+    fn from_str() -> anyhow::Result<()> {
         // Test '/' format parsing
         let nft_id_slash_str = "0.0.123/456";
 

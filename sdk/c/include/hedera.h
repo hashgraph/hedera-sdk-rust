@@ -731,6 +731,25 @@ enum HederaError hedera_nft_id_from_string(const char *s,
                                            uint64_t *serial);
 
 /**
+ * Parse a Hedera `NftId` from the passed bytes.
+ */
+enum HederaError hedera_nft_id_from_bytes(const uint8_t *bytes,
+                                          size_t bytes_size,
+                                          uint64_t *token_id_shard,
+                                          uint64_t *token_id_realm,
+                                          uint64_t *token_id_num,
+                                          uint64_t *serial);
+
+/**
+ * Serialize the passed NftId as bytes
+ */
+size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
+                              uint64_t token_id_realm,
+                              uint64_t token_id_num,
+                              uint64_t serial,
+                              uint8_t **buf);
+
+/**
  * Subscribe with this request against the provided client of the Hedera network.
  * On successful completion, calls `callback` with `ERROR_OK` and a `NULL` `message`.
  */
