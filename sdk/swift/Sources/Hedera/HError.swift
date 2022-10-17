@@ -55,7 +55,7 @@ public struct HError: Error, CustomStringConvertible {
         self.description = description
     }
 
-    // swiftlint:disable cyclomatic_complexity function_body_length
+    // swiftlint:disable cyclomatic_complexity
     internal init?(_ error: HederaError) {
         switch error {
         case HEDERA_ERROR_TIMED_OUT:

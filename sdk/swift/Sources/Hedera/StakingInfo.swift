@@ -24,9 +24,10 @@ public struct StakingInfo: Codable {
     /// If true, the contract declines receiving a staking reward. The default value is false.
     public let declineStakingReward: Bool
 
-    /// The staking period during which either the staking settings for this account or contract changed (such as starting
-    /// staking or changing staked_node_id) or the most recent reward was earned, whichever is later. If this account or contract
-    /// is not currently staked to a node, then this field is not set.
+    /// The staking period during which either the staking settings for this account or contract changed
+    /// (such as starting staking or changing staked_node_id)
+    /// or the most recent reward was earned, whichever is later.
+    /// If this account or contract is not currently staked to a node, then this field is not set.
     public let stakePeriodStart: Date?
 
     /// The amount in Hbar that will be received in the next reward situation.
@@ -48,8 +49,8 @@ public struct StakingInfo: Codable {
 
         let stakePeriodStartNanos = try container.decodeIfPresent(UInt64.self, forKey: .stakePeriodStart)
 
-        if (stakePeriodStartNanos != nil) {
-            stakePeriodStart = Date(unixTimestampNanos: stakePeriodStartNanos!)
+        if let stakePeriodStartNanos {
+            stakePeriodStart = Date(unixTimestampNanos: stakePeriodStartNanos)
         } else {
             stakePeriodStart = nil
         }
