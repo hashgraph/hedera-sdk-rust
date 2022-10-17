@@ -26,10 +26,14 @@ use libc::size_t;
 
 use super::{
     parse_bytes,
-    parse_str, to_bytes,
+    parse_str,
+    to_bytes,
 };
 use crate::ffi::error::Error;
 use crate::PublicKey;
+
+#[cfg(test)]
+mod tests;
 
 /// Parse a `PublicKey` from a sequence of bytes.
 ///
@@ -112,10 +116,10 @@ pub unsafe extern "C" fn hedera_public_key_from_bytes_der(
 }
 
 /// Parse a Hedera public key from the passed string.
-/// 
+///
 /// Optionally strips a `0x` prefix.
 /// See [`hedera_public_key_from_bytes`]
-/// 
+///
 /// # Safety
 /// - `s` must be a valid string
 /// - `key` must be a valid for writes according to [*Rust* pointer rules].

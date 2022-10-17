@@ -155,7 +155,7 @@ pub unsafe extern "C" fn hedera_private_key_from_bytes_der(
 ///
 /// Optionally strips a `0x` prefix.
 /// See [`hedera_private_key_from_bytes`]
-/// 
+///
 /// # Safety
 /// - `s` must be a valid string
 /// - `key` must be a valid for writes according to [*Rust* pointer rules].

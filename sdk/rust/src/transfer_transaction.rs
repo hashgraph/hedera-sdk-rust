@@ -173,12 +173,8 @@ impl TransferTransaction {
         approved: bool,
     ) -> &mut Self {
         let NftId { token_id, serial } = nft_id;
-        let transfer = NftTransfer {
-            serial,
-            sender_account_id,
-            receiver_account_id,
-            is_approval: approved,
-        };
+        let transfer =
+            NftTransfer { serial, sender_account_id, receiver_account_id, is_approval: approved };
 
         if let Some(tt) =
             self.body.data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id)

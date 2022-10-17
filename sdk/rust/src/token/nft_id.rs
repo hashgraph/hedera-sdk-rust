@@ -95,7 +95,9 @@ impl FromStr for NftId {
             return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"));
         }
 
-        let serial = parts[1].parse().map_err(|_| Error::basic_parse("unexpected error - could not parse serial number"))?;
+        let serial = parts[1]
+            .parse()
+            .map_err(|_| Error::basic_parse("unexpected error - could not parse serial number"))?;
 
         Ok(Self { token_id: TokenId::from_str(parts[0])?, serial })
     }
