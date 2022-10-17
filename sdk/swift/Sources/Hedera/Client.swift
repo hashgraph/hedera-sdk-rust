@@ -32,9 +32,19 @@ public final class Client {
         hedera_client_free(ptr)
     }
 
+    /// Construct a Hedera client pre-configured for mainnet access.
+    public static func forMainnet() -> Client {
+        Client(hedera_client_for_testnet())
+    }
+
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Client {
         Client(hedera_client_for_testnet())
+    }
+
+    /// Construct a Hedera client pre-configured for previewnet access.
+    public static func forPreviewnet() -> Client {
+        Client(hedera_client_for_previewnet())
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with

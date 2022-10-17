@@ -86,7 +86,7 @@ pub struct TokenWipeTransactionData {
     amount: Option<u64>,
 
     /// The serial numbers of a non-fungible token to wipe from the specified account.
-    serial_numbers: Vec<u64>,
+    serials: Vec<u64>,
 }
 
 impl TokenWipeTransaction {
@@ -110,8 +110,8 @@ impl TokenWipeTransaction {
     }
 
     /// Sets the serial numbers of a non-fungible token to wipe from the specified account.
-    pub fn serial_numbers(&mut self, serial_numbers: impl IntoIterator<Item = u64>) -> &mut Self {
-        self.body.data.serial_numbers = serial_numbers.into_iter().collect();
+    pub fn serials(&mut self, serials: impl IntoIterator<Item = u64>) -> &mut Self {
+        self.body.data.serials = serials.into_iter().collect();
         self
     }
 }
@@ -136,7 +136,7 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
         let account = self.account_id.as_ref().map(AccountId::to_protobuf);
         let token = self.token_id.as_ref().map(TokenId::to_protobuf);
         let amount = self.amount.unwrap_or_default();
-        let serial_numbers = self.serial_numbers.iter().map(|num| *num as i64).collect();
+        let serial_numbers = self.serials.iter().map(|num| *num as i64).collect();
 
         services::transaction_body::Data::TokenWipe(services::TokenWipeAccountTransactionBody {
             token,
@@ -173,7 +173,7 @@ mod tests {
   "accountId": "0.0.1001",
   "tokenId": "0.0.1002",
   "amount": 123,
-  "serialNumbers": [
+  "serials": [
     1,
     2,
     3
@@ -188,7 +188,7 @@ mod tests {
             .account_id(AccountId::from(1001))
             .token_id(TokenId::from(1002))
             .amount(123u64)
-            .serial_numbers([1, 2, 3]);
+            .serials([1, 2, 3]);
 
         let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -206,7 +206,7 @@ mod tests {
         assert_eq!(data.account_id, Some(AccountId::from(1001)));
         assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
         assert_eq!(data.amount.unwrap(), 123);
-        assert_eq!(data.serial_numbers, [1, 2, 3]);
+        assert_eq!(data.serials, [1, 2, 3]);
 
         Ok(())
     }

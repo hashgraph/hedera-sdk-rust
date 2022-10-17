@@ -22,7 +22,7 @@ import Foundation
 
 /// Common units of hbar.
 /// For the most part they follow SI prefix conventions.
-public enum HbarUnit: UInt64 {
+public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLiteral {
     case tinybar = 1
     case microbar = 100
     case millibar = 100_000
@@ -30,9 +30,61 @@ public enum HbarUnit: UInt64 {
     case kilobar = 100_000_000_000
     case megabar = 100_000_000_000_000
     case gigabar = 100_000_000_000_000_000
+
+    public func getSymbol() -> String {
+        description
+    }
+
+    public var description: String {
+        switch self {
+        case .tinybar:
+            return "tℏ"
+        case .microbar:
+            return "µℏ"
+        case .millibar:
+            return "mℏ"
+        case .hbar:
+            return "ℏ"
+        case .kilobar:
+            return "kℏ"
+        case .megabar:
+            return "Mℏ"
+        case .gigabar:
+            return "Gℏ"
+        }
+    }
+
+    public init(stringLiteral value: StringLiteralType) {
+        self.init(value)!
+    }
+
+    public init?(_ description: String) {
+        switch description {
+        case "tℏ":
+            self = .tinybar
+        case "µℏ":
+            self = .microbar
+        case "mℏ":
+            self = .millibar
+        case "ℏ":
+            self = .hbar
+        case "kℏ":
+            self = .kilobar
+        case "Mℏ":
+            self = .megabar
+        case "Gℏ":
+            self = .gigabar
+        default:
+            return nil
+        }
+    }
+
+    public func tinybar() -> UInt64 {
+        self.rawValue
+    }
 }
 
-public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral, ExpressibleByFloatLiteral {
+public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLiteral, ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Equatable {
     /// A constant value of zero hbars.
     public static let zero: Hbar = 0
 
@@ -42,8 +94,17 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     /// A constant value of the minimum number of hbars.
     public static let min: Hbar = -50000000000
 
-    public static func fromTinybars(_ amount: Int64) -> Self {
-        Self(tinybars: amount)
+    /// Create a new Hbar of the specified, possibly fractional value.
+    public init(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws {
+        guard amount.isFinite else { throw NSError(domain: "Amount must be a finite decimal number", code: 0) }
+
+        let tinybars = amount * Decimal(unit.rawValue);
+
+        if (!(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0))) {
+            throw NSError(domain: "Amount and Unit combination results in a fractional value for tinybar.  Ensure tinybar value is a whole number.", code: 0)
+        }
+
+        self.tinybars = NSDecimalNumber(decimal: tinybars).int64Value
     }
 
     public init(stringLiteral value: StringLiteralType) {
@@ -51,27 +112,46 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public init(integerLiteral value: IntegerLiteralType) {
-        self.init(tinybars: Int64(value))
+        try! self.init(Decimal(value))
     }
 
     public init(floatLiteral value: FloatLiteralType) {
         try! self.init(Decimal(value))
     }
 
+    public static func fromString(_ description: String) throws -> Self {
+        let parts = description.split(separator: " ", maxSplits: 1)
+
+        // fixme: how to make this look nicer?
+        let unit: HbarUnit;
+        if parts.count == 1 {
+            unit = HbarUnit.hbar
+        } else {
+            if let tmp = HbarUnit.init(String(parts[1])) {
+                unit = tmp
+            } else {
+                throw NSError(domain: "unit must be a valid hbar unit", code: 0)
+            }
+        }
+
+        guard let amount = Decimal(string: String(parts[0])) else {
+            throw NSError(domain: "Amount not parsable as a decimal", code: 0)
+        }
+
+        return try Self(amount, unit)
+    }
+
     public init?(_ description: String) {
-        let amount = NSDecimalNumber(string: description).decimalValue
+        guard let hbar = try? Self.fromString(description) else { return nil }
+        tinybars = hbar.tinybars
+    }
 
-        if (amount.isNaN) {
-            return nil
-        }
+    public static func from(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws -> Self {
+        try Self.init(amount, unit)
+    }
 
-        let hbar = try? Self(amount)
-
-        if (hbar == nil) {
-            return nil
-        }
-
-        self = hbar!
+    public static func fromTinybars(_ amount: Int64) -> Self {
+        Self(tinybars: amount)
     }
 
     public init(from decoder: Decoder) throws {
@@ -82,23 +162,15 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
         self.tinybars = tinybars
     }
 
-    /// Create a new Hbar of the specified, possibly fractional value.
-    public init(_ amount: Decimal) throws {
-        self = try Self(amount, HbarUnit.hbar)
-    }
-
-    /// Create a new Hbar of the specified, possibly fractional value.
-    public init(_ amount: Decimal, _ unit: HbarUnit) throws {
-        let tinybars = amount * Decimal(unit.rawValue);
-
-        if (!(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0))) {
-            throw NSError(domain: "Amount and Unit combination results in a fractional value for tinybar.  Ensure tinybar value is a whole number.", code: 0)
-        }
-
-        self.tinybars = NSDecimalNumber(decimal: tinybars).int64Value
-    }
-
     private let tinybars: Int64
+
+    public func getValue() -> Decimal {
+        to(.hbar)
+    }
+
+    public func negated() -> Self {
+        Self.init(tinybars: -tinybars)
+    }
 
     /// Convert this hbar value to a different unit.
     public func to(_ unit: HbarUnit) -> Decimal {
@@ -110,8 +182,14 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
         tinybars
     }
 
+    public func toString(_ unit: HbarUnit? = nil) -> String {
+        let unit = unit ?? (abs(tinybars) < 10_000 ? .tinybar : .hbar)
+
+        return "\(to(unit)) \(unit)"
+    }
+
     public var description: String {
-        to(.hbar).description
+        toString()
     }
 
     public func encode(to encoder: Encoder) throws {

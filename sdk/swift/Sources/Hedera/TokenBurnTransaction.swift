@@ -22,13 +22,13 @@
 public final class TokenBurnTransaction: Transaction {
     /// Create a new `TokenBurnTransaction`.
     public init(
-        tokenId: TokenId? = nil,
-        amount: UInt64 = 0,
-        serialNumbers: [UInt64] = []
+            tokenId: TokenId? = nil,
+            amount: UInt64 = 0,
+            serials: [UInt64] = []
     ) {
         self.tokenId = tokenId
         self.amount = amount
-        self.serialNumbers = serialNumbers
+        self.serials = serials
     }
 
     /// The token for which to burn tokens.
@@ -54,12 +54,20 @@ public final class TokenBurnTransaction: Transaction {
     }
 
     /// The serial numbers of a non-fungible token to burn from the treasury account.
-    public var serialNumbers: [UInt64]
+    public var serials: [UInt64]
 
     /// Sets the serial numbers of a non-fungible token to burn from the treasury account.
     @discardableResult
-    public func serialNumbers(_ serialNumbers: [UInt64]) -> Self {
-        self.serialNumbers = serialNumbers
+    public func setSerials(_ serials: [UInt64]) -> Self {
+        self.serials = serials
+
+        return self
+    }
+
+    /// Add a serial number to the list of serial numbers.
+    @discardableResult
+    public func addSerial(_ serial: UInt64) -> Self {
+        serials.append(serial)
 
         return self
     }
@@ -67,7 +75,7 @@ public final class TokenBurnTransaction: Transaction {
     private enum CodingKeys: String, CodingKey {
         case tokenId
         case amount
-        case serialNumbers
+        case serials
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -75,7 +83,7 @@ public final class TokenBurnTransaction: Transaction {
 
         try container.encode(tokenId, forKey: .tokenId)
         try container.encode(amount, forKey: .amount)
-        try container.encode(serialNumbers, forKey: .serialNumbers)
+        try container.encode(serials, forKey: .serials)
 
         try super.encode(to: encoder)
     }

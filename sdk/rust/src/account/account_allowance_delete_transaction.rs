@@ -59,7 +59,7 @@ pub struct NftRemoveAllowance {
     pub owner_account_id: AccountId,
 
     /// The list of serial numbers to remove allowances from.
-    pub serial_numbers: Vec<i64>,
+    pub serials: Vec<i64>,
 }
 
 impl AccountAllowanceDeleteTransaction {
@@ -74,11 +74,11 @@ impl AccountAllowanceDeleteTransaction {
         if let Some(allowance) = self.body.data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id && allowance.owner_account_id == owner_account_id
         }) {
-            allowance.serial_numbers.push(nft_id.serial_number as i64);
+            allowance.serials.push(nft_id.serial as i64);
         } else {
             self.body.data.nft_allowances.push(NftRemoveAllowance {
                 token_id: nft_id.token_id,
-                serial_numbers: vec![nft_id.serial_number as i64],
+                serials: vec![nft_id.serial as i64],
                 owner_account_id,
             });
         }
@@ -126,7 +126,7 @@ impl ToProtobuf for NftRemoveAllowance {
         Self::Protobuf {
             token_id: Some(self.token_id.to_protobuf()),
             owner: Some(self.owner_account_id.to_protobuf()),
-            serial_numbers: self.serial_numbers.clone(),
+            serial_numbers: self.serials.clone(),
         }
     }
 }
