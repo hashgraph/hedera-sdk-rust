@@ -211,6 +211,10 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         hedera_private_key_is_ecdsa(ptr)
     }
 
+    public func isDerivable() -> Bool {
+        hedera_private_key_is_derivable(ptr)
+    }
+
     public func derive(_ index: Int32) throws -> Self {
         var derived = OpaquePointer(bitPattern: 0)
         let err = hedera_private_key_derive(ptr, index, &derived)
