@@ -26,7 +26,8 @@ import Foundation
 ///
 public final class TopicUpdateTransaction: Transaction {
     /// Create a new `TopicUpdateTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+    }
 
     /// The topic ID which is being updated in this transaction.
     public var topicId: TopicId?
@@ -40,12 +41,12 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public var expiresAt: Date?
+    public var expirationTime: Date?
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
-    public func expiresAt(_ expiresAt: Date) -> Self {
-        self.expiresAt = expiresAt
+    public func expirationTime(_ expirationTime: Date) -> Self {
+        self.expirationTime = expirationTime
 
         return self
     }
@@ -110,7 +111,7 @@ public final class TopicUpdateTransaction: Transaction {
 
     private enum CodingKeys: String, CodingKey {
         case topicId
-        case expiresAt
+        case expirationTime
         case topicMemo
         case adminKey
         case submitKey
@@ -122,7 +123,7 @@ public final class TopicUpdateTransaction: Transaction {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encode(topicId, forKey: .topicId)
-        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
         try container.encodeIfPresent(topicMemo, forKey: .topicMemo)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
         try container.encodeIfPresent(submitKey, forKey: .submitKey)
