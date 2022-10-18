@@ -129,20 +129,17 @@ tasks:
 
             - rm -rf ../swift/CHedera.xcframework/{ios,macos}-*/
 
-            - mkdir -p ../swift/CHedera.xcframework/macos-{x86_64,arm64}/Headers/
+            - mkdir -p ../swift/CHedera.xcframework/macos-universal/Headers/
             - mkdir -p ../swift/CHedera.xcframework/ios-{x86_64-simulator,arm64}/Headers/
 
-            - cp ../c/lib/macos-x86_64/libhedera.a ../swift/CHedera.xcframework/macos-x86_64/
-            - cp ../c/lib/macos-arm64/libhedera.a ../swift/CHedera.xcframework/macos-arm64/
+            - lipo ../c/lib/macos-x86_64/libhedera.a ../c/lib/macos-arm64/libhedera.a -output ../swift/CHedera.xcframework/macos-universal/libhedera.a -create
             - cp ../c/lib/ios-x86_64/libhedera.a ../swift/CHedera.xcframework/ios-x86_64-simulator/
             - cp ../c/lib/ios-arm64/libhedera.a ../swift/CHedera.xcframework/ios-arm64/
 
-            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-x86_64/Headers/
-            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-arm64/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-universal/Headers/
             - cp ../c/include/hedera.h ../swift/CHedera.xcframework/ios-x86_64-simulator/Headers/
             - cp ../c/include/hedera.h ../swift/CHedera.xcframework/ios-arm64/Headers/
 
-            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-x86_64/Headers/
-            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-arm64/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-universal/Headers/
             - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/ios-x86_64-simulator/Headers/
             - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/ios-arm64/Headers/
