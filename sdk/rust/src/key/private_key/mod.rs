@@ -511,7 +511,7 @@ impl PrivateKey {
         }
     }
 
-    /// Recover a `PrivateKey` from a generated mnemonic phrase and a passphrase.
+    /// Recover a `PrivateKey` from a mnemonic phrase and a passphrase.
     // this is specifically for the two `try_into`s which depend on `split_array_ref`.
     // There *is* a 3rd unwrap for a "key is not derivable" error, but we construct a key that _is_ derivable.
     // Any panic would indicate a bug in this crate or a dependency of it, not in user code.
