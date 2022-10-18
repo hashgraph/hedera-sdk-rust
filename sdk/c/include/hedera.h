@@ -438,6 +438,14 @@ bool hedera_private_key_is_ed25519(struct HederaPrivateKey *key);
 bool hedera_private_key_is_ecdsa(struct HederaPrivateKey *key);
 
 /**
+ * Returns true if calling [`derive`](Self::derive) on `key` would succeed.
+ * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+ *
+ * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+ */
+bool hedera_private_key_is_derivable(struct HederaPrivateKey *key);
+
+/**
  * Derives a child key based on `index`.
  *
  * # Safety

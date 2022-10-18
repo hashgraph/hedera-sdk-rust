@@ -419,6 +419,12 @@ impl PrivateKey {
         }
     }
 
+    /// Returns true if calling [`derive`](Self::derive) on `self` would succeed.
+    #[must_use]
+    pub fn is_derivable(&self) -> bool {
+        self.is_ed25519() && self.0.chain_code.is_some()
+    }
+
     /// Derives a child key based on `index`.
     ///
     /// # Errors

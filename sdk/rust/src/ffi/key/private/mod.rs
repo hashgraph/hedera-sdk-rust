@@ -429,6 +429,18 @@ pub unsafe extern "C" fn hedera_private_key_is_ecdsa(key: *mut PrivateKey) -> bo
     key.is_ecdsa()
 }
 
+/// Returns true if calling [`derive`](Self::derive) on `key` would succeed.
+/// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+///
+/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+#[no_mangle]
+pub unsafe extern "C" fn hedera_private_key_is_derivable(key: *mut PrivateKey) -> bool {
+    // safety: caller promises that `key` must be valid for reads
+    let key = unsafe { key.as_ref().unwrap() };
+
+    key.is_derivable()
+}
+
 /// Derives a child key based on `index`.
 ///
 /// # Safety
