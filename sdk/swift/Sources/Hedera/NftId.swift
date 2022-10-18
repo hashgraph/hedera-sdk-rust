@@ -18,7 +18,14 @@
  * ‍
  */
 
+import Foundation
 import CHedera
+
+// safety: `hedera_bytes_free` needs to be called so...
+// perf: might as well enable use of the no copy constructor.
+private let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
+    hedera_bytes_free(buf, size)
+}
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
 public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable {
@@ -32,6 +39,21 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
     public init(tokenId: TokenId, serial: UInt64) {
         self.tokenId = tokenId
         self.serial = serial
+    }
+
+    public static func fromString(_ description: String) throws -> Self {
+        var shard: UInt64 = 0
+        var realm: UInt64 = 0
+        var num: UInt64 = 0
+        var serial: UInt64 = 0
+
+        let err = hedera_nft_id_from_string(description, &shard, &realm, &num, &serial)
+
+        if err != HEDERA_ERROR_OK {
+            throw HError(err)!
+        }
+
+        return Self(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
     }
 
     public required convenience init?(_ description: String) {
@@ -61,6 +83,30 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         var container = encoder.singleValueContainer()
 
         try container.encode(String(describing: self))
+    }
+
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+            var serial: UInt64 = 0
+
+            let err = hedera_nft_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num, &serial)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_nft_id_to_bytes(tokenId.shard, tokenId.realm, tokenId.num, serial, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: unsafeCHederaBytesFree)
     }
 
     public static func == (lhs: NftId, rhs: NftId) -> Bool {
