@@ -33,6 +33,11 @@ private let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
 public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     internal let ptr: OpaquePointer
 
+    internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
+        Self.init(ptr)
+    }
+
+    // sadly, we can't avoid a leaky abstraction here.
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }
@@ -226,6 +231,10 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         }
 
         return Self(derived!)
+    }
+
+    public func fromMnemonic(_ mnemonic: Mnemonic, _ passphrase: String) -> Self {
+        Self.init(hedera_private_key_from_mnemonic(mnemonic.ptr, passphrase))
     }
 
     deinit {

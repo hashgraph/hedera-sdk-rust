@@ -28,6 +28,7 @@ mod client;
 mod entity_id;
 mod execute;
 mod key;
+mod mnemonic;
 mod nft_id;
 mod runtime;
 mod subscribe;
