@@ -26,10 +26,6 @@ use std::ptr::{
     self,
     addr_of_mut,
 };
-use std::str::FromStr;
-
-use assert_matches::assert_matches;
-use expect_test::expect;
 
 use crate::ffi::c_util::hedera_string_free;
 use crate::ffi::error::Error;
@@ -37,10 +33,6 @@ use crate::ffi::key::public::{
     hedera_public_key_free,
     hedera_public_key_from_string,
     hedera_public_key_to_string,
-};
-use crate::{
-    PublicKey,
-    Signature,
 };
 
 #[test]

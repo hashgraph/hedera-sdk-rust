@@ -82,7 +82,7 @@ impl fmt::Debug for Mnemonic {
 impl Mnemonic {
     // todo(sr): before release, try to find a better internal representation
     // lets not expose this until we know what the final signature should be
-    fn words(&self) -> &[String] {
+    pub(crate) fn words(&self) -> &[String] {
         match &self.0 {
             MnemonicData::V1(it) => it.words(),
             MnemonicData::V2V3(it) => it.words(),
