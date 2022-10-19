@@ -105,7 +105,9 @@ where
         _node_account_id: AccountId,
         _transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response> {
-        Ok(Hbar::from_tinybars(response_header(&response.response)?.cost as Tinybar))
+        let cost = Hbar::from_tinybars(response_header(&response.response)?.cost as Tinybar);
+
+        Ok(self.0.data.map_cost(cost))
     }
 
     fn make_error_pre_check(

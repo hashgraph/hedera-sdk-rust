@@ -31,7 +31,9 @@ use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
 use crate::{
     FromProtobuf,
-    NftId, TokenId, ToProtobuf,
+    NftId,
+    ToProtobuf,
+    TokenId,
 };
 
 /// Parse a Hedera `NftId` from the passed string.
@@ -95,21 +97,17 @@ pub unsafe extern "C" fn hedera_nft_id_from_bytes(
 /// Serialize the passed NftId as bytes
 #[no_mangle]
 pub unsafe extern "C" fn hedera_nft_id_to_bytes(
-    token_id_shard:  u64,
-    token_id_realm:  u64,
-    token_id_num:  u64,
+    token_id_shard: u64,
+    token_id_realm: u64,
+    token_id_num: u64,
     serial: u64,
-    buf: *mut *mut u8
+    buf: *mut *mut u8,
 ) -> size_t {
     // todo: use `as_maybe_uninit_ref` once that's stable.
     assert!(!buf.is_null());
 
     let nft_id = NftId {
-        token_id: TokenId {
-            shard: token_id_shard,
-            realm: token_id_realm,
-            num: token_id_num,
-        },
+        token_id: TokenId { shard: token_id_shard, realm: token_id_realm, num: token_id_num },
         serial,
     };
 
