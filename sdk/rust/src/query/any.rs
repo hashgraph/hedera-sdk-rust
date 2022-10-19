@@ -63,6 +63,7 @@ use crate::{
     FileContentsResponse,
     FileInfo,
     FromProtobuf,
+    Hbar,
     NetworkVersionInfo,
     NetworkVersionInfoQueryData,
     Query,
@@ -199,6 +200,27 @@ impl QueryExecute for AnyQueryData {
             Self::TopicInfo(query) => query.is_payment_required(),
             Self::ScheduleInfo(query) => query.is_payment_required(),
             Self::NetworkVersionInfo(query) => query.is_payment_required(),
+        }
+    }
+
+    fn map_cost(&self, cost: Hbar) -> Hbar {
+        match self {
+            Self::AccountInfo(query) => query.map_cost(cost),
+            Self::AccountBalance(query) => query.map_cost(cost),
+            Self::AccountStakers(query) => query.map_cost(cost),
+            Self::AccountRecords(query) => query.map_cost(cost),
+            Self::TransactionReceipt(query) => query.map_cost(cost),
+            Self::TransactionRecord(query) => query.map_cost(cost),
+            Self::FileContents(query) => query.map_cost(cost),
+            Self::FileInfo(query) => query.map_cost(cost),
+            Self::ContractBytecode(query) => query.map_cost(cost),
+            Self::ContractCall(query) => query.map_cost(cost),
+            Self::ContractInfo(query) => query.map_cost(cost),
+            Self::TokenNftInfo(query) => query.map_cost(cost),
+            Self::TokenInfo(query) => query.map_cost(cost),
+            Self::TopicInfo(query) => query.map_cost(cost),
+            Self::ScheduleInfo(query) => query.map_cost(cost),
+            Self::NetworkVersionInfo(query) => query.map_cost(cost),
         }
     }
 

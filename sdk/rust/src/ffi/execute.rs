@@ -24,7 +24,7 @@ use std::ffi::{
     CString,
 };
 use std::os::raw::c_char;
-use std::ptr::null;
+use std::ptr;
 
 use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
@@ -37,21 +37,27 @@ use crate::{
     Client,
 };
 
-thread_local! {
-    static EXECUTE_RESPONSE: RefCell<CString> = RefCell::new(CString::new("").unwrap());
-}
-
 #[derive(serde::Deserialize)]
 #[serde(untagged)]
 enum AnyRequest {
     Transaction(Box<AnyTransaction>),
     Query(Box<AnyQuery>),
     MirrorQuery(AnyMirrorQuery),
+    QueryCost(QueryCostRequest),
+}
+
+#[derive(serde::Deserialize)]
+struct QueryCostRequest {
+    query: Box<AnyQuery>,
 }
 
 /// Execute this request against the provided client of the Hedera network.
+///
+/// # Safety
+/// - todo(sr): Missing basically everything
+/// - `callback` must not store `response` after it returns.
 #[no_mangle]
-pub extern "C" fn hedera_execute(
+pub unsafe extern "C" fn hedera_execute(
     client: *const Client,
     request: *const c_char,
     context: *const c_void,
@@ -83,22 +89,27 @@ pub extern "C" fn hedera_execute(
                 .execute(client)
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),
+
+            AnyRequest::QueryCost(req) => req
+                .query
+                .get_cost(client)
+                .await
+                .map(|response| serde_json::to_string(&response).unwrap()),
         };
 
-        let response = response.map(|response| {
-            EXECUTE_RESPONSE.with(|response_text| {
-                *response_text.borrow_mut() = CString::new(response).unwrap();
-
-                response_text.borrow().as_ptr()
-            })
-        });
+        let response =
+            response.map(|response| CString::new(response).unwrap().into_raw() as *const c_char);
 
         let (err, response) = match response {
             Ok(response) => (Error::Ok, response),
-            Err(error) => (Error::new(error), null()),
+            Err(error) => (Error::new(error), ptr::null()),
         };
 
         callback.call(err, response);
+
+        if !response.is_null() {
+            drop(unsafe { CString::from_raw(response as *mut _) });
+        }
     });
 
     Error::Ok

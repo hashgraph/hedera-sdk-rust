@@ -36,6 +36,7 @@ use crate::{
     Client,
     Error,
     FromProtobuf,
+    Hbar,
     Query,
     Status,
     TransactionId,
@@ -51,6 +52,11 @@ pub trait QueryExecute:
     /// Returns `true` if this query requires a payment to be submitted.
     fn is_payment_required(&self) -> bool {
         true
+    }
+
+    /// Alter the required payment amount in arbitrary ways after `get_cost` has returned.
+    fn map_cost(&self, cost: Hbar) -> Hbar {
+        cost
     }
 
     /// Returns `true` if this query should be retried after a back-off from the result
