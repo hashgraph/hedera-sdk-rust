@@ -156,6 +156,126 @@ enum HederaError hedera_entity_id_from_string(const char *s,
                                               uint64_t *id_num);
 
 /**
+ * Parse a Hedera `FileId` from the passed bytes.
+ *
+ * # Safety
+ * - `file_id_shard`, `file_id_realm`, and `file_id_num` must all be valid for writes.
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ */
+enum HederaError hedera_file_id_from_bytes(const uint8_t *bytes,
+                                           size_t bytes_size,
+                                           uint64_t *file_id_shard,
+                                           uint64_t *file_id_realm,
+                                           uint64_t *file_id_num);
+
+/**
+ * Serialize the passed FileId as bytes
+ *
+ * # Safety
+ * - `buf` must be valid for writes.
+ */
+size_t hedera_file_id_to_bytes(uint64_t file_id_shard,
+                               uint64_t file_id_realm,
+                               uint64_t file_id_num,
+                               uint8_t **buf);
+
+/**
+ * Parse a Hedera `ContractId` from the passed bytes.
+ *
+ * # Safety
+ * - `contract_id_shard`, `contract_id_realm`, and `contract_id_num` must all be valid for writes.
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ */
+enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
+                                               size_t bytes_size,
+                                               uint64_t *contract_id_shard,
+                                               uint64_t *contract_id_realm,
+                                               uint64_t *contract_id_num);
+
+/**
+ * Serialize the passed ContractId as bytes
+ *
+ * # Safety
+ * - `buf` must be valid for writes.
+ */
+size_t hedera_contract_id_to_bytes(uint64_t contract_id_shard,
+                                   uint64_t contract_id_realm,
+                                   uint64_t contract_id_num,
+                                   uint8_t **buf);
+
+/**
+ * Parse a Hedera `TopicId` from the passed bytes.
+ *
+ * # Safety
+ * - `topic_id_shard`, `topic_id_realm`, and `topic_id_num` must all be valid for writes.
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ */
+enum HederaError hedera_topic_id_from_bytes(const uint8_t *bytes,
+                                            size_t bytes_size,
+                                            uint64_t *topic_id_shard,
+                                            uint64_t *topic_id_realm,
+                                            uint64_t *topic_id_num);
+
+/**
+ * Serialize the passed TopicId as bytes
+ *
+ * # Safety
+ * - `buf` must be valid for writes.
+ */
+size_t hedera_topic_id_to_bytes(uint64_t topic_id_shard,
+                                uint64_t topic_id_realm,
+                                uint64_t topic_id_num,
+                                uint8_t **buf);
+
+/**
+ * Parse a Hedera `TokenId` from the passed bytes.
+ *
+ * # Safety
+ * - `token_id_shard`, `token_id_realm`, and `token_id_num` must all be valid for writes.
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ */
+enum HederaError hedera_token_id_from_bytes(const uint8_t *bytes,
+                                            size_t bytes_size,
+                                            uint64_t *token_id_shard,
+                                            uint64_t *token_id_realm,
+                                            uint64_t *token_id_num);
+
+/**
+ * Serialize the passed TokenId as bytes
+ *
+ * # Safety
+ * - `buf` must be valid for writes.
+ */
+size_t hedera_token_id_to_bytes(uint64_t token_id_shard,
+                                uint64_t token_id_realm,
+                                uint64_t token_id_num,
+                                uint8_t **buf);
+
+/**
+ * Parse a Hedera `ScheduleId` from the passed bytes.
+ *
+ * # Safety
+ * - `schedule_id_shard`, `schedule_id_realm`, and `schedule_id_num` must all be valid for writes.
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ */
+enum HederaError hedera_schedule_id_from_bytes(const uint8_t *bytes,
+                                               size_t bytes_size,
+                                               uint64_t *schedule_id_shard,
+                                               uint64_t *schedule_id_realm,
+                                               uint64_t *schedule_id_num);
+
+/**
+ * Serialize the passed ScheduleId as bytes
+ *
+ * # Safety
+ * - `buf` must be valid for writes.
+ */
+size_t hedera_schedule_id_to_bytes(uint64_t schedule_id_shard,
+                                   uint64_t schedule_id_realm,
+                                   uint64_t schedule_id_num,
+                                   uint8_t **buf);
+
+/**
  * Execute this request against the provided client of the Hedera network.
  *
  * # Safety

@@ -21,12 +21,6 @@
 import Foundation
 import CHedera
 
-// safety: `hedera_bytes_free` needs to be called so...
-// perf: might as well enable use of the no copy constructor.
-private let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
-    hedera_bytes_free(buf, size)
-}
-
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
 public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable {
     /// The (non-fungible) token of which this NFT is an instance.
@@ -106,7 +100,7 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_nft_id_to_bytes(tokenId.shard, tokenId.realm, tokenId.num, serial, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
     }
 
     public static func == (lhs: NftId, rhs: NftId) -> Bool {
