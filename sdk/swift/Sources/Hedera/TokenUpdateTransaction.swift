@@ -24,21 +24,21 @@ import Foundation
 public final class TokenUpdateTransaction: Transaction {
     /// Create a new `TokenUpdateTransaction`.
     public init(
-        tokenId: TokenId? = nil,
-        name: String = "",
-        symbol: String = "",
-        treasuryAccountId: AccountId? = nil,
-        adminKey: Key? = nil,
-        kycKey: Key? = nil,
-        freezeKey: Key? = nil,
-        wipeKey: Key? = nil,
-        supplyKey: Key? = nil,
-        autoRenewAccountId: AccountId? = nil,
-        autoRenewPeriod: TimeInterval? = nil,
-        expiresAt: Date? = nil,
-        tokenMemo: String = "",
-        feeScheduleKey: Key? = nil,
-        pauseKey: Key? = nil
+            tokenId: TokenId? = nil,
+            name: String = "",
+            symbol: String = "",
+            treasuryAccountId: AccountId? = nil,
+            adminKey: Key? = nil,
+            kycKey: Key? = nil,
+            freezeKey: Key? = nil,
+            wipeKey: Key? = nil,
+            supplyKey: Key? = nil,
+            autoRenewAccountId: AccountId? = nil,
+            autoRenewPeriod: TimeInterval? = nil,
+            expirationTime: Date? = nil,
+            tokenMemo: String = "",
+            feeScheduleKey: Key? = nil,
+            pauseKey: Key? = nil
     ) {
         self.tokenId = tokenId
         self.name = name
@@ -51,7 +51,7 @@ public final class TokenUpdateTransaction: Transaction {
         self.supplyKey = supplyKey
         self.autoRenewAccountId = autoRenewAccountId
         self.autoRenewPeriod = autoRenewPeriod
-        self.expiresAt = expiresAt
+        self.expirationTime = expirationTime
         self.tokenMemo = tokenMemo
         self.feeScheduleKey = feeScheduleKey
         self.pauseKey = pauseKey
@@ -181,12 +181,12 @@ public final class TokenUpdateTransaction: Transaction {
     }
 
     /// The new time at which the token should expire.
-    public var expiresAt: Date?
+    public var expirationTime: Date?
 
     /// Sets the new time at which the token should expire.
     @discardableResult
-    public func expiresAt(_ expiresAt: Date) -> Self {
-        self.expiresAt = expiresAt
+    public func expirationTime(_ expirationTime: Date) -> Self {
+        self.expirationTime = expirationTime
 
         return self
     }
@@ -236,7 +236,7 @@ public final class TokenUpdateTransaction: Transaction {
         case supplyKey
         case autoRenewAccountId
         case autoRenewPeriod
-        case expiresAt
+        case expirationTime
         case tokenMemo
         case feeScheduleKey
         case pauseKey
@@ -256,7 +256,7 @@ public final class TokenUpdateTransaction: Transaction {
         try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
         try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
         try container.encode(tokenMemo, forKey: .tokenMemo)
         try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)
         try container.encodeIfPresent(pauseKey, forKey: .pauseKey)
