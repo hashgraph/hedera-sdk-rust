@@ -144,6 +144,15 @@ where
         self.payment.transaction_id(id);
         self
     }
+
+    /// Fetch the cost of this query.
+    pub async fn get_cost(&self, client: &Client) -> crate::Result<Hbar> {
+        if !self.data.is_payment_required() {
+            return Ok(Hbar::ZERO);
+        }
+
+        QueryCost::new(self).execute(client).await
+    }
 }
 
 impl<D> Query<D>

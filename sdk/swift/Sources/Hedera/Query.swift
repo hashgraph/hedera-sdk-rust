@@ -118,6 +118,11 @@ public class Query<Response: Decodable>: Request {
         return self
     }
 
+    public func getCost(_ client: Client) async throws -> Hbar {
+
+        try await QueryCost(query: self).execute(client)
+    }
+
     // TODO: paymentSigner
 
     private enum CodingKeys: String, CodingKey {
