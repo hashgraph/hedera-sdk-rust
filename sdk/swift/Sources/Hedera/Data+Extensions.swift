@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import CHedera
 
 private func hexVal(_ char: UInt8) -> UInt8? {
     // this would be a very clean function if swift had a way of doing ascii-charcter literals, but it can't.
@@ -41,6 +42,12 @@ private func hexVal(_ char: UInt8) -> UInt8? {
 }
 
 internal extension Data {
+    // safety: `hedera_bytes_free` needs to be called so...
+    // perf: might as well enable use of the no copy constructor.
+    static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
+        hedera_bytes_free(buf, size)
+    }
+
     private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
 
     // (sr): swift compiler wins the "useless acl vs explicit acl debate
