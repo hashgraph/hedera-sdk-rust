@@ -19,6 +19,7 @@
  */
 
 import CHedera
+import Foundation
 
 public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Equatable, Codable,
         ExpressibleByStringLiteral {
@@ -78,22 +79,134 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, E
     }
 }
 
+// fixme(sr): How do DRY?
+
 /// The unique identifier for a file on Hedera.
 public final class FileId: EntityId {
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+
+            let err = hedera_file_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(shard: shard, realm: realm, num: num)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_file_id_to_bytes(shard, realm, num, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
 }
 
 /// The unique identifier for a smart contract on Hedera.
 public final class ContractId: EntityId {
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+
+            let err = hedera_contract_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(shard: shard, realm: realm, num: num)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_contract_id_to_bytes(shard, realm, num, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
 }
 
 /// The unique identifier for a topic on Hedera.
 public final class TopicId: EntityId {
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+
+            let err = hedera_topic_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(shard: shard, realm: realm, num: num)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_topic_id_to_bytes(shard, realm, num, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
 }
 
 /// The unique identifier for a token on Hedera.
 public final class TokenId: EntityId {
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+
+            let err = hedera_token_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(shard: shard, realm: realm, num: num)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_token_id_to_bytes(shard, realm, num, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
 }
 
 /// The unique identifier for a schedule on Hedera.
 public final class ScheduleId: EntityId {
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+
+            let err = hedera_schedule_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(shard: shard, realm: realm, num: num)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_schedule_id_to_bytes(shard, realm, num, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
 }
