@@ -157,6 +157,10 @@ enum HederaError hedera_entity_id_from_string(const char *s,
 
 /**
  * Execute this request against the provided client of the Hedera network.
+ *
+ * # Safety
+ * - todo(sr): Missing basically everything
+ * - `callback` must not store `response` after it returns.
  */
 enum HederaError hedera_execute(const struct HederaClient *client,
                                 const char *request,
