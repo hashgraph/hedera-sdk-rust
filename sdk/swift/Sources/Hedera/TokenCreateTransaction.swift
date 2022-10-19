@@ -24,27 +24,27 @@ import Foundation
 public final class TokenCreateTransaction: Transaction {
     /// Create a new `TokenCreateTransaction`.
     public init(
-        name: String = "",
-        symbol: String = "",
-        decimals: UInt32 = 0,
-        initialSupply: UInt64 = 0,
-        treasuryAccountId: AccountId? = nil,
-        adminKey: Key? = nil,
-        kycKey: Key? = nil,
-        freezeKey: Key? = nil,
-        wipeKey: Key? = nil,
-        supplyKey: Key? = nil,
-        freezeDefault: Bool = false,
-        expiresAt: Date? = nil,
-        autoRenewAccountId: AccountId? = nil,
-        autoRenewPeriod: TimeInterval? = nil,
-        tokenMemo: String = "",
-        tokenType: TokenType = .fungibleCommon,
-        tokenSupplyType: TokenSupplyType = .infinite,
-        maxSupply: UInt64 = 0,
-        feeScheduleKey: Key? = nil,
-        customFees: [CustomFee] = [],
-        pauseKey: Key? = nil
+            name: String = "",
+            symbol: String = "",
+            decimals: UInt32 = 0,
+            initialSupply: UInt64 = 0,
+            treasuryAccountId: AccountId? = nil,
+            adminKey: Key? = nil,
+            kycKey: Key? = nil,
+            freezeKey: Key? = nil,
+            wipeKey: Key? = nil,
+            supplyKey: Key? = nil,
+            freezeDefault: Bool = false,
+            expirationTime: Date? = nil,
+            autoRenewAccountId: AccountId? = nil,
+            autoRenewPeriod: TimeInterval? = nil,
+            tokenMemo: String = "",
+            tokenType: TokenType = .fungibleCommon,
+            tokenSupplyType: TokenSupplyType = .infinite,
+            maxSupply: UInt64 = 0,
+            feeScheduleKey: Key? = nil,
+            customFees: [CustomFee] = [],
+            pauseKey: Key? = nil
     ) {
         self.name = name
         self.symbol = symbol
@@ -57,7 +57,7 @@ public final class TokenCreateTransaction: Transaction {
         self.wipeKey = wipeKey
         self.supplyKey = supplyKey
         self.freezeDefault = freezeDefault
-        self.expiresAt = expiresAt
+        self.expirationTime = expirationTime
         self.autoRenewAccountId = autoRenewAccountId
         self.autoRenewPeriod = autoRenewPeriod
         self.tokenMemo = tokenMemo
@@ -192,12 +192,12 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The time at which the token should expire.
-    public var expiresAt: Date?
+    public var expirationTime: Date?
 
     /// Sets the time at which the token should expire.
     @discardableResult
-    public func expiresAt(_ expiresAt: Date) -> Self {
-        self.expiresAt = expiresAt
+    public func expirationTime(_ expirationTime: Date) -> Self {
+        self.expirationTime = expirationTime
 
         return self
     }
@@ -315,7 +315,7 @@ public final class TokenCreateTransaction: Transaction {
         case wipeKey
         case supplyKey
         case freezeDefault
-        case expiresAt
+        case expirationTime
         case autoRenewAccountId
         case autoRenewPeriod
         case tokenMemo
@@ -341,7 +341,7 @@ public final class TokenCreateTransaction: Transaction {
         try container.encodeIfPresent(wipeKey, forKey: .wipeKey)
         try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
         try container.encode(freezeDefault, forKey: .freezeDefault)
-        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
         try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
         try container.encode(tokenMemo, forKey: .tokenMemo)
