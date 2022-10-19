@@ -66,12 +66,12 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The time at which this file should expire.
-    public var expiresAt: Date?
+    public var expirationTime: Date?
 
     /// Sets the time at which this file should expire.
     @discardableResult
-    public func expiresAt(_ expiresAt: Date) -> Self {
-        self.expiresAt = expiresAt
+    public func expirationTime(_ expirationTime: Date) -> Self {
+        self.expirationTime = expirationTime
 
         return self
     }
@@ -80,7 +80,7 @@ public final class FileCreateTransaction: Transaction {
         case fileMemo
         case keys
         case contents
-        case expiresAt
+        case expirationTime
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -89,7 +89,7 @@ public final class FileCreateTransaction: Transaction {
         try container.encode(fileMemo, forKey: .fileMemo)
         try container.encode(keys, forKey: .keys)
         try container.encode(contents.base64EncodedString(), forKey: .contents)
-        try container.encodeIfPresent(expiresAt?.unixTimestampNanos, forKey: .expiresAt)
+        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
 
         try super.encode(to: encoder)
     }
