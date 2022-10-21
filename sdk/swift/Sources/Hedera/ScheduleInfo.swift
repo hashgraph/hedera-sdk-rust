@@ -58,4 +58,6 @@ public final class ScheduleInfo: Codable {
 
     /// The time the schedule transaction was deleted.
     public let deletedAt: Date?
+
+    public let ledgerId: LedgerId
 }
