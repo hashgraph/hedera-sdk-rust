@@ -27,7 +27,7 @@ public struct ContractFunctionResult: Codable {
     public let contractId: ContractId
 
     /// The new contract's 20-byte EVM address.
-    // TODO: public let evmAddress: ContractId?
+    public let evmAddress: ContractId?
 
     /// Message if there was an error during smart contract execution.
     public let errorMessage: String?
@@ -59,6 +59,7 @@ public struct ContractFunctionResult: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         contractId = try container.decode(ContractId.self, forKey: .contractId)
+        evmAddress = try container.decode(ContractId.self, forKey: .evmAddress)
         errorMessage = try container.decodeIfPresent(String.self, forKey: .errorMessage)
         bloom = Data(base64Encoded: try container.decode(String.self, forKey: .bloom))!
         gasUsed = try container.decode(UInt64.self, forKey: .gasUsed)

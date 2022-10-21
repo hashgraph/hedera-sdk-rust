@@ -58,4 +58,6 @@ public final class ContractInfo: Codable {
 
     /// The maximum number of tokens that a contract can be implicitly associated with.
     public let maxAutomaticTokenAssociations: UInt32
+
+    public let ledgerId: LedgerId
 }
