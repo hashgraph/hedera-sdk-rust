@@ -19,6 +19,7 @@
  */
 
 import CHedera
+import Foundation
 
 /// The unique identifier for a cryptocurrency account on Hedera.
 public final class AccountId: EntityId {
@@ -48,7 +49,7 @@ public final class AccountId: EntityId {
             return nil
         }
 
-        self.alias = alias != nil ? PublicKey(alias!) : nil
+        self.alias = alias != nil ? PublicKey.unsafeFromPtr(alias!) : nil
 
         super.init(shard: shard, realm: realm, num: num)
     }
@@ -79,6 +80,36 @@ public final class AccountId: EntityId {
         return super.description
     }
 
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var shard: UInt64 = 0
+            var realm: UInt64 = 0
+            var num: UInt64 = 0
+            var alias: OpaquePointer?
+
+            let err = hedera_account_id_from_bytes(
+                    pointer.baseAddress,
+                    pointer.count,
+                    &shard,
+                    &realm,
+                    &num,
+                    &alias
+            )
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(shard: shard, realm: realm, num: num)
+        }
+    }
+
+    public func toBytes() -> Data {
+        var buf: UnsafeMutablePointer<UInt8>?
+        let size = hedera_account_id_to_bytes(shard, realm, num, alias?.ptr, &buf)
+
+        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
 }
 
 // TODO: checksum

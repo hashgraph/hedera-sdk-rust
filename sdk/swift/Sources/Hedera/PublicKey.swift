@@ -22,15 +22,22 @@ import CHedera
 import Foundation
 
 // todo: deduplicate these with `PrivateKey.swift`
+
 private typealias UnsafeFromBytesFunc = @convention(c) (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?) -> HederaError
 
 /// A public key on the Hedera network.
 public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Codable {
-    private let ptr: OpaquePointer
+    internal let ptr: OpaquePointer
 
-    internal init(_ ptr: OpaquePointer) {
+    // sadly, we can't avoid a leaky abstraction here.
+    internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
+        Self.init(ptr)
+    }
+
+    private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }
+
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
         let ptr = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
