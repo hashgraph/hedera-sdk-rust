@@ -158,7 +158,7 @@ pub(crate) use network_version_info_query::NetworkVersionInfoQueryData;
 pub use node_address::NodeAddress;
 pub use node_address_book_query::NodeAddressBookQuery;
 pub(crate) use node_address_book_query::NodeAddressBookQueryData;
-pub use protobuf::{
+pub(crate) use protobuf::{
     FromProtobuf,
     ToProtobuf,
 };

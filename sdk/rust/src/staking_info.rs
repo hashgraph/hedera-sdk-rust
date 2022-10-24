@@ -6,6 +6,7 @@ use serde_with::{
 };
 use time::OffsetDateTime;
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -41,24 +42,16 @@ pub struct StakingInfo {
 }
 
 impl FromProtobuf<services::StakingInfo> for StakingInfo {
-    fn from_protobuf(pb: services::StakingInfo) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        let mut staked_account_id = None;
-        let mut staked_node_id = None;
-
-        match pb.staked_id {
+    fn from_protobuf(pb: services::StakingInfo) -> crate::Result<Self> {
+        let (staked_account_id, staked_node_id) = match pb.staked_id {
             Some(services::staking_info::StakedId::StakedAccountId(id)) => {
-                staked_account_id = Some(AccountId::from_protobuf(id)?);
+                (Some(AccountId::from_protobuf(id)?), None)
             }
 
-            Some(services::staking_info::StakedId::StakedNodeId(id)) => {
-                staked_node_id = Some(id as u64);
-            }
+            Some(services::staking_info::StakedId::StakedNodeId(id)) => (None, Some(id as u64)),
 
-            None => {}
-        }
+            None => (None, None),
+        };
 
         Ok(Self {
             decline_staking_reward: pb.decline_reward,
@@ -68,5 +61,28 @@ impl FromProtobuf<services::StakingInfo> for StakingInfo {
             staked_account_id,
             staked_node_id,
         })
+    }
+}
+
+impl ToProtobuf for StakingInfo {
+    type Protobuf = services::StakingInfo;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::StakingInfo {
+            decline_reward: self.decline_staking_reward,
+            stake_period_start: self.stake_period_start.map(Into::into),
+            pending_reward: self.pending_reward.to_tinybars(),
+            staked_to_me: self.staked_to_me.to_tinybars(),
+            staked_id: self
+                .staked_node_id
+                .map(|it| it as i64)
+                .map(services::staking_info::StakedId::StakedNodeId)
+                .or_else(|| {
+                    self.staked_account_id
+                        .as_ref()
+                        .map(ToProtobuf::to_protobuf)
+                        .map(services::staking_info::StakedId::StakedAccountId)
+                }),
+        }
     }
 }

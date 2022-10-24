@@ -57,6 +57,23 @@ pub struct AccountId {
     pub alias: Option<PublicKey>,
 }
 
+impl AccountId {
+    /// Create a new `AccountId` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`] if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`] if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl Debug for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "\"{}\"", self)
