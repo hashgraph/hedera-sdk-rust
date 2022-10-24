@@ -20,7 +20,7 @@
 
 /// Hedera follows semantic versioning for both the HAPI protobufs and
 /// the Services software.
-public struct SemanticVersion: Codable {
+public struct SemanticVersion: Codable, CustomStringConvertible {
     /// Increases with incompatible API changes
     public let major: UInt32
 
@@ -29,4 +29,12 @@ public struct SemanticVersion: Codable {
 
     /// Increases with backwards-compatible bug fixes
     public let patch: UInt32
+
+    public var description: String {
+        "\(major).\(minor)\(patch)"
+    }
+
+    public func toString() -> String {
+        description
+    }
 }

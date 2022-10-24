@@ -21,6 +21,7 @@
 import Foundation
 
 // TODO: keys
+
 /// Response from `FileInfoQuery`.
 public final class FileInfo: Codable {
     /// The file ID of the file for which information is requested.
@@ -37,4 +38,6 @@ public final class FileInfo: Codable {
 
     /// Memo associated with the file.
     public let fileMemo: String
+
+    public let ledgerId: LedgerId
 }
