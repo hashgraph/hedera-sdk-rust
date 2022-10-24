@@ -94,6 +94,30 @@ enum HederaError hedera_account_id_from_string(const char *s,
                                                struct HederaPublicKey **id_alias);
 
 /**
+ * Parse a Hedera `AccountId` from the passed bytes.
+ */
+enum HederaError hedera_account_id_from_bytes(const uint8_t *bytes,
+                                              size_t bytes_size,
+                                              uint64_t *id_shard,
+                                              uint64_t *id_realm,
+                                              uint64_t *id_num,
+                                              struct HederaPublicKey **id_alias);
+
+/**
+ * Serialize the passed `AccountId` as bytes
+ *
+ * # Safety
+ * - `id_alias` must either be null or point to a valid public key.
+ * - `buf` must be valid for writes.
+ * - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
+ */
+size_t hedera_account_id_to_bytes(uint64_t id_shard,
+                                  uint64_t id_realm,
+                                  uint64_t id_num,
+                                  const struct HederaPublicKey *id_alias,
+                                  uint8_t **buf);
+
+/**
  * Free a string returned from a hedera API.
  *
  * A function will tell you if the string needs to be freed with this method.
