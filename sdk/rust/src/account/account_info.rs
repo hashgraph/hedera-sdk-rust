@@ -19,11 +19,13 @@
  */
 
 use hedera_proto::services;
+use prost::Message;
 use time::{
     Duration,
     OffsetDateTime,
 };
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -92,6 +94,48 @@ pub struct AccountInfo {
     pub staking: Option<StakingInfo>,
 }
 
+impl AccountInfo {
+    /// Create a new `AccountInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::crypto_get_info_response::AccountInfo>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        services::crypto_get_info_response::AccountInfo {
+            account_id: Some(self.account_id.to_protobuf()),
+            contract_account_id: self.contract_account_id.clone(),
+            deleted: self.is_deleted,
+            proxy_received: self.proxy_received.to_tinybars(),
+            key: Some(self.key.to_protobuf()),
+            balance: self.balance.to_tinybars() as u64,
+            receiver_sig_required: self.is_receiver_signature_required,
+            expiration_time: self.expiration_time.as_ref().map(ToProtobuf::to_protobuf),
+            auto_renew_period: self.auto_renew_period.as_ref().map(ToProtobuf::to_protobuf),
+            memo: self.account_memo.clone(),
+            owned_nfts: self.owned_nfts as i64,
+            max_automatic_token_associations: self.max_automatic_token_associations as i32,
+            alias: self.alias_key.as_ref().map(ToProtobuf::to_bytes).unwrap_or_default(),
+            ledger_id: self.ledger_id.to_bytes(),
+            ethereum_nonce: self.ethereum_nonce as i64,
+            staking_info: self.staking.as_ref().map(ToProtobuf::to_protobuf),
+
+            // unimplemented fields
+            live_hashes: Vec::default(),
+            token_relationships: Vec::default(),
+
+            // deprecated fields
+            ..Default::default()
+        }
+        .encode_to_vec()
+    }
+}
+
 impl FromProtobuf<services::response::Response> for AccountInfo {
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
@@ -99,29 +143,38 @@ impl FromProtobuf<services::response::Response> for AccountInfo {
     {
         let response = pb_getv!(pb, CryptoGetInfo, services::response::Response);
         let info = pb_getf!(response, account_info)?;
-        let key = pb_getf!(info, key)?;
-        let account_id = pb_getf!(info, account_id)?;
-        let alias_key = PublicKey::from_alias_bytes(&info.alias)?;
-        let ledger_id = LedgerId::from_bytes(info.ledger_id);
-        let staking = info.staking_info.map(StakingInfo::from_protobuf).transpose()?;
+        Self::from_protobuf(info)
+    }
+}
+
+impl FromProtobuf<services::crypto_get_info_response::AccountInfo> for AccountInfo {
+    fn from_protobuf(pb: services::crypto_get_info_response::AccountInfo) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let key = pb_getf!(pb, key)?;
+        let account_id = pb_getf!(pb, account_id)?;
+        let alias_key = PublicKey::from_alias_bytes(&pb.alias)?;
+        let ledger_id = LedgerId::from_bytes(pb.ledger_id);
+        let staking = pb.staking_info.map(StakingInfo::from_protobuf).transpose()?;
 
         Ok(Self {
             ledger_id,
             staking,
             account_id: AccountId::from_protobuf(account_id)?,
-            contract_account_id: info.contract_account_id,
-            is_deleted: info.deleted,
-            proxy_received: Hbar::from_tinybars(info.proxy_received),
+            contract_account_id: pb.contract_account_id,
+            is_deleted: pb.deleted,
+            proxy_received: Hbar::from_tinybars(pb.proxy_received),
             key: Key::from_protobuf(key)?,
-            balance: Hbar::from_tinybars(info.balance as Tinybar),
-            expiration_time: info.expiration_time.map(Into::into),
-            auto_renew_period: info.auto_renew_period.map(Into::into),
-            account_memo: info.memo,
-            owned_nfts: info.owned_nfts as u64,
-            max_automatic_token_associations: info.max_automatic_token_associations as u32,
+            balance: Hbar::from_tinybars(pb.balance as Tinybar),
+            expiration_time: pb.expiration_time.map(Into::into),
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            account_memo: pb.memo,
+            owned_nfts: pb.owned_nfts as u64,
+            max_automatic_token_associations: pb.max_automatic_token_associations as u32,
             alias_key,
-            ethereum_nonce: info.ethereum_nonce as u64,
-            is_receiver_signature_required: info.receiver_sig_required,
+            ethereum_nonce: pb.ethereum_nonce as u64,
+            is_receiver_signature_required: pb.receiver_sig_required,
         })
     }
 }

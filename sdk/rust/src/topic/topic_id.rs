@@ -51,6 +51,22 @@ pub struct TopicId {
     /// A non-negative number identifying the entity within the realm containing this topic.
     pub num: u64,
 }
+impl TopicId {
+    /// Create a new `TopicId` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
 
 impl Debug for TopicId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {

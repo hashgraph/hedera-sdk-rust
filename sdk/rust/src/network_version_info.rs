@@ -32,8 +32,18 @@ pub struct SemanticVersion {
     /// Increases with backwards-compatible new functionality
     pub minor: u32,
 
-    /// Increases with backwards-compatible bug fixes
+    /// Increases with backwards-compatible bug fixes]
     pub patch: u32,
+
+    /// A pre-release version MAY be denoted by appending a hyphen and a series of dot separated identifiers (https://semver.org/#spec-item-9);
+    /// so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘alpha.1’
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub prerelease: String,
+    /// Build metadata MAY be denoted by appending a plus sign and a series of dot separated identifiers
+    /// immediately following the patch or pre-release version (https://semver.org/#spec-item-10);
+    /// so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘21AF26D3’
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub build: String,
 }
 
 /// Versions of Hedera Services, and the protobuf schema.
@@ -68,6 +78,12 @@ impl FromProtobuf<services::SemanticVersion> for SemanticVersion {
     where
         Self: Sized,
     {
-        Ok(Self { major: pb.major as u32, minor: pb.minor as u32, patch: pb.patch as u32 })
+        Ok(Self {
+            major: pb.major as u32,
+            minor: pb.minor as u32,
+            patch: pb.patch as u32,
+            prerelease: pb.pre,
+            build: pb.build,
+        })
     }
 }
