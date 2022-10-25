@@ -118,6 +118,16 @@ size_t hedera_account_id_to_bytes(uint64_t id_shard,
                                   uint8_t **buf);
 
 /**
+ * # Safety
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ * - `s` must only be freed with `hedera_string_free`,
+ *   notably this means it must not be freed with `free`.
+ */
+enum HederaError hedera_account_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
+
+enum HederaError hedera_account_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+/**
  * Free a string returned from a hedera API.
  *
  * A function will tell you if the string needs to be freed with this method.

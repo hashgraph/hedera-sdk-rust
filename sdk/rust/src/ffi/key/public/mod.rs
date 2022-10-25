@@ -361,7 +361,7 @@ pub unsafe extern "C" fn hedera_public_key_is_ecdsa(key: *mut PublicKey) -> bool
 
 /// Releases memory associated with the public key.
 #[no_mangle]
-pub extern "C" fn hedera_public_key_free(key: *mut PublicKey) {
+pub unsafe extern "C" fn hedera_public_key_free(key: *mut PublicKey) {
     assert!(!key.is_null());
 
     let _key = unsafe { Box::from_raw(key) };

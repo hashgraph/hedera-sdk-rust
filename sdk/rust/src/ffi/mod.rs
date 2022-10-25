@@ -22,6 +22,7 @@
 mod error;
 
 mod account_id;
+mod account_info;
 mod c_util;
 mod callback;
 mod client;
