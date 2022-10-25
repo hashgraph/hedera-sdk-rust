@@ -168,7 +168,7 @@ impl FromStr for SemanticVersion {
                 let minor = parse_version(minor, "minor")?;
                 let patch = parse_version(patch, "patch")?;
 
-                let pre = match pre {
+                let prerelease = match pre {
                     Some(it) => parse_prerelease(it)?,
                     None => String::new(),
                 };
@@ -178,7 +178,7 @@ impl FromStr for SemanticVersion {
                     None => String::new(),
                 };
 
-                Ok(Self { major, minor, patch, prerelease: pre, build })
+                Ok(Self { major, minor, patch, prerelease, build })
             }
             _ => Err(Error::basic_parse("expected major.minor.patch for semver")),
         }

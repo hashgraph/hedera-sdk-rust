@@ -89,9 +89,9 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaSemanticVersion) throws -> Result) rethrows -> Result {
-        try prerelease.withCString { (pre) in
+        try prerelease.withCString { (prerelease) in
             try build.withCString { (build) in
-                let mutPrerelease = UnsafeMutablePointer(mutating: pre)
+                let mutPrerelease = UnsafeMutablePointer(mutating: prerelease)
                 let mutBuild = UnsafeMutablePointer(mutating: build)
                 let csemver = HederaSemanticVersion(major: major, minor: minor, patch: patch, prerelease: mutPrerelease, build: mutBuild)
 

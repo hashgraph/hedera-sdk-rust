@@ -86,9 +86,9 @@ impl SemanticVersion {
             let string = match string.is_null() {
                 true => None,
                 false => {
-                    let pre = unsafe { CStr::from_ptr(string) };
-                    let pre = pre.to_str().unwrap().to_owned();
-                    Some(pre)
+                    let prerelease = unsafe { CStr::from_ptr(string) };
+                    let prerelease = prerelease.to_str().unwrap().to_owned();
+                    Some(prerelease)
                 }
             };
 
