@@ -40,6 +40,23 @@ pub struct StakingInfo {
     pub staked_node_id: Option<u64>,
 }
 
+impl StakingInfo {
+    /// Create a new `StakingInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl FromProtobuf<services::StakingInfo> for StakingInfo {
     fn from_protobuf(pb: services::StakingInfo) -> crate::Result<Self> {
         let (staked_account_id, staked_node_id) = match pb.staked_id {

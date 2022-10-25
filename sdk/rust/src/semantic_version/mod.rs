@@ -186,7 +186,7 @@ impl FromStr for SemanticVersion {
 }
 
 impl SemanticVersion {
-    /// Create a new `NetworkVersionInfo` from protobuf-encoded `bytes`.
+    /// Create a new `SemanticVersion` from protobuf-encoded `bytes`.
     ///
     /// # Errors
     /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
