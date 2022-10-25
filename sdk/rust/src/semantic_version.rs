@@ -20,7 +20,10 @@
 
 use hedera_proto::services;
 
-use crate::FromProtobuf;
+use crate::{
+    FromProtobuf,
+    ToProtobuf,
+};
 
 /// Hedera follows [semantic versioning](https://semver.org) for both the HAPI protobufs and
 /// the Services software.
@@ -46,6 +49,23 @@ pub struct SemanticVersion {
     pub build: String,
 }
 
+impl SemanticVersion {
+    /// Create a new `NetworkVersionInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl FromProtobuf<services::SemanticVersion> for SemanticVersion {
     fn from_protobuf(pb: services::SemanticVersion) -> crate::Result<Self>
     where
@@ -58,5 +78,18 @@ impl FromProtobuf<services::SemanticVersion> for SemanticVersion {
             prerelease: pb.pre,
             build: pb.build,
         })
+    }
+}
+
+impl ToProtobuf for SemanticVersion {
+    type Protobuf = services::SemanticVersion;
+    fn to_protobuf(&self) -> Self::Protobuf {
+        Self::Protobuf {
+            major: self.major as i32,
+            minor: self.minor as i32,
+            patch: self.patch as i32,
+            pre: self.prerelease.clone(),
+            build: self.build.clone(),
+        }
     }
 }
