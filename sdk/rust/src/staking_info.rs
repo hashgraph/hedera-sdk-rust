@@ -1,5 +1,4 @@
 use hedera_proto::services;
-use serde::Serialize;
 use serde_with::{
     serde_as,
     TimestampNanoSeconds,
@@ -16,7 +15,7 @@ use crate::{
 // todo(sr): is this right?
 /// Info related to account/contract staking settings.
 #[serde_as]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StakingInfo {
     /// If `true`, the contract declines receiving a staking reward. The default value is `false`.

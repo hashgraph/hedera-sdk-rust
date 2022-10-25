@@ -38,7 +38,7 @@ use crate::{
 };
 
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AccountInfo {
     /// The account that is being referenced.
