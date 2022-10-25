@@ -31,6 +31,7 @@ for name in [
     "TransferHbar",
     "CreateAccount",
     "DeleteAccount",
+    "GetAddressBook",
     "GetFileContents",
 ] {
     exampleTargets.append(
