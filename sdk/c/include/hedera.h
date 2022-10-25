@@ -1120,6 +1120,9 @@ enum HederaError hedera_semantic_version_from_bytes(const uint8_t *bytes,
                                                     size_t bytes_size,
                                                     struct HederaSemanticVersion *semver);
 
+enum HederaError hedera_semantic_version_from_string(const char *s,
+                                                     struct HederaSemanticVersion *semver);
+
 size_t hedera_semantic_version_to_bytes(struct HederaSemanticVersion semver, uint8_t **buf);
 
 /**
