@@ -19,10 +19,12 @@
  */
 
 use hedera_proto::services;
+use prost::Message;
 
 use crate::{
     FromProtobuf,
     SemanticVersion,
+    ToProtobuf,
 };
 
 /// Versions of Hedera Services, and the protobuf schema.
@@ -36,12 +38,43 @@ pub struct NetworkVersionInfo {
     pub services_version: SemanticVersion,
 }
 
+impl NetworkVersionInfo {
+    /// Create a new `NetworkVersionInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::NetworkGetVersionInfoResponse>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        services::NetworkGetVersionInfoResponse {
+            header: None,
+            hapi_proto_version: Some(self.protobuf_version.to_protobuf()),
+            hedera_services_version: Some(self.services_version.to_protobuf()),
+        }
+        .encode_to_vec()
+    }
+}
+
 impl FromProtobuf<services::response::Response> for NetworkVersionInfo {
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
     where
         Self: Sized,
     {
         let pb = pb_getv!(pb, NetworkGetVersionInfo, services::response::Response);
+        Self::from_protobuf(pb)
+    }
+}
+
+impl FromProtobuf<services::NetworkGetVersionInfoResponse> for NetworkVersionInfo {
+    fn from_protobuf(pb: services::NetworkGetVersionInfoResponse) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
         let protobuf_version = pb_getf!(pb, hapi_proto_version)?;
         let services_version = pb_getf!(pb, hedera_services_version)?;
 

@@ -56,6 +56,69 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
+typedef struct HederaSemanticVersion {
+  /**
+   * Increases with incompatible API changes
+   */
+  uint32_t major;
+  /**
+   * Increases with backwards-compatible new functionality
+   */
+  uint32_t minor;
+  /**
+   * Increases with backwards-compatible bug fixes]
+   */
+  uint32_t patch;
+  /**
+   * A pre-release version MAY be denoted by appending a hyphen and a series of dot separated identifiers (https://semver.org/#spec-item-9);
+   * so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘alpha.1’
+   *
+   * treat `null` as an empty string.
+   *
+   * # Safety
+   *
+   * - If allocated by Hedera, must be freed with `hedera_string_free`,
+   *   notably this means that it must not be freed with `free`.
+   * - If *not* allocated by Hedera, must be freed however it normally would,
+   *   notably this means that it must not be freed with `hedera_string_free`
+   * - This field must be valid for reads (unless it's null)
+   * - If this is allocated by Hedera,
+   *   this will also be valid for writes *if* the field is non-null,
+   *   however, the length of this field must *not* be changed.
+   */
+  char *prerelease;
+  /**
+   * Build metadata MAY be denoted by appending a plus sign and a series of dot separated identifiers
+   * immediately following the patch or pre-release version (https://semver.org/#spec-item-10);
+   * so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘21AF26D3’
+   *
+   * treat `null` as an empty string.
+   *
+   * # Safety
+   *
+   * - If allocated by Hedera, must be freed with `hedera_string_free`,
+   *   notably this means that it must not be freed with `free`.
+   * - If *not* allocated by Hedera, must be freed however it normally would,
+   *   notably this means that it must not be freed with `hedera_string_free`
+   * - This field must be valid for reads (unless it's null)
+   * - If this is allocated by Hedera,
+   *   this will also be valid for writes *if* the field is non-null,
+   *   however, the length of this field must *not* be changed.
+   */
+  char *build;
+} HederaSemanticVersion;
+
+typedef struct HederaNetworkVersionInfo {
+  /**
+   * Version of the protobuf schema in use by the network.
+   */
+  struct HederaSemanticVersion protobuf_version;
+  /**
+   * Version of the Hedera services in use by the network.
+   */
+  struct HederaSemanticVersion services_version;
+} HederaNetworkVersionInfo;
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -1019,6 +1082,12 @@ char *hedera_mnemonic_to_string(struct HederaMnemonic *mnemonic);
  */
 void hedera_mnemonic_free(struct HederaMnemonic *mnemonic);
 
+enum HederaError hedera_network_version_info_from_bytes(const uint8_t *bytes,
+                                                        size_t bytes_size,
+                                                        struct HederaNetworkVersionInfo *info);
+
+size_t hedera_network_version_info_to_bytes(struct HederaNetworkVersionInfo info, uint8_t **buf);
+
 /**
  * Parse a Hedera `NftId` from the passed string.
  */
@@ -1046,6 +1115,12 @@ size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
                               uint64_t token_id_num,
                               uint64_t serial,
                               uint8_t **buf);
+
+enum HederaError hedera_semantic_version_from_bytes(const uint8_t *bytes,
+                                                    size_t bytes_size,
+                                                    struct HederaSemanticVersion *semver);
+
+size_t hedera_semantic_version_to_bytes(struct HederaSemanticVersion semver, uint8_t **buf);
 
 /**
  * Subscribe with this request against the provided client of the Hedera network.
