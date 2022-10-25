@@ -83,6 +83,10 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, E
 
 /// The unique identifier for a file on Hedera.
 public final class FileId: EntityId {
+    public static let addressBook: FileId = FileId(num: 102)
+    public static let feeSchedule: FileId = FileId(num: 111)
+    public static let exchangeRates: FileId = FileId(num: 112)
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
             var shard: UInt64 = 0
