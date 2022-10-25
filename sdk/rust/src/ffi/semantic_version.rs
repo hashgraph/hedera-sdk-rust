@@ -29,6 +29,7 @@ use std::{
 };
 
 use super::error::Error;
+use crate::ffi::util::cstr_from_ptr;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -131,6 +132,26 @@ pub unsafe extern "C" fn hedera_semantic_version_from_bytes(
     let bytes = unsafe { slice::from_raw_parts(bytes, bytes_size) };
 
     let parsed = ffi_try!(crate::SemanticVersion::from_bytes(bytes));
+    let parsed = SemanticVersion::from_rust(parsed);
+
+    unsafe {
+        ptr::write(semver, parsed);
+    }
+
+    Error::Ok
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_semantic_version_from_string(
+    s: *const c_char,
+    semver: *mut SemanticVersion,
+) -> Error {
+    assert!(!s.is_null());
+    assert!(!semver.is_null());
+
+    let s = unsafe { cstr_from_ptr(s) };
+
+    let parsed = ffi_try!(s.parse());
     let parsed = SemanticVersion::from_rust(parsed);
 
     unsafe {
