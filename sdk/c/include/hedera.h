@@ -404,6 +404,8 @@ enum HederaError hedera_file_info_from_bytes(const uint8_t *bytes, size_t bytes_
 
 enum HederaError hedera_file_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
 
+enum HederaError hedera_key_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
 /**
  * Generates a new Ed25519 private key.
  */
