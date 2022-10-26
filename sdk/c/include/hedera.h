@@ -1136,6 +1136,16 @@ size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
                               uint64_t serial,
                               uint8_t **buf);
 
+/**
+ * # Safety
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ * - `s` must only be freed with `hedera_string_free`,
+ *   notably this means it must not be freed with `free`.
+ */
+enum HederaError hedera_schedule_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
+
+enum HederaError hedera_schedule_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
 enum HederaError hedera_semantic_version_from_bytes(const uint8_t *bytes,
                                                     size_t bytes_size,
                                                     struct HederaSemanticVersion *semver);
