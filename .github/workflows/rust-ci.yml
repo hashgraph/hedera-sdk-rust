@@ -1,0 +1,33 @@
+name: Rust CI
+on:
+  pull-request:
+  push: 
+    branches: ['main']
+
+defaults:
+  run:
+    working-directory: sdk/rust
+
+# todo: caching, filter to `sdk/rust`
+jobs:
+  format:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Format
+        run: cargo format --check
+  
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check
+        run: cargo check --features ffi
+  
+  test:
+    needs: ['check']
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test
+        run: cargo test --features ffi
