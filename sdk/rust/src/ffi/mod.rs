@@ -40,6 +40,7 @@ mod semantic_version;
 mod staking_info;
 mod subscribe;
 mod token_association;
+mod transaction_receipt;
 mod util;
 
 use semantic_version::SemanticVersion;
