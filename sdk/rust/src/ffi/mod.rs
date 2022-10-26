@@ -35,6 +35,7 @@ mod mnemonic;
 mod network_version_info;
 mod nft_id;
 mod runtime;
+mod schedule_info;
 mod semantic_version;
 mod staking_info;
 mod subscribe;

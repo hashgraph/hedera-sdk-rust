@@ -19,12 +19,14 @@
  */
 
 use hedera_proto::services;
+use prost::Message;
 use serde::{
     Deserialize,
     Serialize,
 };
 use time::OffsetDateTime;
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -78,6 +80,41 @@ pub struct ScheduleInfo {
     pub ledger_id: LedgerId,
 }
 
+impl ScheduleInfo {
+    /// Create a new `ScheduleInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::ScheduleInfo>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        services::ScheduleInfo {
+            schedule_id: Some(self.schedule_id.to_protobuf()),
+            expiration_time: self.expiration_time.as_ref().map(ToProtobuf::to_protobuf),
+            memo: self.schedule_memo.clone(),
+            admin_key: self.admin_key.as_ref().map(ToProtobuf::to_protobuf),
+            signers: (!self.signatories.is_empty()).then(|| services::KeyList {
+                keys: self.signatories.iter().map(ToProtobuf::to_protobuf).collect::<Vec<_>>(),
+            }),
+            creator_account_id: Some(self.creator_account_id.to_protobuf()),
+            payer_account_id: self.payer_account_id.as_ref().map(ToProtobuf::to_protobuf),
+            scheduled_transaction_id: Some(self.scheduled_transaction_id.to_protobuf()),
+            ledger_id: self.ledger_id.to_bytes(),
+            wait_for_expiry: self.wait_for_expiry,
+
+            // unimplemented fields
+            scheduled_transaction_body: None,
+            data: None,
+        }
+        .encode_to_vec()
+    }
+}
+
 impl FromProtobuf<services::response::Response> for ScheduleInfo {
     #[allow(deprecated)]
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
@@ -86,16 +123,25 @@ impl FromProtobuf<services::response::Response> for ScheduleInfo {
     {
         let response = pb_getv!(pb, ScheduleGetInfo, services::response::Response);
         let info = pb_getf!(response, schedule_info)?;
-        let schedule_id = pb_getf!(info, schedule_id)?;
-        let creator_account_id = pb_getf!(info, creator_account_id)?;
-        let payer_account_id = info.payer_account_id.map(AccountId::from_protobuf).transpose()?;
-        let admin_key = info.admin_key.map(Key::from_protobuf).transpose()?;
-        let ledger_id = LedgerId::from_bytes(info.ledger_id);
+        Self::from_protobuf(info)
+    }
+}
+
+impl FromProtobuf<services::ScheduleInfo> for ScheduleInfo {
+    fn from_protobuf(pb: services::ScheduleInfo) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let schedule_id = pb_getf!(pb, schedule_id)?;
+        let creator_account_id = pb_getf!(pb, creator_account_id)?;
+        let payer_account_id = pb.payer_account_id.map(AccountId::from_protobuf).transpose()?;
+        let admin_key = pb.admin_key.map(Key::from_protobuf).transpose()?;
+        let ledger_id = LedgerId::from_bytes(pb.ledger_id);
 
         let scheduled_transaction_id =
-            TransactionId::from_protobuf(pb_getf!(info, scheduled_transaction_id)?)?;
+            TransactionId::from_protobuf(pb_getf!(pb, scheduled_transaction_id)?)?;
 
-        let signatories = info
+        let signatories = pb
             .signers
             .map(|kl| {
                 kl.keys.into_iter().map(Key::from_protobuf).collect::<crate::Result<Vec<_>>>()
@@ -103,7 +149,7 @@ impl FromProtobuf<services::response::Response> for ScheduleInfo {
             .transpose()?
             .unwrap_or_default();
 
-        let (executed_at, deleted_at) = match info.data {
+        let (executed_at, deleted_at) = match pb.data {
             Some(services::schedule_info::Data::DeletionTime(deleted)) => {
                 (None, Some(deleted.into()))
             }
@@ -119,14 +165,14 @@ impl FromProtobuf<services::response::Response> for ScheduleInfo {
             schedule_id: ScheduleId::from_protobuf(schedule_id)?,
             executed_at,
             deleted_at,
-            schedule_memo: info.memo,
+            schedule_memo: pb.memo,
             creator_account_id: AccountId::from_protobuf(creator_account_id)?,
             payer_account_id,
-            expiration_time: info.expiration_time.map(Into::into),
+            expiration_time: pb.expiration_time.map(Into::into),
             admin_key,
             scheduled_transaction_id,
             signatories,
-            wait_for_expiry: info.wait_for_expiry,
+            wait_for_expiry: pb.wait_for_expiry,
             ledger_id,
         })
     }
