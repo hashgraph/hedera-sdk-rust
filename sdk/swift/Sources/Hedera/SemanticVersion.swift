@@ -18,8 +18,8 @@
  * ‍
  */
 
-import Foundation
 import CHedera
+import Foundation
 
 /// Hedera follows semantic versioning for both the HAPI protobufs and
 /// the Services software.
@@ -32,7 +32,6 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
 
     /// Increases with backwards-compatible bug fixes
     public let patch: UInt32
-
 
     /// A pre-release version MAY be denoted by appending a hyphen and a series of dot separated identifiers (https://semver.org/#spec-item-9);
     /// so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘alpha.1’
@@ -93,7 +92,8 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
             try build.withCString { (build) in
                 let mutPrerelease = UnsafeMutablePointer(mutating: prerelease)
                 let mutBuild = UnsafeMutablePointer(mutating: build)
-                let csemver = HederaSemanticVersion(major: major, minor: minor, patch: patch, prerelease: mutPrerelease, build: mutBuild)
+                let csemver = HederaSemanticVersion(
+                    major: major, minor: minor, patch: patch, prerelease: mutPrerelease, build: mutBuild)
 
                 return try body(csemver)
             }
@@ -104,7 +104,7 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
         try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
             var semver = HederaSemanticVersion()
 
-            let err = hedera_semantic_version_from_bytes(pointer.baseAddress, pointer.count, &semver);
+            let err = hedera_semantic_version_from_bytes(pointer.baseAddress, pointer.count, &semver)
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!
@@ -133,4 +133,3 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
         description
     }
 }
-

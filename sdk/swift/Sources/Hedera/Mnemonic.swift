@@ -22,7 +22,7 @@ import CHedera
 import Foundation
 
 public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiteral {
-    internal let ptr: OpaquePointer;
+    internal let ptr: OpaquePointer
 
     public var words: [String] {
         description.components(separatedBy: " ")

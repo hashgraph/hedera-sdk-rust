@@ -29,7 +29,7 @@ public enum Program {
         let client = Client.forTestnet()
 
         let results = try await NodeAddressBookQuery().setFileId(FileId.addressBook)
-                .execute(client)
+            .execute(client)
 
         print(results)
     }

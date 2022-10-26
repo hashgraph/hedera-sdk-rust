@@ -62,6 +62,6 @@ let package = Package(
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
         .target(name: "Hedera", dependencies: ["CHedera", .product(name: "NumberKit", package: "swift-numberkit")]),
-        .testTarget(name: "HederaTests", dependencies: ["Hedera"])
+        .testTarget(name: "HederaTests", dependencies: ["Hedera"]),
     ] + exampleTargets
 )

@@ -85,15 +85,16 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
 }
 
 public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLiteral,
-        ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Equatable {
+    ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Equatable
+{
     /// A constant value of zero hbars.
     public static let zero: Hbar = 0
 
     /// A constant value of the maximum number of hbars.
-    public static let max: Hbar = 50000000000
+    public static let max: Hbar = 50_000_000_000
 
     /// A constant value of the minimum number of hbars.
-    public static let min: Hbar = -50000000000
+    public static let min: Hbar = -50_000_000_000
 
     /// Create a new Hbar of the specified, possibly fractional value.
     public init(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws {
@@ -105,8 +106,9 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
 
         if !(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0)) {
             throw NSError(
-                    domain: "Amount and Unit combination results in a fractional value for tinybar. Ensure tinybar value is a whole number.",
-                    code: 0
+                domain:
+                    "Amount and Unit combination results in a fractional value for tinybar. Ensure tinybar value is a whole number.",
+                code: 0
             )
         }
 

@@ -79,9 +79,9 @@ public final class AccountInfo: Codable {
         let json: String = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
             var ptr: UnsafeMutablePointer<CChar>? = UnsafeMutablePointer(bitPattern: 0)
             let err = hedera_account_info_from_bytes(
-                    pointer.baseAddress,
-                    pointer.count,
-                    &ptr
+                pointer.baseAddress,
+                pointer.count,
+                &ptr
             )
 
             if err != HEDERA_ERROR_OK {
@@ -98,18 +98,19 @@ public final class AccountInfo: Codable {
         let jsonBytes = try JSONEncoder().encode(self)
         let json = String(data: jsonBytes, encoding: .utf8)!
         var buf: UnsafeMutablePointer<UInt8>?
-        var buf_size: Int = 0
-        let err = hedera_account_info_to_bytes(json, &buf, &buf_size)
+        var bufSize: Int = 0
+        let err = hedera_account_info_to_bytes(json, &buf, &bufSize)
 
         if err != HEDERA_ERROR_OK {
             throw HError(err)!
         }
 
-        return Data(bytesNoCopy: buf!, count: buf_size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
     }
 
     public func toBytes() -> Data {
         // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
         try! toBytesInner()
     }
 }
