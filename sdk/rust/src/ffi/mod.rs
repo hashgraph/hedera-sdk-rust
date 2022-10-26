@@ -29,6 +29,7 @@ mod client;
 mod contract_info;
 mod entity_id;
 mod execute;
+mod file_info;
 mod key;
 mod mnemonic;
 mod network_version_info;
