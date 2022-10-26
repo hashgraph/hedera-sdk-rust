@@ -20,6 +20,7 @@
 
 use hedera_proto::services;
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -37,6 +38,23 @@ pub struct TokenAssociation {
     pub account_id: AccountId,
 }
 
+impl TokenAssociation {
+    /// Create a new `TokenAssociation` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl FromProtobuf<services::TokenAssociation> for TokenAssociation {
     fn from_protobuf(pb: services::TokenAssociation) -> crate::Result<Self>
     where
@@ -49,5 +67,16 @@ impl FromProtobuf<services::TokenAssociation> for TokenAssociation {
             token_id: TokenId::from_protobuf(token_id)?,
             account_id: AccountId::from_protobuf(account_id)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenAssociation {
+    type Protobuf = services::TokenAssociation;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenAssociation {
+            token_id: Some(self.token_id.to_protobuf()),
+            account_id: Some(self.account_id.to_protobuf()),
+        }
     }
 }
