@@ -18,8 +18,8 @@
  * ‍
  */
 
-import Foundation
 import CHedera
+import Foundation
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
 public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable {

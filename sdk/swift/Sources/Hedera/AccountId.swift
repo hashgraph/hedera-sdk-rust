@@ -88,12 +88,12 @@ public final class AccountId: EntityId {
             var alias: OpaquePointer?
 
             let err = hedera_account_id_from_bytes(
-                    pointer.baseAddress,
-                    pointer.count,
-                    &shard,
-                    &realm,
-                    &num,
-                    &alias
+                pointer.baseAddress,
+                pointer.count,
+                &shard,
+                &realm,
+                &num,
+                &alias
             )
 
             if err != HEDERA_ERROR_OK {

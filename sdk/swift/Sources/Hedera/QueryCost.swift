@@ -23,7 +23,7 @@ import Foundation
 final internal class QueryCost<T: Decodable, U: Query<T>>: Request {
     internal typealias Response = Hbar
 
-    private let query: U;
+    private let query: U
 
     internal init(query: U) {
         self.query = query

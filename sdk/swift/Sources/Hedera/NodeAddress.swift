@@ -22,6 +22,8 @@ import Foundation
 import Network
 
 public struct SocketAddressV4: LosslessStringConvertible, Decodable {
+    // name is is to match the other SDKs.
+    // swiftlint:disable:next identifier_name
     public var ip: IPv4Address
     public var port: UInt16
 
@@ -31,6 +33,8 @@ public struct SocketAddressV4: LosslessStringConvertible, Decodable {
             return nil
         }
 
+        // name is is to match the field
+        // swiftlint:disable:next identifier_name
         guard let ip = IPv4Address(parts[0]) else {
             return nil
         }

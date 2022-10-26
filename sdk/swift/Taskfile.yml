@@ -13,11 +13,13 @@ tasks:
 
     format:
         cmds:
-            - swift format -i -p -r Sources Examples Package.swift
+            - swift format --configuration .swift-format.json --recursive --in-place --parallel Sources/ Tests/ Examples/ Package.swift
 
     lint:
         cmds:
-            - swiftlint --strict --quiet
+            - cmd: swiftlint --quiet
+              ignore_error: true
+            - swift format lint --configuration .swift-format.json --recursive --parallel Sources/ Tests/ Examples/ Package.swift
 
     package:
         deps: [":rust:package"]

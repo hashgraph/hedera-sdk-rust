@@ -21,7 +21,9 @@
 import CHedera
 import Foundation
 
-private typealias UnsafeFromBytesFunc = @convention(c) (UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?) -> HederaError
+private typealias UnsafeFromBytesFunc = @convention(c) (
+    UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
+) -> HederaError
 
 /// A private key on the Hedera network.
 public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {

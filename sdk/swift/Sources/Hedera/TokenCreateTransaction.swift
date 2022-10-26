@@ -24,27 +24,27 @@ import Foundation
 public final class TokenCreateTransaction: Transaction {
     /// Create a new `TokenCreateTransaction`.
     public init(
-            name: String = "",
-            symbol: String = "",
-            decimals: UInt32 = 0,
-            initialSupply: UInt64 = 0,
-            treasuryAccountId: AccountId? = nil,
-            adminKey: Key? = nil,
-            kycKey: Key? = nil,
-            freezeKey: Key? = nil,
-            wipeKey: Key? = nil,
-            supplyKey: Key? = nil,
-            freezeDefault: Bool = false,
-            expirationTime: Date? = nil,
-            autoRenewAccountId: AccountId? = nil,
-            autoRenewPeriod: TimeInterval? = nil,
-            tokenMemo: String = "",
-            tokenType: TokenType = .fungibleCommon,
-            tokenSupplyType: TokenSupplyType = .infinite,
-            maxSupply: UInt64 = 0,
-            feeScheduleKey: Key? = nil,
-            customFees: [CustomFee] = [],
-            pauseKey: Key? = nil
+        name: String = "",
+        symbol: String = "",
+        decimals: UInt32 = 0,
+        initialSupply: UInt64 = 0,
+        treasuryAccountId: AccountId? = nil,
+        adminKey: Key? = nil,
+        kycKey: Key? = nil,
+        freezeKey: Key? = nil,
+        wipeKey: Key? = nil,
+        supplyKey: Key? = nil,
+        freezeDefault: Bool = false,
+        expirationTime: Date? = nil,
+        autoRenewAccountId: AccountId? = nil,
+        autoRenewPeriod: TimeInterval? = nil,
+        tokenMemo: String = "",
+        tokenType: TokenType = .fungibleCommon,
+        tokenSupplyType: TokenSupplyType = .infinite,
+        maxSupply: UInt64 = 0,
+        feeScheduleKey: Key? = nil,
+        customFees: [CustomFee] = [],
+        pauseKey: Key? = nil
     ) {
         self.name = name
         self.symbol = symbol

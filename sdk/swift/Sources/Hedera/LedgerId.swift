@@ -21,7 +21,8 @@
 import Foundation
 
 public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable,
-        CustomStringConvertible {
+    CustomStringConvertible
+{
     public static let mainnet = LedgerId(Data([0]))
 
     public static let testnet = LedgerId(Data([1]))

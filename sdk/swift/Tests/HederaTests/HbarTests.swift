@@ -20,10 +20,11 @@
 
 import Foundation
 import XCTest
+
 @testable import Hedera
 
-final class HbarTests: XCTestCase {
-    func testInit() throws {
+public final class HbarTests: XCTestCase {
+    public func testInit() throws {
         let fifty: Hbar = 50
 
         XCTAssertEqual(fifty, Hbar(50))
@@ -42,82 +43,82 @@ final class HbarTests: XCTestCase {
         XCTAssertEqual(fifty, Hbar.fromTinybars(5_000_000_000))
     }
 
-    func testFractionalTinybarThrowsError() {
+    public func testFractionalTinybarThrowsError() {
         // todo: test the exact error.
         XCTAssertThrowsError(try Hbar(0.1, .tinybar))
     }
 
-    func testNanHbarThrowsError() {
+    public func testNanHbarThrowsError() {
         // todo: test the exact error.
         XCTAssertThrowsError(try Hbar(Decimal.quietNaN))
     }
 
-    func testInitUnit() throws {
-        let fifty_tinybar: Hbar = 0.0000005
+    public func testInitUnit() throws {
+        let fiftyTinybar: Hbar = 0.0000005
 
-        XCTAssertEqual(fifty_tinybar, try Hbar(50, .tinybar))
-        XCTAssertEqual(fifty_tinybar, try Hbar(50.0, .tinybar))
-        XCTAssertEqual(fifty_tinybar, try Hbar(0.5, .microbar))
-        XCTAssertEqual(fifty_tinybar, try Hbar(5e-4, .millibar))
-        XCTAssertEqual(fifty_tinybar, try Hbar(5e-7, .hbar))
-        XCTAssertEqual(fifty_tinybar, try Hbar(5e-10, .kilobar))
-        XCTAssertEqual(fifty_tinybar, "50 tℏ")
-        XCTAssertEqual(fifty_tinybar, "50.0 tℏ")
-        XCTAssertEqual(fifty_tinybar, "0.5 µℏ")
-        XCTAssertEqual(fifty_tinybar, "0.0005 mℏ")
-        XCTAssertEqual(fifty_tinybar, "0.0000005 ℏ")
-        XCTAssertEqual(fifty_tinybar, "0.0000000005 kℏ")
-        XCTAssertEqual(fifty_tinybar, "0.0000000000005 Mℏ")
-        XCTAssertEqual(fifty_tinybar, "0.0000000000000005 Gℏ")
+        XCTAssertEqual(fiftyTinybar, try Hbar(50, .tinybar))
+        XCTAssertEqual(fiftyTinybar, try Hbar(50.0, .tinybar))
+        XCTAssertEqual(fiftyTinybar, try Hbar(0.5, .microbar))
+        XCTAssertEqual(fiftyTinybar, try Hbar(5e-4, .millibar))
+        XCTAssertEqual(fiftyTinybar, try Hbar(5e-7, .hbar))
+        XCTAssertEqual(fiftyTinybar, try Hbar(5e-10, .kilobar))
+        XCTAssertEqual(fiftyTinybar, "50 tℏ")
+        XCTAssertEqual(fiftyTinybar, "50.0 tℏ")
+        XCTAssertEqual(fiftyTinybar, "0.5 µℏ")
+        XCTAssertEqual(fiftyTinybar, "0.0005 mℏ")
+        XCTAssertEqual(fiftyTinybar, "0.0000005 ℏ")
+        XCTAssertEqual(fiftyTinybar, "0.0000000005 kℏ")
+        XCTAssertEqual(fiftyTinybar, "0.0000000000005 Mℏ")
+        XCTAssertEqual(fiftyTinybar, "0.0000000000000005 Gℏ")
 
-        XCTAssertEqual(fifty_tinybar, try Hbar.from(50, .tinybar))
-        XCTAssertEqual(fifty_tinybar, try Hbar.from(50.0, .tinybar))
-        XCTAssertEqual(fifty_tinybar, try Hbar.from(0.5, .microbar))
-        XCTAssertEqual(fifty_tinybar, try Hbar.from(5e-4, .millibar))
-        XCTAssertEqual(fifty_tinybar, try Hbar.from(5e-7, .hbar))
-        XCTAssertEqual(fifty_tinybar, try Hbar.from(5e-10, .kilobar))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("50 tℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("50.0 tℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("0.5 µℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("0.0005 mℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("0.0000005 ℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("0.0000000005 kℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("0.0000000000005 Mℏ"))
-        XCTAssertEqual(fifty_tinybar, try Hbar.fromString("0.0000000000000005 Gℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.from(50, .tinybar))
+        XCTAssertEqual(fiftyTinybar, try Hbar.from(50.0, .tinybar))
+        XCTAssertEqual(fiftyTinybar, try Hbar.from(0.5, .microbar))
+        XCTAssertEqual(fiftyTinybar, try Hbar.from(5e-4, .millibar))
+        XCTAssertEqual(fiftyTinybar, try Hbar.from(5e-7, .hbar))
+        XCTAssertEqual(fiftyTinybar, try Hbar.from(5e-10, .kilobar))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("50 tℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("50.0 tℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.5 µℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.0005 mℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.0000005 ℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.0000000005 kℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.0000000000005 Mℏ"))
+        XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.0000000000000005 Gℏ"))
     }
 
-    func testTo() {
-        let twenty_two_kilobars: Hbar = 22_000
+    public func testTo() {
+        let twentyTwoKilobars: Hbar = 22_000
 
-        XCTAssertEqual(twenty_two_kilobars.getValue(), 22_000)
-        XCTAssertEqual(twenty_two_kilobars.to(.tinybar), 2_200_000_000_000)
-        XCTAssertEqual(twenty_two_kilobars.to(.microbar), 22_000_000_000)
-        XCTAssertEqual(twenty_two_kilobars.to(.millibar), 22_000_000)
-        XCTAssertEqual(twenty_two_kilobars.to(.hbar), 22_000)
-        XCTAssertEqual(twenty_two_kilobars.to(.kilobar), 22)
-        XCTAssertEqual(twenty_two_kilobars.to(.megabar), Decimal(string: "0.022"))
-        XCTAssertEqual(twenty_two_kilobars.to(.gigabar), Decimal(string: "0.000022"))
+        XCTAssertEqual(twentyTwoKilobars.getValue(), 22_000)
+        XCTAssertEqual(twentyTwoKilobars.to(.tinybar), 2_200_000_000_000)
+        XCTAssertEqual(twentyTwoKilobars.to(.microbar), 22_000_000_000)
+        XCTAssertEqual(twentyTwoKilobars.to(.millibar), 22_000_000)
+        XCTAssertEqual(twentyTwoKilobars.to(.hbar), 22_000)
+        XCTAssertEqual(twentyTwoKilobars.to(.kilobar), 22)
+        XCTAssertEqual(twentyTwoKilobars.to(.megabar), Decimal(string: "0.022"))
+        XCTAssertEqual(twentyTwoKilobars.to(.gigabar), Decimal(string: "0.000022"))
     }
 
-    func testNegated() {
+    public func testNegated() {
         XCTAssertEqual(Hbar(2).negated(), -2)
     }
 
     // what better way to ensure the right thing gets printed than to test that for all values of <inner range>.
     // it isn't practical to test all ~2^64 values `Hbar` can hold.
     // In fact, this test test's less than 1% of 1% of 1%... of all values.
-    func testDescription() {
+    public func testDescription() {
         let innerRange = -9999...9999
-        for i in innerRange {
-            let hbar = Hbar.fromTinybars(Int64(i))
-            let expected = "\(i) tℏ"
+        for amount in innerRange {
+            let hbar = Hbar.fromTinybars(Int64(amount))
+            let expected = "\(amount) tℏ"
             XCTAssertEqual(hbar.toString(), expected)
             XCTAssertEqual(hbar.description, expected)
         }
 
-        for i in -20000...20_000 {
-            guard !innerRange.contains(i) else { continue }
-            let hbar = Hbar.fromTinybars(Int64(i))
+        for amount in -20000...20_000 {
+            guard !innerRange.contains(amount) else { continue }
+            let hbar = Hbar.fromTinybars(Int64(amount))
 
             let expected = "\(hbar.to(.hbar)) ℏ"
             XCTAssertEqual(hbar.toString(), expected)
@@ -125,7 +126,7 @@ final class HbarTests: XCTestCase {
         }
     }
 
-    func testToStringWithUnit() {
+    public func testToStringWithUnit() {
         let fifty: Hbar = 50
 
         XCTAssertEqual(fifty.toString(.tinybar), "5000000000 tℏ")
@@ -137,8 +138,8 @@ final class HbarTests: XCTestCase {
         XCTAssertEqual(fifty.toString(.gigabar), "0.00000005 Gℏ")
     }
 
-    func testEncodingHasNoUnit() throws {
-       let encoded = String(data: try JSONEncoder().encode(Hbar(21)), encoding: .utf8)!
+    public func testEncodingHasNoUnit() throws {
+        let encoded = String(data: try JSONEncoder().encode(Hbar(21)), encoding: .utf8)!
 
         XCTAssertEqual(encoded, "2100000000")
     }

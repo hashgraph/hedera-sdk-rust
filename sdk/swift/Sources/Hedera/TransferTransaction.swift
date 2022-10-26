@@ -60,7 +60,7 @@ public final class TransferTransaction: Transaction {
     /// Add a non-approved token transfer with decimals to the transaction.
     @discardableResult
     public func tokenTransferWithDecimals(
-            _ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64, _ expectedDecimals: UInt32
+        _ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64, _ expectedDecimals: UInt32
     ) -> Self {
         doTokenTransfer(tokenId, accountId, amount, false, expectedDecimals)
     }
@@ -68,7 +68,7 @@ public final class TransferTransaction: Transaction {
     /// Add an approved token transfer with decimals to the transaction.
     @discardableResult
     public func approvedTokenTransferWithDecimals(
-            _ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64, _ expectedDecimals: UInt32
+        _ tokenId: TokenId, _ accountId: AccountId, _ amount: Int64, _ expectedDecimals: UInt32
     ) -> Self {
         doTokenTransfer(tokenId, accountId, amount, false, expectedDecimals)
     }
@@ -76,22 +76,23 @@ public final class TransferTransaction: Transaction {
     /// Add a non-approved nft transfer to the transaction.
     @discardableResult
     public func nftTransfer(_ nftId: NftId, _ senderAccountId: AccountId, _ receiverAccountId: AccountId)
-            -> Self {
+        -> Self
+    {
         doNftTransfer(nftId, senderAccountId, receiverAccountId, false)
     }
 
     /// Add an approved nft transfer to the transaction.
     @discardableResult
     public func approvedNftTransfer(
-            _ nftId: NftId, _ senderAccountId: AccountId, _ receiverAccountId: AccountId
+        _ nftId: NftId, _ senderAccountId: AccountId, _ receiverAccountId: AccountId
     ) -> Self {
         doNftTransfer(nftId, senderAccountId, receiverAccountId, true)
     }
 
     private func doHbarTransfer(
-            _ accountId: AccountId,
-            _ amount: Int64,
-            _ approved: Bool
+        _ accountId: AccountId,
+        _ amount: Int64,
+        _ approved: Bool
     ) -> Self {
         transfers.append(Transfer(accountId: accountId, amount: amount, isApproval: approved))
 
@@ -99,11 +100,11 @@ public final class TransferTransaction: Transaction {
     }
 
     private func doTokenTransfer(
-            _ tokenId: TokenId,
-            _ accountId: AccountId,
-            _ amount: Int64,
-            _ approved: Bool,
-            _ expectedDecimals: UInt32?
+        _ tokenId: TokenId,
+        _ accountId: AccountId,
+        _ amount: Int64,
+        _ approved: Bool,
+        _ expectedDecimals: UInt32?
     ) -> Self {
         let transfer = Transfer(accountId: accountId, amount: amount, isApproval: approved)
 
@@ -112,40 +113,40 @@ public final class TransferTransaction: Transaction {
             tokenTransfer.transfers.append(transfer)
         } else {
             tokenTransfers.append(
-                    TokenTransfer(
-                            tokenId: tokenId,
-                            transfers: [transfer],
-                            nftTransfers: [],
-                            expectedDecimals: expectedDecimals
-                    ))
+                TokenTransfer(
+                    tokenId: tokenId,
+                    transfers: [transfer],
+                    nftTransfers: [],
+                    expectedDecimals: expectedDecimals
+                ))
         }
 
         return self
     }
 
     private func doNftTransfer(
-            _ nftId: NftId,
-            _ senderAccountId: AccountId,
-            _ receiverAccountId: AccountId,
-            _ approved: Bool
+        _ nftId: NftId,
+        _ senderAccountId: AccountId,
+        _ receiverAccountId: AccountId,
+        _ approved: Bool
     ) -> Self {
         let transfer = NftTransfer(
-                senderAccountId: senderAccountId,
-                receiverAccountId: receiverAccountId,
-                serial: nftId.serial,
-                isApproval: approved
+            senderAccountId: senderAccountId,
+            receiverAccountId: receiverAccountId,
+            serial: nftId.serial,
+            isApproval: approved
         )
 
         if var tokenTransfer = tokenTransfers.first(where: { (transfer) in transfer.tokenId == nftId.tokenId }) {
             tokenTransfer.nftTransfers.append(transfer)
         } else {
             tokenTransfers.append(
-                    TokenTransfer(
-                            tokenId: nftId.tokenId,
-                            transfers: [],
-                            nftTransfers: [transfer],
-                            expectedDecimals: nil
-                    ))
+                TokenTransfer(
+                    tokenId: nftId.tokenId,
+                    transfers: [],
+                    nftTransfers: [transfer],
+                    expectedDecimals: nil
+                ))
         }
 
         return self
