@@ -27,6 +27,7 @@ use serde_with::{
     skip_serializing_none,
 };
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     ContractId,
@@ -44,7 +45,7 @@ use crate::{
 /// Response from [`TransactionReceiptQuery`][crate::TransactionReceiptQuery].
 #[serde_as]
 #[skip_serializing_none]
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionReceipt {
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
@@ -109,7 +110,24 @@ pub struct TransactionReceipt {
     pub children: Vec<TransactionReceipt>,
 }
 
+impl TransactionReceipt {}
+
 impl TransactionReceipt {
+    /// Create a new `FileInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::TransactionReceipt>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+
     fn from_protobuf(
         receipt: services::TransactionReceipt,
         duplicates: Vec<Self>,
@@ -186,5 +204,31 @@ impl FromProtobuf<services::TransactionReceipt> for TransactionReceipt {
         Self: Sized,
     {
         Self::from_protobuf(receipt, Vec::new(), Vec::new())
+    }
+}
+
+impl ToProtobuf for TransactionReceipt {
+    type Protobuf = services::TransactionReceipt;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TransactionReceipt {
+            status: self.status as i32,
+            account_id: self.account_id.as_ref().map(ToProtobuf::to_protobuf),
+            file_id: self.file_id.as_ref().map(ToProtobuf::to_protobuf),
+            contract_id: self.contract_id.as_ref().map(ToProtobuf::to_protobuf),
+            exchange_rate: None,
+            topic_id: self.topic_id.as_ref().map(ToProtobuf::to_protobuf),
+            topic_sequence_number: self.topic_sequence_number,
+            topic_running_hash: self.topic_running_hash.clone().unwrap_or_default(),
+            topic_running_hash_version: self.topic_running_hash_version,
+            token_id: self.token_id.as_ref().map(ToProtobuf::to_protobuf),
+            new_total_supply: self.new_total_supply,
+            schedule_id: self.schedule_id.as_ref().map(ToProtobuf::to_protobuf),
+            scheduled_transaction_id: self
+                .scheduled_transaction_id
+                .as_ref()
+                .map(ToProtobuf::to_protobuf),
+            serial_numbers: self.serials.clone(),
+        }
     }
 }
