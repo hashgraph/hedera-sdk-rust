@@ -64,6 +64,7 @@ mod node_address;
 mod node_address_book_query;
 mod query;
 mod schedule;
+mod semantic_version;
 mod signature;
 mod signer;
 mod staking_info;
@@ -149,10 +150,7 @@ pub use mirror_query::{
     MirrorQuery,
 };
 pub use mnemonic::Mnemonic;
-pub use network_version_info::{
-    NetworkVersionInfo,
-    SemanticVersion,
-};
+pub use network_version_info::NetworkVersionInfo;
 pub use network_version_info_query::NetworkVersionInfoQuery;
 pub(crate) use network_version_info_query::NetworkVersionInfoQueryData;
 pub use node_address::NodeAddress;
@@ -175,6 +173,7 @@ pub use schedule::{
     ScheduleInfoQuery,
     ScheduleSignTransaction,
 };
+pub use semantic_version::SemanticVersion;
 pub use signature::{
     Signature,
     SignaturePair,
