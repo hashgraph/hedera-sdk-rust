@@ -191,7 +191,6 @@ version = "0.24.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6358dedf60f4d9b8db43ad187391afe959746101346fe51bb978126bec61dfb"
 dependencies = [
- "clap 3.2.22",
  "heck",
  "indexmap",
  "log",
@@ -231,21 +230,6 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.2.22"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86447ad904c7fb335a790c9d7fe3d0d971dc523b8ccd1561a520de9a85302750"
-dependencies = [
- "atty",
- "bitflags",
- "clap_lex 0.2.4",
- "indexmap",
- "strsim",
- "termcolor",
- "textwrap",
-]
-
-[[package]]
-name = "clap"
 version = "4.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0a1af219c3e254a8b4649d6ddaef886b2015089f35f2ac5e1db31410c0566ab8"
@@ -253,7 +237,7 @@ dependencies = [
  "atty",
  "bitflags",
  "clap_derive",
- "clap_lex 0.3.0",
+ "clap_lex",
  "once_cell",
  "strsim",
  "termcolor",
@@ -270,15 +254,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "clap_lex"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2850f2f5a82cbf437dd5af4d49848fbdfc27c157c3d010345776f952765261c5"
-dependencies = [
- "os_str_bytes",
 ]
 
 [[package]]
@@ -729,9 +704,8 @@ dependencies = [
  "async-stream",
  "async-trait",
  "backoff",
- "base64",
  "cbindgen",
- "clap 4.0.7",
+ "clap",
  "dotenvy",
  "ed25519-dalek",
  "expect-test",
@@ -742,7 +716,6 @@ dependencies = [
  "hex",
  "hex-literal",
  "hmac",
- "http",
  "itertools",
  "k256",
  "libc",
@@ -1189,26 +1162,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "password-hash"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7676374caaee8a325c9e7a2ae557f216c5563a171d6997b0ef8a65af35147700"
-dependencies = [
- "base64ct",
- "rand_core",
- "subtle",
-]
-
-[[package]]
 name = "pbkdf2"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "83a0692ec44e4cf1ef28ca317f14f8f07da2d95ec3fa01f86e4467b725e60917"
 dependencies = [
  "digest",
- "hmac",
- "password-hash",
- "sha2",
 ]
 
 [[package]]
@@ -1711,12 +1670,6 @@ checksum = "bab24d30b911b2376f3a13cc2cd443142f0c81dda04c118693e35b3835757755"
 dependencies = [
  "winapi-util",
 ]
-
-[[package]]
-name = "textwrap"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "949517c0cf1bf4ee812e2e07e08ab448e3ae0d23472aee8a06c985f0c8815b16"
 
 [[package]]
 name = "thiserror"
