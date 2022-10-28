@@ -3,19 +3,9 @@ use std::fmt::{
     Display,
     Formatter,
 };
+use std::ops;
 use std::str::FromStr;
 
-use derive_more::{
-    Add,
-    AddAssign,
-    Div,
-    DivAssign,
-    Mul,
-    MulAssign,
-    Neg,
-    Sub,
-    SubAssign,
-};
 use rust_decimal::prelude::*;
 use serde::{
     Deserialize,
@@ -124,27 +114,7 @@ impl FromStr for HbarUnit {
 }
 
 /// A quantity of `hbar`.
-#[derive(
-    Serialize,
-    Deserialize,
-    Default,
-    Copy,
-    Clone,
-    Hash,
-    PartialEq,
-    Eq,
-    Ord,
-    PartialOrd,
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Neg,
-    AddAssign,
-    SubAssign,
-    MulAssign,
-    DivAssign,
-)]
+#[derive(Serialize, Deserialize, Default, Copy, Clone, Hash, PartialEq, Eq, Ord, PartialOrd)]
 pub struct Hbar(i64);
 
 impl Hbar {
@@ -278,6 +248,82 @@ impl FromStr for Hbar {
         let amount: Decimal = amount.parse().map_err(Error::basic_parse)?;
         let unit = HbarUnit::from_str(unit)?;
         Ok(Hbar::from_unit(amount, unit))
+    }
+}
+
+impl ops::Neg for Hbar {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        Self(-self.0)
+    }
+}
+
+impl ops::Add for Hbar {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0)
+    }
+}
+
+impl ops::AddAssign for Hbar {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0
+    }
+}
+
+impl ops::Sub for Hbar {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}
+
+impl ops::SubAssign for Hbar {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0
+    }
+}
+
+impl<T> ops::Mul<T> for Hbar
+where
+    i64: ops::Mul<T, Output = i64>,
+{
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        Self(self.0 * rhs)
+    }
+}
+
+impl<T> ops::MulAssign<T> for Hbar
+where
+    i64: ops::MulAssign<T>,
+{
+    fn mul_assign(&mut self, rhs: T) {
+        self.0 *= rhs
+    }
+}
+
+impl<T> ops::Div<T> for Hbar
+where
+    i64: ops::Div<T, Output = i64>,
+{
+    type Output = Self;
+
+    fn div(self, rhs: T) -> Self::Output {
+        Self(self.0 / rhs)
+    }
+}
+
+impl<T> ops::DivAssign<T> for Hbar
+where
+    i64: ops::DivAssign<T>,
+{
+    fn div_assign(&mut self, rhs: T) {
+        self.0 /= rhs
     }
 }
 
