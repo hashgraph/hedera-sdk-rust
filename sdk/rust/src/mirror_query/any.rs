@@ -23,12 +23,6 @@ use hedera_proto::{
     mirror,
     services,
 };
-use serde::{
-    Deserialize,
-    Deserializer,
-    Serialize,
-    Serializer,
-};
 use tonic::transport::Channel;
 use tonic::{
     Code,
@@ -49,8 +43,9 @@ use crate::{
 /// Represents any possible query to the mirror network.
 pub type AnyMirrorQuery = MirrorQuery<AnyMirrorQueryData>;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
-#[serde(rename_all = "camelCase", tag = "$type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryData {
     NodeAddressBook(NodeAddressBookQueryData),
     TopicMessage(TopicMessageQueryData),
@@ -59,8 +54,9 @@ pub enum AnyMirrorQueryData {
 /// Represents the response of any possible query to the mirror network.
 pub type AnyMirrorQueryResponse = Vec<AnyMirrorQueryMessage>;
 
-#[derive(Debug, serde::Serialize, Clone)]
-#[serde(rename_all = "camelCase", tag = "$type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryMessage {
     NodeAddressBook(NodeAddress),
     TopicMessage(TopicMessage),
@@ -142,19 +138,21 @@ impl FromProtobuf<AnyMirrorQueryGrpcMessage> for AnyMirrorQueryMessage {
 //  we create a proxy type that has the same layout but is only for AnyMirrorQueryData and does
 //  derive(Deserialize).
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[cfg(feature = "ffi")]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 struct AnyMirrorQueryProxy {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     data: AnyMirrorQueryData,
 }
 
-impl<D> Serialize for MirrorQuery<D>
+#[cfg(feature = "ffi")]
+impl<D> serde::Serialize for MirrorQuery<D>
 where
     D: MirrorQuerySubscribe,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: serde::Serializer,
     {
         // TODO: remove the clones, should be possible with Cows
 
@@ -162,12 +160,13 @@ where
     }
 }
 
-impl<'de> Deserialize<'de> for AnyMirrorQuery {
+#[cfg(feature = "ffi")]
+impl<'de> serde::Deserialize<'de> for AnyMirrorQuery {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>,
+        D: serde::Deserializer<'de>,
     {
-        <AnyMirrorQueryProxy as Deserialize>::deserialize(deserializer)
+        <AnyMirrorQueryProxy as serde::Deserialize>::deserialize(deserializer)
             .map(|query| Self { data: query.data })
     }
 }

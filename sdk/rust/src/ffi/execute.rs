@@ -37,7 +37,7 @@ use crate::{
 };
 
 #[derive(serde::Deserialize)]
-#[serde(untagged)]
+#[cfg_attr(feature = "ffi", serde(untagged))]
 enum AnyRequest {
     Transaction(Box<AnyTransaction>),
     Query(Box<AnyQuery>),

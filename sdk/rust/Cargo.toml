@@ -15,22 +15,28 @@ bench = false
 crate-type = ["lib", "staticlib", "cdylib"]
 
 [features]
-ffi = ["libc"]
+ffi = [
+    "libc",
+    "fraction/with-serde-support",
+    "ed25519-dalek/serde",
+    "hedera-proto/serde",
+    "serde",
+    "serde_with",
+    "serde_json",
+    "time/serde",
+    "serde/derive",
+]
 
 [dependencies]
 async-stream = "0.3.3"
 async-trait = "0.1.53"
 backoff = "0.4.0"
 base64 = "0.13.0"
-ed25519-dalek = { version = "1.0.1", features = ["rand", "serde"] }
-fraction = { version = "0.11.0", features = ["with-serde-support"] }
+ed25519-dalek = { version = "1.0.1", features = ["rand"] }
+fraction = "0.11.0"
 futures-core = "0.3.21"
 futures-util = "0.3.21"
-hedera-proto = { path = "./protobufs", features = [
-    "serde",
-    "time_0_3",
-    "fraction",
-] }
+hedera-proto = { path = "./protobufs", features = ["time_0_3", "fraction"] }
 hex = "0.4.3"
 hmac = "0.12.1"
 http = "0.2.7"
@@ -47,17 +53,24 @@ pkcs8 = "0.9.0"
 prost = "0.11.0"
 rand = "0.8.5"
 rust_decimal = "1.26.1"
-serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.79"
 sha2 = "0.10.2"
 sha3 = "0.10.2"
 thiserror = "1.0.31"
-time = { version = "0.3.9", features = ["serde"] }
+time = "0.3.9"
 tokio = { version = "1.18.1", features = ["rt-multi-thread"] }
 tonic = "0.8.0"
 
+[dependencies.serde_json]
+version = "1.0.79"
+optional = true
+
+[dependencies.serde]
+version = "1.0.137"
+optional = true
+
 [dependencies.serde_with]
 version = "2.0.0"
+optional = true
 features = ["base64", "time_0_3"]
 
 [dev-dependencies]

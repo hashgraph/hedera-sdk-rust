@@ -7,14 +7,6 @@ use std::ops;
 use std::str::FromStr;
 
 use rust_decimal::prelude::*;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
 
 use crate::Error;
 
@@ -25,7 +17,7 @@ pub type Tinybar = i64;
 ///
 /// See the [Hedera Documentation](https://docs.hedera.com/guides/docs/sdks/hbars#hbar-units).
 #[repr(i64)]
-#[derive(Debug, SerializeDisplay, Copy, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Copy, Hash, PartialEq, Eq, Clone)]
 pub enum HbarUnit {
     /// The atomic (smallest) unit of [`Hbar`], used natively by the Hedera network.
     ///
@@ -114,7 +106,8 @@ impl FromStr for HbarUnit {
 }
 
 /// A quantity of `hbar`.
-#[derive(Serialize, Deserialize, Default, Copy, Clone, Hash, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Default, Copy, Clone, Hash, PartialEq, Eq, Ord, PartialOrd)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub struct Hbar(i64);
 
 impl Hbar {

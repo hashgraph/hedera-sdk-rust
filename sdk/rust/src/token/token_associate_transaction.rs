@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::transaction::{
@@ -52,9 +51,10 @@ use crate::{
 /// ready to interact with the tokens.
 pub type TokenAssociateTransaction = Transaction<TokenAssociateTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
     account_id: Option<AccountId>,
@@ -112,20 +112,22 @@ impl From<TokenAssociateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        TokenAssociateTransaction,
-        TokenId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            TokenAssociateTransaction,
+            TokenId,
+        };
 
-    // language=JSON
-    const TOKEN_ASSOCIATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const TOKEN_ASSOCIATE_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenAssociate",
   "accountId": "0.0.1001",
   "tokenIds": [
@@ -133,28 +135,30 @@ mod tests {
   ]
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TokenAssociateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TokenAssociateTransaction::new();
 
-        transaction.account_id(AccountId::from(1001)).token_ids([TokenId::from(1002)]);
+            transaction.account_id(AccountId::from(1001)).token_ids([TokenId::from(1002)]);
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, TOKEN_ASSOCIATE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, TOKEN_ASSOCIATE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOKEN_ASSOCIATE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(TOKEN_ASSOCIATE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenAssociate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenAssociate(transaction) => transaction);
 
-        assert_eq!(data.token_ids[0], TokenId::from(1002));
-        assert_eq!(data.account_id, Some(AccountId::from(1001)));
+            assert_eq!(data.token_ids[0], TokenId::from(1002));
+            assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

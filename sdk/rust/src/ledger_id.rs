@@ -6,11 +6,6 @@ use std::fmt::{
 };
 use std::str::FromStr;
 
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
-
 use crate::Error;
 
 // todo: use `Box<[u8]>` (16 bytes on cpus with 64 bit pointers)
@@ -18,7 +13,8 @@ use crate::Error;
 // `Other` would be `Box<[u8]>`, but nothing else would have an alloc, the whole struct would be 24 bytes on x86-64,
 // wouldn't allocate 99.99% of the time, and could be const constructable in 99.999% of cases.
 /// The ID of a Hedera Ledger.
-#[derive(Eq, PartialEq, Clone, SerializeDisplay, DeserializeFromStr)]
+#[derive(Eq, PartialEq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct LedgerId(Vec<u8>);
 
 impl LedgerId {

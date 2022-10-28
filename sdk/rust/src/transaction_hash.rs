@@ -25,7 +25,6 @@ use std::fmt::{
     Formatter,
 };
 
-use serde_with::SerializeDisplay;
 use sha2::{
     Digest,
     Sha384,
@@ -34,7 +33,8 @@ use sha2::{
 /// The client-generated SHA-384 hash of a transaction that was submitted.
 ///
 /// This can be used to lookup the transaction in an explorer.
-#[derive(Copy, Clone, Hash, SerializeDisplay)]
+#[derive(Copy, Clone, Hash)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay))]
 pub struct TransactionHash(pub [u8; 48]);
 
 impl TransactionHash {

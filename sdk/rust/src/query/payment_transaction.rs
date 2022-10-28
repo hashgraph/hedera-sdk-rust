@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::transaction::{
@@ -39,9 +38,10 @@ use crate::{
 
 pub type PaymentTransaction = Transaction<PaymentTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct PaymentTransactionData {
     pub(crate) amount: Option<Hbar>,
     pub(crate) max_amount: Option<Hbar>,

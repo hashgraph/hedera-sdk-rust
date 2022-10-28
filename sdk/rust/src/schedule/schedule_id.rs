@@ -27,10 +27,6 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
 
 use crate::{
     EntityId,
@@ -39,7 +35,8 @@ use crate::{
 };
 
 /// The unique identifier for a scheduled transaction on Hedera.
-#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 #[repr(C)]
 pub struct ScheduleId {
     /// A non-negative number identifying the shard containing this scheduled transaction.

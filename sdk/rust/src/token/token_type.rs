@@ -19,10 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 
 use crate::{
     FromProtobuf,
@@ -37,8 +33,9 @@ use crate::{
 /// Only `FungibleCommon` and `NonFungibleUnique` are supported right now. More
 /// may be added in the future.
 ///
-#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[repr(C)]
 pub enum TokenType {
     /// Interchangeable value with one another, where any quantity of them has the same value as

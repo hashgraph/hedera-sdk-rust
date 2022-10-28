@@ -19,11 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::base64::Base64;
 use time::OffsetDateTime;
 
 use crate::{
@@ -35,8 +30,9 @@ use crate::{
 // TODO pub ledger_id: LedgerId, --- also shows as todo in account_info.rs
 /// Response from [`TokenNftInfoQuery`][crate::TokenNftInfoQuery].
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenNftInfo {
     /// The ID of the NFT.
     pub nft_id: NftId,
@@ -48,7 +44,7 @@ pub struct TokenNftInfo {
     pub creation_time: OffsetDateTime,
 
     /// The unique metadata of the NFT.
-    #[serde(with = "serde_with::As::<Base64>")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub metadata: Vec<u8>,
 
     /// If an allowance is granted for the NFT, its corresponding spender account.

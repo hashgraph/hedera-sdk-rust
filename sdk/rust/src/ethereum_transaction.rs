@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde_with::base64::Base64;
 use tonic::transport::Channel;
 
 use crate::transaction::{
@@ -38,11 +37,12 @@ use crate::{
 /// Submit an Ethereum transaction.
 pub type EthereumTransaction = Transaction<EthereumTransactionData>;
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct EthereumTransactionData {
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
-    #[serde(with = "serde_with::As::<Base64>")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub ethereum_data: Vec<u8>,
 
     /// For large transactions (for example contract create) this should be used to

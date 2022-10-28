@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -51,9 +50,10 @@ use crate::{
 /// - If no Freeze Key is defined, the transaction will resolve to `TOKEN_HAS_NO_FREEZE_KEY`.
 pub type TokenFreezeTransaction = Transaction<TokenFreezeTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenFreezeTransactionData {
     /// The account to be frozen.
     account_id: Option<AccountId>,
@@ -111,47 +111,50 @@ impl From<TokenFreezeTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        TokenFreezeTransaction,
-        TokenId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            TokenFreezeTransaction,
+            TokenId,
+        };
 
-    // language=JSON
-    const TOKEN_FREEZE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const TOKEN_FREEZE_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenFreeze",
   "accountId": "0.0.1001",
   "tokenId": "0.0.1002"
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TokenFreezeTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TokenFreezeTransaction::new();
 
-        transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
+            transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, TOKEN_FREEZE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, TOKEN_FREEZE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOKEN_FREEZE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(TOKEN_FREEZE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFreeze(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFreeze(transaction) => transaction);
 
-        assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
-        assert_eq!(data.account_id, Some(AccountId::from(1001)));
+            assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
+            assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

@@ -24,11 +24,6 @@ use std::fmt::{
     Formatter,
 };
 
-use serde_with::{
-    skip_serializing_none,
-    DurationSeconds,
-    FromInto,
-};
 use time::Duration;
 
 use crate::execute::execute;
@@ -45,50 +40,57 @@ mod any;
 mod execute;
 mod protobuf;
 
+#[cfg(feature = "ffi")]
 pub use any::AnyTransaction;
-pub(crate) use any::{
-    AnyTransactionBody,
-    AnyTransactionData,
-};
+#[cfg(feature = "ffi")]
+pub(crate) use any::AnyTransactionBody;
+pub(crate) use any::AnyTransactionData;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 /// A transaction that can be executed on the Hedera network.
-#[derive(serde::Serialize)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 pub struct Transaction<D>
 where
     D: TransactionExecute,
 {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     pub(crate) body: TransactionBody<D>,
 
-    #[serde(skip)]
+    #[cfg_attr(feature = "ffi", serde(skip))]
     pub(crate) signers: Vec<Box<dyn Signer>>,
 }
 
-#[skip_serializing_none]
-#[derive(Debug, Default, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 // fires because of `serde_as`
 #[allow(clippy::type_repetition_in_bounds)]
 pub(crate) struct TransactionBody<D>
 where
     D: TransactionExecute,
 {
-    #[serde(flatten)]
-    #[serde(with = "serde_with::As::<FromInto<AnyTransactionData>>")]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>")
+    )]
     pub(crate) data: D,
 
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
-    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
     pub(crate) max_transaction_fee: Option<Hbar>,
 
-    #[serde(skip_serializing_if = "String::is_empty")]
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub(crate) transaction_memo: String,
 
     pub(crate) payer_account_id: Option<AccountId>,

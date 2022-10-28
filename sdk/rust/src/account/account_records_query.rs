@@ -40,8 +40,9 @@ use crate::{
 /// that were above the threshold, during the last 25 hours.
 pub type AccountRecordsQuery = Query<AccountRecordsQueryData>;
 
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountRecordsQueryData {
     account_id: Option<AccountId>,
 }

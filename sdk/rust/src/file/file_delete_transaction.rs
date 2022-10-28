@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -44,9 +43,10 @@ use crate::{
 ///
 pub type FileDeleteTransaction = Transaction<FileDeleteTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileDeleteTransactionData {
     /// The file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.
@@ -94,44 +94,47 @@ impl From<FileDeleteTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        FileDeleteTransaction,
-        FileId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            FileDeleteTransaction,
+            FileId,
+        };
 
-    // language=JSON
-    const FILE_DELETE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const FILE_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "fileDelete",
   "fileId": "0.0.1001"
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = FileDeleteTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = FileDeleteTransaction::new();
 
-        transaction.file_id(FileId::from(1001));
+            transaction.file_id(FileId::from(1001));
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, FILE_DELETE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, FILE_DELETE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(FILE_DELETE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(FILE_DELETE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::FileDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::FileDelete(transaction) => transaction);
 
-        assert_eq!(data.file_id.unwrap(), FileId::from(1001));
+            assert_eq!(data.file_id.unwrap(), FileId::from(1001));
 
-        Ok(())
+            Ok(())
+        }
     }
 }
