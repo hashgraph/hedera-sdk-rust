@@ -25,7 +25,6 @@ use serde::{
     Deserializer,
 };
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
 };
@@ -429,7 +428,6 @@ impl TransactionExecute for AnyTransactionData {
 //  we create a proxy type that has the same layout but is only for AnyQueryData and does
 //  derive(Deserialize).
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -440,7 +438,7 @@ pub(crate) struct AnyTransactionBody<D> {
     #[serde(default)]
     node_account_ids: Option<Vec<AccountId>>,
 
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     #[serde(default)]
     transaction_valid_duration: Option<Duration>,
 

@@ -22,10 +22,7 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde_with::{
-    serde_as,
-    TimestampNanoSeconds,
-};
+use serde_with::TimestampNanoSeconds;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
@@ -55,11 +52,11 @@ pub type SystemDeleteTransaction = Transaction<SystemDeleteTransactionData>;
 /// When a smart contract is deleted, the cryptocurrency account within it continues
 /// to exist, and is not affected by the expiration time here.
 ///
-#[serde_as]
+
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct SystemDeleteTransactionData {
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
     pub expiration_time: Option<OffsetDateTime>,
     pub file_id: Option<FileId>,
     pub contract_id: Option<ContractId>,

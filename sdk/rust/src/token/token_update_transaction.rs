@@ -22,7 +22,6 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
     TimestampNanoSeconds,
@@ -68,7 +67,6 @@ use crate::{
 ///    `CurrentTreasuryStillOwnsNfts`.
 pub type TokenUpdateTransaction = Transaction<TokenUpdateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -105,11 +103,11 @@ pub struct TokenUpdateTransactionData {
     auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     auto_renew_period: Option<Duration>,
 
     /// Sets the time at which the token should expire.
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
     expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the token (UTF-8 encoding max 100 bytes)

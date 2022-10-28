@@ -21,10 +21,7 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::transaction::{
@@ -55,7 +52,6 @@ use crate::{
 /// ready to interact with the tokens.
 pub type TokenAssociateTransaction = Transaction<TokenAssociateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]

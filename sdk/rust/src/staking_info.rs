@@ -1,8 +1,5 @@
 use hedera_proto::services;
-use serde_with::{
-    serde_as,
-    TimestampNanoSeconds,
-};
+use serde_with::TimestampNanoSeconds;
 use time::OffsetDateTime;
 
 use crate::protobuf::ToProtobuf;
@@ -14,7 +11,6 @@ use crate::{
 
 // todo(sr): is this right?
 /// Info related to account/contract staking settings.
-#[serde_as]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StakingInfo {
@@ -24,7 +20,7 @@ pub struct StakingInfo {
     /// The staking period during which either the staking settings for this account or contract changed (such as starting
     /// staking or changing staked_node_id) or the most recent reward was earned, whichever is later. If this account or contract
     /// is not currently staked to a node, then this field is not set.
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
     pub stake_period_start: Option<OffsetDateTime>,
 
     /// The amount in `Hbar` that will be received in the next reward situation.

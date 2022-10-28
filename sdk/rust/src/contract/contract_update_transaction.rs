@@ -26,7 +26,6 @@ use serde::{
     Serialize,
 };
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
     TimestampNanoSeconds,
@@ -53,19 +52,18 @@ use crate::{
 /// Updates the fields of a smart contract to the given values.
 pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ContractUpdateTransactionData {
     contract_id: Option<ContractId>,
 
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
     expiration_time: Option<OffsetDateTime>,
 
     admin_key: Option<Key>,
 
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     auto_renew_period: Option<Duration>,
 
     contract_memo: Option<String>,

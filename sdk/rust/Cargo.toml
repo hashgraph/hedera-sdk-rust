@@ -50,13 +50,16 @@ rand = "0.8.5"
 rust_decimal = "1.26.1"
 serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.79"
-serde_with = { version = "2.0.0", features = ["base64", "time_0_3"] }
 sha2 = "0.10.2"
 sha3 = "0.10.2"
 thiserror = "1.0.31"
 time = { version = "0.3.9", features = ["serde"] }
 tokio = { version = "1.18.1", features = ["rt-multi-thread"] }
 tonic = "0.8.0"
+
+[dependencies.serde_with]
+version = "2.0.0"
+features = ["base64", "time_0_3"]
 
 [dev-dependencies]
 anyhow = "1.0.57"

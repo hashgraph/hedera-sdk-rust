@@ -22,7 +22,6 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
     TimestampNanoSeconds,
@@ -73,7 +72,6 @@ use crate::{
 ///
 pub type TokenCreateTransaction = Transaction<TokenCreateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -113,7 +111,7 @@ pub struct TokenCreateTransactionData {
     freeze_default: bool,
 
     /// The time at which the token should expire.
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
     expiration_time: Option<OffsetDateTime>,
 
     /// An account which will be automatically charged to renew the token's expiration, at
@@ -121,7 +119,7 @@ pub struct TokenCreateTransactionData {
     auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     auto_renew_period: Option<Duration>,
 
     /// The memo associated with the token.

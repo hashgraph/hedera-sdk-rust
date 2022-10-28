@@ -22,10 +22,7 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -61,7 +58,6 @@ use crate::{
 /// `BatchSizeLimitExceeded` response code will be returned.
 pub type TokenMintTransaction = Transaction<TokenMintTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -73,7 +69,7 @@ pub struct TokenMintTransactionData {
     amount: u64,
 
     /// The list of metadata for a non-fungible token to mint to the treasury account.
-    #[serde_as(as = "Vec<Base64>")]
+    #[serde(with = "serde_with::As::<Vec<Base64>>")]
     metadata: Vec<Vec<u8>>,
 }
 

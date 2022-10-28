@@ -24,7 +24,6 @@ use serde::{
     Serialize,
 };
 use serde_with::base64::Base64;
-use serde_with::serde_as;
 use time::OffsetDateTime;
 
 use crate::{
@@ -35,7 +34,7 @@ use crate::{
 
 // TODO pub ledger_id: LedgerId, --- also shows as todo in account_info.rs
 /// Response from [`TokenNftInfoQuery`][crate::TokenNftInfoQuery].
-#[serde_as]
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TokenNftInfo {
@@ -49,7 +48,7 @@ pub struct TokenNftInfo {
     pub creation_time: OffsetDateTime,
 
     /// The unique metadata of the NFT.
-    #[serde_as(as = "Base64")]
+    #[serde(with = "serde_with::As::<Base64>")]
     pub metadata: Vec<u8>,
 
     /// If an allowance is granted for the NFT, its corresponding spender account.

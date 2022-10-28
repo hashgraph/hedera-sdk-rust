@@ -24,7 +24,6 @@ use serde::{
     Serialize,
 };
 use serde_with::base64::Base64;
-use serde_with::serde_as;
 
 use crate::{
     FileId,
@@ -32,7 +31,7 @@ use crate::{
 };
 
 /// Response from [`FileContentsQuery`][crate::FileContentsQuery].
-#[serde_as]
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FileContentsResponse {
@@ -41,7 +40,7 @@ pub struct FileContentsResponse {
 
     // TODO: .contents vs .bytes (?)
     /// The bytes contained in the file.
-    #[serde_as(as = "Base64")]
+    #[serde(with = "serde_with::As::<Base64>")]
     pub contents: Vec<u8>,
 }
 
