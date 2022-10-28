@@ -28,8 +28,9 @@ use crate::{
 };
 
 /// Versions of Hedera Services, and the protobuf schema.
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct NetworkVersionInfo {
     /// Version of the protobuf schema in use by the network.
     pub protobuf_version: SemanticVersion,

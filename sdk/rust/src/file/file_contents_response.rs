@@ -19,11 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::base64::Base64;
 
 use crate::{
     FileId,
@@ -32,15 +27,16 @@ use crate::{
 
 /// Response from [`FileContentsQuery`][crate::FileContentsQuery].
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileContentsResponse {
     /// The file ID of the file whose contents are being returned.
     pub file_id: FileId,
 
     // TODO: .contents vs .bytes (?)
     /// The bytes contained in the file.
-    #[serde(with = "serde_with::As::<Base64>")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub contents: Vec<u8>,
 }
 

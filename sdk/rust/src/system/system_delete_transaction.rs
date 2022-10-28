@@ -22,7 +22,6 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde_with::TimestampNanoSeconds;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
@@ -53,10 +52,14 @@ pub type SystemDeleteTransaction = Transaction<SystemDeleteTransactionData>;
 /// to exist, and is not affected by the expiration time here.
 ///
 
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct SystemDeleteTransactionData {
-    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub expiration_time: Option<OffsetDateTime>,
     pub file_id: Option<FileId>,
     pub contract_id: Option<ContractId>,

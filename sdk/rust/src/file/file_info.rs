@@ -30,8 +30,9 @@ use crate::{
 };
 
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileInfo {
     /// The file ID of the file for which information is requested.
     pub file_id: FileId,

@@ -20,10 +20,6 @@
 
 use hedera_proto::services;
 use prost::Message;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 use time::OffsetDateTime;
 
 use crate::protobuf::ToProtobuf;
@@ -38,7 +34,8 @@ use crate::{
 
 // TODO: scheduled_transaction
 /// Response from [`ScheduleInfoQuery`][crate::ScheduleInfoQuery].
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub struct ScheduleInfo {
     /// The ID of the schedule for which information is requested.
     pub schedule_id: ScheduleId,

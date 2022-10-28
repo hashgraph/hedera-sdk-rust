@@ -19,8 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde_with::base64::Base64;
-use serde_with::TimestampNanoSeconds;
 use time::{
     Duration,
     OffsetDateTime,
@@ -36,8 +34,9 @@ use crate::{
 
 /// Response from [`TopicInfoQuery`][crate::TopicInfoQuery].
 
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TopicInfo {
     /// The ID of the topic for which information is requested.
     pub topic_id: TopicId,
@@ -46,14 +45,17 @@ pub struct TopicInfo {
     pub topic_memo: String,
 
     /// SHA-384 running hash of (previousRunningHash, topicId, consensusTimestamp, sequenceNumber, message).
-    #[serde(with = "serde_with::As::<Base64>")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub running_hash: Vec<u8>,
 
     /// Sequence number (starting at 1 for the first submitMessage) of messages on the topic.
     pub sequence_number: u64,
 
     /// Effective consensus timestamp at (and after) which submitMessage calls will no longer succeed on the topic.
-    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// Access control for update/delete of the topic.

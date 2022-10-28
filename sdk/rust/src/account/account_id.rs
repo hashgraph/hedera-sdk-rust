@@ -27,10 +27,6 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
 
 use crate::{
     EntityId,
@@ -42,7 +38,8 @@ use crate::{
 
 // TODO: checksum
 /// A unique identifier for a cryptocurrency account on Hedera.
-#[derive(SerializeDisplay, Copy, DeserializeFromStr, Hash, PartialEq, Eq, Clone)]
+#[derive(Copy, Hash, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct AccountId {
     /// A non-negative number identifying the shard containing this account.
     pub shard: u64,

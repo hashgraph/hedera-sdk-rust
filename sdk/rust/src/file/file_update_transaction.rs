@@ -21,11 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use serde_with::base64::Base64;
-use serde_with::{
-    skip_serializing_none,
-    TimestampNanoSeconds,
-};
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
@@ -50,9 +45,10 @@ use crate::{
 ///
 pub type FileUpdateTransaction = Transaction<FileUpdateTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileUpdateTransactionData {
     /// The file ID which is being updated in this transaction.
     file_id: Option<FileId>,
@@ -66,11 +62,17 @@ pub struct FileUpdateTransactionData {
     keys: Option<Vec<Key>>,
 
     /// The bytes that are to be the contents of the file.
-    #[serde(with = "serde_with::As::<Option<Base64>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
+    )]
     contents: Option<Vec<u8>>,
 
     /// The time at which this file should expire.
-    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     expiration_time: Option<OffsetDateTime>,
 }
 
@@ -153,24 +155,26 @@ impl From<FileUpdateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use std::str::FromStr;
 
-    use assert_matches::assert_matches;
-    use time::OffsetDateTime;
+        use assert_matches::assert_matches;
+        use time::OffsetDateTime;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        FileId,
-        FileUpdateTransaction,
-        Key,
-        PublicKey,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            FileId,
+            FileUpdateTransaction,
+            Key,
+            PublicKey,
+        };
 
-    // language=JSON
-    const FILE_UPDATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const FILE_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "fileUpdate",
   "fileId": "0.0.1001",
   "fileMemo": "File memo",
@@ -183,47 +187,47 @@ mod tests {
   "expirationTime": 1656352251277559886
 }"#;
 
-    const SIGN_KEY: &str =
+        const SIGN_KEY: &str =
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = FileUpdateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = FileUpdateTransaction::new();
 
-        transaction
-            .file_id(FileId::from(1001))
-            .file_memo("File memo")
-            .keys([PublicKey::from_str(SIGN_KEY)?])
-            .contents("Hello, world!".into())
-            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+            transaction
+                .file_id(FileId::from(1001))
+                .file_memo("File memo")
+                .keys([PublicKey::from_str(SIGN_KEY)?])
+                .contents("Hello, world!".into())
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, FILE_UPDATE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, FILE_UPDATE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(FILE_UPDATE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(FILE_UPDATE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::FileUpdate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::FileUpdate(transaction) => transaction);
 
-        assert_eq!(data.file_id.unwrap(), FileId::from(1001));
-        assert_eq!(data.file_memo.unwrap(), "File memo");
-        assert_eq!(
-            data.expiration_time.unwrap(),
-            OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
-        );
+            assert_eq!(data.file_id.unwrap(), FileId::from(1001));
+            assert_eq!(data.file_memo.unwrap(), "File memo");
+            assert_eq!(
+                data.expiration_time.unwrap(),
+                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+            );
 
-        let sign_key =
-            assert_matches!(data.keys.unwrap().remove(0), Key::Single(public_key) => public_key);
-        assert_eq!(sign_key, PublicKey::from_str(SIGN_KEY)?);
+            let sign_key = assert_matches!(data.keys.unwrap().remove(0), Key::Single(public_key) => public_key);
+            assert_eq!(sign_key, PublicKey::from_str(SIGN_KEY)?);
 
-        let bytes: Vec<u8> = "Hello, world!".into();
-        assert_eq!(data.contents.unwrap(), bytes);
+            let bytes: Vec<u8> = "Hello, world!".into();
+            assert_eq!(data.contents.unwrap(), bytes);
 
-        Ok(())
+            Ok(())
+        }
     }
 }

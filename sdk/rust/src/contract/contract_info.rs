@@ -20,10 +20,6 @@
 
 use hedera_proto::services;
 use prost::Message;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 use time::{
     Duration,
     OffsetDateTime,
@@ -41,7 +37,9 @@ use crate::{
 // TODO: staking_info
 /// Current information on a smart contract instance.
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+// fixme: `renameAll = "camelCase"`
 pub struct ContractInfo {
     /// ID of the contract instance, in the format used by transactions.
     pub contract_id: ContractId,

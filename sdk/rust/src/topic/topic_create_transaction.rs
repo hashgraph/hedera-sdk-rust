@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
-use serde_with::{
-    skip_serializing_none,
-    DurationSeconds,
-};
 use time::Duration;
 use tonic::transport::Channel;
 
@@ -51,12 +47,13 @@ use crate::{
 ///
 pub type TopicCreateTransaction = Transaction<TopicCreateTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TopicCreateTransactionData {
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
-    #[serde(skip_serializing_if = "String::is_empty")]
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     topic_memo: String,
 
     /// Access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
@@ -68,7 +65,10 @@ pub struct TopicCreateTransactionData {
     /// The initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time, if
     /// the `auto_renew_account_id` is configured.
-    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     auto_renew_period: Option<Duration>,
 
     /// Account to be used at the topic's expiration time to extend the life of the topic.
@@ -165,29 +165,31 @@ impl From<TopicCreateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use std::str::FromStr;
 
-    use assert_matches::assert_matches;
-    use time::Duration;
+        use assert_matches::assert_matches;
+        use time::Duration;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        Key,
-        PublicKey,
-        TopicCreateTransaction,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            Key,
+            PublicKey,
+            TopicCreateTransaction,
+        };
 
-    // language=JSON
-    const TOPIC_CREATE_EMPTY: &str = r#"{
+        // language=JSON
+        const TOPIC_CREATE_EMPTY: &str = r#"{
   "$type": "topicCreate"
 }"#;
 
-    // language=JSON
-    const TOPIC_CREATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const TOPIC_CREATE_TRANSACTION_JSON: &str = r#"{
   "$type": "topicCreate",
   "topicMemo": "A topic memo",
   "adminKey": {
@@ -200,60 +202,61 @@ mod tests {
   "autoRenewAccountId": "0.0.1001"
 }"#;
 
-    const ADMIN_KEY: &str =
+        const ADMIN_KEY: &str =
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-    const SUBMIT_KEY: &str =
+        const SUBMIT_KEY: &str =
         "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500";
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TopicCreateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TopicCreateTransaction::new();
 
-        transaction
-            .topic_memo("A topic memo")
-            .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-            .submit_key(PublicKey::from_str(SUBMIT_KEY)?)
-            .auto_renew_period(Duration::days(90))
-            .auto_renew_account_id(AccountId::from(1001));
+            transaction
+                .topic_memo("A topic memo")
+                .admin_key(PublicKey::from_str(ADMIN_KEY)?)
+                .submit_key(PublicKey::from_str(SUBMIT_KEY)?)
+                .auto_renew_period(Duration::days(90))
+                .auto_renew_account_id(AccountId::from(1001));
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, TOPIC_CREATE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, TOPIC_CREATE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
 
-        assert_eq!(data.topic_memo, "A topic memo");
-        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+            assert_eq!(data.topic_memo, "A topic memo");
+            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
 
-        let admin_key =
-            assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+            let admin_key =
+                assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+            assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
-        let submit_key =
-            assert_matches!(data.submit_key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(submit_key, PublicKey::from_str(SUBMIT_KEY)?);
+            let submit_key =
+                assert_matches!(data.submit_key.unwrap(), Key::Single(public_key) => public_key);
+            assert_eq!(submit_key, PublicKey::from_str(SUBMIT_KEY)?);
 
-        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1001)));
+            assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1001)));
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    #[ignore = "auto renew period is `None`"]
-    fn it_should_deserialize_empty() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_EMPTY)?;
+        #[test]
+        #[ignore = "auto renew period is `None`"]
+        fn it_should_deserialize_empty() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_EMPTY)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
 
-        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

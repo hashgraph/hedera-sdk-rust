@@ -21,15 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::{
-    skip_serializing_none,
-    DurationSeconds,
-    TimestampNanoSeconds,
-};
 use time::{
     Duration,
     OffsetDateTime,
@@ -52,18 +43,25 @@ use crate::{
 /// Updates the fields of a smart contract to the given values.
 pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-#[serde(default, rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct ContractUpdateTransactionData {
     contract_id: Option<ContractId>,
 
-    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     expiration_time: Option<OffsetDateTime>,
 
     admin_key: Option<Key>,
 
-    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     auto_renew_period: Option<Duration>,
 
     contract_memo: Option<String>,
@@ -215,28 +213,30 @@ impl From<ContractUpdateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use std::str::FromStr;
 
-    use assert_matches::assert_matches;
-    use time::{
-        Duration,
-        OffsetDateTime,
-    };
+        use assert_matches::assert_matches;
+        use time::{
+            Duration,
+            OffsetDateTime,
+        };
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        ContractId,
-        ContractUpdateTransaction,
-        Key,
-        PublicKey,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            ContractId,
+            ContractUpdateTransaction,
+            Key,
+            PublicKey,
+        };
 
-    // language=JSON
-    const CONTRACT_UPDATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const CONTRACT_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractUpdate",
   "contractId": "0.0.1001",
   "expirationTime": 1656352251277559886,
@@ -252,56 +252,58 @@ mod tests {
   "declineStakingReward": true
 }"#;
 
-    const ADMIN_KEY: &str =
+        const ADMIN_KEY: &str =
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = ContractUpdateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = ContractUpdateTransaction::new();
 
-        transaction
-            .contract_id(ContractId::from(1001))
-            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
-            .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-            .auto_renew_period(Duration::days(90))
-            .contract_memo("A contract memo")
-            .max_automatic_token_associations(1024)
-            .auto_renew_account_id(AccountId::from(1002))
-            .staked_account_id(AccountId::from(1003))
-            .staked_node_id(7)
-            .decline_staking_reward(true);
+            transaction
+                .contract_id(ContractId::from(1001))
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+                .admin_key(PublicKey::from_str(ADMIN_KEY)?)
+                .auto_renew_period(Duration::days(90))
+                .contract_memo("A contract memo")
+                .max_automatic_token_associations(1024)
+                .auto_renew_account_id(AccountId::from(1002))
+                .staked_account_id(AccountId::from(1003))
+                .staked_node_id(7)
+                .decline_staking_reward(true);
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, CONTRACT_UPDATE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, CONTRACT_UPDATE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_UPDATE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(CONTRACT_UPDATE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractUpdate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractUpdate(transaction) => transaction);
 
-        assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
-        assert_eq!(
-            data.expiration_time.unwrap(),
-            OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
-        );
-        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-        assert_eq!(data.contract_memo.unwrap(), "A contract memo");
-        assert_eq!(data.max_automatic_token_associations.unwrap(), 1024);
-        assert_eq!(data.staked_node_id.unwrap(), 7);
-        assert_eq!(data.decline_staking_reward.unwrap(), true);
+            assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
+            assert_eq!(
+                data.expiration_time.unwrap(),
+                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+            );
+            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+            assert_eq!(data.contract_memo.unwrap(), "A contract memo");
+            assert_eq!(data.max_automatic_token_associations.unwrap(), 1024);
+            assert_eq!(data.staked_node_id.unwrap(), 7);
+            assert_eq!(data.decline_staking_reward.unwrap(), true);
 
-        let admin_key =
-            assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+            let admin_key =
+                assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+            assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
-        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
-        assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
+            assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
+            assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

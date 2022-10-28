@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::freeze_service_client::FreezeServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
@@ -48,8 +44,9 @@ use crate::{
 ///
 pub type FreezeTransaction = Transaction<FreezeTransactionData>;
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct FreezeTransactionData {
     start_time: Option<OffsetDateTime>,
     file_id: Option<FileId>,

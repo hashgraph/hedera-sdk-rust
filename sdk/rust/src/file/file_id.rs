@@ -27,10 +27,6 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
 
 use crate::{
     EntityId,
@@ -40,7 +36,8 @@ use crate::{
 };
 
 /// The unique identifier for a file on Hedera.
-#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct FileId {
     /// The shard number.
     pub shard: u64,

@@ -21,12 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::base64::Base64;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::query::{
@@ -51,9 +45,10 @@ use crate::{
 ///
 pub type ContractCallQuery = Query<ContractCallQueryData>;
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Default, Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractCallQueryData {
     /// The contract instance to call.
     pub contract_id: Option<ContractId>,
@@ -62,7 +57,7 @@ pub struct ContractCallQueryData {
     pub gas: u64,
 
     /// The function parameters as their raw bytes.
-    #[serde(with = "serde_with::As::<Base64>")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub function_parameters: Vec<u8>,
 
     /// The sender for this transaction.

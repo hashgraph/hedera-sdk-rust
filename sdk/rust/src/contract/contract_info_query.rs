@@ -21,11 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::query::{
@@ -43,9 +38,10 @@ use crate::{
 /// Get information about a smart contract instance.
 pub type ContractInfoQuery = Query<ContractInfoQueryData>;
 
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Default, Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractInfoQueryData {
     /// The contract for which information is requested.
     contract_id: Option<ContractId>,

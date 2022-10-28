@@ -45,9 +45,10 @@ use crate::{
 ///
 pub type AccountBalanceQuery = Query<AccountBalanceQueryData>;
 
-#[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub struct AccountBalanceQueryData {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     source: AccountBalanceSource,
 }
 
@@ -64,8 +65,9 @@ impl From<AccountBalanceQueryData> for AnyQueryData {
     }
 }
 
-#[derive(Clone, serde::Serialize, serde::Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 enum AccountBalanceSource {
     AccountId(AccountId),
     ContractId(ContractId),
@@ -128,42 +130,45 @@ impl QueryExecute for AccountBalanceQueryData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::account::account_balance_query::AccountBalanceSource;
-    use crate::query::AnyQueryData;
-    use crate::{
-        AccountBalanceQuery,
-        AccountId,
-        AnyQuery,
-    };
+        use crate::account::account_balance_query::AccountBalanceSource;
+        use crate::query::AnyQueryData;
+        use crate::{
+            AccountBalanceQuery,
+            AccountId,
+            AnyQuery,
+        };
 
-    // language=JSON
-    const ACCOUNT_BALANCE: &str = r#"{
+        // language=JSON
+        const ACCOUNT_BALANCE: &str = r#"{
   "$type": "accountBalance",
   "accountId": "0.0.1001"
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut query = AccountBalanceQuery::new();
-        query.account_id(AccountId::from(1001));
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut query = AccountBalanceQuery::new();
+            query.account_id(AccountId::from(1001));
 
-        let s = serde_json::to_string_pretty(&query)?;
-        assert_eq!(s, ACCOUNT_BALANCE);
+            let s = serde_json::to_string_pretty(&query)?;
+            assert_eq!(s, ACCOUNT_BALANCE);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let query: AnyQuery = serde_json::from_str(ACCOUNT_BALANCE)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let query: AnyQuery = serde_json::from_str(ACCOUNT_BALANCE)?;
 
-        let data = assert_matches!(query.data, AnyQueryData::AccountBalance(query) => query);
-        let source = assert_matches!(data.source, AccountBalanceSource::AccountId(id) => id);
+            let data = assert_matches!(query.data, AnyQueryData::AccountBalance(query) => query);
+            let source = assert_matches!(data.source, AccountBalanceSource::AccountId(id) => id);
 
-        assert_eq!(source.num, 1001);
+            assert_eq!(source.num, 1001);
 
-        Ok(())
+            Ok(())
+        }
     }
 }

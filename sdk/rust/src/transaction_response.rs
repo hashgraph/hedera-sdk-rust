@@ -36,8 +36,9 @@ use crate::{
 /// To learn the consensus result, the client should later obtain a
 /// receipt (free), or can buy a more detailed record (not free).
 ///
-#[derive(Debug, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionResponse {
     /// The account ID of the node that the transaction was submitted to.
     pub node_account_id: AccountId,
