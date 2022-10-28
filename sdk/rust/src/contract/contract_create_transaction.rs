@@ -27,7 +27,6 @@ use serde::{
 };
 use serde_with::base64::Base64;
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
 };
@@ -51,12 +50,11 @@ use crate::{
 /// Start a new smart contract instance.
 pub type ContractCreateTransaction = Transaction<ContractCreateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ContractCreateTransactionData {
-    #[serde_as(as = "Option<Base64>")]
+    #[serde(with = "serde_with::As::<Option<Base64>>")]
     bytecode: Option<Vec<u8>>,
 
     bytecode_file_id: Option<FileId>,
@@ -67,10 +65,10 @@ pub struct ContractCreateTransactionData {
 
     initial_balance: Hbar,
 
-    #[serde_as(as = "DurationSeconds<i64>")]
+    #[serde(with = "serde_with::As::<DurationSeconds<i64>>")]
     auto_renew_period: Duration,
 
-    #[serde_as(as = "Base64")]
+    #[serde(with = "serde_with::As::<Base64>")]
     constructor_parameters: Vec<u8>,
 
     contract_memo: String,

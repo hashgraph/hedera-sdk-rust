@@ -22,10 +22,7 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -53,7 +50,6 @@ use crate::{
 ///
 pub type TopicMessageSubmitTransaction = Transaction<TopicMessageSubmitTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -63,7 +59,7 @@ pub struct TopicMessageSubmitTransactionData {
 
     /// Message to be submitted.
     /// Max size of the Transaction (including signatures) is 6KiB.
-    #[serde_as(as = "Option<Base64>")]
+    #[serde(with = "serde_with::As::<Option<Base64>>")]
     message: Option<Vec<u8>>,
 
     /// The `TransactionId` of the first chunk.

@@ -26,10 +26,7 @@ use serde::{
     Serialize,
 };
 use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::query::{
@@ -54,7 +51,6 @@ use crate::{
 ///
 pub type ContractCallQuery = Query<ContractCallQueryData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -66,7 +62,7 @@ pub struct ContractCallQueryData {
     pub gas: u64,
 
     /// The function parameters as their raw bytes.
-    #[serde_as(as = "Base64")]
+    #[serde(with = "serde_with::As::<Base64>")]
     pub function_parameters: Vec<u8>,
 
     /// The sender for this transaction.

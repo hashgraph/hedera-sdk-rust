@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use serde_with::base64::Base64;
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     TimestampNanoSeconds,
 };
@@ -49,7 +48,6 @@ use crate::{
 /// Create a new file, containing the given contents.
 pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -64,11 +62,11 @@ pub struct FileCreateTransactionData {
     keys: Option<Vec<Key>>,
 
     /// The bytes that are to be the contents of the file.
-    #[serde_as(as = "Option<Base64>")]
+    #[serde(with = "serde_with::As::<Option<Base64>>")]
     contents: Option<Vec<u8>>,
 
     /// The time at which this file should expire.
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[serde(with = "serde_with::As::<Option<TimestampNanoSeconds>>")]
     expiration_time: Option<OffsetDateTime>,
 }
 

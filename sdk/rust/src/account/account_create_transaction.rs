@@ -22,7 +22,6 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
 };
@@ -48,7 +47,7 @@ pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
 // TODO: shard_id: Option<ShardId>
 // TODO: realm_id: Option<RealmId>
 // TODO: new_realm_admin_key: Option<Key>,
-#[serde_as]
+
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -66,7 +65,7 @@ pub struct AccountCreateTransactionData {
     pub receiver_signature_required: bool,
 
     /// The account is charged to extend its expiration date every this many seconds.
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.

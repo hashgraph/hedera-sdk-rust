@@ -22,10 +22,7 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -45,7 +42,6 @@ use crate::{
 ///
 pub type FileAppendTransaction = Transaction<FileAppendTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -54,7 +50,7 @@ pub struct FileAppendTransactionData {
     file_id: Option<FileId>,
 
     /// The bytes that will be appended to the end of the specified file.
-    #[serde_as(as = "Option<Base64>")]
+    #[serde(with = "serde_with::As::<Option<Base64>>")]
     contents: Option<Vec<u8>>,
 }
 

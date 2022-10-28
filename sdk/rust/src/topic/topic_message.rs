@@ -21,7 +21,6 @@
 use hedera_proto::mirror;
 use serde::Serialize;
 use serde_with::base64::Base64;
-use serde_with::serde_as;
 use time::OffsetDateTime;
 
 use crate::{
@@ -30,18 +29,18 @@ use crate::{
 };
 
 /// Topic message records.
-#[serde_as]
+
 #[derive(Serialize, Clone, Debug)]
 pub struct TopicMessage {
     /// The consensus timestamp of the message.
     pub consensus_at: OffsetDateTime,
 
     /// The content of the message.
-    #[serde_as(as = "Base64")]
+    #[serde(with = "serde_with::As::<Base64>")]
     pub contents: Vec<u8>,
 
     /// The new running hash of the topic that received the message.
-    #[serde_as(as = "Base64")]
+    #[serde(with = "serde_with::As::<Base64>")]
     pub running_hash: Vec<u8>,
 
     /// Version of the SHA-384 digest used to update the running hash.

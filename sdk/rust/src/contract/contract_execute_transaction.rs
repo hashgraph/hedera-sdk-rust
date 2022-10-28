@@ -25,10 +25,7 @@ use serde::{
     Deserialize,
     Serialize,
 };
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
+use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::transaction::{
@@ -56,7 +53,6 @@ use crate::{
 ///
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

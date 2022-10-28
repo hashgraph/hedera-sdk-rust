@@ -22,7 +22,6 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
 };
@@ -52,7 +51,6 @@ use crate::{
 ///
 pub type TopicCreateTransaction = Transaction<TopicCreateTransactionData>;
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -70,7 +68,7 @@ pub struct TopicCreateTransactionData {
     /// The initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time, if
     /// the `auto_renew_account_id` is configured.
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     auto_renew_period: Option<Duration>,
 
     /// Account to be used at the topic's expiration time to extend the life of the topic.

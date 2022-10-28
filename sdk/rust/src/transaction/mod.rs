@@ -25,7 +25,6 @@ use std::fmt::{
 };
 
 use serde_with::{
-    serde_as,
     skip_serializing_none,
     DurationSeconds,
     FromInto,
@@ -69,7 +68,6 @@ where
     pub(crate) signers: Vec<Box<dyn Signer>>,
 }
 
-#[serde_as]
 #[skip_serializing_none]
 #[derive(Debug, Default, Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -80,12 +78,12 @@ where
     D: TransactionExecute,
 {
     #[serde(flatten)]
-    #[serde_as(as = "FromInto<AnyTransactionData>")]
+    #[serde(with = "serde_with::As::<FromInto<AnyTransactionData>>")]
     pub(crate) data: D,
 
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[serde(with = "serde_with::As::<Option<DurationSeconds<i64>>>")]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
     pub(crate) max_transaction_fee: Option<Hbar>,
