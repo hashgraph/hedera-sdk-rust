@@ -18,8 +18,8 @@
  * ‍
  */
 
-import Foundation
 import CHedera
+import Foundation
 
 extension String {
     /// Creates a new string by copying from a CHedera owned string.

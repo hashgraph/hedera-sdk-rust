@@ -50,9 +50,9 @@ public struct TransactionResponse: Decodable {
     /// Will return a `receiptStatus` error for a failing receipt.
     public func getReceipt(_ client: Client) async throws -> TransactionReceipt {
         try await TransactionReceiptQuery()
-                .transactionId(transactionId)
-                .nodeAccountIds([nodeAccountId])
-                .validateStatus(true)
-                .execute(client)
+            .transactionId(transactionId)
+            .nodeAccountIds([nodeAccountId])
+            .validateStatus(true)
+            .execute(client)
     }
 }

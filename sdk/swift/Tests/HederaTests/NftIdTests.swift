@@ -19,19 +19,20 @@
  */
 
 import XCTest
+
 @testable import Hedera
 
 private let parsedNftId = NftId(tokenId: TokenId(shard: 1415, realm: 314, num: 123), serial: 456)
 
-final class NftIdTests: XCTestCase {
-    func testParseSlashFormat() {
+public final class NftIdTests: XCTestCase {
+    public func testParseSlashFormat() {
 
         let actualNftId: NftId = "1415.314.123/456"
 
         XCTAssertEqual(parsedNftId, actualNftId)
     }
 
-    func testParseAtFormat() {
+    public func testParseAtFormat() {
         let actualNftId: NftId = "1415.314.123@456"
 
         XCTAssertEqual(parsedNftId, actualNftId)

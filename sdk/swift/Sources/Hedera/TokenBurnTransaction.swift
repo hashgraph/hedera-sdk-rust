@@ -22,9 +22,9 @@
 public final class TokenBurnTransaction: Transaction {
     /// Create a new `TokenBurnTransaction`.
     public init(
-            tokenId: TokenId? = nil,
-            amount: UInt64 = 0,
-            serials: [UInt64] = []
+        tokenId: TokenId? = nil,
+        amount: UInt64 = 0,
+        serials: [UInt64] = []
     ) {
         self.tokenId = tokenId
         self.amount = amount

@@ -36,7 +36,8 @@ public struct NetworkVersionInfo: Codable {
     private func unsafeWithCHedera<Result>(_ body: (HederaNetworkVersionInfo) throws -> Result) rethrows -> Result {
         try protobufVersion.unsafeWithCHedera { (protobufVersion) in
             try servicesVersion.unsafeWithCHedera { (servicesVersion) in
-                let info = HederaNetworkVersionInfo(protobuf_version: protobufVersion, services_version: servicesVersion)
+                let info = HederaNetworkVersionInfo(
+                    protobuf_version: protobufVersion, services_version: servicesVersion)
                 return try body(info)
             }
         }
@@ -46,7 +47,7 @@ public struct NetworkVersionInfo: Codable {
         try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
             var info = HederaNetworkVersionInfo()
 
-            let err = hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info);
+            let err = hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info)
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!

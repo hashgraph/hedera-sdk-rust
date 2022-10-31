@@ -1,40 +1,47 @@
 import XCTest
+
 @testable import Hedera
 
-final class PublicKeyTests: XCTestCase {
-    func testParseEd25519() throws {
-        let pk: PublicKey = "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
+public final class PublicKeyTests: XCTestCase {
+    public func testParseEd25519() throws {
+        let publicKey: PublicKey =
+            "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
 
-        XCTAssertEqual(pk.description, "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
+        XCTAssertEqual(
+            publicKey.description,
+            "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
     }
 
-    func testParseEcdsa() throws {
-        let pk: PublicKey = "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
+    public func testParseEcdsa() throws {
+        let publicKey: PublicKey =
+            "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
 
-        XCTAssertEqual(pk.description, "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
+        XCTAssertEqual(
+            publicKey.description,
+            "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
     }
 
-    func pkParseVariants(key: String) throws {
+    private func publicKeyParseVariants(key: String) throws {
         for variant in 0..<4 {
-            let prefix = variant & 1 == 1;
-            let uppercase = (variant >> 1) & 1 == 1;
-            let prefixStr = prefix ? "0x" : "";
+            let prefix = variant & 1 == 1
+            let uppercase = (variant >> 1) & 1 == 1
+            let prefixStr = prefix ? "0x" : ""
             let keyCased = uppercase ? key.uppercased() : key.lowercased()
-            let pk = try PublicKey.fromString("\(prefixStr)\(keyCased)")
+            let publicKey = try PublicKey.fromString("\(prefixStr)\(keyCased)")
 
-            XCTAssertEqual(key, pk.description)
+            XCTAssertEqual(key, publicKey.description)
         }
     }
 
-    func testEd25519ParseVariants() throws {
-        try pkParseVariants(
-                key: "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
+    public func testEd25519ParseVariants() throws {
+        try publicKeyParseVariants(
+            key: "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
         )
     }
 
-    func testEcdsaParseVariants() throws {
-        try pkParseVariants(
-                key: "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
+    public func testEcdsaParseVariants() throws {
+        try publicKeyParseVariants(
+            key: "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
         )
     }
 }
