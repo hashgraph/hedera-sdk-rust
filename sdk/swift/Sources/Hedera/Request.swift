@@ -30,9 +30,9 @@ public protocol Request: Encodable {
     func decodeResponse(_ responseBytes: Data) throws -> Response
 }
 
-public extension Request {
+extension Request {
     /// Execute this request against the provided client of the Hedera network.
-    func execute(_ client: Client) async throws -> Response {
+    public func execute(_ client: Client) async throws -> Response {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
         let request = String(data: requestBytes, encoding: .utf8)!
@@ -63,7 +63,7 @@ public extension Request {
         return try decodeResponse(responseBytes)
     }
 
-    func decodeResponse(_ responseBytes: Data) throws -> Response {
+    public func decodeResponse(_ responseBytes: Data) throws -> Response {
         // decode the response as the generic output type of this query types
         try JSONDecoder().decode(Response.self, from: responseBytes)
     }

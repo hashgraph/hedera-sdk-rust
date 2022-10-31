@@ -18,8 +18,8 @@
  * ‍
  */
 
-import Foundation
 import CHedera
+import Foundation
 
 private func hexVal(_ char: UInt8) -> UInt8? {
     // this would be a very clean function if swift had a way of doing ascii-charcter literals, but it can't.
@@ -41,27 +41,26 @@ private func hexVal(_ char: UInt8) -> UInt8? {
     }
 }
 
-internal extension Data {
+extension Data {
     // safety: `hedera_bytes_free` needs to be called so...
     // perf: might as well enable use of the no copy constructor.
-    static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
+    internal static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
         hedera_bytes_free(buf, size)
     }
 
     private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
 
     // (sr): swift compiler wins the "useless acl vs explicit acl debate
-    // swiftlint:disable explicit_acl
-    func hexStringEncoded() -> String {
-        String(reduce(into: "".unicodeScalars) { result, value in
-            result.append(Self.hexAlphabet[Int(value / 0x10)])
-            result.append(Self.hexAlphabet[Int(value % 0x10)])
-        })
+    internal func hexStringEncoded() -> String {
+        String(
+            reduce(into: "".unicodeScalars) { result, value in
+                result.append(Self.hexAlphabet[Int(value / 0x10)])
+                result.append(Self.hexAlphabet[Int(value % 0x10)])
+            })
     }
 
     // (sr): swift compiler wins the "useless acl vs explicit acl debate
-    // swiftlint:disable explicit_acl
-    init?(hexEncoded: String) {
+    internal init?(hexEncoded: String) {
         let chars = Array(hexEncoded.utf8)
         // note: hex check is done character by character
         let count = chars.count

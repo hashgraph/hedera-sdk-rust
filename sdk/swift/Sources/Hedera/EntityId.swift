@@ -22,7 +22,8 @@ import CHedera
 import Foundation
 
 public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Equatable, Codable,
-        ExpressibleByStringLiteral {
+    ExpressibleByStringLiteral
+{
     /// The shard number (non-negative).
     public let shard: UInt64
 

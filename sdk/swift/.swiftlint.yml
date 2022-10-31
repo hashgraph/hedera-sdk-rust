@@ -1,6 +1,7 @@
 included:
   - Examples/
   - Sources/
+  - Tests/
 
 excluded:
   - .build/
@@ -8,6 +9,11 @@ excluded:
 disabled_rules:
   # TODO: re-enable once the project is deemed complete
   - todo
+  # swift-format disagrees, swift-format has its own style lints.
+  - opening_brace
+  - trailing_comma
+  # coverered by swift-format.
+  - line_length
 
 opt_in_rules:
   - anyobject_protocol
@@ -38,6 +44,7 @@ opt_in_rules:
   - expiring_todo
   - explicit_acl
   - explicit_top_level_acl
-  - extension_access_modifier
+  # this conflicts with `explicit_acl` by making the ACL redundant
+  # - extension_access_modifier
   - fallthrough
   - fatal_error_message

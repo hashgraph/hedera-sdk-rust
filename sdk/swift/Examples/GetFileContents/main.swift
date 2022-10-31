@@ -40,11 +40,11 @@ public enum Program {
 }
 
 extension Environment {
-    var operatorAccountId: AccountId {
+    public var operatorAccountId: AccountId {
         AccountId(self["OPERATOR_ACCOUNT_ID"]!.stringValue)!
     }
 
-    var operatorKey: PrivateKey {
+    public var operatorKey: PrivateKey {
         PrivateKey(self["OPERATOR_KEY"]!.stringValue)!
     }
 }

@@ -19,22 +19,25 @@
  */
 
 import XCTest
+
 @testable import Hedera
 
-final class SemanticVersionDescriptionTests: XCTestCase {
-    func testBasic() {
+public final class SemanticVersionDescriptionTests: XCTestCase {
+    public func testBasic() {
         XCTAssertEqual(SemanticVersion(major: 1, minor: 2, patch: 3).description, "1.2.3")
     }
 
-    func testWithPrerelease() {
+    public func testWithPrerelease() {
         XCTAssertEqual(SemanticVersion(major: 3, minor: 1, patch: 4, prerelease: "15.92").description, "3.1.4-15.92")
     }
 
-    func testWithBuild() {
+    public func testWithBuild() {
         XCTAssertEqual(SemanticVersion(major: 1, minor: 41, patch: 1, build: "6535asd").description, "1.41.1+6535asd")
     }
 
-    func testWithPrereleaseAndBuild() {
-        XCTAssertEqual(SemanticVersion(major: 0, minor: 1, patch: 4, prerelease: "0.9a2", build: "sha.25531c").description, "0.1.4-0.9a2+sha.25531c")
+    public func testWithPrereleaseAndBuild() {
+        XCTAssertEqual(
+            SemanticVersion(major: 0, minor: 1, patch: 4, prerelease: "0.9a2", build: "sha.25531c").description,
+            "0.1.4-0.9a2+sha.25531c")
     }
 }

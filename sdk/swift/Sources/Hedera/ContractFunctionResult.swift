@@ -65,7 +65,8 @@ public struct ContractFunctionResult: Codable {
         gasUsed = try container.decode(UInt64.self, forKey: .gasUsed)
         gas = try container.decode(UInt64.self, forKey: .gas)
         hbarAmount = try container.decode(Hbar.self, forKey: .hbarAmount)
-        contractFunctionParametersBytes = Data(base64Encoded: try container.decode(String.self, forKey: .contractFunctionParametersBytes))!
+        contractFunctionParametersBytes = Data(
+            base64Encoded: try container.decode(String.self, forKey: .contractFunctionParametersBytes))!
         bytes = Data(base64Encoded: try container.decode(String.self, forKey: .bytes))!
         senderAccountId = try container.decodeIfPresent(AccountId.self, forKey: .senderAccountId)
     }
