@@ -1,11 +1,11 @@
 use hedera_proto::services;
-use serde::Serialize;
 use serde_with::{
     serde_as,
     TimestampNanoSeconds,
 };
 use time::OffsetDateTime;
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -15,7 +15,7 @@ use crate::{
 // todo(sr): is this right?
 /// Info related to account/contract staking settings.
 #[serde_as]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct StakingInfo {
     /// If `true`, the contract declines receiving a staking reward. The default value is `false`.
@@ -40,25 +40,34 @@ pub struct StakingInfo {
     pub staked_node_id: Option<u64>,
 }
 
+impl StakingInfo {
+    /// Create a new `StakingInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl FromProtobuf<services::StakingInfo> for StakingInfo {
-    fn from_protobuf(pb: services::StakingInfo) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        let mut staked_account_id = None;
-        let mut staked_node_id = None;
-
-        match pb.staked_id {
+    fn from_protobuf(pb: services::StakingInfo) -> crate::Result<Self> {
+        let (staked_account_id, staked_node_id) = match pb.staked_id {
             Some(services::staking_info::StakedId::StakedAccountId(id)) => {
-                staked_account_id = Some(AccountId::from_protobuf(id)?);
+                (Some(AccountId::from_protobuf(id)?), None)
             }
 
-            Some(services::staking_info::StakedId::StakedNodeId(id)) => {
-                staked_node_id = Some(id as u64);
-            }
+            Some(services::staking_info::StakedId::StakedNodeId(id)) => (None, Some(id as u64)),
 
-            None => {}
-        }
+            None => (None, None),
+        };
 
         Ok(Self {
             decline_staking_reward: pb.decline_reward,
@@ -68,5 +77,28 @@ impl FromProtobuf<services::StakingInfo> for StakingInfo {
             staked_account_id,
             staked_node_id,
         })
+    }
+}
+
+impl ToProtobuf for StakingInfo {
+    type Protobuf = services::StakingInfo;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::StakingInfo {
+            decline_reward: self.decline_staking_reward,
+            stake_period_start: self.stake_period_start.map(Into::into),
+            pending_reward: self.pending_reward.to_tinybars(),
+            staked_to_me: self.staked_to_me.to_tinybars(),
+            staked_id: self
+                .staked_node_id
+                .map(|it| it as i64)
+                .map(services::staking_info::StakedId::StakedNodeId)
+                .or_else(|| {
+                    self.staked_account_id
+                        .as_ref()
+                        .map(ToProtobuf::to_protobuf)
+                        .map(services::staking_info::StakedId::StakedAccountId)
+                }),
+        }
     }
 }

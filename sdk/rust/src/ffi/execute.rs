@@ -18,7 +18,6 @@
  * ‍
  */
 
-use std::cell::RefCell;
 use std::ffi::{
     c_void,
     CString,

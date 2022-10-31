@@ -19,7 +19,9 @@
  */
 
 use hedera_proto::services;
+use prost::Message;
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -38,15 +40,47 @@ pub struct AccountBalance {
     pub hbars: Hbar,
 }
 
+impl AccountBalance {
+    /// Create a new `AccountBalance` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::CryptoGetAccountBalanceResponse>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        services::CryptoGetAccountBalanceResponse {
+            header: None,
+            account_id: Some(self.account_id.to_protobuf()),
+            balance: self.hbars.to_tinybars() as u64,
+            token_balances: Vec::default(),
+        }
+        .encode_to_vec()
+    }
+}
+
+impl FromProtobuf<services::CryptoGetAccountBalanceResponse> for AccountBalance {
+    fn from_protobuf(pb: services::CryptoGetAccountBalanceResponse) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let account_id = pb_getf!(pb, account_id)?;
+        let account_id = AccountId::from_protobuf(account_id)?;
+
+        let balance = Hbar::from_tinybars(pb.balance as Tinybar);
+
+        Ok(Self { account_id, hbars: balance })
+    }
+}
+
 impl FromProtobuf<services::response::Response> for AccountBalance {
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self> {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
-        let account_id = pb_getf!(response, account_id)?;
-        let account_id = AccountId::from_protobuf(account_id)?;
-
-        let balance = Hbar::from_tinybars(response.balance as Tinybar);
-
-        Ok(Self { account_id, hbars: balance })
+        Self::from_protobuf(response)
     }
 }
