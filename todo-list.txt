@@ -56,9 +56,9 @@
  - [ ] checksum support
  - [X] to_bytes()
  - [X] from_bytes()
-[X] ContractInfoQuery
+[X] ContractInfo
  - [X] ledger_id
- - [ ] staking_info
+ - [X] staking_info
 [X] ContractUpdateTransaction
 [X] EthereumTransaction
 [ ] EthereumFlow

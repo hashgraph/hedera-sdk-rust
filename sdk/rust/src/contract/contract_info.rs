@@ -32,14 +32,13 @@ use crate::{
     FromProtobuf,
     Key,
     LedgerId,
+    StakingInfo,
 };
 
-// TODO: staking_info
 /// Current information on a smart contract instance.
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-// fixme: `renameAll = "camelCase"`
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractInfo {
     /// ID of the contract instance, in the format used by transactions.
     pub contract_id: ContractId,
@@ -81,6 +80,9 @@ pub struct ContractInfo {
 
     /// The ledger ID the response was returned from
     pub ledger_id: LedgerId,
+
+    /// Staking metadata for this contract.
+    pub staking_info: Option<StakingInfo>,
 }
 
 impl ContractInfo {
@@ -110,10 +112,10 @@ impl ContractInfo {
             ledger_id: self.ledger_id.to_bytes(),
             auto_renew_account_id: self.auto_renew_account_id.as_ref().map(ToProtobuf::to_protobuf),
             max_automatic_token_associations: self.max_automatic_token_associations as i32,
+            staking_info: self.staking_info.as_ref().map(ToProtobuf::to_protobuf),
 
             // unimplemented fields
             token_relationships: Vec::new(),
-            staking_info: None,
         }
         .encode_to_vec()
     }
@@ -145,6 +147,7 @@ impl FromProtobuf<services::contract_get_info_response::ContractInfo> for Contra
             pb.auto_renew_account_id.map(AccountId::from_protobuf).transpose()?;
         let admin_key = pb.admin_key.map(Key::from_protobuf).transpose()?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
+        let staking_info = pb.staking_info.map(StakingInfo::from_protobuf).transpose()?;
 
         Ok(Self {
             contract_id: ContractId::from_protobuf(contract_id)?,
@@ -160,6 +163,7 @@ impl FromProtobuf<services::contract_get_info_response::ContractInfo> for Contra
             admin_key,
             storage: pb.storage as u64,
             ledger_id,
+            staking_info,
         })
     }
 }
