@@ -1,0 +1,60 @@
+name: Rust CI
+on:
+  pull_request:
+  push:
+    paths: ["sdk/rust/**", "protobufs/**"]
+    branches: ['main']
+
+defaults:
+  run:
+    working-directory: sdk/rust
+
+jobs:
+  format:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Add `rustfmt` to toolchain
+        run: rustup component add rustfmt
+      - name: Format
+        run: cargo fmt --check
+  
+  check:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            sdk/rust
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+
+      - name: Check
+        run: cargo check --features ffi
+        
+  
+  test:
+    needs: ['check']
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            sdk/rust
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v1
+
+      - name: Test
+        run: cargo test --features ffi
