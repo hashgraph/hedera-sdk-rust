@@ -32,7 +32,8 @@ use crate::{
 /// A transfer fee to assess during a `CryptoTransfer` that transfers units of the token to which the
 /// fee is attached. A custom fee may be either fixed or fractional, and must specify a fee collector
 /// account to receive the assessed fees. Only positive fees may be assessed.
-#[derive(serde::Serialize, serde::Deserialize, Debug, Hash, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[repr(C)]
 pub struct CustomFee {
     /// The fee to be charged.
@@ -64,7 +65,8 @@ impl ToProtobuf for CustomFee {
 }
 
 /// Represents the possible fee types.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub enum Fee {
     /// Fixed fee to be charged.
@@ -127,7 +129,8 @@ impl From<FractionalFee> for Fee {
 
 /// A fixed number of units (hbar or token) to assess as a fee during a `CryptoTransfer` that transfers
 /// units of the token to which this fixed fee is attached.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct FixedFee {
     /// The number of units to assess as a fee
@@ -177,7 +180,8 @@ impl ToProtobuf for FixedFee {
 /// A fraction of the transferred units of a token to assess as a fee. The amount assessed will never
 /// be less than the given `minimum_amount`, and never greater than the given `maximum_amount`.  The
 /// denomination is always units of the token to which this fractional fee is attached.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct FractionalFee {
     /// The fraction of the transferred units to assess as a fee
@@ -224,7 +228,8 @@ impl ToProtobuf for FractionalFee {
 /// value" includes both ℏ and units of fungible HTS tokens.) When the NFT sender does not receive
 /// any fungible value, the ledger will assess the fallback fee, if present, to the new NFT owner.
 /// Royalty fees can only be added to tokens of type type `NON_FUNGIBLE_UNIQUE`.
-#[derive(Debug, serde::Serialize, serde::Deserialize, Hash, PartialEq, Eq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct RoyaltyFee {
     /// The fraction of fungible value exchanged for an NFT to collect as royalty

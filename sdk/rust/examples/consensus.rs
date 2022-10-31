@@ -23,7 +23,8 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use clap::Parser;
-use futures::TryStreamExt;
+// `use futures::TryStreamExt`, this is better practice though.
+use futures_util::TryStreamExt;
 use hedera::{
     AccountId, Client, PrivateKey, TopicId, TopicMessageQuery, TopicMessageSubmitTransaction
 };

@@ -20,12 +20,6 @@
 
 use async_trait::async_trait;
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Deserializer,
-    Serialize,
-    Serializer,
-};
 use tonic::transport::Channel;
 
 use super::ToQueryProtobuf;
@@ -44,7 +38,6 @@ use crate::file::{
     FileContentsQueryData,
     FileInfoQueryData,
 };
-use crate::query::payment_transaction::PaymentTransactionData;
 use crate::query::QueryExecute;
 use crate::schedule::ScheduleInfoQueryData;
 use crate::token::{
@@ -52,7 +45,6 @@ use crate::token::{
     TokenNftInfoQueryData,
 };
 use crate::topic::TopicInfoQueryData;
-use crate::transaction::AnyTransactionBody;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
 use crate::{
     AccountBalance,
@@ -71,7 +63,6 @@ use crate::{
     TokenInfo,
     TokenNftInfo,
     TopicInfo,
-    Transaction,
     TransactionReceipt,
     TransactionRecord,
     TransactionRecordQueryData,
@@ -80,8 +71,9 @@ use crate::{
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]
-#[serde(rename_all = "camelCase", tag = "$type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
@@ -103,8 +95,9 @@ pub enum AnyQueryData {
 
 // todo: strategically box fields of variants, rather than the entire structs.
 /// Common response type for *all* queries.
-#[derive(Debug, serde::Serialize, Clone)]
-#[serde(rename_all = "camelCase", tag = "$type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyQueryResponse {
     /// Response from [`AccountBalanceQuery`](crate::AccountBalanceQuery).
     AccountBalance(AccountBalance),
@@ -353,22 +346,26 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
 //  we create a proxy type that has the same layout but is only for AnyQueryData and does
 //  derive(Deserialize).
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[cfg(feature = "ffi")]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 struct AnyQueryProxy {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     data: AnyQueryData,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    payment: Option<AnyTransactionBody<PaymentTransactionData>>,
+    #[cfg_attr(feature = "ffi", serde(default))]
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
+    payment: Option<
+        crate::transaction::AnyTransactionBody<super::payment_transaction::PaymentTransactionData>,
+    >,
 }
 
-impl<D> Serialize for Query<D>
+#[cfg(feature = "ffi")]
+impl<D> serde::Serialize for Query<D>
 where
     D: QueryExecute,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer,
+        S: serde::Serializer,
     {
         // TODO: remove the clones, should be possible with Cows
 
@@ -378,14 +375,15 @@ where
     }
 }
 
-impl<'de> Deserialize<'de> for AnyQuery {
+#[cfg(feature = "ffi")]
+impl<'de> serde::Deserialize<'de> for AnyQuery {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>,
+        D: serde::Deserializer<'de>,
     {
-        <AnyQueryProxy as Deserialize>::deserialize(deserializer).map(|query| Self {
+        <AnyQueryProxy as serde::Deserialize>::deserialize(deserializer).map(|query| Self {
             data: query.data,
-            payment: Transaction {
+            payment: crate::Transaction {
                 body: query.payment.map(Into::into).unwrap_or_default(),
                 signers: Vec::new(),
             },

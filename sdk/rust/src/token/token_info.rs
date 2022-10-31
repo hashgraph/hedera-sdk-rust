@@ -41,8 +41,9 @@ use crate::{
 };
 
 /// Response from [`TokenInfoQuery`][crate::TokenInfoQuery].
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenInfo {
     /// The ID of the token for which information is requested.
     pub token_id: TokenId,

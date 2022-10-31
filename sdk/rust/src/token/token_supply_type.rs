@@ -19,10 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 
 use crate::{
     FromProtobuf,
@@ -32,8 +28,9 @@ use crate::{
 /// Possible token supply types.
 /// Can be used to restrict supply to a set maximum.
 /// Defaults to [`Infinite`](Self::Infinite).
-#[derive(Serialize, Deserialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[repr(C)]
 pub enum TokenSupplyType {
     /// Indicates the token has a maximum supply of [`u64::MAX`].

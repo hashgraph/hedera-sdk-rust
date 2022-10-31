@@ -29,8 +29,9 @@ use crate::{
 };
 
 /// Any method that can be used to authorize an operation on Hedera.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub enum Key {
     // todo(sr): not happy with any of these (fix before merge)
     /// A single public key.

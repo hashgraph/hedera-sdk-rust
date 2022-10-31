@@ -48,50 +48,54 @@ use crate::{
 ///
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TransferTransactionData {
     transfers: Vec<Transfer>,
     token_transfers: Vec<TokenTransfer>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct Transfer {
     account_id: AccountId,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     amount: i64,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     is_approval: bool,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct TokenTransfer {
     token_id: TokenId,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     transfers: Vec<Transfer>,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     nft_transfers: Vec<NftTransfer>,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     expected_decimals: Option<u32>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct NftTransfer {
     sender_account_id: AccountId,
     receiver_account_id: AccountId,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     serial: u64,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     is_approval: bool,
 }
 

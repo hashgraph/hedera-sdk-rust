@@ -44,8 +44,9 @@ use crate::{
 /// messages for an HCS Topic via a specific (possibly open-ended) time range.
 pub type TopicMessageQuery = MirrorQuery<TopicMessageQueryData>;
 
-#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TopicMessageQueryData {
     /// The topic ID to retrieve messages for.
     topic_id: Option<TopicId>,

@@ -25,10 +25,6 @@ use hedera_proto::services::{
     schedulable_transaction_body,
     transaction_body,
 };
-use serde::{
-    Deserialize,
-    Serialize,
-};
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
@@ -56,8 +52,9 @@ use crate::{
 ///
 pub type ScheduleCreateTransaction = Transaction<ScheduleCreateTransactionData>;
 
-#[derive(Serialize, Default, Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleCreateTransactionData {
     scheduled_transaction: Option<SchedulableTransactionBody>,
 
@@ -72,16 +69,17 @@ pub struct ScheduleCreateTransactionData {
     wait_for_expiry: bool,
 }
 
-#[derive(Serialize, Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct SchedulableTransactionBody {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     data: Box<AnyTransactionData>,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     max_transaction_fee: Option<Hbar>,
 
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "String::is_empty"))]
     transaction_memo: String,
 }
 

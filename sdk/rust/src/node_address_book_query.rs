@@ -42,8 +42,9 @@ use crate::{
 /// The nodes are returned in ascending order by node ID.
 pub type NodeAddressBookQuery = MirrorQuery<NodeAddressBookQueryData>;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct NodeAddressBookQueryData {
     /// The ID of the address book file on the network.
     /// Can either be `0.0.101` or `0.0.102`. Defaults to `0.0.102`.

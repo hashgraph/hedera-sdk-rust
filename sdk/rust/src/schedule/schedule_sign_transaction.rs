@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -43,7 +39,9 @@ use crate::{
 /// Adds zero or more signing keys to a schedule.
 pub type ScheduleSignTransaction = Transaction<ScheduleSignTransactionData>;
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+// fixme: `rename_all = "camelCase"`
 pub struct ScheduleSignTransactionData {
     schedule_id: Option<ScheduleId>,
 }

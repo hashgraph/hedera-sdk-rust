@@ -18,16 +18,20 @@
  * ‍
  */
 
-use std::env;
+#[cfg(not(feature = "ffi"))]
+fn main() {}
 
-use cbindgen::{
-    Config,
-    EnumConfig,
-    Language,
-    RenameRule,
-};
-
+#[cfg(feature = "ffi")]
 fn main() -> anyhow::Result<()> {
+    use std::env;
+
+    use cbindgen::{
+        Config,
+        EnumConfig,
+        Language,
+        RenameRule,
+    };
+
     cbindgen::Builder::new()
         .with_config(Config {
             cpp_compat: true,

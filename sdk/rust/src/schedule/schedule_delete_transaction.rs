@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -45,7 +41,8 @@ use crate::{
 /// receive any additional signing keys, nor will it be executed.
 pub type ScheduleDeleteTransaction = Transaction<ScheduleDeleteTransactionData>;
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[derive(Debug, Default, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub struct ScheduleDeleteTransactionData {
     schedule_id: Option<ScheduleId>,
 }

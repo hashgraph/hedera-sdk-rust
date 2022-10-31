@@ -20,15 +20,6 @@
 
 use async_trait::async_trait;
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Deserializer,
-};
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-    DurationSeconds,
-};
 use time::Duration;
 use tonic::transport::Channel;
 use tonic::{
@@ -102,11 +93,13 @@ use crate::{
     TransactionId,
 };
 
+#[cfg(feature = "ffi")]
 /// Any possible transaction that may be executed on the Hedera network.
 pub type AnyTransaction = Transaction<AnyTransactionData>;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase", tag = "$type")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyTransactionData {
     AccountCreate(AccountCreateTransactionData),
     AccountUpdate(AccountUpdateTransactionData),
@@ -429,31 +422,34 @@ impl TransactionExecute for AnyTransactionData {
 //  we create a proxy type that has the same layout but is only for AnyQueryData and does
 //  derive(Deserialize).
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub(crate) struct AnyTransactionBody<D> {
-    #[serde(flatten)]
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     data: D,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     node_account_ids: Option<Vec<AccountId>>,
 
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
-    #[serde(default)]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
+    #[cfg_attr(feature = "ffi", serde(default))]
     transaction_valid_duration: Option<Duration>,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     max_transaction_fee: Option<Hbar>,
 
-    #[serde(default, skip_serializing_if = "String::is_empty")]
+    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "String::is_empty"))]
     transaction_memo: String,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     payer_account_id: Option<AccountId>,
 
-    #[serde(default)]
+    #[cfg_attr(feature = "ffi", serde(default))]
     transaction_id: Option<TransactionId>,
 }
 
@@ -500,12 +496,13 @@ where
     }
 }
 
-impl<'de> Deserialize<'de> for AnyTransaction {
+#[cfg(feature = "ffi")]
+impl<'de> serde::Deserialize<'de> for AnyTransaction {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>,
+        D: serde::Deserializer<'de>,
     {
-        <AnyTransactionBody<AnyTransactionData> as Deserialize>::deserialize(deserializer)
+        <AnyTransactionBody<AnyTransactionData> as serde::Deserialize>::deserialize(deserializer)
             .map(AnyTransactionBody::into)
     }
 }

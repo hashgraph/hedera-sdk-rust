@@ -41,10 +41,6 @@ use pkcs8::der::{
     Encode,
 };
 use prost::Message;
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
 
 use crate::key::private_key::ED25519_OID;
 use crate::protobuf::ToProtobuf;
@@ -58,7 +54,8 @@ use crate::{
 mod tests;
 
 /// A public key on the Hedera network.
-#[derive(Clone, Eq, Copy, Hash, PartialEq, SerializeDisplay, DeserializeFromStr)]
+#[derive(Clone, Eq, Copy, Hash, PartialEq)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct PublicKey(PublicKeyData);
 
 #[derive(Clone, Copy)]

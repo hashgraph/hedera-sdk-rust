@@ -21,16 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-    DurationSeconds,
-};
 use time::Duration;
 use tonic::transport::Channel;
 
@@ -51,12 +41,15 @@ use crate::{
 /// Start a new smart contract instance.
 pub type ContractCreateTransaction = Transaction<ContractCreateTransactionData>;
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(default, rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct ContractCreateTransactionData {
-    #[serde_as(as = "Option<Base64>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
+    )]
     bytecode: Option<Vec<u8>>,
 
     bytecode_file_id: Option<FileId>,
@@ -67,10 +60,13 @@ pub struct ContractCreateTransactionData {
 
     initial_balance: Hbar,
 
-    #[serde_as(as = "DurationSeconds<i64>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<serde_with::DurationSeconds<i64>>")
+    )]
     auto_renew_period: Duration,
 
-    #[serde_as(as = "Base64")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     constructor_parameters: Vec<u8>,
 
     contract_memo: String,
@@ -272,31 +268,33 @@ impl From<ContractCreateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use std::str::FromStr;
 
-    use assert_matches::assert_matches;
-    use time::Duration;
+        use assert_matches::assert_matches;
+        use time::Duration;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        ContractCreateTransaction,
-        FileId,
-        Hbar,
-        Key,
-        PublicKey,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            ContractCreateTransaction,
+            FileId,
+            Hbar,
+            Key,
+            PublicKey,
+        };
 
-    // language=JSON
-    const CONTRACT_CREATE_EMPTY: &str = r#"{
+        // language=JSON
+        const CONTRACT_CREATE_EMPTY: &str = r#"{
   "$type": "contractCreate"
 }"#;
 
-    // language=JSON
-    const CONTRACT_CREATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const CONTRACT_CREATE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractCreate",
   "bytecode": "SGVsbG8sIHdvcmxkIQ==",
   "bytecodeFileId": "0.0.1001",
@@ -315,73 +313,75 @@ mod tests {
   "declineStakingReward": false
 }"#;
 
-    const ADMIN_KEY: &str =
+        const ADMIN_KEY: &str =
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = ContractCreateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = ContractCreateTransaction::new();
 
-        transaction
-            .bytecode("Hello, world!")
-            .bytecode_file_id(FileId::from(1001))
-            .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-            .gas(1000)
-            .initial_balance(Hbar::from_tinybars(1_000_000))
-            .auto_renew_period(Duration::days(90))
-            .constructor_parameters([5, 10, 15])
-            .contract_memo("A contract memo")
-            .max_automatic_token_associations(512)
-            .auto_renew_account_id(AccountId::from(1002))
-            .staked_account_id(AccountId::from(1003))
-            .staked_node_id(7)
-            .decline_staking_reward(false);
+            transaction
+                .bytecode("Hello, world!")
+                .bytecode_file_id(FileId::from(1001))
+                .admin_key(PublicKey::from_str(ADMIN_KEY)?)
+                .gas(1000)
+                .initial_balance(Hbar::from_tinybars(1_000_000))
+                .auto_renew_period(Duration::days(90))
+                .constructor_parameters([5, 10, 15])
+                .contract_memo("A contract memo")
+                .max_automatic_token_associations(512)
+                .auto_renew_account_id(AccountId::from(1002))
+                .staked_account_id(AccountId::from(1003))
+                .staked_node_id(7)
+                .decline_staking_reward(false);
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, CONTRACT_CREATE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, CONTRACT_CREATE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_CREATE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(CONTRACT_CREATE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
 
-        assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
-        assert_eq!(data.gas, 1000);
-        assert_eq!(data.initial_balance.to_tinybars(), 1_000_000);
-        assert_eq!(data.auto_renew_period, Duration::days(90));
-        assert_eq!(data.constructor_parameters, [5, 10, 15]);
-        assert_eq!(data.contract_memo, "A contract memo");
-        assert_eq!(data.max_automatic_token_associations, 512);
-        assert_eq!(data.staked_node_id.unwrap(), 7);
-        assert_eq!(data.decline_staking_reward, false);
+            assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
+            assert_eq!(data.gas, 1000);
+            assert_eq!(data.initial_balance.to_tinybars(), 1_000_000);
+            assert_eq!(data.auto_renew_period, Duration::days(90));
+            assert_eq!(data.constructor_parameters, [5, 10, 15]);
+            assert_eq!(data.contract_memo, "A contract memo");
+            assert_eq!(data.max_automatic_token_associations, 512);
+            assert_eq!(data.staked_node_id.unwrap(), 7);
+            assert_eq!(data.decline_staking_reward, false);
 
-        let bytes: Vec<u8> = "Hello, world!".into();
-        assert_eq!(data.bytecode.unwrap(), bytes);
+            let bytes: Vec<u8> = "Hello, world!".into();
+            assert_eq!(data.bytecode.unwrap(), bytes);
 
-        let admin_key =
-            assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
-        assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
+            let admin_key =
+                assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
+            assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
-        assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
-        assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
+            assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
+            assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize_empty() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_CREATE_EMPTY)?;
+        #[test]
+        fn it_should_deserialize_empty() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(CONTRACT_CREATE_EMPTY)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
 
-        assert_eq!(data.auto_renew_period, Duration::days(90));
-        assert_eq!(data.decline_staking_reward, false);
+            assert_eq!(data.auto_renew_period, Duration::days(90));
+            assert_eq!(data.decline_staking_reward, false);
 
-        Ok(())
+            Ok(())
+        }
     }
 }

@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -46,9 +45,10 @@ use crate::{
 ///
 pub type TopicDeleteTransaction = Transaction<TopicDeleteTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TopicDeleteTransactionData {
     /// The topic ID which is being deleted in this transaction.
     topic_id: Option<TopicId>,
@@ -95,44 +95,47 @@ impl From<TopicDeleteTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        TopicDeleteTransaction,
-        TopicId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            TopicDeleteTransaction,
+            TopicId,
+        };
 
-    // language=JSON
-    const TOPIC_DELETE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const TOPIC_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "topicDelete",
   "topicId": "0.0.1001"
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TopicDeleteTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TopicDeleteTransaction::new();
 
-        transaction.topic_id(TopicId::from(1001));
+            transaction.topic_id(TopicId::from(1001));
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, TOPIC_DELETE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, TOPIC_DELETE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOPIC_DELETE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(TOPIC_DELETE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicDelete(transaction) => transaction);
 
-        assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
+            assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

@@ -30,8 +30,9 @@ use crate::{
 };
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountBalance {
     /// The account that is being referenced.
     pub account_id: AccountId,

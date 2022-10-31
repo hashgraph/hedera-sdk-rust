@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -51,10 +47,10 @@ use crate::{
 /// - If invalid token is specified, transaction will result in `INVALID_TOKEN_ID`
 pub type TokenDeleteTransaction = Transaction<TokenDeleteTransactionData>;
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenDeleteTransactionData {
     /// The token to be deleted.
     token_id: Option<TokenId>,
@@ -101,44 +97,47 @@ impl From<TokenDeleteTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        TokenDeleteTransaction,
-        TokenId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            TokenDeleteTransaction,
+            TokenId,
+        };
 
-    //language=JSON
-    const TOKEN_DELETE_TRANSACTION_JSON: &str = r#"{
+        //language=JSON
+        const TOKEN_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenDelete",
   "tokenId": "0.0.1002"
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TokenDeleteTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TokenDeleteTransaction::new();
 
-        transaction.token_id(TokenId::from(1002));
+            transaction.token_id(TokenId::from(1002));
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, TOKEN_DELETE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, TOKEN_DELETE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOKEN_DELETE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(TOKEN_DELETE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenDelete(transaction) => transaction);
 
-        assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
+            assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

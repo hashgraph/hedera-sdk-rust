@@ -39,8 +39,9 @@ use crate::{
 ///
 pub type TokenInfoQuery = Query<TokenInfoQueryData>;
 
-#[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Clone, Debug)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenInfoQueryData {
     token_id: Option<TokenId>,
 }
@@ -88,39 +89,42 @@ impl QueryExecute for TokenInfoQueryData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::query::AnyQueryData;
-    use crate::{
-        AnyQuery,
-        TokenId,
-        TokenInfoQuery,
-    };
+        use crate::query::AnyQueryData;
+        use crate::{
+            AnyQuery,
+            TokenId,
+            TokenInfoQuery,
+        };
 
-    // language=JSON
-    const TOKEN_INFO: &str = r#"{
+        // language=JSON
+        const TOKEN_INFO: &str = r#"{
   "$type": "tokenInfo",
   "tokenId": "0.0.1001",
   "payment": {}
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut query = TokenInfoQuery::new();
-        query.token_id(TokenId::from(1001));
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut query = TokenInfoQuery::new();
+            query.token_id(TokenId::from(1001));
 
-        let s = serde_json::to_string_pretty(&query)?;
-        assert_eq!(s, TOKEN_INFO);
+            let s = serde_json::to_string_pretty(&query)?;
+            assert_eq!(s, TOKEN_INFO);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let query: AnyQuery = serde_json::from_str(TOKEN_INFO)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let query: AnyQuery = serde_json::from_str(TOKEN_INFO)?;
 
-        let data = assert_matches!(query.data, AnyQueryData::TokenInfo(query) => query);
-        assert_eq!(data.token_id, Some(TokenId { shard: 0, realm: 0, num: 1001 }));
-        Ok(())
+            let data = assert_matches!(query.data, AnyQueryData::TokenInfo(query) => query);
+            assert_eq!(data.token_id, Some(TokenId { shard: 0, realm: 0, num: 1001 }));
+            Ok(())
+        }
     }
 }
