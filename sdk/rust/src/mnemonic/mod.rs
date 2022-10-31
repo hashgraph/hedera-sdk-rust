@@ -263,8 +263,7 @@ impl MnemonicV1 {
                 .map_or(-1, |it| it as i32)
         });
 
-        let data = convert_radix(indecies, 4096, 256, 33);
-        let mut data: Vec<_> = data.into_iter().map(|it| it as u8).collect();
+        let mut data = convert_radix(indecies);
 
         let (crc, data) = data.split_last_mut().unwrap();
 
@@ -399,28 +398,26 @@ fn crc8(data: &[u8]) -> u8 {
 // forgive me, universe, for the crimes I'm about to commit.
 //
 // todo: this is only done with one base pair and it's 4096->256, maybe there's a much nicer way to do this?
-fn convert_radix<I: IntoIterator<Item = i32>>(
-    nums: I,
-    from_radix: i32,
-    to_radix: i32,
-    to_length: usize,
-) -> Vec<i32> {
+fn convert_radix<I: IntoIterator<Item = i32>>(nums: I) -> [u8; 33] {
+    let from_radix = BigInt::from(i64::from(4096));
+
     let mut buf = BigInt::from(0);
-    let from_radix = BigInt::from(i64::from(from_radix));
 
     for num in nums {
         buf *= &from_radix;
         buf += num;
     }
 
-    let mut out = vec![0; to_length];
+    let mut out = [0; 33];
 
-    let to_radix = BigInt::from(i64::from(to_radix));
+    let to_radix = BigInt::from(i64::from(256));
 
     for out in out.iter_mut().rev() {
         let rem;
         (buf, rem) = buf.div_rem(&to_radix);
-        *out = rem.to_i32().unwrap();
+
+        // pay careful note that this (somehow) turns `rem` into `rem_euclid`
+        *out = rem.to_i32().unwrap() as u8;
     }
 
     out
