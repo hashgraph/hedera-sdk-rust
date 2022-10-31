@@ -39,8 +39,9 @@ use crate::{
 /// For each of them, give the amount currently staked.
 pub type AccountStakersQuery = Query<AccountStakersQueryData>;
 
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountStakersQueryData {
     account_id: Option<AccountId>,
 }

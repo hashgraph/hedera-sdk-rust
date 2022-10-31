@@ -37,8 +37,9 @@ use crate::{
 ///
 pub type NetworkVersionInfoQuery = Query<NetworkVersionInfoQueryData>;
 
-#[derive(Default, Clone, serde::Serialize, serde::Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Clone, Debug)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct NetworkVersionInfoQueryData {}
 
 impl From<NetworkVersionInfoQueryData> for AnyQueryData {

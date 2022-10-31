@@ -21,7 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde_with::skip_serializing_none;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -41,9 +40,10 @@ use crate::{
 ///
 pub type ContractDeleteTransaction = Transaction<ContractDeleteTransactionData>;
 
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractDeleteTransactionData {
     pub delete_contract_id: Option<ContractId>,
 
@@ -125,52 +125,56 @@ impl From<ContractDeleteTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::contract::ContractDeleteTransaction;
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        ContractId,
-    };
+        use crate::contract::ContractDeleteTransaction;
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            ContractId,
+        };
 
-    // language=JSON
-    const CONTRACT_DELETE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const CONTRACT_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractDelete",
   "deleteContractId": "0.0.1001",
   "transferAccountId": "0.0.1002",
   "transferContractId": "0.0.1003"
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = ContractDeleteTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = ContractDeleteTransaction::new();
 
-        transaction
-            .delete_contract_id(ContractId::from(1001))
-            .transfer_account_id(AccountId::from(1002))
-            .transfer_contract_id(ContractId::from(1003));
+            transaction
+                .delete_contract_id(ContractId::from(1001))
+                .transfer_account_id(AccountId::from(1002))
+                .transfer_contract_id(ContractId::from(1003));
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, CONTRACT_DELETE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, CONTRACT_DELETE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_DELETE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(CONTRACT_DELETE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractDelete(transaction) => transaction);
 
-        assert_eq!(data.delete_contract_id.unwrap(), ContractId::from(1001));
-        assert_eq!(data.transfer_contract_id.unwrap(), ContractId::from(1003));
-        assert_eq!(data.transfer_account_id, Some(AccountId::from(1002)));
+            assert_eq!(data.delete_contract_id.unwrap(), ContractId::from(1001));
+            assert_eq!(data.transfer_contract_id.unwrap(), ContractId::from(1003));
+            assert_eq!(data.transfer_account_id, Some(AccountId::from(1002)));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

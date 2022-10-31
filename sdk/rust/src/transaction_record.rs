@@ -19,12 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-    TimestampNanoSeconds,
-};
 use time::OffsetDateTime;
 
 use crate::{
@@ -40,10 +34,10 @@ use crate::{
 
 /// The complete record for a transaction on Hedera that has reached consensus.
 /// Response from [`TransactionRecordQuery`][crate::TransactionRecordQuery].
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionRecord {
     /// The status (reach consensus, or failed, or is unknown) and the ID of
     /// any new account/file/instance created.
@@ -51,11 +45,14 @@ pub struct TransactionRecord {
 
     /// The hash of the Transaction that executed (not the hash of any Transaction that failed for
     /// having a duplicate TransactionID).
-    #[serde_as(as = "Base64")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub transaction_hash: Vec<u8>,
 
     /// The consensus timestamp.
-    #[serde_as(as = "TimestampNanoSeconds")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
+    )]
     pub consensus_timestamp: OffsetDateTime,
 
     /// The ID of the transaction this record represents.
@@ -78,7 +75,10 @@ pub struct TransactionRecord {
 
     /// In the record of an internal transaction, the consensus timestamp of the user
     /// transaction that spawned it.
-    #[serde_as(as = "Option<TimestampNanoSeconds>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub parent_consensus_timestamp: Option<OffsetDateTime>,
 
     /// In the record of an internal CryptoCreate transaction triggered by a user

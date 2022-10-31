@@ -21,11 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -45,16 +40,19 @@ use crate::{
 ///
 pub type FileAppendTransaction = Transaction<FileAppendTransactionData>;
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileAppendTransactionData {
     /// The file to which the bytes will be appended.
     file_id: Option<FileId>,
 
     /// The bytes that will be appended to the end of the specified file.
-    #[serde_as(as = "Option<Base64>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
+    )]
     contents: Option<Vec<u8>>,
 }
 
@@ -106,50 +104,53 @@ impl From<FileAppendTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        FileAppendTransaction,
-        FileId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            FileAppendTransaction,
+            FileId,
+        };
 
-    // language=JSON
-    const FILE_APPEND_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const FILE_APPEND_TRANSACTION_JSON: &str = r#"{
   "$type": "fileAppend",
   "fileId": "0.0.1001",
   "contents": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = FileAppendTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = FileAppendTransaction::new();
 
-        transaction
-            .file_id(FileId::from(1001))
-            .contents("Appending these bytes to file 1001".into());
+            transaction
+                .file_id(FileId::from(1001))
+                .contents("Appending these bytes to file 1001".into());
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, FILE_APPEND_TRANSACTION_JSON);
+            assert_eq!(transaction_json, FILE_APPEND_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(FILE_APPEND_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(FILE_APPEND_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::FileAppend(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::FileAppend(transaction) => transaction);
 
-        assert_eq!(data.file_id.unwrap(), FileId::from(1001));
+            assert_eq!(data.file_id.unwrap(), FileId::from(1001));
 
-        let bytes: Vec<u8> = "Appending these bytes to file 1001".into();
-        assert_eq!(data.contents.unwrap(), bytes);
+            let bytes: Vec<u8> = "Appending these bytes to file 1001".into();
+            assert_eq!(data.contents.unwrap(), bytes);
 
-        Ok(())
+            Ok(())
+        }
     }
 }

@@ -21,11 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-    DurationSeconds,
-};
 use time::Duration;
 use tonic::transport::Channel;
 
@@ -48,10 +43,11 @@ pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
 // TODO: shard_id: Option<ShardId>
 // TODO: realm_id: Option<RealmId>
 // TODO: new_realm_admin_key: Option<Key>,
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(default, rename_all = "camelCase")]
+
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct AccountCreateTransactionData {
     /// The key that must sign each transfer out of the account.
     ///
@@ -66,7 +62,10 @@ pub struct AccountCreateTransactionData {
     pub receiver_signature_required: bool,
 
     /// The account is charged to extend its expiration date every this many seconds.
-    #[serde_as(as = "Option<DurationSeconds<i64>>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.
@@ -228,30 +227,32 @@ impl From<AccountCreateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use std::str::FromStr;
 
-    use assert_matches::assert_matches;
-    use time::Duration;
+        use assert_matches::assert_matches;
+        use time::Duration;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountCreateTransaction,
-        AccountId,
-        Hbar,
-        Key,
-        PublicKey,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountCreateTransaction,
+            AccountId,
+            Hbar,
+            Key,
+            PublicKey,
+        };
 
-    // language=JSON
-    const ACCOUNT_CREATE_EMPTY: &str = r#"{
+        // language=JSON
+        const ACCOUNT_CREATE_EMPTY: &str = r#"{
   "$type": "accountCreate"
 }"#;
 
-    // language=JSON
-    const ACCOUNT_CREATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const ACCOUNT_CREATE_TRANSACTION_JSON: &str = r#"{
   "$type": "accountCreate",
   "key": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
@@ -266,62 +267,64 @@ mod tests {
   "declineStakingReward": false
 }"#;
 
-    const KEY: &str =
+        const KEY: &str =
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
-    #[test]
-    #[ignore = "auto renew period is `None`"]
-    fn it_should_deserialize_empty() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_EMPTY)?;
+        #[test]
+        #[ignore = "auto renew period is `None`"]
+        fn it_should_deserialize_empty() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_EMPTY)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
 
-        assert_eq!(data.auto_renew_period, Some(Duration::days(90)));
+            assert_eq!(data.auto_renew_period, Some(Duration::days(90)));
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = AccountCreateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = AccountCreateTransaction::new();
 
-        transaction
-            .key(PublicKey::from_str(KEY)?)
-            .initial_balance(Hbar::from_tinybars(1000))
-            .receiver_signature_required(true)
-            .auto_renew_period(Duration::days(90))
-            .account_memo("An account memo")
-            .max_automatic_token_associations(256)
-            .staked_account_id(AccountId::from(1001))
-            .staked_node_id(7)
-            .decline_staking_reward(false);
+            transaction
+                .key(PublicKey::from_str(KEY)?)
+                .initial_balance(Hbar::from_tinybars(1000))
+                .receiver_signature_required(true)
+                .auto_renew_period(Duration::days(90))
+                .account_memo("An account memo")
+                .max_automatic_token_associations(256)
+                .staked_account_id(AccountId::from(1001))
+                .staked_node_id(7)
+                .decline_staking_reward(false);
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, ACCOUNT_CREATE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, ACCOUNT_CREATE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(ACCOUNT_CREATE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
 
-        assert_eq!(data.initial_balance.to_tinybars(), 1000);
-        assert_eq!(data.receiver_signature_required, true);
-        assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-        assert_eq!(data.account_memo, "An account memo");
-        assert_eq!(data.max_automatic_token_associations, 256);
-        assert_eq!(data.staked_node_id.unwrap(), 7);
-        assert_eq!(data.decline_staking_reward, false);
+            assert_eq!(data.initial_balance.to_tinybars(), 1000);
+            assert_eq!(data.receiver_signature_required, true);
+            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
+            assert_eq!(data.account_memo, "An account memo");
+            assert_eq!(data.max_automatic_token_associations, 256);
+            assert_eq!(data.staked_node_id.unwrap(), 7);
+            assert_eq!(data.decline_staking_reward, false);
 
-        let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+            let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
 
-        assert_eq!(key, PublicKey::from_str(KEY)?);
-        assert_eq!(data.staked_account_id, Some(AccountId::from(1001)));
+            assert_eq!(key, PublicKey::from_str(KEY)?);
+            assert_eq!(data.staked_account_id, Some(AccountId::from(1001)));
 
-        Ok(())
+            Ok(())
+        }
     }
 }

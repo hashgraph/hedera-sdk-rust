@@ -21,14 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
 use tonic::transport::Channel;
 
 use crate::transaction::{
@@ -56,10 +48,10 @@ use crate::{
 ///
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Serialize, Deserialize, Default, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Default, Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractExecuteTransactionData {
     /// The contract instance to call.
     contract_id: Option<ContractId>,
@@ -139,20 +131,22 @@ impl From<ContractExecuteTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        ContractExecuteTransaction,
-        ContractId,
-        Hbar,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            ContractExecuteTransaction,
+            ContractId,
+            Hbar,
+        };
 
-    // language=JSON
-    const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractExecute",
   "contractId": "0.0.1001",
   "gas": 1000,
@@ -174,36 +168,38 @@ mod tests {
   ]
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = ContractExecuteTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = ContractExecuteTransaction::new();
 
-        transaction
-            .contract_id(ContractId::from(1001))
-            .gas(1000)
-            .payable_amount(Hbar::from_tinybars(10))
-            .function_parameters("Hello, world!".into());
+            transaction
+                .contract_id(ContractId::from(1001))
+                .gas(1000)
+                .payable_amount(Hbar::from_tinybars(10))
+                .function_parameters("Hello, world!".into());
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, CONTRACT_EXECUTE_TRANSACTION_JSON);
+            assert_eq!(transaction_json, CONTRACT_EXECUTE_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(CONTRACT_EXECUTE_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(CONTRACT_EXECUTE_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractExecute(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractExecute(transaction) => transaction);
 
-        assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
-        assert_eq!(data.gas, 1000);
-        assert_eq!(data.payable_amount.to_tinybars(), 10);
+            assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
+            assert_eq!(data.gas, 1000);
+            assert_eq!(data.payable_amount.to_tinybars(), 10);
 
-        let bytes: Vec<u8> = "Hello, world!".into();
-        assert_eq!(data.function_parameters, bytes);
+            let bytes: Vec<u8> = "Hello, world!".into();
+            assert_eq!(data.function_parameters, bytes);
 
-        Ok(())
+            Ok(())
+        }
     }
 }

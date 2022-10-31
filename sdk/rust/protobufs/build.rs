@@ -109,7 +109,7 @@ successful transaction.
     create_dir_all(&mirror_out_dir)?;
 
     tonic_build::configure()
-        .build_server(cfg!(feature = "server"))
+        .build_server(false)
         .extern_path(".proto.Timestamp", "crate::services::Timestamp")
         .extern_path(".proto.TopicID", "crate::services::TopicId")
         .extern_path(".proto.FileID", "crate::services::FileId")

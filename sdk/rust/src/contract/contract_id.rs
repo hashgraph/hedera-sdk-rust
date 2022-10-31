@@ -27,10 +27,6 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use serde_with::{
-    DeserializeFromStr,
-    SerializeDisplay,
-};
 
 use crate::{
     EntityId,
@@ -40,7 +36,8 @@ use crate::{
 
 // TODO: checksum
 /// A unique identifier for a smart contract on Hedera.
-#[derive(SerializeDisplay, DeserializeFromStr, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct ContractId {
     /// A non-negative number identifying the shard containing this contract instance.
     pub shard: u64,

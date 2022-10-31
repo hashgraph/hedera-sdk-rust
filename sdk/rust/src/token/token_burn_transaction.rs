@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -65,10 +61,10 @@ use crate::{
 /// response code will be returned.
 pub type TokenBurnTransaction = Transaction<TokenBurnTransactionData>;
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenBurnTransactionData {
     /// The token for which to burn tokens.
     token_id: Option<TokenId>,
@@ -137,19 +133,21 @@ impl From<TokenBurnTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        TokenBurnTransaction,
-        TokenId,
-    };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            TokenBurnTransaction,
+            TokenId,
+        };
 
-    // language=JSON
-    const TOKEN_BURN_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const TOKEN_BURN_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenBurn",
   "tokenId": "0.0.1002",
   "amount": 100,
@@ -160,29 +158,30 @@ mod tests {
   ]
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TokenBurnTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TokenBurnTransaction::new();
 
-        transaction.token_id(TokenId::from(1002)).amount(100u64).serials([1, 2, 3]);
+            transaction.token_id(TokenId::from(1002)).amount(100u64).serials([1, 2, 3]);
 
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
-        assert_eq!(transaction_json, TOKEN_BURN_TRANSACTION_JSON);
+            assert_eq!(transaction_json, TOKEN_BURN_TRANSACTION_JSON);
 
-        Ok(())
-    }
+            Ok(())
+        }
 
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TOKEN_BURN_TRANSACTION_JSON)?;
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction = serde_json::from_str(TOKEN_BURN_TRANSACTION_JSON)?;
 
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenBurn(transaction) => transaction);
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenBurn(transaction) => transaction);
 
-        assert_eq!(data.token_id, Some(TokenId::from(1002)));
-        assert_eq!(data.amount, 100);
-        assert_eq!(data.serials, vec![1, 2, 3]);
+            assert_eq!(data.token_id, Some(TokenId::from(1002)));
+            assert_eq!(data.amount, 100);
+            assert_eq!(data.serials, vec![1, 2, 3]);
 
-        Ok(())
+            Ok(())
+        }
     }
 }

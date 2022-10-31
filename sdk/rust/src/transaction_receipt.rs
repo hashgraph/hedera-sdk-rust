@@ -21,11 +21,6 @@
 use std::ops::Not;
 
 use hedera_proto::services;
-use serde_with::base64::Base64;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
 
 use crate::protobuf::ToProtobuf;
 use crate::{
@@ -43,10 +38,11 @@ use crate::{
 
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 /// Response from [`TransactionReceiptQuery`][crate::TransactionReceiptQuery].
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
+
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionReceipt {
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
     /// the associated transaction did not have a valid payer signature.
@@ -73,7 +69,10 @@ pub struct TransactionReceipt {
     // TODO: use a hash type (for display/debug/serialize purposes)
     /// In the receipt for a `TopicMessageSubmitTransaction`, the new running hash of the
     /// topic that received the message.
-    #[serde_as(as = "Option<Base64>")]
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
+    )]
     pub topic_running_hash: Option<Vec<u8>>,
 
     /// In the receipt of a `TopicMessageSubmitTransaction`, the version of the SHA-384

@@ -22,8 +22,6 @@ use std::fmt::Debug;
 
 use async_trait::async_trait;
 use hedera_proto::services;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
 use tonic::transport::Channel;
 
 use crate::execute::Execute;
@@ -44,9 +42,7 @@ use crate::{
 
 /// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]
-pub trait QueryExecute:
-    Sync + Send + Into<AnyQueryData> + Clone + Debug + Serialize + DeserializeOwned + ToQueryProtobuf
-{
+pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQueryProtobuf {
     type Response: FromProtobuf<services::response::Response>;
 
     /// Returns `true` if this query requires a payment to be submitted.

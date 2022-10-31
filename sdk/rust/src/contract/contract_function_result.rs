@@ -19,12 +19,6 @@
  */
 
 use hedera_proto::services;
-use serde::{
-    Deserialize,
-    Serialize,
-};
-use serde_with::base64::Base64;
-use serde_with::serde_as;
 
 use crate::{
     AccountId,
@@ -34,9 +28,10 @@ use crate::{
 
 // TODO: log info
 /// The result returned by a call to a smart contract function.
-#[serde_as]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractFunctionResult {
     /// The smart contract instance whose function was called.
     pub contract_id: ContractId,
@@ -45,14 +40,14 @@ pub struct ContractFunctionResult {
     pub evm_address: Option<ContractId>,
 
     /// The raw bytes returned by the function.
-    #[serde_as(as = "Base64")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub bytes: Vec<u8>,
 
     /// Message if there was an error during smart contract execution.
     pub error_message: Option<String>,
 
     /// Bloom filter for record.
-    #[serde_as(as = "Base64")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub bloom: Vec<u8>,
 
     /// Units of gas used to execute contract.
@@ -65,7 +60,7 @@ pub struct ContractFunctionResult {
     pub hbar_amount: u64,
 
     /// The parameters passed into the contract call.
-    #[serde_as(as = "Base64")]
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub contract_function_parameters_bytes: Vec<u8>,
 
     /// The account that is the "sender." If not present it is the accountId from the transactionId.

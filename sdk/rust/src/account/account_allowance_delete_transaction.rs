@@ -43,14 +43,16 @@ use crate::{
 /// [`AccountAllowanceApproveTransaction`](crate::AccountAllowanceApproveTransaction).
 pub type AccountAllowanceDeleteTransaction = Transaction<AccountAllowanceDeleteTransactionData>;
 
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountAllowanceDeleteTransactionData {
     pub nft_allowances: Vec<NftRemoveAllowance>,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct NftRemoveAllowance {
     /// token that the allowance pertains to
     pub token_id: TokenId,

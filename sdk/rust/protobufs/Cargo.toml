@@ -6,8 +6,6 @@ repository = "https://github.com/hashgraph/hedera-sdk-rust"
 version = "0.4.0"
 
 [features]
-# enable gRPC server generation
-server = []
 
 [dependencies]
 fraction = { version = "0.11.0", optional = true }
@@ -15,7 +13,10 @@ prost = "0.11.0"
 prost-types = "0.11.0"
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 time_0_3 = { version = "0.3.9", optional = true, package = "time" }
-tonic = "0.8.0"
+
+# todo: get the tonic devs to actually make `channel` usable without `transport` (it *should*, it's *documented* as such, but it just doesn't work).
+[dependencies.tonic]
+version = "0.8.0"
 
 [build-dependencies]
 anyhow = "1.0.55"

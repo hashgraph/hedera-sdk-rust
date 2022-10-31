@@ -18,15 +18,11 @@
  * ‍
  */
 
-use serde::{
-    Deserialize,
-    Serialize,
-};
-
 // todo(sr): Not happy with this doc.
 /// What type of freeze should be executed?
-#[derive(Serialize, Default, Deserialize, Debug, Hash, PartialEq, Eq, Clone, Copy)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[repr(C)]
 pub enum FreezeType {
     /// An (invalid) default value for this enum, to ensure the client explicitly sets

@@ -21,10 +21,6 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use serde_with::{
-    serde_as,
-    skip_serializing_none,
-};
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
@@ -51,10 +47,10 @@ use crate::{
 /// `CustomScheduleAlreadyHasNoFees` if the fee schedule was already empty.
 pub type TokenFeeScheduleUpdateTransaction = Transaction<TokenFeeScheduleUpdateTransactionData>;
 
-#[serde_as]
-#[skip_serializing_none]
-#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
+#[derive(Debug, Clone, Default)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenFeeScheduleUpdateTransactionData {
     /// The token whose fee schedule is to be updated.
     token_id: Option<TokenId>,
@@ -111,25 +107,27 @@ impl From<TokenFeeScheduleUpdateTransactionData> for AnyTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use assert_matches::assert_matches;
+    #[cfg(feature = "ffi")]
+    mod ffi {
+        use assert_matches::assert_matches;
 
-    use crate::token::custom_fees::{
-        CustomFee,
-        Fee,
-        FixedFee,
-    };
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        TokenFeeScheduleUpdateTransaction,
-        TokenId,
-    };
+        use crate::token::custom_fees::{
+            CustomFee,
+            Fee,
+            FixedFee,
+        };
+        use crate::transaction::{
+            AnyTransaction,
+            AnyTransactionData,
+        };
+        use crate::{
+            AccountId,
+            TokenFeeScheduleUpdateTransaction,
+            TokenId,
+        };
 
-    // language=JSON
-    const TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON: &str = r#"{
+        // language=JSON
+        const TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenFeeScheduleUpdate",
   "tokenId": "0.0.1001",
   "customFees": [
@@ -145,38 +143,42 @@ mod tests {
   ]
 }"#;
 
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TokenFeeScheduleUpdateTransaction::new();
+        #[test]
+        fn it_should_serialize() -> anyhow::Result<()> {
+            let mut transaction = TokenFeeScheduleUpdateTransaction::new();
 
-        transaction.token_id(TokenId::from(1001)).custom_fees([CustomFee {
-            fee: Fee::FixedFee(FixedFee { amount: 1, denominating_token_id: TokenId::from(7) }),
-            fee_collector_account_id: AccountId::from(8),
-        }]);
-
-        let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-        assert_eq!(transaction_json, TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON);
-
-        Ok(())
-    }
-
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction =
-            serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
-
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
-
-        assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
-        assert_eq!(
-            data.custom_fees,
-            [CustomFee {
+            transaction.token_id(TokenId::from(1001)).custom_fees([CustomFee {
                 fee: Fee::FixedFee(FixedFee { amount: 1, denominating_token_id: TokenId::from(7) }),
-                fee_collector_account_id: AccountId::from(8)
-            }]
-        );
+                fee_collector_account_id: AccountId::from(8),
+            }]);
 
-        Ok(())
+            let transaction_json = serde_json::to_string_pretty(&transaction)?;
+
+            assert_eq!(transaction_json, TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON);
+
+            Ok(())
+        }
+
+        #[test]
+        fn it_should_deserialize() -> anyhow::Result<()> {
+            let transaction: AnyTransaction =
+                serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
+
+            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
+
+            assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
+            assert_eq!(
+                data.custom_fees,
+                [CustomFee {
+                    fee: Fee::FixedFee(FixedFee {
+                        amount: 1,
+                        denominating_token_id: TokenId::from(7)
+                    }),
+                    fee_collector_account_id: AccountId::from(8)
+                }]
+            );
+
+            Ok(())
+        }
     }
 }
