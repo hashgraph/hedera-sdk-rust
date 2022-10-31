@@ -18,10 +18,50 @@
  * ‍
  */
 
+import CHedera
+import Foundation
+
 public struct NetworkVersionInfo: Codable {
     /// Version of the protobuf schema in use by the network.
     public let protobufVersion: SemanticVersion
 
     /// Version of the Hedera services in use by the network.
     public let servicesVersion: SemanticVersion
+
+    private init(unsafeFromCHedera hedera: HederaNetworkVersionInfo) {
+        protobufVersion = SemanticVersion(unsafeFromCHedera: hedera.protobuf_version)
+        servicesVersion = SemanticVersion(unsafeFromCHedera: hedera.services_version)
+    }
+
+    private func unsafeWithCHedera<Result>(_ body: (HederaNetworkVersionInfo) throws -> Result) rethrows -> Result {
+        try protobufVersion.unsafeWithCHedera { (protobufVersion) in
+            try servicesVersion.unsafeWithCHedera { (servicesVersion) in
+                let info = HederaNetworkVersionInfo(protobuf_version: protobufVersion, services_version: servicesVersion)
+                return try body(info)
+            }
+        }
+    }
+
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var info = HederaNetworkVersionInfo()
+
+            let err = hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info);
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return Self(unsafeFromCHedera: info)
+        }
+    }
+
+    public func toBytes() -> Data {
+        unsafeWithCHedera { info in
+            var buf: UnsafeMutablePointer<UInt8>?
+            let size = hedera_network_version_info_to_bytes(info, &buf)
+
+            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        }
+    }
 }

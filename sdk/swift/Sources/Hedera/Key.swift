@@ -18,6 +18,9 @@
  * ‍
  */
 
+import CHedera
+import Foundation
+
 // TODO: KeyList
 // TODO: ThresholdKey
 public enum Key {
@@ -60,5 +63,24 @@ extension Key: Codable {
         } else {
             fatalError("(BUG) unexpected variant for Key")
         }
+    }
+
+        private func toBytesInner() throws -> Data {
+        let jsonBytes = try JSONEncoder().encode(self)
+        let json = String(data: jsonBytes, encoding: .utf8)!
+        var buf: UnsafeMutablePointer<UInt8>?
+        var buf_size: Int = 0
+        let err = hedera_key_to_bytes(json, &buf, &buf_size)
+
+        if err != HEDERA_ERROR_OK {
+            throw HError(err)!
+        }
+
+        return Data(bytesNoCopy: buf!, count: buf_size, deallocator: Data.unsafeCHederaBytesFree)
+    }
+
+    public func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        try! toBytesInner()
     }
 }

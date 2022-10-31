@@ -27,11 +27,11 @@ private typealias UnsafeFromBytesFunc = @convention(c) (UnsafePointer<UInt8>?, I
 public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     internal let ptr: OpaquePointer
 
+    // sadly, we can't avoid a leaky abstraction here.
     internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
         Self.init(ptr)
     }
 
-    // sadly, we can't avoid a leaky abstraction here.
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }
@@ -48,7 +48,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
 
     /// Gets the ``PublicKey`` which corresponds to this private key.
     public func getPublicKey() -> PublicKey {
-        PublicKey(hedera_private_key_get_public_key(ptr))
+        PublicKey.unsafeFromPtr(hedera_private_key_get_public_key(ptr))
     }
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {

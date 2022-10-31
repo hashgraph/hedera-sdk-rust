@@ -42,14 +42,18 @@ pub trait ToProtobuf: Send + Sync {
 /// Convert from a `hedera_protobufs` type.
 pub trait FromProtobuf<Protobuf> {
     /// Attempt to convert from `Protobuf` to `Self`.
-    // todo:
+    ///
+    /// This method is *not* `dyn` safe, and explicitly has a `Self: Sized` bound.
+    // todo: errors
     #[allow(clippy::missing_errors_doc)]
     fn from_protobuf(pb: Protobuf) -> crate::Result<Self>
     where
         Self: Sized;
 
     // fixme(sr): I'm not happy with this doc comment.
-    /// Create a new `Self` from the given `bytes`.
+    /// Create a new `Self` from protobuf-encoded `bytes`.
+    ///
+    /// This method is *not* `dyn` safe, and explicitly has a `Self: Sized` bound.
     ///
     /// # Errors
     /// - [`Error::FromProtobuf`] if `Protobuf` fails to decode from the bytes.

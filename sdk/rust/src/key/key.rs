@@ -45,6 +45,14 @@ pub enum Key {
     // TODO: ThresholdKey
 }
 
+impl Key {
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl ToProtobuf for Key {
     type Protobuf = services::Key;
 

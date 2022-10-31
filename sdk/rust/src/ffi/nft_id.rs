@@ -30,9 +30,7 @@ use libc::size_t;
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
 use crate::{
-    FromProtobuf,
     NftId,
-    ToProtobuf,
     TokenId,
 };
 

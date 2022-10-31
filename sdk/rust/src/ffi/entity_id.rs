@@ -33,9 +33,7 @@ use crate::{
     ContractId,
     EntityId,
     FileId,
-    FromProtobuf,
     ScheduleId,
-    ToProtobuf,
     TokenId,
     TopicId,
 };
@@ -66,6 +64,7 @@ pub extern "C" fn hedera_entity_id_from_string(
 
 // note(sr): This abstraction is worthwhile because it reduces the amount of duplicated non-trival unsafe code.
 // generics (on `FromProtobuf`/`ToProtobuf`) make it very hard to do this without this hack.
+// Alternatively, lack of generics, on the inherent impls make it hard with out the hack.
 trait FromToBytes {
     fn ffi_from_bytes(bytes: &[u8]) -> crate::Result<Self>
     where
@@ -83,7 +82,7 @@ macro_rules! impl_ffi_convert_traits_for {
         $(
             impl FromToBytes for $type {
                 fn ffi_from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-                    FromProtobuf::from_bytes(bytes)
+                    Self::from_bytes(bytes)
                 }
 
                 fn ffi_to_bytes(&self) -> Box<[u8]> {
@@ -111,7 +110,7 @@ impl_ffi_convert_traits_for!(FileId, TokenId, ScheduleId, TopicId);
 // todo: use a different mechanism & support evm_address
 impl FromToBytes for ContractId {
     fn ffi_from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        FromProtobuf::from_bytes(bytes)
+        ContractId::from_bytes(bytes)
     }
 
     fn ffi_to_bytes(&self) -> Box<[u8]> {

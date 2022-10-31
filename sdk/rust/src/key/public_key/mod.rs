@@ -47,6 +47,7 @@ use serde_with::{
 };
 
 use crate::key::private_key::ED25519_OID;
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     Error,
@@ -389,6 +390,19 @@ impl FromProtobuf<services::Key> for PublicKey {
             Some(EcdsaSecp256k1(bytes)) => PublicKey::from_bytes_ecdsa(&bytes),
             None => Err(Error::from_protobuf("unexpected empty key in single key")),
         }
+    }
+}
+
+impl ToProtobuf for PublicKey {
+    type Protobuf = services::Key;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let key = match &self.0 {
+            PublicKeyData::Ed25519(_) => services::key::Key::Ed25519(self.to_bytes()),
+            PublicKeyData::Ecdsa(_) => services::key::Key::EcdsaSecp256k1(self.to_bytes()),
+        };
+
+        Self::Protobuf { key: Some(key) }
     }
 }
 
