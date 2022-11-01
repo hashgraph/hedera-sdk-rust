@@ -3,6 +3,67 @@ version: "3"
 silent: true
 
 tasks:
+    # todo: consider only using the host platform for this task- this is a local task.
+    swift-build:
+        run: once
+        sources:
+            - src/**/*.rs
+            - Cargo.toml
+            - Cargo.lock
+        generates:
+            - ../swift/CHedera.xcframework/macos-universal
+            - ../swift/CHedera.xcframework/ios-arm64
+            - ../swift/CHedera.xcframework/ios-universal-simulator
+
+        cmds:
+            #
+            # Build the Hedera Rust SDK
+            #
+
+            # Ensure we have rust-src
+            - rustup component add rust-src 2> /dev/null
+
+            # Build for target: x86_64-apple-darwin
+            - rustup target add x86_64-apple-darwin 2> /dev/null
+            - cargo build --features ffi -p hedera --target x86_64-apple-darwin
+
+            # Build for target: x86_64-apple-ios
+            - rustup target add x86_64-apple-ios 2> /dev/null
+            - cargo build --features ffi -p hedera --target x86_64-apple-ios
+
+            # Build for target: aarch64-apple-darwin
+            - rustup target add aarch64-apple-darwin 2> /dev/null
+            - cargo build --features ffi -p hedera --target aarch64-apple-darwin
+
+            # Build for target: aarch64-apple-ios
+            - rustup target add aarch64-apple-ios 2> /dev/null
+            - cargo build --features ffi -p hedera --target aarch64-apple-ios
+
+            # Build for target: aarch64-apple-ios-sim
+            - rustup target add aarch64-apple-ios-sim 2> /dev/null
+            - cargo build --features ffi -p hedera --target aarch64-apple-ios-sim
+
+            #
+            # Package for Swift
+            #
+
+            - rm -rf ../swift/CHedera.xcframework/{ios,macos}-*/
+
+            - mkdir -p ../swift/CHedera.xcframework/macos-universal/Headers/
+            - mkdir -p ../swift/CHedera.xcframework/ios-{universal-simulator,arm64}/Headers/
+
+            - lipo target/{x86_64,aarch64}-apple-darwin/debug/libhedera.a -output ../swift/CHedera.xcframework/macos-universal/libhedera.a -create
+            - lipo target/{x86_64-apple-ios,aarch64-apple-ios-sim}/debug/libhedera.a  -output ../swift/CHedera.xcframework/ios-universal-simulator/libhedera.a -create
+            - cp target/aarch64-apple-ios/debug/libhedera.a ../swift/CHedera.xcframework/ios-arm64/
+
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-universal/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/ios-universal-simulator/Headers/
+            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/ios-arm64/Headers/
+
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-universal/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/ios-universal-simulator/Headers/
+            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/ios-arm64/Headers/
+
     build:
         run: once
         generates:
@@ -12,16 +73,6 @@ tasks:
         cmds:
             # Build the Hedera Rust SDK (in debug mode)
             - cmd: cargo build --message-format=short --features=ffi
-
-            # Package for Swift
-            - rm -rf ../swift/CHedera.xcframework/macos-*/
-            - mkdir -p ../swift/CHedera.xcframework/macos-{x86_64,arm64}/Headers/
-            - cp target/debug/libhedera.a ../swift/CHedera.xcframework/macos-x86_64/
-            - cp target/debug/libhedera.a ../swift/CHedera.xcframework/macos-arm64/
-            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-x86_64/Headers/
-            - cp ../c/include/hedera.h ../swift/CHedera.xcframework/macos-arm64/Headers/
-            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-x86_64/Headers/
-            - cp ../swift/CHedera.xcframework/module.modulemap ../swift/CHedera.xcframework/macos-arm64/Headers/
 
     format:
         cmds:
@@ -44,6 +95,8 @@ tasks:
         run: once
         sources:
             - src/**/*.rs
+            - Cargo.toml
+            - Cargo.lock
         generates:
             - ../c/lib/macos-x86_64/libhedera.a
             - ../c/lib/ios-x86_64/libhedera.a
@@ -113,8 +166,8 @@ tasks:
             - cp target/x86_64-apple-ios/release/libhedera.a ../c/lib/ios-x86_64/
             - cp target/aarch64-apple-darwin/release/libhedera.a ../c/lib/macos-arm64/
             - cp target/aarch64-apple-ios/release/libhedera.a ../c/lib/ios-arm64/
-            - cp target/x86_64-unknown-linux-gnu/release/libhedera.a ../c/lib/linux-x86_64/
             - cp target/aarch64-apple-ios-sim/release/libhedera.a ../c/lib/ios-arm64-sim/
+            - cp target/x86_64-unknown-linux-gnu/release/libhedera.a ../c/lib/linux-x86_64/
             - cp target/x86_64-pc-windows-gnu/release/libhedera.a ../c/lib/windows-x86_64/
 
             #
