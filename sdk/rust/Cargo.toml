@@ -60,6 +60,9 @@ time = "0.3.9"
 tokio = { version = "1.18.1", features = ["rt-multi-thread"] }
 tonic = "0.8.0"
 
+# for ed25519-dalek
+rand_0_7 = { version = "0.7", package = "rand" }
+
 [dependencies.serde_json]
 version = "1.0.79"
 optional = true
@@ -94,7 +97,3 @@ opt-level = "z"
 overflow-checks = false
 panic = "abort"
 strip = true
-
-[patch.crates-io]
-curve25519-dalek = { git = "https://github.com/launchbadge/curve25519-dalek", branch = "lb-update" }
-ed25519-dalek = { git = "https://github.com/launchbadge/ed25519-dalek", branch = "lb-update" }
