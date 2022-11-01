@@ -48,10 +48,6 @@ use pkcs8::{
     AssociatedOid,
     ObjectIdentifier,
 };
-use rand::{
-    thread_rng,
-    Rng,
-};
 use sha2::Sha512;
 use sha3::Digest;
 
@@ -123,7 +119,10 @@ impl PrivateKey {
     /// Generates a new Ed25519 `PrivateKey`.
     #[must_use]
     pub fn generate_ed25519() -> Self {
-        let mut csprng = thread_rng();
+        use rand_0_7::Rng as _;
+
+        let mut csprng = rand_0_7::thread_rng();
+
         let data = ed25519_dalek::Keypair::generate(&mut csprng);
         let data = PrivateKeyData::Ed25519(data);
 
@@ -136,7 +135,7 @@ impl PrivateKey {
     /// Generates a new ECDSA(secp256k1) `PrivateKey`.
     #[must_use]
     pub fn generate_ecdsa() -> Self {
-        let data = k256::ecdsa::SigningKey::random(&mut thread_rng());
+        let data = k256::ecdsa::SigningKey::random(&mut rand::thread_rng());
         let data = PrivateKeyData::Ecdsa(data);
 
         Self(Arc::new(PrivateKeyDataWrapper::new(data)))
