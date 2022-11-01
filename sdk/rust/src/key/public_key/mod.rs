@@ -31,16 +31,14 @@ use std::hash::{
 use std::str::FromStr;
 
 use ed25519_dalek::ed25519::signature::DigestVerifier;
-use ed25519_dalek::{
-    Digest,
-    Verifier,
-};
+use ed25519_dalek::Verifier;
 use hedera_proto::services;
 use pkcs8::der::{
     Decode,
     Encode,
 };
 use prost::Message;
+use sha2::Digest;
 
 use crate::key::private_key::ED25519_OID;
 use crate::protobuf::ToProtobuf;
