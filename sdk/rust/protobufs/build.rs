@@ -33,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
     // in the beginning, there was only services and it was named "protos"
 
-    let services: Vec<_> = read_dir("../../../protobufs/services")?
+    let services: Vec<_> = read_dir("./protobufs/services")?
         .filter_map(|entry| Some(entry.ok()?.path()))
         .collect();
 
@@ -97,7 +97,7 @@ successful transaction.
             );
     }
 
-    cfg.compile(&services, &["../../../protobufs/services/"])?;
+    cfg.compile(&services, &["./protobufs/services/"])?;
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
@@ -121,10 +121,10 @@ successful transaction.
         .out_dir(&mirror_out_dir)
         .compile(
             &[
-                "../../../protobufs/mirror/consensus_service.proto",
-                "../../../protobufs/mirror/mirror_network_service.proto",
+                "./protobufs/mirror/consensus_service.proto",
+                "./protobufs/mirror/mirror_network_service.proto",
             ],
-            &["../../../protobufs/mirror/", "../../../protobufs/services/"],
+            &["./protobufs/mirror/", "./protobufs/services/"],
         )?;
 
     // streams
@@ -197,8 +197,8 @@ successful transaction.
         .extern_path(".proto.ContractID", "crate::services::ContractId");
 
     cfg.out_dir(&streams_out_dir).compile(
-        &["../../../protobufs/streams/account_balance_file.proto"],
-        &["../../../protobufs/streams/", "../../../protobufs/services/"],
+        &["./protobufs/streams/account_balance_file.proto"],
+        &["./protobufs/streams/", "./protobufs/services/"],
     )?;
 
     Ok(())
