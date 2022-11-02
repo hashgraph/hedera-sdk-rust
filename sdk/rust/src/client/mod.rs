@@ -44,13 +44,17 @@ use crate::{
 mod mirror_network;
 mod network;
 
+struct Operator {
+    account_id: AccountId,
+    signer: Box<dyn Signer>,
+}
+
 /// Managed client for use on the Hedera network.
 #[derive(Clone)]
 pub struct Client {
     network: Arc<Network>,
     mirror_network: Arc<MirrorNetwork>,
-    operator_account_id: Arc<RwLock<Option<AccountId>>>,
-    operator_signer: Arc<AsyncRwLock<Option<Box<dyn Signer>>>>,
+    operator: Arc<AsyncRwLock<Option<Operator>>>,
     max_transaction_fee_tinybar: Arc<AtomicU64>,
 }
 
@@ -61,8 +65,7 @@ impl Client {
         Self {
             network: Arc::new(Network::from_static(MAINNET)),
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::MAINNET])),
-            operator_account_id: Arc::new(RwLock::new(None)),
-            operator_signer: Arc::new(AsyncRwLock::new(None)),
+            operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
         }
     }
@@ -73,8 +76,7 @@ impl Client {
         Self {
             network: Arc::new(Network::from_static(TESTNET)),
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
-            operator_account_id: Arc::new(RwLock::new(None)),
-            operator_signer: Arc::new(AsyncRwLock::new(None)),
+            operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
         }
     }
@@ -85,8 +87,7 @@ impl Client {
         Self {
             network: Arc::new(Network::from_static(PREVIEWNET)),
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::PREVIEWNET])),
-            operator_account_id: Arc::new(RwLock::new(None)),
-            operator_signer: Arc::new(AsyncRwLock::new(None)),
+            operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
         }
     }
@@ -100,24 +101,23 @@ impl Client {
     /// The operator private key is used to sign all transactions executed by this client.
     ///
     pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
-        *self.operator_account_id.write() = Some(id);
-
         block_in_place(|| {
-            *self.operator_signer.blocking_write() = Some(Box::new(key));
+            *self.operator.blocking_write() =
+                Some(Operator { account_id: id, signer: Box::new(key) });
         });
     }
 
     /// Generate a new transaction ID from the stored operator account ID, if present.
     pub(crate) fn generate_transaction_id(&self) -> Option<TransactionId> {
-        self.operator_account_id.read().map(TransactionId::generate)
+        self.operator.blocking_read().as_ref().map(|it| it.account_id).map(TransactionId::generate)
     }
 
     pub(crate) async fn sign_with_operator(
         &self,
         body_bytes: &[u8],
     ) -> Result<SignaturePair, BoxStdError> {
-        if let Some(signer) = &*self.operator_signer.read().await {
-            signer.sign(body_bytes).await
+        if let Some(operator) = &*self.operator.read().await {
+            operator.signer.sign(body_bytes).await
         } else {
             unreachable!()
         }
