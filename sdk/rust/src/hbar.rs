@@ -120,6 +120,18 @@ impl Hbar {
     /// The maximum allowable amount of hbar `50 Gℏ`.
     pub const MAX: Self = Self::from_integer_unit(50, HbarUnit::Gigabar);
 
+    /// Create a `Hbar` containing `amount ℏ`.
+    ///
+    /// # Examples
+    /// ```
+    /// # use hedera::Hbar;
+    /// let hbar = Hbar::new(52);
+    /// assert_eq!(hbar.to_string(), "52 ℏ");
+    #[must_use]
+    pub const fn new(amount: i64) -> Self {
+        Self::from_integer_unit(amount, HbarUnit::Hbar)
+    }
+
     /// Convert from `tinybars` to `Hbar`.
     ///
     /// # Examples
@@ -262,7 +274,7 @@ impl ops::Add for Hbar {
 
 impl ops::AddAssign for Hbar {
     fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0
+        self.0 += rhs.0;
     }
 }
 
@@ -276,7 +288,7 @@ impl ops::Sub for Hbar {
 
 impl ops::SubAssign for Hbar {
     fn sub_assign(&mut self, rhs: Self) {
-        self.0 -= rhs.0
+        self.0 -= rhs.0;
     }
 }
 
@@ -296,7 +308,7 @@ where
     i64: ops::MulAssign<T>,
 {
     fn mul_assign(&mut self, rhs: T) {
-        self.0 *= rhs
+        self.0 *= rhs;
     }
 }
 
@@ -316,7 +328,7 @@ where
     i64: ops::DivAssign<T>,
 {
     fn div_assign(&mut self, rhs: T) {
-        self.0 /= rhs
+        self.0 /= rhs;
     }
 }
 
