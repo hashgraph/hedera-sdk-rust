@@ -42,6 +42,11 @@ private func hexVal(_ char: UInt8) -> UInt8? {
 }
 
 extension Data {
+    // this copies
+    internal func safeSubdata(in range: Range<Self.Index>) -> Data? {
+        return contains(range: range) ? self.subdata(in: range) : nil
+    }
+
     private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
 
     // (sr): swift compiler wins the "useless acl vs explicit acl debate
