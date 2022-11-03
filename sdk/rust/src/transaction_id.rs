@@ -78,6 +78,21 @@ impl TransactionId {
 
         Self { account_id, valid_start, scheduled: false, nonce: None }
     }
+
+    /// Create a new `TransactionId` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
 }
 
 impl Debug for TransactionId {
@@ -113,6 +128,19 @@ impl FromProtobuf<services::TransactionId> for TransactionId {
             nonce: (pb.nonce != 0).then_some(pb.nonce),
             scheduled: pb.scheduled,
         })
+    }
+}
+
+impl ToProtobuf for TransactionId {
+    type Protobuf = services::TransactionId;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TransactionId {
+            account_id: Some(self.account_id.to_protobuf()),
+            scheduled: self.scheduled,
+            nonce: self.nonce.unwrap_or_default(),
+            transaction_valid_start: Some(self.valid_start.into()),
+        }
     }
 }
 
@@ -157,19 +185,6 @@ impl FromStr for TransactionId {
         };
 
         Ok(Self { account_id, valid_start, nonce, scheduled })
-    }
-}
-
-impl ToProtobuf for TransactionId {
-    type Protobuf = services::TransactionId;
-
-    fn to_protobuf(&self) -> Self::Protobuf {
-        services::TransactionId {
-            account_id: Some(self.account_id.to_protobuf()),
-            scheduled: self.scheduled,
-            nonce: self.nonce.unwrap_or_default(),
-            transaction_valid_start: Some(self.valid_start.into()),
-        }
     }
 }
 
