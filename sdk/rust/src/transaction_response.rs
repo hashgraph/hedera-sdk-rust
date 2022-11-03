@@ -58,7 +58,7 @@ pub struct TransactionResponse {
 // TODO: get_record
 // TODO: get_successful_record
 impl TransactionResponse {
-    /// Get the receipt of this transaction.
+    /// Get the receipt for this transaction.
     /// Will wait for consensus.
     ///
     /// # Errors
