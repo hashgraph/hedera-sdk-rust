@@ -78,6 +78,21 @@ impl TransactionId {
 
         Self { account_id, valid_start, scheduled: false, nonce: None }
     }
+
+    /// Create a new `TransactionId` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
 }
 
 impl Debug for TransactionId {
@@ -116,50 +131,6 @@ impl FromProtobuf<services::TransactionId> for TransactionId {
     }
 }
 
-// TODO: add unit tests to prove parsing
-// TODO: potentially improve parsing with `nom` or `combine`
-impl FromStr for TransactionId {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        const EXPECTED: &str = "expecting <accountId>@<validStart>[?scheduled][/<nonce>]";
-
-        let mut parts = s.splitn(4, &['@', '?', '/']);
-
-        let account_id = if let Some(account_id_s) = parts.next() {
-            AccountId::from_str(account_id_s)?
-        } else {
-            return Err(Error::basic_parse(EXPECTED));
-        };
-
-        let valid_start = if let Some(valid_start_s) = parts.next() {
-            let (seconds_s, nanos_s) =
-                valid_start_s.split_once('.').ok_or_else(|| Error::basic_parse(EXPECTED))?;
-
-            let seconds = i64::from_str(seconds_s).map_err(Error::basic_parse)?;
-            let nanos = i64::from_str(nanos_s).map_err(Error::basic_parse)?;
-
-            OffsetDateTime::from_unix_timestamp(seconds).map_err(Error::basic_parse)?
-                + Duration::nanoseconds(nanos)
-        } else {
-            return Err(Error::basic_parse(EXPECTED));
-        };
-
-        let mut scheduled = false;
-        let mut nonce = None;
-
-        for part in parts.take(2) {
-            if part == "scheduled" {
-                scheduled = true;
-            } else {
-                nonce = Some(i32::from_str(part).map_err(Error::basic_parse)?);
-            }
-        }
-
-        Ok(Self { account_id, valid_start, nonce, scheduled })
-    }
-}
-
 impl ToProtobuf for TransactionId {
     type Protobuf = services::TransactionId;
 
@@ -170,5 +141,108 @@ impl ToProtobuf for TransactionId {
             nonce: self.nonce.unwrap_or_default(),
             transaction_valid_start: Some(self.valid_start.into()),
         }
+    }
+}
+
+// TODO: add unit tests to prove parsing
+// TODO: potentially improve parsing with `nom` or `combine`
+impl FromStr for TransactionId {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        const EXPECTED: &str = "expecting <accountId>@<validStart>[?scheduled][/<nonce>]";
+        // parse route:
+        // split_once('@') -> ("<accountId>", "<validStart>[?scheduled][/<nonce>]")
+        // rsplit_once('/') -> Either ("<validStart>[?scheduled]", "<nonce>") or ("<validStart>[?scheduled]")
+        // .strip_suffix("?scheduled") -> ("<validStart>") and the suffix was either removed or not.
+        // (except it's better ux to do a `split_once('?')`... Except it doesn't matter that much)
+
+        let (account_id, s) = s.split_once('@').ok_or_else(|| Error::basic_parse(EXPECTED))?;
+
+        let account_id: AccountId = account_id.parse()?;
+
+        let (s, nonce) = match s.rsplit_once('/') {
+            Some((s, nonce)) => (s, Some(nonce)),
+            None => (s, None),
+        };
+
+        let nonce = nonce.map(i32::from_str).transpose().map_err(Error::basic_parse)?;
+
+        let (valid_start, scheduled) = match s.strip_suffix("?scheduled") {
+            Some(rest) => (rest, true),
+            None => (s, false),
+        };
+
+        let valid_start = {
+            let (seconds, nanos) =
+                valid_start.split_once('.').ok_or_else(|| Error::basic_parse(EXPECTED))?;
+
+            let seconds = i64::from_str(seconds).map_err(Error::basic_parse)?;
+            let nanos = i64::from_str(nanos).map_err(Error::basic_parse)?;
+
+            OffsetDateTime::from_unix_timestamp(seconds).map_err(Error::basic_parse)?
+                + Duration::nanoseconds(nanos)
+        };
+
+        Ok(Self { account_id, valid_start, nonce, scheduled })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use assert_matches::assert_matches;
+
+    use crate::{
+        AccountId,
+        TransactionId,
+    };
+
+    #[test]
+    fn from_str_wrong_field() {
+        assert_matches!(TransactionId::from_str("0.0.31415?1641088801.2"), Err(_));
+    }
+
+    #[test]
+    fn from_str_wrong_field2() {
+        assert_matches!(TransactionId::from_str("0.0.31415/1641088801.2"), Err(_));
+    }
+
+    #[test]
+    fn from_str_out_of_order() {
+        assert_matches!(TransactionId::from_str("0.0.31415?scheduled/1412@1641088801.2"), Err(_));
+    }
+
+    #[test]
+    fn from_str_single_digit_nanos() {
+        let id = TransactionId {
+            account_id: AccountId::from(31415),
+            valid_start: time::Date::from_calendar_date(2022, time::Month::January, 2)
+                .unwrap()
+                .with_hms_nano(2, 0, 1, 2)
+                .unwrap()
+                .assume_utc(),
+            nonce: None,
+            scheduled: false,
+        };
+
+        assert_eq!(id, "0.0.31415@1641088801.2".parse().unwrap());
+    }
+
+    #[test]
+    fn display_single_digit_nanos() {
+        let id = TransactionId {
+            account_id: AccountId::from(31415),
+            valid_start: time::Date::from_calendar_date(2022, time::Month::January, 2)
+                .unwrap()
+                .with_hms_nano(2, 0, 1, 2)
+                .unwrap()
+                .assume_utc(),
+            nonce: None,
+            scheduled: false,
+        };
+
+        assert_eq!(id.to_string(), "0.0.31415@1641088801.2");
     }
 }
