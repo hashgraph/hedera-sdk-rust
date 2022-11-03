@@ -27,12 +27,16 @@ use crate::{
 };
 
 /// Topic message records.
-
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TopicMessage {
     /// The consensus timestamp of the message.
-    pub consensus_at: OffsetDateTime,
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
+    )]
+    pub consensus_timestamp: OffsetDateTime,
 
     /// The content of the message.
     #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
@@ -83,7 +87,7 @@ impl FromProtobuf<mirror::ConsensusTopicResponse> for TopicMessage {
             initial_transaction_id.map(TransactionId::from_protobuf).transpose()?;
 
         Ok(Self {
-            consensus_at,
+            consensus_timestamp: consensus_at,
             contents,
             running_hash,
             running_hash_version,
