@@ -53,9 +53,17 @@ pub struct TopicMessageQueryData {
 
     /// Include messages which reached consensus on or after this time.
     /// Defaults to the current time.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     start_time: Option<OffsetDateTime>,
 
     /// Include messages which reached consensus before this time.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     end_time: Option<OffsetDateTime>,
 
     /// The maximum number of messages to receive before stopping.
