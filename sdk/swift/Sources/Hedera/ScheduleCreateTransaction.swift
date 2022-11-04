@@ -31,7 +31,7 @@ import Foundation
 public final class ScheduleCreateTransaction: Transaction {
     /// Create a new `ScheduleCreateTransaction`.
     public init(
-        expirationTime: Date? = nil,
+        expirationTime: Timestamp? = nil,
         isWaitForExpiry: Bool = false,
         payerAccountId: AccountId? = nil,
         scheduledTransaction: Transaction? = nil,
@@ -47,11 +47,11 @@ public final class ScheduleCreateTransaction: Transaction {
     }
 
     /// The timestamp for when the transaction should be evaluated for execution and then expire.
-    public var expirationTime: Date?
+    public var expirationTime: Timestamp?
 
     /// Set the timestamp for when the transaction should be evaluated for execution and then expire.
     @discardableResult
-    public func expirationTime(_ expirationTime: Date?) -> Self {
+    public func expirationTime(_ expirationTime: Timestamp?) -> Self {
         self.expirationTime = expirationTime
 
         return self
@@ -128,7 +128,7 @@ public final class ScheduleCreateTransaction: Transaction {
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
+        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
         try container.encode(isWaitForExpiry, forKey: .isWaitForExpiry)
         try container.encodeIfPresent(payerAccountId, forKey: .payerAccountId)
         try container.encodeIfPresent(scheduledTransaction, forKey: .scheduledTransaction)

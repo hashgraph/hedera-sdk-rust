@@ -41,11 +41,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public var expirationTime: Date?
+    public var expirationTime: Timestamp?
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
-    public func expirationTime(_ expirationTime: Date) -> Self {
+    public func expirationTime(_ expirationTime: Timestamp) -> Self {
         self.expirationTime = expirationTime
 
         return self
@@ -123,7 +123,7 @@ public final class TopicUpdateTransaction: Transaction {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encode(topicId, forKey: .topicId)
-        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
+        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
         try container.encodeIfPresent(topicMemo, forKey: .topicMemo)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
         try container.encodeIfPresent(submitKey, forKey: .submitKey)

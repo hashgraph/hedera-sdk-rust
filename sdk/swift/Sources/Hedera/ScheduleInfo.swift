@@ -52,13 +52,13 @@ public final class ScheduleInfo: Codable {
     public let scheduleMemo: String
 
     /// The date and time the schedule transaction will expire
-    public let expirationTime: Date?
+    public let expirationTime: Timestamp?
 
     /// The time the schedule transaction was executed.
-    public let executedAt: Date?
+    public let executedAt: Timestamp?
 
     /// The time the schedule transaction was deleted.
-    public let deletedAt: Date?
+    public let deletedAt: Timestamp?
 
     public let ledgerId: LedgerId
 

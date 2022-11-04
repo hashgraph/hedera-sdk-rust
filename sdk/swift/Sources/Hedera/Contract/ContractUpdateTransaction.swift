@@ -25,7 +25,7 @@ public final class ContractUpdateTransaction: Transaction {
     /// Create a new `ContractUpdateTransaction`.
     public init(
         contractId: ContractId? = nil,
-        expirationTime: Date? = nil,
+        expirationTime: Timestamp? = nil,
         adminKey: Key? = nil,
         autoRenewPeriod: TimeInterval? = nil,
         contractMemo: String? = nil,
@@ -59,11 +59,11 @@ public final class ContractUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public var expirationTime: Date?
+    public var expirationTime: Timestamp?
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
-    public func expirationTime(_ expirationTime: Date?) -> Self {
+    public func expirationTime(_ expirationTime: Timestamp?) -> Self {
         self.expirationTime = expirationTime
 
         return self
@@ -114,7 +114,7 @@ public final class ContractUpdateTransaction: Transaction {
     }
 
     /// The account to be used at the contract's expiration time to extend the
-    /// life of the contract.
+
     public var autoRenewAccountId: AccountId?
 
     /// Sets the account to be used at the contract's expiration time to extend the
@@ -180,7 +180,7 @@ public final class ContractUpdateTransaction: Transaction {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .adminKey)
+        try container.encodeIfPresent(expirationTime, forKey: .adminKey)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
         try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
         try container.encodeIfPresent(contractMemo, forKey: .contractMemo)

@@ -6,8 +6,8 @@ public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
     /// Create a new `TopicMessageQuery`.
     public init(
         topicId: TopicId? = nil,
-        startTime: Date? = nil,
-        endTime: Date? = nil,
+        startTime: Timestamp? = nil,
+        endTime: Timestamp? = nil,
         limit: UInt64 = 0
     ) {
         self.topicId = topicId
@@ -21,10 +21,10 @@ public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
 
     /// Include messages which reached consensus on or after this time.
     /// Defaults to the current time.
-    public var startTime: Date?
+    public var startTime: Timestamp?
 
     /// Include messages which reached consensus before this time.
-    public var endTime: Date?
+    public var endTime: Timestamp?
 
     /// The maximum number of message to receive before stopping.
     public var limit: UInt64
@@ -40,7 +40,7 @@ public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
     /// Set to include messages which reached consensus on or after this time.
     /// Defaults to the current time.
     @discardableResult
-    public func startTime(_ startTime: Date) -> Self {
+    public func startTime(_ startTime: Timestamp) -> Self {
         self.startTime = startTime
 
         return self
@@ -48,7 +48,7 @@ public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
 
     /// Set to include messages which reached consensus before this time.
     @discardableResult
-    public func endTime(_ endTime: Date) -> Self {
+    public func endTime(_ endTime: Timestamp) -> Self {
         self.endTime = endTime
 
         return self
@@ -75,8 +75,8 @@ public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
             keyedBy: CodingKeys.self)
 
         try container.encodeIfPresent(topicId, forKey: .topicId)
-        try container.encodeIfPresent(startTime?.unixTimestampNanos, forKey: .startTime)
-        try container.encodeIfPresent(endTime?.unixTimestampNanos, forKey: .endTime)
+        try container.encodeIfPresent(startTime, forKey: .startTime)
+        try container.encodeIfPresent(endTime, forKey: .endTime)
 
         if limit != 0 {
             try container.encode(limit, forKey: .limit)

@@ -37,7 +37,7 @@ public final class ContractInfo: Codable {
     public let adminKey: Key?
 
     /// The current time at which this contract instance (and its account) is set to expire.
-    public let expirationTime: Date?
+    public let expirationTime: Timestamp?
 
     /// The auto renew period for this contract instance.
     public let autoRenewPeriod: TimeInterval?
