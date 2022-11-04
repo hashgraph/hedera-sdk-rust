@@ -49,7 +49,7 @@ public final class AccountInfo: Codable {
     public let isReceiverSignatureRequired: Bool
 
     /// The TimeStamp time at which this account is set to expire.
-    public let expirationTime: Date?
+    public let expirationTime: Timestamp?
 
     /// The duration for expiration time will extend every this many seconds.
     public let autoRenewPeriod: TimeInterval?

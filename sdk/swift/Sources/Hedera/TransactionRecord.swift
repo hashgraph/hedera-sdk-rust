@@ -33,7 +33,7 @@ public struct TransactionRecord: Codable {
     public let transactionHash: Data
 
     /// The consensus timestamp.
-    public let consensusTimestamp: Date
+    public let consensusTimestamp: Timestamp
 
     // TODO: TransactionId
     /// The ID of the transaction this record represents.
@@ -53,7 +53,7 @@ public struct TransactionRecord: Codable {
 
     /// In the record of an internal transaction, the consensus timestamp of the user
     /// transaction that spawned it.
-    public let parentConsensusTimestamp: Date?
+    public let parentConsensusTimestamp: Timestamp?
 
     /// In the record of an internal CryptoCreate transaction triggered by a user
     /// transaction with a (previously unused) alias, the new account's alias.
@@ -76,20 +76,14 @@ public struct TransactionRecord: Codable {
 
         receipt = try container.decode(TransactionReceipt.self, forKey: .receipt)
         transactionHash = Data(base64Encoded: try container.decode(String.self, forKey: .transactionHash))!
-        consensusTimestamp = Date(unixTimestampNanos: try container.decode(UInt64.self, forKey: .consensusTimestamp))
+        consensusTimestamp = try container.decode(Timestamp.self, forKey: .consensusTimestamp)
         transactionId = try container.decode(String.self, forKey: .transactionId)
         transactionMemo = try container.decode(String.self, forKey: .transactionMemo)
         transactionFee = try container.decode(Hbar.self, forKey: .transactionFee)
         scheduleRef = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleRef)
         automaticTokenAssociations = try container.decode([TokenAssociation].self, forKey: .automaticTokenAssociations)
 
-        if let parentConsensusTimestampNanos = try container.decodeIfPresent(
-            UInt64.self, forKey: .parentConsensusTimestamp)
-        {
-            parentConsensusTimestamp = Date(unixTimestampNanos: parentConsensusTimestampNanos)
-        } else {
-            parentConsensusTimestamp = nil
-        }
+        parentConsensusTimestamp = try container.decodeIfPresent(Timestamp.self, forKey: .parentConsensusTimestamp)
 
         aliasKey = try container.decodeIfPresent(PublicKey.self, forKey: .aliasKey)
         children = try container.decode([TransactionRecord].self, forKey: .children)

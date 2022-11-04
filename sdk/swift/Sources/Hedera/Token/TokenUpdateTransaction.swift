@@ -35,7 +35,7 @@ public final class TokenUpdateTransaction: Transaction {
         supplyKey: Key? = nil,
         autoRenewAccountId: AccountId? = nil,
         autoRenewPeriod: TimeInterval? = nil,
-        expirationTime: Date? = nil,
+        expirationTime: Timestamp? = nil,
         tokenMemo: String = "",
         feeScheduleKey: Key? = nil,
         pauseKey: Key? = nil
@@ -181,11 +181,11 @@ public final class TokenUpdateTransaction: Transaction {
     }
 
     /// The new time at which the token should expire.
-    public var expirationTime: Date?
+    public var expirationTime: Timestamp?
 
     /// Sets the new time at which the token should expire.
     @discardableResult
-    public func expirationTime(_ expirationTime: Date) -> Self {
+    public func expirationTime(_ expirationTime: Timestamp) -> Self {
         self.expirationTime = expirationTime
 
         return self
@@ -256,7 +256,7 @@ public final class TokenUpdateTransaction: Transaction {
         try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
         try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
+        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
         try container.encode(tokenMemo, forKey: .tokenMemo)
         try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)
         try container.encodeIfPresent(pauseKey, forKey: .pauseKey)

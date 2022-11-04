@@ -26,7 +26,7 @@ public final class SystemDeleteTransaction: Transaction {
     public init(
         fileId: FileId? = nil,
         contractId: ContractId? = nil,
-        expirationTime: Date? = nil
+        expirationTime: Timestamp? = nil
     ) {
         self.fileId = fileId
         self.contractId = contractId
@@ -57,12 +57,12 @@ public final class SystemDeleteTransaction: Transaction {
 
     /// The timestamp at which the "deleted" file should
     /// truly be permanently deleted.
-    public var expirationTime: Date?
+    public var expirationTime: Timestamp?
 
     /// Sets the timestamp at which the "deleted" file should
     /// truly be permanently deleted.
     @discardableResult
-    public func expirationTime(_ expirationTime: Date) -> Self {
+    public func expirationTime(_ expirationTime: Timestamp) -> Self {
         self.expirationTime = expirationTime
 
         return self
@@ -79,7 +79,7 @@ public final class SystemDeleteTransaction: Transaction {
 
         try container.encodeIfPresent(fileId, forKey: .fileId)
         try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(expirationTime?.unixTimestampNanos, forKey: .expirationTime)
+        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
 
         try super.encode(to: encoder)
     }

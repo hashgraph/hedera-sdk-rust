@@ -74,7 +74,7 @@ public final class TokenInfo: Codable {
     public let autoRenewPeriod: TimeInterval?
 
     /// The epoch second at which the token will expire
-    public let expirationTime: Date?
+    public let expirationTime: Timestamp?
 
     /// The memo associated with the token
     public let tokenMemo: String
