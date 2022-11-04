@@ -40,7 +40,7 @@ public final class ContractInfo: Codable {
     public let expirationTime: Timestamp?
 
     /// The auto renew period for this contract instance.
-    public let autoRenewPeriod: TimeInterval?
+    public let autoRenewPeriod: Duration?
 
     /// Number of bytes of storage being used by this instance.
     public let storage: UInt64

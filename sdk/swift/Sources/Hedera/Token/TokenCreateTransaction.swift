@@ -37,7 +37,7 @@ public final class TokenCreateTransaction: Transaction {
         freezeDefault: Bool = false,
         expirationTime: Timestamp? = nil,
         autoRenewAccountId: AccountId? = nil,
-        autoRenewPeriod: TimeInterval? = nil,
+        autoRenewPeriod: Duration? = nil,
         tokenMemo: String = "",
         tokenType: TokenType = .fungibleCommon,
         tokenSupplyType: TokenSupplyType = .infinite,
@@ -216,11 +216,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry.
-    public var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: Duration?
 
     /// Sets the interval at which the auto-renew account will be charged to extend the token's expiry.
     @discardableResult
-    public func autoRenewPeriod(_ autoRenewPeriod: TimeInterval) -> Self {
+    public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
         self.autoRenewPeriod = autoRenewPeriod
 
         return self
@@ -343,7 +343,7 @@ public final class TokenCreateTransaction: Transaction {
         try container.encode(freezeDefault, forKey: .freezeDefault)
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
         try container.encode(tokenMemo, forKey: .tokenMemo)
         try container.encode(tokenType, forKey: .tokenType)
         try container.encode(tokenSupplyType, forKey: .tokenSupplyType)

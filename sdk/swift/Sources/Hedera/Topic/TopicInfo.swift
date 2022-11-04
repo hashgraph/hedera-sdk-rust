@@ -35,7 +35,7 @@ public final class TopicInfo: Codable {
     public let sequenceNumber: UInt64
 
     /// Effective consensus timestamp at (and after) which submitMessage calls will no longer succeed on the topic.
-    public let expirationTime: TimeInterval?
+    public let expirationTime: Duration?
 
     /// Access control for update/delete of the topic.
     public let adminKey: Key?
@@ -48,5 +48,5 @@ public final class TopicInfo: Codable {
     public let autoRenewAccountId: AccountId?
 
     /// The interval at which the auto-renew account will be charged to extend the topic's expiry.
-    public let autoRenewPeriod: TimeInterval?
+    public let autoRenewPeriod: Duration?
 }

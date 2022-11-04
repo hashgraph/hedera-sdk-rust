@@ -28,7 +28,7 @@ internal final class PaymentTransaction: Codable {
     internal var transactionMemo: String?
     internal var payerAccountId: AccountId?
     internal var transactionId: String?
-    internal var transactionValidDuration: TimeInterval?
+    internal var transactionValidDuration: Duration?
     // TODO: private var paymentSigners: [OpaquePointer] = [];
 
     public func encode(to encoder: Encoder) throws {
