@@ -52,7 +52,7 @@ public final class AccountInfo: Codable {
     public let expirationTime: Timestamp?
 
     /// The duration for expiration time will extend every this many seconds.
-    public let autoRenewPeriod: TimeInterval?
+    public let autoRenewPeriod: Duration?
 
     /// The memo associated with the account.
     public let accountMemo: String

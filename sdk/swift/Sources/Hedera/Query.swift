@@ -74,7 +74,7 @@ public class Query<Response: Decodable>: Request {
     ///
     /// Defaults to 120 seconds (or two minutes).
     ///
-    public func paymentTransactionValidDuration(_ validDuration: TimeInterval) -> Self {
+    public func paymentTransactionValidDuration(_ validDuration: Duration) -> Self {
         self.payment.transactionValidDuration = validDuration
 
         return self

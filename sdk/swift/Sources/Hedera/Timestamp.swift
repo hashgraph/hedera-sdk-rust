@@ -10,18 +10,18 @@ private let unixEpoch: Date = Calendar.current.date(from: DateComponents(timeZon
 public struct Timestamp: Codable, CustomStringConvertible {
     public let seconds: UInt64
     public let subSecondNanos: UInt32
-    
+
     public init(fromUnixTimestampNanos nanos: UInt64) {
         self.seconds = nanos / nanosPerSecond
         self.subSecondNanos = UInt32(nanos % nanosPerSecond)
     }
 
     /// Convert from a ``Date`` to a `Timestamp`
-    /// 
+    ///
     /// `Date` is stored as ``Double`` seconds, so, it may not have full precision.
     public init(from date: Date) {
         let components = Calendar.current.dateComponents([.second, .nanosecond], from: unixEpoch, to: date)
-        
+
         seconds = UInt64(components.second!)
         subSecondNanos = UInt32(components.nanosecond!)
     }

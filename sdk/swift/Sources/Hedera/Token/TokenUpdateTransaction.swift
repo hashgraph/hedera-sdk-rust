@@ -34,7 +34,7 @@ public final class TokenUpdateTransaction: Transaction {
         wipeKey: Key? = nil,
         supplyKey: Key? = nil,
         autoRenewAccountId: AccountId? = nil,
-        autoRenewPeriod: TimeInterval? = nil,
+        autoRenewPeriod: Duration? = nil,
         expirationTime: Timestamp? = nil,
         tokenMemo: String = "",
         feeScheduleKey: Key? = nil,
@@ -169,12 +169,12 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The new interval at which the auto renew account will be charged to extend
     /// the token's expiry.
-    public var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: Duration?
 
     /// Sets the new interval at which the auto renew account will be charged to extend
     /// the token's expiry.
     @discardableResult
-    public func autoRenewPeriod(_ autoRenewPeriod: TimeInterval) -> Self {
+    public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
         self.autoRenewPeriod = autoRenewPeriod
 
         return self
@@ -255,7 +255,7 @@ public final class TokenUpdateTransaction: Transaction {
         try container.encodeIfPresent(wipeKey, forKey: .wipeKey)
         try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
         try container.encode(tokenMemo, forKey: .tokenMemo)
         try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)

@@ -87,12 +87,12 @@ public final class TopicUpdateTransaction: Transaction {
     /// The initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time, if
     /// the `autoRenewAccountId` is configured.
-    public var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: Duration?
 
     /// Sets the initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time.
     @discardableResult
-    public func autoRenewPeriod(_ autoRenewPeriod: TimeInterval) -> Self {
+    public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
         self.autoRenewPeriod = autoRenewPeriod
 
         return self
@@ -127,7 +127,7 @@ public final class TopicUpdateTransaction: Transaction {
         try container.encodeIfPresent(topicMemo, forKey: .topicMemo)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
         try container.encodeIfPresent(submitKey, forKey: .submitKey)
-        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
 
         try super.encode(to: encoder)

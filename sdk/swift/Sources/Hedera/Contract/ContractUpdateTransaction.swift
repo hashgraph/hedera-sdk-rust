@@ -27,7 +27,7 @@ public final class ContractUpdateTransaction: Transaction {
         contractId: ContractId? = nil,
         expirationTime: Timestamp? = nil,
         adminKey: Key? = nil,
-        autoRenewPeriod: TimeInterval? = nil,
+        autoRenewPeriod: Duration? = nil,
         contractMemo: String? = nil,
         maxAutomaticTokenAssociations: UInt32? = nil,
         autoRenewAccountId: AccountId? = nil,
@@ -81,11 +81,11 @@ public final class ContractUpdateTransaction: Transaction {
     }
 
     /// The auto renew period for this smart contract.
-    public var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: Duration?
 
     /// Set the auto renew period for this smart contract.
     @discardableResult
-    public func autoRenewPeriod(_ autoRenewPeriod: TimeInterval?) -> Self {
+    public func autoRenewPeriod(_ autoRenewPeriod: Duration?) -> Self {
         self.autoRenewPeriod = autoRenewPeriod
 
         return self
@@ -182,7 +182,7 @@ public final class ContractUpdateTransaction: Transaction {
         try container.encodeIfPresent(contractId, forKey: .contractId)
         try container.encodeIfPresent(expirationTime, forKey: .adminKey)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
         try container.encodeIfPresent(contractMemo, forKey: .contractMemo)
         try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
