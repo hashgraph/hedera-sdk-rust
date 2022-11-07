@@ -21,7 +21,6 @@
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
-use parking_lot::RwLock;
 use tokio::sync::RwLock as AsyncRwLock;
 use tokio::task::block_in_place;
 

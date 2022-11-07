@@ -56,6 +56,25 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
+typedef struct HederaAccountId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+  /**
+   * Safety:
+   * - If `alias` is not null, it must:
+   *   - be properly aligned
+   *   - be dereferenceable
+   *   - point to a valid instance of `PublicKey` (any `PublicKey` that `hedera` provides which hasn't been freed yet)
+   */
+  struct HederaPublicKey *alias;
+} HederaAccountId;
+
+typedef struct HederaAccountBalance {
+  struct HederaAccountId id;
+  int64_t hbars;
+} HederaAccountBalance;
+
 typedef struct HederaSemanticVersion {
   /**
    * Increases with incompatible API changes
@@ -148,36 +167,44 @@ int32_t hedera_error_grpc_status(void);
 int32_t hedera_error_pre_check_status(void);
 
 /**
+ * Parse a Hedera `AccountBalance` from the passed bytes.
+ */
+enum HederaError hedera_account_balance_from_bytes(const uint8_t *bytes,
+                                                   size_t bytes_size,
+                                                   struct HederaAccountBalance *id);
+
+/**
+ * Serialize the passed `AccountBalance` as bytes
+ *
+ * # Safety
+ * - `id` must uphold the safety requirements of `AccountBalance`.
+ * - `buf` must be valid for writes.
+ * - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
+ */
+size_t hedera_account_balance_to_bytes(struct HederaAccountBalance id,
+                                       uint8_t **buf);
+
+/**
  * Parse a Hedera `AccountId` from the passed string.
  */
-enum HederaError hedera_account_id_from_string(const char *s,
-                                               uint64_t *id_shard,
-                                               uint64_t *id_realm,
-                                               uint64_t *id_num,
-                                               struct HederaPublicKey **id_alias);
+enum HederaError hedera_account_id_from_string(const char *s, struct HederaAccountId *id);
 
 /**
  * Parse a Hedera `AccountId` from the passed bytes.
  */
 enum HederaError hedera_account_id_from_bytes(const uint8_t *bytes,
                                               size_t bytes_size,
-                                              uint64_t *id_shard,
-                                              uint64_t *id_realm,
-                                              uint64_t *id_num,
-                                              struct HederaPublicKey **id_alias);
+                                              struct HederaAccountId *id);
 
 /**
  * Serialize the passed `AccountId` as bytes
  *
  * # Safety
- * - `id_alias` must either be null or point to a valid public key.
+ * - `id` must uphold the safety requirements of `AccountId`.
  * - `buf` must be valid for writes.
  * - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
  */
-size_t hedera_account_id_to_bytes(uint64_t id_shard,
-                                  uint64_t id_realm,
-                                  uint64_t id_num,
-                                  const struct HederaPublicKey *id_alias,
+size_t hedera_account_id_to_bytes(struct HederaAccountId id,
                                   uint8_t **buf);
 
 /**
