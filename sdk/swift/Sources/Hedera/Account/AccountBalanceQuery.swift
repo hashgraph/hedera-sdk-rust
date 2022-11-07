@@ -23,8 +23,7 @@
 /// This returns only the balance, so it is a smaller reply
 /// than `AccountInfoQuery`, which returns the balance plus
 /// additional information.
-///
-public final class AccountBalanceQuery: Query<AccountBalanceResponse> {
+public final class AccountBalanceQuery: Query<AccountBalance> {
     /// Create a new `AccountBalanceQuery`.
     public init(
         accountId: AccountId? = nil,
@@ -40,7 +39,6 @@ public final class AccountBalanceQuery: Query<AccountBalanceResponse> {
     /// Sets the account ID for which information is requested.
     ///
     /// This is mutually exclusive with `contractId`.
-    ///
     @discardableResult
     public func accountId(_ accountId: AccountId) -> Self {
         self.accountId = accountId
@@ -55,7 +53,6 @@ public final class AccountBalanceQuery: Query<AccountBalanceResponse> {
     /// Sets the contract ID for which information is requested.
     ///
     /// This is mutually exclusive with `accountId`.
-    ///
     @discardableResult
     public func contractId(_ contractId: ContractId) -> Self {
         self.contractId = contractId

@@ -76,8 +76,7 @@ enum AccountBalanceSource {
 impl AccountBalanceQuery {
     /// Sets the account ID for which information is requested.
     ///
-    /// This is mutually exclusive with [`contract_id`](#method.contract_id).
-    ///
+    /// This is mutually exclusive with [`contract_id`](Self::contract_id).
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.data.source = AccountBalanceSource::AccountId(id);
         self
@@ -85,8 +84,7 @@ impl AccountBalanceQuery {
 
     /// Sets the contract ID for which information is requested.
     ///
-    /// This is mutually exclusive with [`account_id`](#method.account_id).
-    ///
+    /// This is mutually exclusive with [`account_id`](Self::account_id).
     pub fn contract_id(&mut self, id: ContractId) -> &mut Self {
         self.data.source = AccountBalanceSource::ContractId(id);
         self

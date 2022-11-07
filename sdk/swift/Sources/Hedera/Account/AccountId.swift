@@ -37,21 +37,19 @@ public final class AccountId: EntityId {
         super.init(shard: shard, realm: realm, num: num)
     }
 
-    public required init?(_ description: String) {
-        var shard: UInt64 = 0
-        var realm: UInt64 = 0
-        var num: UInt64 = 0
-        var alias: OpaquePointer?
+    public required convenience init?(_ description: String) {
+        var id: HederaAccountId = HederaAccountId()
 
-        let err = hedera_account_id_from_string(description, &shard, &realm, &num, &alias)
+        let err = hedera_account_id_from_string(
+            description,
+            &id
+        )
 
         if err != HEDERA_ERROR_OK {
             return nil
         }
 
-        self.alias = alias != nil ? PublicKey.unsafeFromPtr(alias!) : nil
-
-        super.init(shard: shard, realm: realm, num: num)
+        self.init(unsafeFromCHedera: id)
     }
 
     public required convenience init(integerLiteral value: IntegerLiteralType) {
@@ -64,6 +62,15 @@ public final class AccountId: EntityId {
 
     public required convenience init(from decoder: Decoder) throws {
         self.init(try decoder.singleValueContainer().decode(String.self))!
+    }
+
+    internal init(unsafeFromCHedera hedera: HederaAccountId) {
+        alias = hedera.alias.map(PublicKey.unsafeFromPtr)
+        super.init(shard: hedera.shard, realm: hedera.realm, num: hedera.num)
+    }
+
+    internal func unsafeWithCHedera<Result>(_ body: (HederaAccountId) throws -> Result) rethrows -> Result {
+        try body(HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr))
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -82,33 +89,30 @@ public final class AccountId: EntityId {
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-            var alias: OpaquePointer?
+            var id = HederaAccountId()
 
             let err = hedera_account_id_from_bytes(
                 pointer.baseAddress,
                 pointer.count,
-                &shard,
-                &realm,
-                &num,
-                &alias
+                &id
             )
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!
             }
 
-            return Self(shard: shard, realm: realm, num: num)
+            return Self(unsafeFromCHedera: id)
         }
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_account_id_to_bytes(shard, realm, num, alias?.ptr, &buf)
+        self.unsafeWithCHedera {
+            (hedera) in
+            var buf: UnsafeMutablePointer<UInt8>?
+            let size = hedera_account_id_to_bytes(hedera, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        }
     }
 }
 

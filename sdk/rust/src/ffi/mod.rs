@@ -21,6 +21,7 @@
 #[macro_use]
 mod error;
 
+mod account_balance;
 mod account_id;
 mod account_info;
 mod c_util;
@@ -43,4 +44,8 @@ mod token_association;
 mod transaction_receipt;
 mod util;
 
+use account_id::{
+    AccountId,
+    RefAccountId,
+};
 use semantic_version::SemanticVersion;
