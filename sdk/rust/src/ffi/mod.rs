@@ -38,6 +38,7 @@ mod nft_id;
 mod runtime;
 mod schedule_info;
 mod semantic_version;
+mod signer;
 mod staking_info;
 mod subscribe;
 mod timestamp;
@@ -51,4 +52,5 @@ use account_id::{
     RefAccountId,
 };
 use semantic_version::SemanticVersion;
+pub(crate) use signer::CSigner;
 use timestamp::Timestamp;

@@ -75,6 +75,51 @@ typedef struct HederaAccountBalance {
   int64_t hbars;
 } HederaAccountBalance;
 
+typedef struct HederaSigner {
+  /**
+   * Safety:
+   * - Must not be null
+   * - must be properly aligned
+   * - must be dereferencable in the rust sense.
+   */
+  const struct HederaPublicKey *public_key;
+  /**
+   * Safety: It must be safe to send `context` to other threads.
+   * Safety: It must be safe to share `context` between threads.
+   */
+  void *context;
+  /**
+   * Safety:
+   * Must not be null
+   * must be callable with the appropriate arguments
+   */
+  size_t (*sign_func)(void *context, const uint8_t *message, size_t message_size, const uint8_t **signature);
+  /**
+   * Safety:
+   * Must not be null
+   * must be callable with the appropriate arguments
+   */
+  void (*free_signature_func)(void *context, uint8_t *signature, size_t signature_size);
+  /**
+   * Safety:
+   * May be null
+   * must be callable with the appropriate arguments
+   */
+  void (*free_context_func)(void *context);
+} HederaSigner;
+
+typedef struct HederaSigners {
+  /**
+   * may only be null if signers_size is 0.
+   */
+  const struct HederaSigner *signers;
+  size_t signers_size;
+  /**
+   * Free this array of signers (must *not* free the contexts for the original signers)
+   */
+  void (*free)(const struct HederaSigner *signers, size_t signers_size);
+} HederaSigners;
+
 typedef struct HederaSemanticVersion {
   /**
    * Increases with incompatible API changes
@@ -433,6 +478,7 @@ size_t hedera_schedule_id_to_bytes(uint64_t schedule_id_shard,
 enum HederaError hedera_execute(const struct HederaClient *client,
                                 const char *request,
                                 const void *context,
+                                struct HederaSigners signers,
                                 void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
