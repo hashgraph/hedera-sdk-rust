@@ -71,10 +71,10 @@ public final class TokenInfo: Codable {
     public let autoRenewAccountId: AccountId?
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
-    public let autoRenewPeriod: TimeInterval?
+    public let autoRenewPeriod: Duration?
 
     /// The epoch second at which the token will expire
-    public let expirationTime: Date?
+    public let expirationTime: Timestamp?
 
     /// The memo associated with the token
     public let tokenMemo: String

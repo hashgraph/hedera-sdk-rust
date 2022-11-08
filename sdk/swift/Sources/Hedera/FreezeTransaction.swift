@@ -25,7 +25,7 @@ import Foundation
 public final class FreezeTransaction: Transaction {
     /// Create a new `FreezeTransaction`.
     public init(
-        startTime: Date? = nil,
+        startTime: Timestamp? = nil,
         fileId: FileId? = nil,
         fileHash: Data? = nil,
         freezeType: FreezeType = .unknown
@@ -37,11 +37,11 @@ public final class FreezeTransaction: Transaction {
     }
 
     /// The start time.
-    public var startTime: Date?
+    public var startTime: Timestamp?
 
     /// Sets the start time.
     @discardableResult
-    public func startTime(_ startTime: Date) -> Self {
+    public func startTime(_ startTime: Timestamp) -> Self {
         self.startTime = startTime
 
         return self

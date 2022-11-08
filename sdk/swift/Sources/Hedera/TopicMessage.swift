@@ -4,7 +4,7 @@ import Foundation
 /// Topic message records.
 public struct TopicMessage: Codable {
     /// The consensus timestamp of the message.
-    public let consensusTimestamp: Date
+    public let consensusTimestamp: Timestamp
 
     /// The content of the message.
     public let contents: Data
@@ -33,10 +33,7 @@ public struct TopicMessage: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        let consensusTimestampNanos = try container.decodeIfPresent(UInt64.self, forKey: .consensusTimestamp)!
-
-        consensusTimestamp = Date(unixTimestampNanos: consensusTimestampNanos)
-
+        consensusTimestamp = try container.decodeIfPresent(Timestamp.self, forKey: .consensusTimestamp)!
         contents = Data(base64Encoded: try container.decode(String.self, forKey: .contents))!
         runningHash = Data(base64Encoded: try container.decode(String.self, forKey: .runningHash))!
         runningHashVersion = try container.decode(UInt64.self, forKey: .runningHashVersion)

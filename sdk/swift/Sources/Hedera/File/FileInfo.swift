@@ -32,7 +32,7 @@ public final class FileInfo: Codable {
     public let size: UInt64
 
     /// Current time which this account is set to expire.
-    public let expirationTime: TimeInterval?
+    public let expirationTime: Duration?
 
     /// True if deleted but not yet expired.
     public let isDeleted: Bool
