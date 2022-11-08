@@ -55,7 +55,6 @@ use crate::{
     AccountId,
     Error,
     PublicKey,
-    SignaturePair,
 };
 
 pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
@@ -406,15 +405,15 @@ impl PrivateKey {
         matches!(self.0.data, PrivateKeyData::Ecdsa(_))
     }
 
-    pub(crate) fn sign(&self, message: &[u8]) -> SignaturePair {
-        let public = self.public_key();
-
+    pub(crate) fn sign(&self, message: &[u8]) -> Vec<u8> {
         match &self.0.data {
-            PrivateKeyData::Ed25519(key) => SignaturePair::ed25519(key.sign(message), public),
-            PrivateKeyData::Ecdsa(key) => SignaturePair::ecdsa(
-                key.sign_digest(sha3::Keccak256::new_with_prefix(message)),
-                public,
-            ),
+            PrivateKeyData::Ed25519(key) => key.sign(message).to_bytes().as_slice().to_vec(),
+            PrivateKeyData::Ecdsa(key) => {
+                let signature: k256::ecdsa::Signature =
+                    key.sign_digest(sha3::Keccak256::new_with_prefix(message));
+
+                signature.to_vec()
+            }
         }
     }
 
@@ -551,6 +550,14 @@ impl PrivateKey {
         }
 
         key
+    }
+
+    #[must_use]
+    pub(crate) fn _kind(&self) -> super::KeyKind {
+        match &self.0.data {
+            PrivateKeyData::Ed25519(_) => super::KeyKind::Ed25519,
+            PrivateKeyData::Ecdsa(_) => super::KeyKind::Ecdsa,
+        }
     }
 }
 
