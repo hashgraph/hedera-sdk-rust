@@ -29,7 +29,7 @@ public final class TokenNftInfo: Codable {
     public let accountId: AccountId
 
     /// Effective consensus timestamp at which the NFT was minted.
-    public let creationTime: Date
+    public let creationTime: Timestamp
 
     /// The unique metadata of the NFT.
     public let metadata: Data

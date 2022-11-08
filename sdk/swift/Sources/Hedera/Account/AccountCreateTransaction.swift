@@ -27,7 +27,7 @@ public final class AccountCreateTransaction: Transaction {
         key: Key? = nil,
         initialBalance: Hbar = 0,
         receiverSignatureRequired: Bool = false,
-        autoRenewPeriod: TimeInterval? = nil,
+        autoRenewPeriod: Duration? = nil,
         accountMemo: String = "",
         maxAutomaticTokenAssociations: UInt32 = 0,
         stakedAccountId: AccountId? = nil,
@@ -79,11 +79,11 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// The period until the account will be charged to extend its expiration date.
-    public var autoRenewPeriod: TimeInterval?
+    public var autoRenewPeriod: Duration?
 
     /// Sets the period until the account will be charged to extend its expiration date.
     @discardableResult
-    public func autoRenewPeriod(_ autoRenewPeriod: TimeInterval) -> Self {
+    public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
         self.autoRenewPeriod = autoRenewPeriod
 
         return self
@@ -165,7 +165,7 @@ public final class AccountCreateTransaction: Transaction {
         try container.encodeIfPresent(key, forKey: .key)
         try container.encode(initialBalance, forKey: .initialBalance)
         try container.encode(accountMemo, forKey: .accountMemo)
-        try container.encodeIfPresent(autoRenewPeriod?.wholeSeconds, forKey: .autoRenewPeriod)
+        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
         try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
         try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
         try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)

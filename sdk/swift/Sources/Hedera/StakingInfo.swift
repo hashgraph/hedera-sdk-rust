@@ -29,7 +29,7 @@ public struct StakingInfo: Codable {
     /// (such as starting staking or changing staked_node_id)
     /// or the most recent reward was earned, whichever is later.
     /// If this account or contract is not currently staked to a node, then this field is not set.
-    public let stakePeriodStart: Date?
+    public let stakePeriodStart: Timestamp?
 
     /// The amount in Hbar that will be received in the next reward situation.
     public let pendingReward: Hbar
@@ -47,15 +47,7 @@ public struct StakingInfo: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         declineStakingReward = try container.decode(Bool.self, forKey: .declineStakingReward)
-
-        let stakePeriodStartNanos = try container.decodeIfPresent(UInt64.self, forKey: .stakePeriodStart)
-
-        if let stakePeriodStartNanos = stakePeriodStartNanos {
-            stakePeriodStart = Date(unixTimestampNanos: stakePeriodStartNanos)
-        } else {
-            stakePeriodStart = nil
-        }
-
+        stakePeriodStart = try container.decodeIfPresent(Timestamp.self, forKey: .stakePeriodStart)
         pendingReward = try container.decode(Hbar.self, forKey: .pendingReward)
         stakedToMe = try container.decode(Hbar.self, forKey: .stakedToMe)
         stakedAccountId = try container.decodeIfPresent(AccountId.self, forKey: .stakedAccountId)
