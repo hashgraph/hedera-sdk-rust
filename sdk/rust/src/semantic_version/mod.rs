@@ -47,13 +47,13 @@ pub struct SemanticVersion {
     /// Increases with backwards-compatible bug fixes]
     pub patch: u32,
 
-    /// A pre-release version MAY be denoted by appending a hyphen and a series of dot separated identifiers (https://semver.org/#spec-item-9);
+    /// A pre-release version MAY be denoted by appending a hyphen and a series of dot separated identifiers (<https://semver.org/#spec-item-9>);
     /// so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘alpha.1’
     #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub prerelease: String,
 
     /// Build metadata MAY be denoted by appending a plus sign and a series of dot separated identifiers
-    /// immediately following the patch or pre-release version (https://semver.org/#spec-item-10);
+    /// immediately following the patch or pre-release version (<https://semver.org/#spec-item-10>);
     /// so given a semver 0.14.0-alpha.1+21AF26D3, this field would contain ‘21AF26D3’
     #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub build: String,

@@ -26,13 +26,45 @@ use libc::size_t;
 
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
-use crate::{
-    AccountId,
-    PublicKey,
-};
+use crate::protobuf::ToProtobuf;
+use crate::PublicKey;
+
+#[repr(C)]
+pub struct AccountId {
+    shard: u64,
+    realm: u64,
+    num: u64,
+    /// Safety:
+    /// - If `alias` is not null, it must:
+    ///   - be properly aligned
+    ///   - be dereferenceable
+    ///   - point to a valid instance of `PublicKey` (any `PublicKey` that `hedera` provides which hasn't been freed yet)
+    alias: *mut PublicKey,
+}
+
+impl AccountId {
+    // ties the lifetime of `PublicKey` to `self`, which is likely overly restrictive
+    pub(super) fn borrow_ref<'a>(&'a self) -> RefAccountId<'a> {
+        // safety: invariants of self require a non-null `PublicKey` to follow the required invariants of `NonNull::as_ref`.
+        let alias = unsafe { self.alias.as_ref() };
+
+        RefAccountId { shard: self.shard, realm: self.realm, num: self.num, alias }
+    }
+}
+
+impl From<crate::AccountId> for AccountId {
+    fn from(id: crate::AccountId) -> Self {
+        Self {
+            shard: id.shard,
+            realm: id.realm,
+            num: id.num,
+            alias: id.alias.map(Box::new).map_or_else(ptr::null_mut, Box::into_raw),
+        }
+    }
+}
 
 // sr: why clone when you could just not.
-struct RefAccountId<'a> {
+pub(super) struct RefAccountId<'a> {
     shard: u64,
     realm: u64,
     num: u64,
@@ -41,8 +73,16 @@ struct RefAccountId<'a> {
 
 impl<'a> RefAccountId<'a> {
     fn into_bytes(self) -> Vec<u8> {
-        use hedera_proto::services;
         use prost::Message;
+        self.to_protobuf().encode_to_vec()
+    }
+}
+
+impl<'a> ToProtobuf for RefAccountId<'a> {
+    type Protobuf = hedera_proto::services::AccountId;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        use hedera_proto::services;
 
         services::AccountId {
             realm_num: self.realm as i64,
@@ -52,7 +92,6 @@ impl<'a> RefAccountId<'a> {
                 Some(alias) => services::account_id::Account::Alias(alias.to_bytes_raw()),
             }),
         }
-        .encode_to_vec()
     }
 }
 
@@ -60,27 +99,15 @@ impl<'a> RefAccountId<'a> {
 #[no_mangle]
 pub unsafe extern "C" fn hedera_account_id_from_string(
     s: *const c_char,
-    id_shard: *mut u64,
-    id_realm: *mut u64,
-    id_num: *mut u64,
-    id_alias: *mut *mut PublicKey,
+    id: *mut AccountId,
 ) -> Error {
-    assert!(!id_shard.is_null());
-    assert!(!id_realm.is_null());
-    assert!(!id_num.is_null());
-    assert!(!id_alias.is_null());
+    assert!(!id.is_null());
 
     let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(AccountId::from_str(&s));
+    let parsed = ffi_try!(crate::AccountId::from_str(&s)).into();
 
     unsafe {
-        ptr::write(id_shard, parsed.shard);
-        ptr::write(id_realm, parsed.realm);
-        ptr::write(id_num, parsed.num);
-
-        if let Some(alias) = parsed.alias {
-            ptr::write(id_alias, Box::into_raw(Box::new(alias)));
-        }
+        ptr::write(id, parsed);
     }
 
     Error::Ok
@@ -91,29 +118,17 @@ pub unsafe extern "C" fn hedera_account_id_from_string(
 pub unsafe extern "C" fn hedera_account_id_from_bytes(
     bytes: *const u8,
     bytes_size: size_t,
-    id_shard: *mut u64,
-    id_realm: *mut u64,
-    id_num: *mut u64,
-    id_alias: *mut *mut PublicKey,
+    id: *mut AccountId,
 ) -> Error {
     assert!(!bytes.is_null());
-    assert!(!id_shard.is_null());
-    assert!(!id_realm.is_null());
-    assert!(!id_num.is_null());
-    assert!(!id_alias.is_null());
+    assert!(!id.is_null());
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
 
-    let parsed = ffi_try!(AccountId::from_bytes(&bytes));
+    let parsed = ffi_try!(crate::AccountId::from_bytes(&bytes)).into();
 
     unsafe {
-        ptr::write(id_shard, parsed.shard);
-        ptr::write(id_realm, parsed.realm);
-        ptr::write(id_num, parsed.num);
-
-        if let Some(alias) = parsed.alias {
-            ptr::write(id_alias, Box::into_raw(Box::new(alias)));
-        }
+        ptr::write(id, parsed);
     }
 
     Error::Ok
@@ -122,23 +137,12 @@ pub unsafe extern "C" fn hedera_account_id_from_bytes(
 /// Serialize the passed `AccountId` as bytes
 ///
 /// # Safety
-/// - `id_alias` must either be null or point to a valid public key.
+/// - `id` must uphold the safety requirements of `AccountId`.
 /// - `buf` must be valid for writes.
 /// - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
 #[no_mangle]
-pub unsafe extern "C" fn hedera_account_id_to_bytes(
-    id_shard: u64,
-    id_realm: u64,
-    id_num: u64,
-    id_alias: *const PublicKey,
-    buf: *mut *mut u8,
-) -> size_t {
-    // safety: `id_alias` must either be null or point to a valid public key.
-    let id_alias = unsafe { id_alias.as_ref() };
-
-    let bytes = RefAccountId { shard: id_shard, realm: id_realm, num: id_num, alias: id_alias }
-        .into_bytes()
-        .into_boxed_slice();
+pub unsafe extern "C" fn hedera_account_id_to_bytes(id: AccountId, buf: *mut *mut u8) -> size_t {
+    let bytes = id.borrow_ref().into_bytes().into_boxed_slice();
 
     let bytes = Box::leak(bytes);
     let len = bytes.len();

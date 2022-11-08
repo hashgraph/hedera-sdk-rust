@@ -24,7 +24,7 @@ mod time;
 #[macro_use]
 pub(crate) mod get;
 
-pub use convert::{
+pub(crate) use convert::{
     FromProtobuf,
     ToProtobuf,
 };
