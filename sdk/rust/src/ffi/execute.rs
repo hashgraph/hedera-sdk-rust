@@ -25,6 +25,7 @@ use std::ffi::{
 use std::os::raw::c_char;
 use std::ptr;
 
+use super::signer::Signers;
 use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
 use crate::ffi::runtime::RUNTIME;
@@ -60,6 +61,7 @@ pub unsafe extern "C" fn hedera_execute(
     client: *const Client,
     request: *const c_char,
     context: *const c_void,
+    signers: Signers,
     callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
 ) -> Error {
     assert!(!client.is_null());
@@ -70,6 +72,11 @@ pub unsafe extern "C" fn hedera_execute(
     let request: AnyRequest =
         ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
 
+    let signers_2: Vec<_> = signers.as_slice().iter().map(|it| it.to_csigner()).collect();
+
+    drop(signers);
+    let signers = signers_2;
+
     let callback = Callback::new(context, callback);
 
     RUNTIME.spawn(async move {
@@ -79,10 +86,16 @@ pub unsafe extern "C" fn hedera_execute(
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),
 
-            AnyRequest::Transaction(mut transaction) => transaction
-                .execute(client)
-                .await
-                .map(|response| serde_json::to_string(&response).unwrap()),
+            AnyRequest::Transaction(mut transaction) => {
+                for signer in signers {
+                    transaction.sign_signer(crate::signer::Signer::C(signer));
+                }
+
+                transaction
+                    .execute(client)
+                    .await
+                    .map(|response| serde_json::to_string(&response).unwrap())
+            }
 
             AnyRequest::MirrorQuery(mut mirror_query) => mirror_query
                 .execute(client)

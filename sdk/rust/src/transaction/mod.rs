@@ -186,8 +186,7 @@ where
 
     /// Sign the transaction.
     pub fn sign(&mut self, private_key: PrivateKey) -> &mut Self {
-        self.signers.push(Signer::PrivateKey(private_key));
-        self
+        self.sign_signer(Signer::PrivateKey(private_key))
     }
 
     /// Sign the transaction.
@@ -196,7 +195,11 @@ where
         public_key: PublicKey,
         signer: Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>,
     ) -> &mut Self {
-        self.signers.push(Signer::Arbitrary(public_key, signer));
+        self.sign_signer(Signer::Arbitrary(public_key, signer))
+    }
+
+    pub(crate) fn sign_signer(&mut self, signer: Signer) -> &mut Self {
+        self.signers.push(signer);
         self
     }
 }

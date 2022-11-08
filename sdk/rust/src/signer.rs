@@ -26,8 +26,8 @@ use crate::{
 pub(crate) enum Signer {
     PrivateKey(PrivateKey),
     Arbitrary(PublicKey, Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
-    // #[cfg(feature = "ffi")]
-    // C(CSigner),
+    #[cfg(feature = "ffi")]
+    C(crate::ffi::CSigner),
 }
 
 impl Signer {
@@ -36,6 +36,8 @@ impl Signer {
         match self {
             Signer::PrivateKey(it) => it.public_key(),
             Signer::Arbitrary(it, _) => *it,
+            #[cfg(feature = "ffi")]
+            Signer::C(it) => it.public_key(),
         }
     }
 
@@ -46,6 +48,8 @@ impl Signer {
                 let bytes = signer(&message);
                 (*public, bytes)
             }
+            #[cfg(feature = "ffi")]
+            Signer::C(it) => it.sign(message),
         }
     }
 }
