@@ -18,37 +18,34 @@
  * ‍
  */
 
-use async_trait::async_trait;
-
-use crate::error::BoxStdError;
 use crate::{
     PrivateKey,
-    SignaturePair,
+    PublicKey,
 };
 
-// todo(sr): not happy with this comment.
-/// Represents the capability to sign a message.
-#[async_trait]
-pub trait Signer: 'static + Send + Sync {
-    /// Attempt to sign the `message`.
-    ///
-    /// When signing is succesful, returns a `SignaturePair`.
-    async fn sign(&self, message: &[u8]) -> Result<SignaturePair, BoxStdError>;
+pub(crate) enum Signer {
+    PrivateKey(PrivateKey),
+    Arbitrary(PublicKey, Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
+    // #[cfg(feature = "ffi")]
+    // C(CSigner),
 }
 
-#[async_trait]
-impl Signer for PrivateKey {
-    async fn sign(&self, message: &[u8]) -> Result<SignaturePair, BoxStdError> {
-        Ok(self.sign(message))
+impl Signer {
+    // *Cheap* Accessor to get the public key without signing the message first.
+    pub(crate) fn public_key(&self) -> PublicKey {
+        match self {
+            Signer::PrivateKey(it) => it.public_key(),
+            Signer::Arbitrary(it, _) => *it,
+        }
     }
-}
 
-// TODO: EnvironmentSigner
-// TODO: GoogleCloudSecretSigner
-
-#[async_trait]
-impl Signer for Box<dyn Signer> {
-    async fn sign(&self, message: &[u8]) -> Result<SignaturePair, BoxStdError> {
-        self.as_ref().sign(message).await
+    pub(crate) fn sign(&self, message: &[u8]) -> (PublicKey, Vec<u8>) {
+        match self {
+            Signer::PrivateKey(it) => (it.public_key(), it.sign(message)),
+            Signer::Arbitrary(public, signer) => {
+                let bytes = signer(&message);
+                (*public, bytes)
+            }
+        }
     }
 }

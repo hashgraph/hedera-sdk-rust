@@ -42,12 +42,43 @@ use crate::{
     Error,
     Hbar,
     HbarUnit,
+    PublicKey,
     ToProtobuf,
     Transaction,
     TransactionHash,
     TransactionId,
     TransactionResponse,
 };
+
+#[derive(Debug)]
+struct SignaturePair {
+    signature: Vec<u8>,
+    public: PublicKey,
+}
+
+impl SignaturePair {
+    pub fn into_protobuf(self) -> services::SignaturePair {
+        let signature = match self.public.kind() {
+            crate::key::KeyKind::Ed25519 => {
+                services::signature_pair::Signature::Ed25519(self.signature)
+            }
+            crate::key::KeyKind::Ecdsa => {
+                services::signature_pair::Signature::EcdsaSecp256k1(self.signature)
+            }
+        };
+        services::SignaturePair {
+            signature: Some(signature),
+            // TODO: is there any way to utilize the _prefix_ nature of this field?
+            pub_key_prefix: self.public.to_bytes_raw(),
+        }
+    }
+}
+
+impl From<(PublicKey, Vec<u8>)> for SignaturePair {
+    fn from((public, signature): (PublicKey, Vec<u8>)) -> Self {
+        Self { public, signature }
+    }
+}
 
 #[async_trait]
 pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> {
@@ -103,12 +134,22 @@ where
 
         let body_bytes = transaction_body.encode_to_vec();
 
-        let mut signatures = Vec::with_capacity(1);
+        let mut signatures = Vec::with_capacity(1 + self.signers.len());
 
         let operator_signature =
             client.sign_with_operator(&body_bytes).await.map_err(Error::signature)?;
 
-        signatures.push(operator_signature.to_protobuf());
+        // todo: avoid the `.map(xyz).collect()`
+        signatures.push(SignaturePair::from(operator_signature));
+
+        for signer in &self.signers {
+            if signatures.iter().all(|it| it.public != signer.public_key()) {
+                let signature = signer.sign(&body_bytes);
+                signatures.push(SignaturePair::from(signature))
+            }
+        }
+
+        let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
 
         let signed_transaction = services::SignedTransaction {
             body_bytes,

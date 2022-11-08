@@ -22,11 +22,9 @@ use std::str::FromStr;
 
 use assert_matches::assert_matches;
 use expect_test::expect;
+use hex_literal::hex;
 
-use crate::{
-    PublicKey,
-    Signature,
-};
+use crate::PublicKey;
 
 #[test]
 fn ed25519_from_str() {
@@ -82,12 +80,9 @@ fn ed25519_verify() {
     )
     .unwrap();
 
-    let signature = Signature::ed25519(
-        ed25519_dalek::Signature::from_str(concat!(
-            "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef",
-            "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07"
-        ))
-        .unwrap(),
+    let signature = hex!(
+        "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
+        "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07"
     );
 
     pk.verify(b"hello, world", &signature).unwrap();
@@ -103,12 +98,9 @@ fn ecdsa_verify() {
     // notice that this doesn't match other impls
     // this is to avoid signature malleability.
     // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0032.mediawiki
-    let signature = Signature::ecdsa(
-        k256::ecdsa::Signature::from_str(concat!(
-            "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c",
-            "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
-        ))
-        .unwrap(),
+    let signature = hex!(
+        "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+        "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
     );
 
     pk.verify(b"hello world", &signature).unwrap();
@@ -121,12 +113,9 @@ fn ed25519_verify_bad_signature() {
     )
     .unwrap();
 
-    let signature = Signature::ed25519(
-        ed25519_dalek::Signature::from_str(concat!(
-            "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef",
-            "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f00"
-        ))
-        .unwrap(),
+    let signature = hex!(
+        "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
+        "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f00"
     );
 
     let err = assert_matches!(pk.verify(b"hello, world", &signature), Err(e) => e);
@@ -144,12 +133,9 @@ fn ecdsa_verify_bad_signature() {
   )
   .unwrap();
 
-    let signature = Signature::ecdsa(
-        k256::ecdsa::Signature::from_str(concat!(
-            "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c",
-            "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563850"
-        ))
-        .unwrap(),
+    let signature = hex!(
+        "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+        "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563850"
     );
 
     let err = assert_matches!(pk.verify(b"hello world", &signature), Err(e) => e);
@@ -164,17 +150,14 @@ fn ed25519_verify_error_ecdsa() {
     )
     .unwrap();
 
-    let signature = Signature::ecdsa(
-        k256::ecdsa::Signature::from_str(concat!(
-            "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c",
-            "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
-        ))
-        .unwrap(),
+    let signature = hex!(
+        "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
+        "086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
     );
 
     let err = assert_matches!(pk.verify(b"hello, world", &signature), Err(e) => e);
 
-    expect!["failed to verify a signature: Expected Ed25519 signature"].assert_eq(&err.to_string());
+    expect!["failed to verify a signature: signature error"].assert_eq(&err.to_string());
 }
 
 #[test]
@@ -184,15 +167,12 @@ fn ecdsa_verify_error_ed25519() {
   )
   .unwrap();
 
-    let signature = Signature::ed25519(
-        ed25519_dalek::Signature::from_str(concat!(
-            "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef",
-            "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07"
-        ))
-        .unwrap(),
+    let signature = hex!(
+        "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
+        "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07"
     );
 
     let err = assert_matches!(pk.verify(b"hello world", &signature), Err(e) => e);
 
-    expect!["failed to verify a signature: Expected Ecdsa signature"].assert_eq(&err.to_string());
+    expect!["failed to verify a signature: signature error"].assert_eq(&err.to_string());
 }

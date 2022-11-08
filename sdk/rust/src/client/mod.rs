@@ -35,8 +35,7 @@ use crate::error::BoxStdError;
 use crate::{
     AccountId,
     PrivateKey,
-    SignaturePair,
-    Signer,
+    PublicKey,
     TransactionId,
 };
 
@@ -45,7 +44,7 @@ mod network;
 
 struct Operator {
     account_id: AccountId,
-    signer: Box<dyn Signer>,
+    signer: PrivateKey,
 }
 
 /// Managed client for use on the Hedera network.
@@ -101,8 +100,7 @@ impl Client {
     ///
     pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
         block_in_place(|| {
-            *self.operator.blocking_write() =
-                Some(Operator { account_id: id, signer: Box::new(key) });
+            *self.operator.blocking_write() = Some(Operator { account_id: id, signer: key });
         });
     }
 
@@ -114,9 +112,9 @@ impl Client {
     pub(crate) async fn sign_with_operator(
         &self,
         body_bytes: &[u8],
-    ) -> Result<SignaturePair, BoxStdError> {
+    ) -> Result<(PublicKey, Vec<u8>), BoxStdError> {
         if let Some(operator) = &*self.operator.read().await {
-            operator.signer.sign(body_bytes).await
+            Ok((operator.signer.public_key(), operator.signer.sign(&body_bytes)))
         } else {
             unreachable!()
         }

@@ -37,11 +37,11 @@ fn ed25519_sign() {
     )
     .unwrap();
 
-    let signature = private_key.sign(b"hello, world").signature;
+    let signature = private_key.sign(b"hello, world");
     expect![[r#"
-            Signature::Ed25519(9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07)
-        "#]]
-    .assert_debug_eq(&signature);
+        "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f07"
+    "#]]
+        .assert_debug_eq(&hex::encode(signature));
 }
 
 #[test]
@@ -54,11 +54,11 @@ fn ecdsa_sign() {
     // notice that this doesn't match other impls
     // this is to avoid signature malleability.
     // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0032.mediawiki
-    let signature = private_key.sign(b"hello world").signature;
+    let signature = private_key.sign(b"hello world");
     expect![[r#"
-        Signature::Ecdsa(f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851)
+        "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
     "#]]
-    .assert_debug_eq(&signature);
+    .assert_debug_eq(&hex::encode(signature));
 }
 
 #[test]

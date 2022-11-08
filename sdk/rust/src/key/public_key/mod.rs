@@ -33,6 +33,7 @@ use std::str::FromStr;
 use ed25519_dalek::ed25519::signature::DigestVerifier;
 use ed25519_dalek::Verifier;
 use hedera_proto::services;
+use k256::ecdsa;
 use pkcs8::der::{
     Decode,
     Encode,
@@ -311,28 +312,31 @@ impl PublicKey {
     /// # Errors
     /// - [`Error::SignatureVerify`] if the signature algorithm doesn't match this `PublicKey`.
     /// - [`Error::SignatureVerify`] if the signature is invalid for this `PublicKey`.
-    pub fn verify(&self, msg: &[u8], signature: &crate::Signature) -> crate::Result<()> {
+    pub fn verify(&self, msg: &[u8], signature: &[u8]) -> crate::Result<()> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => {
-                // todo: figure out what the signature actually was if it wasn't ed25519
-                // technically it'll always be ecdsa-secp256k1 but that is annoyingly not future proof.
-                let signature = signature
-                    .as_ed25519()
-                    .ok_or_else(|| "Expected Ed25519 signature".to_owned())
+                let signature = ed25519_dalek::Signature::from_bytes(signature)
                     .map_err(Error::signature_verify)?;
 
-                key.verify(msg, signature).map_err(Error::signature_verify)
+                key.verify(msg, &signature).map_err(Error::signature_verify)
             }
             PublicKeyData::Ecdsa(key) => {
                 // todo: see above comment on ed25519 signatures
-                let signature = signature
-                    .as_ecdsa()
-                    .ok_or_else(|| "Expected Ecdsa signature".to_owned())
-                    .map_err(Error::signature_verify)?;
 
-                key.verify_digest(sha3::Keccak256::new_with_prefix(msg), signature)
+                let signature =
+                    ecdsa::Signature::try_from(signature).map_err(Error::signature_verify)?;
+
+                key.verify_digest(sha3::Keccak256::new_with_prefix(msg), &signature)
                     .map_err(Error::signature_verify)
             }
+        }
+    }
+
+    #[must_use]
+    pub(crate) fn kind(&self) -> super::KeyKind {
+        match &self.0 {
+            PublicKeyData::Ed25519(_) => super::KeyKind::Ed25519,
+            PublicKeyData::Ecdsa(_) => super::KeyKind::Ecdsa,
         }
     }
 }
