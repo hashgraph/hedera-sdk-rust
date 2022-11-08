@@ -84,6 +84,7 @@ mod transfer_transaction;
 #[cfg(feature = "ffi")]
 mod ffi;
 mod hbar;
+mod transfer;
 
 pub use account::{
     AccountAllowanceApproveTransaction,
@@ -203,6 +204,7 @@ pub use token::{
     TokenMintTransaction,
     TokenNftInfo,
     TokenNftInfoQuery,
+    TokenNftTransfer,
     TokenPauseTransaction,
     TokenRevokeKycTransaction,
     TokenSupplyType,
@@ -232,4 +234,5 @@ pub use transaction_record::TransactionRecord;
 pub use transaction_record_query::TransactionRecordQuery;
 pub(crate) use transaction_record_query::TransactionRecordQueryData;
 pub use transaction_response::TransactionResponse;
+pub use transfer::Transfer;
 pub use transfer_transaction::TransferTransaction;

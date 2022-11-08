@@ -35,6 +35,7 @@ mod token_info_query;
 mod token_mint_transaction;
 mod token_nft_info;
 mod token_nft_info_query;
+mod token_nft_transfer;
 mod token_pause_transaction;
 mod token_revoke_kyc_transaction;
 mod token_supply_type;
@@ -93,6 +94,7 @@ pub use token_nft_info_query::{
     TokenNftInfoQuery,
     TokenNftInfoQueryData,
 };
+pub use token_nft_transfer::TokenNftTransfer;
 pub use token_pause_transaction::{
     TokenPauseTransaction,
     TokenPauseTransactionData,

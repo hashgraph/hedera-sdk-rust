@@ -18,18 +18,25 @@
  * ‍
  */
 
+use std::collections::HashMap;
+
 use hedera_proto::services;
 use time::OffsetDateTime;
 
 use crate::{
+    AccountId,
+    ContractFunctionResult,
     FromProtobuf,
     Hbar,
     PublicKey,
     ScheduleId,
     Tinybar,
     TokenAssociation,
+    TokenId,
+    TokenNftTransfer,
     TransactionId,
     TransactionReceipt,
+    Transfer,
 };
 
 /// The complete record for a transaction on Hedera that has reached consensus.
@@ -54,6 +61,20 @@ pub struct TransactionRecord {
         serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
     )]
     pub consensus_timestamp: OffsetDateTime,
+
+    /// Record of the value returned by the smart contract function or constructor.
+    pub contract_function_result: Option<ContractFunctionResult>,
+
+    /// All hbar transfers as a result of this transaction, such as fees, or
+    /// transfers performed by the transaction, or by a smart contract it calls,
+    /// or by the creation of threshold records that it triggers.
+    pub transfers: Vec<Transfer>,
+
+    /// All fungible token transfers as a result of this transaction.
+    pub token_transfers: HashMap<TokenId, HashMap<AccountId, i64>>,
+
+    /// All NFT Token transfers as a result of this transaction.
+    pub token_nft_transfers: HashMap<TokenId, Vec<TokenNftTransfer>>,
 
     /// The ID of the transaction this record represents.
     pub transaction_id: TransactionId,
@@ -103,11 +124,6 @@ pub struct TransactionRecord {
     // /// whose input was a 384-bit string.
     // TODO: pub prng_number: i32,
 }
-// TODO: contractFunctionResult
-// TODO: transfers
-// TODO: tokenTransfers
-// TODO: tokenTransferList
-// TODO: tokenNftTransfers
 // TODO: paid_staking_rewards
 
 impl TransactionRecord {
@@ -116,6 +132,7 @@ impl TransactionRecord {
         duplicates: Vec<Self>,
         children: Vec<Self>,
     ) -> crate::Result<Self> {
+        use services::transaction_record::Body;
         let receipt = pb_getf!(record, receipt)?;
         let receipt = <TransactionReceipt as FromProtobuf<_>>::from_protobuf(receipt)?;
 
@@ -133,10 +150,57 @@ impl TransactionRecord {
             .map(TokenAssociation::from_protobuf)
             .collect::<crate::Result<Vec<_>>>()?;
 
+        let contract_function_result = record.body.map(|it| match it {
+            Body::ContractCallResult(it) | Body::ContractCreateResult(it) => it,
+        });
+
+        let contract_function_result =
+            contract_function_result.map(ContractFunctionResult::from_protobuf).transpose()?;
+
+        let transfers = record.transfer_list.map_or_else(Vec::new, |it| it.account_amounts);
+        let transfers: Result<Vec<_>, _> =
+            transfers.into_iter().map(Transfer::from_protobuf).collect();
+
+        let transfers = transfers?;
+
+        let (token_transfers, token_nft_transfers) = {
+            let mut token_transfers = HashMap::with_capacity(record.token_transfer_lists.len());
+
+            let mut token_nft_transfers: HashMap<TokenId, Vec<TokenNftTransfer>> =
+                HashMap::with_capacity(record.token_transfer_lists.len());
+
+            for transfer_list in record.token_transfer_lists {
+                let token_id = pb_getf!(transfer_list, token)?;
+                let token_id = TokenId::from_protobuf(token_id)?;
+
+                // `.insert` would be the most idiomatic way, but this matches behavior with Java.
+                let token_transfers = token_transfers
+                    .entry(token_id)
+                    .or_insert_with(|| HashMap::with_capacity(transfer_list.transfers.len()));
+
+                for it in transfer_list.transfers {
+                    let account_id = AccountId::from_protobuf(pb_getf!(it, account_id)?)?;
+                    token_transfers.insert(account_id, it.amount);
+                }
+
+                let nft_transfers: Result<Vec<_>, _> = transfer_list
+                    .nft_transfers
+                    .into_iter()
+                    .map(|it| TokenNftTransfer::from_protobuf(it, token_id))
+                    .collect();
+                let nft_transfers = nft_transfers?;
+
+                token_nft_transfers.entry(token_id).or_default().extend_from_slice(&nft_transfers);
+            }
+
+            (token_transfers, token_nft_transfers)
+        };
+
         Ok(Self {
             receipt,
             transaction_hash: record.transaction_hash,
             consensus_timestamp: consensus_timestamp.into(),
+            contract_function_result,
             transaction_id: TransactionId::from_protobuf(transaction_id)?,
             transaction_memo: record.memo,
             transaction_fee: Hbar::from_tinybars(record.transaction_fee as Tinybar),
@@ -147,6 +211,9 @@ impl TransactionRecord {
             ethereum_hash: record.ethereum_hash,
             children,
             alias_key,
+            transfers,
+            token_transfers,
+            token_nft_transfers,
         })
     }
 }
