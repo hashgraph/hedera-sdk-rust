@@ -106,8 +106,7 @@ public final class AccountId: EntityId {
     }
 
     public func toBytes() -> Data {
-        self.unsafeWithCHedera {
-            (hedera) in
+        self.unsafeWithCHedera { (hedera) in
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_account_id_to_bytes(hedera, &buf)
 

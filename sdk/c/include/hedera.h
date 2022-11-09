@@ -138,6 +138,18 @@ typedef struct HederaNetworkVersionInfo {
   struct HederaSemanticVersion services_version;
 } HederaNetworkVersionInfo;
 
+typedef struct HederaTimestamp {
+  uint64_t secs;
+  uint32_t nanos;
+} HederaTimestamp;
+
+typedef struct HederaTransactionId {
+  struct HederaAccountId account_id;
+  struct HederaTimestamp valid_start;
+  int32_t nonce;
+  bool scheduled;
+} HederaTransactionId;
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -1214,6 +1226,20 @@ enum HederaError hedera_token_association_from_bytes(const uint8_t *bytes,
                                                      char **s);
 
 enum HederaError hedera_token_association_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+/**
+ * # Safety
+ * - `s` must be a valid string
+ * - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
+ */
+enum HederaError hedera_transaction_id_from_string(const char *s,
+                                                   struct HederaTransactionId *transation_id);
+
+enum HederaError hedera_transaction_id_from_bytes(const uint8_t *bytes,
+                                                  size_t bytes_size,
+                                                  struct HederaTransactionId *transation_id);
+
+size_t hedera_transaction_id_to_bytes(struct HederaTransactionId id, uint8_t **buf);
 
 /**
  * # Safety

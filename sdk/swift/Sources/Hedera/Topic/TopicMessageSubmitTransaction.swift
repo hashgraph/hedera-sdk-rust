@@ -60,12 +60,11 @@ public final class TopicMessageSubmitTransaction: Transaction {
     /// The `TransactionId` of the first chunk.
     ///
     /// Should get copied to every subsequent chunk in a fragmented message.
-    // TODO: TransactionId
-    public var initialTransactionId: String?
+    public var initialTransactionId: TransactionId?
 
     /// Sets the `TransactionId` of the first chunk.
     @discardableResult
-    public func initialTransactionId(_ initialTransactionId: String) -> Self {
+    public func initialTransactionId(_ initialTransactionId: TransactionId) -> Self {
         self.initialTransactionId = initialTransactionId
 
         return self
