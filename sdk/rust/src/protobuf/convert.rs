@@ -39,6 +39,22 @@ pub trait ToProtobuf: Send + Sync {
     }
 }
 
+impl<T: ToProtobuf> ToProtobuf for Option<T> {
+    type Protobuf = Option<T::Protobuf>;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        self.as_ref().map(T::to_protobuf)
+    }
+}
+
+impl<T: ToProtobuf> ToProtobuf for Vec<T> {
+    type Protobuf = Vec<T::Protobuf>;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        self.iter().map(T::to_protobuf).collect()
+    }
+}
+
 /// Convert from a `hedera_protobufs` type.
 pub trait FromProtobuf<Protobuf> {
     /// Attempt to convert from `Protobuf` to `Self`.
@@ -64,6 +80,18 @@ pub trait FromProtobuf<Protobuf> {
         Protobuf: prost::Message + Default,
     {
         Protobuf::decode(bytes).map_err(Error::from_protobuf).and_then(Self::from_protobuf)
+    }
+}
+
+impl<T, P> FromProtobuf<Option<P>> for Option<T>
+where
+    T: FromProtobuf<P>,
+{
+    fn from_protobuf(pb: Option<P>) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        pb.map(T::from_protobuf).transpose()
     }
 }
 
