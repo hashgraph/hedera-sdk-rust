@@ -28,7 +28,7 @@ private typealias UnsafeFromBytesFunc = @convention(c) (
 ) -> HederaError
 
 /// A public key on the Hedera network.
-public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Codable {
+public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Codable, Equatable, Hashable {
     internal let ptr: OpaquePointer
 
     // sadly, we can't avoid a leaky abstraction here.
@@ -190,6 +190,16 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         var container = encoder.singleValueContainer()
 
         try container.encode(String(describing: self))
+    }
+
+    public static func == (lhs: PublicKey, rhs: PublicKey) -> Bool {
+        // this will always be true for public keys, DER is a stable format with canonicalization.
+        // ideally we'd do this a different way, but that needs to wait until ffi is gone.
+        lhs.toBytesDer() == rhs.toBytesDer()
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(toBytesDer())
     }
 
     deinit {

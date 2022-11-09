@@ -89,7 +89,7 @@ pub struct TransactionRecord {
     /// Reference to the scheduled transaction ID that this transaction record represents.
     pub schedule_ref: Option<ScheduleId>,
 
-    /// All custom fees that were assessed during a CryptoTransfer, and must be paid if the
+    /// All custom fees that were assessed during a [`TransferTransaction`](crate::TransferTransaction), and must be paid if the
     /// transaction status resolved to SUCCESS.
     pub assessed_custom_fees: Vec<AssessedCustomFee>,
 
