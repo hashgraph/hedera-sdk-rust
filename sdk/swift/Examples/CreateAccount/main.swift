@@ -36,7 +36,7 @@ public enum Program {
 
         let response = try await AccountCreateTransaction()
             .key(.single(newKey.getPublicKey()))
-            .initialBalance(500_000_000)
+            .initialBalance(5)
             .execute(client)
 
         let receipt = try await response.getReceipt(client)
