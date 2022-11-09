@@ -1,7 +1,7 @@
 import CHedera
 import Foundation
 
-public struct TransactionId: Codable, ExpressibleByStringLiteral, LosslessStringConvertible {
+public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, LosslessStringConvertible {
     /// The Account ID that paid for this transaction.
     public let accountId: AccountId
 
