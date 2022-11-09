@@ -25,6 +25,7 @@ use time::OffsetDateTime;
 
 use crate::{
     AccountId,
+    AssessedCustomFee,
     ContractFunctionResult,
     FromProtobuf,
     Hbar,
@@ -88,9 +89,10 @@ pub struct TransactionRecord {
     /// Reference to the scheduled transaction ID that this transaction record represents.
     pub schedule_ref: Option<ScheduleId>,
 
-    // /// All custom fees that were assessed during a CryptoTransfer, and must be paid if the
-    // /// transaction status resolved to SUCCESS.
-    // TODO: pub assessed_custom_fees: Vec<AssessedCustomFee>,
+    /// All custom fees that were assessed during a CryptoTransfer, and must be paid if the
+    /// transaction status resolved to SUCCESS.
+    pub assessed_custom_fees: Vec<AssessedCustomFee>,
+
     /// All token associations implicitly created while handling this transaction
     pub automatic_token_associations: Vec<TokenAssociation>,
 
@@ -134,34 +136,26 @@ impl TransactionRecord {
     ) -> crate::Result<Self> {
         use services::transaction_record::Body;
         let receipt = pb_getf!(record, receipt)?;
-        let receipt = <TransactionReceipt as FromProtobuf<_>>::from_protobuf(receipt)?;
+        let receipt = TransactionReceipt::from_protobuf(receipt)?;
 
         let consensus_timestamp = pb_getf!(record, consensus_timestamp)?;
         let transaction_id = pb_getf!(record, transaction_id)?;
-        let schedule_ref = record.schedule_ref.map(ScheduleId::from_protobuf).transpose()?;
+        let schedule_ref = Option::from_protobuf(record.schedule_ref)?;
         let parent_consensus_timestamp = record.parent_consensus_timestamp.map(Into::into);
 
         let alias_key =
             (!record.alias.is_empty()).then(|| PublicKey::from_bytes(&record.alias)).transpose()?;
 
-        let automatic_token_associations = record
-            .automatic_token_associations
-            .into_iter()
-            .map(TokenAssociation::from_protobuf)
-            .collect::<crate::Result<Vec<_>>>()?;
+        let automatic_token_associations = Vec::from_protobuf(record.automatic_token_associations)?;
 
         let contract_function_result = record.body.map(|it| match it {
             Body::ContractCallResult(it) | Body::ContractCreateResult(it) => it,
         });
 
-        let contract_function_result =
-            contract_function_result.map(ContractFunctionResult::from_protobuf).transpose()?;
+        let contract_function_result = Option::from_protobuf(contract_function_result)?;
 
         let transfers = record.transfer_list.map_or_else(Vec::new, |it| it.account_amounts);
-        let transfers: Result<Vec<_>, _> =
-            transfers.into_iter().map(Transfer::from_protobuf).collect();
-
-        let transfers = transfers?;
+        let transfers = Vec::from_protobuf(transfers)?;
 
         let (token_transfers, token_nft_transfers) = {
             let mut token_transfers = HashMap::with_capacity(record.token_transfer_lists.len());
@@ -214,6 +208,7 @@ impl TransactionRecord {
             transfers,
             token_transfers,
             token_nft_transfers,
+            assessed_custom_fees: Vec::from_protobuf(record.assessed_custom_fees)?,
         })
     }
 }
@@ -227,17 +222,9 @@ impl FromProtobuf<services::response::Response> for TransactionRecord {
 
         let record = pb_getf!(pb, transaction_record)?;
 
-        let duplicates = pb
-            .duplicate_transaction_records
-            .into_iter()
-            .map(<TransactionRecord as FromProtobuf<_>>::from_protobuf)
-            .collect::<crate::Result<_>>()?;
+        let duplicates = Vec::from_protobuf(pb.duplicate_transaction_records)?;
 
-        let children = pb
-            .child_transaction_records
-            .into_iter()
-            .map(<TransactionRecord as FromProtobuf<_>>::from_protobuf)
-            .collect::<crate::Result<_>>()?;
+        let children = Vec::from_protobuf(pb.child_transaction_records)?;
 
         Self::from_protobuf(record, duplicates, children)
     }

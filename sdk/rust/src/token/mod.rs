@@ -18,6 +18,7 @@
  * ‍
  */
 
+mod assessed_custom_fee;
 mod custom_fees;
 mod nft_id;
 mod token_associate_transaction;
@@ -45,6 +46,7 @@ mod token_unpause_transaction;
 mod token_update_transaction;
 mod token_wipe_transaction;
 
+pub use assessed_custom_fee::AssessedCustomFee;
 pub use nft_id::NftId;
 pub use token_associate_transaction::{
     TokenAssociateTransaction,

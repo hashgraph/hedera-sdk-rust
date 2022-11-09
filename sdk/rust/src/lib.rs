@@ -188,6 +188,7 @@ pub use system::{
     SystemUndeleteTransaction,
 };
 pub use token::{
+    AssessedCustomFee,
     NftId,
     TokenAssociateTransaction,
     TokenAssociation,
