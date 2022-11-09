@@ -105,8 +105,8 @@ impl Client {
     }
 
     /// Generate a new transaction ID from the stored operator account ID, if present.
-    pub(crate) fn generate_transaction_id(&self) -> Option<TransactionId> {
-        self.operator.blocking_read().as_ref().map(|it| it.account_id).map(TransactionId::generate)
+    pub(crate) async fn generate_transaction_id(&self) -> Option<TransactionId> {
+        self.operator.read().await.as_ref().map(|it| it.account_id).map(TransactionId::generate)
     }
 
     pub(crate) async fn sign_with_operator(

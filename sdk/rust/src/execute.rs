@@ -121,10 +121,13 @@ where
     // if we need to generate a transaction ID for this request (and one was not provided),
     // generate one now
     let explicit_transaction_id = executable.transaction_id();
-    let mut transaction_id = executable
-        .requires_transaction_id()
-        .then(|| explicit_transaction_id.or_else(|| client.generate_transaction_id()))
-        .flatten();
+    let mut transaction_id = match executable.requires_transaction_id() {
+        false => None,
+        true => match explicit_transaction_id {
+            Some(id) => Some(id),
+            None => client.generate_transaction_id().await,
+        },
+    };
 
     // if we were explicitly given a list of nodes to use, we iterate through each
     // of the given nodes (in a random order)
@@ -215,7 +218,7 @@ where
                         // the transaction that was generated has since expired
                         // re-generate the transaction ID and try again, immediately
                         last_error = Some(executable.make_error_pre_check(status, transaction_id));
-                        transaction_id = client.generate_transaction_id();
+                        transaction_id = client.generate_transaction_id().await;
                         continue;
                     }
 
