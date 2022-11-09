@@ -35,6 +35,20 @@ public struct TransactionRecord: Codable {
     /// The consensus timestamp.
     public let consensusTimestamp: Timestamp
 
+    /// Record of the value returned by the smart contract function or constructor.
+    public let contractFunctionResult: ContractFunctionResult?
+
+    /// All hbar transfers as a result of this transaction, such as fees, or
+    /// transfers performed by the transaction, or by a smart contract it calls,
+    /// or by the creation of threshold records that it triggers.
+    public let transfers: [Transfer]
+
+    /// All fungible token transfers as a result of this transaction.
+    public let tokenTransfers: [TokenId: [AccountId: Int64]]
+
+    /// All NFT Token transfers as a result of this transaction.
+    public let tokenNftTransfers: [TokenId: [TokenNftTransfer]]
+
     /// The ID of the transaction this record represents.
     public let transactionId: TransactionId
 
@@ -46,6 +60,10 @@ public struct TransactionRecord: Codable {
 
     /// Reference to the scheduled transaction ID that this transaction record represents.
     public let scheduleRef: ScheduleId?
+
+    /// All custom fees that were assessed during a ``TransferTransaction``, and must be paid if the
+    /// transaction status resolved to SUCCESS.
+    public let assessedCustomFees: [AssessedCustomFee]
 
     /// All token associations implicitly created while handling this transaction
     public let automaticTokenAssociations: [TokenAssociation]
@@ -76,10 +94,16 @@ public struct TransactionRecord: Codable {
         receipt = try container.decode(TransactionReceipt.self, forKey: .receipt)
         transactionHash = Data(base64Encoded: try container.decode(String.self, forKey: .transactionHash))!
         consensusTimestamp = try container.decode(Timestamp.self, forKey: .consensusTimestamp)
+        contractFunctionResult = try container.decodeIfPresent(
+            ContractFunctionResult.self, forKey: .contractFunctionResult)
+        transfers = try container.decode([Transfer].self, forKey: .transfers)
+        tokenTransfers = try container.decode(Dictionary.self, forKey: .tokenTransfers)
+        tokenNftTransfers = try container.decode(Dictionary.self, forKey: .tokenNftTransfers)
         transactionId = try container.decode(TransactionId.self, forKey: .transactionId)
         transactionMemo = try container.decode(String.self, forKey: .transactionMemo)
         transactionFee = try container.decode(Hbar.self, forKey: .transactionFee)
         scheduleRef = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleRef)
+        assessedCustomFees = try container.decode([AssessedCustomFee].self, forKey: .assessedCustomFees)
         automaticTokenAssociations = try container.decode([TokenAssociation].self, forKey: .automaticTokenAssociations)
 
         parentConsensusTimestamp = try container.decodeIfPresent(Timestamp.self, forKey: .parentConsensusTimestamp)
