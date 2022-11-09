@@ -1,17 +1,17 @@
 import CHedera
 import Foundation
 
-func sign(_ context: UnsafeMutableRawPointer?, _ message: UnsafePointer<UInt8>?, _ messageSize: size_t, _ signature: UnsafeMutablePointer<UnsafePointer<UInt8>?>?) -> size_t {
+func sign(
+    _ context: UnsafeMutableRawPointer?, _ message: UnsafePointer<UInt8>?, _ messageSize: size_t,
+    _ signature: UnsafeMutablePointer<UnsafePointer<UInt8>?>?
+) -> size_t {
     let signer = Unmanaged<Signer>.fromOpaque(context!).takeUnretainedValue()
 
-    
     // have to copy; we don't have a mutable pointer
     let messageData = Data(bytes: message!, count: messageSize)
 
-
     let signatureData = signer.signFunc(messageData)
 
-    
     // raw pointer timeeee (yes, we do need to double copy.)
     let buffer = signatureData.withUnsafeBytes {
         (dataBuffer) in
@@ -24,7 +24,9 @@ func sign(_ context: UnsafeMutableRawPointer?, _ message: UnsafePointer<UInt8>?,
     return buffer.count
 }
 
-func freeSignature(_ context: UnsafeMutableRawPointer?, _ signature: UnsafeMutablePointer<UInt8>?, _ signatureSize: size_t) {
+func freeSignature(
+    _ context: UnsafeMutableRawPointer?, _ signature: UnsafeMutablePointer<UInt8>?, _ signatureSize: size_t
+) {
     UnsafeMutableBufferPointer(start: signature!, count: signatureSize).deallocate()
 }
 
@@ -38,7 +40,7 @@ func hackMutablePointerToImmutable<Pointee>(_ ptr: UnsafePointer<Pointee>?) -> U
 }
 
 public class Signer {
-    internal init(_ publicKey: PublicKey, _  signFunc: @escaping (Data) -> Data) {
+    internal init(_ publicKey: PublicKey, _ signFunc: @escaping (Data) -> Data) {
         self.publicKey = publicKey
         self.signFunc = signFunc
     }
@@ -49,7 +51,9 @@ public class Signer {
     internal func unsafeIntoHederaSigner() -> HederaSigner {
         let unmanaged = Unmanaged.passRetained(self)
         let ptr = unmanaged.toOpaque()
-        return HederaSigner(public_key: self.publicKey.ptr, context: ptr, sign_func: sign, free_signature_func: freeSignature, free_context_func: freeContext)
+        return HederaSigner(
+            public_key: self.publicKey.ptr, context: ptr, sign_func: sign, free_signature_func: freeSignature,
+            free_context_func: freeContext)
     }
 }
 

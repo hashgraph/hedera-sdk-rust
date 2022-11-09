@@ -59,7 +59,6 @@ extension Request {
         return try decodeResponse(responseBytes)
     }
 
-
     /// Execute this request against the provided client of the Hedera network.
     public func execute(_ client: Client) async throws -> Response {
         // encode self as a JSON request to pass to Rust
