@@ -773,6 +773,20 @@ bool hedera_private_key_is_ed25519(struct HederaPrivateKey *key);
 bool hedera_private_key_is_ecdsa(struct HederaPrivateKey *key);
 
 /**
+ * # Safety
+ * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+ * - `message` must be valid for reads of up to `message_size` bytes.
+ * - `buf` must be valid for writes according to [*Rust* pointer rules]
+ * - the length of the returned buffer must not be modified.
+ * - the returned pointer must NOT be freed with `free`.
+ * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+ */
+size_t hedera_private_key_sign(struct HederaPrivateKey *key,
+                               const uint8_t *message,
+                               size_t message_size,
+                               uint8_t **buf);
+
+/**
  * Returns true if calling [`derive`](Self::derive) on `key` would succeed.
  * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
  *
@@ -1049,6 +1063,24 @@ char *hedera_public_key_to_string_der(struct HederaPublicKey *key);
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
 char *hedera_public_key_to_string_raw(struct HederaPublicKey *key);
+
+/**
+ * Verify a `signature` on a `message` with this public key.
+ *
+ * # Safety
+ * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+ * - `message` must be valid for reads of up to `message_size` message.
+ * - `signature` must be valid for reads of up to `signature_size` signature.
+ *
+ * # Errors
+ * - [`Error::SignatureVerify`] if the signature algorithm doesn't match this `PublicKey`.
+ * - [`Error::SignatureVerify`] if the signature is invalid for this `PublicKey`.
+ */
+enum HederaError hedera_public_key_verify(struct HederaPublicKey *key,
+                                          const uint8_t *message,
+                                          size_t message_size,
+                                          const uint8_t *signature,
+                                          size_t signature_size);
 
 /**
  * Returns `true` if `key` is an Ed25519 `PublicKey`.

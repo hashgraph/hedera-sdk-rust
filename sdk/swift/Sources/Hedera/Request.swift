@@ -40,7 +40,8 @@ extension Request {
         // start an unmanaged continuation to bridge a C callback with Swift async
         let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
             // invoke `hedera_execute`, callback will be invoked on request completion
-            let err = hedera_execute(client.ptr, request, continuation, HederaSigners()) { continuation, err, responsePtr in
+            let err = hedera_execute(client.ptr, request, continuation, HederaSigners()) {
+                continuation, err, responsePtr in
                 if err != HEDERA_ERROR_OK {
                     // an error has occurred, consume from the TLS storage for the error
                     // and throw it up back to the async task
