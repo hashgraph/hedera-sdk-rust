@@ -40,7 +40,9 @@ mod schedule_info;
 mod semantic_version;
 mod staking_info;
 mod subscribe;
+mod timestamp;
 mod token_association;
+mod transaction_id;
 mod transaction_receipt;
 mod util;
 
@@ -49,3 +51,4 @@ use account_id::{
     RefAccountId,
 };
 use semantic_version::SemanticVersion;
+use timestamp::Timestamp;
