@@ -35,7 +35,7 @@ public class Transaction: Request {
         self.signWith(privateKey.getPublicKey()) { privateKey.sign($0) }
     }
 
-    @discardableResult 
+    @discardableResult
     public func signWith(_ publicKey: PublicKey, _ signer: @escaping (Data) -> (Data)) -> Self {
         self.signers.append(Signer(publicKey, signer))
 
