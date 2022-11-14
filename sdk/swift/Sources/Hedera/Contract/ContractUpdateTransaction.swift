@@ -102,6 +102,13 @@ public final class ContractUpdateTransaction: Transaction {
         return self
     }
 
+    @discardableResult
+    public func clearMemo() -> Self {
+        contractMemo = nil
+
+        return self
+    }
+
     /// The maximum number of tokens that this contract can be automatically associated with.
     public var maxAutomaticTokenAssociations: UInt32?
 
@@ -126,6 +133,13 @@ public final class ContractUpdateTransaction: Transaction {
         return self
     }
 
+    @discardableResult
+    public func clearAutoRenewAccountId() -> Self {
+        autoRenewAccountId = nil
+
+        return self
+    }
+
     /// The ID of the account to which this contract is staking.
     /// This is mutually exclusive with `staked_node_id`.
     public var stakedAccountId: AccountId?
@@ -135,6 +149,13 @@ public final class ContractUpdateTransaction: Transaction {
     @discardableResult
     public func stakedAccountId(_ stakedAccountId: AccountId?) -> Self {
         self.stakedAccountId = stakedAccountId
+
+        return self
+    }
+
+    @discardableResult
+    public func clearStakedAccountId() -> Self {
+        stakedAccountId = nil
 
         return self
     }
@@ -152,6 +173,13 @@ public final class ContractUpdateTransaction: Transaction {
         return self
     }
 
+    @discardableResult
+    public func clearStakedNodeId() -> Self {
+        stakedNodeId = nil
+
+        return self
+    }
+
     /// If true, the contract declines receiving a staking reward. The default value is false.
     public var declineStakingReward: Bool?
 
@@ -159,6 +187,13 @@ public final class ContractUpdateTransaction: Transaction {
     @discardableResult
     public func declineStakingReward(_ declineStakingReward: Bool?) -> Self {
         self.declineStakingReward = declineStakingReward
+
+        return self
+    }
+
+    @discardableResult
+    public func clearDeclineStakingReward() -> Self {
+        declineStakingReward = nil
 
         return self
     }

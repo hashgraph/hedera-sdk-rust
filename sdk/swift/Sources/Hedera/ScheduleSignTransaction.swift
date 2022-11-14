@@ -38,6 +38,13 @@ public final class ScheduleSignTransaction: Transaction {
         return self
     }
 
+    @discardableResult
+    public func clearScheduleId() -> Self {
+        scheduleId = nil
+
+        return self
+    }
+
     private enum CodingKeys: String, CodingKey {
         case scheduleId
     }
