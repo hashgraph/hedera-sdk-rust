@@ -159,11 +159,11 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let contract_id = self.contract_id.as_ref().map(ContractId::to_protobuf);
+        let contract_id = self.contract_id.to_protobuf();
         let expiration_time = self.expiration_time.map(Into::into);
-        let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
+        let admin_key = self.admin_key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.map(Into::into);
-        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
+        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
 
         let staked_id = match (&self.staked_account_id, self.staked_node_id) {
             (_, Some(node_id)) => Some(

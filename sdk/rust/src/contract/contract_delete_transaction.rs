@@ -89,7 +89,7 @@ impl ToTransactionDataProtobuf for ContractDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let delete_contract_id = self.delete_contract_id.as_ref().map(ContractId::to_protobuf);
+        let delete_contract_id = self.delete_contract_id.to_protobuf();
 
         let obtainers = match (&self.transfer_account_id, &self.transfer_contract_id) {
             (Some(account_id), None) => {

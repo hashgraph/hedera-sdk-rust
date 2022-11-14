@@ -66,7 +66,7 @@ impl ToQueryProtobuf for FileContentsQueryData {
         services::Query {
             query: Some(services::query::Query::FileGetContents(services::FileGetContentsQuery {
                 header: Some(header),
-                file_id: self.file_id.as_ref().map(FileId::to_protobuf),
+                file_id: self.file_id.to_protobuf(),
             })),
         }
     }

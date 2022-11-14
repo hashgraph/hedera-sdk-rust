@@ -225,13 +225,11 @@ impl ToTransactionDataProtobuf for AccountAllowanceApproveTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let crypto_allowances =
-            self.hbar_allowances.iter().map(HbarAllowance::to_protobuf).collect();
+        let crypto_allowances = self.hbar_allowances.to_protobuf();
 
-        let token_allowances =
-            self.token_allowances.iter().map(TokenAllowance::to_protobuf).collect();
+        let token_allowances = self.token_allowances.to_protobuf();
 
-        let nft_allowances = self.nft_allowances.iter().map(NftAllowance::to_protobuf).collect();
+        let nft_allowances = self.nft_allowances.to_protobuf();
 
         services::transaction_body::Data::CryptoApproveAllowance(
             services::CryptoApproveAllowanceTransactionBody {
@@ -284,10 +282,7 @@ impl ToProtobuf for NftAllowance {
             spender: Some(self.spender_account_id.to_protobuf()),
             serial_numbers: self.serials.clone(),
             approved_for_all: self.approved_for_all,
-            delegating_spender: self
-                .delegating_spender_account_id
-                .as_ref()
-                .map(AccountId::to_protobuf),
+            delegating_spender: self.delegating_spender_account_id.to_protobuf(),
         }
     }
 }

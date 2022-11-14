@@ -87,7 +87,7 @@ impl ToTransactionDataProtobuf for FileAppendTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let file_id = self.file_id.as_ref().map(FileId::to_protobuf);
+        let file_id = self.file_id.to_protobuf();
 
         services::transaction_body::Data::FileAppend(services::FileAppendTransactionBody {
             file_id,

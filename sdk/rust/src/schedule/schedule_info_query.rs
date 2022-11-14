@@ -62,7 +62,7 @@ impl ScheduleInfoQuery {
 
 impl ToQueryProtobuf for ScheduleInfoQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let schedule_id = self.schedule_id.as_ref().map(ScheduleId::to_protobuf);
+        let schedule_id = self.schedule_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::ScheduleGetInfo(services::ScheduleGetInfoQuery {

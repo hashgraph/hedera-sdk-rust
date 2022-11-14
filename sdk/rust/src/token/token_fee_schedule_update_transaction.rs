@@ -90,8 +90,8 @@ impl ToTransactionDataProtobuf for TokenFeeScheduleUpdateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let token_id = self.token_id.as_ref().map(TokenId::to_protobuf);
-        let custom_fees = self.custom_fees.iter().map(CustomFee::to_protobuf).collect();
+        let token_id = self.token_id.to_protobuf();
+        let custom_fees = self.custom_fees.to_protobuf();
 
         services::transaction_body::Data::TokenFeeScheduleUpdate(
             services::TokenFeeScheduleUpdateTransactionBody { token_id, custom_fees },
