@@ -23,6 +23,11 @@ import Foundation
 
 /// The unique identifier for a cryptocurrency account on Hedera.
 public final class AccountId: EntityId {
+    public override func hash(into hasher: inout Hasher) {
+        super.hash(into: &hasher)
+        hasher.combine(alias)
+    }
+
     public let alias: PublicKey?
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, alias: PublicKey) {
@@ -113,9 +118,11 @@ public final class AccountId: EntityId {
             return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
         }
     }
+
+    public static func == (lhs: AccountId, rhs: AccountId) -> Bool {
+        lhs.shard == rhs.shard && lhs.realm == rhs.realm && lhs.num == lhs.num && lhs.alias == rhs.alias
+    }
 }
 
 // TODO: checksum
 // TODO: to evm address
-// TODO: hash
-// TODO: equals
