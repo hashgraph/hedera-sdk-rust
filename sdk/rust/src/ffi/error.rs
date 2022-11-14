@@ -161,3 +161,18 @@ pub extern "C" fn hedera_error_pre_check_status() -> i32 {
         -1
     })
 }
+
+// the stutter is intentional, it's the `ReceiptStatus`' `Status`.
+#[no_mangle]
+pub extern "C" fn hedera_error_receipt_status_status() -> i32 {
+    LAST_ERROR.with(|error| {
+        if let Some(error) = &*error.borrow() {
+            if let crate::Error::ReceiptStatus { status, .. } = error {
+                return *status as i32;
+            }
+        }
+
+        // NOTE: -1 is an unlikely sentinel value for if this error wasn't a ReceiptStatus
+        -1
+    })
+}
