@@ -92,14 +92,13 @@ impl ScheduleInfo {
     pub fn to_bytes(&self) -> Vec<u8> {
         services::ScheduleInfo {
             schedule_id: Some(self.schedule_id.to_protobuf()),
-            expiration_time: self.expiration_time.as_ref().map(ToProtobuf::to_protobuf),
+            expiration_time: self.expiration_time.to_protobuf(),
             memo: self.schedule_memo.clone(),
-            admin_key: self.admin_key.as_ref().map(ToProtobuf::to_protobuf),
-            signers: (!self.signatories.is_empty()).then(|| services::KeyList {
-                keys: self.signatories.iter().map(ToProtobuf::to_protobuf).collect::<Vec<_>>(),
-            }),
+            admin_key: self.admin_key.to_protobuf(),
+            signers: (!self.signatories.is_empty())
+                .then(|| services::KeyList { keys: self.signatories.to_protobuf() }),
             creator_account_id: Some(self.creator_account_id.to_protobuf()),
-            payer_account_id: self.payer_account_id.as_ref().map(ToProtobuf::to_protobuf),
+            payer_account_id: self.payer_account_id.to_protobuf(),
             scheduled_transaction_id: Some(self.scheduled_transaction_id.to_protobuf()),
             ledger_id: self.ledger_id.to_bytes(),
             wait_for_expiry: self.wait_for_expiry,
@@ -131,20 +130,15 @@ impl FromProtobuf<services::ScheduleInfo> for ScheduleInfo {
     {
         let schedule_id = pb_getf!(pb, schedule_id)?;
         let creator_account_id = pb_getf!(pb, creator_account_id)?;
-        let payer_account_id = pb.payer_account_id.map(AccountId::from_protobuf).transpose()?;
-        let admin_key = pb.admin_key.map(Key::from_protobuf).transpose()?;
+        let payer_account_id = Option::from_protobuf(pb.payer_account_id)?;
+        let admin_key = Option::from_protobuf(pb.admin_key)?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
 
         let scheduled_transaction_id =
             TransactionId::from_protobuf(pb_getf!(pb, scheduled_transaction_id)?)?;
 
-        let signatories = pb
-            .signers
-            .map(|kl| {
-                kl.keys.into_iter().map(Key::from_protobuf).collect::<crate::Result<Vec<_>>>()
-            })
-            .transpose()?
-            .unwrap_or_default();
+        let signatories =
+            pb.signers.map(|kl| Vec::from_protobuf(kl.keys)).transpose()?.unwrap_or_default();
 
         let (executed_at, deleted_at) = match pb.data {
             Some(services::schedule_info::Data::DeletionTime(deleted)) => {

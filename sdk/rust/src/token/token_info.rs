@@ -136,8 +136,6 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
         let token_type = TokenType::from_protobuf(info.token_type())?;
         let token_supply_type = TokenSupplyType::from_protobuf(info.supply_type())?;
         let token_id = pb_getf!(info, token_id)?;
-        let auto_renew_account_id =
-            info.auto_renew_account.clone().map(AccountId::from_protobuf).transpose()?;
 
         let default_kyc_status = match info.default_kyc_status() {
             TokenKycStatus::KycNotApplicable => None,
@@ -157,6 +155,8 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
             TokenPauseStatus::Unpaused => Some(false),
         };
 
+        let auto_renew_account_id = Option::from_protobuf(info.auto_renew_account)?;
+
         let treasury_account_id = pb_getf!(info, treasury)?;
         let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
@@ -167,11 +167,11 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
             decimals: info.decimals as u32,
             total_supply: info.total_supply as u64,
             treasury_account_id: AccountId::from_protobuf(treasury_account_id)?,
-            admin_key: info.admin_key.map(Key::from_protobuf).transpose()?,
-            kyc_key: info.kyc_key.map(Key::from_protobuf).transpose()?,
-            freeze_key: info.freeze_key.map(Key::from_protobuf).transpose()?,
-            wipe_key: info.wipe_key.map(Key::from_protobuf).transpose()?,
-            supply_key: info.supply_key.map(Key::from_protobuf).transpose()?,
+            admin_key: Option::from_protobuf(info.admin_key)?,
+            kyc_key: Option::from_protobuf(info.kyc_key)?,
+            freeze_key: Option::from_protobuf(info.freeze_key)?,
+            wipe_key: Option::from_protobuf(info.wipe_key)?,
+            supply_key: Option::from_protobuf(info.supply_key)?,
             default_freeze_status,
             default_kyc_status,
             is_deleted: info.deleted,
@@ -182,13 +182,9 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
             token_type,
             token_supply_type,
             max_supply: info.max_supply as u64,
-            fee_schedule_key: info.fee_schedule_key.map(Key::from_protobuf).transpose()?,
-            custom_fees: info
-                .custom_fees
-                .into_iter()
-                .map(CustomFee::from_protobuf)
-                .collect::<Result<Vec<_>, _>>()?, //test this
-            pause_key: info.pause_key.map(Key::from_protobuf).transpose()?,
+            fee_schedule_key: Option::from_protobuf(info.fee_schedule_key)?,
+            custom_fees: Vec::from_protobuf(info.custom_fees)?, //test this
+            pause_key: Option::from_protobuf(info.pause_key)?,
             pause_status,
             ledger_id,
         })

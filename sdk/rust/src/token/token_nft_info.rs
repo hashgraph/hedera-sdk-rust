@@ -63,7 +63,7 @@ impl FromProtobuf<services::response::Response> for TokenNftInfo {
         let account_id = pb_getf!(nft, account_id)?;
         let creation_time = nft.creation_time.unwrap();
         let metadata = nft.metadata;
-        let spender_account_id = nft.spender_id.map(AccountId::from_protobuf).transpose()?;
+        let spender_account_id = Option::from_protobuf(nft.spender_id)?;
 
         Ok(Self {
             nft_id: NftId::from_protobuf(nft_id)?,

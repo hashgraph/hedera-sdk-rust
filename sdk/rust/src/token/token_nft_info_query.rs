@@ -63,7 +63,7 @@ impl TokenNftInfoQuery {
 
 impl ToQueryProtobuf for TokenNftInfoQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let nft_id = self.nft_id.as_ref().map(NftId::to_protobuf);
+        let nft_id = self.nft_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::TokenGetNftInfo(services::TokenGetNftInfoQuery {

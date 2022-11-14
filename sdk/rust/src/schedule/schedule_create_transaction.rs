@@ -303,8 +303,8 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
             }
         });
 
-        let payer_account_id = self.payer_account_id.as_ref().map(AccountId::to_protobuf);
-        let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
+        let payer_account_id = self.payer_account_id.to_protobuf();
+        let admin_key = self.admin_key.to_protobuf();
         let expiration_time = self.expiration_time.map(Into::into);
 
         transaction_body::Data::ScheduleCreate(services::ScheduleCreateTransactionBody {

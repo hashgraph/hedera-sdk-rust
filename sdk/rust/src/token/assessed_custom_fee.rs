@@ -51,9 +51,9 @@ impl FromProtobuf<services::AssessedCustomFee> for AssessedCustomFee {
     {
         Ok(Self {
             amount: pb.amount,
-            token_id: pb.token_id.map(TokenId::from_protobuf).transpose()?,
-            fee_collector_account_id: FromProtobuf::from_protobuf(pb.fee_collector_account_id)?,
-            payer_account_id_list: FromProtobuf::from_protobuf(pb.effective_payer_account_id)?,
+            token_id: Option::from_protobuf(pb.token_id)?,
+            fee_collector_account_id: Option::from_protobuf(pb.fee_collector_account_id)?,
+            payer_account_id_list: Vec::from_protobuf(pb.effective_payer_account_id)?,
         })
     }
 }

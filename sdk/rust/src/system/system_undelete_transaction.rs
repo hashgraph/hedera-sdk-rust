@@ -86,8 +86,8 @@ impl ToTransactionDataProtobuf for SystemUndeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let contract_id = self.contract_id.as_ref().map(ContractId::to_protobuf);
-        let file_id = self.file_id.as_ref().map(FileId::to_protobuf);
+        let contract_id = self.contract_id.to_protobuf();
+        let file_id = self.file_id.to_protobuf();
 
         let id = match (contract_id, file_id) {
             (Some(contract_id), _) => {

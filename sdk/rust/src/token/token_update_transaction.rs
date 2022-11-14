@@ -263,21 +263,21 @@ impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
         services::transaction_body::Data::TokenUpdate(services::TokenUpdateTransactionBody {
-            token: self.token_id.as_ref().map(TokenId::to_protobuf),
+            token: self.token_id.to_protobuf(),
             name: self.name.clone(),
             symbol: self.symbol.clone(),
-            treasury: self.treasury_account_id.as_ref().map(AccountId::to_protobuf),
-            admin_key: self.admin_key.as_ref().map(Key::to_protobuf),
-            kyc_key: self.kyc_key.as_ref().map(Key::to_protobuf),
-            freeze_key: self.freeze_key.as_ref().map(Key::to_protobuf),
-            wipe_key: self.wipe_key.as_ref().map(Key::to_protobuf),
-            supply_key: self.supply_key.as_ref().map(Key::to_protobuf),
+            treasury: self.treasury_account_id.to_protobuf(),
+            admin_key: self.admin_key.to_protobuf(),
+            kyc_key: self.kyc_key.to_protobuf(),
+            freeze_key: self.freeze_key.to_protobuf(),
+            wipe_key: self.wipe_key.to_protobuf(),
+            supply_key: self.supply_key.to_protobuf(),
             expiry: self.expiration_time.map(Into::into),
-            auto_renew_account: self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
             auto_renew_period: self.auto_renew_period.map(Into::into),
             memo: Some(self.token_memo.clone()),
-            fee_schedule_key: self.fee_schedule_key.as_ref().map(Key::to_protobuf),
-            pause_key: self.pause_key.as_ref().map(Key::to_protobuf),
+            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
+            pause_key: self.pause_key.to_protobuf(),
         })
     }
 }

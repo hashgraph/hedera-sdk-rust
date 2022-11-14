@@ -109,7 +109,7 @@ impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let contract_id = self.contract_id.as_ref().map(ContractId::to_protobuf);
+        let contract_id = self.contract_id.to_protobuf();
 
         services::transaction_body::Data::ContractCall(
             #[allow(deprecated)]

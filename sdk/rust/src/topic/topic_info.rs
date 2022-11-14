@@ -83,12 +83,11 @@ impl FromProtobuf<services::response::Response> for TopicInfo {
         let response = pb_getv!(pb, ConsensusGetTopicInfo, services::response::Response);
         let topic_id = pb_getf!(response, topic_id)?;
         let info = pb_getf!(response, topic_info)?;
-        let admin_key = info.admin_key.map(Key::from_protobuf).transpose()?;
-        let submit_key = info.submit_key.map(Key::from_protobuf).transpose()?;
+        let admin_key = Option::from_protobuf(info.admin_key)?;
+        let submit_key = Option::from_protobuf(info.submit_key)?;
         let expiration_time = info.expiration_time.map(Into::into);
         let auto_renew_period = info.auto_renew_period.map(Into::into);
-        let auto_renew_account_id =
-            info.auto_renew_account.map(AccountId::from_protobuf).transpose()?;
+        let auto_renew_account_id = Option::from_protobuf(info.auto_renew_account)?;
         let ledger_id = LedgerId::from_bytes(info.ledger_id);
 
         Ok(Self {

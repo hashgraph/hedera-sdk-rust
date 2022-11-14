@@ -62,7 +62,7 @@ impl TopicInfoQuery {
 
 impl ToQueryProtobuf for TopicInfoQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let topic_id = self.topic_id.as_ref().map(TopicId::to_protobuf);
+        let topic_id = self.topic_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::ConsensusGetTopicInfo(
