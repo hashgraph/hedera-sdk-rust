@@ -18,6 +18,7 @@
  * ‍
  */
 
+mod assessed_custom_fee;
 mod custom_fees;
 mod nft_id;
 mod token_associate_transaction;
@@ -35,6 +36,7 @@ mod token_info_query;
 mod token_mint_transaction;
 mod token_nft_info;
 mod token_nft_info_query;
+mod token_nft_transfer;
 mod token_pause_transaction;
 mod token_revoke_kyc_transaction;
 mod token_supply_type;
@@ -44,6 +46,7 @@ mod token_unpause_transaction;
 mod token_update_transaction;
 mod token_wipe_transaction;
 
+pub use assessed_custom_fee::AssessedCustomFee;
 pub use nft_id::NftId;
 pub use token_associate_transaction::{
     TokenAssociateTransaction,
@@ -93,6 +96,7 @@ pub use token_nft_info_query::{
     TokenNftInfoQuery,
     TokenNftInfoQueryData,
 };
+pub use token_nft_transfer::TokenNftTransfer;
 pub use token_pause_transaction::{
     TokenPauseTransaction,
     TokenPauseTransactionData,

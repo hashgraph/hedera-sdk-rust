@@ -26,8 +26,29 @@
 /// account (a receiver). The amounts list must sum to zero.
 ///
 public final class TransferTransaction: Transaction {
-    private var transfers: [Transfer] = []
-    private var tokenTransfers: [TokenTransfer] = []
+    // avoid scope collisions by nesting :/
+    private struct Transfer: Encodable {
+        let accountId: AccountId
+        let amount: Int64
+        let isApproval: Bool
+    }
+
+    private struct TokenTransfer: Encodable {
+        let tokenId: TokenId
+        var transfers: [TransferTransaction.Transfer]
+        var nftTransfers: [TransferTransaction.NftTransfer]
+        var expectedDecimals: UInt32?
+    }
+
+    private struct NftTransfer: Encodable {
+        let senderAccountId: AccountId
+        let receiverAccountId: AccountId
+        let serial: UInt64
+        let isApproval: Bool
+    }
+
+    private var transfers: [TransferTransaction.Transfer] = []
+    private var tokenTransfers: [TransferTransaction.TokenTransfer] = []
 
     /// Create a new `TransferTransaction`.
     public override init() {
@@ -165,24 +186,4 @@ public final class TransferTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
-}
-
-private struct Transfer: Encodable {
-    let accountId: AccountId
-    let amount: Int64
-    let isApproval: Bool
-}
-
-private struct TokenTransfer: Encodable {
-    let tokenId: TokenId
-    var transfers: [Transfer]
-    var nftTransfers: [NftTransfer]
-    var expectedDecimals: UInt32?
-}
-
-private struct NftTransfer: Encodable {
-    let senderAccountId: AccountId
-    let receiverAccountId: AccountId
-    let serial: UInt64
-    let isApproval: Bool
 }

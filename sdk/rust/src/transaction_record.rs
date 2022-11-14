@@ -18,18 +18,26 @@
  * ‍
  */
 
+use std::collections::HashMap;
+
 use hedera_proto::services;
 use time::OffsetDateTime;
 
 use crate::{
+    AccountId,
+    AssessedCustomFee,
+    ContractFunctionResult,
     FromProtobuf,
     Hbar,
     PublicKey,
     ScheduleId,
     Tinybar,
     TokenAssociation,
+    TokenId,
+    TokenNftTransfer,
     TransactionId,
     TransactionReceipt,
+    Transfer,
 };
 
 /// The complete record for a transaction on Hedera that has reached consensus.
@@ -55,6 +63,20 @@ pub struct TransactionRecord {
     )]
     pub consensus_timestamp: OffsetDateTime,
 
+    /// Record of the value returned by the smart contract function or constructor.
+    pub contract_function_result: Option<ContractFunctionResult>,
+
+    /// All hbar transfers as a result of this transaction, such as fees, or
+    /// transfers performed by the transaction, or by a smart contract it calls,
+    /// or by the creation of threshold records that it triggers.
+    pub transfers: Vec<Transfer>,
+
+    /// All fungible token transfers as a result of this transaction.
+    pub token_transfers: HashMap<TokenId, HashMap<AccountId, i64>>,
+
+    /// All NFT Token transfers as a result of this transaction.
+    pub token_nft_transfers: HashMap<TokenId, Vec<TokenNftTransfer>>,
+
     /// The ID of the transaction this record represents.
     pub transaction_id: TransactionId,
 
@@ -67,9 +89,10 @@ pub struct TransactionRecord {
     /// Reference to the scheduled transaction ID that this transaction record represents.
     pub schedule_ref: Option<ScheduleId>,
 
-    // /// All custom fees that were assessed during a CryptoTransfer, and must be paid if the
-    // /// transaction status resolved to SUCCESS.
-    // TODO: pub assessed_custom_fees: Vec<AssessedCustomFee>,
+    /// All custom fees that were assessed during a [`TransferTransaction`](crate::TransferTransaction), and must be paid if the
+    /// transaction status resolved to SUCCESS.
+    pub assessed_custom_fees: Vec<AssessedCustomFee>,
+
     /// All token associations implicitly created while handling this transaction
     pub automatic_token_associations: Vec<TokenAssociation>,
 
@@ -103,11 +126,6 @@ pub struct TransactionRecord {
     // /// whose input was a 384-bit string.
     // TODO: pub prng_number: i32,
 }
-// TODO: contractFunctionResult
-// TODO: transfers
-// TODO: tokenTransfers
-// TODO: tokenTransferList
-// TODO: tokenNftTransfers
 // TODO: paid_staking_rewards
 
 impl TransactionRecord {
@@ -116,27 +134,67 @@ impl TransactionRecord {
         duplicates: Vec<Self>,
         children: Vec<Self>,
     ) -> crate::Result<Self> {
+        use services::transaction_record::Body;
         let receipt = pb_getf!(record, receipt)?;
-        let receipt = <TransactionReceipt as FromProtobuf<_>>::from_protobuf(receipt)?;
+        let receipt = TransactionReceipt::from_protobuf(receipt)?;
 
         let consensus_timestamp = pb_getf!(record, consensus_timestamp)?;
         let transaction_id = pb_getf!(record, transaction_id)?;
-        let schedule_ref = record.schedule_ref.map(ScheduleId::from_protobuf).transpose()?;
+        let schedule_ref = Option::from_protobuf(record.schedule_ref)?;
         let parent_consensus_timestamp = record.parent_consensus_timestamp.map(Into::into);
 
         let alias_key =
             (!record.alias.is_empty()).then(|| PublicKey::from_bytes(&record.alias)).transpose()?;
 
-        let automatic_token_associations = record
-            .automatic_token_associations
-            .into_iter()
-            .map(TokenAssociation::from_protobuf)
-            .collect::<crate::Result<Vec<_>>>()?;
+        let automatic_token_associations = Vec::from_protobuf(record.automatic_token_associations)?;
+
+        let contract_function_result = record.body.map(|it| match it {
+            Body::ContractCallResult(it) | Body::ContractCreateResult(it) => it,
+        });
+
+        let contract_function_result = Option::from_protobuf(contract_function_result)?;
+
+        let transfers = record.transfer_list.map_or_else(Vec::new, |it| it.account_amounts);
+        let transfers = Vec::from_protobuf(transfers)?;
+
+        let (token_transfers, token_nft_transfers) = {
+            let mut token_transfers = HashMap::with_capacity(record.token_transfer_lists.len());
+
+            let mut token_nft_transfers: HashMap<TokenId, Vec<TokenNftTransfer>> =
+                HashMap::with_capacity(record.token_transfer_lists.len());
+
+            for transfer_list in record.token_transfer_lists {
+                let token_id = pb_getf!(transfer_list, token)?;
+                let token_id = TokenId::from_protobuf(token_id)?;
+
+                // `.insert` would be the most idiomatic way, but this matches behavior with Java.
+                let token_transfers = token_transfers
+                    .entry(token_id)
+                    .or_insert_with(|| HashMap::with_capacity(transfer_list.transfers.len()));
+
+                for it in transfer_list.transfers {
+                    let account_id = AccountId::from_protobuf(pb_getf!(it, account_id)?)?;
+                    token_transfers.insert(account_id, it.amount);
+                }
+
+                let nft_transfers: Result<Vec<_>, _> = transfer_list
+                    .nft_transfers
+                    .into_iter()
+                    .map(|it| TokenNftTransfer::from_protobuf(it, token_id))
+                    .collect();
+                let nft_transfers = nft_transfers?;
+
+                token_nft_transfers.entry(token_id).or_default().extend_from_slice(&nft_transfers);
+            }
+
+            (token_transfers, token_nft_transfers)
+        };
 
         Ok(Self {
             receipt,
             transaction_hash: record.transaction_hash,
             consensus_timestamp: consensus_timestamp.into(),
+            contract_function_result,
             transaction_id: TransactionId::from_protobuf(transaction_id)?,
             transaction_memo: record.memo,
             transaction_fee: Hbar::from_tinybars(record.transaction_fee as Tinybar),
@@ -147,6 +205,10 @@ impl TransactionRecord {
             ethereum_hash: record.ethereum_hash,
             children,
             alias_key,
+            transfers,
+            token_transfers,
+            token_nft_transfers,
+            assessed_custom_fees: Vec::from_protobuf(record.assessed_custom_fees)?,
         })
     }
 }
@@ -160,17 +222,9 @@ impl FromProtobuf<services::response::Response> for TransactionRecord {
 
         let record = pb_getf!(pb, transaction_record)?;
 
-        let duplicates = pb
-            .duplicate_transaction_records
-            .into_iter()
-            .map(<TransactionRecord as FromProtobuf<_>>::from_protobuf)
-            .collect::<crate::Result<_>>()?;
+        let duplicates = Vec::from_protobuf(pb.duplicate_transaction_records)?;
 
-        let children = pb
-            .child_transaction_records
-            .into_iter()
-            .map(<TransactionRecord as FromProtobuf<_>>::from_protobuf)
-            .collect::<crate::Result<_>>()?;
+        let children = Vec::from_protobuf(pb.child_transaction_records)?;
 
         Self::from_protobuf(record, duplicates, children)
     }
