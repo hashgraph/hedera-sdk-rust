@@ -31,7 +31,6 @@ use crate::query::{
 };
 use crate::{
     Error,
-    FromProtobuf,
     Query,
     Status,
     ToProtobuf,
@@ -151,12 +150,11 @@ impl QueryExecute for TransactionReceiptQueryData {
     }
 
     fn make_response(&self, response: Response) -> crate::Result<Self::Response> {
-        let receipt = <TransactionReceipt as FromProtobuf<_>>::from_protobuf(response)?;
+        let receipt = TransactionReceipt::from_response_protobuf(response, self.transaction_id)?;
 
         if self.validate_status && receipt.status != Status::Success {
             return Err(Error::ReceiptStatus {
-                // NOTE: it should be impossible to get here without a transaction ID set
-                transaction_id: self.transaction_id.unwrap(),
+                transaction_id: self.transaction_id,
                 status: receipt.status,
             });
         }

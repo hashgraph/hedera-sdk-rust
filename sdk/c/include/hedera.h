@@ -178,6 +178,8 @@ int32_t hedera_error_grpc_status(void);
  */
 int32_t hedera_error_pre_check_status(void);
 
+int32_t hedera_error_receipt_status_status(void);
+
 /**
  * Parse a Hedera `AccountBalance` from the passed bytes.
  */
