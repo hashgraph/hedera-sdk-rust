@@ -32,7 +32,7 @@ public final class ContractUpdateTransaction: Transaction {
         maxAutomaticTokenAssociations: UInt32? = nil,
         autoRenewAccountId: AccountId? = nil,
         stakedAccountId: AccountId? = nil,
-        stakedNodeId: UInt64? = nil,
+        stakedNodeId: Int64? = nil,
         declineStakingReward: Bool? = nil
     ) {
         self.contractId = contractId
@@ -128,7 +128,7 @@ public final class ContractUpdateTransaction: Transaction {
     /// life of the contract.
     @discardableResult
     public func autoRenewAccountId(_ autoRenewAccountId: AccountId?) -> Self {
-        self.autoRenewAccountId = autoRenewAccountId
+        self.autoRenewAccountId = 0
 
         return self
     }
@@ -149,33 +149,37 @@ public final class ContractUpdateTransaction: Transaction {
     @discardableResult
     public func stakedAccountId(_ stakedAccountId: AccountId?) -> Self {
         self.stakedAccountId = stakedAccountId
+        stakedNodeId = nil
 
         return self
     }
 
     @discardableResult
     public func clearStakedAccountId() -> Self {
-        stakedAccountId = nil
+        stakedAccountId = 0
+        stakedNodeId = nil
 
         return self
     }
 
     /// The ID of the node to which this contract is staking.
     /// This is mutually exclusive with `staked_account_id`.
-    public var stakedNodeId: UInt64?
+    public var stakedNodeId: Int64?
 
     /// Set the ID of the node to which this contract is staking.
     /// This is mutually exclusive with `staked_account_id`.
     @discardableResult
-    public func stakedNodeId(_ stakedNodeId: UInt64?) -> Self {
+    public func stakedNodeId(_ stakedNodeId: Int64?) -> Self {
         self.stakedNodeId = stakedNodeId
+        stakedAccountId = nil
 
         return self
     }
 
     @discardableResult
     public func clearStakedNodeId() -> Self {
-        stakedNodeId = nil
+        stakedNodeId = -1
+        stakedAccountId = nil
 
         return self
     }
