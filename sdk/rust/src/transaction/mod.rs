@@ -27,11 +27,13 @@ use std::fmt::{
 use time::Duration;
 
 use crate::execute::execute;
+use crate::signer::Signer;
 use crate::{
     AccountId,
     Client,
     Hbar,
-    Signer,
+    PrivateKey,
+    PublicKey,
     TransactionId,
     TransactionResponse,
 };
@@ -60,7 +62,7 @@ where
     pub(crate) body: TransactionBody<D>,
 
     #[cfg_attr(feature = "ffi", serde(skip))]
-    pub(crate) signers: Vec<Box<dyn Signer>>,
+    pub(crate) signers: Vec<Signer>,
 }
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
@@ -179,6 +181,25 @@ where
     /// Overrides payer account defined on this transaction or on the client.
     pub fn transaction_id(&mut self, id: TransactionId) -> &mut Self {
         self.body.transaction_id = Some(id);
+        self
+    }
+
+    /// Sign the transaction.
+    pub fn sign(&mut self, private_key: PrivateKey) -> &mut Self {
+        self.sign_signer(Signer::PrivateKey(private_key))
+    }
+
+    /// Sign the transaction.
+    pub fn sign_with<F>(
+        &mut self,
+        public_key: PublicKey,
+        signer: Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>,
+    ) -> &mut Self {
+        self.sign_signer(Signer::Arbitrary(public_key, signer))
+    }
+
+    pub(crate) fn sign_signer(&mut self, signer: Signer) -> &mut Self {
+        self.signers.push(signer);
         self
     }
 }

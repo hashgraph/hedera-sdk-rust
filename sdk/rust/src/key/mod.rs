@@ -26,3 +26,9 @@ mod public_key;
 pub use key::Key;
 pub use private_key::PrivateKey;
 pub use public_key::PublicKey;
+
+#[derive(Copy, Clone)]
+pub(crate) enum KeyKind {
+    Ed25519,
+    Ecdsa,
+}
