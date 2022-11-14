@@ -61,8 +61,7 @@ public struct TransactionReceipt: Codable {
     ///
     /// For fungible tokens, the current total supply of this token.
     /// For non-fungible tokens, the total number of NFTs issued for a given token id.
-    ///
-    public let newTotalSupply: UInt64
+    public let totalSupply: UInt64
 
     /// In the receipt for a `ScheduleCreateTransaction`, the id of the newly created schedule.
     public let scheduleId: ScheduleId?
