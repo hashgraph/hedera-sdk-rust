@@ -202,6 +202,13 @@ public final class TokenUpdateTransaction: Transaction {
         return self
     }
 
+    @discardableResult
+    public func clearMemo() -> Self {
+        tokenMemo = ""
+
+        return self
+    }
+
     /// The new key which can change the token's custom fee schedule.
     public var feeScheduleKey: Key?
 
