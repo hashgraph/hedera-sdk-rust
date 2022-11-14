@@ -24,10 +24,14 @@ import Foundation
 // TODO: exchangeRate
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 public struct TransactionReceipt: Codable {
-    // TODO: enum Status
+    // fixme(sr): better doc comment.
+    // todo: once `TransactionId`s exist in swift on main, use on of those.
+    /// The ID of the transaction that this is a receipt for.
+    public let transactionId: String?
+
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
     /// the associated transaction did not have a valid payer signature.
-    public let status: String
+    public let status: Status
 
     /// In the receipt for an `AccountCreateTransaction`, the id of the newly created account.
     public let accountId: AccountId?
@@ -100,6 +104,15 @@ public struct TransactionReceipt: Codable {
         }
 
         return try JSONDecoder().decode(Self.self, from: json.data(using: .utf8)!)
+    }
+
+    @discardableResult
+    public func validateStatus(_ doValidate: Bool) throws -> Self {
+        if doValidate && status != Status.ok {
+            throw HError(kind: .receiptStatus(status: status), description: "")
+        }
+
+        return self
     }
 
     private func toBytesInner() throws -> Data {

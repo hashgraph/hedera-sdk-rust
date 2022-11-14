@@ -29,12 +29,11 @@ public struct HError: Error, CustomStringConvertible {
         case grpcStatus(status: Int32)
         case fromProtobuf
         // TODO: add TransactionId
-        // TODO: use Status enum
-        case transactionPreCheckStatus(status: Int32)
-        case transactionNoIdPreCheckStatus(status: Int32)
-        case queryPreCheckStatus(status: Int32)
-        case queryPaymentPreCheckStatus(status: Int32)
-        case queryNoPaymentPreCheckStatus(status: Int32)
+        case transactionPreCheckStatus(status: Status)
+        case transactionNoIdPreCheckStatus(status: Status)
+        case queryPreCheckStatus(status: Status)
+        case queryPaymentPreCheckStatus(status: Status)
+        case queryNoPaymentPreCheckStatus(status: Status)
         case basicParse
         case keyParse
         case noPayerAccountOrTransactionId
@@ -42,8 +41,7 @@ public struct HError: Error, CustomStringConvertible {
         case nodeAccountUnknown
         case responseStatusUnrecognized
         case signature
-        // TODO: enum Status
-        case receiptStatus(status: String)
+        case receiptStatus(status: Status)
         case requestParse
     }
 
@@ -68,19 +66,19 @@ public struct HError: Error, CustomStringConvertible {
             kind = .fromProtobuf
 
         case HEDERA_ERROR_TRANSACTION_PRE_CHECK_STATUS:
-            kind = .transactionPreCheckStatus(status: hedera_error_pre_check_status())
+            kind = .transactionPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
 
         case HEDERA_ERROR_TRANSACTION_NO_ID_PRE_CHECK_STATUS:
-            kind = .transactionNoIdPreCheckStatus(status: hedera_error_pre_check_status())
+            kind = .transactionNoIdPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
 
         case HEDERA_ERROR_QUERY_PRE_CHECK_STATUS:
-            kind = .queryPreCheckStatus(status: hedera_error_pre_check_status())
+            kind = .queryPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
 
         case HEDERA_ERROR_QUERY_PAYMENT_PRE_CHECK_STATUS:
-            kind = .queryPaymentPreCheckStatus(status: hedera_error_pre_check_status())
+            kind = .queryPaymentPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
 
         case HEDERA_ERROR_QUERY_NO_PAYMENT_PRE_CHECK_STATUS:
-            kind = .queryNoPaymentPreCheckStatus(status: hedera_error_pre_check_status())
+            kind = .queryNoPaymentPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
 
         case HEDERA_ERROR_BASIC_PARSE:
             kind = .basicParse
@@ -104,8 +102,7 @@ public struct HError: Error, CustomStringConvertible {
             kind = .signature
 
         case HEDERA_ERROR_RECEIPT_STATUS:
-            // TODO: get receipt status
-            kind = .receiptStatus(status: "?")
+            kind = .receiptStatus(status: Status(rawValue: hedera_error_receipt_status_status()))
 
         case HEDERA_ERROR_REQUEST_PARSE:
             kind = .requestParse
