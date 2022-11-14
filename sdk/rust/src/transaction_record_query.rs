@@ -129,12 +129,11 @@ impl QueryExecute for TransactionRecordQueryData {
     }
 
     fn make_response(&self, response: Response) -> crate::Result<Self::Response> {
-        let record = <TransactionRecord as FromProtobuf<_>>::from_protobuf(response)?;
+        let record = TransactionRecord::from_protobuf(response)?;
 
         if self.validate_status && record.receipt.status != Status::Success {
             return Err(Error::ReceiptStatus {
-                // NOTE: it should be impossible to get here without a transaction ID set
-                transaction_id: self.transaction_id.unwrap(),
+                transaction_id: self.transaction_id,
                 status: record.receipt.status,
             });
         }

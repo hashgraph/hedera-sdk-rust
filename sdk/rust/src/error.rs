@@ -174,12 +174,12 @@ pub enum Error {
 
     // fixme(sr): Citation needed (unsure if this is accurate).
     /// Getting the receipt for `transaction_id` failed with `status`.
-    #[error("receipt for transaction `{transaction_id}` failed with status `{status:?}`")]
+    #[error("receipt for transaction `{transaction_id:?}` failed with status `{status:?}`")]
     ReceiptStatus {
         /// The Error's status code.
         status: Status,
         /// The [`Transaction`](crate::Transaction)'s ID.
-        transaction_id: TransactionId,
+        transaction_id: Option<TransactionId>,
     },
 
     /// Failed to sign a message.

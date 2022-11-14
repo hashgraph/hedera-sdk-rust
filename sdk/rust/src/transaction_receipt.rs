@@ -44,6 +44,10 @@ use crate::{
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionReceipt {
+    // fixme(sr): better doc comment.
+    /// The ID of the transaction that this is a receipt for.
+    pub transaction_id: Option<TransactionId>,
+
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
     /// the associated transaction did not have a valid payer signature.
     pub status: Status,
@@ -86,8 +90,7 @@ pub struct TransactionReceipt {
     ///
     /// For fungible tokens, the current total supply of this token.
     /// For non-fungible tokens, the total number of NFTs issued for a given token id.
-    ///
-    pub new_total_supply: u64,
+    pub total_supply: u64,
 
     /// In the receipt for a `ScheduleCreateTransaction`, the id of the newly created schedule.
     pub schedule_id: Option<ScheduleId>,
@@ -109,14 +112,12 @@ pub struct TransactionReceipt {
     pub children: Vec<TransactionReceipt>,
 }
 
-impl TransactionReceipt {}
-
 impl TransactionReceipt {
     /// Create a new `FileInfo` from protobuf-encoded `bytes`.
     ///
     /// # Errors
-    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
-    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    /// - [`Error::FromProtobuf`] if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`] if decoding the protobuf fails.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         FromProtobuf::<services::TransactionReceipt>::from_bytes(bytes)
     }
@@ -127,10 +128,23 @@ impl TransactionReceipt {
         ToProtobuf::to_bytes(self)
     }
 
+    /// Validate [`status`](Self.status) and return an `Err` if it isn't [`Status::Ok`]
+    ///
+    /// # Errors
+    /// - [`Error::ReceiptStatus`] if `validate && self.status != Status::Ok`
+    pub fn validate_status(&self, validate: bool) -> crate::Result<&Self> {
+        if validate && self.status != Status::Ok {
+            Err(Error::ReceiptStatus { status: self.status, transaction_id: self.transaction_id })
+        } else {
+            Ok(self)
+        }
+    }
+
     fn from_protobuf(
         receipt: services::TransactionReceipt,
         duplicates: Vec<Self>,
         children: Vec<Self>,
+        transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self> {
         let status = if let Some(status) = Status::from_i32(receipt.status) {
             status
@@ -150,7 +164,7 @@ impl TransactionReceipt {
 
         Ok(Self {
             status,
-            new_total_supply: receipt.new_total_supply,
+            total_supply: receipt.new_total_supply,
             serials: receipt.serial_numbers,
             topic_running_hash_version: receipt.topic_running_hash_version,
             topic_sequence_number: receipt.topic_sequence_number,
@@ -168,15 +182,14 @@ impl TransactionReceipt {
             schedule_id,
             duplicates,
             children,
+            transaction_id,
         })
     }
-}
 
-impl FromProtobuf<services::response::Response> for TransactionReceipt {
-    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
+    pub(crate) fn from_response_protobuf(
+        pb: services::response::Response,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Result<Self> {
         let pb = pb_getv!(pb, TransactionGetReceipt, services::response::Response);
 
         let receipt = pb_getf!(pb, receipt)?;
@@ -193,7 +206,16 @@ impl FromProtobuf<services::response::Response> for TransactionReceipt {
             .map(<TransactionReceipt as FromProtobuf<_>>::from_protobuf)
             .collect::<crate::Result<_>>()?;
 
-        Self::from_protobuf(receipt, duplicates, children)
+        Self::from_protobuf(receipt, duplicates, children, transaction_id)
+    }
+}
+
+impl FromProtobuf<services::response::Response> for TransactionReceipt {
+    fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Self::from_response_protobuf(pb, None)
     }
 }
 
@@ -202,7 +224,7 @@ impl FromProtobuf<services::TransactionReceipt> for TransactionReceipt {
     where
         Self: Sized,
     {
-        Self::from_protobuf(receipt, Vec::new(), Vec::new())
+        Self::from_protobuf(receipt, Vec::new(), Vec::new(), None)
     }
 }
 
@@ -221,7 +243,7 @@ impl ToProtobuf for TransactionReceipt {
             topic_running_hash: self.topic_running_hash.clone().unwrap_or_default(),
             topic_running_hash_version: self.topic_running_hash_version,
             token_id: self.token_id.as_ref().map(ToProtobuf::to_protobuf),
-            new_total_supply: self.new_total_supply,
+            new_total_supply: self.total_supply,
             schedule_id: self.schedule_id.as_ref().map(ToProtobuf::to_protobuf),
             scheduled_transaction_id: self
                 .scheduled_transaction_id
