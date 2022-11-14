@@ -27,7 +27,7 @@ internal final class PaymentTransaction: Codable {
     internal var maxTransactionFee: Hbar?
     internal var transactionMemo: String?
     internal var payerAccountId: AccountId?
-    internal var transactionId: String?
+    internal var transactionId: TransactionId?
     internal var transactionValidDuration: Duration?
     // TODO: private var paymentSigners: [OpaquePointer] = [];
 

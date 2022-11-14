@@ -67,11 +67,10 @@ public struct TransactionReceipt: Codable {
     /// In the receipt for a `ScheduleCreateTransaction`, the id of the newly created schedule.
     public let scheduleId: ScheduleId?
 
-    // TODO: TransactionId type
     /// In the receipt of a `ScheduleCreateTransaction` or `ScheduleSignTransaction` that resolves
     /// to `Success`, the `TransactionId` that should be used to query for the receipt or
     /// record of the relevant scheduled transaction.
-    public let scheduledTransactionId: String?
+    public let scheduledTransactionId: TransactionId?
 
     /// In the receipt of a `TokenMintTransaction` for tokens of type `NonFungibleUnique`,
     /// the serial numbers of the newly created NFTs.

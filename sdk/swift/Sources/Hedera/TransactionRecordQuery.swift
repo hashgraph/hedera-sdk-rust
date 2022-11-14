@@ -22,12 +22,11 @@
 ///
 public final class TransactionRecordQuery: Query<TransactionRecord> {
     /// The ID of the transaction for which the record is being requested.
-    // TODO: TransactionId
-    public var transactionId: String?
+    public var transactionId: TransactionId?
 
     /// Set the ID of the transaction for which the record is being requested.
     @discardableResult
-    public func transactionId(_ transactionId: String) -> Self {
+    public func transactionId(_ transactionId: TransactionId) -> Self {
         self.transactionId = transactionId
 
         return self

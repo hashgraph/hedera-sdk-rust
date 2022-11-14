@@ -1,3 +1,4 @@
+import CHedera
 import Foundation
 
 private let nanosPerSecond: UInt64 = 1_000_000_000
@@ -7,7 +8,7 @@ private let timeZoneUTC: TimeZone = TimeZone(abbreviation: "UTC")!
 private let unixEpoch: Date = Calendar.current.date(from: DateComponents(timeZone: timeZoneUTC, year: 1970))!
 
 /// UNIX timestamp with nanosecond precision
-public struct Timestamp: Codable, CustomStringConvertible {
+public struct Timestamp: Codable, Equatable, CustomStringConvertible {
     public let seconds: UInt64
     public let subSecondNanos: UInt32
 
@@ -32,9 +33,19 @@ public struct Timestamp: Codable, CustomStringConvertible {
         self.init(fromUnixTimestampNanos: try container.decode(UInt64.self))
     }
 
+    // note(sr): these have the same abi lol, no "unsafe" here.
+    internal init(fromCHedera ts: HederaTimestamp) {
+        seconds = ts.secs
+        subSecondNanos = ts.nanos
+    }
+
     // todo: what do on overflow?
     public var unixTimestampNanos: UInt64 {
         seconds * nanosPerSecond + UInt64(subSecondNanos)
+    }
+
+    internal func toCHederaTimestamp() -> HederaTimestamp {
+        HederaTimestamp(secs: seconds, nanos: subSecondNanos)
     }
 
     /// Convert from a `Timestamp` to a `Date`
