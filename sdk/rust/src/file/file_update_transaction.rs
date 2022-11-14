@@ -130,10 +130,10 @@ impl ToTransactionDataProtobuf for FileUpdateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let file_id = self.file_id.as_ref().map(FileId::to_protobuf);
-        let expiration_time = self.expiration_time.as_ref().map(OffsetDateTime::to_protobuf);
+        let file_id = self.file_id.to_protobuf();
+        let expiration_time = self.expiration_time.to_protobuf();
 
-        let keys = self.keys.as_deref().unwrap_or_default().iter().map(Key::to_protobuf).collect();
+        let keys = self.keys.to_protobuf().unwrap_or_default();
 
         let keys = services::KeyList { keys };
 

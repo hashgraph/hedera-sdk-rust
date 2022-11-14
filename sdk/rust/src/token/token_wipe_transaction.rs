@@ -129,8 +129,8 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let token = self.token_id.as_ref().map(TokenId::to_protobuf);
+        let account = self.account_id.to_protobuf();
+        let token = self.token_id.to_protobuf();
         let amount = self.amount.unwrap_or_default();
         let serial_numbers = self.serials.iter().map(|num| *num as i64).collect();
 

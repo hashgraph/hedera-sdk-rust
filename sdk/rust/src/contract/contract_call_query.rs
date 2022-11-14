@@ -99,8 +99,8 @@ impl From<ContractCallQueryData> for AnyQueryData {
 
 impl ToQueryProtobuf for ContractCallQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let contract_id = self.contract_id.as_ref().map(ContractId::to_protobuf);
-        let sender_id = self.sender_account_id.as_ref().map(AccountId::to_protobuf);
+        let contract_id = self.contract_id.to_protobuf();
+        let sender_id = self.sender_account_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::ContractCallLocal(

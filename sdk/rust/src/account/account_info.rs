@@ -116,15 +116,15 @@ impl AccountInfo {
             key: Some(self.key.to_protobuf()),
             balance: self.balance.to_tinybars() as u64,
             receiver_sig_required: self.is_receiver_signature_required,
-            expiration_time: self.expiration_time.as_ref().map(ToProtobuf::to_protobuf),
-            auto_renew_period: self.auto_renew_period.as_ref().map(ToProtobuf::to_protobuf),
+            expiration_time: self.expiration_time.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
             memo: self.account_memo.clone(),
             owned_nfts: self.owned_nfts as i64,
             max_automatic_token_associations: self.max_automatic_token_associations as i32,
             alias: self.alias_key.as_ref().map(ToProtobuf::to_bytes).unwrap_or_default(),
             ledger_id: self.ledger_id.to_bytes(),
             ethereum_nonce: self.ethereum_nonce as i64,
-            staking_info: self.staking.as_ref().map(ToProtobuf::to_protobuf),
+            staking_info: self.staking.to_protobuf(),
 
             // unimplemented fields
             live_hashes: Vec::default(),
@@ -157,7 +157,7 @@ impl FromProtobuf<services::crypto_get_info_response::AccountInfo> for AccountIn
         let account_id = pb_getf!(pb, account_id)?;
         let alias_key = PublicKey::from_alias_bytes(&pb.alias)?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
-        let staking = pb.staking_info.map(StakingInfo::from_protobuf).transpose()?;
+        let staking = Option::from_protobuf(pb.staking_info)?;
 
         Ok(Self {
             ledger_id,

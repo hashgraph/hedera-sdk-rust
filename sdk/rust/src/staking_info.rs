@@ -94,8 +94,7 @@ impl ToProtobuf for StakingInfo {
                 .map(services::staking_info::StakedId::StakedNodeId)
                 .or_else(|| {
                     self.staked_account_id
-                        .as_ref()
-                        .map(ToProtobuf::to_protobuf)
+                        .to_protobuf()
                         .map(services::staking_info::StakedId::StakedAccountId)
                 }),
         }

@@ -65,7 +65,7 @@ impl AccountInfoQuery {
 
 impl ToQueryProtobuf for AccountInfoQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
+        let account_id = self.account_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::CryptoGetInfo(services::CryptoGetInfoQuery {

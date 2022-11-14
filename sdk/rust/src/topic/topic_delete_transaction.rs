@@ -79,7 +79,7 @@ impl ToTransactionDataProtobuf for TopicDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let topic_id = self.topic_id.as_ref().map(TopicId::to_protobuf);
+        let topic_id = self.topic_id.to_protobuf();
 
         services::transaction_body::Data::ConsensusDeleteTopic(
             services::ConsensusDeleteTopicTransactionBody { topic_id },

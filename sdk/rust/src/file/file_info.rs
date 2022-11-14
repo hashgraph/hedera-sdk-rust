@@ -72,7 +72,7 @@ impl FileInfo {
         services::file_get_info_response::FileInfo {
             file_id: Some(self.file_id.to_protobuf()),
             size: self.size as i64,
-            expiration_time: self.expiration_time.as_ref().map(ToProtobuf::to_protobuf),
+            expiration_time: self.expiration_time.to_protobuf(),
             deleted: self.is_deleted,
             memo: self.file_memo.clone(),
             ledger_id: self.ledger_id.to_bytes(),

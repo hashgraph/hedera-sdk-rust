@@ -182,10 +182,10 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let key = self.key.as_ref().map(Key::to_protobuf);
-        let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let expiration_time = self.expiration_time.as_ref().map(OffsetDateTime::to_protobuf);
+        let account_id = self.account_id.to_protobuf();
+        let key = self.key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let expiration_time = self.expiration_time.to_protobuf();
 
         let receiver_signature_required = self.receiver_signature_required.map(|required| {
             services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)

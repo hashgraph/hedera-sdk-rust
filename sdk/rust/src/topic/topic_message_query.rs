@@ -113,7 +113,7 @@ impl MirrorQuerySubscribe for TopicMessageQueryData {
     type Message = TopicMessage;
 
     async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status> {
-        let topic_id = self.topic_id.as_ref().map(TopicId::to_protobuf);
+        let topic_id = self.topic_id.to_protobuf();
         let consensus_end_time = self.end_time.map(Into::into);
         let consensus_start_time = self.start_time.map(Into::into);
 

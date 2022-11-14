@@ -91,7 +91,7 @@ impl TransactionReceiptQuery {
 
 impl ToQueryProtobuf for TransactionReceiptQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let transaction_id = self.transaction_id.as_ref().map(TransactionId::to_protobuf);
+        let transaction_id = self.transaction_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::TransactionGetReceipt(

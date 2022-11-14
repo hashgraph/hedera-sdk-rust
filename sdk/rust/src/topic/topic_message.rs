@@ -83,8 +83,7 @@ impl FromProtobuf<mirror::ConsensusTopicResponse> for TopicMessage {
             (None, 1, 1)
         };
 
-        let initial_transaction_id =
-            initial_transaction_id.map(TransactionId::from_protobuf).transpose()?;
+        let initial_transaction_id = Option::from_protobuf(initial_transaction_id)?;
 
         Ok(Self {
             consensus_timestamp: consensus_at,

@@ -106,8 +106,7 @@ impl ToTransactionDataProtobuf for AccountAllowanceDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let nft_allowances =
-            self.nft_allowances.iter().map(NftRemoveAllowance::to_protobuf).collect();
+        let nft_allowances = self.nft_allowances.to_protobuf();
 
         services::transaction_body::Data::CryptoDeleteAllowance(
             services::CryptoDeleteAllowanceTransactionBody { nft_allowances },

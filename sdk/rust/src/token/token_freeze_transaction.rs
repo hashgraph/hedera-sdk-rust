@@ -93,8 +93,8 @@ impl ToTransactionDataProtobuf for TokenFreezeTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let token = self.token_id.as_ref().map(TokenId::to_protobuf);
+        let account = self.account_id.to_protobuf();
+        let token = self.token_id.to_protobuf();
 
         services::transaction_body::Data::TokenFreeze(services::TokenFreezeAccountTransactionBody {
             token,

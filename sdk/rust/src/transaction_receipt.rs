@@ -152,15 +152,14 @@ impl TransactionReceipt {
             return Err(Error::ResponseStatusUnrecognized(receipt.status));
         };
 
-        let account_id = receipt.account_id.map(AccountId::from_protobuf).transpose()?;
-        let file_id = receipt.file_id.map(FileId::from_protobuf).transpose()?;
-        let contract_id = receipt.contract_id.map(ContractId::from_protobuf).transpose()?;
-        let topic_id = receipt.topic_id.map(TopicId::from_protobuf).transpose()?;
-        let token_id = receipt.token_id.map(TokenId::from_protobuf).transpose()?;
-        let schedule_id = receipt.schedule_id.map(ScheduleId::from_protobuf).transpose()?;
+        let account_id = Option::from_protobuf(receipt.account_id)?;
+        let file_id = Option::from_protobuf(receipt.file_id)?;
+        let contract_id = Option::from_protobuf(receipt.contract_id)?;
+        let topic_id = Option::from_protobuf(receipt.topic_id)?;
+        let token_id = Option::from_protobuf(receipt.token_id)?;
+        let schedule_id = Option::from_protobuf(receipt.schedule_id)?;
 
-        let scheduled_transaction_id =
-            receipt.scheduled_transaction_id.map(TransactionId::from_protobuf).transpose()?;
+        let scheduled_transaction_id = Option::from_protobuf(receipt.scheduled_transaction_id)?;
 
         Ok(Self {
             status,
@@ -194,17 +193,9 @@ impl TransactionReceipt {
 
         let receipt = pb_getf!(pb, receipt)?;
 
-        let duplicates = pb
-            .duplicate_transaction_receipts
-            .into_iter()
-            .map(<TransactionReceipt as FromProtobuf<_>>::from_protobuf)
-            .collect::<crate::Result<_>>()?;
+        let duplicates = Vec::from_protobuf(pb.duplicate_transaction_receipts)?;
 
-        let children = pb
-            .child_transaction_receipts
-            .into_iter()
-            .map(<TransactionReceipt as FromProtobuf<_>>::from_protobuf)
-            .collect::<crate::Result<_>>()?;
+        let children = Vec::from_protobuf(pb.child_transaction_receipts)?;
 
         Self::from_protobuf(receipt, duplicates, children, transaction_id)
     }
@@ -234,21 +225,18 @@ impl ToProtobuf for TransactionReceipt {
     fn to_protobuf(&self) -> Self::Protobuf {
         services::TransactionReceipt {
             status: self.status as i32,
-            account_id: self.account_id.as_ref().map(ToProtobuf::to_protobuf),
-            file_id: self.file_id.as_ref().map(ToProtobuf::to_protobuf),
-            contract_id: self.contract_id.as_ref().map(ToProtobuf::to_protobuf),
+            account_id: self.account_id.to_protobuf(),
+            file_id: self.file_id.to_protobuf(),
+            contract_id: self.contract_id.to_protobuf(),
             exchange_rate: None,
-            topic_id: self.topic_id.as_ref().map(ToProtobuf::to_protobuf),
+            topic_id: self.topic_id.to_protobuf(),
             topic_sequence_number: self.topic_sequence_number,
             topic_running_hash: self.topic_running_hash.clone().unwrap_or_default(),
             topic_running_hash_version: self.topic_running_hash_version,
-            token_id: self.token_id.as_ref().map(ToProtobuf::to_protobuf),
+            token_id: self.token_id.to_protobuf(),
             new_total_supply: self.total_supply,
-            schedule_id: self.schedule_id.as_ref().map(ToProtobuf::to_protobuf),
-            scheduled_transaction_id: self
-                .scheduled_transaction_id
-                .as_ref()
-                .map(ToProtobuf::to_protobuf),
+            schedule_id: self.schedule_id.to_protobuf(),
+            scheduled_transaction_id: self.scheduled_transaction_id.to_protobuf(),
             serial_numbers: self.serials.clone(),
         }
     }
