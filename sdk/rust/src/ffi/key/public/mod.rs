@@ -20,6 +20,7 @@
 
 use std::ffi::CString;
 use std::os::raw::c_char;
+use std::slice;
 use std::str::FromStr;
 
 use libc::size_t;
@@ -325,6 +326,40 @@ pub unsafe extern "C" fn hedera_public_key_to_string_raw(key: *mut PublicKey) ->
     // if this unwrap fails the called method's impl has a bug,
     // because hex-encoded anything doesn't contain `\0`.
     CString::new(key.to_string_raw()).unwrap().into_raw()
+}
+
+/// Verify a `signature` on a `message` with this public key.
+///
+/// # Safety
+/// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+/// - `message` must be valid for reads of up to `message_size` message.
+/// - `signature` must be valid for reads of up to `signature_size` signature.
+///
+/// # Errors
+/// - [`Error::SignatureVerify`] if the signature algorithm doesn't match this `PublicKey`.
+/// - [`Error::SignatureVerify`] if the signature is invalid for this `PublicKey`.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_public_key_verify(
+    key: *mut PublicKey,
+    message: *const u8,
+    message_size: size_t,
+    signature: *const u8,
+    signature_size: size_t,
+) -> Error {
+    assert!(!message.is_null());
+    assert!(!signature.is_null());
+    // safety: caller promises that `key` must be valid for reads
+    let key = unsafe { key.as_ref().unwrap() };
+
+    // safety: caller promises that `message` is valid for r/w of up to `message_size`, which is exactly what `slice::from_raw_parts` wants.
+    let message = unsafe { slice::from_raw_parts(message, message_size) };
+
+    // safety: caller promises that `signature` is valid for r/w of up to `signature_size`, which is exactly what `slice::from_raw_parts` wants.
+    let signature = unsafe { slice::from_raw_parts(signature, signature_size) };
+
+    ffi_try!(key.verify(message, signature));
+
+    Error::Ok
 }
 
 // ffi note: `bool` is defined to have the same layout as c17's `_Bool`.

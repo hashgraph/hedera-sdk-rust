@@ -207,6 +207,14 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         hedera_private_key_is_ecdsa(ptr)
     }
 
+    public func sign(_ message: Data) -> Data {
+        message.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+            var buf: UnsafeMutablePointer<UInt8>?
+            let size = hedera_private_key_sign(ptr, pointer.baseAddress, pointer.count, &buf)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        }
+    }
+
     public func isDerivable() -> Bool {
         hedera_private_key_is_derivable(ptr)
     }

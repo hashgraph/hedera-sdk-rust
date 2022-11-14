@@ -23,8 +23,11 @@ use std::ffi::{
     CString,
 };
 use std::os::raw::c_char;
-use std::ptr;
 use std::str::FromStr;
+use std::{
+    ptr,
+    slice,
+};
 
 use libc::size_t;
 
@@ -429,6 +432,43 @@ pub unsafe extern "C" fn hedera_private_key_is_ecdsa(key: *mut PrivateKey) -> bo
     let key = unsafe { key.as_ref().unwrap() };
 
     key.is_ecdsa()
+}
+
+/// # Safety
+/// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+/// - `message` must be valid for reads of up to `message_size` bytes.
+/// - `buf` must be valid for writes according to [*Rust* pointer rules]
+/// - the length of the returned buffer must not be modified.
+/// - the returned pointer must NOT be freed with `free`.
+/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+#[no_mangle]
+pub unsafe extern "C" fn hedera_private_key_sign(
+    key: *mut PrivateKey,
+    message: *const u8,
+    message_size: size_t,
+    buf: *mut *mut u8,
+) -> size_t {
+    assert!(!message.is_null());
+    assert!(!key.is_null());
+
+    // safety: caller promises that `key` must be valid for reads
+    let key = unsafe { key.as_ref().unwrap() };
+
+    // safety: caller promises that `message` is valid for r/w of up to `message_size`, which is exactly what `slice::from_raw_parts` wants.
+    let message = unsafe { slice::from_raw_parts(message, message_size) };
+
+    let bytes = key.sign(message).into_boxed_slice();
+
+    let bytes = Box::leak(bytes);
+    let len = bytes.len();
+    let bytes = bytes.as_mut_ptr();
+
+    // safety: invariants promise that `buf` must be valid for writes.
+    unsafe {
+        ptr::write(buf, bytes);
+    }
+
+    len
 }
 
 /// Returns true if calling [`derive`](Self::derive) on `key` would succeed.

@@ -65,7 +65,6 @@ mod node_address_book_query;
 mod query;
 mod schedule;
 mod semantic_version;
-mod signature;
 mod signer;
 mod staking_info;
 mod system;
@@ -175,11 +174,6 @@ pub use schedule::{
     ScheduleSignTransaction,
 };
 pub use semantic_version::SemanticVersion;
-pub use signature::{
-    Signature,
-    SignaturePair,
-};
-pub use signer::Signer;
 pub use staking_info::StakingInfo;
 pub use system::{
     FreezeTransaction,

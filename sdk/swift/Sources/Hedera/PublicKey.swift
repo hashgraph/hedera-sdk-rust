@@ -178,6 +178,20 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         AccountId.init(shard: shard, realm: realm, alias: self)
     }
 
+    public func verify(_ message: Data, _ signature: Data) throws {
+        try message.withUnsafeBytes { (messagePointer: UnsafeRawBufferPointer) in
+            try signature.withUnsafeBytes { (signaturePointer: UnsafeRawBufferPointer) in
+                let err = hedera_public_key_verify(
+                    ptr, messagePointer.baseAddress, messagePointer.count, signaturePointer.baseAddress,
+                    signaturePointer.count)
+
+                if err != HEDERA_ERROR_OK {
+                    throw HError(err)!
+                }
+            }
+        }
+    }
+
     public func isEd25519() -> Bool {
         hedera_public_key_is_ed25519(ptr)
     }
