@@ -84,8 +84,8 @@ impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let account_id = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let transfer_account_id = self.transfer_account_id.as_ref().map(AccountId::to_protobuf);
+        let account_id = self.account_id.to_protobuf();
+        let transfer_account_id = self.transfer_account_id.to_protobuf();
 
         services::transaction_body::Data::CryptoDelete(services::CryptoDeleteTransactionBody {
             transfer_account_id,

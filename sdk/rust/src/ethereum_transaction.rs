@@ -105,7 +105,7 @@ impl ToTransactionDataProtobuf for EthereumTransactionData {
         _node_account_id: crate::AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let call_data = self.call_data_file_id.as_ref().map(FileId::to_protobuf);
+        let call_data = self.call_data_file_id.to_protobuf();
 
         services::transaction_body::Data::EthereumTransaction(services::EthereumTransactionBody {
             ethereum_data: self.ethereum_data.clone(),

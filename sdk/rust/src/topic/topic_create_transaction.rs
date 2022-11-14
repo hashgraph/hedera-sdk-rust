@@ -140,10 +140,10 @@ impl ToTransactionDataProtobuf for TopicCreateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
-        let submit_key = self.submit_key.as_ref().map(Key::to_protobuf);
-        let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
-        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
+        let admin_key = self.admin_key.to_protobuf();
+        let submit_key = self.submit_key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
 
         services::transaction_body::Data::ConsensusCreateTopic(
             services::ConsensusCreateTopicTransactionBody {

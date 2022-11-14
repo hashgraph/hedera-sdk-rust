@@ -265,8 +265,8 @@ impl ToProtobuf for TokenTransfer {
     type Protobuf = services::TokenTransferList;
 
     fn to_protobuf(&self) -> Self::Protobuf {
-        let transfers = self.transfers.iter().map(Transfer::to_protobuf).collect();
-        let nft_transfers = self.nft_transfers.iter().map(NftTransfer::to_protobuf).collect();
+        let transfers = self.transfers.to_protobuf();
+        let nft_transfers = self.nft_transfers.to_protobuf();
 
         services::TokenTransferList {
             token: Some(self.token_id.to_protobuf()),
@@ -296,11 +296,13 @@ impl ToTransactionDataProtobuf for TransferTransactionData {
         _node_account_id: crate::AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let transfers = self.transfers.is_empty().not().then(|| services::TransferList {
-            account_amounts: self.transfers.iter().map(Transfer::to_protobuf).collect(),
-        });
+        let transfers = self
+            .transfers
+            .is_empty()
+            .not()
+            .then(|| services::TransferList { account_amounts: self.transfers.to_protobuf() });
 
-        let token_transfers = self.token_transfers.iter().map(TokenTransfer::to_protobuf).collect();
+        let token_transfers = self.token_transfers.to_protobuf();
 
         services::transaction_body::Data::CryptoTransfer(services::CryptoTransferTransactionBody {
             transfers,

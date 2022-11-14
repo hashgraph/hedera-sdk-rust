@@ -114,7 +114,7 @@ impl ToTransactionDataProtobuf for TokenMintTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let token = self.token_id.as_ref().map(TokenId::to_protobuf);
+        let token = self.token_id.to_protobuf();
         let amount = self.amount;
         let metadata = self.metadata.clone();
 

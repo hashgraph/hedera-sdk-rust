@@ -203,9 +203,9 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let admin_key = self.admin_key.as_ref().map(Key::to_protobuf);
+        let admin_key = self.admin_key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.into();
-        let auto_renew_account_id = self.auto_renew_account_id.as_ref().map(AccountId::to_protobuf);
+        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
 
         let initcode_source = match (&self.bytecode, &self.bytecode_file_id) {
             (_, Some(file_id)) => {

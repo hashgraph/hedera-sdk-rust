@@ -94,8 +94,8 @@ impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let account = self.account_id.as_ref().map(AccountId::to_protobuf);
-        let tokens = self.token_ids.iter().map(TokenId::to_protobuf).collect();
+        let account = self.account_id.to_protobuf();
+        let tokens = self.token_ids.to_protobuf();
 
         services::transaction_body::Data::TokenAssociate(services::TokenAssociateTransactionBody {
             account,

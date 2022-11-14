@@ -72,7 +72,7 @@ impl ToTransactionDataProtobuf for ScheduleDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &TransactionId,
     ) -> services::transaction_body::Data {
-        let schedule_id = self.schedule_id.as_ref().map(ScheduleId::to_protobuf);
+        let schedule_id = self.schedule_id.to_protobuf();
 
         services::transaction_body::Data::ScheduleDelete(services::ScheduleDeleteTransactionBody {
             schedule_id,

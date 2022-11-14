@@ -180,8 +180,8 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let key = self.key.as_ref().map(Key::to_protobuf);
-        let auto_renew_period = self.auto_renew_period.as_ref().map(Duration::to_protobuf);
+        let key = self.key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.to_protobuf();
 
         let staked_id = match (&self.staked_account_id, self.staked_node_id) {
             (_, Some(node_id)) => Some(

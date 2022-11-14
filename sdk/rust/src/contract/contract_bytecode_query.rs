@@ -64,7 +64,7 @@ impl From<ContractBytecodeQueryData> for AnyQueryData {
 
 impl ToQueryProtobuf for ContractBytecodeQueryData {
     fn to_query_protobuf(&self, header: services::QueryHeader) -> services::Query {
-        let contract_id = self.contract_id.as_ref().map(ContractId::to_protobuf);
+        let contract_id = self.contract_id.to_protobuf();
 
         services::Query {
             query: Some(services::query::Query::ContractGetBytecode(

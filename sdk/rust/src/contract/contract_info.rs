@@ -102,17 +102,17 @@ impl ContractInfo {
             contract_id: Some(self.contract_id.to_protobuf()),
             account_id: Some(self.account_id.to_protobuf()),
             contract_account_id: self.contract_account_id.clone(),
-            admin_key: self.admin_key.as_ref().map(ToProtobuf::to_protobuf),
-            expiration_time: self.expiration_time.as_ref().map(ToProtobuf::to_protobuf),
-            auto_renew_period: self.auto_renew_period.as_ref().map(ToProtobuf::to_protobuf),
+            admin_key: self.admin_key.to_protobuf(),
+            expiration_time: self.expiration_time.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
             storage: self.storage as i64,
             memo: self.contract_memo.clone(),
             balance: self.balance,
             deleted: self.is_deleted,
             ledger_id: self.ledger_id.to_bytes(),
-            auto_renew_account_id: self.auto_renew_account_id.as_ref().map(ToProtobuf::to_protobuf),
+            auto_renew_account_id: self.auto_renew_account_id.to_protobuf(),
             max_automatic_token_associations: self.max_automatic_token_associations as i32,
-            staking_info: self.staking_info.as_ref().map(ToProtobuf::to_protobuf),
+            staking_info: self.staking_info.to_protobuf(),
 
             // unimplemented fields
             token_relationships: Vec::new(),
@@ -143,11 +143,10 @@ impl FromProtobuf<services::contract_get_info_response::ContractInfo> for Contra
         let account_id = pb_getf!(pb, account_id)?;
         let expiration_time = pb.expiration_time.map(Into::into);
         let auto_renew_period = pb.auto_renew_period.map(Into::into);
-        let auto_renew_account_id =
-            pb.auto_renew_account_id.map(AccountId::from_protobuf).transpose()?;
-        let admin_key = pb.admin_key.map(Key::from_protobuf).transpose()?;
+        let auto_renew_account_id = Option::from_protobuf(pb.auto_renew_account_id)?;
+        let admin_key = Option::from_protobuf(pb.admin_key)?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
-        let staking_info = pb.staking_info.map(StakingInfo::from_protobuf).transpose()?;
+        let staking_info = Option::from_protobuf(pb.staking_info)?;
 
         Ok(Self {
             contract_id: ContractId::from_protobuf(contract_id)?,
