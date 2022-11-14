@@ -41,8 +41,7 @@ public final class ScheduleInfo: Codable {
 
     /// The transaction id that will be used in the record of the scheduled transaction (if
     /// it executes).
-    // TODO: TransactionId type
-    public let scheduledTransactionId: String
+    public let scheduledTransactionId: TransactionId
 
     /// When set to true, the transaction will be evaluated for execution at `expiration_time`
     /// instead of when all required signatures are received.

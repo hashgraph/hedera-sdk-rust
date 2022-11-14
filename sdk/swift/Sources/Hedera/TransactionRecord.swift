@@ -35,9 +35,8 @@ public struct TransactionRecord: Codable {
     /// The consensus timestamp.
     public let consensusTimestamp: Timestamp
 
-    // TODO: TransactionId
     /// The ID of the transaction this record represents.
-    public let transactionId: String
+    public let transactionId: TransactionId
 
     /// The memo that was submitted as part of the transaction.
     public let transactionMemo: String
@@ -77,7 +76,7 @@ public struct TransactionRecord: Codable {
         receipt = try container.decode(TransactionReceipt.self, forKey: .receipt)
         transactionHash = Data(base64Encoded: try container.decode(String.self, forKey: .transactionHash))!
         consensusTimestamp = try container.decode(Timestamp.self, forKey: .consensusTimestamp)
-        transactionId = try container.decode(String.self, forKey: .transactionId)
+        transactionId = try container.decode(TransactionId.self, forKey: .transactionId)
         transactionMemo = try container.decode(String.self, forKey: .transactionMemo)
         transactionFee = try container.decode(Hbar.self, forKey: .transactionFee)
         scheduleRef = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleRef)

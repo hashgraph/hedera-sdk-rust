@@ -26,7 +26,6 @@
 ///
 /// To learn the consensus result, the client should later obtain a
 /// receipt (free), or can buy a more detailed record (not free).
-///
 public struct TransactionResponse: Decodable {
     /// The account ID of the node that the transaction was submitted to.
     public let nodeAccountId: AccountId
@@ -34,14 +33,11 @@ public struct TransactionResponse: Decodable {
     /// The client-generated transaction ID of the transaction that was submitted.
     ///
     /// This can be used to lookup the transaction in an explorer.
-    ///
-    public let transactionId: String
-    // TODO: Use `TransactionId` type
+    public let transactionId: TransactionId
 
     /// The client-generated SHA-384 hash of the transaction that was submitted.
     ///
     /// This can be used to lookup the transaction in an explorer.
-    ///
     public let transactionHash: String
     // TODO: Use `TransactionHash` type
 
