@@ -70,17 +70,65 @@ where
         self.subscribe(client).try_collect().await
     }
 
+    #[cfg(feature = "ffi")]
+    pub(crate) async fn execute_with_optional_timeout(
+        &mut self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> crate::Result<Vec<D::Message>> {
+        self.subscribe_with_optional_timeout(client, timeout).try_collect().await
+    }
+
+    /// Execute this query against the provided client of the Hedera network.
+    ///
+    /// Note that `timeout` is the connection timeout.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn execute_with_timeout(
+        &mut self,
+        client: &Client,
+        timeout: std::time::Duration,
+    ) -> crate::Result<Vec<D::Message>> {
+        self.subscribe_with_optional_timeout(client, Some(timeout)).try_collect().await
+    }
+
     /// Subscribe to this query with the provided client of the Hedera network.
-    #[allow(unused_labels)]
     pub fn subscribe(
         &self,
         client: &Client,
     ) -> Pin<Box<dyn Stream<Item = crate::Result<D::Message>> + Send>> {
+        self.subscribe_with_optional_timeout(client, None)
+    }
+
+    /// Subscribe to this query with the provided client of the Hedera network.
+    ///
+    /// Note that `timeout` is the connection timeout.
+    pub fn subscribe_with_timeout(
+        &self,
+        client: &Client,
+        timeout: std::time::Duration,
+    ) -> Pin<Box<dyn Stream<Item = crate::Result<D::Message>> + Send>> {
+        self.subscribe_with_optional_timeout(client, Some(timeout))
+    }
+
+    #[allow(unused_labels)]
+    pub(crate) fn subscribe_with_optional_timeout(
+        &self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> Pin<Box<dyn Stream<Item = crate::Result<D::Message>> + Send>> {
+        let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
+            std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
+        });
+
         let client = client.clone();
         let self_ = self.clone();
 
         Box::pin(stream! {
-            let mut backoff = ExponentialBackoff::default();
+            let mut backoff = ExponentialBackoff {
+                max_elapsed_time: Some(timeout),
+                ..ExponentialBackoff::default()
+            };
             let mut backoff_inf = ExponentialBackoff::default();
 
             // remove maximum elapsed time for # of back-offs on inf.

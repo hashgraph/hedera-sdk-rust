@@ -147,11 +147,28 @@ where
 
     /// Fetch the cost of this query.
     pub async fn get_cost(&self, client: &Client) -> crate::Result<Hbar> {
+        self.get_cost_with_optional_timeout(client, None).await
+    }
+
+    pub(crate) async fn get_cost_with_optional_timeout(
+        &self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> crate::Result<Hbar> {
         if !self.data.is_payment_required() {
             return Ok(Hbar::ZERO);
         }
 
-        QueryCost::new(self).execute(client).await
+        QueryCost::new(self).execute(client, timeout).await
+    }
+
+    /// Fetch the cost of this query.
+    pub async fn get_cost_with_timeout(
+        &self,
+        client: &Client,
+        timeout: std::time::Duration,
+    ) -> crate::Result<Hbar> {
+        self.get_cost_with_optional_timeout(client, Some(timeout)).await
     }
 }
 
@@ -163,9 +180,19 @@ where
     // todo:
     #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<D::Response> {
+        self.execute_with_optional_timeout(client, None).await
+    }
+
+    // eww long name
+    pub(crate) async fn execute_with_optional_timeout(
+        &mut self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> crate::Result<D::Response> {
         if self.payment.body.data.amount.is_none() && self.data.is_payment_required() {
+            // should this inherit the timeout?
             // payment is required but none was specified, query the cost
-            let cost = QueryCost::new(self).execute(client).await?;
+            let cost = QueryCost::new(self).execute(client, None).await?;
 
             if let Some(max_amount) = self.payment.body.data.max_amount {
                 if cost > max_amount {
@@ -179,6 +206,17 @@ where
             self.payment.body.data.amount = Some(cost);
         }
 
-        execute(client, self).await
+        execute(client, self, timeout).await
+    }
+
+    /// Execute this query against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn execute_with_timeout(
+        &mut self,
+        client: &Client,
+        timeout: std::time::Duration,
+    ) -> crate::Result<D::Response> {
+        self.execute_with_optional_timeout(client, Some(timeout)).await
     }
 }

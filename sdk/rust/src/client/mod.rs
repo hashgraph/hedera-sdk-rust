@@ -134,4 +134,9 @@ impl Client {
     pub(crate) fn max_transaction_fee(&self) -> &AtomicU64 {
         &self.max_transaction_fee_tinybar
     }
+
+    pub(crate) fn get_request_timeout(&self) -> Option<std::time::Duration> {
+        // todo: implement this.
+        None
+    }
 }
