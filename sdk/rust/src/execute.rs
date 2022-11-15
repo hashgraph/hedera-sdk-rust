@@ -110,13 +110,13 @@ pub(crate) trait Execute {
 pub(crate) async fn execute<E>(
     client: &Client,
     executable: &E,
-    timeout: impl Into<Option<std::time::Duration>>,
+    timeout: impl Into<Option<std::time::Duration>> + Send,
 ) -> crate::Result<E::Response>
 where
     E: Execute + Sync,
 {
     let timeout: Option<std::time::Duration> = timeout.into();
-    
+
     let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
         std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
     });
