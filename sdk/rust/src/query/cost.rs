@@ -134,7 +134,11 @@ where
     D: QueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
-    pub async fn execute(&mut self, client: &Client) -> crate::Result<Hbar> {
-        execute(client, self).await
+    pub(crate) async fn execute(
+        &mut self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> crate::Result<Hbar> {
+        execute(client, self, timeout).await
     }
 }

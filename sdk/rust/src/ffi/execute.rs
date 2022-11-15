@@ -62,6 +62,8 @@ pub unsafe extern "C" fn hedera_execute(
     request: *const c_char,
     context: *const c_void,
     signers: Signers,
+    has_timeout: bool,
+    timeout_nanos: u64,
     callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
 ) -> Error {
     assert!(!client.is_null());
@@ -74,6 +76,8 @@ pub unsafe extern "C" fn hedera_execute(
 
     let signers_2: Vec<_> = signers.as_slice().iter().map(|it| it.to_csigner()).collect();
 
+    let timeout = has_timeout.then(|| std::time::Duration::from_nanos(timeout_nanos));
+
     drop(signers);
     let signers = signers_2;
 
@@ -82,7 +86,7 @@ pub unsafe extern "C" fn hedera_execute(
     RUNTIME.spawn(async move {
         let response = match request {
             AnyRequest::Query(mut query) => query
-                .execute(client)
+                .execute_with_optional_timeout(client, timeout)
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),
 
@@ -92,19 +96,19 @@ pub unsafe extern "C" fn hedera_execute(
                 }
 
                 transaction
-                    .execute(client)
+                    .execute_with_optional_timeout(client, timeout)
                     .await
                     .map(|response| serde_json::to_string(&response).unwrap())
             }
 
             AnyRequest::MirrorQuery(mut mirror_query) => mirror_query
-                .execute(client)
+                .execute_with_optional_timeout(client, timeout)
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),
 
             AnyRequest::QueryCost(req) => req
                 .query
-                .get_cost(client)
+                .get_cost_with_optional_timeout(client, timeout)
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),
         };
