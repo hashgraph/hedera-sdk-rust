@@ -9,7 +9,7 @@
 
 ## Requirements
 
-- Swift v5.3+
+- Swift v5.5+
 - MacOS v10.15+ (2019, Catalina)
 - iOS 12+ (2018)
 
