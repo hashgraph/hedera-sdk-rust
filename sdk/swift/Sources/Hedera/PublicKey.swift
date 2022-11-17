@@ -41,7 +41,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
-        let ptr = try bytes.withUnsafeTypedBytes { pointer in
+        try bytes.withUnsafeTypedBytes { pointer -> Self in
             var key: OpaquePointer? = nil
             let err = chederaCallback(pointer.baseAddress, pointer.count, &key)
 
@@ -49,10 +49,8 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
                 throw HError(err)!
             }
 
-            return key!
+            return Self(key!)
         }
-
-        return Self(ptr)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
