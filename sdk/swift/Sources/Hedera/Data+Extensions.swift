@@ -89,3 +89,11 @@ extension Data {
         self.init(arr)
     }
 }
+
+extension Data {
+    internal func withUnsafeTypedBytes<R>(_ body: (UnsafeBufferPointer<UInt8>) throws -> R) rethrows -> R {
+        try self.withUnsafeBytes { pointer in
+            try body(pointer.assumingMemoryBound(to: UInt8.self))
+        }
+    }
+}

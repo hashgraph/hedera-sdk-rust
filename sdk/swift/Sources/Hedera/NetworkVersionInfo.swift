@@ -44,7 +44,7 @@ public struct NetworkVersionInfo: Codable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        try bytes.withUnsafeTypedBytes { pointer in
             var info = HederaNetworkVersionInfo()
 
             let err = hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info)
