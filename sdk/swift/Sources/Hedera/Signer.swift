@@ -13,8 +13,7 @@ func sign(
     let signatureData = signer.signFunc(messageData)
 
     // raw pointer timeeee (yes, we do need to double copy.)
-    let buffer = signatureData.withUnsafeBytes {
-        (dataBuffer) in
+    let buffer = signatureData.withUnsafeBytes { dataBuffer -> UnsafeMutableBufferPointer<UInt8> in
         let buffer = UnsafeMutableRawBufferPointer.allocate(byteCount: dataBuffer.count, alignment: 1)
         buffer.copyBytes(from: dataBuffer)
         return buffer.bindMemory(to: UInt8.self)

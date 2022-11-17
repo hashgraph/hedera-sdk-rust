@@ -54,18 +54,16 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
-        let ptr = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
-            var key = OpaquePointer(bitPattern: 0)
-            let err = chederaCallback(pointer.bindMemory(to: UInt8.self).baseAddress, pointer.count, &key)
+        try bytes.withUnsafeTypedBytes { pointer -> Self in
+            var key: OpaquePointer? = nil
+            let err = chederaCallback(pointer.baseAddress, pointer.count, &key)
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!
             }
 
-            return key!
+            return Self(key!)
         }
-
-        return Self(ptr)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
@@ -85,7 +83,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public static func fromString(_ description: String) throws -> Self {
-        var key = OpaquePointer(bitPattern: 0)
+        var key: OpaquePointer? = nil
         let err = hedera_private_key_from_string(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -96,7 +94,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public init?(_ description: String) {
-        var key = OpaquePointer(bitPattern: 0)
+        var key: OpaquePointer? = nil
         let err = hedera_private_key_from_string(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -208,7 +206,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public func sign(_ message: Data) -> Data {
-        message.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        message.withUnsafeTypedBytes { pointer in
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_private_key_sign(ptr, pointer.baseAddress, pointer.count, &buf)
             return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)

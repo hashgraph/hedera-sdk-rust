@@ -101,7 +101,7 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        try bytes.withUnsafeTypedBytes { pointer in
             var semver = HederaSemanticVersion()
 
             let err = hedera_semantic_version_from_bytes(pointer.baseAddress, pointer.count, &semver)

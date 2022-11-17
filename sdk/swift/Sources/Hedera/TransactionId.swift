@@ -68,7 +68,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        try bytes.withUnsafeTypedBytes { pointer in
             var id = HederaTransactionId()
 
             let err = hedera_transaction_id_from_bytes(

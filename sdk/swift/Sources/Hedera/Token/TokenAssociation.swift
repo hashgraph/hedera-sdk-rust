@@ -30,8 +30,8 @@ public struct TokenAssociation: Codable {
     public let accountId: AccountId
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        let json: String = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
-            var ptr: UnsafeMutablePointer<CChar>? = UnsafeMutablePointer(bitPattern: 0)
+        let json: String = try bytes.withUnsafeTypedBytes { pointer in
+            var ptr: UnsafeMutablePointer<CChar>? = nil
             let err = hedera_token_association_from_bytes(
                 pointer.baseAddress,
                 pointer.count,

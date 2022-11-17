@@ -45,7 +45,7 @@ extension Data {
     // safety: `hedera_bytes_free` needs to be called so...
     // perf: might as well enable use of the no copy constructor.
     internal static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
-        hedera_bytes_free(buf, size)
+        hedera_bytes_free(buf.bindMemory(to: UInt8.self, capacity: size), size)
     }
 
     private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
@@ -87,5 +87,13 @@ extension Data {
         }
 
         self.init(arr)
+    }
+}
+
+extension Data {
+    internal func withUnsafeTypedBytes<R>(_ body: (UnsafeBufferPointer<UInt8>) throws -> R) rethrows -> R {
+        try self.withUnsafeBytes { pointer in
+            try body(pointer.bindMemory(to: UInt8.self))
+        }
     }
 }

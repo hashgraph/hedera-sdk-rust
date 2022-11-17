@@ -93,7 +93,7 @@ public final class AccountId: EntityId {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        try bytes.withUnsafeTypedBytes { pointer in
             var id = HederaAccountId()
 
             let err = hedera_account_id_from_bytes(

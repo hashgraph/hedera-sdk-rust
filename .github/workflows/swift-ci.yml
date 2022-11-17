@@ -64,15 +64,22 @@ jobs:
         run: swift format lint --strict --configuration .swift-format.json --recursive --parallel Sources/ Tests/ Examples/ Package.swift
 
   build:
+    strategy:
+      matrix:
+        swift: ["5.5", "5.7"]
     needs: build-ffi
     runs-on: macos-12
     steps:
+      - uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift }}
+
       - uses: actions/checkout@v3
 
       - uses: actions/cache@v3
         with:
           path: sdk/swift/.build
-          key: ${{ runner.os }}-spm-${{ github.job }}-${{ hashFiles('**/Package.resolved') }}
+          key: ${{ runner.os }}-spm-${{ github.job }}-${{ matrix.swift }}-${{ hashFiles('**/Package.resolved') }}
 
       - name: Download CHedera artifacts
         uses: actions/download-artifact@v3
@@ -91,15 +98,21 @@ jobs:
         run: swift build
 
   test:
+    strategy:
+      matrix:
+        swift: ["5.5", "5.7"]
     needs: [build-ffi, build]
     runs-on: macos-12
     steps:
+      - uses: swift-actions/setup-swift@v1
+        with:
+          swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v3
 
       - uses: actions/cache@v3
         with:
           path: sdk/swift/.build
-          key: ${{ runner.os }}-spm-${{ github.job }}-${{ hashFiles('**/Package.resolved') }}
+          key: ${{ runner.os }}-spm-${{ github.job }}-${{ matrix.swift }}-${{ hashFiles('**/Package.resolved') }}
 
       - name: Download CHedera `x86_64-apple-darwin`
         uses: actions/download-artifact@v3
