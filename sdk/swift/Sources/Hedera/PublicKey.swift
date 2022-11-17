@@ -41,9 +41,9 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
-        let ptr = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
-            var key = OpaquePointer(bitPattern: 0)
-            let err = chederaCallback(pointer.bindMemory(to: UInt8.self).baseAddress, pointer.count, &key)
+        let ptr = try bytes.withUnsafeTypedBytes { pointer in
+            var key: OpaquePointer? = nil
+            let err = chederaCallback(pointer.baseAddress, pointer.count, &key)
 
             if err != HEDERA_ERROR_OK {
                 throw HError(err)!
@@ -179,8 +179,8 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public func verify(_ message: Data, _ signature: Data) throws {
-        try message.withUnsafeBytes { (messagePointer: UnsafeRawBufferPointer) in
-            try signature.withUnsafeBytes { (signaturePointer: UnsafeRawBufferPointer) in
+        try message.withUnsafeTypedBytes { messagePointer in
+            try signature.withUnsafeTypedBytes { signaturePointer in
                 let err = hedera_public_key_verify(
                     ptr, messagePointer.baseAddress, messagePointer.count, signaturePointer.baseAddress,
                     signaturePointer.count)

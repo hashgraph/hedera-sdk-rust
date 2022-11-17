@@ -76,8 +76,8 @@ public final class AccountInfo: Codable {
     public let staking: StakingInfo?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        let json: String = try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
-            var ptr: UnsafeMutablePointer<CChar>? = UnsafeMutablePointer(bitPattern: 0)
+        let json: String = try bytes.withUnsafeTypedBytes { pointer in
+            var ptr: UnsafeMutablePointer<CChar>? = nil
             let err = hedera_account_info_from_bytes(
                 pointer.baseAddress,
                 pointer.count,
