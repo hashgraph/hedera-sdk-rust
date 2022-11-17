@@ -80,7 +80,7 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        try bytes.withUnsafeTypedBytes { pointer in
             var shard: UInt64 = 0
             var realm: UInt64 = 0
             var num: UInt64 = 0

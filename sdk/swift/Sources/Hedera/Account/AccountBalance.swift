@@ -42,7 +42,7 @@ public final class AccountBalance: Codable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) in
+        try bytes.withUnsafeTypedBytes { pointer in
             var balance = HederaAccountBalance()
 
             let err = hedera_account_balance_from_bytes(
