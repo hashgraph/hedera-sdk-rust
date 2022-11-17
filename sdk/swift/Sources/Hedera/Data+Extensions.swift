@@ -93,7 +93,11 @@ extension Data {
 extension Data {
     internal func withUnsafeTypedBytes<R>(_ body: (UnsafeBufferPointer<UInt8>) throws -> R) rethrows -> R {
         try self.withUnsafeBytes { pointer in
+#if swift(>=5.7) 
             try body(pointer.assumingMemoryBound(to: UInt8.self))
+#else
+            try body(pointer.bindMemory(to: UInt8.self))
+#endif
         }
     }
 }
