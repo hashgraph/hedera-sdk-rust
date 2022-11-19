@@ -23,9 +23,14 @@ use crate::{
     PublicKey,
 };
 
+/// Singing function for `sign_with`.
+///
+/// You probably won't ever have to explicitly mention this.
+pub type ArbitrarySigner = Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>;
+
 pub(crate) enum Signer {
     PrivateKey(PrivateKey),
-    Arbitrary(PublicKey, Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
+    Arbitrary(PublicKey, ArbitrarySigner),
     #[cfg(feature = "ffi")]
     C(crate::ffi::CSigner),
 }
@@ -45,7 +50,7 @@ impl Signer {
         match self {
             Signer::PrivateKey(it) => (it.public_key(), it.sign(message)),
             Signer::Arbitrary(public, signer) => {
-                let bytes = signer(&message);
+                let bytes = signer(message);
                 (*public, bytes)
             }
             #[cfg(feature = "ffi")]

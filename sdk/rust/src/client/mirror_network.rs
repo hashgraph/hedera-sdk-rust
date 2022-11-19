@@ -57,7 +57,7 @@ impl MirrorNetwork {
         let mut slot = self.channel.write();
 
         let endpoints = self.addresses.iter().map(|address| {
-            let uri = format!("tcp://{}", address);
+            let uri = format!("tcp://{address}");
             Endpoint::from_shared(uri)
                 .unwrap()
                 .keep_alive_timeout(Duration::from_secs(10))

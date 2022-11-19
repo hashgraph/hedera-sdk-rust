@@ -97,7 +97,7 @@ impl TransactionId {
 
 impl Debug for TransactionId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 
@@ -110,7 +110,7 @@ impl Display for TransactionId {
             self.valid_start.unix_timestamp(),
             self.valid_start.nanosecond(),
             if self.scheduled { "?scheduled" } else { "" },
-            self.nonce.map(|nonce| format!("/{}", nonce)).as_deref().unwrap_or_default()
+            self.nonce.map(|nonce| format!("/{nonce}")).as_deref().unwrap_or_default()
         )
     }
 }
