@@ -28,8 +28,10 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
+use crate::evm_address::EvmAddress;
 use crate::{
     EntityId,
+    Error,
     FromProtobuf,
     ToProtobuf,
 };
@@ -57,6 +59,41 @@ pub struct ContractId {
 }
 
 impl ContractId {
+    /// Create a `ContractId` from the given shard/realm/num
+    #[must_use]
+    pub fn new(shard: u64, realm: u64, num: u64) -> Self {
+        Self { shard, realm, num, evm_address: None }
+    }
+
+    /// Create a `ContractId` from a `shard.realm.evm_address` set.
+    #[must_use]
+    pub fn from_evm_address_bytes(shard: u64, realm: u64, evm_address: [u8; 20]) -> Self {
+        Self { shard, realm, num: 0, evm_address: Some(evm_address) }
+    }
+
+    /// Create a `ContractId` from a `shard.realm.evm_address` set.
+    ///
+    /// # Errors
+    /// [`Error::BasicParse`] if `address` is invalid hex, or the wrong length.
+    pub fn from_evm_address(shard: u64, realm: u64, address: &str) -> crate::Result<Self> {
+        let address = {
+            let mut buf = [0; 20];
+            hex::decode_to_slice(address.strip_prefix("0x").unwrap_or(address), &mut buf)
+                .map_err(Error::basic_parse)?;
+
+            buf
+        };
+
+        Ok(Self { shard, realm, num: 0, evm_address: Some(address) })
+    }
+
+    /// create a `ContractId` from a solidity address.
+    pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
+        let EntityId { shard, realm, num } = EntityId::from_solidity_address(address)?;
+
+        Ok(Self { shard, realm, num, evm_address: None })
+    }
+
     /// Create a new `ContractId` from protobuf-encoded `bytes`.
     ///
     /// # Errors
@@ -71,18 +108,27 @@ impl ContractId {
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
     }
+
+    /// Convert `self` into a solidity `address`
+    pub fn to_solidity_address(&self) -> crate::Result<String> {
+        if let Some(address) = self.evm_address {
+            return Ok(hex::encode(&address));
+        }
+
+        EntityId { shard: self.shard, realm: self.realm, num: self.num }.to_solidity_address()
+    }
 }
 
 impl Debug for ContractId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 
 impl Display for ContractId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(address) = &self.evm_address {
-            write!(f, "{}.{}.{}", self.shard, self.realm, hex::encode(address))
+            write!(f, "{}.{}.{}", self.shard, self.realm, EvmAddress::from_ref(address))
         } else {
             write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
         }
@@ -92,16 +138,15 @@ impl Display for ContractId {
 impl FromProtobuf<services::ContractId> for ContractId {
     fn from_protobuf(pb: services::ContractId) -> crate::Result<Self> {
         let contract = pb_getf!(pb, contract)?;
-        let num = pb_getv!(contract, ContractNum, services::contract_id::Contract);
 
-        // TODO: handle incoming EVM address !!
+        let (num, evm_address) = match contract {
+            services::contract_id::Contract::ContractNum(it) => (it as u64, None),
+            services::contract_id::Contract::EvmAddress(it) => {
+                (0, Some(EvmAddress::try_from(it)?.0))
+            }
+        };
 
-        Ok(Self {
-            evm_address: None,
-            num: num as u64,
-            shard: pb.shard_num as u64,
-            realm: pb.realm_num as u64,
-        })
+        Ok(Self { evm_address, num, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
     }
 }
 
@@ -122,7 +167,7 @@ impl ToProtobuf for ContractId {
 
 impl From<[u8; 20]> for ContractId {
     fn from(address: [u8; 20]) -> Self {
-        Self { num: 0, shard: 0, realm: 0, evm_address: Some(address) }
+        Self { shard: 0, realm: 0, num: 0, evm_address: Some(address) }
     }
 }
 
@@ -133,16 +178,34 @@ impl From<u64> for ContractId {
 }
 
 impl FromStr for ContractId {
-    type Err = crate::Error;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // TODO: Handle EVM Address !!
+        let expecting = || {
+            Error::basic_parse(format!(
+                "expecting <shard>.<realm>.<num> or <shard>.<realm>.<evm_address>, got `{s}`"
+            ))
+        };
 
-        s.parse().map(|EntityId { shard, realm, num }| Self {
-            shard,
-            realm,
-            num,
-            evm_address: None,
-        })
+        let Some((shard, s)) = s.split_once('.') else {
+            let num: u64 = s.parse().map_err(Error::basic_parse)?;
+            return Ok(num.into())
+        };
+
+        let shard = shard.parse().map_err(Error::basic_parse)?;
+
+        let (realm, s) = s.split_once('.').ok_or_else(expecting)?;
+
+        let realm = realm.parse().map_err(Error::basic_parse)?;
+
+        if let Ok(num) = u64::from_str(s) {
+            Ok(Self { shard, realm, num, evm_address: None })
+        } else if let Ok(evm_address) = hex::decode(s.strip_prefix("0x").unwrap_or(s)) {
+            let evm_address = EvmAddress::try_from(evm_address)?.0;
+
+            Ok(Self { shard, realm, num: 0, evm_address: Some(evm_address) })
+        } else {
+            return Err(expecting());
+        }
     }
 }

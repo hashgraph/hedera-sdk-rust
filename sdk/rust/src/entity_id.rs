@@ -28,6 +28,7 @@ use std::str::FromStr;
 
 use itertools::Itertools;
 
+use crate::evm_address::EvmAddress;
 use crate::Error;
 
 /// The ID of an entity on the Hedera network.
@@ -44,9 +45,19 @@ pub struct EntityId {
     pub num: u64,
 }
 
+impl EntityId {
+    pub(crate) fn from_solidity_address(address: &str) -> crate::Result<Self> {
+        EvmAddress::from_str(address).map(Self::from)
+    }
+
+    pub(crate) fn to_solidity_address(self) -> crate::Result<String> {
+        EvmAddress::try_from(self).map(|it| it.to_string())
+    }
+}
+
 impl Debug for EntityId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 

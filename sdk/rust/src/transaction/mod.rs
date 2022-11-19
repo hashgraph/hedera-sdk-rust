@@ -30,6 +30,7 @@ use crate::execute::execute;
 use crate::signer::Signer;
 use crate::{
     AccountId,
+    ArbitrarySigner,
     Client,
     Hbar,
     PrivateKey,
@@ -190,11 +191,7 @@ where
     }
 
     /// Sign the transaction.
-    pub fn sign_with<F>(
-        &mut self,
-        public_key: PublicKey,
-        signer: Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>,
-    ) -> &mut Self {
+    pub fn sign_with<F>(&mut self, public_key: PublicKey, signer: ArbitrarySigner) -> &mut Self {
         self.sign_signer(Signer::Arbitrary(public_key, signer))
     }
 

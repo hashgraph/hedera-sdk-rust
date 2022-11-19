@@ -87,7 +87,7 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
             bytes: pb.contract_call_result,
             error_message: if pb.error_message.is_empty() { None } else { Some(pb.error_message) },
             bloom: pb.bloom,
-            gas_used: pb.gas_used as u64,
+            gas_used: pb.gas_used,
             gas: pb.gas as u64,
             hbar_amount: pb.amount as u64,
             contract_function_parameters_bytes: pb.function_parameters,
