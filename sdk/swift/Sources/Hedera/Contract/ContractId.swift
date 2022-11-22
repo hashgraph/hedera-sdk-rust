@@ -1,9 +1,9 @@
-import Foundation
 import CHedera
+import Foundation
 
 /// The unique identifier for a smart contract on Hedera.
 public final class ContractId: EntityId {
-    public let evmAddress: Data?;
+    public let evmAddress: Data?
 
     public required init(shard: UInt64, realm: UInt64, num: UInt64) {
         evmAddress = nil
@@ -11,7 +11,7 @@ public final class ContractId: EntityId {
     }
 
     private convenience init(parsing description: String) throws {
-        var hedera = HederaContractId();
+        var hedera = HederaContractId()
 
         let err = hedera_contract_id_from_string(description, &hedera)
 
@@ -38,16 +38,17 @@ public final class ContractId: EntityId {
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaContractId) throws -> Result) rethrows -> Result {
-        assert(self.evmAddress.map { $0.count == 20 } ?? true);
+        assert(self.evmAddress.map { $0.count == 20 } ?? true)
 
         if let evmAddress = self.evmAddress {
             return try evmAddress.withUnsafeTypedBytes { evmAddress in
-                return try body(HederaContractId(
-                    shard: self.shard,
-                    realm: self.realm,
-                    num: self.num,
-                    evm_address: UnsafeMutablePointer(mutating: evmAddress.baseAddress)
-                ))
+                return try body(
+                    HederaContractId(
+                        shard: self.shard,
+                        realm: self.realm,
+                        num: self.num,
+                        evm_address: UnsafeMutablePointer(mutating: evmAddress.baseAddress)
+                    ))
             }
         } else {
             return try body(HederaContractId(shard: self.shard, realm: self.realm, num: self.num, evm_address: nil))
@@ -56,7 +57,7 @@ public final class ContractId: EntityId {
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer in
-            var hedera = HederaContractId();
+            var hedera = HederaContractId()
 
             let err = hedera_contract_id_from_bytes(pointer.baseAddress, pointer.count, &hedera)
 
@@ -70,6 +71,44 @@ public final class ContractId: EntityId {
 
     public static func fromString(_ description: String) throws -> Self {
         try Self(parsing: description)
+    }
+
+    public static func fromEvmAddress(_ shard: UInt64, _ realm: UInt64, _ address: String) throws -> Self {
+        var hedera = HederaContractId()
+
+        let err = hedera_contract_id_from_evm_address(shard, realm, address, &hedera)
+
+        if err != HEDERA_ERROR_OK {
+            throw HError(err)!
+        }
+
+        return Self(unsafeFromCHedera: hedera)
+    }
+
+    public static func fromSolidityAddress(_ address: String) throws -> Self {
+        var hedera = HederaContractId()
+
+        let err = hedera_contract_id_from_solidity_address(address, &hedera)
+
+        if err != HEDERA_ERROR_OK {
+            throw HError(err)!
+        }
+
+        return Self(unsafeFromCHedera: hedera)
+    }
+
+    public func toSolidityAddress() throws -> String {
+        try unsafeWithCHedera { hedera in
+            var out: UnsafeMutablePointer<CChar>?
+
+            let err = hedera_contract_id_to_solidity_address(hedera, &out)
+
+            if err != HEDERA_ERROR_OK {
+                throw HError(err)!
+            }
+
+            return String(hString: out!)
+        }
     }
 
     public func toBytes() -> Data {
