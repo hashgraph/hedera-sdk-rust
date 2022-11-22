@@ -82,7 +82,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_ed25519)
     }
 
-    public static func fromString(_ description: String) throws -> Self {
+    private init(parsing description: String) throws {
         var key: OpaquePointer?
         let err = hedera_private_key_from_string(description, &key)
 
@@ -90,22 +90,20 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
             throw HError(err)!
         }
 
-        return Self(key!)
+        self.ptr = key!
     }
 
-    public init?(_ description: String) {
-        var key: OpaquePointer?
-        let err = hedera_private_key_from_string(description, &key)
+    public static func fromString(_ description: String) throws -> Self {
+        try Self(parsing: description)
+    }
 
-        if err != HEDERA_ERROR_OK {
-            return nil
-        }
-
-        ptr = key!
+    public convenience init?(_ description: String) {
+        try? self.init(parsing: description)
     }
 
     public required convenience init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
     }
 
     public static func fromStringDer(_ description: String) throws -> Self {

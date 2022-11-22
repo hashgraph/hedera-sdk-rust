@@ -33,7 +33,7 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         Self(bytes)
     }
 
-    public static func fromString(_ description: Data) -> Self? {
+    public static func fromString(_ description: String) -> Self? {
         Self(description)
     }
 
