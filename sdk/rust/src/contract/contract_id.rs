@@ -76,15 +76,7 @@ impl ContractId {
     /// # Errors
     /// [`Error::BasicParse`] if `address` is invalid hex, or the wrong length.
     pub fn from_evm_address(shard: u64, realm: u64, address: &str) -> crate::Result<Self> {
-        let address = {
-            let mut buf = [0; 20];
-            hex::decode_to_slice(address.strip_prefix("0x").unwrap_or(address), &mut buf)
-                .map_err(Error::basic_parse)?;
-
-            buf
-        };
-
-        Ok(Self { shard, realm, num: 0, evm_address: Some(address) })
+        Ok(Self { shard, realm, num: 0, evm_address: Some(EvmAddress::from_str(address)?.0) })
     }
 
     /// create a `ContractId` from a solidity address.
