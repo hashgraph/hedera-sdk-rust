@@ -239,8 +239,12 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return Self(derived!)
     }
 
-    public func fromMnemonic(_ mnemonic: Mnemonic, _ passphrase: String) -> Self {
-        Self.init(hedera_private_key_from_mnemonic(mnemonic.ptr, passphrase))
+    public static func fromMnemonic(_ mnemonic: Mnemonic, _ passphrase: String) -> Self {
+        Self(hedera_private_key_from_mnemonic(mnemonic.ptr, passphrase))
+    }
+
+    public static func fromMnemonic(_ mnemonic: Mnemonic) -> Self {
+        Self.fromMnemonic(mnemonic, "")
     }
 
     deinit {
