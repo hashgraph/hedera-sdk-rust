@@ -30,11 +30,11 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
     public static let previewnet = LedgerId(Data([2]))
 
     public static func fromBytes(_ bytes: Data) -> Self {
-        Self.init(bytes)
+        Self(bytes)
     }
 
     public static func fromString(_ description: Data) -> Self? {
-        Self.init(description)
+        Self(description)
     }
 
     public init(_ bytes: Data) {

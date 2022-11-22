@@ -36,7 +36,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
         }
     }
 
-    public static func fromString(_ description: String) throws -> Self {
+    private init(parsing description: String) throws {
         var id = HederaTransactionId()
 
         let err = hedera_transaction_id_from_string(
@@ -48,22 +48,21 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
             throw HError(err)!
         }
 
-        return Self(unsafeFromCHedera: id)
+        self.init(unsafeFromCHedera: id)
+    }
+
+    public static func fromString(_ description: String) throws -> Self {
+        try Self(parsing: description)
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
     }
 
     // semver parsing is shockingly hard. So the FFI really does carry its weight.
     public init?(_ description: String) {
-        let res = try? Self.fromString(description)
-
-        if res == nil {
-            return nil
-        }
-
-        self = res!
+        try? self.init(parsing: description)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
