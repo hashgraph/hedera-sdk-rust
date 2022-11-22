@@ -28,8 +28,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaTransactionId) throws -> Result) rethrows -> Result {
-        try accountId.unsafeWithCHedera {
-            (hederaAccountId) in
+        try accountId.unsafeWithCHedera { hederaAccountId in
             try body(
                 HederaTransactionId(
                     account_id: hederaAccountId, valid_start: validStart.toCHederaTimestamp(), nonce: nonce ?? 0,
@@ -86,8 +85,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     public func toBytes() -> Data {
-        self.unsafeWithCHedera {
-            (hedera) in
+        unsafeWithCHedera { hedera in
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_transaction_id_to_bytes(hedera, &buf)
 
