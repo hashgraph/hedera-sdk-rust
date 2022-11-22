@@ -15,7 +15,8 @@ pub(crate) struct EvmAddress(pub(crate) [u8; 20]);
 impl EvmAddress {
     #[must_use]
     pub(crate) fn from_ref(bytes: &[u8; 20]) -> &Self {
-        bytes.into()
+        // safety: `self` is `#[repr(transpart)] over `[u8; 20]`
+        unsafe { &*(bytes as *const u8 as *const EvmAddress) }
     }
 }
 
@@ -60,9 +61,8 @@ impl From<[u8; 20]> for EvmAddress {
 }
 
 impl<'a> From<&'a [u8; 20]> for &'a EvmAddress {
-    fn from(value: &[u8; 20]) -> Self {
-        // safety: `self` is `#[repr(transpart)] over `[u8; 20]`
-        unsafe { &*(value as *const u8 as *const EvmAddress) }
+    fn from(value: &'a [u8; 20]) -> Self {
+        EvmAddress::from_ref(value)
     }
 }
 
