@@ -113,7 +113,7 @@ public struct HError: Error, CustomStringConvertible {
         }
 
         let descriptionBytes = hedera_error_message()
-        description = String.init(hString: descriptionBytes!)
+        description = String(hString: descriptionBytes!)
     }
     // swiftlint:enable cyclomatic_complexity function_body_length
 }
