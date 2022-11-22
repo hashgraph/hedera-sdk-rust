@@ -55,7 +55,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer -> Self in
-            var key: OpaquePointer? = nil
+            var key: OpaquePointer?
             let err = chederaCallback(pointer.baseAddress, pointer.count, &key)
 
             if err != HEDERA_ERROR_OK {
@@ -83,7 +83,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public static func fromString(_ description: String) throws -> Self {
-        var key: OpaquePointer? = nil
+        var key: OpaquePointer?
         let err = hedera_private_key_from_string(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -94,7 +94,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public init?(_ description: String) {
-        var key: OpaquePointer? = nil
+        var key: OpaquePointer?
         let err = hedera_private_key_from_string(description, &key)
 
         if err != HEDERA_ERROR_OK {

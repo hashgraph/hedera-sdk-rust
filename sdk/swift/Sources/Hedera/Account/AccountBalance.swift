@@ -35,8 +35,7 @@ public final class AccountBalance: Codable {
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaAccountBalance) throws -> Result) rethrows -> Result {
-        try accountId.unsafeWithCHedera {
-            (hederaAccountId) in
+        try accountId.unsafeWithCHedera { hederaAccountId in
             try body(HederaAccountBalance(id: hederaAccountId, hbars: hbars.toTinybars()))
         }
     }
@@ -60,8 +59,7 @@ public final class AccountBalance: Codable {
     }
 
     public func toBytes() -> Data {
-        self.unsafeWithCHedera {
-            (hedera) in
+        self.unsafeWithCHedera { hedera in
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_account_balance_to_bytes(hedera, &buf)
 

@@ -1,7 +1,7 @@
 import CHedera
 import Foundation
 
-func sign(
+private func sign(
     _ context: UnsafeMutableRawPointer?, _ message: UnsafePointer<UInt8>?, _ messageSize: size_t,
     _ signature: UnsafeMutablePointer<UnsafePointer<UInt8>?>?
 ) -> size_t {
@@ -23,18 +23,18 @@ func sign(
     return buffer.count
 }
 
-func freeSignature(
+private func freeSignature(
     _ context: UnsafeMutableRawPointer?, _ signature: UnsafeMutablePointer<UInt8>?, _ signatureSize: size_t
 ) {
     UnsafeMutableBufferPointer(start: signature!, count: signatureSize).deallocate()
 }
 
-func freeContext(_ context: UnsafeMutableRawPointer?) {
-    let _ = Unmanaged<Signer>.fromOpaque(context!).takeRetainedValue()
+private func freeContext(_ context: UnsafeMutableRawPointer?) {
+    _ = Unmanaged<Signer>.fromOpaque(context!).takeRetainedValue()
 }
 
 // note(sr): swift understands this, but it doesn't understand if I were to just do the `signature!.pointee = buffer.baseAddress`, seriously, feel free to try it.
-func hackMutablePointerToImmutable<Pointee>(_ ptr: UnsafePointer<Pointee>?) -> UnsafePointer<Pointee>? {
+private func hackMutablePointerToImmutable<Pointee>(_ ptr: UnsafePointer<Pointee>?) -> UnsafePointer<Pointee>? {
     ptr
 }
 
@@ -44,8 +44,8 @@ public class Signer {
         self.signFunc = signFunc
     }
 
-    let publicKey: PublicKey
-    let signFunc: (Data) -> Data
+    fileprivate let publicKey: PublicKey
+    fileprivate let signFunc: (Data) -> Data
 
     internal func unsafeIntoHederaSigner() -> HederaSigner {
         let unmanaged = Unmanaged.passRetained(self)
@@ -63,9 +63,9 @@ private func freeHederaSigners(_ ptr: UnsafePointer<HederaSigner>?, _ size: size
 internal func makeHederaSignersFromArray(signers: [Signer]) -> HederaSigners {
     let buffer = UnsafeMutableBufferPointer<HederaSigner>.allocate(capacity: signers.count)
 
-    var (iterator_rest, idx) = buffer.initialize(from: signers.makeIterator().map { $0.unsafeIntoHederaSigner() })
+    var (iteratorRest, idx) = buffer.initialize(from: signers.makeIterator().map { $0.unsafeIntoHederaSigner() })
 
-    assert(iterator_rest.next() == nil)
+    assert(iteratorRest.next() == nil)
     assert(idx == signers.count)
 
     return HederaSigners(signers: buffer.baseAddress, signers_size: buffer.count, free: freeHederaSigners)
