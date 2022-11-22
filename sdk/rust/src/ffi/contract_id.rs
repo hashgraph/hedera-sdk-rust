@@ -1,4 +1,7 @@
-use std::ffi::c_char;
+use std::ffi::{
+    c_char,
+    CString,
+};
 use std::ptr::{
     self,
     NonNull,
@@ -67,7 +70,7 @@ pub extern "C" fn hedera_contract_id_from_string(
 /// Parse a Hedera `ContractId` from the passed bytes.
 ///
 /// # Safety
-/// - `contract_id_shard`, `contract_id_realm`, and `contract_id_num` must all be valid for writes.
+/// - `contract_id` be valid for writes.
 /// - `bytes` must be valid for reads of up to `bytes_size` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn hedera_contract_id_from_bytes(
@@ -89,7 +92,57 @@ pub unsafe extern "C" fn hedera_contract_id_from_bytes(
     Error::Ok
 }
 
-/// Serialize the passed ContractId as bytes
+/// Create a `ContractId` from a `shard.realm.evm_address` set.
+///
+/// # Safety
+/// - `contract_id` must be valid for writes.
+/// - `address` must be valid for reads up until the first `\0` character.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_contract_id_from_evm_address(
+    shard: u64,
+    realm: u64,
+    evm_address: *const c_char,
+    contract_id: *mut ContractId,
+) -> Error {
+    assert!(!contract_id.is_null());
+
+    let evm_address = unsafe { cstr_from_ptr(evm_address) };
+    let parsed = ffi_try!(crate::ContractId::from_evm_address(shard, realm, &evm_address));
+
+    let parsed = ContractId::from_rust(parsed);
+
+    unsafe {
+        ptr::write(contract_id, parsed);
+    }
+
+    Error::Ok
+}
+
+/// create a `ContractId` from a solidity address.
+///
+/// # Safety
+/// - `contract_id` must be valid for writes.
+/// - `address` must be valid for reads up until the first `\0` character.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_contract_id_from_solidity_address(
+    address: *const c_char,
+    contract_id: *mut ContractId,
+) -> Error {
+    assert!(!contract_id.is_null());
+
+    let evm_address = unsafe { cstr_from_ptr(address) };
+    let parsed = ffi_try!(crate::ContractId::from_solidity_address(&evm_address));
+
+    let parsed = ContractId::from_rust(parsed);
+
+    unsafe {
+        ptr::write(contract_id, parsed);
+    }
+
+    Error::Ok
+}
+
+/// Serialize the passed `ContractId` as bytes
 ///
 /// # Safety
 /// - `buf` must be valid for writes.
@@ -113,4 +166,27 @@ pub unsafe extern "C" fn hedera_contract_id_to_bytes(
     }
 
     len
+}
+
+/// Serialize the passed `ContractId` as a solidity `address`
+///
+/// # Safety
+/// - `s` must be valid for writes
+#[no_mangle]
+pub unsafe extern "C" fn hedera_contract_id_to_solidity_address(
+    contract_id: ContractId,
+    s: *mut *mut c_char,
+) -> Error {
+    // todo: use `as_maybe_uninit_ref` once that's stable.
+    assert!(!s.is_null());
+
+    let out = ffi_try!(contract_id.to_rust().to_solidity_address());
+    let out = CString::new(out).unwrap().into_raw();
+
+    // safety: invariants promise that `buf` must be valid for writes.
+    unsafe {
+        ptr::write(s, out);
+    }
+
+    Error::Ok
 }

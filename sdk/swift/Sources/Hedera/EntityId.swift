@@ -118,7 +118,6 @@ public final class FileId: EntityId {
     }
 }
 
-
 /// The unique identifier for a topic on Hedera.
 public final class TopicId: EntityId {
     public static func fromBytes(_ bytes: Data) throws -> Self {

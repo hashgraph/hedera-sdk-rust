@@ -353,7 +353,7 @@ enum HederaError hedera_contract_id_from_string(const char *s,
  * Parse a Hedera `ContractId` from the passed bytes.
  *
  * # Safety
- * - `contract_id_shard`, `contract_id_realm`, and `contract_id_num` must all be valid for writes.
+ * - `contract_id` be valid for writes.
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
  */
 enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
@@ -361,12 +361,43 @@ enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
                                                struct HederaContractId *contract_id);
 
 /**
- * Serialize the passed ContractId as bytes
+ * Create a `ContractId` from a `shard.realm.evm_address` set.
+ *
+ * # Safety
+ * - `contract_id` must be valid for writes.
+ * - `address` must be valid for reads up until the first `\0` character.
+ */
+enum HederaError hedera_contract_id_from_evm_address(uint64_t shard,
+                                                     uint64_t realm,
+                                                     const char *evm_address,
+                                                     struct HederaContractId *contract_id);
+
+/**
+ * create a `ContractId` from a solidity address.
+ *
+ * # Safety
+ * - `contract_id` must be valid for writes.
+ * - `address` must be valid for reads up until the first `\0` character.
+ */
+enum HederaError hedera_contract_id_from_solidity_address(const char *address,
+                                                          struct HederaContractId *contract_id);
+
+/**
+ * Serialize the passed `ContractId` as bytes
  *
  * # Safety
  * - `buf` must be valid for writes.
  */
 size_t hedera_contract_id_to_bytes(struct HederaContractId contract_id, uint8_t **buf);
+
+/**
+ * Serialize the passed `ContractId` as a solidity `address`
+ *
+ * # Safety
+ * - `s` must be valid for writes
+ */
+enum HederaError hedera_contract_id_to_solidity_address(struct HederaContractId contract_id,
+                                                        char **s);
 
 /**
  * # Safety
