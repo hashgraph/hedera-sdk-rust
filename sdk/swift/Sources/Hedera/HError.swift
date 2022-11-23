@@ -21,13 +21,13 @@
 import CHedera
 import Foundation
 
-fileprivate func lastErrorMessage() -> String? {
-        guard let descriptionBytes = hedera_error_message() else {
-            return nil
-        }
-
-        return String(hString: descriptionBytes)
+private func lastErrorMessage() -> String? {
+    guard let descriptionBytes = hedera_error_message() else {
+        return nil
     }
+
+    return String(hString: descriptionBytes)
+}
 
 /// Represents any possible error from a fallible function in the Hedera SDK.
 public struct HError: Error, CustomStringConvertible {
@@ -65,7 +65,7 @@ public struct HError: Error, CustomStringConvertible {
         self.description = description
     }
 
-    // swiftlint:disable cyclomatic_complexity
+    // swiftlint:disable cyclomatic_complexity function_body_length
     internal init?(_ error: HederaError) {
         switch error {
         case HEDERA_ERROR_TIMED_OUT:
@@ -97,7 +97,7 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_KEY_PARSE:
             kind = .keyParse
-        
+
         case HEDERA_ERROR_KEY_DERIVE:
             kind = .keyDerive
 
@@ -121,7 +121,7 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_REQUEST_PARSE:
             kind = .requestParse
-        
+
         case HEDERA_ERROR_MNEMONIC_PARSE:
             kind = .mnemonicParse
 
@@ -134,15 +134,20 @@ public struct HError: Error, CustomStringConvertible {
         case HEDERA_ERROR_OK:
             return nil
 
-        
         default:
             let message = String(describing: lastErrorMessage())
-            preconditionFailure("unknown error code `\(error)`, message: `\(message)`")
+            fatalError("unknown error code `\(error)`, message: `\(message)`")
 
             return nil
         }
 
         description = lastErrorMessage()!
+    }
+
+    internal static func throwing(error: HederaError) throws {
+        if let err = Self(error) {
+            throw err
+        }
     }
 
     // swiftlint:enable cyclomatic_complexity function_body_length

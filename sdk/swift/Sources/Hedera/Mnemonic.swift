@@ -44,11 +44,7 @@ public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiter
     public static func fromString(_ description: String) throws -> Self {
         var ptr: OpaquePointer?
 
-        let err = hedera_mnemonic_from_string(description, &ptr)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_mnemonic_from_string(description, &ptr))
 
         return Self(ptr!)
     }
@@ -56,11 +52,7 @@ public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiter
     public init?(_ description: String) {
         var ptr: OpaquePointer?
 
-        let err = hedera_mnemonic_from_string(description, &ptr)
-
-        if err != HEDERA_ERROR_OK {
-            return nil
-        }
+        try? HError.throwing(error: hedera_mnemonic_from_string(description, &ptr))
 
         self.ptr = ptr!
     }
@@ -82,11 +74,7 @@ public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiter
     public func toPrivateKey(passphrase: String = "") throws -> PrivateKey {
         var ptr: OpaquePointer?
 
-        let err = hedera_mnemonic_to_private_key(self.ptr, passphrase, &ptr)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_mnemonic_to_private_key(self.ptr, passphrase, &ptr))
 
         return PrivateKey.unsafeFromPtr(ptr!)
     }
@@ -94,11 +82,7 @@ public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiter
     public func toLegacyPrivateKey() throws -> PrivateKey {
         var ptr: OpaquePointer?
 
-        let err = hedera_mnemonic_to_legacy_private_key(self.ptr, &ptr)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_mnemonic_to_legacy_private_key(self.ptr, &ptr))
 
         return PrivateKey.unsafeFromPtr(ptr!)
     }

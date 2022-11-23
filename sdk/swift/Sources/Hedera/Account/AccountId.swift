@@ -42,19 +42,16 @@ public final class AccountId: EntityId {
         super.init(shard: shard, realm: realm, num: num)
     }
 
-    public required convenience init?(_ description: String) {
-        var id: HederaAccountId = HederaAccountId()
+    private convenience init(parsing description: String) throws {
+        var id = HederaAccountId()
 
-        let err = hedera_account_id_from_string(
-            description,
-            &id
-        )
-
-        if err != HEDERA_ERROR_OK {
-            return nil
-        }
+        try HError.throwing(error: hedera_account_id_from_string(description, &id))
 
         self.init(unsafeFromCHedera: id)
+    }
+
+    public required convenience init?(_ description: String) {
+        try? self.init(parsing: description)
     }
 
     public required convenience init(integerLiteral value: IntegerLiteralType) {
@@ -62,7 +59,8 @@ public final class AccountId: EntityId {
     }
 
     public required convenience init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
     }
 
     public required convenience init(from decoder: Decoder) throws {
@@ -96,15 +94,7 @@ public final class AccountId: EntityId {
         try bytes.withUnsafeTypedBytes { pointer in
             var id = HederaAccountId()
 
-            let err = hedera_account_id_from_bytes(
-                pointer.baseAddress,
-                pointer.count,
-                &id
-            )
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_account_id_from_bytes(pointer.baseAddress, pointer.count, &id))
 
             return Self(unsafeFromCHedera: id)
         }

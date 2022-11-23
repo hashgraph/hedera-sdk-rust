@@ -47,11 +47,8 @@ public struct NetworkVersionInfo: Codable {
         try bytes.withUnsafeTypedBytes { pointer in
             var info = HederaNetworkVersionInfo()
 
-            let err = hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(
+                error: hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info))
 
             return Self(unsafeFromCHedera: info)
         }

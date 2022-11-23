@@ -100,11 +100,8 @@ public final class FileId: EntityId {
             var realm: UInt64 = 0
             var num: UInt64 = 0
 
-            let err = hedera_file_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(
+                error: hedera_file_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
 
             return Self(shard: shard, realm: realm, num: num)
         }
@@ -126,11 +123,8 @@ public final class TopicId: EntityId {
             var realm: UInt64 = 0
             var num: UInt64 = 0
 
-            let err = hedera_topic_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(
+                error: hedera_topic_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
 
             return Self(shard: shard, realm: realm, num: num)
         }
@@ -152,11 +146,8 @@ public final class TokenId: EntityId {
             var realm: UInt64 = 0
             var num: UInt64 = 0
 
-            let err = hedera_token_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(
+                error: hedera_token_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
 
             return Self(shard: shard, realm: realm, num: num)
         }
@@ -178,11 +169,8 @@ public final class ScheduleId: EntityId {
             var realm: UInt64 = 0
             var num: UInt64 = 0
 
-            let err = hedera_schedule_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(
+                error: hedera_schedule_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
 
             return Self(shard: shard, realm: realm, num: num)
         }

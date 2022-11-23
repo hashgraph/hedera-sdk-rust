@@ -44,15 +44,7 @@ public final class AccountBalance: Codable {
         try bytes.withUnsafeTypedBytes { pointer in
             var balance = HederaAccountBalance()
 
-            let err = hedera_account_balance_from_bytes(
-                pointer.baseAddress,
-                pointer.count,
-                &balance
-            )
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_account_balance_from_bytes(pointer.baseAddress, pointer.count, &balance))
 
             return Self(unsafeFromCHedera: balance)
         }

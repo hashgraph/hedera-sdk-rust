@@ -13,11 +13,7 @@ public final class ContractId: EntityId {
     private convenience init(parsing description: String) throws {
         var hedera = HederaContractId()
 
-        let err = hedera_contract_id_from_string(description, &hedera)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_contract_id_from_string(description, &hedera))
 
         self.init(unsafeFromCHedera: hedera)
     }
@@ -59,11 +55,7 @@ public final class ContractId: EntityId {
         try bytes.withUnsafeTypedBytes { pointer in
             var hedera = HederaContractId()
 
-            let err = hedera_contract_id_from_bytes(pointer.baseAddress, pointer.count, &hedera)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_contract_id_from_bytes(pointer.baseAddress, pointer.count, &hedera))
 
             return Self(unsafeFromCHedera: hedera)
         }
@@ -76,11 +68,7 @@ public final class ContractId: EntityId {
     public static func fromEvmAddress(_ shard: UInt64, _ realm: UInt64, _ address: String) throws -> Self {
         var hedera = HederaContractId()
 
-        let err = hedera_contract_id_from_evm_address(shard, realm, address, &hedera)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_contract_id_from_evm_address(shard, realm, address, &hedera))
 
         return Self(unsafeFromCHedera: hedera)
     }
@@ -88,11 +76,7 @@ public final class ContractId: EntityId {
     public static func fromSolidityAddress(_ address: String) throws -> Self {
         var hedera = HederaContractId()
 
-        let err = hedera_contract_id_from_solidity_address(address, &hedera)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_contract_id_from_solidity_address(address, &hedera))
 
         return Self(unsafeFromCHedera: hedera)
     }
@@ -101,11 +85,7 @@ public final class ContractId: EntityId {
         try unsafeWithCHedera { hedera in
             var out: UnsafeMutablePointer<CChar>?
 
-            let err = hedera_contract_id_to_solidity_address(hedera, &out)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_contract_id_to_solidity_address(hedera, &out))
 
             return String(hString: out!)
         }
