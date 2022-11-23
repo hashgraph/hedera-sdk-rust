@@ -39,14 +39,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     private init(parsing description: String) throws {
         var id = HederaTransactionId()
 
-        let err = hedera_transaction_id_from_string(
-            description,
-            &id
-        )
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_transaction_id_from_string(description, &id))
 
         self.init(unsafeFromCHedera: id)
     }
@@ -60,7 +53,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
         try! self.init(parsing: value)
     }
 
-    // semver parsing is shockingly hard. So the FFI really does carry its weight.
+    // txid parsing is shockingly hard. So the FFI really does carry its weight.
     public init?(_ description: String) {
         try? self.init(parsing: description)
     }
@@ -69,15 +62,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
         try bytes.withUnsafeTypedBytes { pointer in
             var id = HederaTransactionId()
 
-            let err = hedera_transaction_id_from_bytes(
-                pointer.baseAddress,
-                pointer.count,
-                &id
-            )
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_transaction_id_from_bytes(pointer.baseAddress, pointer.count, &id))
 
             return Self(unsafeFromCHedera: id)
         }
