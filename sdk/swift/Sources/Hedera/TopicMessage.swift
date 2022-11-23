@@ -19,10 +19,9 @@ public struct TopicMessage: Codable {
     /// for the same topic.
     public let sequenceNumber: UInt64
 
-    // fixme: `TransactionId`
     /// The `TransactionId` of the first chunk, gets copied to every subsequent chunk in
     /// a fragmented message.
-    public let initialTransactionId: String?
+    public let initialTransactionId: TransactionId?
 
     /// The sequence number (from 1 to total) of the current chunk in the message.
     public let chunkNumber: UInt32
@@ -38,7 +37,7 @@ public struct TopicMessage: Codable {
         runningHash = Data(base64Encoded: try container.decode(String.self, forKey: .runningHash))!
         runningHashVersion = try container.decode(UInt64.self, forKey: .runningHashVersion)
         sequenceNumber = try container.decode(UInt64.self, forKey: .sequenceNumber)
-        initialTransactionId = try container.decode(String.self, forKey: .initialTransactionId)
+        initialTransactionId = try container.decode(TransactionId.self, forKey: .initialTransactionId)
         chunkNumber = try container.decode(UInt32.self, forKey: .chunkNumber)
         chunkTotal = try container.decode(UInt32.self, forKey: .chunkTotal)
     }
