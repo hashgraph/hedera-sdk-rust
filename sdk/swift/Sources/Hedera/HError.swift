@@ -21,6 +21,14 @@
 import CHedera
 import Foundation
 
+fileprivate func lastErrorMessage() -> String? {
+        guard let descriptionBytes = hedera_error_message() else {
+            return nil
+        }
+
+        return String(hString: descriptionBytes)
+    }
+
 /// Represents any possible error from a fallible function in the Hedera SDK.
 public struct HError: Error, CustomStringConvertible {
     // https://developer.apple.com/documentation/swift/error#2845903
@@ -36,6 +44,7 @@ public struct HError: Error, CustomStringConvertible {
         case queryNoPaymentPreCheckStatus(status: Status)
         case basicParse
         case keyParse
+        case keyDerive
         case noPayerAccountOrTransactionId
         case maxQueryPaymentExceeded
         case nodeAccountUnknown
@@ -43,6 +52,9 @@ public struct HError: Error, CustomStringConvertible {
         case signature
         case receiptStatus(status: Status)
         case requestParse
+        case mnemonicParse
+        case mnemonicEntropy
+        case signatureVerify
     }
 
     public let description: String
@@ -85,6 +97,9 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_KEY_PARSE:
             kind = .keyParse
+        
+        case HEDERA_ERROR_KEY_DERIVE:
+            kind = .keyDerive
 
         case HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID:
             kind = .noPayerAccountOrTransactionId
@@ -106,15 +121,30 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_REQUEST_PARSE:
             kind = .requestParse
+        
+        case HEDERA_ERROR_MNEMONIC_PARSE:
+            kind = .mnemonicParse
 
+        case HEDERA_ERROR_MNEMONIC_ENTROPY:
+            kind = .mnemonicEntropy
+
+        case HEDERA_ERROR_SIGNATURE_VERIFY:
+            kind = .signatureVerify
+
+        case HEDERA_ERROR_OK:
+            return nil
+
+        
         default:
-            // HEDERA_ERROR_OK
+            let message = String(describing: lastErrorMessage())
+            preconditionFailure("unknown error code `\(error)`, message: `\(message)`")
+
             return nil
         }
 
-        let descriptionBytes = hedera_error_message()
-        description = String(hString: descriptionBytes!)
+        description = lastErrorMessage()!
     }
+
     // swiftlint:enable cyclomatic_complexity function_body_length
 }
 
