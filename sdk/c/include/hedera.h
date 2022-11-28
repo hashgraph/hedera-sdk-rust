@@ -479,6 +479,8 @@ enum HederaError hedera_execute(const struct HederaClient *client,
                                 const char *request,
                                 const void *context,
                                 struct HederaSigners signers,
+                                bool has_timeout,
+                                uint64_t timeout_nanos,
                                 void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**

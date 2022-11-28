@@ -42,13 +42,13 @@ public class Transaction: Request {
         return self
     }
 
-    public func execute(_ client: Client) async throws -> TransactionResponse {
+    public func execute(_ client: Client, _ timeoutNanos: UInt64? = nil) async throws -> TransactionResponse {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 
         let request = String(data: requestBytes, encoding: .utf8)!
 
-        return try await self.executeEncoded(client, request: request, signers: self.signers)
+        return try await executeEncoded(client, request: request, signers: signers, timeoutNanos: timeoutNanos)
     }
 
     public func encode(to encoder: Encoder) throws {
