@@ -119,7 +119,7 @@ pub unsafe extern "C" fn hedera_execute(
         };
 
         let response =
-            response.map(|response| CString::new(response).unwrap().into_raw() as *const c_char);
+            response.map(|response| CString::new(response).unwrap().into_raw().cast_const());
 
         let (err, response) = match response {
             Ok(response) => (Error::Ok, response),
@@ -129,7 +129,7 @@ pub unsafe extern "C" fn hedera_execute(
         callback.call(err, response);
 
         if !response.is_null() {
-            drop(unsafe { CString::from_raw(response as *mut _) });
+            drop(unsafe { CString::from_raw(response.cast_mut()) });
         }
     });
 
