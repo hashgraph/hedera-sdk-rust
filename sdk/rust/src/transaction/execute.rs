@@ -76,7 +76,7 @@ impl SignaturePair {
 
 impl From<(PublicKey, Vec<u8>)> for SignaturePair {
     fn from((public, signature): (PublicKey, Vec<u8>)) -> Self {
-        Self { public, signature }
+        Self { signature, public }
     }
 }
 
@@ -145,7 +145,7 @@ where
         for signer in &self.signers {
             if signatures.iter().all(|it| it.public != signer.public_key()) {
                 let signature = signer.sign(&body_bytes);
-                signatures.push(SignaturePair::from(signature))
+                signatures.push(SignaturePair::from(signature));
             }
         }
 

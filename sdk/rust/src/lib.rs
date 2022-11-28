@@ -52,6 +52,7 @@ mod contract;
 mod entity_id;
 mod error;
 mod ethereum_transaction;
+mod evm_address;
 mod execute;
 mod file;
 mod key;
@@ -174,6 +175,7 @@ pub use schedule::{
     ScheduleSignTransaction,
 };
 pub use semantic_version::SemanticVersion;
+pub use signer::ArbitrarySigner;
 pub use staking_info::StakingInfo;
 pub use system::{
     FreezeTransaction,

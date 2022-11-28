@@ -118,32 +118,6 @@ public final class FileId: EntityId {
     }
 }
 
-/// The unique identifier for a smart contract on Hedera.
-public final class ContractId: EntityId {
-    public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            let err = hedera_contract_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
-    }
-
-    public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_contract_id_to_bytes(shard, realm, num, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
-    }
-}
-
 /// The unique identifier for a topic on Hedera.
 public final class TopicId: EntityId {
     public static func fromBytes(_ bytes: Data) throws -> Self {

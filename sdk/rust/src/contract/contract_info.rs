@@ -153,7 +153,7 @@ impl FromProtobuf<services::contract_get_info_response::ContractInfo> for Contra
             account_id: AccountId::from_protobuf(account_id)?,
             contract_account_id: pb.contract_account_id,
             is_deleted: pb.deleted,
-            balance: pb.balance as u64,
+            balance: pb.balance,
             expiration_time,
             auto_renew_period,
             auto_renew_account_id,

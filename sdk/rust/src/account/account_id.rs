@@ -73,11 +73,14 @@ impl AccountId {
 
 impl Debug for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 
 impl Display for AccountId {
+    // allowed because `alias` would go before `shard` and `realm` and create a confusing reading experience:
+    // `write!(f, "{}.{}.{alias}", self.shard, self.realm);`
+    #[allow(clippy::uninlined_format_args)]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(alias) = &self.alias {
             write!(f, "{}.{}.{}", self.shard, self.realm, alias)
