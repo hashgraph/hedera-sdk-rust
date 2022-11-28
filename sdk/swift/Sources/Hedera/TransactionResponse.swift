@@ -18,6 +18,8 @@
  * ‍
  */
 
+import Foundation
+
 /// Response from ``Transaction.execute``.
 ///
 /// When the client sends a node a transaction of any kind, the node replies with this, which
@@ -67,8 +69,8 @@ public struct TransactionResponse: Decodable {
     /// Get the receipt of this transaction.
     /// Will wait for consensus.
     /// Will return a `receiptStatus` error for a failing receipt.
-    public func getReceipt(_ client: Client, _ timeoutNanos: UInt64? = nil) async throws -> TransactionReceipt {
-        try await getReceiptQuery().execute(client, timeoutNanos)
+    public func getReceipt(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionReceipt {
+        try await getReceiptQuery().execute(client, timeout)
     }
 
     public func getReceiptQuery() -> TransactionReceiptQuery {
@@ -78,8 +80,8 @@ public struct TransactionResponse: Decodable {
             .validateStatus(validateStatus)
     }
 
-    public func getRecord(_ client: Client, _ timeoutNanos: UInt64? = nil) async throws -> TransactionRecord {
-        try await getRecordQuery().execute(client, timeoutNanos)
+    public func getRecord(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionRecord {
+        try await getRecordQuery().execute(client, timeout)
     }
 
     public func getRecordQuery() -> TransactionRecordQuery {

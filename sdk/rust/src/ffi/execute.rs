@@ -63,7 +63,7 @@ pub unsafe extern "C" fn hedera_execute(
     context: *const c_void,
     signers: Signers,
     has_timeout: bool,
-    timeout_nanos: u64,
+    timeout: f64,
     callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
 ) -> Error {
     assert!(!client.is_null());
@@ -76,7 +76,12 @@ pub unsafe extern "C" fn hedera_execute(
 
     let signers_2: Vec<_> = signers.as_slice().iter().map(|it| it.to_csigner()).collect();
 
-    let timeout = has_timeout.then(|| std::time::Duration::from_nanos(timeout_nanos));
+    let timeout = has_timeout
+        .then(|| std::time::Duration::try_from_secs_f64(timeout))
+        .transpose()
+        .map_err(crate::Error::request_parse);
+
+    let timeout = ffi_try!(timeout);
 
     drop(signers);
     let signers = signers_2;
