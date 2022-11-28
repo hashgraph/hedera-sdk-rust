@@ -27,7 +27,19 @@ public class Transaction: Request {
     public typealias Response = TransactionResponse
 
     private enum CodingKeys: String, CodingKey {
+        case maxTransactionFee
         case type = "$type"
+    }
+
+    /// The maximum allowed transaction fee for this transaction.
+    public var maxTransactionFee: Hbar? = 1
+
+    /// Sets the maximum allowed transaction fee for this transaction.
+    @discardableResult
+    public func maxTransactionFee(_ maxTransactionFee: Hbar) -> Self {
+        self.maxTransactionFee = maxTransactionFee
+
+        return self
     }
 
     @discardableResult
@@ -58,5 +70,6 @@ public class Transaction: Request {
         let requestName = typeName.prefix(1).lowercased() + typeName.dropFirst().dropLast(11)
 
         try container.encode(requestName, forKey: .type)
+        try container.encode(maxTransactionFee, forKey: .maxTransactionFee)
     }
 }
