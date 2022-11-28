@@ -27,14 +27,14 @@ use std::fmt::{
 use time::Duration;
 
 use crate::execute::execute;
-use crate::signer::Signer;
+use crate::signer::AnySigner;
 use crate::{
     AccountId,
-    ArbitrarySigner,
     Client,
     Hbar,
     PrivateKey,
     PublicKey,
+    Signer,
     TransactionId,
     TransactionResponse,
 };
@@ -63,7 +63,7 @@ where
     pub(crate) body: TransactionBody<D>,
 
     #[cfg_attr(feature = "ffi", serde(skip))]
-    pub(crate) signers: Vec<Signer>,
+    pub(crate) signers: Vec<AnySigner>,
 }
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
@@ -187,15 +187,15 @@ where
 
     /// Sign the transaction.
     pub fn sign(&mut self, private_key: PrivateKey) -> &mut Self {
-        self.sign_signer(Signer::PrivateKey(private_key))
+        self.sign_signer(AnySigner::PrivateKey(private_key))
     }
 
     /// Sign the transaction.
-    pub fn sign_with<F>(&mut self, public_key: PublicKey, signer: ArbitrarySigner) -> &mut Self {
-        self.sign_signer(Signer::Arbitrary(public_key, signer))
+    pub fn sign_with<F>(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
+        self.sign_signer(AnySigner::Arbitrary(public_key, signer))
     }
 
-    pub(crate) fn sign_signer(&mut self, signer: Signer) -> &mut Self {
+    pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {
         self.signers.push(signer);
         self
     }

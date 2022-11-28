@@ -46,9 +46,8 @@ pub struct FileInfo {
     /// True if deleted but not yet expired.
     pub is_deleted: bool,
 
-    /// One of these keys must sign in order to modify or delete the file.
+    // /// One of these keys must sign in order to modify or delete the file.
     // TODO: pub keys: KeyList, (Not implemented in key.rs yet)
-
     /// Memo associated with the file.
     pub file_memo: String,
 
