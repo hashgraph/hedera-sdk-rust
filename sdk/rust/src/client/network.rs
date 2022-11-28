@@ -205,7 +205,7 @@ impl Network {
         let addresses = &self.addresses[index];
 
         let endpoints = addresses.iter().map(|address| {
-            let uri = format!("tcp://{}:50211", address);
+            let uri = format!("tcp://{address}:50211");
             Endpoint::from_shared(uri)
                 .unwrap()
                 .keep_alive_timeout(Duration::from_secs(10))

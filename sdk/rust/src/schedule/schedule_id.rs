@@ -68,7 +68,7 @@ impl ScheduleId {
 
 impl Debug for ScheduleId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 

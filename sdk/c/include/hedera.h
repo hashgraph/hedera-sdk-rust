@@ -75,6 +75,19 @@ typedef struct HederaAccountBalance {
   int64_t hbars;
 } HederaAccountBalance;
 
+typedef struct HederaContractId {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+  /**
+   * # Safety
+   * - must either be null or valid for 20 bytes
+   * - if allocated by `hedera` it must be freed by hedera
+   * - otherwise must *not* be freed by hedera.
+   */
+  uint8_t *evm_address;
+} HederaContractId;
+
 typedef struct HederaSigner {
   /**
    * Safety:
@@ -331,6 +344,62 @@ void hedera_client_set_operator(struct HederaClient *client,
                                 struct HederaPrivateKey *key);
 
 /**
+ * Parse a Hedera `ContractId` from the passed string.
+ */
+enum HederaError hedera_contract_id_from_string(const char *s,
+                                                struct HederaContractId *contract_id);
+
+/**
+ * Parse a Hedera `ContractId` from the passed bytes.
+ *
+ * # Safety
+ * - `contract_id` be valid for writes.
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ */
+enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
+                                               size_t bytes_size,
+                                               struct HederaContractId *contract_id);
+
+/**
+ * Create a `ContractId` from a `shard.realm.evm_address` set.
+ *
+ * # Safety
+ * - `contract_id` must be valid for writes.
+ * - `address` must be valid for reads up until the first `\0` character.
+ */
+enum HederaError hedera_contract_id_from_evm_address(uint64_t shard,
+                                                     uint64_t realm,
+                                                     const char *evm_address,
+                                                     struct HederaContractId *contract_id);
+
+/**
+ * create a `ContractId` from a solidity address.
+ *
+ * # Safety
+ * - `contract_id` must be valid for writes.
+ * - `address` must be valid for reads up until the first `\0` character.
+ */
+enum HederaError hedera_contract_id_from_solidity_address(const char *address,
+                                                          struct HederaContractId *contract_id);
+
+/**
+ * Serialize the passed `ContractId` as bytes
+ *
+ * # Safety
+ * - `buf` must be valid for writes.
+ */
+size_t hedera_contract_id_to_bytes(struct HederaContractId contract_id, uint8_t **buf);
+
+/**
+ * Serialize the passed `ContractId` as a solidity `address`
+ *
+ * # Safety
+ * - `s` must be valid for writes
+ */
+enum HederaError hedera_contract_id_to_solidity_address(struct HederaContractId contract_id,
+                                                        char **s);
+
+/**
  * # Safety
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
  * - `s` must only be freed with `hedera_string_free`,
@@ -371,30 +440,6 @@ size_t hedera_file_id_to_bytes(uint64_t file_id_shard,
                                uint64_t file_id_realm,
                                uint64_t file_id_num,
                                uint8_t **buf);
-
-/**
- * Parse a Hedera `ContractId` from the passed bytes.
- *
- * # Safety
- * - `contract_id_shard`, `contract_id_realm`, and `contract_id_num` must all be valid for writes.
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- */
-enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
-                                               size_t bytes_size,
-                                               uint64_t *contract_id_shard,
-                                               uint64_t *contract_id_realm,
-                                               uint64_t *contract_id_num);
-
-/**
- * Serialize the passed ContractId as bytes
- *
- * # Safety
- * - `buf` must be valid for writes.
- */
-size_t hedera_contract_id_to_bytes(uint64_t contract_id_shard,
-                                   uint64_t contract_id_realm,
-                                   uint64_t contract_id_num,
-                                   uint8_t **buf);
 
 /**
  * Parse a Hedera `TopicId` from the passed bytes.

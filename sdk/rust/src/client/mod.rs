@@ -114,7 +114,7 @@ impl Client {
         body_bytes: &[u8],
     ) -> Result<(PublicKey, Vec<u8>), BoxStdError> {
         if let Some(operator) = &*self.operator.read().await {
-            Ok((operator.signer.public_key(), operator.signer.sign(&body_bytes)))
+            Ok((operator.signer.public_key(), operator.signer.sign(body_bytes)))
         } else {
             unreachable!()
         }

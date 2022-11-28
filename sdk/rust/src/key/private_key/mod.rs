@@ -93,7 +93,7 @@ impl Debug for PrivateKeyDataWrapper {
                 (Algorithm::Ed25519, hex::encode(key.secret.as_bytes()))
             }
 
-            PrivateKeyData::Ecdsa(key) => (Algorithm::Ecdsa, hex::encode(&key.to_bytes())),
+            PrivateKeyData::Ecdsa(key) => (Algorithm::Ecdsa, hex::encode(key.to_bytes())),
         };
 
         f.debug_struct("PrivateKeyData")
@@ -526,7 +526,7 @@ impl PrivateKey {
 
         let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(b"ed25519 seed")
             .expect("hmac can take a seed of any size")
-            .chain_update(&seed)
+            .chain_update(seed)
             .finalize()
             .into_bytes()
             .into();

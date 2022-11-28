@@ -68,7 +68,7 @@ impl FileId {
 
 impl Debug for FileId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{}\"", self)
+        write!(f, "\"{self}\"")
     }
 }
 

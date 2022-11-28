@@ -220,47 +220,6 @@ pub unsafe extern "C" fn hedera_file_id_to_bytes(
     unsafe { id_to_bytes::<FileId>(file_id_shard, file_id_realm, file_id_num, buf) }
 }
 
-/// Parse a Hedera `ContractId` from the passed bytes.
-// todo: contract ID needs EVM address handling.
-///
-/// # Safety
-/// - `contract_id_shard`, `contract_id_realm`, and `contract_id_num` must all be valid for writes.
-/// - `bytes` must be valid for reads of up to `bytes_size` bytes.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_contract_id_from_bytes(
-    bytes: *const u8,
-    bytes_size: size_t,
-    contract_id_shard: *mut u64,
-    contract_id_realm: *mut u64,
-    contract_id_num: *mut u64,
-) -> Error {
-    // safety: invariants pushed up to the caller.
-    unsafe {
-        id_from_bytes::<ContractId>(
-            bytes,
-            bytes_size,
-            contract_id_shard,
-            contract_id_realm,
-            contract_id_num,
-        )
-    }
-}
-
-/// Serialize the passed ContractId as bytes
-///
-/// # Safety
-/// - `buf` must be valid for writes.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_contract_id_to_bytes(
-    contract_id_shard: u64,
-    contract_id_realm: u64,
-    contract_id_num: u64,
-    buf: *mut *mut u8,
-) -> size_t {
-    // safety: invariants pushed up to the caller.
-    unsafe { id_to_bytes::<ContractId>(contract_id_shard, contract_id_realm, contract_id_num, buf) }
-}
-
 /// Parse a Hedera `TopicId` from the passed bytes.
 ///
 /// # Safety
