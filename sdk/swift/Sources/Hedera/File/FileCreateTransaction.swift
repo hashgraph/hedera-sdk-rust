@@ -66,7 +66,8 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The time at which this file should expire.
-    public var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? = Timestamp(
+        from: Calendar.current.date(byAdding: .day, value: 90, to: Date())!)
 
     /// Sets the time at which this file should expire.
     @discardableResult
