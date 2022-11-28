@@ -33,7 +33,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     // sadly, we can't avoid a leaky abstraction here.
     internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
-        Self.init(ptr)
+        Self(ptr)
     }
 
     private init(_ ptr: OpaquePointer) {
@@ -42,7 +42,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer -> Self in
-            var key: OpaquePointer? = nil
+            var key: OpaquePointer?
             let err = chederaCallback(pointer.baseAddress, pointer.count, &key)
 
             if err != HEDERA_ERROR_OK {
@@ -70,7 +70,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public static func fromString(_ description: String) throws -> Self {
-        var key = OpaquePointer(bitPattern: 0)
+        var key: OpaquePointer?
         let err = hedera_public_key_from_string(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -81,7 +81,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public init?(_ description: String) {
-        var key = OpaquePointer.init(bitPattern: 0)
+        var key: OpaquePointer?
         let err = hedera_public_key_from_string(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -96,7 +96,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public static func fromStringDer(_ description: String) throws -> Self {
-        var key = OpaquePointer(bitPattern: 0)
+        var key: OpaquePointer?
         let err = hedera_public_key_from_string_der(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -107,7 +107,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public static func fromStringEd25519(_ description: String) throws -> Self {
-        var key = OpaquePointer(bitPattern: 0)
+        var key: OpaquePointer?
         let err = hedera_public_key_from_string_ed25519(description, &key)
 
         if err != HEDERA_ERROR_OK {
@@ -118,7 +118,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public static func fromStringEcdsa(_ description: String) throws -> Self {
-        var key = OpaquePointer(bitPattern: 0)
+        var key: OpaquePointer?
         let err = hedera_public_key_from_string_ecdsa(description, &key)
 
         if err != HEDERA_ERROR_OK {

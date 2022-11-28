@@ -28,8 +28,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaTransactionId) throws -> Result) rethrows -> Result {
-        try accountId.unsafeWithCHedera {
-            (hederaAccountId) in
+        try accountId.unsafeWithCHedera { hederaAccountId in
             try body(
                 HederaTransactionId(
                     account_id: hederaAccountId, valid_start: validStart.toCHederaTimestamp(), nonce: nonce ?? 0,
@@ -37,7 +36,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
         }
     }
 
-    public static func fromString(_ description: String) throws -> Self {
+    private init(parsing description: String) throws {
         var id = HederaTransactionId()
 
         let err = hedera_transaction_id_from_string(
@@ -49,22 +48,21 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
             throw HError(err)!
         }
 
-        return Self(unsafeFromCHedera: id)
+        self.init(unsafeFromCHedera: id)
+    }
+
+    public static func fromString(_ description: String) throws -> Self {
+        try Self(parsing: description)
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
     }
 
     // semver parsing is shockingly hard. So the FFI really does carry its weight.
     public init?(_ description: String) {
-        let res = try? Self.fromString(description)
-
-        if res == nil {
-            return nil
-        }
-
-        self = res!
+        try? self.init(parsing: description)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
@@ -86,8 +84,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     public func toBytes() -> Data {
-        self.unsafeWithCHedera {
-            (hedera) in
+        unsafeWithCHedera { hedera in
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_transaction_id_to_bytes(hedera, &buf)
 
