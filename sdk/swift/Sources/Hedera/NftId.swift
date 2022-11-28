@@ -35,38 +35,28 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         self.serial = serial
     }
 
-    public static func fromString(_ description: String) throws -> Self {
+    private convenience init(parsing description: String) throws {
         var shard: UInt64 = 0
         var realm: UInt64 = 0
         var num: UInt64 = 0
         var serial: UInt64 = 0
 
-        let err = hedera_nft_id_from_string(description, &shard, &realm, &num, &serial)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
-
-        return Self(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
-    }
-
-    public required convenience init?(_ description: String) {
-        var shard: UInt64 = 0
-        var realm: UInt64 = 0
-        var num: UInt64 = 0
-        var serial: UInt64 = 0
-
-        let err = hedera_nft_id_from_string(description, &shard, &realm, &num, &serial)
-
-        if err != HEDERA_ERROR_OK {
-            return nil
-        }
+        try HError.throwing(error: hedera_nft_id_from_string(description, &shard, &realm, &num, &serial))
 
         self.init(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
     }
 
+    public static func fromString(_ description: String) throws -> Self {
+        try self.init(parsing: description)
+    }
+
+    public required convenience init?(_ description: String) {
+        try? self.init(parsing: description)
+    }
+
     public required convenience init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
     }
 
     public required convenience init(from decoder: Decoder) throws {
@@ -86,11 +76,8 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
             var num: UInt64 = 0
             var serial: UInt64 = 0
 
-            let err = hedera_nft_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num, &serial)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(
+                error: hedera_nft_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num, &serial))
 
             return Self(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
         }
