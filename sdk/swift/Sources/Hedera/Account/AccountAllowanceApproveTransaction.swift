@@ -30,7 +30,7 @@
 public final class AccountAllowanceApproveTransaction: Transaction {
     private var hbarAllowances: [HbarAllowance] = []
     private var tokenAllowances: [TokenAllowance] = []
-    private var nftAllowances: [NftAllowance] = []
+    private var nftAllowances: [TokenNftAllowance] = []
 
     /// Create a new `AccountAllowanceApproveTransaction`.
     public override init() {
@@ -52,6 +52,10 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         return self
     }
 
+    public func getHbarApprovals() -> [HbarAllowance] {
+        self.hbarAllowances
+    }
+
     /// Approves the token allowance.
     @discardableResult
     public func approveTokenAllowance(
@@ -70,6 +74,10 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         return self
     }
 
+    public func getTokenApprovals() -> [TokenAllowance] {
+        self.tokenAllowances
+    }
+
     /// Approves the token NFT allowance.
     @discardableResult
     public func approveTokenNftAllowance(
@@ -84,7 +92,7 @@ public final class AccountAllowanceApproveTransaction: Transaction {
             allowance.serials.append(nftId.serial)
         } else {
             nftAllowances.append(
-                NftAllowance(
+                TokenNftAllowance(
                     tokenId: nftId.tokenId,
                     ownerAccountId: ownerAccountId,
                     spenderAccountId: spenderAccountId,
@@ -106,7 +114,7 @@ public final class AccountAllowanceApproveTransaction: Transaction {
     ) -> Self {
 
         nftAllowances.append(
-            NftAllowance(
+            TokenNftAllowance(
                 tokenId: tokenId,
                 ownerAccountId: ownerAccountId,
                 spenderAccountId: spenderAccountId,
@@ -116,6 +124,10 @@ public final class AccountAllowanceApproveTransaction: Transaction {
             ))
 
         return self
+    }
+
+    public func getNftApprovals() -> [TokenNftAllowance] {
+        self.nftAllowances
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -135,20 +147,20 @@ public final class AccountAllowanceApproveTransaction: Transaction {
     }
 }
 
-private struct HbarAllowance: Codable {
+public struct HbarAllowance: Codable {
     let ownerAccountId: AccountId
     let spenderAccountId: AccountId
     let amount: Hbar
 }
 
-private struct TokenAllowance: Codable {
+public struct TokenAllowance: Codable {
     let tokenId: TokenId
     let ownerAccountId: AccountId
     let spenderAccountId: AccountId
     let amount: UInt64
 }
 
-private struct NftAllowance: Codable {
+public struct TokenNftAllowance: Codable {
     let tokenId: TokenId
     let ownerAccountId: AccountId
     let spenderAccountId: AccountId
