@@ -92,7 +92,7 @@ pub unsafe extern "C" fn hedera_execute(
 
             AnyRequest::Transaction(mut transaction) => {
                 for signer in signers {
-                    transaction.sign_signer(crate::signer::Signer::C(signer));
+                    transaction.sign_signer(crate::signer::AnySigner::C(signer));
                 }
 
                 transaction
