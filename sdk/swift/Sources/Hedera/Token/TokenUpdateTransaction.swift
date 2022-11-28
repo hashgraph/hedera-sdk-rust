@@ -25,8 +25,8 @@ public final class TokenUpdateTransaction: Transaction {
     /// Create a new `TokenUpdateTransaction`.
     public init(
         tokenId: TokenId? = nil,
-        name: String = "",
-        symbol: String = "",
+        tokenName: String = "",
+        tokenSymbol: String = "",
         treasuryAccountId: AccountId? = nil,
         adminKey: Key? = nil,
         kycKey: Key? = nil,
@@ -41,8 +41,8 @@ public final class TokenUpdateTransaction: Transaction {
         pauseKey: Key? = nil
     ) {
         self.tokenId = tokenId
-        self.name = name
-        self.symbol = symbol
+        self.tokenName = tokenName
+        self.tokenSymbol = tokenSymbol
         self.treasuryAccountId = treasuryAccountId
         self.adminKey = adminKey
         self.kycKey = kycKey
@@ -69,23 +69,23 @@ public final class TokenUpdateTransaction: Transaction {
     }
 
     /// The publicly visible name of the token.
-    public var name: String
+    public var tokenName: String
 
     /// Sets the publicly visible name of the token.
     @discardableResult
-    public func name(_ name: String) -> Self {
-        self.name = name
+    public func tokenName(_ tokenName: String) -> Self {
+        self.tokenName = tokenName
 
         return self
     }
 
     /// The publicly visible token symbol.
-    public var symbol: String
+    public var tokenSymbol: String
 
     /// Sets the publicly visible token symbol.
     @discardableResult
-    public func symbol(_ symbol: String) -> Self {
-        self.symbol = symbol
+    public func tokenSymbol(_ tokenSymbol: String) -> Self {
+        self.tokenSymbol = tokenSymbol
 
         return self
     }
@@ -233,8 +233,8 @@ public final class TokenUpdateTransaction: Transaction {
 
     private enum CodingKeys: String, CodingKey {
         case tokenId
-        case name
-        case symbol
+        case tokenName
+        case tokenSymbol
         case treasuryAccountId
         case adminKey
         case kycKey
@@ -253,8 +253,8 @@ public final class TokenUpdateTransaction: Transaction {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encodeIfPresent(tokenId, forKey: .tokenId)
-        try container.encode(name, forKey: .name)
-        try container.encode(symbol, forKey: .symbol)
+        try container.encode(tokenName, forKey: .tokenName)
+        try container.encode(tokenSymbol, forKey: .tokenSymbol)
         try container.encodeIfPresent(treasuryAccountId, forKey: .treasuryAccountId)
         try container.encodeIfPresent(adminKey, forKey: .adminKey)
         try container.encodeIfPresent(kycKey, forKey: .kycKey)
