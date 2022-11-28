@@ -160,3 +160,22 @@ fn account_alias_from_str(s: &str) -> Option<AccountId> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::AccountId;
+
+    #[test]
+    fn parse() {
+        let account_id: AccountId = "0.0.1001".parse().unwrap();
+
+        assert_eq!(account_id, AccountId { shard: 0, realm: 0, num: 1001, alias: None });
+    }
+
+    #[test]
+    fn to_from_bytes_roundtrip() {
+        let account_id = AccountId { shard: 0, realm: 0, num: 1001, alias: None };
+
+        assert_eq!(account_id, AccountId::from_bytes(&account_id.to_bytes()).unwrap());
+    }
+}
