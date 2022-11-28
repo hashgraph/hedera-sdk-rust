@@ -72,6 +72,8 @@ pub struct ContractUpdateTransactionData {
 
     staked_account_id: Option<AccountId>,
 
+    proxy_account_id: Option<AccountId>,
+
     staked_node_id: Option<u64>,
 
     decline_staking_reward: Option<bool>,
@@ -118,6 +120,13 @@ impl ContractUpdateTransaction {
     /// life of the contract.
     pub fn auto_renew_account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(account_id);
+        self
+    }
+
+    /// Sets the ID of the account to which this account is proxy staked.
+    pub fn proxy_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.proxy_account_id = Some(id);
+
         self
     }
 
@@ -190,7 +199,7 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
                 contract_id,
                 expiration_time,
                 admin_key,
-                proxy_account_id: None,
+                proxy_account_id: self.proxy_account_id.to_protobuf(),
                 auto_renew_period,
                 max_automatic_token_associations: self
                     .max_automatic_token_associations
