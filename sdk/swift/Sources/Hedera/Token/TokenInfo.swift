@@ -24,11 +24,11 @@ public final class TokenInfo: Codable {
     /// The ID of the token for which information is requested.
     public let tokenId: TokenId
 
-    /// Name of token.
-    public let name: String
+    /// The name for this token.
+    public let tokenName: String
 
-    /// Symbol of token.
-    public let symbol: String
+    /// The symbol for this token.
+    public let tokenSymbol: String
 
     /// The amount of decimal places that this token supports.
     public let decimals: UInt32

@@ -48,11 +48,11 @@ pub struct TokenInfo {
     /// The ID of the token for which information is requested.
     pub token_id: TokenId,
 
-    /// Name of token.
-    pub name: String,
+    /// The name for this token.
+    pub token_name: String,
 
-    /// Symbol of token.
-    pub symbol: String,
+    /// The symbol for this token.
+    pub token_symbol: String,
 
     /// The amount of decimal places that this token supports.
     pub decimals: u32,
@@ -162,8 +162,8 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
 
         Ok(Self {
             token_id: TokenId::from_protobuf(token_id)?,
-            name: info.name,
-            symbol: info.symbol,
+            token_name: info.name,
+            token_symbol: info.symbol,
             decimals: info.decimals,
             total_supply: info.total_supply,
             treasury_account_id: AccountId::from_protobuf(treasury_account_id)?,
