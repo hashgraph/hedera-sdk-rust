@@ -38,7 +38,8 @@ let exampleTargets = [
     Target.executableTarget(
         name: "\(name)Example",
         dependencies: ["Hedera", .product(name: "SwiftDotenv", package: "swift-dotenv")],
-        path: "Examples/\(name)"
+        path: "Examples/\(name)",
+        swiftSettings: [.unsafeFlags(["-parse-as-library"])]
     )
 }
 
