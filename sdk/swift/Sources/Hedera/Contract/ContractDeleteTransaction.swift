@@ -28,10 +28,10 @@ public final class ContractDeleteTransaction: Transaction {
         self.contractId = contractId
     }
 
-    /// The token to be deleted.
+    /// The contract to be deleted.
     public var contractId: ContractId?
 
-    /// Sets the token to be deleted.
+    /// Sets the contract to be deleted.
     @discardableResult
     public func contractId(_ contractId: ContractId) -> Self {
         self.contractId = contractId
@@ -39,14 +39,40 @@ public final class ContractDeleteTransaction: Transaction {
         return self
     }
 
+    /// The account ID which will receive all remaining hbars.
+    public var transferAccountId: AccountId?
+
+    /// Sets the account ID which will receive all remaining hbars.
+    @discardableResult
+    public func transferAccountId(_ transferAccountId: AccountId) -> Self {
+        self.transferAccountId = transferAccountId
+
+        return self
+    }
+
+    /// The contract ID which will receive all remaining hbars.
+    public var transferContractId: ContractId?
+
+    /// Sets the contract ID which will receive all remaining hbars.
+    @discardableResult
+    public func transferContractId(_ transferContractId: ContractId) -> Self {
+        self.transferContractId = transferContractId
+
+        return self
+    }
+
     private enum CodingKeys: String, CodingKey {
         case contractId
+        case transferAccountId
+        case transferContractId
     }
 
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
         try container.encodeIfPresent(contractId, forKey: .contractId)
+        try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
+        try container.encodeIfPresent(transferContractId, forKey: .transferContractId)
 
         try super.encode(to: encoder)
     }

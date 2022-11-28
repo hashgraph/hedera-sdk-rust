@@ -45,7 +45,7 @@ pub type ContractDeleteTransaction = Transaction<ContractDeleteTransactionData>;
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractDeleteTransactionData {
-    pub delete_contract_id: Option<ContractId>,
+    pub contract_id: Option<ContractId>,
 
     pub transfer_account_id: Option<AccountId>,
 
@@ -54,8 +54,8 @@ pub struct ContractDeleteTransactionData {
 
 impl ContractDeleteTransaction {
     /// Sets the contract ID which should be deleted.
-    pub fn delete_contract_id(&mut self, id: ContractId) -> &mut Self {
-        self.body.data.delete_contract_id = Some(id);
+    pub fn contract_id(&mut self, id: ContractId) -> &mut Self {
+        self.body.data.contract_id = Some(id);
         self
     }
 
@@ -89,7 +89,7 @@ impl ToTransactionDataProtobuf for ContractDeleteTransactionData {
         _node_account_id: AccountId,
         _transaction_id: &crate::TransactionId,
     ) -> services::transaction_body::Data {
-        let delete_contract_id = self.delete_contract_id.to_protobuf();
+        let delete_contract_id = self.contract_id.to_protobuf();
 
         let obtainers = match (&self.transfer_account_id, &self.transfer_contract_id) {
             (Some(account_id), None) => {
@@ -142,7 +142,7 @@ mod tests {
         // language=JSON
         const CONTRACT_DELETE_TRANSACTION_JSON: &str = r#"{
   "$type": "contractDelete",
-  "deleteContractId": "0.0.1001",
+  "contractId": "0.0.1001",
   "transferAccountId": "0.0.1002",
   "transferContractId": "0.0.1003"
 }"#;
@@ -152,7 +152,7 @@ mod tests {
             let mut transaction = ContractDeleteTransaction::new();
 
             transaction
-                .delete_contract_id(ContractId::from(1001))
+                .contract_id(ContractId::from(1001))
                 .transfer_account_id(AccountId::from(1002))
                 .transfer_contract_id(ContractId::from(1003));
 
@@ -170,7 +170,7 @@ mod tests {
 
             let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractDelete(transaction) => transaction);
 
-            assert_eq!(data.delete_contract_id.unwrap(), ContractId::from(1001));
+            assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
             assert_eq!(data.transfer_contract_id.unwrap(), ContractId::from(1003));
             assert_eq!(data.transfer_account_id, Some(AccountId::from(1002)));
 
