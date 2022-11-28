@@ -75,6 +75,14 @@ public final class TokenWipeTransaction: Transaction {
         return self
     }
 
+    /// Add a serial number of a non-fungible token to wipe from the specified account
+    @discardableResult
+    public func addSerial(_ serial: UInt64) -> Self {
+        self.serials.append(serial)
+
+        return self
+    }
+
     private enum CodingKeys: String, CodingKey {
         case tokenId
         case amount
