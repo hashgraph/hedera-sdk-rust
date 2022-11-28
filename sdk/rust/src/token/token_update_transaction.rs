@@ -71,10 +71,10 @@ pub struct TokenUpdateTransactionData {
     token_id: Option<TokenId>,
 
     /// The publicly visible name of the token.
-    name: String,
+    token_name: String,
 
     /// The publicly visible token symbol.
-    symbol: String,
+    token_symbol: String,
 
     /// The account which will act as a treasury for the token.
     treasury_account_id: Option<AccountId>,
@@ -133,15 +133,15 @@ impl TokenUpdateTransaction {
 
     /// Sets the new publicly visible name of the token.
     /// Maximum 100 characters.
-    pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
-        self.body.data.name = name.into();
+    pub fn token_name(&mut self, token_name: impl Into<String>) -> &mut Self {
+        self.body.data.token_name = token_name.into();
         self
     }
 
     /// Sets the new publicly visible token symbol.
     /// Maximum 100 characters.
-    pub fn symbol(&mut self, symbol: impl Into<String>) -> &mut Self {
-        self.body.data.symbol = symbol.into();
+    pub fn token_symbol(&mut self, token_symbol: impl Into<String>) -> &mut Self {
+        self.body.data.token_symbol = token_symbol.into();
         self
     }
 
@@ -264,8 +264,8 @@ impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
     ) -> services::transaction_body::Data {
         services::transaction_body::Data::TokenUpdate(services::TokenUpdateTransactionBody {
             token: self.token_id.to_protobuf(),
-            name: self.name.clone(),
-            symbol: self.symbol.clone(),
+            name: self.token_name.clone(),
+            symbol: self.token_symbol.clone(),
             treasury: self.treasury_account_id.to_protobuf(),
             admin_key: self.admin_key.to_protobuf(),
             kyc_key: self.kyc_key.to_protobuf(),
@@ -316,8 +316,8 @@ mod tests {
         const TOKEN_UPDATE_TRANSACTION_JSON: &str = r#"{
   "$type": "tokenUpdate",
   "tokenId": "0.0.1001",
-  "name": "Pound",
-  "symbol": "LB",
+  "tokenName": "Pound",
+  "tokenSymbol": "LB",
   "treasuryAccountId": "0.0.1002",
   "adminKey": {
     "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
@@ -367,8 +367,8 @@ mod tests {
 
             transaction
                 .token_id(TokenId::from(1001))
-                .name("Pound")
-                .symbol("LB")
+                .token_name("Pound")
+                .token_symbol("LB")
                 .treasury_account_id(AccountId::from(1002))
                 .admin_key(PublicKey::from_str(ADMIN_KEY)?)
                 .kyc_key(PublicKey::from_str(KYC_KEY)?)
@@ -396,8 +396,8 @@ mod tests {
             let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenUpdate(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
-            assert_eq!(data.name, "Pound");
-            assert_eq!(data.symbol, "LB");
+            assert_eq!(data.token_name, "Pound");
+            assert_eq!(data.token_symbol, "LB");
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
             assert_eq!(data.token_memo, "A new memo");
             assert_eq!(
