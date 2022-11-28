@@ -160,7 +160,7 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public static func from(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws -> Self {
-        try Self.init(amount, unit)
+        try Self(amount, unit)
     }
 
     public static func fromTinybars(_ amount: Int64) -> Self {
@@ -182,7 +182,7 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public func negated() -> Self {
-        Self.init(tinybars: -tinybars)
+        Self(tinybars: -tinybars)
     }
 
     /// Convert this hbar value to a different unit.

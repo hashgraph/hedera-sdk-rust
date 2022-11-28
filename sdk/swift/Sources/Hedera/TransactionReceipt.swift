@@ -88,7 +88,7 @@ public struct TransactionReceipt: Codable {
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         let json: String = try bytes.withUnsafeTypedBytes { pointer in
-            var ptr: UnsafeMutablePointer<CChar>? = UnsafeMutablePointer(bitPattern: 0)
+            var ptr: UnsafeMutablePointer<CChar>?
             let err = hedera_transaction_receipt_from_bytes(
                 pointer.baseAddress,
                 pointer.count,
