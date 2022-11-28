@@ -130,7 +130,7 @@ impl CSigner {
         let signature_out = unsafe { slice::from_raw_parts(signature, signature_size) }.to_vec();
 
         unsafe {
-            (self.free_signature_func)(self.context, signature as *mut u8, signature_size);
+            (self.free_signature_func)(self.context, signature.cast_mut(), signature_size);
         }
 
         (self.public_key, signature_out)
