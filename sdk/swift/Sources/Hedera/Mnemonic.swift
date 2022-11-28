@@ -67,7 +67,7 @@ public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiter
     }
 
     public static func generate12() -> Self {
-        let ptr = hedera_mnemonic_generate_24()
+        let ptr = hedera_mnemonic_generate_12()
         return Self(ptr!)
     }
 
