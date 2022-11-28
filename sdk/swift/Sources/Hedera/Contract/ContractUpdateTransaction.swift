@@ -31,6 +31,7 @@ public final class ContractUpdateTransaction: Transaction {
         contractMemo: String? = nil,
         maxAutomaticTokenAssociations: UInt32? = nil,
         autoRenewAccountId: AccountId? = nil,
+        proxyAccountId: AccountId? = nil,
         stakedAccountId: AccountId? = nil,
         stakedNodeId: Int64? = nil,
         declineStakingReward: Bool? = nil
@@ -42,6 +43,7 @@ public final class ContractUpdateTransaction: Transaction {
         self.contractMemo = contractMemo
         self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
         self.autoRenewAccountId = autoRenewAccountId
+        self.proxyAccountId = proxyAccountId
         self.stakedAccountId = stakedAccountId
         self.stakedNodeId = stakedNodeId
         self.declineStakingReward = declineStakingReward
@@ -136,6 +138,17 @@ public final class ContractUpdateTransaction: Transaction {
     @discardableResult
     public func clearAutoRenewAccountId() -> Self {
         autoRenewAccountId = nil
+
+        return self
+    }
+
+    /// The ID of the account to which this account is proxy staked.
+    public var proxyAccountId: AccountId?
+
+    /// Sets the ID of the account to which this account is proxy staked.
+    @discardableResult
+    public func proxyAccountId(_ proxyAccountId: AccountId?) -> Self {
+        self.proxyAccountId = proxyAccountId
 
         return self
     }
