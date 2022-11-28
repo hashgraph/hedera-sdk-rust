@@ -148,23 +148,23 @@ public final class AccountAllowanceApproveTransaction: Transaction {
 }
 
 public struct HbarAllowance: Codable {
-    let ownerAccountId: AccountId
-    let spenderAccountId: AccountId
-    let amount: Hbar
+    public let ownerAccountId: AccountId
+    public let spenderAccountId: AccountId
+    public let amount: Hbar
 }
 
 public struct TokenAllowance: Codable {
-    let tokenId: TokenId
-    let ownerAccountId: AccountId
-    let spenderAccountId: AccountId
-    let amount: UInt64
+    public let tokenId: TokenId
+    public let ownerAccountId: AccountId
+    public let spenderAccountId: AccountId
+    public let amount: UInt64
 }
 
 public struct TokenNftAllowance: Codable {
-    let tokenId: TokenId
-    let ownerAccountId: AccountId
-    let spenderAccountId: AccountId
-    var serials: [UInt64]
-    let approvedForAll: Bool?
-    let delegatingSpenderAccountId: AccountId?
+    public let tokenId: TokenId
+    public let ownerAccountId: AccountId
+    public let spenderAccountId: AccountId
+    public var serials: [UInt64]
+    public let approvedForAll: Bool?
+    public let delegatingSpenderAccountId: AccountId?
 }
