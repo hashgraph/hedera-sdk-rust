@@ -49,6 +49,10 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         return self
     }
 
+    public func getTokenNftAllowanceDeletions() -> [NftRemoveAllowance] {
+        self.nftAllowances
+    }
+
     private enum CodingKeys: String, CodingKey {
         case nftAllowances
     }
@@ -62,8 +66,8 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
     }
 }
 
-private struct NftRemoveAllowance: Encodable {
-    let tokenId: TokenId
-    let ownerAccountId: AccountId
-    var serials: [UInt64]
+public struct NftRemoveAllowance: Encodable {
+    public let tokenId: TokenId
+    public let ownerAccountId: AccountId
+    public var serials: [UInt64]
 }
