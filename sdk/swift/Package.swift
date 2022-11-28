@@ -25,6 +25,7 @@ import PackageDescription
 let exampleTargets = [
     "CreateAccount",
     "CreateFile",
+    "CreateTopic",
     "DeleteAccount",
     "GenerateKey",
     "GenerateKeyWithMnemonic",
