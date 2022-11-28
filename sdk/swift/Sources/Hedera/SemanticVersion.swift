@@ -55,11 +55,8 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     // internal API, do NOT expose.
     private static func fromString(_ description: String) throws -> Self {
         var csemver = HederaSemanticVersion()
-        let err = hedera_semantic_version_from_string(description, &csemver)
 
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_semantic_version_from_string(description, &csemver))
 
         return Self(unsafeFromCHedera: csemver)
     }
@@ -104,11 +101,7 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
         try bytes.withUnsafeTypedBytes { pointer in
             var semver = HederaSemanticVersion()
 
-            let err = hedera_semantic_version_from_bytes(pointer.baseAddress, pointer.count, &semver)
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_semantic_version_from_bytes(pointer.baseAddress, pointer.count, &semver))
 
             return Self(unsafeFromCHedera: semver)
         }

@@ -99,16 +99,16 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     /// Create a new Hbar of the specified, possibly fractional value.
     public init(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws {
         guard amount.isFinite else {
-            throw NSError(domain: "Amount must be a finite decimal number", code: 0)
+            throw HError(kind: .basicParse, description: "amount must be a finite decimal number")
         }
 
         let tinybars = amount * Decimal(unit.rawValue)
 
         if !(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0)) {
-            throw NSError(
-                domain:
-                    "Amount and Unit combination results in a fractional value for tinybar. Ensure tinybar value is a whole number.",
-                code: 0
+            throw HError(
+                kind: .basicParse,
+                description:
+                    "amount and unit combination results in a fractional value for tinybar, ensure tinybar value is a whole number"
             )
         }
 
@@ -140,12 +140,12 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
             if let tmp = HbarUnit.init(String(parts[1])) {
                 unit = tmp
             } else {
-                throw NSError(domain: "unit must be a valid hbar unit", code: 0)
+                throw HError(kind: .basicParse, description: "unit must be a valid hbar unit")
             }
         }
 
         guard let amount = Decimal(string: String(parts[0])) else {
-            throw NSError(domain: "Amount not parsable as a decimal", code: 0)
+            throw HError(kind: .basicParse, description: "amount not parsable as a decimal")
         }
 
         return try Self(amount, unit)

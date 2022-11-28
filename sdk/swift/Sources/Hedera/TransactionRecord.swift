@@ -20,9 +20,9 @@
 
 import Foundation
 
+// TODO: assessed_custom_fees
 /// The complete record for a transaction on Hedera that has reached consensus.
 /// Response from `TransactionRecordQuery`.
-// TODO: assessed_custom_fees
 public struct TransactionRecord: Codable {
     /// The status (reach consensus, or failed, or is unknown) and the ID of
     /// any new account/file/instance created.

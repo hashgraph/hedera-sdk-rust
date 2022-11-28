@@ -40,12 +40,12 @@ extension Request {
             let err = hedera_execute(
                 client.ptr, request, continuation, makeHederaSignersFromArray(signers: signers), timeoutNanos != nil,
                 timeoutNanos ?? 0
-            ) {
-                continuation, err, responsePtr in
-                if err != HEDERA_ERROR_OK {
+            ) { continuation, err, responsePtr in
+
+                if let err = HError(err) {
                     // an error has occurred, consume from the TLS storage for the error
                     // and throw it up back to the async task
-                    resumeUnmanagedContinuation(continuation, throwing: HError(err)!)
+                    resumeUnmanagedContinuation(continuation, throwing: err)
                 } else {
                     // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
                     let responseText = String(validatingUTF8: responsePtr!)!
@@ -56,8 +56,8 @@ extension Request {
                 }
             }
 
-            if err != HEDERA_ERROR_OK {
-                resumeUnmanagedContinuation(continuation, throwing: HError(err)!)
+            if let err = HError(err) {
+                resumeUnmanagedContinuation(continuation, throwing: err)
             }
         }
 

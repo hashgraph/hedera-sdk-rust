@@ -57,15 +57,7 @@ public struct StakingInfo: Codable {
     public static func fromBytes(_ bytes: Data) throws -> Self {
         let json: String = try bytes.withUnsafeTypedBytes { pointer in
             var ptr: UnsafeMutablePointer<CChar>?
-            let err = hedera_staking_info_from_bytes(
-                pointer.baseAddress,
-                pointer.count,
-                &ptr
-            )
-
-            if err != HEDERA_ERROR_OK {
-                throw HError(err)!
-            }
+            try HError.throwing(error: hedera_staking_info_from_bytes(pointer.baseAddress, pointer.count, &ptr))
 
             return String(hString: ptr!)
         }
@@ -78,11 +70,7 @@ public struct StakingInfo: Codable {
         let json = String(data: jsonBytes, encoding: .utf8)!
         var buf: UnsafeMutablePointer<UInt8>?
         var bufSize: Int = 0
-        let err = hedera_staking_info_to_bytes(json, &buf, &bufSize)
-
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_staking_info_to_bytes(json, &buf, &bufSize))
 
         return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
     }

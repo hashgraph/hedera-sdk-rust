@@ -70,11 +70,8 @@ extension Key: Codable {
         let json = String(data: jsonBytes, encoding: .utf8)!
         var buf: UnsafeMutablePointer<UInt8>?
         var bufSize: Int = 0
-        let err = hedera_key_to_bytes(json, &buf, &bufSize)
 
-        if err != HEDERA_ERROR_OK {
-            throw HError(err)!
-        }
+        try HError.throwing(error: hedera_key_to_bytes(json, &buf, &bufSize))
 
         return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
     }
