@@ -27,6 +27,7 @@ let exampleTargets = [
     "CreateFile",
     "DeleteAccount",
     "GenerateKey",
+    "GenerateKeyWithMnemonic",
     "GetAccountBalance",
     "GetAccountInfo",
     "TransferHbar",
