@@ -212,6 +212,27 @@ where
     // todo:
     #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
-        execute(client, self).await
+        execute(client, self, None).await
+    }
+
+    #[cfg(feature = "ffi")]
+    pub(crate) async fn execute_with_optional_timeout(
+        &mut self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> crate::Result<TransactionResponse> {
+        execute(client, self, timeout).await
+    }
+
+    /// Execute this transaction against the provided client of the Hedera network.
+    // todo:
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn execute_with_timeout(
+        &mut self,
+        client: &Client,
+        // fixme: be consistent with `time::Duration`? Except `tokio::time` is `std::time`, and we depend on tokio.
+        timeout: std::time::Duration,
+    ) -> crate::Result<TransactionResponse> {
+        execute(client, self, timeout).await
     }
 }

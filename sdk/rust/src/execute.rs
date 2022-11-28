@@ -107,13 +107,23 @@ pub(crate) trait Execute {
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
 }
 
-pub(crate) async fn execute<E>(client: &Client, executable: &E) -> crate::Result<E::Response>
+pub(crate) async fn execute<E>(
+    client: &Client,
+    executable: &E,
+    timeout: impl Into<Option<std::time::Duration>> + Send,
+) -> crate::Result<E::Response>
 where
     E: Execute + Sync,
 {
-    // the overall timeout for the backoff starts measuring from here
+    let timeout: Option<std::time::Duration> = timeout.into();
 
-    let mut backoff = ExponentialBackoff::default();
+    let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
+        std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
+    });
+
+    // the overall timeout for the backoff starts measuring from here
+    let mut backoff =
+        ExponentialBackoff { max_elapsed_time: Some(timeout), ..ExponentialBackoff::default() };
     let mut last_error: Option<Error> = None;
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
@@ -140,7 +150,6 @@ where
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
-
     loop {
         // if no explicit set of node account IDs, we randomly sample 1/3 of all
         // healthy nodes on the client. this set of healthy nodes can change on

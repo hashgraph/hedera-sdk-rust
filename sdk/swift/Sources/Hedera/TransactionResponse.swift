@@ -41,14 +41,51 @@ public struct TransactionResponse: Decodable {
     public let transactionHash: String
     // TODO: Use `TransactionHash` type
 
+    public var validateStatus: Bool = true
+
+    private enum CodingKeys: String, CodingKey {
+        case nodeAccountId
+        case transactionId
+        case transactionHash
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        nodeAccountId = try container.decode(AccountId.self, forKey: .nodeAccountId)
+        transactionId = try container.decode(TransactionId.self, forKey: .transactionId)
+        transactionHash = try container.decode(String.self, forKey: .transactionHash)
+    }
+
+    @discardableResult
+    public mutating func validateStatus(_ validateStatus: Bool) -> Self {
+        self.validateStatus = validateStatus
+
+        return self
+    }
+
     /// Get the receipt of this transaction.
     /// Will wait for consensus.
     /// Will return a `receiptStatus` error for a failing receipt.
-    public func getReceipt(_ client: Client) async throws -> TransactionReceipt {
-        try await TransactionReceiptQuery()
+    public func getReceipt(_ client: Client, _ timeoutNanos: UInt64? = nil) async throws -> TransactionReceipt {
+        try await getReceiptQuery().execute(client, timeoutNanos)
+    }
+
+    public func getReceiptQuery() -> TransactionReceiptQuery {
+        TransactionReceiptQuery()
             .transactionId(transactionId)
             .nodeAccountIds([nodeAccountId])
-            .validateStatus(true)
-            .execute(client)
+            .validateStatus(validateStatus)
+    }
+
+    public func getRecord(_ client: Client, _ timeoutNanos: UInt64? = nil) async throws -> TransactionRecord {
+        try await getRecordQuery().execute(client, timeoutNanos)
+    }
+
+    public func getRecordQuery() -> TransactionRecordQuery {
+        TransactionRecordQuery()
+            .transactionId(transactionId)
+            .nodeAccountIds([nodeAccountId])
+            .validateStatus(validateStatus)
     }
 }

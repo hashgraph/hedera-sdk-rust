@@ -185,6 +185,7 @@ where
             node_account_id,
             transaction_id: transaction_id.unwrap(),
             transaction_hash,
+            validate_status: true,
         })
     }
 

@@ -25,6 +25,8 @@ use crate::{
     TransactionId,
     TransactionReceipt,
     TransactionReceiptQuery,
+    TransactionRecord,
+    TransactionRecordQuery,
 };
 
 /// Response from [`Transaction::execute`][crate::Transaction::execute].
@@ -46,30 +48,98 @@ pub struct TransactionResponse {
     /// The client-generated transaction ID of the transaction that was submitted.
     ///
     /// This can be used to lookup the transaction in an explorer.
-    ///
     pub transaction_id: TransactionId,
 
     /// The client-generated SHA-384 hash of the transaction that was submitted.
     ///
     /// This can be used to lookup the transaction in an explorer.
     pub transaction_hash: TransactionHash,
+
+    /// Whether the receipt/record status should be validated.
+    #[cfg_attr(feature = "ffi", serde(skip))]
+    pub validate_status: bool,
 }
 
-// TODO: get_record
-// TODO: get_successful_record
 impl TransactionResponse {
+    /// Whether the receipt/record status should be validated.
+    pub fn valdiate_status(&mut self, validate: bool) -> &mut Self {
+        self.validate_status = validate;
+        self
+    }
+
+    /// Create a query that will get the receipt for this transaction.
+    #[must_use]
+    pub fn get_receipt_query(&self) -> TransactionReceiptQuery {
+        let mut query = TransactionReceiptQuery::new();
+
+        query
+            .transaction_id(self.transaction_id)
+            .node_account_ids([self.node_account_id])
+            .validate_status(self.validate_status);
+
+        query
+    }
+
+    /// Create a query that will get the record for this transaction.
+    #[must_use]
+    pub fn get_record_query(&self) -> TransactionRecordQuery {
+        let mut query = TransactionRecordQuery::new();
+
+        query
+            .transaction_id(self.transaction_id)
+            .node_account_ids([self.node_account_id])
+            .validate_status(self.validate_status);
+
+        query
+    }
+
     /// Get the receipt for this transaction.
     /// Will wait for consensus.
     ///
     /// # Errors
-    /// - [`Error::ReceiptStatus`](crate::Error::ReceiptStatus) for a failing receipt.
+    /// - if [`validate_status`](Self.validate_status) is `true`:
+    ///   [`Error::ReceiptStatus`](crate::Error::ReceiptStatus) for a failing receipt.
+    ///
     /// fixme: is that it? Surely there are more situations.
     pub async fn get_receipt(&self, client: &Client) -> crate::Result<TransactionReceipt> {
-        TransactionReceiptQuery::new()
-            .transaction_id(self.transaction_id)
-            .node_account_ids([self.node_account_id])
-            .validate_status(true)
-            .execute(client)
-            .await
+        self.get_receipt_query().execute(client).await
+    }
+
+    /// Get the receipt for this transaction.
+    /// Will wait for consensus.
+    ///
+    /// # Errors
+    /// - if [`validate_status`](Self.validate_status) is `true`:
+    ///   [`Error::ReceiptStatus`](crate::Error::ReceiptStatus) for a failing receipt.
+    pub async fn get_receipt_with_timeout(
+        &self,
+        client: &Client,
+        timeout: std::time::Duration,
+    ) -> crate::Result<TransactionReceipt> {
+        self.get_receipt_query().execute_with_timeout(client, timeout).await
+    }
+
+    /// Get the record for this transaction.
+    /// Will wait for consensus.
+    ///
+    /// # Errors
+    /// - if [`validate_status`](Self.validate_status) is `true`:
+    ///   [`Error::ReceiptStatus`](crate::Error::ReceiptStatus) for a failing receipt in the record.
+    pub async fn get_record(&self, client: &Client) -> crate::Result<TransactionRecord> {
+        self.get_record_query().execute(client).await
+    }
+
+    /// Get the record for this transaction.
+    /// Will wait for consensus.
+    ///
+    /// # Errors
+    /// - if [`validate_status`](Self.validate_status) is `true`:
+    ///   [`Error::ReceiptStatus`](crate::Error::ReceiptStatus) for a failing receipt in the record.
+    pub async fn get_record_with_timeout(
+        &self,
+        client: &Client,
+        timeout: std::time::Duration,
+    ) -> crate::Result<TransactionRecord> {
+        self.get_record_query().execute_with_timeout(client, timeout).await
     }
 }
