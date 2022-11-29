@@ -62,30 +62,17 @@ public final class ScheduleInfo: Codable {
     public let ledgerId: LedgerId
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        let json: String = try bytes.withUnsafeTypedBytes { pointer in
-            var ptr: UnsafeMutablePointer<CChar>?
-            try HError.throwing(error: hedera_schedule_info_from_bytes(pointer.baseAddress, pointer.count, &ptr))
-
-            return String(hString: ptr!)
-        }
-
-        return try JSONDecoder().decode(Self.self, from: json.data(using: .utf8)!)
-    }
-
-    private func toBytesInner() throws -> Data {
-        let jsonBytes = try JSONEncoder().encode(self)
-        let json = String(data: jsonBytes, encoding: .utf8)!
-        var buf: UnsafeMutablePointer<UInt8>?
-        var bufSize: Int = 0
-
-        try HError.throwing(error: hedera_schedule_info_to_bytes(json, &buf, &bufSize))
-
-        return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
+        try Self.fromJsonBytes(bytes)
     }
 
     public func toBytes() -> Data {
         // can't have `throws` because that's the wrong function signature.
         // swiftlint:disable force_try
-        try! toBytesInner()
+        try! toJsonBytes()
     }
+}
+
+extension ScheduleInfo: ToFromJsonBytes {
+    static var cFromBytes: FromJsonBytesFunc { hedera_schedule_info_from_bytes }
+    static var cToBytes: ToJsonBytesFunc { hedera_schedule_info_to_bytes }
 }
