@@ -18,6 +18,7 @@
  * ‍
  */
 
+import CHedera
 import Foundation
 
 public final class TokenInfo: Codable {
@@ -68,7 +69,7 @@ public final class TokenInfo: Codable {
 
     /// An account which will be automatically charged to renew the token's expiration,
     /// at autoRenewPeriod interval.
-    public let autoRenewAccountId: AccountId?
+    public let autoRenewAccount: AccountId?
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
     public let autoRenewPeriod: Duration?
@@ -83,7 +84,7 @@ public final class TokenInfo: Codable {
     public let tokenType: TokenType
 
     /// The token supply type
-    public let tokenSupplyType: TokenSupplyType
+    public let supplyType: TokenSupplyType
 
     /// The Maximum number of tokens that can be in circulation.
     public let maxSupply: UInt64
@@ -96,4 +97,23 @@ public final class TokenInfo: Codable {
 
     /// Specifies whether the token is paused or not.
     public let pauseStatus: Bool?
+
+    /// The ledger ID the response was returned from
+    public let ledgerId: LedgerId
+
+    static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
+    }
+
+    func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
+        try! self.toJsonBytes()
+    }
+}
+
+extension TokenInfo: ToFromJsonBytes {
+    static var cToBytes: ToJsonBytesFunc { hedera_token_info_to_bytes }
+
+    static var cFromBytes: FromJsonBytesFunc { hedera_token_info_from_bytes }
 }
