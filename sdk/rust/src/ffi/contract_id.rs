@@ -33,7 +33,7 @@ impl ContractId {
         let crate::ContractId { shard, realm, num, evm_address } = rust;
 
         let evm_address =
-            evm_address.map(|it| NonNull::new(Box::into_raw(Box::new(it)) as *mut u8).unwrap());
+            evm_address.map(|it| NonNull::new(Box::into_raw(Box::new(it)).cast::<u8>()).unwrap());
 
         Self { shard, realm, num, evm_address }
     }
