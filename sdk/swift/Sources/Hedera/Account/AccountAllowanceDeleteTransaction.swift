@@ -65,9 +65,3 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         try super.encode(to: encoder)
     }
 }
-
-public struct NftRemoveAllowance: Encodable {
-    public let tokenId: TokenId
-    public let ownerAccountId: AccountId
-    public var serials: [UInt64]
-}
