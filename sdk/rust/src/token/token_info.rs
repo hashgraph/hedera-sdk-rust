@@ -123,7 +123,7 @@ pub struct TokenInfo {
     /// Specifies whether the token is paused or not.
     pub pause_status: Option<bool>,
 
-    /// The ledger ID the response was returned from
+    /// The ledger ID the response was returned from.
     pub ledger_id: LedgerId,
 }
 
