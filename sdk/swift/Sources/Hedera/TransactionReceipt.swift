@@ -86,17 +86,6 @@ public struct TransactionReceipt: Codable {
     /// given top-level id, in consensus order.
     public let children: [TransactionReceipt]
 
-    public static func fromBytes(_ bytes: Data) throws -> Self {
-        let json: String = try bytes.withUnsafeTypedBytes { pointer in
-            var ptr: UnsafeMutablePointer<CChar>?
-            try HError.throwing(error: hedera_transaction_receipt_from_bytes(pointer.baseAddress, pointer.count, &ptr))
-
-            return String(hString: ptr!)
-        }
-
-        return try JSONDecoder().decode(Self.self, from: json.data(using: .utf8)!)
-    }
-
     @discardableResult
     public func validateStatus(_ doValidate: Bool) throws -> Self {
         if doValidate && status != Status.ok {
@@ -106,20 +95,18 @@ public struct TransactionReceipt: Codable {
         return self
     }
 
-    private func toBytesInner() throws -> Data {
-        let jsonBytes = try JSONEncoder().encode(self)
-        let json = String(data: jsonBytes, encoding: .utf8)!
-        var buf: UnsafeMutablePointer<UInt8>?
-        var bufSize: Int = 0
-
-        try HError.throwing(error: hedera_transaction_receipt_to_bytes(json, &buf, &bufSize))
-
-        return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
     }
 
     public func toBytes() -> Data {
         // can't have `throws` because that's the wrong function signature.
         // swiftlint:disable force_try
-        try! toBytesInner()
+        try! toJsonBytes()
     }
+}
+
+extension TransactionReceipt: ToFromJsonBytes {
+    static var cFromBytes: FromJsonBytesFunc { hedera_transaction_receipt_from_bytes }
+    static var cToBytes: ToJsonBytesFunc { hedera_transaction_receipt_to_bytes }
 }
