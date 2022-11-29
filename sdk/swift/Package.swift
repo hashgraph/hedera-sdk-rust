@@ -22,28 +22,25 @@
 
 import PackageDescription
 
-// collect example targets
-var exampleTargets: [PackageDescription.Target] = []
-for name in [
-    "GetAccountBalance",
+let exampleTargets = [
+    "CreateAccount",
+    "CreateFile",
+    "CreateTopic",
+    "DeleteAccount",
     "GenerateKey",
+    "GenerateKeyWithMnemonic",
+    "GetAccountBalance",
     "GetAccountInfo",
     "TransferHbar",
-    "CreateAccount",
-    "DeleteAccount",
     "GetAddressBook",
     "GetFileContents",
-] {
-    exampleTargets.append(
-        .executableTarget(
-            name: "\(name)Example",
-            dependencies: ["Hedera", .product(name: "SwiftDotenv", package: "swift-dotenv")],
-            path: "Examples/\(name)",
-            swiftSettings: [
-                .unsafeFlags([
-                    "-parse-as-library"
-                ])
-            ]))
+].map { name in
+    Target.executableTarget(
+        name: "\(name)Example",
+        dependencies: ["Hedera", .product(name: "SwiftDotenv", package: "swift-dotenv")],
+        path: "Examples/\(name)",
+        swiftSettings: [.unsafeFlags(["-parse-as-library"])]
+    )
 }
 
 let package = Package(
