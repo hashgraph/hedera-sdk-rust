@@ -24,11 +24,13 @@ use hedera_proto::services::{
     TokenKycStatus,
     TokenPauseStatus,
 };
+use prost::Message;
 use time::{
     Duration,
     OffsetDateTime,
 };
 
+use crate::protobuf::ToProtobuf;
 use crate::token::custom_fees::CustomFee;
 use crate::{
     AccountId,
@@ -42,7 +44,7 @@ use crate::{
 
 /// Response from [`TokenInfoQuery`][crate::TokenInfoQuery].
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenInfo {
     /// The ID of the token for which information is requested.
@@ -92,7 +94,7 @@ pub struct TokenInfo {
 
     /// An account which will be automatically charged to renew the token's expiration,
     /// at autoRenewPeriod interval.
-    pub auto_renew_account_id: Option<AccountId>,
+    pub auto_renew_account: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
     pub auto_renew_period: Option<Duration>,
@@ -107,7 +109,7 @@ pub struct TokenInfo {
     pub token_type: TokenType,
 
     /// The token supply type
-    pub token_supply_type: TokenSupplyType,
+    pub supply_type: TokenSupplyType,
 
     /// The Maximum number of tokens that can be in circulation.
     pub max_supply: u64,
@@ -125,6 +127,67 @@ pub struct TokenInfo {
     pub ledger_id: LedgerId,
 }
 
+impl TokenInfo {
+    /// Create a new `TokenInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::TokenInfo>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let default_freeze_status = match self.default_freeze_status {
+            Some(true) => TokenFreezeStatus::Frozen as i32,
+            Some(false) => TokenFreezeStatus::Unfrozen as i32,
+            None => TokenFreezeStatus::FreezeNotApplicable as i32,
+        };
+
+        let default_kyc_status = match self.default_kyc_status {
+            Some(true) => TokenKycStatus::Granted as i32,
+            Some(false) => TokenKycStatus::Revoked as i32,
+            None => TokenKycStatus::KycNotApplicable as i32,
+        };
+
+        services::TokenInfo {
+            token_id: Some(self.token_id.to_protobuf()),
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+            decimals: self.decimals,
+            total_supply: self.total_supply,
+            treasury: Some(self.treasury_account_id.to_protobuf()),
+            admin_key: self.admin_key.to_protobuf(),
+            kyc_key: self.kyc_key.to_protobuf(),
+            freeze_key: self.freeze_key.to_protobuf(),
+            wipe_key: self.wipe_key.to_protobuf(),
+            supply_key: self.supply_key.to_protobuf(),
+            default_freeze_status,
+            default_kyc_status,
+            deleted: self.is_deleted,
+            auto_renew_account: self.auto_renew_account.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+            expiry: self.expiration_time.to_protobuf(),
+            memo: self.token_memo.clone(),
+            token_type: self.token_type.to_protobuf() as i32,
+            supply_type: self.supply_type.to_protobuf() as i32,
+            max_supply: self.max_supply as i64,
+            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
+            custom_fees: self.custom_fees.to_protobuf(),
+            pause_key: self.pause_key.to_protobuf(),
+            pause_status: match self.pause_status {
+                Some(true) => TokenPauseStatus::Paused as i32,
+                Some(false) => TokenPauseStatus::Unpaused as i32,
+                None => TokenPauseStatus::PauseNotApplicable as i32,
+            },
+            ledger_id: self.ledger_id.to_bytes(),
+        }
+        .encode_to_vec()
+    }
+}
+
 impl FromProtobuf<services::response::Response> for TokenInfo {
     #[allow(deprecated)]
     fn from_protobuf(pb: services::response::Response) -> crate::Result<Self>
@@ -133,58 +196,67 @@ impl FromProtobuf<services::response::Response> for TokenInfo {
     {
         let response = pb_getv!(pb, TokenGetInfo, services::response::Response);
         let info = pb_getf!(response, token_info)?;
-        let token_type = TokenType::from_protobuf(info.token_type())?;
-        let token_supply_type = TokenSupplyType::from_protobuf(info.supply_type())?;
-        let token_id = pb_getf!(info, token_id)?;
+        Self::from_protobuf(info)
+    }
+}
 
-        let default_kyc_status = match info.default_kyc_status() {
+impl FromProtobuf<services::TokenInfo> for TokenInfo {
+    fn from_protobuf(pb: services::TokenInfo) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let token_type = TokenType::from_protobuf(pb.token_type())?;
+        let token_supply_type = TokenSupplyType::from_protobuf(pb.supply_type())?;
+        let token_id = pb_getf!(pb, token_id)?;
+
+        let default_kyc_status = match pb.default_kyc_status() {
             TokenKycStatus::KycNotApplicable => None,
             TokenKycStatus::Granted => Some(true),
             TokenKycStatus::Revoked => Some(false),
         };
 
-        let default_freeze_status = match info.default_freeze_status() {
+        let default_freeze_status = match pb.default_freeze_status() {
             TokenFreezeStatus::FreezeNotApplicable => None,
             TokenFreezeStatus::Frozen => Some(true),
             TokenFreezeStatus::Unfrozen => Some(false),
         };
 
-        let pause_status = match info.pause_status() {
+        let pause_status = match pb.pause_status() {
             TokenPauseStatus::PauseNotApplicable => None,
             TokenPauseStatus::Paused => Some(true),
             TokenPauseStatus::Unpaused => Some(false),
         };
 
-        let auto_renew_account_id = Option::from_protobuf(info.auto_renew_account)?;
+        let auto_renew_account_id = Option::from_protobuf(pb.auto_renew_account)?;
 
-        let treasury_account_id = pb_getf!(info, treasury)?;
-        let ledger_id = LedgerId::from_bytes(info.ledger_id);
+        let treasury_account_id = pb_getf!(pb, treasury)?;
+        let ledger_id = LedgerId::from_bytes(pb.ledger_id);
 
         Ok(Self {
             token_id: TokenId::from_protobuf(token_id)?,
-            name: info.name,
-            symbol: info.symbol,
-            decimals: info.decimals,
-            total_supply: info.total_supply,
+            name: pb.name,
+            symbol: pb.symbol,
+            decimals: pb.decimals,
+            total_supply: pb.total_supply,
             treasury_account_id: AccountId::from_protobuf(treasury_account_id)?,
-            admin_key: Option::from_protobuf(info.admin_key)?,
-            kyc_key: Option::from_protobuf(info.kyc_key)?,
-            freeze_key: Option::from_protobuf(info.freeze_key)?,
-            wipe_key: Option::from_protobuf(info.wipe_key)?,
-            supply_key: Option::from_protobuf(info.supply_key)?,
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            kyc_key: Option::from_protobuf(pb.kyc_key)?,
+            freeze_key: Option::from_protobuf(pb.freeze_key)?,
+            wipe_key: Option::from_protobuf(pb.wipe_key)?,
+            supply_key: Option::from_protobuf(pb.supply_key)?,
             default_freeze_status,
             default_kyc_status,
-            is_deleted: info.deleted,
-            auto_renew_account_id,
-            auto_renew_period: info.auto_renew_period.map(Into::into),
-            expiration_time: info.expiry.map(Into::into),
-            token_memo: info.memo,
+            is_deleted: pb.deleted,
+            auto_renew_account: auto_renew_account_id,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            expiration_time: pb.expiry.map(Into::into),
+            token_memo: pb.memo,
             token_type,
-            token_supply_type,
-            max_supply: info.max_supply as u64,
-            fee_schedule_key: Option::from_protobuf(info.fee_schedule_key)?,
-            custom_fees: Vec::from_protobuf(info.custom_fees)?, //test this
-            pause_key: Option::from_protobuf(info.pause_key)?,
+            supply_type: token_supply_type,
+            max_supply: pb.max_supply as u64,
+            fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
+            custom_fees: Vec::from_protobuf(pb.custom_fees)?, //test this
+            pause_key: Option::from_protobuf(pb.pause_key)?,
             pause_status,
             ledger_id,
         })

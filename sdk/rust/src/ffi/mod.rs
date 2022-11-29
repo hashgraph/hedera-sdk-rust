@@ -44,6 +44,7 @@ mod staking_info;
 mod subscribe;
 mod timestamp;
 mod token_association;
+mod token_info;
 mod transaction_id;
 mod transaction_receipt;
 mod util;

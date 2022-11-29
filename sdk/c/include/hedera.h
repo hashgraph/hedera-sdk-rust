@@ -1356,6 +1356,16 @@ enum HederaError hedera_token_association_to_bytes(const char *s, uint8_t **buf,
 
 /**
  * # Safety
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ * - `s` must only be freed with `hedera_string_free`,
+ *   notably this means it must not be freed with `free`.
+ */
+enum HederaError hedera_token_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
+
+enum HederaError hedera_token_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+/**
+ * # Safety
  * - `s` must be a valid string
  * - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
  */
