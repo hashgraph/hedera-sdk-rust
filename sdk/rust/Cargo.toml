@@ -8,7 +8,7 @@ license = "Apache-2.0"
 name = "hedera"
 readme = "../../README.md"
 repository = "https://github.com/hashgraph/hedera-sdk-rust"
-version = "0.6.0"
+version = "0.7.0"
 
 [lib]
 bench = false
@@ -16,17 +16,17 @@ crate-type = ["lib", "staticlib"]
 
 [features]
 ffi = [
-    "anyhow",
-    "cbindgen",
-    "libc",
-    "fraction/with-serde-support",
-    "ed25519-dalek/serde",
-    "hedera-proto/serde",
-    "serde",
-    "serde_with",
-    "serde_json",
-    "time/serde",
-    "serde/derive",
+  "anyhow",
+  "cbindgen",
+  "libc",
+  "fraction/with-serde-support",
+  "ed25519-dalek/serde",
+  "hedera-proto/serde",
+  "serde",
+  "serde_with",
+  "serde_json",
+  "time/serde",
+  "serde/derive",
 ]
 
 [dependencies]
@@ -37,7 +37,10 @@ ed25519-dalek = { version = "1.0.1", features = ["rand"] }
 fraction = "0.11.0"
 futures-core = "0.3.21"
 futures-util = "0.3.21"
-hedera-proto = { path = "./protobufs", version = "0.4.0", features = ["time_0_3", "fraction"] }
+hedera-proto = { path = "./protobufs", version = "0.4.0", features = [
+  "time_0_3",
+  "fraction",
+] }
 hex = "0.4.3"
 hmac = "0.12.1"
 itertools = "0.10.3"
