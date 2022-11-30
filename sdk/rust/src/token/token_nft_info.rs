@@ -41,6 +41,10 @@ pub struct TokenNftInfo {
     pub account_id: AccountId,
 
     /// Effective consensus timestamp at which the NFT was minted.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
+    )]
     pub creation_time: OffsetDateTime,
 
     /// The unique metadata of the NFT.
