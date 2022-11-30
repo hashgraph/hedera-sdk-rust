@@ -95,9 +95,17 @@ pub struct TokenInfo {
     pub auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     pub auto_renew_period: Option<Duration>,
 
     /// The epoch second at which the token will expire
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the token
