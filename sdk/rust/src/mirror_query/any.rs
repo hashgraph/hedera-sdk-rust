@@ -51,9 +51,6 @@ pub enum AnyMirrorQueryData {
     TopicMessage(TopicMessageQueryData),
 }
 
-/// Represents the response of any possible query to the mirror network.
-pub type AnyMirrorQueryResponse = Vec<AnyMirrorQueryMessage>;
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
@@ -72,6 +69,14 @@ pub enum AnyMirrorQueryGrpcStream {
     TopicMessage(Streaming<mirror::ConsensusTopicResponse>),
 }
 
+/// Represents the response of any possible query to the mirror network.
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(tag = "$type"))]
+pub enum AnyMirrorQueryResponse {
+    NodeAddressBook(<NodeAddressBookQueryData as MirrorQuerySubscribe>::Response),
+    TopicMessage(<TopicMessageQueryData as MirrorQuerySubscribe>::Response),
+}
+
 #[async_trait]
 impl MirrorQuerySubscribe for AnyMirrorQueryData {
     type GrpcStream = AnyMirrorQueryGrpcStream;
@@ -79,6 +84,37 @@ impl MirrorQuerySubscribe for AnyMirrorQueryData {
     type GrpcMessage = AnyMirrorQueryGrpcMessage;
 
     type Message = AnyMirrorQueryMessage;
+
+    type Response = AnyMirrorQueryResponse;
+
+    fn map_response(&self, response: Vec<Self::GrpcMessage>) -> crate::Result<Self::Response> {
+        // yes this whole thing is every bit as stupid as it looks, someone please try to find a better design.
+        match self {
+            AnyMirrorQueryData::NodeAddressBook(it) => {
+                let response = response
+                    .into_iter()
+                    .map(|it| match it {
+                        AnyMirrorQueryGrpcMessage::NodeAddressBook(it) => it,
+                        AnyMirrorQueryGrpcMessage::TopicMessage(_) => unreachable!(),
+                    })
+                    .collect();
+
+                it.map_response(response).map(AnyMirrorQueryResponse::NodeAddressBook)
+            }
+
+            AnyMirrorQueryData::TopicMessage(it) => {
+                let response = response
+                    .into_iter()
+                    .map(|it| match it {
+                        AnyMirrorQueryGrpcMessage::NodeAddressBook(_) => unreachable!(),
+                        AnyMirrorQueryGrpcMessage::TopicMessage(it) => it,
+                    })
+                    .collect();
+
+                it.map_response(response).map(AnyMirrorQueryResponse::TopicMessage)
+            }
+        }
+    }
 
     fn should_retry(&self, status_code: Code) -> bool {
         match self {

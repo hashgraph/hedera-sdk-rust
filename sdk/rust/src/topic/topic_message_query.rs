@@ -30,6 +30,7 @@ use crate::mirror_query::{
     AnyMirrorQueryData,
     MirrorQuerySubscribe,
 };
+use crate::protobuf::FromProtobuf;
 use crate::{
     MirrorQuery,
     ToProtobuf,
@@ -111,6 +112,12 @@ impl MirrorQuerySubscribe for TopicMessageQueryData {
     type GrpcMessage = mirror::ConsensusTopicResponse;
 
     type Message = TopicMessage;
+
+    type Response = Vec<TopicMessage>;
+
+    fn map_response(&self, response: Vec<Self::GrpcMessage>) -> crate::Result<Self::Response> {
+        Vec::from_protobuf(response)
+    }
 
     async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status> {
         let topic_id = self.topic_id.to_protobuf();

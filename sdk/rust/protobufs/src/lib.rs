@@ -44,3 +44,9 @@ pub mod mirror {
 pub mod streams {
     tonic::include_proto!("streams/proto");
 }
+
+impl Extend<services::NodeAddress> for services::NodeAddressBook {
+    fn extend<T: IntoIterator<Item = services::NodeAddress>>(&mut self, iter: T) {
+        self.node_address.extend(iter)
+    }
+}

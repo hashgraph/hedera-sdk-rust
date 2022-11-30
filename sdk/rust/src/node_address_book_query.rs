@@ -31,10 +31,12 @@ use crate::mirror_query::{
     AnyMirrorQueryData,
     MirrorQuerySubscribe,
 };
+use crate::protobuf::FromProtobuf;
 use crate::{
     FileId,
     MirrorQuery,
     NodeAddress,
+    NodeAddressBook,
     ToProtobuf,
 };
 
@@ -90,6 +92,12 @@ impl MirrorQuerySubscribe for NodeAddressBookQueryData {
     type GrpcMessage = services::NodeAddress;
 
     type Message = NodeAddress;
+
+    type Response = NodeAddressBook;
+
+    fn map_response(&self, response: Vec<Self::GrpcMessage>) -> crate::Result<Self::Response> {
+        NodeAddressBook::from_protobuf(services::NodeAddressBook { node_address: response })
+    }
 
     async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status> {
         let file_id = self.file_id.to_protobuf();

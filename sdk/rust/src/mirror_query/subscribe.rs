@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::future::Future;
 use std::pin::Pin;
 
 use async_stream::stream;
@@ -45,6 +46,11 @@ pub trait MirrorQuerySubscribe: 'static + Into<AnyMirrorQueryData> + Send + Sync
 
     type Message: Send + FromProtobuf<Self::GrpcMessage>;
 
+    // Often `Vec<Self::Message>` but not always.
+    type Response: Send;
+
+    fn map_response(&self, response: Vec<Self::GrpcMessage>) -> crate::Result<Self::Response>;
+
     /// Return `true` to retry establishing the stream, up to a configurable maximum timeout.
     #[allow(unused_variables)]
     fn should_retry(&self, status_code: tonic::Code) -> bool {
@@ -66,17 +72,18 @@ where
     /// Execute this query against the provided client of the Hedera network.
     // todo:
     #[allow(clippy::missing_errors_doc)]
-    pub async fn execute(&mut self, client: &Client) -> crate::Result<Vec<D::Message>> {
-        self.subscribe(client).try_collect().await
+    pub async fn execute(&mut self, client: &Client) -> crate::Result<D::Response> {
+        self.execute_with_optional_timeout(client, None).await
     }
 
-    #[cfg(feature = "ffi")]
     pub(crate) async fn execute_with_optional_timeout(
         &mut self,
         client: &Client,
         timeout: Option<std::time::Duration>,
-    ) -> crate::Result<Vec<D::Message>> {
-        self.subscribe_with_optional_timeout(client, timeout).try_collect().await
+    ) -> crate::Result<D::Response> {
+        let resp = self.subscribe_inner(client, timeout).try_collect().await?;
+
+        self.data.map_response(resp)
     }
 
     /// Execute this query against the provided client of the Hedera network.
@@ -88,8 +95,8 @@ where
         &mut self,
         client: &Client,
         timeout: std::time::Duration,
-    ) -> crate::Result<Vec<D::Message>> {
-        self.subscribe_with_optional_timeout(client, Some(timeout)).try_collect().await
+    ) -> crate::Result<D::Response> {
+        self.execute_with_optional_timeout(client, Some(timeout)).await
     }
 
     /// Subscribe to this query with the provided client of the Hedera network.
@@ -112,11 +119,11 @@ where
     }
 
     #[allow(unused_labels)]
-    pub(crate) fn subscribe_with_optional_timeout(
+    fn subscribe_inner(
         &self,
         client: &Client,
         timeout: Option<std::time::Duration>,
-    ) -> Pin<Box<dyn Stream<Item = crate::Result<D::Message>> + Send>> {
+    ) -> impl Stream<Item = crate::Result<D::GrpcMessage>> + Send {
         let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
             std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
         });
@@ -124,7 +131,7 @@ where
         let client = client.clone();
         let self_ = self.clone();
 
-        Box::pin(stream! {
+        stream! {
             let mut backoff = ExponentialBackoff {
                 max_elapsed_time: Some(timeout),
                 ..ExponentialBackoff::default()
@@ -168,7 +175,7 @@ where
                             }
                         };
 
-                        yield D::Message::from_protobuf(message);
+                        yield Ok(message);
                     }
                 };
 
@@ -202,6 +209,18 @@ where
                     }
                 }
             }
-        })
+        }
+    }
+
+    #[allow(unused_labels)]
+    pub(crate) fn subscribe_with_optional_timeout(
+        &self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> Pin<Box<dyn Stream<Item = crate::Result<D::Message>> + Send>> {
+        Box::pin(
+            self.subscribe_inner(client, timeout)
+                .and_then(|it| async { D::Message::from_protobuf(it) }),
+        )
     }
 }

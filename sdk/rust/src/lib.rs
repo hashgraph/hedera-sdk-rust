@@ -62,6 +62,7 @@ mod mnemonic;
 mod network_version_info;
 mod network_version_info_query;
 mod node_address;
+mod node_address_book;
 mod node_address_book_query;
 mod query;
 mod schedule;
@@ -155,6 +156,7 @@ pub use network_version_info::NetworkVersionInfo;
 pub use network_version_info_query::NetworkVersionInfoQuery;
 pub(crate) use network_version_info_query::NetworkVersionInfoQueryData;
 pub use node_address::NodeAddress;
+pub use node_address_book::NodeAddressBook;
 pub use node_address_book_query::NodeAddressBookQuery;
 pub(crate) use node_address_book_query::NodeAddressBookQueryData;
 pub(crate) use protobuf::{
