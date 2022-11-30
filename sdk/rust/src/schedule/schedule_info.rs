@@ -65,12 +65,24 @@ pub struct ScheduleInfo {
     pub schedule_memo: String,
 
     /// The date and time the schedule transaction will expire
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The time the schedule transaction was executed.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub executed_at: Option<OffsetDateTime>,
 
     /// The time the schedule transaction was deleted.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub deleted_at: Option<OffsetDateTime>,
 
     /// The ledger ID the response was returned from

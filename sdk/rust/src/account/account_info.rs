@@ -67,10 +67,18 @@ pub struct AccountInfo {
     /// this account's key.
     pub is_receiver_signature_required: bool,
 
-    /// The TimeStamp time at which this account is set to expire.
+    /// The time at which this account is set to expire.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The duration for expiration time will extend every this many seconds.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.

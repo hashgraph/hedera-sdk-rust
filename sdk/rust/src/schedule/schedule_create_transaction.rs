@@ -64,6 +64,10 @@ pub struct ScheduleCreateTransactionData {
 
     payer_account_id: Option<AccountId>,
 
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     expiration_time: Option<OffsetDateTime>,
 
     wait_for_expiry: bool,

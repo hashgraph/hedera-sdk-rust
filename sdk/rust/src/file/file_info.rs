@@ -41,6 +41,10 @@ pub struct FileInfo {
     pub size: u64,
 
     /// Current time which this account is set to expire.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
+    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// True if deleted but not yet expired.
