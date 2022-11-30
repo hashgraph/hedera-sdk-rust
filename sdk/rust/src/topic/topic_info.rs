@@ -69,6 +69,10 @@ pub struct TopicInfo {
     pub auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the topic's expiry.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+    )]
     pub auto_renew_period: Option<Duration>,
 
     /// The ledger ID the response was returned from
