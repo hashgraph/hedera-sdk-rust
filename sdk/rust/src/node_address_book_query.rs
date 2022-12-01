@@ -18,7 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
+use futures_core::future::BoxFuture;
+use futures_core::stream::BoxStream;
+use futures_core::Stream;
+use futures_util::TryStreamExt;
 use hedera_proto::{
     mirror,
     services,
@@ -29,9 +32,12 @@ use tonic::Response;
 
 use crate::mirror_query::{
     AnyMirrorQueryData,
-    MirrorQuerySubscribe,
+    AnyMirrorQueryMessage,
+    MirrorRequest,
 };
+use crate::protobuf::FromProtobuf;
 use crate::{
+    AnyMirrorQueryResponse,
     FileId,
     MirrorQuery,
     NodeAddress,
@@ -53,6 +59,15 @@ pub struct NodeAddressBookQueryData {
     /// The maximum number of node addresses to receive.
     /// Defaults to _all_.
     limit: u32,
+}
+
+impl NodeAddressBookQueryData {
+    fn map_stream<'a, S>(stream: S) -> impl Stream<Item = crate::Result<NodeAddress>>
+    where
+        S: Stream<Item = crate::Result<services::NodeAddress>> + Send + 'a,
+    {
+        stream.and_then(|it| std::future::ready(NodeAddress::from_protobuf(it)))
+    }
 }
 
 impl Default for NodeAddressBookQueryData {
@@ -83,25 +98,54 @@ impl From<NodeAddressBookQueryData> for AnyMirrorQueryData {
     }
 }
 
-#[async_trait]
-impl MirrorQuerySubscribe for NodeAddressBookQueryData {
-    type GrpcStream = tonic::Streaming<services::NodeAddress>;
+impl MirrorRequest for NodeAddressBookQueryData {
+    type GrpcItem = services::NodeAddress;
 
-    type GrpcMessage = services::NodeAddress;
+    type ConnectStream = tonic::Streaming<Self::GrpcItem>;
 
-    type Message = NodeAddress;
+    type Item = NodeAddress;
 
-    async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status> {
-        let file_id = self.file_id.to_protobuf();
-        let request = mirror::AddressBookQuery { file_id: Some(file_id), limit: self.limit as i32 };
+    type Response = Vec<NodeAddress>;
 
-        NetworkServiceClient::new(channel).get_nodes(request).await.map(Response::into_inner)
+    type ItemStream<'a> = BoxStream<'a, crate::Result<NodeAddress>>;
+
+    fn connect<'a>(
+        &'a self,
+        channel: Channel,
+    ) -> BoxFuture<'a, tonic::Result<Self::ConnectStream>> {
+        Box::pin(async {
+            let file_id = self.file_id.to_protobuf();
+            let request =
+                mirror::AddressBookQuery { file_id: Some(file_id), limit: self.limit as i32 };
+
+            NetworkServiceClient::new(channel).get_nodes(request).await.map(Response::into_inner)
+        })
     }
 
-    async fn message(
-        &self,
-        stream: &mut Self::GrpcStream,
-    ) -> Result<Option<Self::GrpcMessage>, tonic::Status> {
-        stream.message().await
+    fn make_item_stream<'a, S>(stream: S) -> Self::ItemStream<'a>
+    where
+        S: Stream<Item = crate::Result<Self::GrpcItem>> + Send + 'a,
+    {
+        Box::pin(Self::map_stream(stream))
+    }
+
+    fn try_collect<'a, S>(stream: S) -> BoxFuture<'a, crate::Result<Self::Response>>
+    where
+        S: Stream<Item = crate::Result<Self::GrpcItem>> + Send + 'a,
+    {
+        // this doesn't reuse the work in `make_item_stream`
+        Box::pin(Self::map_stream(stream).try_collect())
+    }
+}
+
+impl From<NodeAddress> for AnyMirrorQueryMessage {
+    fn from(value: NodeAddress) -> Self {
+        Self::NodeAddressBook(value)
+    }
+}
+
+impl From<Vec<NodeAddress>> for AnyMirrorQueryResponse {
+    fn from(value: Vec<NodeAddress>) -> Self {
+        Self::NodeAddressBook(value)
     }
 }
