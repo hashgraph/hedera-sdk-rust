@@ -65,20 +65,13 @@ extension Key: Codable {
         }
     }
 
-    private func toBytesInner() throws -> Data {
-        let jsonBytes = try JSONEncoder().encode(self)
-        let json = String(data: jsonBytes, encoding: .utf8)!
-        var buf: UnsafeMutablePointer<UInt8>?
-        var bufSize: Int = 0
-
-        try HError.throwing(error: hedera_key_to_bytes(json, &buf, &bufSize))
-
-        return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
-    }
-
     public func toBytes() -> Data {
         // can't have `throws` because that's the wrong function signature.
         // swiftlint:disable force_try
-        try! toBytesInner()
+        try! toJsonBytes()
     }
+}
+
+extension Key: ToJsonBytes {
+    static var cToBytes: ToJsonBytesFunc { hedera_key_to_bytes }
 }
