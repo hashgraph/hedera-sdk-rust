@@ -18,6 +18,7 @@
  * ‍
  */
 
+import CHedera
 import Foundation
 
 /// Response from `TopicInfoQuery`.
@@ -49,4 +50,23 @@ public final class TopicInfo: Codable {
 
     /// The interval at which the auto-renew account will be charged to extend the topic's expiry.
     public let autoRenewPeriod: Duration?
+
+    /// The ledger ID the response was returned from
+    public let ledgerId: LedgerId
+
+    static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
+    }
+
+    func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
+        try! self.toJsonBytes()
+    }
+}
+
+extension TopicInfo: ToFromJsonBytes {
+    static var cToBytes: ToJsonBytesFunc { hedera_topic_info_to_bytes }
+
+    static var cFromBytes: FromJsonBytesFunc { hedera_topic_info_from_bytes }
 }

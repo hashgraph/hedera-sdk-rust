@@ -18,6 +18,7 @@
  * ‍
  */
 
+import CHedera
 import Foundation
 
 /// Response from `TokenNftInfoQuery`.
@@ -35,5 +36,24 @@ public final class TokenNftInfo: Codable {
     public let metadata: Data
 
     /// If an allowance is granted for the NFT, its corresponding spender account.
-    public let spenderAccountId: AccountId?
+    public let spenderId: AccountId?
+
+    /// The ledger ID the response was returned from
+    public let ledgerId: LedgerId
+
+    static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
+    }
+
+    func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
+        try! self.toJsonBytes()
+    }
+}
+
+extension TokenNftInfo: ToFromJsonBytes {
+    static var cToBytes: ToJsonBytesFunc { hedera_token_nft_info_to_bytes }
+
+    static var cFromBytes: FromJsonBytesFunc { hedera_token_nft_info_from_bytes }
 }
