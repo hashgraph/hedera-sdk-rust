@@ -1414,6 +1414,20 @@ enum HederaError hedera_transaction_receipt_to_bytes(const char *s,
                                                      uint8_t **buf,
                                                      size_t *buf_size);
 
+/**
+ * # Safety
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ * - `s` must only be freed with `hedera_string_free`,
+ *   notably this means it must not be freed with `free`.
+ */
+enum HederaError hedera_assessed_custom_fee_from_bytes(const uint8_t *bytes,
+                                                       size_t bytes_size,
+                                                       char **s);
+
+enum HederaError hedera_assessed_custom_fee_to_bytes(const char *s,
+                                                     uint8_t **buf,
+                                                     size_t *buf_size);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

@@ -50,6 +50,7 @@ mod topic_info;
 mod transaction_id;
 mod transaction_receipt;
 mod util;
+mod assessed_custom_fee;
 
 use account_id::{
     AccountId,
