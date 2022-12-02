@@ -31,6 +31,7 @@ impl From<EvmAddress> for EntityId {
             shard: u64::from(u32::from_be_bytes(shard.try_into().unwrap())),
             realm: u64::from_be_bytes(realm.try_into().unwrap()),
             num: u64::from_be_bytes(num.try_into().unwrap()),
+            checksum: None,
         }
     }
 }

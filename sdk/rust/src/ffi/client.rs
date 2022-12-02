@@ -75,7 +75,7 @@ pub extern "C" fn hedera_client_set_operator(
     let key = key.clone();
 
     client.set_operator(
-        AccountId { shard: id_shard, realm: id_realm, num: id_num, alias: None },
+        AccountId { shard: id_shard, realm: id_realm, num: id_num, alias: None, checksum: None },
         key,
     );
 }

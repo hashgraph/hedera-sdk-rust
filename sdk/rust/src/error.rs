@@ -21,6 +21,7 @@
 use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
+use crate::entity_id::Checksum;
 use crate::{
     AccountId,
     Hbar,
@@ -90,7 +91,7 @@ pub enum Error {
     ///
     /// Caused by `status` being an error.
     #[error(
-        "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
+    "query with payment transaction `{transaction_id}` failed pre-check with status `{status:?}`"
     )]
     QueryPaymentPreCheckStatus {
         /// The `Status` that caused the [`Query`](crate::Query) to fail pre-check.
@@ -114,6 +115,33 @@ pub enum Error {
     /// (ex. [`AccountId`](crate::AccountId), [`ContractId`](crate::ContractId), [`TransactionId`](crate::TransactionId), etc.).
     #[error("failed to parse: {0}")]
     BasicParse(#[source] BoxStdError),
+
+    /// An entity ID had an invalid checksum
+    #[error("entity ID {shard}.{realm}.{num}-{present_checksum} was incorrect.")]
+    BadEntityId {
+        /// The shard number
+        shard: u64,
+        /// The realm number
+        realm: u64,
+        /// The entity number
+        num: u64,
+        /// The (invalid) checksum that was present on the entity ID
+        present_checksum: Checksum,
+        /// The checksum that SHOULD HAVE BEEN on the entity ID
+        expected_checksum: Checksum,
+    },
+
+    /// An entity ID cannot be converted to a string with a checksum, because it takes an alternate form,
+    /// such as an `alias` or `evm_address`
+    #[error("to_string_with_checksum() can't be applied to entity ID with alias or evm_address")]
+    CannotToStringWithChecksum,
+
+    /// A task can't be performed because the Client doesn't have a ledger ID set.
+    #[error("can't {task} without knowing which ledger the entity ID is for; ensure client's ledger ID is set")]
+    CannotPerformTaskWithoutLedgerId {
+        /// The task that can't be performed
+        task: &'static str,
+    },
 
     /// Failed to parse a [`PublicKey`](crate::PublicKey) or [`PrivateKey`](crate::PrivateKey).
     #[error("failed to parse a key: {0}")]

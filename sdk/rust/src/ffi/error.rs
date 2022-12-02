@@ -72,6 +72,9 @@ pub enum Error {
     MnemonicParse,
     MnemonicEntropy,
     SignatureVerify,
+    BadEntityId,
+    CannotToStringWithChecksum,
+    CannotPerformTaskWithoutLedgerId,
 }
 
 impl Error {
@@ -100,6 +103,11 @@ impl Error {
             crate::Error::MnemonicParse { .. } => Self::MnemonicParse,
             crate::Error::MnemonicEntropy(_) => Self::MnemonicEntropy,
             crate::Error::SignatureVerify(_) => Self::SignatureVerify,
+            crate::Error::BadEntityId { .. } => Self::BadEntityId,
+            crate::Error::CannotToStringWithChecksum => Self::CannotToStringWithChecksum,
+            crate::Error::CannotPerformTaskWithoutLedgerId { .. } => {
+                Self::CannotPerformTaskWithoutLedgerId
+            }
         };
 
         set_last_error(error);

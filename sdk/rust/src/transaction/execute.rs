@@ -86,6 +86,8 @@ pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransa
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
 
+    // TODO: validate_checksums(), default implementation does nothing
+
     async fn execute(
         &self,
         channel: Channel,

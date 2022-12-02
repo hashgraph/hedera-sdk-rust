@@ -105,7 +105,12 @@ pub unsafe extern "C" fn hedera_nft_id_to_bytes(
     assert!(!buf.is_null());
 
     let nft_id = NftId {
-        token_id: TokenId { shard: token_id_shard, realm: token_id_realm, num: token_id_num },
+        token_id: TokenId {
+            shard: token_id_shard,
+            realm: token_id_realm,
+            num: token_id_num,
+            checksum: None,
+        },
         serial,
     };
 

@@ -28,7 +28,9 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
+use crate::entity_id::Checksum;
 use crate::{
+    Client,
     EntityId,
     Error,
     FromProtobuf,
@@ -47,6 +49,9 @@ pub struct FileId {
 
     /// The file number.
     pub num: u64,
+
+    /// A checksum if the file ID was read from a user inputted string which inclueded a checksum
+    pub checksum: Option<Checksum>,
 }
 
 impl FileId {
@@ -64,6 +69,21 @@ impl FileId {
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
     }
+
+    /// Convert `self` to a string with a valid checksum.
+    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+        EntityId::to_string_with_checksum(self.to_string(), client).await
+    }
+
+    /// If this file ID was constructed from a user input string, it might include a checksum.
+    ///
+    /// This function will validate that the checksum is correct, returning an `Err()` result containing an
+    /// [`Error::BadEntityId`](crate::Error::BadEntityId) if it's invalid, and a `Some(())` result if it is valid.
+    ///
+    /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
+    pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
+        EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client).await
+    }
 }
 
 impl Debug for FileId {
@@ -80,7 +100,12 @@ impl Display for FileId {
 
 impl FromProtobuf<services::FileId> for FileId {
     fn from_protobuf(pb: services::FileId) -> crate::Result<Self> {
-        Ok(Self { num: pb.file_num as u64, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+        Ok(Self {
+            num: pb.file_num as u64,
+            shard: pb.shard_num as u64,
+            realm: pb.realm_num as u64,
+            checksum: None,
+        })
     }
 }
 
@@ -98,7 +123,7 @@ impl ToProtobuf for FileId {
 
 impl From<u64> for FileId {
     fn from(num: u64) -> Self {
-        Self { num, shard: 0, realm: 0 }
+        Self { num, shard: 0, realm: 0, checksum: None }
     }
 }
 
@@ -106,6 +131,11 @@ impl FromStr for FileId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|EntityId { shard, realm, num }| Self { shard, realm, num })
+        s.parse().map(|EntityId { shard, realm, num, checksum }| Self {
+            shard,
+            realm,
+            num,
+            checksum,
+        })
     }
 }
