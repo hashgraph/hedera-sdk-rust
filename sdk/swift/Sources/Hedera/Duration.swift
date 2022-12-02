@@ -1,4 +1,5 @@
 import Foundation
+import HederaProtobufs
 
 public struct Duration: Codable {
     public let seconds: UInt64
@@ -33,5 +34,17 @@ public struct Duration: Codable {
         var container = encoder.singleValueContainer()
 
         try container.encode(self.seconds)
+    }
+}
+
+extension Duration: ProtobufCodable {
+    internal typealias Protobuf = Proto_Duration
+
+    internal init(protobuf proto: Protobuf) {
+        self.seconds = UInt64(proto.seconds)
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in proto.seconds = Int64(seconds) }
     }
 }

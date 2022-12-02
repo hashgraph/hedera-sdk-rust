@@ -1,5 +1,6 @@
 import CHedera
 import Foundation
+import HederaProtobufs
 
 private let nanosPerSecond: UInt64 = 1_000_000_000
 
@@ -12,9 +13,9 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
     public let seconds: UInt64
     public let subSecondNanos: UInt32
 
-    fileprivate init(seconds: UInt64, uncheckedSubSecondNanos: UInt32) {
-        self.seconds = seconds
-        self.subSecondNanos = uncheckedSubSecondNanos
+    internal init(seconds: UInt64, subSecondNanos: UInt32) {
+        self.seconds = seconds + UInt64(subSecondNanos) / nanosPerSecond
+        self.subSecondNanos = subSecondNanos % UInt32(nanosPerSecond)
     }
 
     public init(fromUnixTimestampNanos nanos: UInt64) {
@@ -77,6 +78,21 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
     }
 
     public static func + (lhs: Timestamp, rhs: Duration) -> Self {
-        Self(seconds: lhs.seconds + rhs.seconds, uncheckedSubSecondNanos: lhs.subSecondNanos)
+        Self(seconds: lhs.seconds + rhs.seconds, subSecondNanos: lhs.subSecondNanos)
+    }
+}
+
+extension Timestamp: ProtobufCodable {
+    internal typealias Protobuf = Proto_Timestamp
+
+    internal init(protobuf proto: Protobuf) {
+        self.init(seconds: UInt64(proto.seconds), subSecondNanos: UInt32(proto.nanos))
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.seconds = Int64(seconds)
+            proto.nanos = Int32(subSecondNanos)
+        }
     }
 }

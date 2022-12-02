@@ -34,7 +34,6 @@ mod crypto;
 mod exchange_rates;
 mod execute;
 mod fee_schedules;
-mod file_info;
 mod key;
 mod mnemonic;
 mod network_version_info;
