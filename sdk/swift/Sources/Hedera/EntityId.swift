@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 public struct Checksum: LosslessStringConvertible, Hashable {
     internal let data: String
@@ -379,28 +379,36 @@ public struct FileId: EntityId, ValidateChecksums {
     public static let feeSchedule: FileId = 111
     public static let exchangeRates: FileId = 112
 
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try helper.validateChecksum(on: ledgerId)
+    }
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_file_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_file_id_to_bytes(shard, realm, num, &buf)
+        toProtobufBytes()
+    }
+}
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+extension FileId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_FileID
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.fileNum)
+        )
     }
 
-    internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try helper.validateChecksum(on: ledgerId)
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.fileNum = Int64(num)
+        }
     }
 }
 
@@ -426,27 +434,35 @@ public struct TopicId: EntityId, ValidateChecksums {
     public let checksum: Checksum?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_topic_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_topic_id_to_bytes(shard, realm, num, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        toProtobufBytes()
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try helper.validateChecksum(on: ledgerId)
+    }
+}
+
+extension TopicId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_TopicID
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.topicNum)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.topicNum = Int64(num)
+        }
     }
 }
 
@@ -471,32 +487,40 @@ public struct TokenId: EntityId, ValidateChecksums {
 
     public let checksum: Checksum?
 
-    public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_token_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
-    }
-
-    public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_token_id_to_bytes(shard, realm, num, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-    }
-
     public func nft(_ serial: UInt64) -> NftId {
         NftId(tokenId: self, serial: serial)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try helper.validateChecksum(on: ledgerId)
+    }
+
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self(fromProtobufBytes: bytes)
+    }
+
+    public func toBytes() -> Data {
+        toProtobufBytes()
+    }
+}
+
+extension TokenId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_TokenID
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.tokenNum)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.tokenNum = Int64(num)
+        }
     }
 }
 
@@ -521,27 +545,35 @@ public struct ScheduleId: EntityId, ValidateChecksums {
 
     public let checksum: Checksum?
 
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try helper.validateChecksum(on: ledgerId)
+    }
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_schedule_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_schedule_id_to_bytes(shard, realm, num, &buf)
+        toProtobufBytes()
+    }
+}
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+extension ScheduleId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_ScheduleID
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.scheduleNum)
+        )
     }
 
-    internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try helper.validateChecksum(on: ledgerId)
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.scheduleNum = Int64(num)
+        }
     }
 }

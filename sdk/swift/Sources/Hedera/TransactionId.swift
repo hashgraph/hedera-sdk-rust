@@ -103,15 +103,4 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try accountId.validateChecksums(on: ledgerId)
     }
-
-    //     public var foo: Bar {
-    //     // `ensureNotFrozen` is a bikesheddable, need to find a balance between "this will die" and "name that's short enough"
-    //     // for instance:
-    //     // precondition(!frozen, "`foo` cannot be set while `\(String(describing: type(of: self)))` is frozen")
-    //     // gives wonderful information, but is also really long
-    //     // whereas:
-    //     // ensureNotFrozen(fieldName: "foo")
-    //     // is a decent chunk shorter and should be able to give all the same info.
-    //     willSet { ensureNotFrozen() }
-    // }
 }

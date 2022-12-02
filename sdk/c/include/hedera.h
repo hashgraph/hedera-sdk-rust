@@ -101,19 +101,6 @@ typedef struct HederaAccountBalance {
   size_t token_balances_len;
 } HederaAccountBalance;
 
-typedef struct HederaContractId {
-  uint64_t shard;
-  uint64_t realm;
-  uint64_t num;
-  /**
-   * # Safety
-   * - must either be null or valid for 20 bytes
-   * - if allocated by `hedera` it must be freed by hedera
-   * - otherwise must *not* be freed by hedera.
-   */
-  uint8_t *evm_address;
-} HederaContractId;
-
 typedef struct HederaSigner {
   /**
    * Safety:
@@ -294,24 +281,6 @@ void hedera_account_balance_token_balances_free(struct HederaTokenBalance *token
                                                 size_t size);
 
 /**
- * Parse a Hedera `AccountId` from the passed bytes.
- */
-enum HederaError hedera_account_id_from_bytes(const uint8_t *bytes,
-                                              size_t bytes_size,
-                                              struct HederaAccountId *id);
-
-/**
- * Serialize the passed `AccountId` as bytes
- *
- * # Safety
- * - `id` must uphold the safety requirements of `AccountId`.
- * - `buf` must be valid for writes.
- * - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
- */
-size_t hedera_account_id_to_bytes(struct HederaAccountId id,
-                                  uint8_t **buf);
-
-/**
  * Free an array of account IDs.
  *
  * # Safety
@@ -435,25 +404,6 @@ bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
 void hedera_client_free(struct HederaClient *client);
 
 /**
- * Parse a Hedera `ContractId` from the passed bytes.
- *
- * # Safety
- * - `contract_id` be valid for writes.
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- */
-enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
-                                               size_t bytes_size,
-                                               struct HederaContractId *contract_id);
-
-/**
- * Serialize the passed `ContractId` as bytes
- *
- * # Safety
- * - `buf` must be valid for writes.
- */
-size_t hedera_contract_id_to_bytes(struct HederaContractId contract_id, uint8_t **buf);
-
-/**
  * # Safety
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
  * - `s` must only be freed with `hedera_string_free`,
@@ -478,102 +428,6 @@ enum HederaError hedera_contract_log_info_to_bytes(const char *s, uint8_t **buf,
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,
                                            uint8_t **result_out);
-
-/**
- * Parse a Hedera `FileId` from the passed bytes.
- *
- * # Safety
- * - `file_id_shard`, `file_id_realm`, and `file_id_num` must all be valid for writes.
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- */
-enum HederaError hedera_file_id_from_bytes(const uint8_t *bytes,
-                                           size_t bytes_size,
-                                           uint64_t *file_id_shard,
-                                           uint64_t *file_id_realm,
-                                           uint64_t *file_id_num);
-
-/**
- * Serialize the passed `FileId` as bytes
- *
- * # Safety
- * - `buf` must be valid for writes.
- */
-size_t hedera_file_id_to_bytes(uint64_t file_id_shard,
-                               uint64_t file_id_realm,
-                               uint64_t file_id_num,
-                               uint8_t **buf);
-
-/**
- * Parse a Hedera `TopicId` from the passed bytes.
- *
- * # Safety
- * - `topic_id_shard`, `topic_id_realm`, and `topic_id_num` must all be valid for writes.
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- */
-enum HederaError hedera_topic_id_from_bytes(const uint8_t *bytes,
-                                            size_t bytes_size,
-                                            uint64_t *topic_id_shard,
-                                            uint64_t *topic_id_realm,
-                                            uint64_t *topic_id_num);
-
-/**
- * Serialize the passed `TopicId` as bytes
- *
- * # Safety
- * - `buf` must be valid for writes.
- */
-size_t hedera_topic_id_to_bytes(uint64_t topic_id_shard,
-                                uint64_t topic_id_realm,
-                                uint64_t topic_id_num,
-                                uint8_t **buf);
-
-/**
- * Parse a Hedera `TokenId` from the passed bytes.
- *
- * # Safety
- * - `token_id_shard`, `token_id_realm`, and `token_id_num` must all be valid for writes.
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- */
-enum HederaError hedera_token_id_from_bytes(const uint8_t *bytes,
-                                            size_t bytes_size,
-                                            uint64_t *token_id_shard,
-                                            uint64_t *token_id_realm,
-                                            uint64_t *token_id_num);
-
-/**
- * Serialize the passed TokenId as bytes
- *
- * # Safety
- * - `buf` must be valid for writes.
- */
-size_t hedera_token_id_to_bytes(uint64_t token_id_shard,
-                                uint64_t token_id_realm,
-                                uint64_t token_id_num,
-                                uint8_t **buf);
-
-/**
- * Parse a Hedera `ScheduleId` from the passed bytes.
- *
- * # Safety
- * - `schedule_id_shard`, `schedule_id_realm`, and `schedule_id_num` must all be valid for writes.
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- */
-enum HederaError hedera_schedule_id_from_bytes(const uint8_t *bytes,
-                                               size_t bytes_size,
-                                               uint64_t *schedule_id_shard,
-                                               uint64_t *schedule_id_realm,
-                                               uint64_t *schedule_id_num);
-
-/**
- * Serialize the passed ScheduleId as bytes
- *
- * # Safety
- * - `buf` must be valid for writes.
- */
-size_t hedera_schedule_id_to_bytes(uint64_t schedule_id_shard,
-                                   uint64_t schedule_id_realm,
-                                   uint64_t schedule_id_num,
-                                   uint8_t **buf);
 
 /**
  * Execute this request against the provided client of the Hedera network.

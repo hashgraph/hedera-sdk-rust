@@ -23,8 +23,6 @@ use std::ptr;
 
 use libc::size_t;
 
-use super::util::make_bytes;
-use crate::ffi::error::Error;
 use crate::protobuf::ToProtobuf;
 use crate::PublicKey;
 
@@ -98,13 +96,6 @@ pub(super) struct RefAccountId<'a> {
     evm_address: Option<&'a [u8; 20]>,
 }
 
-impl<'a> RefAccountId<'a> {
-    fn into_bytes(self) -> Vec<u8> {
-        use prost::Message;
-        self.to_protobuf().encode_to_vec()
-    }
-}
-
 impl<'a> ToProtobuf for RefAccountId<'a> {
     type Protobuf = hedera_proto::services::AccountId;
 
@@ -123,40 +114,6 @@ impl<'a> ToProtobuf for RefAccountId<'a> {
             }),
         }
     }
-}
-
-/// Parse a Hedera `AccountId` from the passed bytes.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_account_id_from_bytes(
-    bytes: *const u8,
-    bytes_size: size_t,
-    id: *mut AccountId,
-) -> Error {
-    assert!(!bytes.is_null());
-    assert!(!id.is_null());
-
-    let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
-
-    let parsed = ffi_try!(crate::AccountId::from_bytes(&bytes)).into();
-
-    unsafe {
-        ptr::write(id, parsed);
-    }
-
-    Error::Ok
-}
-
-/// Serialize the passed `AccountId` as bytes
-///
-/// # Safety
-/// - `id` must uphold the safety requirements of `AccountId`.
-/// - `buf` must be valid for writes.
-/// - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_account_id_to_bytes(id: AccountId, buf: *mut *mut u8) -> size_t {
-    let bytes = id.borrow_ref().into_bytes();
-
-    unsafe { make_bytes(bytes, buf) }
 }
 
 /// Free an array of account IDs.

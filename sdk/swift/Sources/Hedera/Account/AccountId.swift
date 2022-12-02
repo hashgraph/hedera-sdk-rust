@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The unique identifier for a cryptocurrency account on Hedera.
 public struct AccountId: EntityId, ValidateChecksums {
@@ -122,25 +123,6 @@ public struct AccountId: EntityId, ValidateChecksums {
         return helper.description
     }
 
-    public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var id = HederaAccountId()
-
-            try HError.throwing(error: hedera_account_id_from_bytes(pointer.baseAddress, pointer.count, &id))
-
-            return Self(unsafeFromCHedera: id)
-        }
-    }
-
-    public func toBytes() -> Data {
-        self.unsafeWithCHedera { (hedera) in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_account_id_to_bytes(hedera, &buf)
-
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-        }
-    }
-
     public func toStringWithChecksum(_ client: Client) -> String {
         precondition(alias == nil, "cannot create a checksum for an `AccountId` with an alias")
         precondition(evmAddress == nil, "cannot create a checksum for an `AccountId` with an evmAddress")
@@ -167,7 +149,51 @@ public struct AccountId: EntityId, ValidateChecksums {
         Self(evmAddress: evmAddress)
     }
 
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self(fromProtobufBytes: bytes)
+    }
+
+    public func toBytes() -> Data {
+        toProtobufBytes()
+    }
+
     // todo: public func `toEvmAddress`/`getEvmAddress`
 }
 
-// TODO: to evm address
+extension AccountId: TryProtobufCodable {
+    internal typealias Protobuf = Proto_AccountID
+
+    internal init(fromProtobuf proto: Protobuf) throws {
+        let shard = UInt64(proto.shardNum)
+        let realm = UInt64(proto.realmNum)
+
+        if proto.alias.isEmpty {
+            if proto.evmAddress.isEmpty {
+                self.init(shard: shard, realm: realm, num: UInt64(proto.accountNum))
+            } else {
+                let evmAddress = try EvmAddress(proto.evmAddress)
+                self.init(evmAddress: evmAddress)
+            }
+        } else {
+            self.init(shard: shard, realm: realm, alias: try PublicKey(fromProtobufBytes: proto.alias))
+        }
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let evmAddress = evmAddress {
+                proto.evmAddress = evmAddress.data
+                return
+            }
+
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+
+            if let alias = alias {
+                proto.alias = alias.toProtobufBytes()
+            } else {
+                proto.accountNum = Int64(num)
+            }
+        }
+    }
+}
