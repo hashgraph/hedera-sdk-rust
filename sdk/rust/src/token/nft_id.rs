@@ -29,6 +29,7 @@ use std::str::FromStr;
 use hedera_proto::services;
 
 use crate::{
+    Client,
     Error,
     FromProtobuf,
     ToProtobuf,
@@ -61,6 +62,11 @@ impl NftId {
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
+    }
+
+    /// Convert `self` to a string with a valid checksum.
+    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+        Ok(format!("{}/{}", self.token_id.to_string_with_checksum(client).await?, self.serial))
     }
 }
 

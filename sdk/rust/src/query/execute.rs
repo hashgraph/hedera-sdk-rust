@@ -72,6 +72,8 @@ pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQue
         None
     }
 
+    // TODO: validate_checksums(), default implementation does nothing
+
     fn make_response(
         &self,
         response: services::response::Response,

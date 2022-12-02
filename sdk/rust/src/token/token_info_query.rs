@@ -123,7 +123,10 @@ mod tests {
             let query: AnyQuery = serde_json::from_str(TOKEN_INFO)?;
 
             let data = assert_matches!(query.data, AnyQueryData::TokenInfo(query) => query);
-            assert_eq!(data.token_id, Some(TokenId { shard: 0, realm: 0, num: 1001 }));
+            assert_eq!(
+                data.token_id,
+                Some(TokenId { shard: 0, realm: 0, num: 1001, checksum: None })
+            );
             Ok(())
         }
     }

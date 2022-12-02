@@ -450,6 +450,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "displaydoc"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3bf95dc3f046b9da4f2d51833c0d3547d8564ef6910f5c1ed130306a75b92886"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "dissimilar"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -745,6 +756,7 @@ dependencies = [
  "sha3",
  "thiserror",
  "time",
+ "tinystr",
  "tokio",
  "tonic",
 ]
@@ -1788,6 +1800,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65bb801831d812c562ae7d2bfb531f26e66e4e1f6b17307ba4149c5064710e5b"
 dependencies = [
  "time-core",
+]
+
+[[package]]
+name = "tinystr"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8aeafdfd935e4a7fe16a91ab711fa52d54df84f9c8f7ca5837a9d1d902ef4c2"
+dependencies = [
+ "displaydoc",
 ]
 
 [[package]]

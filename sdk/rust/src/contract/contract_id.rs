@@ -28,15 +28,16 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
+use crate::entity_id::Checksum;
 use crate::evm_address::EvmAddress;
 use crate::{
+    Client,
     EntityId,
     Error,
     FromProtobuf,
     ToProtobuf,
 };
 
-// TODO: checksum
 /// A unique identifier for a smart contract on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
@@ -52,6 +53,9 @@ pub struct ContractId {
     /// Note: Exactly one of `evm_address` and `num` must exist.
     pub num: u64,
 
+    /// A checksum if the contract ID was read from a user inputted string which inclueded a checksum
+    pub checksum: Option<Checksum>,
+
     /// EVM address identifying the entity within the realm containing this contract instance.
     ///
     /// Note: Exactly one of `evm_address` and `num` must exist.
@@ -62,13 +66,13 @@ impl ContractId {
     /// Create a `ContractId` from the given shard/realm/num
     #[must_use]
     pub fn new(shard: u64, realm: u64, num: u64) -> Self {
-        Self { shard, realm, num, evm_address: None }
+        Self { shard, realm, num, evm_address: None, checksum: None }
     }
 
     /// Create a `ContractId` from a `shard.realm.evm_address` set.
     #[must_use]
     pub fn from_evm_address_bytes(shard: u64, realm: u64, evm_address: [u8; 20]) -> Self {
-        Self { shard, realm, num: 0, evm_address: Some(evm_address) }
+        Self { shard, realm, num: 0, evm_address: Some(evm_address), checksum: None }
     }
 
     /// Create a `ContractId` from a `shard.realm.evm_address` set.
@@ -76,14 +80,20 @@ impl ContractId {
     /// # Errors
     /// [`Error::BasicParse`] if `address` is invalid hex, or the wrong length.
     pub fn from_evm_address(shard: u64, realm: u64, address: &str) -> crate::Result<Self> {
-        Ok(Self { shard, realm, num: 0, evm_address: Some(EvmAddress::from_str(address)?.0) })
+        Ok(Self {
+            shard,
+            realm,
+            num: 0,
+            evm_address: Some(EvmAddress::from_str(address)?.0),
+            checksum: None,
+        })
     }
 
     /// create a `ContractId` from a solidity address.
     pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
-        let EntityId { shard, realm, num } = EntityId::from_solidity_address(address)?;
+        let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
 
-        Ok(Self { shard, realm, num, evm_address: None })
+        Ok(Self { shard, realm, num, evm_address: None, checksum })
     }
 
     /// Create a new `ContractId` from protobuf-encoded `bytes`.
@@ -107,7 +117,32 @@ impl ContractId {
             return Ok(hex::encode(&address));
         }
 
-        EntityId { shard: self.shard, realm: self.realm, num: self.num }.to_solidity_address()
+        EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
+            .to_solidity_address()
+    }
+
+    /// Convert `self` to a string with a valid checksum.
+    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+        if self.evm_address.is_some() {
+            Err(Error::CannotToStringWithChecksum)
+        } else {
+            EntityId::to_string_with_checksum(self.to_string(), client).await
+        }
+    }
+
+    /// If this contract ID was constructed from a user input string, it might include a checksum.
+    ///
+    /// This function will validate that the checksum is correct, returning an `Err()` result containing an
+    /// [`Error::BadEntityId`](crate::Error::BadEntityId) if it's invalid, and a `Some(())` result if it is valid.
+    ///
+    /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
+    pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
+        if self.evm_address.is_some() {
+            Ok(())
+        } else {
+            EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client)
+                .await
+        }
     }
 }
 
@@ -138,7 +173,13 @@ impl FromProtobuf<services::ContractId> for ContractId {
             }
         };
 
-        Ok(Self { evm_address, num, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+        Ok(Self {
+            evm_address,
+            num,
+            shard: pb.shard_num as u64,
+            realm: pb.realm_num as u64,
+            checksum: None,
+        })
     }
 }
 
@@ -159,13 +200,13 @@ impl ToProtobuf for ContractId {
 
 impl From<[u8; 20]> for ContractId {
     fn from(address: [u8; 20]) -> Self {
-        Self { shard: 0, realm: 0, num: 0, evm_address: Some(address) }
+        Self { shard: 0, realm: 0, num: 0, evm_address: Some(address), checksum: None }
     }
 }
 
 impl From<u64> for ContractId {
     fn from(num: u64) -> Self {
-        Self { num, shard: 0, realm: 0, evm_address: None }
+        Self { num, shard: 0, realm: 0, evm_address: None, checksum: None }
     }
 }
 
@@ -173,31 +214,37 @@ impl FromStr for ContractId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let expecting = || {
+        contract_num_from_str(s).or_else(|| contract_evm_address_from_str(s)).ok_or_else(|| {
             Error::basic_parse(format!(
                 "expecting <shard>.<realm>.<num> or <shard>.<realm>.<evm_address>, got `{s}`"
             ))
-        };
+        })
+    }
+}
 
-        let Some((shard, s)) = s.split_once('.') else {
-            let num: u64 = s.parse().map_err(Error::basic_parse)?;
-            return Ok(num.into())
-        };
+fn contract_num_from_str(s: &str) -> Option<ContractId> {
+    s.parse()
+        .map(|EntityId { shard, realm, num, checksum }| ContractId {
+            shard,
+            realm,
+            num,
+            evm_address: None,
+            checksum,
+        })
+        .ok()
+}
 
-        let shard = shard.parse().map_err(Error::basic_parse)?;
+fn contract_evm_address_from_str(s: &str) -> Option<ContractId> {
+    let parts: Vec<&str> = s.splitn(3, '.').collect();
 
-        let (realm, s) = s.split_once('.').ok_or_else(expecting)?;
+    if parts.len() == 3 {
+        let shard = parts[0].parse().map_err(Error::basic_parse).ok()?;
+        let realm = parts[1].parse().map_err(Error::basic_parse).ok()?;
+        let evm_address = hex::decode(parts[2].strip_prefix("0x").unwrap_or(parts[2])).ok()?;
+        let evm_address = EvmAddress::try_from(evm_address).ok()?.0;
 
-        let realm = realm.parse().map_err(Error::basic_parse)?;
-
-        if let Ok(num) = u64::from_str(s) {
-            Ok(Self { shard, realm, num, evm_address: None })
-        } else if let Ok(evm_address) = hex::decode(s.strip_prefix("0x").unwrap_or(s)) {
-            let evm_address = EvmAddress::try_from(evm_address)?.0;
-
-            Ok(Self { shard, realm, num: 0, evm_address: Some(evm_address) })
-        } else {
-            return Err(expecting());
-        }
+        Some(ContractId { shard, realm, evm_address: Some(evm_address), num: 0, checksum: None })
+    } else {
+        None
     }
 }
