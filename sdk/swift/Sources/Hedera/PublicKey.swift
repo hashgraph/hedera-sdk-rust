@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 // todo: deduplicate these with `PrivateKey.swift`
 
@@ -40,30 +41,40 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         self.ptr = ptr
     }
 
-    private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer -> Self in
+    private init(unsafeFromBytes bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws {
+        let ptr = try bytes.withUnsafeTypedBytes { pointer -> OpaquePointer in
             var key: OpaquePointer?
 
             try HError.throwing(error: chederaCallback(pointer.baseAddress, pointer.count, &key))
 
-            return Self(key!)
+            return key!
         }
+
+        self.ptr = ptr
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes)
+        try Self(unsafeFromBytes: bytes, hedera_public_key_from_bytes)
+    }
+
+    fileprivate convenience init(ed25519Bytes bytes: Data) throws {
+        try self.init(unsafeFromBytes: bytes, hedera_public_key_from_bytes_ed25519)
     }
 
     public static func fromBytesEd25519(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_ed25519)
+        try Self(ed25519Bytes: bytes)
+    }
+
+    fileprivate convenience init(ecdsaBytes bytes: Data) throws {
+        try self.init(unsafeFromBytes: bytes, hedera_public_key_from_bytes_ecdsa)
     }
 
     public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_ecdsa)
+        try Self(ecdsaBytes: bytes)
     }
 
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_der)
+        try Self(unsafeFromBytes: bytes, hedera_public_key_from_bytes_der)
     }
 
     private init(parsing description: String) throws {
@@ -219,5 +230,53 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     deinit {
         hedera_public_key_free(ptr)
+    }
+}
+
+extension PublicKey: TryProtobufCodable {
+    internal typealias Protobuf = Proto_Key
+
+    internal convenience init(protobuf proto: Proto_Key) throws {
+        guard let key = proto.key else {
+            throw HError.fromProtobuf("Key protobuf kind was unexpectedly `nil`")
+        }
+
+        switch key {
+        case .ed25519(let bytes):
+            try self.init(ed25519Bytes: bytes)
+
+        case .contractID:
+            throw HError.fromProtobuf("unsupported Contract ID key in single key")
+
+        case .delegatableContractID:
+            throw HError.fromProtobuf("unsupported Delegatable Contract ID key in single key")
+
+        case .rsa3072:
+            throw HError.fromProtobuf("unsupported RSA-3072 key in single key")
+
+        case .ecdsa384:
+            throw HError.fromProtobuf("unsupported ECDSA-384 key in single key")
+
+        case .thresholdKey:
+            throw HError.fromProtobuf("unsupported threshold key in single key")
+
+        case .keyList:
+            throw HError.fromProtobuf("unsupported keylist in single key")
+
+        case .ecdsaSecp256K1(let bytes):
+            try self.init(ecdsaBytes: bytes)
+        }
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if self.isEd25519() {
+                proto.ed25519 = toBytesRaw()
+            } else if self.isEcdsa() {
+                proto.ecdsaSecp256K1 = toBytesRaw()
+            } else {
+                fatalError("BUG: Unexpected PublicKey kind")
+            }
+        }
     }
 }

@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The unique identifier for a token on Hedera.
 public struct TokenId: EntityId, ValidateChecksums {
@@ -43,23 +43,11 @@ public struct TokenId: EntityId, ValidateChecksums {
     public let checksum: Checksum?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_token_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_token_id_to_bytes(shard, realm, num, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        toProtobufBytes()
     }
 
     public func nft(_ serial: UInt64) -> NftId {
@@ -68,5 +56,25 @@ public struct TokenId: EntityId, ValidateChecksums {
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try helper.validateChecksum(on: ledgerId)
+    }
+}
+
+extension TokenId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_TokenID
+
+    internal init(protobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.tokenNum)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.tokenNum = Int64(num)
+        }
     }
 }

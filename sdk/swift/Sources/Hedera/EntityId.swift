@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 public protocol EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Codable,
     ExpressibleByStringLiteral, Hashable
@@ -251,26 +251,34 @@ public struct FileId: EntityId, ValidateChecksums {
     public static let exchangeRates: FileId = 112
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_file_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_file_id_to_bytes(shard, realm, num, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        toProtobufBytes()
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try helper.validateChecksum(on: ledgerId)
+    }
+}
+
+extension FileId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_FileID
+
+    internal init(protobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.fileNum)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.fileNum = Int64(num)
+        }
     }
 }
