@@ -135,6 +135,7 @@ impl Client {
         &self.max_transaction_fee_tinybar
     }
 
+    #[allow(clippy::unused_self)]
     pub(crate) fn get_request_timeout(&self) -> Option<std::time::Duration> {
         // todo: implement this.
         None

@@ -104,7 +104,7 @@ impl ContractId {
     /// Convert `self` into a solidity `address`
     pub fn to_solidity_address(&self) -> crate::Result<String> {
         if let Some(address) = self.evm_address {
-            return Ok(hex::encode(&address));
+            return Ok(hex::encode(address));
         }
 
         EntityId { shard: self.shard, realm: self.realm, num: self.num }.to_solidity_address()

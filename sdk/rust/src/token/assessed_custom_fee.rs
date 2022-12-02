@@ -9,7 +9,7 @@ use crate::{
     TokenId,
 };
 
-/// A custom transfer fee that was assessed during the handling of a CryptoTransfer.
+/// A custom transfer fee that was assessed during the handling of a `CryptoTransfer`.
 #[derive(Debug, Eq, PartialEq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]

@@ -40,6 +40,7 @@
     clippy::enum_glob_use,
     clippy::enum_variant_names,
     clippy::inline_always,
+    clippy::match_bool,
     clippy::module_name_repetitions
 )]
 

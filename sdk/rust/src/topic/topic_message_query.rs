@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
 use futures_core::Stream;
@@ -33,7 +32,6 @@ use tonic::Response;
 use crate::mirror_query::{
     AnyMirrorQueryData,
     AnyMirrorQueryMessage,
-    MirrorQuerySubscribe,
     MirrorRequest,
 };
 use crate::protobuf::FromProtobuf;
@@ -121,40 +119,6 @@ impl From<TopicMessageQueryData> for AnyMirrorQueryData {
     }
 }
 
-#[async_trait]
-impl MirrorQuerySubscribe for TopicMessageQueryData {
-    type GrpcStream = tonic::Streaming<Self::GrpcMessage>;
-
-    type GrpcMessage = mirror::ConsensusTopicResponse;
-
-    type Message = TopicMessage;
-
-    async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status> {
-        let topic_id = self.topic_id.to_protobuf();
-        let consensus_end_time = self.end_time.map(Into::into);
-        let consensus_start_time = self.start_time.map(Into::into);
-
-        let request = ConsensusTopicQuery {
-            consensus_end_time,
-            consensus_start_time,
-            topic_id,
-            limit: self.limit,
-        };
-
-        ConsensusServiceClient::new(channel)
-            .subscribe_topic(request)
-            .await
-            .map(Response::into_inner)
-    }
-
-    async fn message(
-        &self,
-        stream: &mut Self::GrpcStream,
-    ) -> Result<Option<Self::GrpcMessage>, tonic::Status> {
-        stream.message().await
-    }
-}
-
 impl MirrorRequest for TopicMessageQueryData {
     type GrpcItem = mirror::ConsensusTopicResponse;
 
@@ -166,10 +130,7 @@ impl MirrorRequest for TopicMessageQueryData {
 
     type ItemStream<'a> = BoxStream<'a, crate::Result<TopicMessage>>;
 
-    fn connect<'a>(
-        &'a self,
-        channel: Channel,
-    ) -> BoxFuture<'a, tonic::Result<Self::ConnectStream>> {
+    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
         let topic_id = self.topic_id.to_protobuf();
         let consensus_end_time = self.end_time.map(Into::into);
         let consensus_start_time = self.start_time.map(Into::into);

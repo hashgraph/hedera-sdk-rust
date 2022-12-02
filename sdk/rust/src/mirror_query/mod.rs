@@ -29,7 +29,6 @@ pub use any::{
 };
 pub(crate) use subscribe::{
     subscribe,
-    MirrorQuerySubscribe,
     MirrorRequest,
 };
 
