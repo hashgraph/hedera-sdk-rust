@@ -1,5 +1,5 @@
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The unique identifier for a smart contract on Hedera.
 public struct ContractId: EntityId {
@@ -69,49 +69,6 @@ public struct ContractId: EntityId {
         }
     }
 
-    internal init(unsafeFromCHedera hedera: HederaContractId) {
-        shard = hedera.shard
-        realm = hedera.realm
-
-        if let evmAddress = hedera.evm_address {
-            self.num = 0
-            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: .unsafeCHederaBytesFree)
-        } else {
-            self.num = hedera.num
-            self.evmAddress = nil
-        }
-
-        self.checksum = nil
-    }
-
-    internal func unsafeWithCHedera<Result>(_ body: (HederaContractId) throws -> Result) rethrows -> Result {
-        assert(self.evmAddress.map { $0.count == 20 } ?? true)
-
-        if let evmAddress = self.evmAddress {
-            return try evmAddress.withUnsafeTypedBytes { evmAddress in
-                return try body(
-                    HederaContractId(
-                        shard: self.shard,
-                        realm: self.realm,
-                        num: self.num,
-                        evm_address: UnsafeMutablePointer(mutating: evmAddress.baseAddress)
-                    ))
-            }
-        }
-
-        return try body(HederaContractId(shard: self.shard, realm: self.realm, num: self.num, evm_address: nil))
-    }
-
-    public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var hedera = HederaContractId()
-
-            try HError.throwing(error: hedera_contract_id_from_bytes(pointer.baseAddress, pointer.count, &hedera))
-
-            return Self(unsafeFromCHedera: hedera)
-        }
-    }
-
     public static func fromEvmAddress(_ shard: UInt64, _ realm: UInt64, _ address: String) throws -> Self {
         Self(shard: shard, realm: realm, evmAddress: try SolidityAddress(parsing: address).data)
     }
@@ -123,15 +80,6 @@ public struct ContractId: EntityId {
 
         return String(describing: try SolidityAddress(self))
 
-    }
-
-    public func toBytes() -> Data {
-        unsafeWithCHedera { hedera in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_contract_id_to_bytes(hedera, &buf)
-
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-        }
     }
 
     public var description: String {
@@ -160,5 +108,44 @@ public struct ContractId: EntityId {
         }
 
         try helper.validateChecksum(on: ledgerId)
+    }
+
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self(protobufBytes: bytes)
+    }
+
+    public func toBytes() -> Data {
+        toProtobufBytes()
+    }
+}
+
+extension ContractId: TryProtobufCodable {
+    internal typealias Protobuf = Proto_ContractID
+
+    internal init(protobuf proto: Protobuf) throws {
+        let shard = UInt64(proto.shardNum)
+        let realm = UInt64(proto.realmNum)
+        guard let contract = proto.contract else {
+            throw HError.fromProtobuf("unexpected missing `contract` field")
+        }
+
+        switch contract {
+        case .contractNum(let num):
+            self.init(shard: shard, realm: realm, num: UInt64(num))
+        case .evmAddress(let evmAddress):
+            self.init(shard: shard, realm: realm, evmAddress: evmAddress)
+        }
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            if let evmAddress = evmAddress {
+                proto.evmAddress = evmAddress
+            } else {
+                proto.contractNum = Int64(num)
+            }
+        }
     }
 }
