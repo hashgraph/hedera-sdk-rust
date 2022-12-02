@@ -32,7 +32,6 @@ mod contract_info;
 mod contract_log_info;
 mod crypto;
 mod execute;
-mod file_info;
 mod key;
 mod mnemonic;
 mod network_version_info;

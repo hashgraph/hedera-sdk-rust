@@ -559,7 +559,7 @@ public struct ScheduleId: EntityId, ValidateChecksums {
 }
 
 extension ScheduleId: ProtobufCodable {
-    internal typealias Protobuf = HederaProtobufs.Proto_ScheduleID
+    internal typealias Protobuf = Proto_ScheduleID
 
     internal init(fromProtobuf proto: Protobuf) {
         self.init(

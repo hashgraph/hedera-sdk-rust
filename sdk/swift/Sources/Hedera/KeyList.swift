@@ -1,3 +1,5 @@
+import HederaProtobufs
+
 public struct KeyList: Codable, ExpressibleByArrayLiteral, Equatable {
     public typealias ArrayLiteralElement = Key
 
@@ -36,4 +38,44 @@ extension KeyList: Collection, RandomAccessCollection {
 
     public var startIndex: Int { keys.startIndex }
     public var endIndex: Int { keys.endIndex }
+}
+
+extension KeyList: TryFromProtobuf {
+    internal typealias Protobuf = Proto_KeyList
+
+    internal init(fromProtobuf proto: Protobuf) throws {
+        self.init(keys: try .fromProtobuf(proto.keys))
+    }
+}
+
+extension KeyList: ToProtobuf {
+    internal func toProtobuf() -> Protobuf {
+        .with { $0.keys = keys.toProtobuf() }
+    }
+}
+
+extension KeyList {
+    internal init(fromProtobuf proto: Proto_ThresholdKey) throws {
+        self.init(
+            keys: try .fromProtobuf(proto.keys.keys),
+            threshold: Int(proto.threshold)
+        )
+    }
+
+    internal static func fromProtobuf(_ proto: Proto_ThresholdKey) throws -> Self {
+        try Self(fromProtobuf: proto)
+    }
+
+    internal func toProtobufKey() -> Proto_Key.OneOf_Key {
+        if let threshold = threshold {
+            return .thresholdKey(
+                .with { proto in
+                    proto.keys = toProtobuf()
+                    proto.threshold = UInt32(threshold)
+                }
+            )
+        }
+
+        return .keyList(toProtobuf())
+    }
 }

@@ -445,18 +445,6 @@ enum HederaError hedera_execute(const struct HederaClient *client,
                                 void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_file_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
-
-enum HederaError hedera_file_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
-enum HederaError hedera_key_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
-/**
  * Generates a new Ed25519 private key.
  */
 struct HederaPrivateKey *hedera_private_key_generate_ed25519(void);

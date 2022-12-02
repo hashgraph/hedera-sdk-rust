@@ -1,5 +1,6 @@
 import CHedera
 import Foundation
+import HederaProtobufs
 
 private let nanosPerSecond: UInt64 = 1_000_000_000
 
@@ -11,6 +12,11 @@ private let unixEpoch: Date = Calendar.current.date(from: DateComponents(timeZon
 public struct Timestamp: Codable, Equatable, CustomStringConvertible {
     public let seconds: UInt64
     public let subSecondNanos: UInt32
+
+    internal init(seconds: UInt64, subSecondNanos: UInt32) {
+        self.seconds = seconds + UInt64(subSecondNanos) / nanosPerSecond
+        self.subSecondNanos = subSecondNanos % UInt32(nanosPerSecond)
+    }
 
     public init(fromUnixTimestampNanos nanos: UInt64) {
         self.seconds = nanos / nanosPerSecond
@@ -65,5 +71,20 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
 
     public var description: String {
         String(describing: seconds) + String(format: "%09d", subSecondNanos)
+    }
+}
+
+extension Timestamp: ProtobufCodable {
+    internal typealias Protobuf = Proto_Timestamp
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(seconds: UInt64(proto.seconds), subSecondNanos: UInt32(proto.nanos))
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.seconds = Int64(seconds)
+            proto.nanos = Int32(subSecondNanos)
+        }
     }
 }
