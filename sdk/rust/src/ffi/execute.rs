@@ -29,6 +29,7 @@ use super::signer::Signers;
 use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
 use crate::ffi::runtime::RUNTIME;
+use crate::ffi::signer::Signer;
 use crate::ffi::util::cstr_from_ptr;
 use crate::transaction::AnyTransaction;
 use crate::{
@@ -74,7 +75,7 @@ pub unsafe extern "C" fn hedera_execute(
     let request: AnyRequest =
         ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
 
-    let signers_2: Vec<_> = signers.as_slice().iter().map(|it| it.to_csigner()).collect();
+    let signers_2: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
 
     let timeout = has_timeout
         .then(|| std::time::Duration::try_from_secs_f64(timeout))

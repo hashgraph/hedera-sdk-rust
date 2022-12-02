@@ -54,8 +54,10 @@ pub enum AnyMirrorQueryMessage {
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryResponse {
-    NodeAddressBook(Vec<NodeAddress>),
-    TopicMessage(Vec<TopicMessage>),
+    /// Response for `AnyMirrorQuery::NodeAddressBook`.
+    NodeAddressBook(<NodeAddressBookQueryData as MirrorQueryExecutable>::Response),
+    /// Response for `AnyMirrorQuery::TopicMessage`.
+    TopicMessage(<TopicMessageQueryData as MirrorQueryExecutable>::Response),
 }
 
 impl MirrorQueryExecutable for AnyMirrorQueryData {
@@ -79,11 +81,11 @@ impl MirrorQueryExecutable for AnyMirrorQueryData {
         match self {
             AnyMirrorQueryData::NodeAddressBook(it) => Box::pin(
                 it.subscribe_with_optional_timeout(params, client, timeout)
-                    .map_ok(|it| Self::Item::from(it)),
+                    .map_ok(Self::Item::from),
             ),
             AnyMirrorQueryData::TopicMessage(it) => Box::pin(
                 it.subscribe_with_optional_timeout(params, client, timeout)
-                    .map_ok(|it| Self::Item::from(it)),
+                    .map_ok(Self::Item::from),
             ),
         }
     }

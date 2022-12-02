@@ -109,10 +109,7 @@ impl MirrorRequest for NodeAddressBookQueryData {
 
     type ItemStream<'a> = BoxStream<'a, crate::Result<NodeAddress>>;
 
-    fn connect<'a>(
-        &'a self,
-        channel: Channel,
-    ) -> BoxFuture<'a, tonic::Result<Self::ConnectStream>> {
+    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
         Box::pin(async {
             let file_id = self.file_id.to_protobuf();
             let request =

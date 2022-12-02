@@ -16,7 +16,7 @@ impl EvmAddress {
     #[must_use]
     pub(crate) fn from_ref(bytes: &[u8; 20]) -> &Self {
         // safety: `self` is `#[repr(transpart)] over `[u8; 20]`
-        unsafe { &*(bytes as *const u8 as *const EvmAddress) }
+        unsafe { &*(bytes.as_ptr().cast::<EvmAddress>()) }
     }
 }
 
@@ -115,7 +115,7 @@ impl fmt::Display for EvmAddress {
         let mut output = [0; 40];
 
         // panic: would either never panic or always panic, it never panics.
-        hex::encode_to_slice(&self.0, &mut output).unwrap();
+        hex::encode_to_slice(self.0, &mut output).unwrap();
         // should never fail. But `unsafe` here when we *aren't* in that crate would be... not great.
         let output = std::str::from_utf8_mut(&mut output).unwrap();
         f.write_str(output)

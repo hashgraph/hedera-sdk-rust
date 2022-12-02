@@ -19,7 +19,6 @@
  */
 
 use async_stream::stream;
-use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use futures_core::future::BoxFuture;
@@ -33,31 +32,8 @@ use crate::mirror_query::AnyMirrorQueryData;
 use crate::{
     Client,
     Error,
-    FromProtobuf,
     MirrorQuery,
 };
-
-#[async_trait]
-pub trait MirrorQuerySubscribe: 'static + Into<AnyMirrorQueryData> + Send + Sync + Clone {
-    type GrpcStream: Send;
-
-    type GrpcMessage: Send;
-
-    type Message: Send + FromProtobuf<Self::GrpcMessage>;
-
-    /// Return `true` to retry establishing the stream, up to a configurable maximum timeout.
-    #[allow(unused_variables)]
-    fn should_retry(&self, status_code: tonic::Code) -> bool {
-        false
-    }
-
-    async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status>;
-
-    async fn message(
-        &self,
-        stream: &mut Self::GrpcStream,
-    ) -> Result<Option<Self::GrpcMessage>, tonic::Status>;
-}
 
 impl<D> MirrorQuery<D>
 where
@@ -71,7 +47,7 @@ where
     }
 
     pub(crate) async fn execute_with_optional_timeout(
-        &mut self,
+        &self,
         client: &Client,
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<D::Response> {
@@ -116,10 +92,7 @@ where
     }
 }
 
-pub trait MirrorQueryExecutable: Sized + Into<AnyMirrorQueryData>
-where
-    Self: Sized,
-{
+pub trait MirrorQueryExecutable: Sized + Into<AnyMirrorQueryData> + Send + Sync {
     type Item;
     type Response;
     type ItemStream<'a>: Stream<Item = crate::Result<Self::Item>> + 'a
@@ -198,8 +171,7 @@ pub trait MirrorRequest: Send {
 
     type ItemStream<'a>: Stream<Item = crate::Result<Self::Item>> + 'a;
 
-    fn connect<'a>(&'a self, channel: Channel)
-        -> BoxFuture<'a, tonic::Result<Self::ConnectStream>>;
+    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>>;
 
     /// Return `true` to retry establishing the stream, up to a configurable maximum timeout.
     #[allow(unused_variables)]

@@ -431,7 +431,7 @@ enum HederaError hedera_file_id_from_bytes(const uint8_t *bytes,
                                            uint64_t *file_id_num);
 
 /**
- * Serialize the passed FileId as bytes
+ * Serialize the passed `FileId` as bytes
  *
  * # Safety
  * - `buf` must be valid for writes.
@@ -455,7 +455,7 @@ enum HederaError hedera_topic_id_from_bytes(const uint8_t *bytes,
                                             uint64_t *topic_id_num);
 
 /**
- * Serialize the passed TopicId as bytes
+ * Serialize the passed `TopicId` as bytes
  *
  * # Safety
  * - `buf` must be valid for writes.
@@ -826,7 +826,7 @@ bool hedera_private_key_is_ecdsa(struct HederaPrivateKey *key);
  * - `buf` must be valid for writes according to [*Rust* pointer rules]
  * - the length of the returned buffer must not be modified.
  * - the returned pointer must NOT be freed with `free`.
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+ * [*Rust* pointer rules]: <https://doc.rust-lang.org/std/ptr/index.html#safety>
  */
 size_t hedera_private_key_sign(struct HederaPrivateKey *key,
                                const uint8_t *message,
@@ -1296,7 +1296,7 @@ enum HederaError hedera_nft_id_from_bytes(const uint8_t *bytes,
                                           uint64_t *serial);
 
 /**
- * Serialize the passed NftId as bytes
+ * Serialize the passed `NftId` as bytes
  */
 size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
                               uint64_t token_id_realm,
