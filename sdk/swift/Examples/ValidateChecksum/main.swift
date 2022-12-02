@@ -29,17 +29,17 @@ public enum Program {
         let client = try Client.forName(env.networkName)
 
         // we need to return _something_ to say if stdin has been EOFed on us.
-        guard let _ = try await manualChecksumValidation(client) else {
+        guard try await manualChecksumValidation(client) else {
             return
         }
 
         // we need to return _something_ to say if stdin has been EOFed on us.
-        guard let _ = try await automaticChecksumValidation(client) else {
+        guard try await automaticChecksumValidation(client) else {
             return
         }
     }
 
-    private static func manualChecksumValidation(_ client: Client) async throws -> AccountId? {
+    private static func manualChecksumValidation(_ client: Client) async throws -> Bool {
         print("Example for manual checksum validation")
 
         var accountId: AccountId?
@@ -64,29 +64,29 @@ public enum Program {
         }
 
         guard let accountId = accountId else {
-            return nil
+            return false
         }
 
         let balance = try await AccountBalanceQuery().accountId(accountId).execute(client)
 
         print("Balance for account \(accountId): \(balance)")
 
-        return accountId
+        return true
     }
 
-    static func automaticChecksumValidation(_ client: Client) async throws -> AccountId? {
+    private static func automaticChecksumValidation(_ client: Client) async throws -> Bool {
         print("Example for automatic checksum validation")
         client.setAutoValidateChecksums(true)
 
         guard let accountId = try parseAccountId() else {
-            return nil
+            return false
         }
 
         let balance = try await AccountBalanceQuery().accountId(accountId).execute(client)
 
         print("Balance for account \(accountId): \(balance)")
 
-        return accountId
+        return true
     }
 
     private static func parseAccountId() throws -> AccountId? {
