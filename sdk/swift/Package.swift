@@ -55,10 +55,17 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/objecthub/swift-numberkit.git", from: "2.4.1"),
         .package(url: "https://github.com/thebarndog/swift-dotenv.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
     ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
-        .target(name: "Hedera", dependencies: ["CHedera", .product(name: "NumberKit", package: "swift-numberkit")]),
+        .target(name: "HederaProtobufs", dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")]),
+        .target(
+            name: "Hedera",
+            dependencies: [
+                "HederaProtobufs", "CHedera", .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+                .product(name: "NumberKit", package: "swift-numberkit"),
+            ]),
         .testTarget(name: "HederaTests", dependencies: ["Hedera"]),
     ] + exampleTargets
 )
