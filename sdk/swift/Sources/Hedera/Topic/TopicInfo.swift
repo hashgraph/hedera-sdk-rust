@@ -20,9 +20,34 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Response from `TopicInfoQuery`.
 public final class TopicInfo: Codable {
+    internal init(
+        topicId: TopicId,
+        topicMemo: String,
+        runningHash: Data,
+        sequenceNumber: UInt64,
+        expirationTime: Timestamp?,
+        adminKey: Key?,
+        submitKey: Key?,
+        autoRenewAccountId: AccountId?,
+        autoRenewPeriod: Duration?,
+        ledgerId: LedgerId
+    ) {
+        self.topicId = topicId
+        self.topicMemo = topicMemo
+        self.runningHash = runningHash
+        self.sequenceNumber = sequenceNumber
+        self.expirationTime = expirationTime
+        self.adminKey = adminKey
+        self.submitKey = submitKey
+        self.autoRenewAccountId = autoRenewAccountId
+        self.autoRenewPeriod = autoRenewPeriod
+        self.ledgerId = ledgerId
+    }
+
     /// The ID of the topic for which information is requested.
     public let topicId: TopicId
 
@@ -36,7 +61,7 @@ public final class TopicInfo: Codable {
     public let sequenceNumber: UInt64
 
     /// Effective consensus timestamp at (and after) which submitMessage calls will no longer succeed on the topic.
-    public let expirationTime: Duration?
+    public let expirationTime: Timestamp?
 
     /// Access control for update/delete of the topic.
     public let adminKey: Key?
@@ -55,18 +80,71 @@ public final class TopicInfo: Codable {
     public let ledgerId: LedgerId
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try .fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension TopicInfo: ToFromJsonBytes {
-    internal static var cToBytes: ToJsonBytesFunc { hedera_topic_info_to_bytes }
+extension TopicInfo: TryProtobufCodable {
+    internal typealias Protobuf = Proto_ConsensusGetTopicInfoResponse
 
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_topic_info_from_bytes }
+    internal convenience init(fromProtobuf proto: Protobuf) throws {
+        let info = proto.topicInfo
+
+        let expirationTime = info.hasExpirationTime ? info.expirationTime : nil
+        let adminKey = info.hasAdminKey ? info.adminKey : nil
+        let submitKey = info.hasSubmitKey ? info.submitKey : nil
+        let autoRenewAccountId = info.hasAutoRenewAccount ? info.autoRenewAccount : nil
+        let autoRenewPeriod = info.hasAutoRenewPeriod ? info.autoRenewPeriod : nil
+
+        self.init(
+            topicId: .fromProtobuf(proto.topicID),
+            topicMemo: info.memo,
+            runningHash: info.runningHash,
+            sequenceNumber: info.sequenceNumber,
+            expirationTime: .fromProtobuf(expirationTime),
+            adminKey: try .fromProtobuf(adminKey),
+            submitKey: try .fromProtobuf(submitKey),
+            autoRenewAccountId: try .fromProtobuf(autoRenewAccountId),
+            autoRenewPeriod: .fromProtobuf(autoRenewPeriod),
+            ledgerId: LedgerId(info.ledgerID)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.topicID = topicId.toProtobuf()
+
+            proto.topicInfo = .with { info in
+                info.memo = topicMemo
+
+                info.runningHash = runningHash
+                info.sequenceNumber = sequenceNumber
+
+                if let expirationTime = expirationTime {
+                    info.expirationTime = expirationTime.toProtobuf()
+                }
+
+                if let adminKey = adminKey {
+                    info.adminKey = adminKey.toProtobuf()
+                }
+
+                if let submitKey = submitKey {
+                    info.submitKey = submitKey.toProtobuf()
+                }
+
+                if let autoRenewAccountId = autoRenewAccountId {
+                    info.autoRenewAccount = autoRenewAccountId.toProtobuf()
+                }
+                if let autoRenewPeriod = autoRenewPeriod {
+                    info.autoRenewPeriod = autoRenewPeriod.toProtobuf()
+                }
+
+                info.ledgerID = ledgerId.bytes
+            }
+        }
+    }
 }

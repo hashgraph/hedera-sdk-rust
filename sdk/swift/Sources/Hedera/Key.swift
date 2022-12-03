@@ -27,6 +27,10 @@ public enum Key: Equatable {
     case contractId(ContractId)
     case delegatableContractId(ContractId)
     case keyList(KeyList)
+
+    public func toBytes() -> Data {
+        toProtobufBytes()
+    }
 }
 
 extension Key: Codable {
@@ -69,10 +73,6 @@ extension Key: Codable {
         } else {
             fatalError("(BUG) unexpected variant for Key")
         }
-    }
-
-    public func toBytes() -> Data {
-        toProtobufBytes()
     }
 }
 extension Key: TryProtobufCodable {
