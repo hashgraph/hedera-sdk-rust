@@ -1319,25 +1319,6 @@ enum HederaError hedera_nft_id_from_string(const char *s,
                                            uint64_t *serial);
 
 /**
- * Parse a Hedera `NftId` from the passed bytes.
- */
-enum HederaError hedera_nft_id_from_bytes(const uint8_t *bytes,
-                                          size_t bytes_size,
-                                          uint64_t *token_id_shard,
-                                          uint64_t *token_id_realm,
-                                          uint64_t *token_id_num,
-                                          uint64_t *serial);
-
-/**
- * Serialize the passed `NftId` as bytes
- */
-size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
-                              uint64_t token_id_realm,
-                              uint64_t token_id_num,
-                              uint64_t serial,
-                              uint8_t **buf);
-
-/**
  * # Safety
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
  * - `s` must only be freed with `hedera_string_free`,
@@ -1408,18 +1389,6 @@ enum HederaError hedera_token_association_to_bytes(const char *s, uint8_t **buf,
 enum HederaError hedera_token_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
 enum HederaError hedera_token_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_token_nft_info_from_bytes(const uint8_t *bytes,
-                                                  size_t bytes_size,
-                                                  char **s);
-
-enum HederaError hedera_token_nft_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
 
 /**
  * # Safety
