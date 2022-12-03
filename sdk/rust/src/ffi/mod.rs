@@ -46,7 +46,6 @@ mod subscribe;
 mod timestamp;
 mod token_association;
 mod token_info;
-mod token_nft_info;
 mod topic_info;
 mod transaction;
 mod transaction_id;

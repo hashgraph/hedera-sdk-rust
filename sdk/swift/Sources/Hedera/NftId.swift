@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
 public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
@@ -69,27 +70,6 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         try container.encode(String(describing: self))
     }
 
-    public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-            var serial: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_nft_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num, &serial))
-
-            return Self(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
-        }
-    }
-
-    public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_nft_id_to_bytes(tokenId.shard, tokenId.realm, tokenId.num, serial, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-    }
-
     public static func == (lhs: NftId, rhs: NftId) -> Bool {
         lhs.serial == rhs.serial && lhs.tokenId == rhs.tokenId
     }
@@ -100,5 +80,31 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId.validateChecksums(on: ledgerId)
+    }
+
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self(fromProtobufBytes: bytes)
+    }
+
+    public func toBytes() -> Data {
+        self.toProtobufBytes()
+    }
+}
+
+extension NftId: ProtobufCodable {
+    internal typealias Protobuf = Proto_NftID
+
+    internal convenience init(fromProtobuf proto: Protobuf) {
+        self.init(
+            tokenId: .fromProtobuf(proto.tokenID),
+            serial: UInt64(proto.serialNumber)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.tokenID = tokenId.toProtobuf()
+            proto.serialNumber = Int64(serial)
+        }
     }
 }

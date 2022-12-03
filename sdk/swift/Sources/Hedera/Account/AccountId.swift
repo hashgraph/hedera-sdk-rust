@@ -76,7 +76,7 @@ public struct AccountId: EntityId, ValidateChecksums {
                         kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<alias>`")
                 }
 
-                // might have `evmAddress`
+                // might have `alias`
                 self.init(
                     shard: shard,
                     realm: realm,
@@ -84,7 +84,6 @@ public struct AccountId: EntityId, ValidateChecksums {
                 )
             }
 
-        // check for `evmAddress` eventually
         case .other(let description):
             let evmAddress = try EvmAddress(parsing: description)
             self.init(evmAddress: evmAddress)
