@@ -28,7 +28,9 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
+use crate::entity_id::Checksum;
 use crate::{
+    Client,
     EntityId,
     Error,
     FromProtobuf,
@@ -36,7 +38,6 @@ use crate::{
     ToProtobuf,
 };
 
-// TODO: checksum
 /// A unique identifier for a cryptocurrency account on Hedera.
 #[derive(Copy, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
@@ -52,6 +53,9 @@ pub struct AccountId {
 
     /// An alias for `num` if the account was created from a public key directly.
     pub alias: Option<PublicKey>,
+
+    /// A checksum if the account ID was read from a user inputted string which inclueded a checksum
+    pub checksum: Option<Checksum>,
 }
 
 impl AccountId {
@@ -68,6 +72,30 @@ impl AccountId {
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
+    }
+
+    /// Convert `self` to a string with a valid checksum.
+    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+        if self.alias.is_some() {
+            Err(Error::CannotToStringWithChecksum)
+        } else {
+            EntityId::to_string_with_checksum(self.to_string(), client).await
+        }
+    }
+
+    /// If this account ID was constructed from a user input string, it might include a checksum.
+    ///
+    /// This function will validate that the checksum is correct, returning an `Err()` result containing an
+    /// [`Error::BadEntityId`](crate::Error::BadEntityId) if it's invalid, and a `Some(())` result if it is valid.
+    ///
+    /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
+    pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
+        if self.alias.is_some() {
+            Ok(())
+        } else {
+            EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client)
+                .await
+        }
     }
 }
 
@@ -116,19 +144,25 @@ impl FromProtobuf<services::AccountId> for AccountId {
             }
         };
 
-        Ok(Self { num: num as u64, alias, shard: pb.shard_num as u64, realm: pb.realm_num as u64 })
+        Ok(Self {
+            num: num as u64,
+            alias,
+            shard: pb.shard_num as u64,
+            realm: pb.realm_num as u64,
+            checksum: None,
+        })
     }
 }
 
 impl From<u64> for AccountId {
     fn from(num: u64) -> Self {
-        Self { num, alias: None, shard: 0, realm: 0 }
+        Self { num, alias: None, checksum: None, shard: 0, realm: 0 }
     }
 }
 
 impl From<PublicKey> for AccountId {
     fn from(alias: PublicKey) -> Self {
-        Self { num: 0, shard: 0, realm: 0, alias: Some(alias) }
+        Self { num: 0, shard: 0, realm: 0, alias: Some(alias), checksum: None }
     }
 }
 
@@ -144,7 +178,13 @@ impl FromStr for AccountId {
 
 fn account_num_from_str(s: &str) -> Option<AccountId> {
     s.parse()
-        .map(|EntityId { shard, realm, num }| AccountId { shard, realm, num, alias: None })
+        .map(|EntityId { shard, realm, num, checksum }| AccountId {
+            shard,
+            realm,
+            num,
+            alias: None,
+            checksum,
+        })
         .ok()
 }
 
@@ -158,7 +198,7 @@ fn account_alias_from_str(s: &str) -> Option<AccountId> {
         let realm = parts[1].parse().map_err(Error::basic_parse).ok()?;
         let alias = parts[2].parse().map_err(Error::basic_parse).ok()?;
 
-        Some(AccountId { shard, realm, alias: Some(alias), num: 0 })
+        Some(AccountId { shard, realm, alias: Some(alias), num: 0, checksum: None })
     } else {
         None
     }
@@ -166,19 +206,66 @@ fn account_alias_from_str(s: &str) -> Option<AccountId> {
 
 #[cfg(test)]
 mod tests {
-    use crate::AccountId;
+    use std::str::FromStr;
+
+    use crate::{
+        AccountId,
+        Client,
+    };
 
     #[test]
     fn parse() {
         let account_id: AccountId = "0.0.1001".parse().unwrap();
 
-        assert_eq!(account_id, AccountId { shard: 0, realm: 0, num: 1001, alias: None });
+        assert_eq!(
+            account_id,
+            AccountId { shard: 0, realm: 0, num: 1001, alias: None, checksum: None }
+        );
     }
 
     #[test]
     fn to_from_bytes_roundtrip() {
-        let account_id = AccountId { shard: 0, realm: 0, num: 1001, alias: None };
+        let account_id = AccountId { shard: 0, realm: 0, num: 1001, alias: None, checksum: None };
 
         assert_eq!(account_id, AccountId::from_bytes(&account_id.to_bytes()).unwrap());
+    }
+
+    #[tokio::test]
+    async fn good_checksum_on_mainnet() {
+        AccountId::from_str("0.0.123-vfmkw")
+            .unwrap()
+            .validate_checksum(&Client::for_mainnet())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn good_checksum_on_testnet() {
+        AccountId::from_str("0.0.123-esxsf")
+            .unwrap()
+            .validate_checksum(&Client::for_testnet())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn good_checksum_on_previewnet() {
+        AccountId::from_str("0.0.123-ogizo")
+            .unwrap()
+            .validate_checksum(&Client::for_previewnet())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn to_string_with_checksum() {
+        assert_eq!(
+            AccountId::from_str("0.0.123")
+                .unwrap()
+                .to_string_with_checksum(&Client::for_testnet())
+                .await
+                .unwrap(),
+            "0.0.123-esxsf"
+        );
     }
 }

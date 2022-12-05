@@ -30,7 +30,8 @@ pub struct ContractId {
 
 impl ContractId {
     fn from_rust(rust: crate::ContractId) -> ContractId {
-        let crate::ContractId { shard, realm, num, evm_address } = rust;
+        // fixme: swift checksum support
+        let crate::ContractId { shard, realm, num, evm_address, checksum: _ } = rust;
 
         let evm_address =
             evm_address.map(|it| NonNull::new(Box::into_raw(Box::new(it)).cast::<u8>()).unwrap());
@@ -43,7 +44,8 @@ impl ContractId {
 
         let evm_address = evm_address.map(|it| unsafe { *it.cast::<[u8; 20]>().as_ref() });
 
-        crate::ContractId { shard, realm, num, evm_address }
+        // fixme: swift checksum support
+        crate::ContractId { shard, realm, num, evm_address, checksum: None }
     }
 }
 

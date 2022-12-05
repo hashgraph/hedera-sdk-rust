@@ -30,7 +30,6 @@ use libc::size_t;
 use crate::ffi::error::Error;
 use crate::ffi::util::cstr_from_ptr;
 use crate::{
-    ContractId,
     EntityId,
     FileId,
     ScheduleId,
@@ -92,13 +91,13 @@ macro_rules! impl_ffi_convert_traits_for {
 
             impl FromIntoEntityId for $type {
                 fn from_entity_id(id: EntityId) -> Self {
-                    let EntityId { shard, realm, num } = id;
-                    Self { shard, realm, num }
+                    let EntityId { shard, realm, num, checksum } = id;
+                    Self { shard, realm, num, checksum }
                 }
 
                 fn into_entity_id(&self) -> EntityId {
-                    let Self { shard, realm, num } = *self;
-                    EntityId { shard, realm, num }
+                    let Self { shard, realm, num, checksum } = *self;
+                    EntityId { shard, realm, num, checksum }
                 }
             }
         )*
@@ -106,29 +105,6 @@ macro_rules! impl_ffi_convert_traits_for {
 }
 
 impl_ffi_convert_traits_for!(FileId, TokenId, ScheduleId, TopicId);
-
-// todo: use a different mechanism & support evm_address
-impl FromToBytes for ContractId {
-    fn ffi_from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        ContractId::from_bytes(bytes)
-    }
-
-    fn ffi_to_bytes(&self) -> Box<[u8]> {
-        self.to_bytes().into_boxed_slice()
-    }
-}
-
-impl FromIntoEntityId for ContractId {
-    fn from_entity_id(id: EntityId) -> Self {
-        let EntityId { shard, realm, num } = id;
-        Self { shard, realm, num, evm_address: None }
-    }
-
-    fn into_entity_id(&self) -> EntityId {
-        let Self { shard, realm, num, evm_address: _ } = *self;
-        EntityId { shard, realm, num }
-    }
-}
 
 /// # Safety
 /// - `id_shard`, `id_realm`, and `id_num` must all be valid for writes.
@@ -172,7 +148,7 @@ unsafe fn id_to_bytes<I: FromToBytes + FromIntoEntityId>(
     // todo: use `as_maybe_uninit_ref` once that's stable.
     assert!(!buf.is_null());
 
-    let id = EntityId { shard: id_shard, realm: id_realm, num: id_num };
+    let id = EntityId { shard: id_shard, realm: id_realm, num: id_num, checksum: None };
     let id = I::from_entity_id(id);
     let bytes = id.ffi_to_bytes();
 

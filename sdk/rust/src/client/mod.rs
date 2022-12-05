@@ -34,6 +34,7 @@ use crate::client::network::{
 use crate::error::BoxStdError;
 use crate::{
     AccountId,
+    LedgerId,
     PrivateKey,
     PublicKey,
     TransactionId,
@@ -54,6 +55,7 @@ pub struct Client {
     mirror_network: Arc<MirrorNetwork>,
     operator: Arc<AsyncRwLock<Option<Operator>>>,
     max_transaction_fee_tinybar: Arc<AtomicU64>,
+    ledger_id: Arc<AsyncRwLock<Option<LedgerId>>>,
 }
 
 impl Client {
@@ -65,6 +67,7 @@ impl Client {
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::MAINNET])),
             operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
+            ledger_id: Arc::new(AsyncRwLock::new(Some(LedgerId::mainnet()))),
         }
     }
 
@@ -76,6 +79,7 @@ impl Client {
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::TESTNET])),
             operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
+            ledger_id: Arc::new(AsyncRwLock::new(Some(LedgerId::testnet()))),
         }
     }
 
@@ -87,7 +91,17 @@ impl Client {
             mirror_network: Arc::new(MirrorNetwork::from_static(&[mirror_network::PREVIEWNET])),
             operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
+            ledger_id: Arc::new(AsyncRwLock::new(Some(LedgerId::previewnet()))),
         }
+    }
+
+    pub(crate) async fn ledger_id(&self) -> Option<LedgerId> {
+        self.ledger_id.read().await.clone()
+    }
+
+    /// Sets the ledger ID for the Client's network.
+    pub fn set_ledger_id(&self, ledger_id: Option<LedgerId>) {
+        block_in_place(|| *self.ledger_id.blocking_write() = ledger_id);
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with

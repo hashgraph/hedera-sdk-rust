@@ -62,6 +62,7 @@ thiserror = "1.0.31"
 time = "0.3.9"
 tokio = { version = "1.18.1", features = ["rt-multi-thread"] }
 tonic = "0.8.0"
+tinystr = "0.7.0"
 
 # for ed25519-dalek
 rand_0_7 = { version = "0.7", package = "rand" }
