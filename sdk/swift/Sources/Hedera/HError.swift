@@ -55,6 +55,9 @@ public struct HError: Error, CustomStringConvertible {
         case mnemonicParse
         case mnemonicEntropy
         case signatureVerify
+        case badEntityId
+        case cannotToStringWithChecksum
+        case cannotPerformTaskWithoutLedgerId
     }
 
     public let description: String
@@ -130,6 +133,15 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_SIGNATURE_VERIFY:
             kind = .signatureVerify
+
+        case HEDERA_ERROR_BAD_ENTITY_ID:
+            kind = .badEntityId
+
+        case HEDERA_ERROR_CANNOT_TO_STRING_WITH_CHECKSUM:
+            kind = .cannotToStringWithChecksum
+
+        case HEDERA_ERROR_CANNOT_PERFORM_TASK_WITHOUT_LEDGER_ID:
+            kind = .cannotPerformTaskWithoutLedgerId
 
         case HEDERA_ERROR_OK:
             return nil

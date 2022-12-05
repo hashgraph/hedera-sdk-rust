@@ -146,13 +146,13 @@ impl FixedFee {
     pub fn from_hbar(amount: Hbar) -> Self {
         Self {
             amount: amount.to_tinybars(),
-            denominating_token_id: TokenId { shard: 0, realm: 0, num: 0 },
+            denominating_token_id: TokenId { shard: 0, realm: 0, num: 0, checksum: None },
         }
     }
 
     #[must_use]
     pub fn get_hbar(&self) -> Option<Hbar> {
-        (self.denominating_token_id == TokenId { shard: 0, realm: 0, num: 0 })
+        (self.denominating_token_id == TokenId { shard: 0, realm: 0, num: 0, checksum: None })
             .then(|| Hbar::from_tinybars(self.amount))
     }
 }
