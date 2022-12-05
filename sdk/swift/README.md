@@ -81,7 +81,12 @@ protoc --swift_opt=Visibility=Public --swift_out=./Sources/HederaProtobufs/Servi
 ```
 
 ### Generate Mirror
-todo
+```bash
+# cwd: `$REPO/sdk/swift`
+protoc --swift_opt=Visibility=Public --swift_opt=FileNaming=PathToUnderscores --swift_out=./Sources/HederaProtobufs/Mirror -I=../../protobufs/mirror -I=../../protobufs/services ../../protobufs/mirror/*
 
+# generate GRPC (if needed)
+protoc --grpc-swift_opt=Visibility=Public,FileNaming=PathToUnderscores,Server=false --grpc-swift_out=./Sources/HederaProtobufs/Mirror -I=../../protobufs/mirror -I=../../protobufs/services ../../protobufs/mirror/*
+```
 ### Generate SDK
 todo

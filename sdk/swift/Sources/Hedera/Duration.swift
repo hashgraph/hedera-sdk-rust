@@ -1,5 +1,6 @@
 import Foundation
 import HederaProtobufs
+import SwiftProtobuf
 
 public struct Duration: Codable {
     public let seconds: UInt64
