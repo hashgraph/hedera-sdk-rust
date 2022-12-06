@@ -23,7 +23,7 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     /// Create a new `TokenFeeScheduleUpdateTransaction`.
     public init(
         tokenId: TokenId? = nil,
-        customFees: [CustomFee] = []
+        customFees: [AnyCustomFee] = []
     ) {
         self.tokenId = tokenId
         self.customFees = customFees
@@ -41,11 +41,11 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     }
 
     /// The new custom fees to be assessed during a transfer.
-    public var customFees: [CustomFee]
+    public var customFees: [AnyCustomFee]
 
     /// Sets the new custom fees to be assessed during a transfer.
     @discardableResult
-    public func customFees(_ customFees: [CustomFee]) -> Self {
+    public func customFees(_ customFees: [AnyCustomFee]) -> Self {
         self.customFees = customFees
 
         return self
