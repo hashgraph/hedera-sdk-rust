@@ -31,7 +31,7 @@ use time::{
 };
 
 use crate::protobuf::ToProtobuf;
-use crate::token::custom_fees::CustomFee;
+use crate::token::custom_fees::AnyCustomFee;
 use crate::{
     AccountId,
     FromProtobuf,
@@ -123,7 +123,7 @@ pub struct TokenInfo {
     pub max_supply: u64,
 
     /// The custom fees to be assessed during a transfer that transfers units of this token.
-    pub custom_fees: Vec<CustomFee>,
+    pub custom_fees: Vec<AnyCustomFee>,
 
     /// The Key which can pause and unpause the Token.
     pub pause_key: Option<Key>,

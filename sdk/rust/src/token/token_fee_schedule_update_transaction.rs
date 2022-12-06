@@ -24,7 +24,7 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::token::custom_fees::CustomFee;
+use crate::token::custom_fees::AnyCustomFee;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -56,7 +56,7 @@ pub struct TokenFeeScheduleUpdateTransactionData {
     token_id: Option<TokenId>,
 
     /// The new custom fees to be assessed during a transfer.
-    custom_fees: Vec<CustomFee>,
+    custom_fees: Vec<AnyCustomFee>,
 }
 
 impl TokenFeeScheduleUpdateTransaction {
@@ -67,7 +67,10 @@ impl TokenFeeScheduleUpdateTransaction {
     }
 
     /// Sets the new custom fees to be assessed during a transfer.
-    pub fn custom_fees(&mut self, custom_fees: impl IntoIterator<Item = CustomFee>) -> &mut Self {
+    pub fn custom_fees(
+        &mut self,
+        custom_fees: impl IntoIterator<Item = AnyCustomFee>,
+    ) -> &mut Self {
         self.body.data.custom_fees = custom_fees.into_iter().collect();
         self
     }
@@ -113,8 +116,7 @@ mod tests {
 
         use crate::token::custom_fees::{
             CustomFee,
-            Fee,
-            FixedFee,
+            FixedFeeData,
         };
         use crate::transaction::{
             AnyTransaction,
@@ -132,13 +134,10 @@ mod tests {
   "tokenId": "0.0.1001",
   "customFees": [
     {
-      "fee": {
-        "FixedFee": {
-          "amount": 1,
-          "denominating_token_id": "0.0.7"
-        }
-      },
-      "fee_collector_account_id": "0.0.8"
+      "$type": "fixed",
+      "amount": 1,
+      "denominatingTokenId": "0.0.7",
+      "feeCollectorAccountId": "0.0.8"
     }
   ]
 }"#;
@@ -148,8 +147,8 @@ mod tests {
             let mut transaction = TokenFeeScheduleUpdateTransaction::new();
 
             transaction.token_id(TokenId::from(1001)).custom_fees([CustomFee {
-                fee: Fee::FixedFee(FixedFee { amount: 1, denominating_token_id: TokenId::from(7) }),
-                fee_collector_account_id: AccountId::from(8),
+                fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
+                fee_collector_account_id: Some(AccountId::from(8)),
             }]);
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
@@ -170,11 +169,8 @@ mod tests {
             assert_eq!(
                 data.custom_fees,
                 [CustomFee {
-                    fee: Fee::FixedFee(FixedFee {
-                        amount: 1,
-                        denominating_token_id: TokenId::from(7)
-                    }),
-                    fee_collector_account_id: AccountId::from(8)
+                    fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
+                    fee_collector_account_id: Some(AccountId::from(8))
                 }]
             );
 

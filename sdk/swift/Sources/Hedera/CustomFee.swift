@@ -254,33 +254,6 @@ public struct FractionalFee: CustomFee, Codable {
 
         return self
     }
-
-    enum CodingKeys: String, CodingKey {
-        case amount
-        case minimumAmount
-        case maximumAmount
-        case netOfTransfers
-        case feeCollectorAccountId
-    }
-
-    public init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        amount = Rational(from: try container.decode(String.self, forKey: .amount))!
-        minimumAmount = try container.decode(UInt64.self, forKey: .minimumAmount)
-        maximumAmount = try container.decode(UInt64.self, forKey: .maximumAmount)
-        netOfTransfers = try container.decode(Bool.self, forKey: .netOfTransfers)
-        feeCollectorAccountId = try container.decodeIfPresent(AccountId.self, forKey: .feeCollectorAccountId)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(String(describing: amount), forKey: .amount)
-        try container.encode(minimumAmount, forKey: .minimumAmount)
-        try container.encode(maximumAmount, forKey: .maximumAmount)
-        try container.encode(netOfTransfers, forKey: .netOfTransfers)
-    }
 }
 
 /// A fee to assess during a `TransferTransaction` that changes ownership of an NFT.
@@ -377,26 +350,5 @@ public struct RoyaltyFee: CustomFee, Codable {
         self.fallbackFee = fallbackFee
 
         return self
-    }
-
-    enum CodingKeys: String, CodingKey {
-        case feeCollectorAccountId
-        case exchangeValue
-        case fallbackFee
-    }
-
-    public init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.exchangeValue = Rational(from: try container.decode(String.self, forKey: .exchangeValue))!
-        fallbackFee = try container.decodeIfPresent(FixedFee.self, forKey: .fallbackFee)
-        feeCollectorAccountId = try container.decodeIfPresent(AccountId.self, forKey: .feeCollectorAccountId)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(String(describing: self.exchangeValue), forKey: .exchangeValue)
-        try container.encodeIfPresent(fallbackFee, forKey: .fallbackFee)
-        try container.encodeIfPresent(feeCollectorAccountId, forKey: .feeCollectorAccountId)
     }
 }
