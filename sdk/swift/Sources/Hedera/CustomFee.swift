@@ -157,7 +157,8 @@ public struct FractionalFee: CustomFee, Codable {
         netOfTransfers: Bool = false,
         feeCollectorAccountId: AccountId? = nil
     ) {
-        self.amount = amount
+        self.denominator = amount.denominator
+        self.numerator = amount.numerator
         self.minimumAmount = minimumAmount
         self.maximumAmount = maximumAmount
         self.netOfTransfers = netOfTransfers
@@ -165,12 +166,52 @@ public struct FractionalFee: CustomFee, Codable {
     }
 
     /// The fraction of the transferred units to assess as a fee.
-    public var amount: Rational<UInt64>
+    public var amount: Rational<UInt64> {
+        get {
+            Rational(numerator, denominator)
+        }
+        set(new) {
+            numerator = new.numerator
+            denominator = new.denominator
+        }
+    }
+
+    /// Denominator of `amount`
+    public var denominator: UInt64
+
+    /// Numerator of `amount`
+    public var numerator: UInt64
 
     /// Sets the fraction of the transferred units to assess as a fee.
     @discardableResult
     public mutating func amount(_ amount: Rational<UInt64>) -> Self {
         self.amount = amount
+
+        return self
+    }
+
+    /// Sets the denominator of `amount`
+    ///
+    /// - Parameters:
+    ///   - denominator: the new denominator to use.
+    ///
+    /// - Returns: `self`.
+    @discardableResult
+    public mutating func denominator(_ denominator: UInt64) -> Self {
+        self.denominator = denominator
+
+        return self
+    }
+
+    /// Sets the numerator of `amount`
+    ///
+    /// - Parameters:
+    ///   - numerator: the new numerator to use.
+    ///
+    /// - Returns: `self`.
+    @discardableResult
+    public mutating func numerator(_ numerator: UInt64) -> Self {
+        self.numerator = numerator
 
         return self
     }
@@ -252,19 +293,75 @@ public struct RoyaltyFee: CustomFee, Codable {
     /// Create a new `CustomRoyaltyFee`.
     public init(
         exchangeValue: Rational<UInt64> = "1/1",
-        fallbackFee: FixedFee? = nil
+        fallbackFee: FixedFee? = nil,
+        feeCollectorAccountId: AccountId? = nil
     ) {
-        self.exchangeValue = exchangeValue
+        self.init(
+            numerator: exchangeValue.numerator, denominator: exchangeValue.denominator, fallbackFee: fallbackFee,
+            feeCollectorAccountId: feeCollectorAccountId
+        )
+    }
+
+    /// Create a new `CustomRoyaltyFee`
+    public init(
+        numerator: UInt64 = 1,
+        denominator: UInt64 = 1,
+        fallbackFee: FixedFee? = nil,
+        feeCollectorAccountId: AccountId? = nil
+    ) {
+        self.numerator = numerator
+        self.denominator = denominator
         self.fallbackFee = fallbackFee
+        self.feeCollectorAccountId = feeCollectorAccountId
     }
 
     /// The fraction of fungible value exchanged for an NFT to collect as royalty.
-    public var exchangeValue: Rational<UInt64>
+    public var exchangeValue: Rational<UInt64> {
+        get {
+            Rational(numerator, denominator)
+        }
+        set(new) {
+            numerator = new.numerator
+            denominator = new.denominator
+        }
+    }
+
+    /// Denominator of `exchangeValue`
+    public var denominator: UInt64
+
+    /// Numerator of `exchangeValue`
+    public var numerator: UInt64
 
     /// Sets the fraction of fungible value exchanged for an NFT to collect as royalty.
     @discardableResult
     public mutating func exchangeValue(_ exchangeValue: Rational<UInt64>) -> Self {
         self.exchangeValue = exchangeValue
+
+        return self
+    }
+
+    /// Sets the denominator of `exchangeValue`
+    ///
+    /// - Parameters:
+    ///   - denominator: the new denominator to use.
+    ///
+    /// - Returns: `self`.
+    @discardableResult
+    public mutating func denominator(_ denominator: UInt64) -> Self {
+        self.denominator = denominator
+
+        return self
+    }
+
+    /// Sets the numerator of `exchangeValue`
+    ///
+    /// - Parameters:
+    ///   - numerator: the new numerator to use.
+    ///
+    /// - Returns: `self`.
+    @discardableResult
+    public mutating func numerator(_ numerator: UInt64) -> Self {
+        self.numerator = numerator
 
         return self
     }
