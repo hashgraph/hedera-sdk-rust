@@ -22,7 +22,7 @@ use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
 use futures_util::TryStreamExt;
 
-use super::subscribe::MirrorQueryExecutable;
+use super::subscribe::MirrorQueryExecute;
 use crate::topic::TopicMessageQueryData;
 use crate::{
     MirrorQuery,
@@ -55,12 +55,12 @@ pub enum AnyMirrorQueryMessage {
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryResponse {
     /// Response for `AnyMirrorQuery::NodeAddressBook`.
-    NodeAddressBook(<NodeAddressBookQueryData as MirrorQueryExecutable>::Response),
+    NodeAddressBook(<NodeAddressBookQueryData as MirrorQueryExecute>::Response),
     /// Response for `AnyMirrorQuery::TopicMessage`.
-    TopicMessage(<TopicMessageQueryData as MirrorQueryExecutable>::Response),
+    TopicMessage(<TopicMessageQueryData as MirrorQueryExecute>::Response),
 }
 
-impl MirrorQueryExecutable for AnyMirrorQueryData {
+impl MirrorQueryExecute for AnyMirrorQueryData {
     type Item = AnyMirrorQueryMessage;
 
     type Response = AnyMirrorQueryResponse;
@@ -128,7 +128,7 @@ struct AnyMirrorQueryProxy {
 #[cfg(feature = "ffi")]
 impl<D> serde::Serialize for MirrorQuery<D>
 where
-    D: MirrorQueryExecutable + Clone,
+    D: MirrorQueryExecute + Clone,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where

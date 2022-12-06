@@ -37,7 +37,7 @@ use crate::{
 
 impl<D> MirrorQuery<D>
 where
-    D: MirrorQueryExecutable,
+    D: MirrorQueryExecute,
 {
     /// Execute this query against the provided client of the Hedera network.
     // todo:
@@ -92,7 +92,7 @@ where
     }
 }
 
-pub trait MirrorQueryExecutable: Sized + Into<AnyMirrorQueryData> + Send + Sync {
+pub trait MirrorQueryExecute: Sized + Into<AnyMirrorQueryData> + Send + Sync {
     type Item;
     type Response;
     type ItemStream<'a>: Stream<Item = crate::Result<Self::Item>> + 'a
@@ -116,7 +116,7 @@ pub trait MirrorQueryExecutable: Sized + Into<AnyMirrorQueryData> + Send + Sync 
     ) -> BoxFuture<'a, crate::Result<Self::Response>>;
 }
 
-impl<T> MirrorQueryExecutable for T
+impl<T> MirrorQueryExecute for T
 where
     T: MirrorRequest + Sync + Clone + Into<AnyMirrorQueryData>,
 {

@@ -32,7 +32,7 @@ pub(crate) use subscribe::{
     MirrorRequest,
 };
 
-use self::subscribe::MirrorQueryExecutable;
+use self::subscribe::MirrorQueryExecute;
 
 /// A query that can be executed on the Hedera mirror network.
 #[derive(Clone, Debug, Default)]
@@ -54,7 +54,7 @@ pub struct MirrorQueryCommon {
 
 impl<D> MirrorQuery<D>
 where
-    D: MirrorQueryExecutable + Default,
+    D: MirrorQueryExecute + Default,
 {
     /// Create a new query ready for configuration and execution.
     #[must_use]
