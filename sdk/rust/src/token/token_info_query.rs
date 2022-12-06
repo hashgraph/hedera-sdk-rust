@@ -29,11 +29,8 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::token::token_info::TokenInfo;
-use crate::{
-    Query,
-    ToProtobuf,
-    TokenId,
-};
+use crate::{Query, ToProtobuf, TokenId, LedgerId, Error};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Gets information about Token instance.
 ///
@@ -77,6 +74,10 @@ impl ToQueryProtobuf for TokenInfoQueryData {
 #[async_trait]
 impl QueryExecute for TokenInfoQueryData {
     type Response = TokenInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

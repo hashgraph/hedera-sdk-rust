@@ -28,12 +28,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    AccountId,
-    AllProxyStakers,
-    Query,
-    ToProtobuf,
-};
+use crate::{AccountId, AllProxyStakers, Error, LedgerId, Query, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get all the accounts that are proxy staking to this account.
 /// For each of them, give the amount currently staked.
@@ -76,6 +72,10 @@ impl ToQueryProtobuf for AccountStakersQueryData {
 #[async_trait]
 impl QueryExecute for AccountStakersQueryData {
     type Response = AllProxyStakers;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

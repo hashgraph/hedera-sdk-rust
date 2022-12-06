@@ -46,27 +46,7 @@ use crate::token::{
 };
 use crate::topic::TopicInfoQueryData;
 use crate::transaction_receipt_query::TransactionReceiptQueryData;
-use crate::{
-    AccountBalance,
-    AccountInfo,
-    AllProxyStakers,
-    ContractFunctionResult,
-    ContractInfo,
-    FileContentsResponse,
-    FileInfo,
-    FromProtobuf,
-    Hbar,
-    NetworkVersionInfo,
-    NetworkVersionInfoQueryData,
-    Query,
-    ScheduleInfo,
-    TokenInfo,
-    TokenNftInfo,
-    TopicInfo,
-    TransactionReceipt,
-    TransactionRecord,
-    TransactionRecordQueryData,
-};
+use crate::{AccountBalance, AccountInfo, AllProxyStakers, ContractFunctionResult, ContractInfo, Error, FileContentsResponse, FileInfo, FromProtobuf, Hbar, LedgerId, NetworkVersionInfo, NetworkVersionInfoQueryData, Query, ScheduleInfo, TokenInfo, TokenNftInfo, TopicInfo, TransactionReceipt, TransactionRecord, TransactionRecordQueryData};
 
 /// Any possible query that may be executed on the Hedera network.
 pub type AnyQuery = Query<AnyQueryData>;
@@ -281,6 +261,27 @@ impl QueryExecute for AnyQueryData {
             Self::TopicInfo(query) => query.should_retry(response),
             Self::ScheduleInfo(query) => query.should_retry(response),
             Self::NetworkVersionInfo(query) => query.should_retry(response),
+        }
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        match self {
+            AnyQueryData::AccountBalance(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::AccountInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::AccountStakers(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::AccountRecords(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::TransactionReceipt(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::TransactionRecord(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::FileContents(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::FileInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::ContractBytecode(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::ContractCall(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::TokenInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::ContractInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::TokenNftInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::TopicInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::ScheduleInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
+            AnyQueryData::NetworkVersionInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
         }
     }
 }

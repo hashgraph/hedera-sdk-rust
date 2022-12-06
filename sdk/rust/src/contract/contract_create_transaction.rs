@@ -29,14 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    FileId,
-    Hbar,
-    Key,
-    ToProtobuf,
-    Transaction,
-};
+use crate::{AccountId, Error, FileId, Hbar, Key, LedgerId, ToProtobuf, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Start a new smart contract instance.
 pub type ContractCreateTransaction = Transaction<ContractCreateTransactionData>;
@@ -188,6 +182,12 @@ impl ContractCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for ContractCreateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.bytecode_file_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

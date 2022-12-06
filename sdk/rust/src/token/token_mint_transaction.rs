@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    TokenId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, TokenId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Mints tokens to the Token's treasury Account.
 ///
@@ -99,6 +95,10 @@ impl TokenMintTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenMintTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

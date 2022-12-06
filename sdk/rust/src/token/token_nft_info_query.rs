@@ -29,11 +29,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    NftId,
-    ToProtobuf,
-    TokenNftInfo,
-};
+use crate::{NftId, ToProtobuf, TokenNftInfo, LedgerId, Error};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Gets info on an NFT for a given `TokenID` and serial number.
 pub type TokenNftInfoQuery = Query<TokenNftInfoQueryData>;
@@ -77,6 +74,13 @@ impl ToQueryProtobuf for TokenNftInfoQueryData {
 #[async_trait]
 impl QueryExecute for TokenNftInfoQueryData {
     type Response = TokenNftInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.nft_id.map_or(
+            Ok(()),
+            |nft_id| nft_id.token_id.validate_checksum_for_ledger_id(ledger_id)
+        )
+    }
 
     async fn execute(
         &self,

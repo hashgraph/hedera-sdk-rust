@@ -67,6 +67,16 @@ impl Debug for Checksum {
     }
 }
 
+pub trait AutoValidateChecksum {
+    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
+}
+
+impl<ID> AutoValidateChecksum for Option<ID> where ID: AutoValidateChecksum {
+    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.as_ref().map_or(Ok(()), |id| id.validate_checksum_for_ledger_id(ledger_id))
+    }
+}
+
 /// The ID of an entity on the Hedera network.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
 #[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
@@ -93,7 +103,7 @@ impl EntityId {
         EvmAddress::try_from(self).map(|it| it.to_string())
     }
 
-    pub(crate) fn generate_checksum(entity_id_string: &String, ledger_id: LedgerId) -> Checksum {
+    pub(crate) fn generate_checksum(entity_id_string: &String, ledger_id: &LedgerId) -> Checksum {
         const P3: usize = 26 * 26 * 26; // 3 digits in base 26
         const P5: usize = 26 * 26 * 26 * 26 * 26; // 5 digits in base 26
         const M: usize = 1_000_003; // min prime greater than a million. Used for the final permutation.
@@ -149,22 +159,49 @@ impl EntityId {
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
             if let Some(ledger_id) = client.ledger_id().await {
-                let expected_checksum =
-                    Self::generate_checksum(&format!("{}.{}.{}", shard, realm, num), ledger_id);
-                if present_checksum != &expected_checksum {
-                    return Err(Error::BadEntityId {
-                        shard,
-                        realm,
-                        num,
-                        present_checksum: present_checksum.clone(),
-                        expected_checksum,
-                    });
-                }
+                Self::validate_checksum_internal(shard, realm, num, present_checksum, &ledger_id)
             } else {
-                return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" });
+                Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" })
             }
+        } else {
+            Ok(())
         }
-        return Ok(());
+    }
+
+    pub(crate) fn validate_checksum_for_ledger_id(
+        shard: u64,
+        realm: u64,
+        num: u64,
+        checksum: &Option<Checksum>,
+        ledger_id: &LedgerId
+    ) -> Result<(), Error> {
+        if let Some(present_checksum) = checksum {
+            Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
+        } else {
+            Ok(())
+        }
+    }
+
+    fn validate_checksum_internal(
+        shard: u64,
+        realm: u64,
+        num: u64,
+        present_checksum: &Checksum,
+        ledger_id: &LedgerId
+    ) -> Result<(), Error> {
+        let expected_checksum =
+            Self::generate_checksum(&format!("{}.{}.{}", shard, realm, num), ledger_id);
+        if present_checksum != &expected_checksum {
+            Err(Error::BadEntityId {
+                shard,
+                realm,
+                num,
+                present_checksum: present_checksum.clone(),
+                expected_checksum,
+            })
+        } else {
+            Ok(())
+        }
     }
 
     pub(crate) async fn to_string_with_checksum(
@@ -175,7 +212,7 @@ impl EntityId {
             Ok(format!(
                 "{}-{}",
                 entity_id_string,
-                Self::generate_checksum(&entity_id_string, ledger_id)
+                Self::generate_checksum(&entity_id_string, &ledger_id)
             ))
         } else {
             Err(Error::CannotPerformTaskWithoutLedgerId { task: "derive checksum for entity ID" })

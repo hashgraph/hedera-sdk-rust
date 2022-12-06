@@ -28,13 +28,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    AccountId,
-    ContractFunctionResult,
-    ContractId,
-    Query,
-    ToProtobuf,
-};
+use crate::{AccountId, ContractFunctionResult, ContractId, Error, LedgerId, Query, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Call a function of the given smart contract instance.
 /// It will consume the entire given amount of gas.
@@ -121,6 +116,11 @@ impl ToQueryProtobuf for ContractCallQueryData {
 #[async_trait]
 impl QueryExecute for ContractCallQueryData {
     type Response = ContractFunctionResult;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.sender_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

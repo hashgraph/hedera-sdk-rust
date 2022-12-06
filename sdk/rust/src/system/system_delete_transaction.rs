@@ -31,12 +31,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ContractId,
-    FileId,
-    Transaction,
-};
+use crate::{AccountId, ContractId, Error, FileId, LedgerId, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Delete a file or smart contract - can only be done by a Hedera admin.
 pub type SystemDeleteTransaction = Transaction<SystemDeleteTransactionData>;
@@ -90,6 +86,11 @@ impl SystemDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for SystemDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

@@ -28,14 +28,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Hbar,
-    NftId,
-    ToProtobuf,
-    TokenId,
-    Transaction,
-};
+use crate::{AccountId, Hbar, NftId, ToProtobuf, TokenId, Transaction, LedgerId, Error};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Creates one or more hbar/token approved allowances **relative to the owner account specified in the allowances of
 /// this transaction**.
@@ -210,6 +204,27 @@ struct NftAllowance {
 
 #[async_trait]
 impl TransactionExecute for AccountAllowanceApproveTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for hbar_allowance in &self.hbar_allowances {
+            hbar_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            hbar_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        for token_allowance in &self.token_allowances {
+            token_allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            token_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            token_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        for nft_allowance in &self.nft_allowances {
+            nft_allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            nft_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            nft_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            if let Some(delegating_spender) = nft_allowance.delegating_spender_account_id {
+                delegating_spender.validate_checksum_for_ledger_id(ledger_id)?;
+            }
+        }
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

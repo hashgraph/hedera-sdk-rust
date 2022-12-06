@@ -29,10 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Transaction,
-};
+use crate::{AccountId, Error, LedgerId, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Mark an account as deleted, moving all its current hbars to another account.
 ///
@@ -69,6 +67,11 @@ impl AccountDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for AccountDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transfer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

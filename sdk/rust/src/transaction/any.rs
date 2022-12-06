@@ -86,12 +86,7 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::transfer_transaction::TransferTransactionData;
-use crate::{
-    AccountId,
-    Hbar,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, Hbar, LedgerId, Transaction, TransactionId};
 
 #[cfg(feature = "ffi")]
 /// Any possible transaction that may be executed on the Hedera network.
@@ -359,6 +354,51 @@ impl TransactionExecute for AnyTransactionData {
             Self::ScheduleSign(transaction) => transaction.default_max_transaction_fee(),
             Self::ScheduleDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::Ethereum(transaction) => transaction.default_max_transaction_fee(),
+        }
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        match self {
+            AnyTransactionData::AccountCreate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::AccountUpdate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::AccountDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::AccountAllowanceApprove(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::AccountAllowanceDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ContractCreate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ContractUpdate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ContractDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ContractExecute(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::Transfer(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TopicCreate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TopicUpdate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TopicDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TopicMessageSubmit(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::FileAppend(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::FileCreate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::FileUpdate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::FileDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenAssociate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenBurn(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenCreate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenDissociate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenFreeze(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenGrantKyc(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenMint(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenPause(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenRevokeKyc(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenUnfreeze(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenUnpause(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenUpdate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::TokenWipe(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::SystemDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::SystemUndelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::Freeze(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ScheduleCreate(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ScheduleSign(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::ScheduleDelete(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
+            AnyTransactionData::Ethereum(transaction) => transaction.validate_checksums_for_ledger_id(ledger_id),
         }
     }
 

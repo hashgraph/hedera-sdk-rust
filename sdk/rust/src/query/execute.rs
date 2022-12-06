@@ -29,50 +29,34 @@ use crate::query::{
     AnyQueryData,
     ToQueryProtobuf,
 };
-use crate::{
-    AccountId,
-    Client,
-    Error,
-    FromProtobuf,
-    Hbar,
-    Query,
-    Status,
-    TransactionId,
-};
+use crate::{AccountId, Client, Error, FromProtobuf, Hbar, LedgerId, Query, Status, TransactionId};
 
-/// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]
 pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQueryProtobuf {
     type Response: FromProtobuf<services::response::Response>;
 
-    /// Returns `true` if this query requires a payment to be submitted.
     fn is_payment_required(&self) -> bool {
         true
     }
 
-    /// Alter the required payment amount in arbitrary ways after `get_cost` has returned.
     fn map_cost(&self, cost: Hbar) -> Hbar {
         cost
     }
 
-    /// Returns `true` if this query should be retried after a back-off from the result
-    /// of a pre-check.
     fn should_retry_pre_check(&self, _status: Status) -> bool {
         false
     }
 
-    /// Check whether we should retry an otherwise successful response.
     #[allow(unused_variables)]
     fn should_retry(&self, response: &services::Response) -> bool {
         false
     }
 
-    /// Returns the transaction ID that this query is for, if this query is about a transaction.
     fn transaction_id(&self) -> Option<TransactionId> {
         None
     }
 
-    // TODO: validate_checksums(), default implementation does nothing
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 
     fn make_response(
         &self,
@@ -81,7 +65,6 @@ pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQue
         <Self::Response as FromProtobuf<services::response::Response>>::from_protobuf(response)
     }
 
-    /// Execute the prepared query request against the provided GRPC channel.
     async fn execute(
         &self,
         channel: Channel,
@@ -173,6 +156,10 @@ where
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.data.validate_checksums_for_ledger_id(ledger_id)
     }
 }
 

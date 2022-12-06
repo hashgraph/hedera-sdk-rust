@@ -28,10 +28,7 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    NetworkVersionInfo,
-    Query,
-};
+use crate::{Error, LedgerId, NetworkVersionInfo, Query};
 
 /// Get information about the versions of protobuf and hedera.
 ///
@@ -65,6 +62,10 @@ impl QueryExecute for NetworkVersionInfoQueryData {
 
     fn is_payment_required(&self) -> bool {
         false
+    }
+
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
     }
 
     async fn execute(

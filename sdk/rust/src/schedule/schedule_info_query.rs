@@ -28,12 +28,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    Query,
-    ScheduleId,
-    ScheduleInfo,
-    ToProtobuf,
-};
+use crate::{Error, LedgerId, Query, ScheduleId, ScheduleInfo, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get all the information about a schedule.
 pub type ScheduleInfoQuery = Query<ScheduleInfoQueryData>;
@@ -76,6 +72,10 @@ impl ToQueryProtobuf for ScheduleInfoQueryData {
 #[async_trait]
 impl QueryExecute for ScheduleInfoQueryData {
     type Response = ScheduleInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.schedule_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

@@ -30,12 +30,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    AccountBalance,
-    AccountId,
-    ContractId,
-    ToProtobuf,
-};
+use crate::{AccountBalance, AccountId, ContractId, Error, LedgerId, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get the balance of a cryptocurrency account.
 ///
@@ -115,6 +111,17 @@ impl QueryExecute for AccountBalanceQueryData {
 
     fn is_payment_required(&self) -> bool {
         false
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        match self.source {
+            AccountBalanceSource::AccountId(account_id) => {
+                account_id.validate_checksum_for_ledger_id(ledger_id)
+            }
+            AccountBalanceSource::ContractId(contract_id) => {
+                contract_id.validate_checksum_for_ledger_id(ledger_id)
+            }
+        }
     }
 
     async fn execute(

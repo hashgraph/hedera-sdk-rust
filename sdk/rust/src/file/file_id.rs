@@ -28,14 +28,8 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
-use crate::entity_id::Checksum;
-use crate::{
-    Client,
-    EntityId,
-    Error,
-    FromProtobuf,
-    ToProtobuf,
-};
+use crate::entity_id::{AutoValidateChecksum, Checksum};
+use crate::{Client, EntityId, Error, FromProtobuf, LedgerId, ToProtobuf};
 
 /// The unique identifier for a file on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -83,6 +77,12 @@ impl FileId {
     /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
     pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
         EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client).await
+    }
+}
+
+impl AutoValidateChecksum for FileId {
+    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        EntityId::validate_checksum_for_ledger_id(self.shard, self.realm, self.num, &self.checksum, ledger_id)
     }
 }
 

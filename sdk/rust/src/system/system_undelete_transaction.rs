@@ -30,12 +30,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ContractId,
-    FileId,
-    Transaction,
-};
+use crate::{AccountId, ContractId, Error, FileId, LedgerId, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Undelete a file or smart contract that was deleted by a [`SystemDeleteTransaction`](crate::SystemDeleteTransaction).
 pub type SystemUndeleteTransaction = Transaction<SystemUndeleteTransactionData>;
@@ -67,6 +63,11 @@ impl SystemUndeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for SystemUndeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

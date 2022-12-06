@@ -36,12 +36,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Key,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, Key, LedgerId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Create a new token.
 ///
@@ -312,6 +308,12 @@ impl TokenCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenCreateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        // TODO: validate custom fee collector account IDs once that's merged
+        self.treasury_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

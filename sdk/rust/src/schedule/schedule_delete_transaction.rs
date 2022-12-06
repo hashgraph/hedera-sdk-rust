@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ScheduleId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, ScheduleId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Marks a schedule in the network's action queue as deleted. Must be signed
 /// by the admin key of the target schedule. A deleted schedule cannot
@@ -57,6 +53,10 @@ impl ScheduleDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for ScheduleDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.schedule_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

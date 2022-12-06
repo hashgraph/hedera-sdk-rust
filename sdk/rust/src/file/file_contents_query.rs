@@ -29,11 +29,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    FileContentsResponse,
-    FileId,
-    ToProtobuf,
-};
+use crate::{Error, FileContentsResponse, FileId, LedgerId, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get the contents of a file.
 pub type FileContentsQuery = Query<FileContentsQueryData>;
@@ -75,6 +72,10 @@ impl ToQueryProtobuf for FileContentsQueryData {
 #[async_trait]
 impl QueryExecute for FileContentsQueryData {
     type Response = FileContentsResponse;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

@@ -29,11 +29,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    AccountId,
-    Query,
-    ToProtobuf,
-};
+use crate::{AccountId, Error, LedgerId, Query, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get all the information about an account, including the balance.
 ///
@@ -79,6 +76,10 @@ impl ToQueryProtobuf for AccountInfoQueryData {
 #[async_trait]
 impl QueryExecute for AccountInfoQueryData {
     type Response = AccountInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

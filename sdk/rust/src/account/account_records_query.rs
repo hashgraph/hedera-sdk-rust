@@ -28,13 +28,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    AccountId,
-    FromProtobuf,
-    Query,
-    ToProtobuf,
-    TransactionRecord,
-};
+use crate::{AccountId, Error, FromProtobuf, LedgerId, Query, ToProtobuf, TransactionRecord};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get all the records for an account for any transfers into it and out of it,
 /// that were above the threshold, during the last 25 hours.
@@ -77,6 +72,10 @@ impl ToQueryProtobuf for AccountRecordsQueryData {
 #[async_trait]
 impl QueryExecute for AccountRecordsQueryData {
     type Response = Vec<TransactionRecord>;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,
