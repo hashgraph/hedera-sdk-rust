@@ -36,10 +36,11 @@ mod tests;
 /// fee is attached. A custom fee may be either fixed or fractional, and must specify a fee collector
 /// account to receive the assessed fees. Only positive fees may be assessed.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-#[repr(C)]
 pub struct CustomFee {
     /// The fee to be charged.
+    #[cfg_attr(feature = "ffi", serde(flatten))]
     pub fee: Fee,
 
     /// The account to receive the custom fee
@@ -70,7 +71,7 @@ impl ToProtobuf for CustomFee {
 /// Represents the possible fee types.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[repr(C)]
+#[cfg_attr(feature = "ffi", serde(tag = "$type", rename_all = "camelCase"))]
 pub enum Fee {
     /// Fixed fee to be charged.
     FixedFee(FixedFee),
@@ -134,7 +135,7 @@ impl From<FractionalFee> for Fee {
 /// units of the token to which this fixed fee is attached.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[repr(C)]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FixedFee {
     /// The number of units to assess as a fee
     pub amount: i64,
@@ -185,7 +186,7 @@ impl ToProtobuf for FixedFee {
 /// denomination is always units of the token to which this fractional fee is attached.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[repr(C)]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FractionalFee {
     /// The fraction of the transferred units to assess as a fee
     pub fractional_amount: Fraction,
@@ -233,7 +234,7 @@ impl ToProtobuf for FractionalFee {
 /// Royalty fees can only be added to tokens of type type `NON_FUNGIBLE_UNIQUE`.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[repr(C)]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct RoyaltyFee {
     /// The fraction of fungible value exchanged for an NFT to collect as royalty
     pub exchange_value_fraction: Fraction,
