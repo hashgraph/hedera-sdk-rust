@@ -181,7 +181,7 @@ pub unsafe extern "C" fn hedera_file_id_from_bytes(
     unsafe { id_from_bytes::<FileId>(bytes, bytes_size, file_id_shard, file_id_realm, file_id_num) }
 }
 
-/// Serialize the passed FileId as bytes
+/// Serialize the passed `FileId` as bytes
 ///
 /// # Safety
 /// - `buf` must be valid for writes.
@@ -215,7 +215,7 @@ pub unsafe extern "C" fn hedera_topic_id_from_bytes(
     }
 }
 
-/// Serialize the passed TopicId as bytes
+/// Serialize the passed `TopicId` as bytes
 ///
 /// # Safety
 /// - `buf` must be valid for writes.

@@ -18,22 +18,13 @@
  * ‍
  */
 
-use async_trait::async_trait;
-use hedera_proto::{
-    mirror,
-    services,
-};
-use tonic::transport::Channel;
-use tonic::{
-    Code,
-    Status,
-    Streaming,
-};
+use futures_core::future::BoxFuture;
+use futures_core::stream::BoxStream;
+use futures_util::TryStreamExt;
 
-use crate::mirror_query::MirrorQuerySubscribe;
+use super::subscribe::MirrorQueryExecute;
 use crate::topic::TopicMessageQueryData;
 use crate::{
-    FromProtobuf,
     MirrorQuery,
     NodeAddress,
     NodeAddressBookQueryData,
@@ -51,9 +42,6 @@ pub enum AnyMirrorQueryData {
     TopicMessage(TopicMessageQueryData),
 }
 
-/// Represents the response of any possible query to the mirror network.
-pub type AnyMirrorQueryResponse = Vec<AnyMirrorQueryMessage>;
-
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
@@ -62,74 +50,63 @@ pub enum AnyMirrorQueryMessage {
     TopicMessage(TopicMessage),
 }
 
-pub enum AnyMirrorQueryGrpcMessage {
-    NodeAddressBook(services::NodeAddress),
-    TopicMessage(mirror::ConsensusTopicResponse),
+/// Represents the response of any possible query to the mirror network.
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
+pub enum AnyMirrorQueryResponse {
+    /// Response for `AnyMirrorQuery::NodeAddressBook`.
+    NodeAddressBook(<NodeAddressBookQueryData as MirrorQueryExecute>::Response),
+    /// Response for `AnyMirrorQuery::TopicMessage`.
+    TopicMessage(<TopicMessageQueryData as MirrorQueryExecute>::Response),
 }
 
-pub enum AnyMirrorQueryGrpcStream {
-    NodeAddressBook(Streaming<services::NodeAddress>),
-    TopicMessage(Streaming<mirror::ConsensusTopicResponse>),
-}
+impl MirrorQueryExecute for AnyMirrorQueryData {
+    type Item = AnyMirrorQueryMessage;
 
-#[async_trait]
-impl MirrorQuerySubscribe for AnyMirrorQueryData {
-    type GrpcStream = AnyMirrorQueryGrpcStream;
+    type Response = AnyMirrorQueryResponse;
 
-    type GrpcMessage = AnyMirrorQueryGrpcMessage;
+    type ItemStream<'a> = BoxStream<'a, crate::Result<Self::Item>>
+        where
+            Self: 'a;
 
-    type Message = AnyMirrorQueryMessage;
-
-    fn should_retry(&self, status_code: Code) -> bool {
-        match self {
-            Self::NodeAddressBook(query) => query.should_retry(status_code),
-            Self::TopicMessage(query) => query.should_retry(status_code),
-        }
-    }
-
-    async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, Status> {
-        match self {
-            Self::NodeAddressBook(query) => {
-                query.subscribe(channel).await.map(AnyMirrorQueryGrpcStream::NodeAddressBook)
-            }
-
-            Self::TopicMessage(query) => {
-                query.subscribe(channel).await.map(AnyMirrorQueryGrpcStream::TopicMessage)
-            }
-        }
-    }
-
-    async fn message(
+    fn subscribe_with_optional_timeout<'a>(
         &self,
-        stream: &mut Self::GrpcStream,
-    ) -> Result<Option<Self::GrpcMessage>, Status> {
-        match stream {
-            AnyMirrorQueryGrpcStream::NodeAddressBook(stream) => stream
-                .message()
-                .await
-                .map(|message| message.map(AnyMirrorQueryGrpcMessage::NodeAddressBook)),
-
-            AnyMirrorQueryGrpcStream::TopicMessage(stream) => stream
-                .message()
-                .await
-                .map(|message| message.map(AnyMirrorQueryGrpcMessage::TopicMessage)),
+        params: &crate::mirror_query::MirrorQueryCommon,
+        client: &'a crate::Client,
+        timeout: Option<std::time::Duration>,
+    ) -> Self::ItemStream<'a>
+    where
+        Self: 'a,
+    {
+        match self {
+            AnyMirrorQueryData::NodeAddressBook(it) => Box::pin(
+                it.subscribe_with_optional_timeout(params, client, timeout)
+                    .map_ok(Self::Item::from),
+            ),
+            AnyMirrorQueryData::TopicMessage(it) => Box::pin(
+                it.subscribe_with_optional_timeout(params, client, timeout)
+                    .map_ok(Self::Item::from),
+            ),
         }
     }
-}
 
-impl FromProtobuf<AnyMirrorQueryGrpcMessage> for AnyMirrorQueryMessage {
-    fn from_protobuf(message: AnyMirrorQueryGrpcMessage) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        match message {
-            AnyMirrorQueryGrpcMessage::NodeAddressBook(message) => {
-                NodeAddress::from_protobuf(message).map(Self::NodeAddressBook)
-            }
-
-            AnyMirrorQueryGrpcMessage::TopicMessage(message) => {
-                TopicMessage::from_protobuf(message).map(Self::TopicMessage)
-            }
+    fn execute_with_optional_timeout<'a>(
+        &'a self,
+        params: &'a super::MirrorQueryCommon,
+        client: &'a crate::Client,
+        timeout: Option<std::time::Duration>,
+    ) -> BoxFuture<'a, crate::Result<Self::Response>> {
+        match self {
+            AnyMirrorQueryData::NodeAddressBook(it) => Box::pin(async move {
+                it.execute_with_optional_timeout(params, client, timeout)
+                    .await
+                    .map(Self::Response::from)
+            }),
+            AnyMirrorQueryData::TopicMessage(it) => Box::pin(async move {
+                it.execute_with_optional_timeout(params, client, timeout)
+                    .await
+                    .map(Self::Response::from)
+            }),
         }
     }
 }
@@ -143,12 +120,15 @@ impl FromProtobuf<AnyMirrorQueryGrpcMessage> for AnyMirrorQueryMessage {
 struct AnyMirrorQueryProxy {
     #[cfg_attr(feature = "ffi", serde(flatten))]
     data: AnyMirrorQueryData,
+
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    common: super::MirrorQueryCommon,
 }
 
 #[cfg(feature = "ffi")]
 impl<D> serde::Serialize for MirrorQuery<D>
 where
-    D: MirrorQuerySubscribe,
+    D: MirrorQueryExecute + Clone,
 {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -156,7 +136,8 @@ where
     {
         // TODO: remove the clones, should be possible with Cows
 
-        AnyMirrorQueryProxy { data: self.data.clone().into() }.serialize(serializer)
+        AnyMirrorQueryProxy { data: self.data.clone().into(), common: self.common.clone() }
+            .serialize(serializer)
     }
 }
 
@@ -167,6 +148,6 @@ impl<'de> serde::Deserialize<'de> for AnyMirrorQuery {
         D: serde::Deserializer<'de>,
     {
         <AnyMirrorQueryProxy as serde::Deserialize>::deserialize(deserializer)
-            .map(|query| Self { data: query.data })
+            .map(|query| Self { data: query.data, common: query.common })
     }
 }

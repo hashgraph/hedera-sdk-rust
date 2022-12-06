@@ -18,7 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
+use futures_core::future::BoxFuture;
+use futures_core::stream::BoxStream;
+use futures_core::Stream;
+use futures_util::TryStreamExt;
 use hedera_proto::mirror;
 use hedera_proto::mirror::consensus_service_client::ConsensusServiceClient;
 use hedera_proto::mirror::ConsensusTopicQuery;
@@ -28,9 +31,12 @@ use tonic::Response;
 
 use crate::mirror_query::{
     AnyMirrorQueryData,
-    MirrorQuerySubscribe,
+    AnyMirrorQueryMessage,
+    MirrorRequest,
 };
+use crate::protobuf::FromProtobuf;
 use crate::{
+    AnyMirrorQueryResponse,
     MirrorQuery,
     ToProtobuf,
     TopicId,
@@ -70,6 +76,15 @@ pub struct TopicMessageQueryData {
     limit: u64,
 }
 
+impl TopicMessageQueryData {
+    fn map_stream<'a, S>(stream: S) -> impl Stream<Item = crate::Result<TopicMessage>>
+    where
+        S: Stream<Item = crate::Result<mirror::ConsensusTopicResponse>> + Send + 'a,
+    {
+        stream.and_then(|it| std::future::ready(TopicMessage::from_protobuf(it)))
+    }
+}
+
 impl TopicMessageQuery {
     /// Sets the topic ID to retrieve messages for.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
@@ -104,15 +119,18 @@ impl From<TopicMessageQueryData> for AnyMirrorQueryData {
     }
 }
 
-#[async_trait]
-impl MirrorQuerySubscribe for TopicMessageQueryData {
-    type GrpcStream = tonic::Streaming<Self::GrpcMessage>;
+impl MirrorRequest for TopicMessageQueryData {
+    type GrpcItem = mirror::ConsensusTopicResponse;
 
-    type GrpcMessage = mirror::ConsensusTopicResponse;
+    type ConnectStream = tonic::Streaming<Self::GrpcItem>;
 
-    type Message = TopicMessage;
+    type Item = TopicMessage;
 
-    async fn subscribe(&self, channel: Channel) -> Result<Self::GrpcStream, tonic::Status> {
+    type Response = Vec<TopicMessage>;
+
+    type ItemStream<'a> = BoxStream<'a, crate::Result<TopicMessage>>;
+
+    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
         let topic_id = self.topic_id.to_protobuf();
         let consensus_end_time = self.end_time.map(Into::into);
         let consensus_start_time = self.start_time.map(Into::into);
@@ -124,16 +142,38 @@ impl MirrorQuerySubscribe for TopicMessageQueryData {
             limit: self.limit,
         };
 
-        ConsensusServiceClient::new(channel)
-            .subscribe_topic(request)
-            .await
-            .map(Response::into_inner)
+        Box::pin(async {
+            ConsensusServiceClient::new(channel)
+                .subscribe_topic(request)
+                .await
+                .map(Response::into_inner)
+        })
     }
 
-    async fn message(
-        &self,
-        stream: &mut Self::GrpcStream,
-    ) -> Result<Option<Self::GrpcMessage>, tonic::Status> {
-        stream.message().await
+    fn make_item_stream<'a, S>(stream: S) -> Self::ItemStream<'a>
+    where
+        S: Stream<Item = crate::Result<Self::GrpcItem>> + Send + 'a,
+    {
+        Box::pin(Self::map_stream(stream))
+    }
+
+    fn try_collect<'a, S>(stream: S) -> BoxFuture<'a, crate::Result<Self::Response>>
+    where
+        S: Stream<Item = crate::Result<Self::GrpcItem>> + Send + 'a,
+    {
+        // this doesn't reuse the work in `make_item_stream`
+        Box::pin(Self::map_stream(stream).try_collect())
+    }
+}
+
+impl From<TopicMessage> for AnyMirrorQueryMessage {
+    fn from(value: TopicMessage) -> Self {
+        Self::TopicMessage(value)
+    }
+}
+
+impl From<Vec<TopicMessage>> for AnyMirrorQueryResponse {
+    fn from(value: Vec<TopicMessage>) -> Self {
+        Self::TopicMessage(value)
     }
 }

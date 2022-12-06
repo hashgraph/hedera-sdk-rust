@@ -440,7 +440,7 @@ pub unsafe extern "C" fn hedera_private_key_is_ecdsa(key: *mut PrivateKey) -> bo
 /// - `buf` must be valid for writes according to [*Rust* pointer rules]
 /// - the length of the returned buffer must not be modified.
 /// - the returned pointer must NOT be freed with `free`.
-/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+/// [*Rust* pointer rules]: <https://doc.rust-lang.org/std/ptr/index.html#safety>
 #[no_mangle]
 pub unsafe extern "C" fn hedera_private_key_sign(
     key: *mut PrivateKey,

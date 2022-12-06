@@ -30,7 +30,8 @@ pub type Signer = Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>;
 
 pub(crate) enum AnySigner {
     PrivateKey(PrivateKey),
-    Arbitrary(PublicKey, Signer),
+    // public key is 216 bytes.
+    Arbitrary(Box<PublicKey>, Signer),
     #[cfg(feature = "ffi")]
     C(crate::ffi::CSigner),
 }
@@ -40,7 +41,7 @@ impl AnySigner {
     pub(crate) fn public_key(&self) -> PublicKey {
         match self {
             AnySigner::PrivateKey(it) => it.public_key(),
-            AnySigner::Arbitrary(it, _) => *it,
+            AnySigner::Arbitrary(it, _) => **it,
             #[cfg(feature = "ffi")]
             AnySigner::C(it) => it.public_key(),
         }
@@ -51,7 +52,7 @@ impl AnySigner {
             AnySigner::PrivateKey(it) => (it.public_key(), it.sign(message)),
             AnySigner::Arbitrary(public, signer) => {
                 let bytes = signer(message);
-                (*public, bytes)
+                (**public, bytes)
             }
             #[cfg(feature = "ffi")]
             AnySigner::C(it) => it.sign(message),
