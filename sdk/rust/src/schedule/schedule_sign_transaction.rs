@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ScheduleId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, ScheduleId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Adds zero or more signing keys to a schedule.
 pub type ScheduleSignTransaction = Transaction<ScheduleSignTransactionData>;
@@ -56,6 +52,10 @@ impl ScheduleSignTransaction {
 
 #[async_trait]
 impl TransactionExecute for ScheduleSignTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.schedule_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

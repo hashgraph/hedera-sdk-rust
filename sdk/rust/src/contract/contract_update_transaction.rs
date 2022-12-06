@@ -32,13 +32,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ContractId,
-    Key,
-    ToProtobuf,
-    Transaction,
-};
+use crate::{AccountId, ContractId, Error, Key, LedgerId, ToProtobuf, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Updates the fields of a smart contract to the given values.
 pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;
@@ -153,6 +148,13 @@ impl ContractUpdateTransaction {
 
 #[async_trait]
 impl TransactionExecute for ContractUpdateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.proxy_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

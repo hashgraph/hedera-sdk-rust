@@ -34,13 +34,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Hbar,
-    Key,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, Hbar, Key, LedgerId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
 ///
@@ -137,6 +132,10 @@ impl ScheduleCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for ScheduleCreateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.payer_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

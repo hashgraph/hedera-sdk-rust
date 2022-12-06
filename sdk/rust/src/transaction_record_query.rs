@@ -29,15 +29,7 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    Error,
-    FromProtobuf,
-    Query,
-    Status,
-    ToProtobuf,
-    TransactionId,
-    TransactionRecord,
-};
+use crate::{Error, FromProtobuf, LedgerId, Query, Status, ToProtobuf, TransactionId, TransactionRecord};
 
 /// Get the record of a transaction, given its transaction ID.
 ///
@@ -139,5 +131,9 @@ impl QueryExecute for TransactionRecordQueryData {
         }
 
         Ok(record)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
     }
 }

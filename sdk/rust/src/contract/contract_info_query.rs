@@ -28,12 +28,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    ContractId,
-    ContractInfo,
-    Query,
-    ToProtobuf,
-};
+use crate::{ContractId, ContractInfo, Error, LedgerId, Query, ToProtobuf};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get information about a smart contract instance.
 pub type ContractInfoQuery = Query<ContractInfoQueryData>;
@@ -78,6 +74,10 @@ impl ToQueryProtobuf for ContractInfoQueryData {
 #[async_trait]
 impl QueryExecute for ContractInfoQueryData {
     type Response = ContractInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

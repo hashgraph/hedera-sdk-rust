@@ -38,6 +38,8 @@ use crate::{
     ToProtobuf,
 };
 
+// TODO: validate checksums after PR is merged
+
 /// Query for an address book and return its nodes.
 /// The nodes are returned in ascending order by node ID.
 pub type NodeAddressBookQuery = MirrorQuery<NodeAddressBookQueryData>;

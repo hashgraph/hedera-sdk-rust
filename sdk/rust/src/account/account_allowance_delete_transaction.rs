@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    NftId,
-    TokenId,
-    Transaction,
-};
+use crate::{AccountId, Error, LedgerId, NftId, TokenId, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
 /// will remove the allowances granted to one or more specific non-fungible token serial numbers. Each owner account
@@ -91,6 +87,14 @@ impl AccountAllowanceDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for AccountAllowanceDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for allowance in &self.nft_allowances {
+            allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

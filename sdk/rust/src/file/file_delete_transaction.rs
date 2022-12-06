@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    FileId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, FileId, LedgerId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Delete the given file.
 ///
@@ -63,6 +59,10 @@ impl FileDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for FileDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

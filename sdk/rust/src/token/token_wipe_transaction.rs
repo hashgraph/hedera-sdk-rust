@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    TokenId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, TokenId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Wipes the provided amount of tokens from the specified Account. Must be signed by the Token's
 /// Wipe key.
@@ -114,6 +110,11 @@ impl TokenWipeTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenWipeTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

@@ -28,13 +28,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ContractId,
-    Hbar,
-    ToProtobuf,
-    Transaction,
-};
+use crate::{AccountId, ContractId, Error, Hbar, LedgerId, ToProtobuf, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Call a function of the given smart contract instance, giving it
 /// parameters as its inputs.
@@ -94,6 +89,11 @@ impl ContractExecuteTransaction {
 
 #[async_trait]
 impl TransactionExecute for ContractExecuteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

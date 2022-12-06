@@ -33,11 +33,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Key,
-    Transaction,
-};
+use crate::{AccountId, Error, Key, LedgerId, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Change properties for the given account.
 ///
@@ -167,6 +164,11 @@ impl AccountUpdateTransaction {
 
 #[async_trait]
 impl TransactionExecute for AccountUpdateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

@@ -28,15 +28,8 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
-use crate::entity_id::Checksum;
-use crate::{
-    Client,
-    EntityId,
-    Error,
-    FromProtobuf,
-    PublicKey,
-    ToProtobuf,
-};
+use crate::entity_id::{AutoValidateChecksum, Checksum};
+use crate::{Client, EntityId, Error, FromProtobuf, LedgerId, PublicKey, ToProtobuf};
 
 /// A unique identifier for a cryptocurrency account on Hedera.
 #[derive(Copy, Hash, PartialEq, Eq, Clone)]
@@ -95,6 +88,16 @@ impl AccountId {
         } else {
             EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client)
                 .await
+        }
+    }
+}
+
+impl AutoValidateChecksum for AccountId {
+    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        if self.alias.is_some() {
+            Ok(())
+        } else {
+            EntityId::validate_checksum_for_ledger_id(self.shard, self.realm, self.num, &self.checksum, ledger_id)
         }
     }
 }

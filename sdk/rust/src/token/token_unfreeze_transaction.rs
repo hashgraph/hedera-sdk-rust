@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    TokenId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, TokenId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Unfreezes transfers of the specified token for the account. Must be signed by the Token's freezeKey.
 ///
@@ -78,6 +74,11 @@ impl TokenUnfreezeTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenUnfreezeTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

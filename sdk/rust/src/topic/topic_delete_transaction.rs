@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    TopicId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, TopicId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Delete a topic.
 ///
@@ -64,6 +60,10 @@ impl TopicDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for TopicDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.topic_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

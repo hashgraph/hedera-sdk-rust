@@ -33,13 +33,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Key,
-    TokenId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, Key, LedgerId, TokenId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// At consensus, updates an already created token to the given values.
 ///
@@ -247,6 +242,12 @@ impl TokenUpdateTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenUpdateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.treasury_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

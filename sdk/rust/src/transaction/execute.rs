@@ -36,19 +36,7 @@ use crate::execute::Execute;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
-use crate::{
-    AccountId,
-    Client,
-    Error,
-    Hbar,
-    HbarUnit,
-    PublicKey,
-    ToProtobuf,
-    Transaction,
-    TransactionHash,
-    TransactionId,
-    TransactionResponse,
-};
+use crate::{AccountId, Client, Error, Hbar, HbarUnit, LedgerId, PublicKey, ToProtobuf, Transaction, TransactionHash, TransactionId, TransactionResponse};
 
 #[derive(Debug)]
 struct SignaturePair {
@@ -86,7 +74,7 @@ pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransa
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
 
-    // TODO: validate_checksums(), default implementation does nothing
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 
     async fn execute(
         &self,
@@ -205,6 +193,10 @@ where
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response.node_transaction_precheck_code)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.body.data.validate_checksums_for_ledger_id(ledger_id)
     }
 }
 

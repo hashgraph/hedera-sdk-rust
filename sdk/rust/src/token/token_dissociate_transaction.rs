@@ -29,12 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    TokenId,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, TokenId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Dissociates the provided account with the provided tokens. Must be signed by the provided
 /// Account's key.
@@ -83,6 +79,14 @@ impl TokenDissociateTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenDissociateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        for token_id in &self.token_ids {
+            token_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

@@ -28,11 +28,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    FileId,
-    ToProtobuf,
-    Transaction,
-};
+use crate::{Error, FileId, LedgerId, ToProtobuf, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Submit an Ethereum transaction.
 pub type EthereumTransaction = Transaction<EthereumTransactionData>;
@@ -89,6 +86,10 @@ impl EthereumTransaction {
 
 #[async_trait]
 impl TransactionExecute for EthereumTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.call_data_file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     // noinspection DuplicatedCode
     async fn execute(
         &self,

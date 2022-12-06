@@ -30,13 +30,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    FileId,
-    Key,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, FileId, Key, LedgerId, Transaction, TransactionId};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Modify the metadata and/or the contents of a file.
 ///
@@ -115,6 +110,10 @@ impl FileUpdateTransaction {
 
 #[async_trait]
 impl TransactionExecute for FileUpdateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

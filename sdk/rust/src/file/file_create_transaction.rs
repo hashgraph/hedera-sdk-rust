@@ -33,12 +33,7 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Key,
-    Transaction,
-    TransactionId,
-};
+use crate::{AccountId, Error, Key, LedgerId, Transaction, TransactionId};
 
 /// Create a new file, containing the given contents.
 pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;
@@ -116,6 +111,10 @@ impl FileCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for FileCreateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

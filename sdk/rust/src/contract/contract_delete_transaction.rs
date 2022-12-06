@@ -29,11 +29,8 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    ContractId,
-    Transaction,
-};
+use crate::{AccountId, ContractId, Error, LedgerId, Transaction};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
 /// a designated receiver.
@@ -74,6 +71,12 @@ impl ContractDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for ContractDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.transfer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.transfer_contract_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

@@ -40,6 +40,8 @@ use crate::{
 // TODO: test, test, and test
 // TODO: investigate failure scenarios
 
+// TODO: validate checksums after PR is merged
+
 /// Query a stream of Hedera Consensus Service (HCS)
 /// messages for an HCS Topic via a specific (possibly open-ended) time range.
 pub type TopicMessageQuery = MirrorQuery<TopicMessageQueryData>;

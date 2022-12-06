@@ -28,12 +28,8 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{
-    Query,
-    ToProtobuf,
-    TopicId,
-    TopicInfo,
-};
+use crate::{Query, ToProtobuf, TopicId, TopicInfo, LedgerId, Error};
+use crate::entity_id::AutoValidateChecksum;
 
 /// Retrieve the latest state of a topic.
 pub type TopicInfoQuery = Query<TopicInfoQueryData>;
@@ -75,6 +71,10 @@ impl ToQueryProtobuf for TopicInfoQueryData {
 #[async_trait]
 impl QueryExecute for TopicInfoQueryData {
     type Response = TopicInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.topic_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,
