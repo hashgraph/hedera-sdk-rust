@@ -192,7 +192,7 @@ where
 
     /// Sign the transaction.
     pub fn sign_with<F>(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
-        self.sign_signer(AnySigner::Arbitrary(public_key, signer))
+        self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), signer))
     }
 
     pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {

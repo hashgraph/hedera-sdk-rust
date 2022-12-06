@@ -92,7 +92,7 @@ pub unsafe extern "C" fn hedera_nft_id_from_bytes(
     Error::Ok
 }
 
-/// Serialize the passed NftId as bytes
+/// Serialize the passed `NftId` as bytes
 #[no_mangle]
 pub unsafe extern "C" fn hedera_nft_id_to_bytes(
     token_id_shard: u64,
