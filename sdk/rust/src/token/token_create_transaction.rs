@@ -28,7 +28,7 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::protobuf::ToProtobuf;
-use crate::token::custom_fees::CustomFee;
+use crate::token::custom_fees::AnyCustomFee;
 use crate::token::token_supply_type::TokenSupplyType;
 use crate::token::token_type::TokenType;
 use crate::transaction::{
@@ -140,7 +140,7 @@ pub struct TokenCreateTransactionData {
     fee_schedule_key: Option<Key>,
 
     /// The custom fees to be assessed during a transfer.
-    custom_fees: Vec<CustomFee>,
+    custom_fees: Vec<AnyCustomFee>,
 
     /// The key which can pause and unpause the token.
     pause_key: Option<Key>,
@@ -298,7 +298,10 @@ impl TokenCreateTransaction {
     }
 
     /// Sets the custom fees to be assessed during a transfer.
-    pub fn custom_fees(&mut self, custom_fees: impl IntoIterator<Item = CustomFee>) -> &mut Self {
+    pub fn custom_fees(
+        &mut self,
+        custom_fees: impl IntoIterator<Item = AnyCustomFee>,
+    ) -> &mut Self {
         self.body.data.custom_fees = custom_fees.into_iter().collect();
         self
     }
@@ -373,8 +376,7 @@ mod tests {
 
         use crate::token::custom_fees::{
             CustomFee,
-            Fee,
-            FixedFee,
+            FixedFeeData,
         };
         use crate::token::token_supply_type::TokenSupplyType;
         use crate::token::token_type::TokenType;
@@ -431,13 +433,10 @@ mod tests {
   },
   "customFees": [
     {
-      "fee": {
-        "FixedFee": {
-          "amount": 1,
-          "denominating_token_id": "0.0.7"
-        }
-      },
-      "fee_collector_account_id": "0.0.8"
+      "$type": "fixed",
+      "amount": 1,
+      "denominatingTokenId": "0.0.7",
+      "feeCollectorAccountId": "0.0.8"
     }
   ],
   "pauseKey": {
@@ -485,11 +484,8 @@ mod tests {
                 .max_supply(1_000_000_000)
                 .fee_schedule_key(PublicKey::from_str(FEE_SCHEDULE_KEY)?)
                 .custom_fees([CustomFee {
-                    fee: Fee::FixedFee(FixedFee {
-                        amount: 1,
-                        denominating_token_id: TokenId::from(7),
-                    }),
-                    fee_collector_account_id: AccountId::from(8),
+                    fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
+                    fee_collector_account_id: Some(AccountId::from(8)),
                 }])
                 .pause_key(PublicKey::from_str(PAUSE_KEY)?);
 
@@ -553,11 +549,8 @@ mod tests {
             assert_eq!(
                 data.custom_fees,
                 [CustomFee {
-                    fee: Fee::FixedFee(FixedFee {
-                        amount: 1,
-                        denominating_token_id: TokenId::from(7)
-                    }),
-                    fee_collector_account_id: AccountId::from(8)
+                    fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
+                    fee_collector_account_id: Some(AccountId::from(8)),
                 }]
             );
 

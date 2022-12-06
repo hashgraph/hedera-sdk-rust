@@ -2,11 +2,12 @@ use fraction::Fraction;
 use hedera_proto::services;
 
 use crate::token::custom_fees::{
+    AnyCustomFee,
     CustomFee,
     Fee,
-    FixedFee,
-    FractionalFee,
-    RoyaltyFee,
+    FixedFeeData,
+    FractionalFeeData,
+    RoyaltyFeeData,
 };
 use crate::{
     AccountId,
@@ -17,16 +18,16 @@ use crate::{
 
 #[test]
 fn custom_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
-    let custom_fee = CustomFee {
-        fee_collector_account_id: AccountId::from(1),
-        fee: Fee::FixedFee(FixedFee { denominating_token_id: TokenId::from(2), amount: 1000 }),
+    let custom_fee = AnyCustomFee {
+        fee_collector_account_id: Some(AccountId::from(1)),
+        fee: FixedFeeData { denominating_token_id: TokenId::from(2), amount: 1000 }.into(),
     };
 
     let custom_fee_proto = custom_fee.to_protobuf();
 
     assert_eq!(Some(custom_fee.fee.to_protobuf()), custom_fee_proto.fee);
     assert_eq!(
-        Some(custom_fee.fee_collector_account_id.to_protobuf()),
+        custom_fee.fee_collector_account_id.to_protobuf(),
         custom_fee_proto.fee_collector_account_id
     );
 
@@ -47,7 +48,7 @@ fn custom_fixed_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 
     assert_eq!(Some(custom_fee.fee.to_protobuf()), custom_fee_proto.fee);
     assert_eq!(
-        Some(custom_fee.fee_collector_account_id.to_protobuf()),
+        custom_fee.fee_collector_account_id.to_protobuf(),
         custom_fee_proto.fee_collector_account_id
     );
 
@@ -57,7 +58,7 @@ fn custom_fixed_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 #[test]
 fn fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let amount = 1000;
-    let fee = Fee::FixedFee(FixedFee { amount, denominating_token_id: TokenId::from(1) });
+    let fee = Fee::Fixed(FixedFeeData { amount, denominating_token_id: TokenId::from(1) });
 
     let fee_proto = fee.to_protobuf();
 
@@ -82,7 +83,7 @@ fn fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
     let custom_fee = Fee::from_protobuf(fee_proto).unwrap();
 
     let fixed_fee = match custom_fee {
-        Fee::FixedFee(fixed_fee) => Some(fixed_fee),
+        Fee::Fixed(fixed_fee) => Some(fixed_fee),
         _ => None,
     };
 
@@ -94,7 +95,7 @@ fn fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 #[test]
 fn fixed_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let amount = 1000;
-    let fixed_fee = FixedFee { amount, denominating_token_id: TokenId::from(2) };
+    let fixed_fee = FixedFeeData { amount, denominating_token_id: TokenId::from(2) };
 
     let fixed_fee_proto = fixed_fee.to_protobuf();
 
@@ -106,12 +107,10 @@ fn fixed_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
 #[test]
 fn fixed_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
     let amount = 1000;
-    let fixed_fee_proto = services::FixedFee {
-        amount,
-        denominating_token_id: Some(TokenId::from(2).to_protobuf()),
-    };
+    let fixed_fee_proto =
+        services::FixedFee { amount, denominating_token_id: Some(TokenId::from(2).to_protobuf()) };
 
-    let fixed_fee = FixedFee::from_protobuf(fixed_fee_proto).unwrap();
+    let fixed_fee = FixedFeeData::from_protobuf(fixed_fee_proto).unwrap();
 
     assert_eq!(fixed_fee.amount, amount);
 
@@ -124,8 +123,9 @@ fn fractional_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let maximum_amount = 1000;
     let net_of_transfers = true;
 
-    let fractional_fee = FractionalFee {
-        fractional_amount: (1, 2).into(),
+    let fractional_fee = FractionalFeeData {
+        denominator: 1,
+        numerator: 2,
         minimum_amount,
         maximum_amount,
         net_of_transfers,
@@ -153,7 +153,7 @@ fn fractional_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
         net_of_transfers,
     };
 
-    let fractional_fee = FractionalFee::from_protobuf(fractional_fee_protobuf).unwrap();
+    let fractional_fee = FractionalFeeData::from_protobuf(fractional_fee_protobuf).unwrap();
 
     assert_eq!(fractional_fee.minimum_amount, minimum_amount);
     assert_eq!(fractional_fee.maximum_amount, maximum_amount);
@@ -164,11 +164,11 @@ fn fractional_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 
 #[test]
 fn royalty_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
-    let fallback_fee = FixedFee { denominating_token_id: TokenId::from(1), amount: 1000 };
+    let fallback_fee = FixedFeeData { denominating_token_id: TokenId::from(1), amount: 1000 };
     let exchange_value_fraction: Fraction = (1, 2).into();
 
     let royalty_fee =
-        RoyaltyFee { fallback_fee: fallback_fee.clone(), exchange_value_fraction };
+        RoyaltyFeeData { fallback_fee: Some(fallback_fee.clone()), numerator: 1, denominator: 2 };
 
     let royalty_fee_proto = royalty_fee.to_protobuf();
 
@@ -184,10 +184,8 @@ fn royalty_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
     let numerator = 1;
     let denominator = 2;
 
-    let fallback_fee = services::FixedFee {
-        denominating_token_id: Some(TokenId::from(1).to_protobuf()),
-        amount,
-    };
+    let fallback_fee =
+        services::FixedFee { denominating_token_id: Some(TokenId::from(1).to_protobuf()), amount };
     let exchange_value_fraction = services::Fraction { numerator, denominator };
 
     let royalty_fee_proto = services::RoyaltyFee {
@@ -195,10 +193,11 @@ fn royalty_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
         exchange_value_fraction: Some(exchange_value_fraction),
     };
 
-    let royalty_fee = RoyaltyFee::from_protobuf(royalty_fee_proto).unwrap();
+    let royalty_fee = RoyaltyFeeData::from_protobuf(royalty_fee_proto).unwrap();
 
-    assert_eq!(royalty_fee.fallback_fee.amount, amount);
-    assert_eq!(royalty_fee.exchange_value_fraction, Fraction::from((numerator, denominator)));
+    assert_eq!(royalty_fee.fallback_fee.map(|it| it.amount), Some(amount));
+    assert_eq!(royalty_fee.denominator, denominator as u64);
+    assert_eq!(royalty_fee.numerator, numerator as u64);
 
     Ok(())
 }

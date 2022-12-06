@@ -32,39 +32,98 @@ use crate::{
 #[cfg(test)]
 mod tests;
 
+/// Any `CustomFee`.
+///
+/// See the documentation for [`CustomFee`] and [`AnyCustomFeeData`].
+pub type AnyCustomFee = CustomFee<Fee>;
+
+/// A `FixedCustomFee`.
+///
+/// See the documentation for [`CustomFee`] and [`FixedFeeData`].
+pub type FixedFee = CustomFee<FixedFeeData>;
+
+/// A fractional `CustomFee`.
+///
+/// See the documentation for [`CustomFee`] and [`FractionalFeeData`].
+pub type FractionalFee = CustomFee<FractionalFeeData>;
+
+/// A royalty `CustomFee`.
+///
+/// See the documentation for [`CustomFee`] and [`RoyaltyFeeData`].
+pub type RoyaltyFee = CustomFee<RoyaltyFeeData>;
+
 /// A transfer fee to assess during a `CryptoTransfer` that transfers units of the token to which the
 /// fee is attached. A custom fee may be either fixed or fractional, and must specify a fee collector
 /// account to receive the assessed fees. Only positive fees may be assessed.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-pub struct CustomFee {
-    /// The fee to be charged.
+pub struct CustomFee<Fee> {
+    /// The fee to be charged
     #[cfg_attr(feature = "ffi", serde(flatten))]
     pub fee: Fee,
 
-    /// The account to receive the custom fee
-    pub fee_collector_account_id: AccountId,
+    /// The account to receive the custom fee.
+    pub fee_collector_account_id: Option<AccountId>,
 }
 
-impl FromProtobuf<services::CustomFee> for CustomFee {
-    fn from_protobuf(pb: services::CustomFee) -> crate::Result<Self> {
-        let fee = Fee::from_protobuf(pb_getf!(pb, fee)?)?;
-        let fee_collector_account_id =
-            AccountId::from_protobuf(pb_getf!(pb, fee_collector_account_id)?)?;
+impl AnyCustomFee {
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
+impl FromProtobuf<services::CustomFee> for AnyCustomFee {
+    fn from_protobuf(pb: services::CustomFee) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        let fee_collector_account_id = Option::from_protobuf(pb.fee_collector_account_id)?;
+        let fee = pb_getf!(pb, fee)?;
+
+        let fee: Fee = match fee {
+            services::custom_fee::Fee::FixedFee(pb) => FixedFeeData::from_protobuf(pb)?.into(),
+            services::custom_fee::Fee::FractionalFee(pb) => {
+                FractionalFeeData::from_protobuf(pb)?.into()
+            }
+
+            services::custom_fee::Fee::RoyaltyFee(pb) => RoyaltyFeeData::from_protobuf(pb)?.into(),
+        };
 
         Ok(Self { fee, fee_collector_account_id })
     }
 }
 
-impl ToProtobuf for CustomFee {
+impl ToProtobuf for AnyCustomFee {
     type Protobuf = services::CustomFee;
 
     fn to_protobuf(&self) -> Self::Protobuf {
-        Self::Protobuf {
-            fee: Some(self.fee.to_protobuf()),
-            fee_collector_account_id: Some(self.fee_collector_account_id.to_protobuf()),
+        services::CustomFee {
+            fee_collector_account_id: self.fee_collector_account_id.to_protobuf(),
+            fee: Some(self.fee.to_protobuf().into()),
         }
+    }
+}
+
+impl From<FixedFee> for AnyCustomFee {
+    fn from(v: FixedFee) -> Self {
+        Self { fee: v.fee.into(), fee_collector_account_id: v.fee_collector_account_id }
+    }
+}
+
+impl From<FractionalFee> for AnyCustomFee {
+    fn from(v: FractionalFee) -> Self {
+        Self { fee: v.fee.into(), fee_collector_account_id: v.fee_collector_account_id }
+    }
+}
+
+impl From<RoyaltyFee> for AnyCustomFee {
+    fn from(v: RoyaltyFee) -> Self {
+        Self { fee: v.fee.into(), fee_collector_account_id: v.fee_collector_account_id }
     }
 }
 
@@ -73,28 +132,22 @@ impl ToProtobuf for CustomFee {
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(tag = "$type", rename_all = "camelCase"))]
 pub enum Fee {
-    /// Fixed fee to be charged.
-    FixedFee(FixedFee),
-
-    /// Fractional fee to be charged.
-    FractionalFee(FractionalFee),
-
-    /// Royalty fee to be charged.
-    RoyaltyFee(RoyaltyFee),
+    Fixed(FixedFeeData),
+    Fractional(FractionalFeeData),
+    Royalty(RoyaltyFeeData),
 }
 
 impl FromProtobuf<services::custom_fee::Fee> for Fee {
-    fn from_protobuf(pb: services::custom_fee::Fee) -> crate::Result<Self> {
+    fn from_protobuf(pb: services::custom_fee::Fee) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
         use services::custom_fee::Fee as ProtoFee;
 
         match pb {
-            ProtoFee::FixedFee(fixed_fee) => Ok(Fee::FixedFee(FixedFee::from_protobuf(fixed_fee)?)),
-            ProtoFee::FractionalFee(fractional_fee) => {
-                Ok(Fee::FractionalFee(FractionalFee::from_protobuf(fractional_fee)?))
-            }
-            ProtoFee::RoyaltyFee(royalty_fee) => {
-                Ok(Fee::RoyaltyFee(RoyaltyFee::from_protobuf(royalty_fee)?))
-            }
+            ProtoFee::FixedFee(it) => Ok(FixedFeeData::from_protobuf(it)?.into()),
+            ProtoFee::FractionalFee(it) => Ok(FractionalFeeData::from_protobuf(it)?.into()),
+            ProtoFee::RoyaltyFee(it) => Ok(RoyaltyFeeData::from_protobuf(it)?.into()),
         }
     }
 }
@@ -103,31 +156,30 @@ impl ToProtobuf for Fee {
     type Protobuf = services::custom_fee::Fee;
 
     fn to_protobuf(&self) -> Self::Protobuf {
+        use services::custom_fee::Fee as ProtoFee;
         match self {
-            Self::FixedFee(fixed_fee) => Self::Protobuf::FixedFee(fixed_fee.to_protobuf()),
-            Self::FractionalFee(fractional_fee) => {
-                Self::Protobuf::FractionalFee(fractional_fee.to_protobuf())
-            }
-            Self::RoyaltyFee(royalty_fee) => Self::Protobuf::RoyaltyFee(royalty_fee.to_protobuf()),
+            Self::Fixed(it) => ProtoFee::FixedFee(it.to_protobuf()),
+            Self::Fractional(it) => ProtoFee::FractionalFee(it.to_protobuf()),
+            Self::Royalty(it) => ProtoFee::RoyaltyFee(it.to_protobuf()),
         }
     }
 }
 
-impl From<FixedFee> for Fee {
-    fn from(fixed_fee: FixedFee) -> Self {
-        Self::FixedFee(fixed_fee)
+impl From<FixedFeeData> for Fee {
+    fn from(v: FixedFeeData) -> Self {
+        Self::Fixed(v)
     }
 }
 
-impl From<RoyaltyFee> for Fee {
-    fn from(royalty_fee: RoyaltyFee) -> Self {
-        Self::RoyaltyFee(royalty_fee)
+impl From<FractionalFeeData> for Fee {
+    fn from(v: FractionalFeeData) -> Self {
+        Self::Fractional(v)
     }
 }
 
-impl From<FractionalFee> for Fee {
-    fn from(fractional_fee: FractionalFee) -> Self {
-        Self::FractionalFee(fractional_fee)
+impl From<RoyaltyFeeData> for Fee {
+    fn from(v: RoyaltyFeeData) -> Self {
+        Self::Royalty(v)
     }
 }
 
@@ -136,7 +188,7 @@ impl From<FractionalFee> for Fee {
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub struct FixedFee {
+pub struct FixedFeeData {
     /// The number of units to assess as a fee
     pub amount: i64,
 
@@ -145,7 +197,7 @@ pub struct FixedFee {
     pub denominating_token_id: TokenId,
 }
 
-impl FixedFee {
+impl FixedFeeData {
     #[must_use]
     pub fn from_hbar(amount: Hbar) -> Self {
         Self {
@@ -161,7 +213,7 @@ impl FixedFee {
     }
 }
 
-impl FromProtobuf<services::FixedFee> for FixedFee {
+impl FromProtobuf<services::FixedFee> for FixedFeeData {
     fn from_protobuf(pb: services::FixedFee) -> crate::Result<Self> {
         Ok(Self {
             amount: pb.amount,
@@ -170,7 +222,7 @@ impl FromProtobuf<services::FixedFee> for FixedFee {
     }
 }
 
-impl ToProtobuf for FixedFee {
+impl ToProtobuf for FixedFeeData {
     type Protobuf = services::FixedFee;
 
     fn to_protobuf(&self) -> Self::Protobuf {
@@ -187,9 +239,12 @@ impl ToProtobuf for FixedFee {
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub struct FractionalFee {
-    /// The fraction of the transferred units to assess as a fee
-    pub fractional_amount: Fraction,
+pub struct FractionalFeeData {
+    /// The denominator of the fraction of transferred units to assess as a fee
+    pub denominator: u64,
+
+    /// The numerator of the fraction of transferred units to assess as a fee
+    pub numerator: u64,
 
     /// The minimum amount to assess
     pub minimum_amount: i64,
@@ -203,23 +258,25 @@ pub struct FractionalFee {
     pub net_of_transfers: bool,
 }
 
-impl FromProtobuf<services::FractionalFee> for FractionalFee {
+impl FromProtobuf<services::FractionalFee> for FractionalFeeData {
     fn from_protobuf(pb: services::FractionalFee) -> crate::Result<Self> {
+        let amount = pb.fractional_amount.map(Fraction::from).unwrap_or_default();
         Ok(Self {
+            denominator: *amount.denom().unwrap(),
+            numerator: *amount.numer().unwrap(),
             net_of_transfers: pb.net_of_transfers,
             maximum_amount: pb.maximum_amount,
             minimum_amount: pb.minimum_amount,
-            fractional_amount: pb.fractional_amount.map(Into::into).unwrap_or_default(),
         })
     }
 }
 
-impl ToProtobuf for FractionalFee {
+impl ToProtobuf for FractionalFeeData {
     type Protobuf = services::FractionalFee;
 
     fn to_protobuf(&self) -> Self::Protobuf {
         Self::Protobuf {
-            fractional_amount: Some(self.fractional_amount.into()),
+            fractional_amount: Some(Fraction::new(self.numerator, self.denominator).into()),
             minimum_amount: self.minimum_amount,
             maximum_amount: self.maximum_amount,
             net_of_transfers: self.net_of_transfers,
@@ -235,31 +292,40 @@ impl ToProtobuf for FractionalFee {
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub struct RoyaltyFee {
-    /// The fraction of fungible value exchanged for an NFT to collect as royalty
-    pub exchange_value_fraction: Fraction,
+pub struct RoyaltyFeeData {
+    /// The denominator of the fraction of fungible value exchanged for an NFT to collect as royalty
+    pub denominator: u64,
+
+    /// The numerator of the fraction of fungible value exchanged for an NFT to collect as royalty
+    pub numerator: u64,
 
     /// If present, the fixed fee to assess to the NFT receiver when no fungible value is exchanged
     /// with the sender
-    pub fallback_fee: FixedFee,
+    pub fallback_fee: Option<FixedFeeData>,
 }
 
-impl FromProtobuf<services::RoyaltyFee> for RoyaltyFee {
+impl FromProtobuf<services::RoyaltyFee> for RoyaltyFeeData {
     fn from_protobuf(pb: services::RoyaltyFee) -> crate::Result<Self> {
+        let amount = pb.exchange_value_fraction.unwrap_or_default();
+
         Ok(Self {
-            fallback_fee: FixedFee::from_protobuf(pb_getf!(pb, fallback_fee)?)?,
-            exchange_value_fraction: pb.exchange_value_fraction.map(Into::into).unwrap_or_default(),
+            denominator: amount.denominator as u64,
+            numerator: amount.numerator as u64,
+            fallback_fee: Option::from_protobuf(pb.fallback_fee)?,
         })
     }
 }
 
-impl ToProtobuf for RoyaltyFee {
+impl ToProtobuf for RoyaltyFeeData {
     type Protobuf = services::RoyaltyFee;
 
     fn to_protobuf(&self) -> Self::Protobuf {
         Self::Protobuf {
-            fallback_fee: Some(self.fallback_fee.to_protobuf()),
-            exchange_value_fraction: Some(self.exchange_value_fraction.into()),
+            fallback_fee: self.fallback_fee.to_protobuf(),
+            exchange_value_fraction: Some(services::Fraction {
+                numerator: self.numerator as i64,
+                denominator: self.denominator as i64,
+            }),
         }
     }
 }
