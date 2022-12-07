@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::os::raw::c_char;
-use std::str::FromStr;
 use std::{
     ptr,
     slice,
@@ -28,7 +26,6 @@ use std::{
 use libc::size_t;
 
 use crate::ffi::error::Error;
-use crate::ffi::util::cstr_from_ptr;
 use crate::{
     EntityId,
     FileId,
@@ -36,30 +33,6 @@ use crate::{
     TokenId,
     TopicId,
 };
-
-/// Parse a Hedera `EntityId` from the passed string.
-#[no_mangle]
-pub extern "C" fn hedera_entity_id_from_string(
-    s: *const c_char,
-    id_shard: *mut u64,
-    id_realm: *mut u64,
-    id_num: *mut u64,
-) -> Error {
-    assert!(!id_shard.is_null());
-    assert!(!id_realm.is_null());
-    assert!(!id_num.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(EntityId::from_str(&s));
-
-    unsafe {
-        ptr::write(id_shard, parsed.shard);
-        ptr::write(id_realm, parsed.realm);
-        ptr::write(id_num, parsed.num);
-    }
-
-    Error::Ok
-}
 
 // note(sr): This abstraction is worthwhile because it reduces the amount of duplicated non-trival unsafe code.
 // generics (on `FromProtobuf`/`ToProtobuf`) make it very hard to do this without this hack.

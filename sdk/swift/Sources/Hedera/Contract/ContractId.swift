@@ -2,34 +2,70 @@ import CHedera
 import Foundation
 
 /// The unique identifier for a smart contract on Hedera.
-public final class ContractId: EntityId {
+public struct ContractId: EntityId {
+    public let shard: UInt64
+    public let realm: UInt64
+    public let num: UInt64
     public let evmAddress: Data?
 
-    public required init(shard: UInt64, realm: UInt64, num: UInt64) {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
         evmAddress = nil
-        super.init(shard: shard, realm: realm, num: num)
     }
 
-    private convenience init(parsing description: String) throws {
-        var hedera = HederaContractId()
-
-        try HError.throwing(error: hedera_contract_id_from_string(description, &hedera))
-
-        self.init(unsafeFromCHedera: hedera)
+    private init(shard: UInt64, realm: UInt64, evmAddress: Data) {
+        assert(evmAddress.count == 20)
+        self.shard = shard
+        self.realm = realm
+        num = 0
+        self.evmAddress = evmAddress
     }
 
-    public required convenience init?(_ description: String) {
-        try? self.init(parsing: description)
+    public init<S: StringProtocol>(parsing description: S) throws {
+        switch try PartialEntityId<S.SubSequence>(parsing: description) {
+        case .short(let num):
+            self.init(num: num)
+
+        case .long(let shard, let realm, let last):
+            if let num = UInt64(last) {
+                self.init(shard: shard, realm: realm, num: num)
+            } else {
+                // might have `evmAddress`
+                guard let evmAddress = Data(hexEncoded: last.stripPrefix("0x") ?? last) else {
+                    throw HError(
+                        kind: .basicParse,
+                        description:
+                            "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
+                }
+
+                if evmAddress.count != 20 {
+                    throw HError(
+                        kind: .basicParse,
+                        description: "expected `20` byte evm address, got `\(evmAddress.count)` bytes")
+                }
+
+                self.init(shard: shard, realm: realm, evmAddress: evmAddress)
+            }
+
+        case .other(let description):
+            throw HError(
+                kind: .basicParse,
+                description: "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
+        }
     }
 
     internal init(unsafeFromCHedera hedera: HederaContractId) {
-        if let evmAddress = hedera.evm_address {
-            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: Data.unsafeCHederaBytesFree)
+        shard = hedera.shard
+        realm = hedera.realm
 
-            super.init(shard: hedera.shard, realm: hedera.realm, num: 0)
+        if let evmAddress = hedera.evm_address {
+            self.num = 0
+            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: Data.unsafeCHederaBytesFree)
         } else {
-            evmAddress = nil
-            super.init(shard: hedera.shard, realm: hedera.realm, num: hedera.num)
+            self.num = hedera.num
+            self.evmAddress = nil
         }
     }
 
@@ -59,10 +95,6 @@ public final class ContractId: EntityId {
 
             return Self(unsafeFromCHedera: hedera)
         }
-    }
-
-    public static func fromString(_ description: String) throws -> Self {
-        try Self(parsing: description)
     }
 
     public static func fromEvmAddress(_ shard: UInt64, _ realm: UInt64, _ address: String) throws -> Self {
@@ -100,11 +132,11 @@ public final class ContractId: EntityId {
         }
     }
 
-    public override var description: String {
+    public var description: String {
         if let evmAddress = evmAddress {
             return "\(shard).\(realm).\(evmAddress)"
         } else {
-            return super.description
+            return defaultDescription
         }
     }
 }

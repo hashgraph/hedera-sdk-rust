@@ -21,48 +21,73 @@
 import CHedera
 import Foundation
 
-public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Equatable, Codable,
+public protocol EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Codable,
     ExpressibleByStringLiteral, Hashable
+where
+    Self.IntegerLiteralType == UInt64,
+    Self.StringLiteralType == String
 {
     /// The shard number (non-negative).
-    public let shard: UInt64
+    var shard: UInt64 { get }
 
     /// The realm number (non-negative).
-    public let realm: UInt64
+    var realm: UInt64 { get }
 
     /// The entity (account, file, contract, token, topic, or schedule) number (non-negative).
-    public let num: UInt64
+    var num: UInt64 { get }
 
-    public required init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
-        self.shard = shard
-        self.realm = realm
-        self.num = num
+    /// Create an entity ID from the given entity number.
+    ///
+    /// - Parameters:
+    ///   - num: the number for the new entity ID.
+    init(num: UInt64)
+
+    init(shard: UInt64, realm: UInt64, num: UInt64)
+
+    /// Parse an entity ID from a string.
+    init<S: StringProtocol>(parsing description: S) throws
+
+    /// Parse an entity ID from a string.
+    static func fromString<S: StringProtocol>(_ description: S) throws -> Self
+
+    /// Parse an entity ID from the given `bytes`.
+    static func fromBytes(_ bytes: Data) throws -> Self
+
+    /// Convert this entity ID to bytes.
+    func toBytes() -> Data
+}
+
+extension EntityId {
+    public init(integerLiteral value: IntegerLiteralType) {
+        self.init(num: value)
     }
 
-    public required convenience init?(_ description: String) {
-        var shard: UInt64 = 0
-        var realm: UInt64 = 0
-        var num: UInt64 = 0
-
-        let err = hedera_entity_id_from_string(description, &shard, &realm, &num)
-
-        if err != HEDERA_ERROR_OK {
-            return nil
-        }
-
-        self.init(shard: shard, realm: realm, num: num)
+    public init(num: UInt64) {
+        self.init(shard: 0, realm: 0, num: num)
     }
 
-    public required convenience init(integerLiteral value: IntegerLiteralType) {
-        self.init(num: UInt64(value))
+    public init<S: StringProtocol>(parsing description: S) throws {
+        self = try PartialEntityId<S.SubSequence>(parsing: description).intoNum()
     }
 
-    public required convenience init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+    public init?(_ description: String) {
+        try? self.init(parsing: description)
     }
 
-    public required convenience init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
+    public init(stringLiteral value: StringLiteralType) {
+        // Force try here because this is a logic error.
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
+    }
+
+    public static func fromString<S: StringProtocol>(_ description: S) throws -> Self {
+        try Self(parsing: description)
+    }
+
+    public var description: String { defaultDescription }
+
+    public init(from decoder: Decoder) throws {
+        try self.init(parsing: decoder.singleValueContainer().decode(String.self))
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -71,28 +96,75 @@ public class EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, E
         try container.encode(String(describing: self))
     }
 
-    public var description: String {
+    internal var defaultDescription: String {
         "\(shard).\(realm).\(num)"
     }
+}
 
-    public static func == (lhs: EntityId, rhs: EntityId) -> Bool {
-        lhs.num == rhs.num && lhs.shard == rhs.shard && lhs.realm == rhs.realm
+internal enum PartialEntityId<S> {
+    // entity ID in the form `<num>`
+    case short(num: UInt64)
+    // entity ID in the form `<shard>.<realm>.<last>`
+    case long(shard: UInt64, realm: UInt64, last: S)
+    // entity ID in some other format (for example `0x<evmAddress>`)
+    case other(S)
+
+    internal init<D: StringProtocol>(parsing description: D) throws where S == D.SubSequence {
+        switch description.splitOnce(on: ".") {
+        case .some((let shard, let rest)):
+            // `shard.realm.num` format
+            guard let (realm, last) = rest.splitOnce(on: ".") else {
+                throw HError(
+                    kind: .basicParse, description: "expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
+            }
+
+            self = .long(
+                shard: try UInt64(parsing: shard),
+                realm: try UInt64(parsing: realm),
+                last: last
+            )
+
+        case .none:
+            if let num = UInt64(description) {
+                self = .short(num: num)
+            } else {
+                self = .other(description[...])
+            }
+        }
     }
 
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(shard)
-        hasher.combine(realm)
-        hasher.combine(num)
+    internal func intoNum<E: EntityId>() throws -> E where S: StringProtocol {
+        switch self {
+        case .short(let num):
+            return E(num: num)
+        case .long(let shard, let realm, last: let num):
+            return E(shard: shard, realm: realm, num: try UInt64(parsing: num))
+        case .other(let description):
+            throw HError(
+                kind: .basicParse, description: "expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
+        }
     }
 }
 
 // fixme(sr): How do DRY?
 
 /// The unique identifier for a file on Hedera.
-public final class FileId: EntityId {
-    public static let addressBook: FileId = FileId(num: 102)
-    public static let feeSchedule: FileId = FileId(num: 111)
-    public static let exchangeRates: FileId = FileId(num: 112)
+public struct FileId: EntityId {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
+    }
+
+    public let shard: UInt64
+    public let realm: UInt64
+
+    /// The file number.
+    public let num: UInt64
+
+    public static let addressBook: FileId = 102
+    public static let feeSchedule: FileId = 111
+    public static let exchangeRates: FileId = 112
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer in
@@ -116,7 +188,19 @@ public final class FileId: EntityId {
 }
 
 /// The unique identifier for a topic on Hedera.
-public final class TopicId: EntityId {
+public struct TopicId: EntityId {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
+    }
+
+    public let shard: UInt64
+    public let realm: UInt64
+
+    /// The topic number.
+    public let num: UInt64
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer in
             var shard: UInt64 = 0
@@ -139,7 +223,19 @@ public final class TopicId: EntityId {
 }
 
 /// The unique identifier for a token on Hedera.
-public final class TokenId: EntityId {
+public struct TokenId: EntityId {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
+    }
+
+    public let shard: UInt64
+    public let realm: UInt64
+
+    /// The token number.
+    public let num: UInt64
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer in
             var shard: UInt64 = 0
@@ -162,7 +258,19 @@ public final class TokenId: EntityId {
 }
 
 /// The unique identifier for a schedule on Hedera.
-public final class ScheduleId: EntityId {
+public struct ScheduleId: EntityId {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
+    }
+
+    public let shard: UInt64
+    public let realm: UInt64
+
+    /// The token number.
+    public let num: UInt64
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try bytes.withUnsafeTypedBytes { pointer in
             var shard: UInt64 = 0
