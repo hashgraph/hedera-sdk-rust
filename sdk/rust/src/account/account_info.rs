@@ -53,6 +53,17 @@ pub struct AccountInfo {
     /// transactions for it will fail except the transaction to extend its expiration date.
     pub is_deleted: bool,
 
+    /// The Account ID of the account to which this is proxy staked.
+    ///
+    /// If `proxy_account_id` is `None`, an invalid account, or an account that isn't a node,
+    /// then this account is automatically proxy staked to a node chosen by the network,
+    /// but without earning payments.
+    ///
+    /// If the `proxy_account_id` account refuses to accept proxy staking, or if it is not currently
+    /// running a node, then it will behave as if `proxy_account_id` is `None`.
+    #[deprecated]
+    pub proxy_account_id: Option<AccountId>,
+
     /// The total number of hbars proxy staked to this account.
     pub proxy_received: Hbar,
 
@@ -62,6 +73,16 @@ pub struct AccountInfo {
 
     /// Current balance of the referenced account.
     pub balance: Hbar,
+
+    /// The threshold amount for which an account record is created (and this account
+    /// charged for them) for any send/withdraw transaction.
+    #[deprecated]
+    pub send_record_threshold: Hbar,
+
+    /// The threshold amount for which an account record is created
+    /// (and this account charged for them) for any transaction above this amount.
+    #[deprecated]
+    pub receive_record_threshold: Hbar,
 
     /// If true, no transaction can transfer to this account unless signed by
     /// this account's key.
@@ -116,6 +137,7 @@ impl AccountInfo {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
+        #[allow(deprecated)]
         services::crypto_get_info_response::AccountInfo {
             account_id: Some(self.account_id.to_protobuf()),
             contract_account_id: self.contract_account_id.clone(),
@@ -134,11 +156,16 @@ impl AccountInfo {
             ethereum_nonce: self.ethereum_nonce as i64,
             staking_info: self.staking.to_protobuf(),
 
+            // implemented deprecated fields
+            proxy_account_id: self.proxy_account_id.to_protobuf(),
+            generate_receive_record_threshold: self.receive_record_threshold.to_tinybars() as u64,
+            generate_send_record_threshold: self.send_record_threshold.to_tinybars() as u64,
+
             // unimplemented fields
             live_hashes: Vec::default(),
             token_relationships: Vec::default(),
 
-            // deprecated fields
+            // unimplemented deprecated fields
             ..Default::default()
         }
         .encode_to_vec()
@@ -167,6 +194,7 @@ impl FromProtobuf<services::crypto_get_info_response::AccountInfo> for AccountIn
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
         let staking = Option::from_protobuf(pb.staking_info)?;
 
+        #[allow(deprecated)]
         Ok(Self {
             ledger_id,
             staking,
@@ -184,6 +212,13 @@ impl FromProtobuf<services::crypto_get_info_response::AccountInfo> for AccountIn
             alias_key,
             ethereum_nonce: pb.ethereum_nonce as u64,
             is_receiver_signature_required: pb.receiver_sig_required,
+
+            // deprecated fields
+            proxy_account_id: Option::from_protobuf(pb.proxy_account_id)?,
+            send_record_threshold: Hbar::from_tinybars(pb.generate_send_record_threshold as i64),
+            receive_record_threshold: Hbar::from_tinybars(
+                pb.generate_receive_record_threshold as i64,
+            ),
         })
     }
 }
