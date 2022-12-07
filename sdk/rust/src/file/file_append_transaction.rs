@@ -23,14 +23,21 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, FileId, LedgerId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    FileId,
+    LedgerId,
+    Transaction,
+    TransactionId,
+};
 
 /// Append the given contents to the end of the specified file.
 ///

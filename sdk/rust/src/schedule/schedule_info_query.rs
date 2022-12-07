@@ -23,13 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{Error, LedgerId, Query, ScheduleId, ScheduleInfo, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    Error,
+    LedgerId,
+    Query,
+    ScheduleId,
+    ScheduleInfo,
+    ToProtobuf,
+};
 
 /// Get all the information about a schedule.
 pub type ScheduleInfoQuery = Query<ScheduleInfoQueryData>;

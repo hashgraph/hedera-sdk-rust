@@ -27,13 +27,21 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, ContractId, Error, Key, LedgerId, ToProtobuf, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    ContractId,
+    Error,
+    Key,
+    LedgerId,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Updates the fields of a smart contract to the given values.
 pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;

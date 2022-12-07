@@ -33,7 +33,14 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, Key, LedgerId, Transaction, TransactionId};
+use crate::{
+    AccountId,
+    Error,
+    Key,
+    LedgerId,
+    Transaction,
+    TransactionId,
+};
 
 /// Create a new file, containing the given contents.
 pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;

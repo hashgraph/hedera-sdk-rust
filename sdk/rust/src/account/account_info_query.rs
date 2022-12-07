@@ -24,13 +24,19 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::account::AccountInfo;
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{AccountId, Error, LedgerId, Query, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    LedgerId,
+    Query,
+    ToProtobuf,
+};
 
 /// Get all the information about an account, including the balance.
 ///

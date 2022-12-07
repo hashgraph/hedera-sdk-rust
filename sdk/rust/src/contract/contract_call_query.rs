@@ -23,13 +23,21 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{AccountId, ContractFunctionResult, ContractId, Error, LedgerId, Query, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    ContractFunctionResult,
+    ContractId,
+    Error,
+    LedgerId,
+    Query,
+    ToProtobuf,
+};
 
 /// Call a function of the given smart contract instance.
 /// It will consume the entire given amount of gas.

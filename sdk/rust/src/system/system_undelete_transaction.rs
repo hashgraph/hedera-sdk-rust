@@ -24,14 +24,21 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, ContractId, Error, FileId, LedgerId, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    ContractId,
+    Error,
+    FileId,
+    LedgerId,
+    Transaction,
+};
 
 /// Undelete a file or smart contract that was deleted by a [`SystemDeleteTransaction`](crate::SystemDeleteTransaction).
 pub type SystemUndeleteTransaction = Transaction<SystemUndeleteTransactionData>;

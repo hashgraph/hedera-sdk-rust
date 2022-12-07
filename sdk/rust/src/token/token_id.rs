@@ -28,8 +28,18 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
-use crate::entity_id::{AutoValidateChecksum, Checksum};
-use crate::{Client, EntityId, Error, FromProtobuf, LedgerId, ToProtobuf};
+use crate::entity_id::{
+    AutoValidateChecksum,
+    Checksum,
+};
+use crate::{
+    Client,
+    EntityId,
+    Error,
+    FromProtobuf,
+    LedgerId,
+    ToProtobuf,
+};
 
 /// The unique identifier for a token on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -83,7 +93,13 @@ impl TokenId {
 
 impl AutoValidateChecksum for TokenId {
     fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        EntityId::validate_checksum_for_ledger_id(self.shard, self.realm, self.num, &self.checksum, ledger_id)
+        EntityId::validate_checksum_for_ledger_id(
+            self.shard,
+            self.realm,
+            self.num,
+            &self.checksum,
+            ledger_id,
+        )
     }
 }
 

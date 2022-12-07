@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::token::custom_fees::CustomFee;
 use crate::transaction::{
@@ -30,8 +31,14 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, LedgerId, TokenId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    LedgerId,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
 ///

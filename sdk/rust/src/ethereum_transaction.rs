@@ -23,13 +23,19 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{Error, FileId, LedgerId, ToProtobuf, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    Error,
+    FileId,
+    LedgerId,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Submit an Ethereum transaction.
 pub type EthereumTransaction = Transaction<EthereumTransactionData>;

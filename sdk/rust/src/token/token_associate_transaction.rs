@@ -23,13 +23,21 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, ToProtobuf, TokenId, Transaction, TransactionId, LedgerId, Error};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    LedgerId,
+    ToProtobuf,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
 ///

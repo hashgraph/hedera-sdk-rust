@@ -28,7 +28,16 @@ use crate::execute::{
 };
 use crate::query::execute::response_header;
 use crate::query::QueryExecute;
-use crate::{AccountId, Client, Error, Hbar, LedgerId, Query, Tinybar, TransactionId};
+use crate::{
+    AccountId,
+    Client,
+    Error,
+    Hbar,
+    LedgerId,
+    Query,
+    Tinybar,
+    TransactionId,
+};
 
 pub(super) struct QueryCost<'a, D>(&'a Query<D>)
 where

@@ -23,13 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{ContractId, Error, FromProtobuf, LedgerId, Query, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    ContractId,
+    Error,
+    FromProtobuf,
+    LedgerId,
+    Query,
+    ToProtobuf,
+};
 
 /// Get the runtime bytecode for a smart contract instance.
 pub type ContractBytecodeQuery = Query<ContractBytecodeQueryData>;

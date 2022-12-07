@@ -23,13 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{Query, ToProtobuf, TopicId, TopicInfo, LedgerId, Error};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    Error,
+    LedgerId,
+    Query,
+    ToProtobuf,
+    TopicId,
+    TopicInfo,
+};
 
 /// Retrieve the latest state of a topic.
 pub type TopicInfoQuery = Query<TopicInfoQueryData>;

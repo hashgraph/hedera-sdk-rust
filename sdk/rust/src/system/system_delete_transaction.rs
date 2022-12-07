@@ -25,14 +25,21 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, ContractId, Error, FileId, LedgerId, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    ContractId,
+    Error,
+    FileId,
+    LedgerId,
+    Transaction,
+};
 
 /// Delete a file or smart contract - can only be done by a Hedera admin.
 pub type SystemDeleteTransaction = Transaction<SystemDeleteTransactionData>;

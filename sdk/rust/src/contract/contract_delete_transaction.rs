@@ -23,14 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, ContractId, Error, LedgerId, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    ContractId,
+    Error,
+    LedgerId,
+    Transaction,
+};
 
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
 /// a designated receiver.

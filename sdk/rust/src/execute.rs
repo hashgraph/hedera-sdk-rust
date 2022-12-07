@@ -26,7 +26,14 @@ use rand::thread_rng;
 use tokio::time::sleep;
 use tonic::transport::Channel;
 
-use crate::{AccountId, Client, Error, LedgerId, Status, TransactionId};
+use crate::{
+    AccountId,
+    Client,
+    Error,
+    LedgerId,
+    Status,
+    TransactionId,
+};
 
 #[async_trait]
 pub(crate) trait Execute {
@@ -126,7 +133,7 @@ where
         if let Some(ledger_id) = client.ledger_id().await {
             executable.validate_checksums_for_ledger_id(&ledger_id)?;
         } else {
-            return Err(Error::CannotPerformTaskWithoutLedgerId {task: "validate checksums"});
+            return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksums" });
         }
     }
 

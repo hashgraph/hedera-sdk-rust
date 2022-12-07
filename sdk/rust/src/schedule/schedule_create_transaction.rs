@@ -28,14 +28,22 @@ use hedera_proto::services::{
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, Hbar, Key, LedgerId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    Hbar,
+    Key,
+    LedgerId,
+    Transaction,
+    TransactionId,
+};
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
 ///
