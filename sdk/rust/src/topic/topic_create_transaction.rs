@@ -24,6 +24,7 @@ use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use time::Duration;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -32,7 +33,9 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
     Key,
+    LedgerId,
     Transaction,
     TransactionId,
 };
@@ -125,6 +128,10 @@ impl TopicCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for TopicCreateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

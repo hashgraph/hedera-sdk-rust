@@ -30,7 +30,9 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
     Hbar,
+    LedgerId,
     ToProtobuf,
     Transaction,
     TransactionId,
@@ -49,6 +51,10 @@ pub struct PaymentTransactionData {
 
 #[async_trait]
 impl TransactionExecute for PaymentTransactionData {
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
+    }
+
     // noinspection DuplicatedCode
     async fn execute(
         &self,

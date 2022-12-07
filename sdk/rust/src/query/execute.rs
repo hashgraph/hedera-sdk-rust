@@ -35,6 +35,7 @@ use crate::{
     Error,
     FromProtobuf,
     Hbar,
+    LedgerId,
     Query,
     Status,
     TransactionId,
@@ -72,7 +73,7 @@ pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQue
         None
     }
 
-    // TODO: validate_checksums(), default implementation does nothing
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 
     fn make_response(
         &self,
@@ -173,6 +174,11 @@ where
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.data.validate_checksums_for_ledger_id(ledger_id)?;
+        self.payment.validate_checksums_for_ledger_id(ledger_id)
     }
 }
 

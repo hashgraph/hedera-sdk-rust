@@ -18,7 +18,11 @@
  * ‍
  */
 
-use std::sync::atomic::AtomicU64;
+use std::sync::atomic::{
+    AtomicBool,
+    AtomicU64,
+    Ordering,
+};
 use std::sync::Arc;
 
 use tokio::sync::RwLock as AsyncRwLock;
@@ -56,6 +60,7 @@ pub struct Client {
     operator: Arc<AsyncRwLock<Option<Operator>>>,
     max_transaction_fee_tinybar: Arc<AtomicU64>,
     ledger_id: Arc<AsyncRwLock<Option<LedgerId>>>,
+    auto_validate_checksums: Arc<AtomicBool>,
 }
 
 impl Client {
@@ -68,6 +73,7 @@ impl Client {
             operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
             ledger_id: Arc::new(AsyncRwLock::new(Some(LedgerId::mainnet()))),
+            auto_validate_checksums: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -80,6 +86,7 @@ impl Client {
             operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
             ledger_id: Arc::new(AsyncRwLock::new(Some(LedgerId::testnet()))),
+            auto_validate_checksums: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -92,6 +99,7 @@ impl Client {
             operator: Arc::new(AsyncRwLock::new(None)),
             max_transaction_fee_tinybar: Arc::new(AtomicU64::new(0)),
             ledger_id: Arc::new(AsyncRwLock::new(Some(LedgerId::previewnet()))),
+            auto_validate_checksums: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -102,6 +110,15 @@ impl Client {
     /// Sets the ledger ID for the Client's network.
     pub fn set_ledger_id(&self, ledger_id: Option<LedgerId>) {
         block_in_place(|| *self.ledger_id.blocking_write() = ledger_id);
+    }
+
+    pub(crate) fn auto_validate_checksums(&self) -> bool {
+        self.auto_validate_checksums.load(Ordering::Relaxed)
+    }
+
+    /// Enable or disable automatic entity ID checksum validation.
+    pub fn set_auto_validate_checksums(&self, value: bool) {
+        self.auto_validate_checksums.store(value, Ordering::Relaxed)
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with

@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -31,6 +32,8 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
+    LedgerId,
     NftId,
     TokenId,
     Transaction,
@@ -91,6 +94,14 @@ impl AccountAllowanceDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for AccountAllowanceDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for allowance in &self.nft_allowances {
+            allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

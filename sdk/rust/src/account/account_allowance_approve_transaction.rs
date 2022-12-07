@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -30,7 +31,9 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
     Hbar,
+    LedgerId,
     NftId,
     ToProtobuf,
     TokenId,
@@ -210,6 +213,27 @@ struct NftAllowance {
 
 #[async_trait]
 impl TransactionExecute for AccountAllowanceApproveTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for hbar_allowance in &self.hbar_allowances {
+            hbar_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            hbar_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        for token_allowance in &self.token_allowances {
+            token_allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            token_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            token_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        for nft_allowance in &self.nft_allowances {
+            nft_allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            nft_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            nft_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            if let Some(delegating_spender) = nft_allowance.delegating_spender_account_id {
+                delegating_spender.validate_checksum_for_ledger_id(ledger_id)?;
+            }
+        }
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

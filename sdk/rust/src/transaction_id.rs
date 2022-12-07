@@ -36,10 +36,12 @@ use time::{
     OffsetDateTime,
 };
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::{
     AccountId,
     Error,
     FromProtobuf,
+    LedgerId,
     ToProtobuf,
 };
 
@@ -92,6 +94,12 @@ impl TransactionId {
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
+    }
+}
+
+impl AutoValidateChecksum for TransactionId {
+    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)
     }
 }
 

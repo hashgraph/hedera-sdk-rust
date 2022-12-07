@@ -24,6 +24,7 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -33,7 +34,9 @@ use crate::transaction::{
 use crate::{
     AccountId,
     ContractId,
+    Error,
     FileId,
+    LedgerId,
     Transaction,
 };
 
@@ -67,6 +70,11 @@ impl SystemUndeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for SystemUndeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

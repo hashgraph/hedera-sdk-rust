@@ -31,7 +31,9 @@ use crate::query::QueryExecute;
 use crate::{
     AccountId,
     Client,
+    Error,
     Hbar,
+    LedgerId,
     Query,
     Tinybar,
     TransactionId,
@@ -126,6 +128,10 @@ where
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
     }
 }
 

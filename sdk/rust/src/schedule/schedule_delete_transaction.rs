@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -31,6 +32,8 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
+    LedgerId,
     ScheduleId,
     Transaction,
     TransactionId,
@@ -57,6 +60,10 @@ impl ScheduleDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for ScheduleDeleteTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.schedule_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

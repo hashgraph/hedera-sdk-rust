@@ -24,6 +24,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use hedera_proto::services::response::Response;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -32,6 +33,7 @@ use crate::query::{
 use crate::{
     Error,
     FromProtobuf,
+    LedgerId,
     Query,
     Status,
     ToProtobuf,
@@ -139,5 +141,9 @@ impl QueryExecute for TransactionRecordQueryData {
         }
 
         Ok(record)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transaction_id.validate_checksum_for_ledger_id(ledger_id)
     }
 }

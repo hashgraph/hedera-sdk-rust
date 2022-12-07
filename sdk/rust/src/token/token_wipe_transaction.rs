@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -31,6 +32,8 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
+    LedgerId,
     TokenId,
     Transaction,
     TransactionId,
@@ -114,6 +117,11 @@ impl TokenWipeTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenWipeTransactionData {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)
+    }
+
     async fn execute(
         &self,
         channel: Channel,

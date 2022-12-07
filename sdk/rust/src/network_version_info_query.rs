@@ -29,6 +29,8 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    Error,
+    LedgerId,
     NetworkVersionInfo,
     Query,
 };
@@ -65,6 +67,10 @@ impl QueryExecute for NetworkVersionInfoQueryData {
 
     fn is_payment_required(&self) -> bool {
         false
+    }
+
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
     }
 
     async fn execute(
