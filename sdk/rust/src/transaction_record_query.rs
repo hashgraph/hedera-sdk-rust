@@ -24,6 +24,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use hedera_proto::services::response::Response;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -39,7 +40,6 @@ use crate::{
     TransactionId,
     TransactionRecord,
 };
-use crate::entity_id::AutoValidateChecksum;
 
 /// Get the record of a transaction, given its transaction ID.
 ///
