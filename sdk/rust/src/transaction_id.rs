@@ -36,8 +36,14 @@ use time::{
     OffsetDateTime,
 };
 
-use crate::{AccountId, Error, FromProtobuf, LedgerId, ToProtobuf};
 use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    FromProtobuf,
+    LedgerId,
+    ToProtobuf,
+};
 
 /// The client-generated ID for a transaction.
 ///

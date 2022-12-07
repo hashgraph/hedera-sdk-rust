@@ -32,6 +32,7 @@ use tonic::{
     Status,
 };
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::execute::Execute;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
@@ -50,7 +51,6 @@ use crate::{
     TransactionId,
     TransactionResponse,
 };
-use crate::entity_id::AutoValidateChecksum;
 
 #[derive(Debug)]
 struct SignaturePair {
