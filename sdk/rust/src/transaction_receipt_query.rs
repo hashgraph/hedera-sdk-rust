@@ -38,6 +38,7 @@ use crate::{
     TransactionId,
     TransactionReceipt,
 };
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get the receipt of a transaction, given its transaction ID.
 ///
@@ -163,7 +164,7 @@ impl QueryExecute for TransactionReceiptQueryData {
         Ok(receipt)
     }
 
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
-        Ok(())
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transaction_id.validate_checksum_for_ledger_id(ledger_id)
     }
 }

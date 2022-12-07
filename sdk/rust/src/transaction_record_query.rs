@@ -39,6 +39,7 @@ use crate::{
     TransactionId,
     TransactionRecord,
 };
+use crate::entity_id::AutoValidateChecksum;
 
 /// Get the record of a transaction, given its transaction ID.
 ///
@@ -142,7 +143,7 @@ impl QueryExecute for TransactionRecordQueryData {
         Ok(record)
     }
 
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
-        Ok(())
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transaction_id.validate_checksum_for_ledger_id(ledger_id)
     }
 }

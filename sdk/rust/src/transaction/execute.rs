@@ -50,6 +50,7 @@ use crate::{
     TransactionId,
     TransactionResponse,
 };
+use crate::entity_id::AutoValidateChecksum;
 
 #[derive(Debug)]
 struct SignaturePair {
@@ -209,6 +210,13 @@ where
     }
 
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.body.payer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        if let Some(node_account_ids) = &self.body.node_account_ids {
+            for node_account_id in node_account_ids {
+                node_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            }
+        }
+        self.body.transaction_id.validate_checksum_for_ledger_id(ledger_id)?;
         self.body.data.validate_checksums_for_ledger_id(ledger_id)
     }
 }

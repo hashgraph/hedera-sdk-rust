@@ -76,7 +76,10 @@ where
     ID: AutoValidateChecksum,
 {
     fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.as_ref().map_or(Ok(()), |id| id.validate_checksum_for_ledger_id(ledger_id))
+        if let Some(id) = &self {
+            id.validate_checksum_for_ledger_id(ledger_id)?;
+        }
+        Ok(())
     }
 }
 
@@ -106,7 +109,7 @@ impl EntityId {
         EvmAddress::try_from(self).map(|it| it.to_string())
     }
 
-    pub(crate) fn generate_checksum(entity_id_string: &String, ledger_id: &LedgerId) -> Checksum {
+    pub(crate) fn generate_checksum(entity_id_string: &str, ledger_id: &LedgerId) -> Checksum {
         const P3: usize = 26 * 26 * 26; // 3 digits in base 26
         const P5: usize = 26 * 26 * 26 * 26 * 26; // 5 digits in base 26
         const M: usize = 1_000_003; // min prime greater than a million. Used for the final permutation.
@@ -193,7 +196,7 @@ impl EntityId {
         ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         let expected_checksum =
-            Self::generate_checksum(&format!("{}.{}.{}", shard, realm, num), ledger_id);
+            Self::generate_checksum(&format!("{shard}.{realm}.{num}"), ledger_id);
         if present_checksum != &expected_checksum {
             Err(Error::BadEntityId {
                 shard,
