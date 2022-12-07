@@ -24,6 +24,7 @@ mod error;
 mod account_balance;
 mod account_id;
 mod account_info;
+mod assessed_custom_fee;
 mod c_util;
 mod callback;
 mod client;
@@ -50,7 +51,6 @@ mod topic_info;
 mod transaction_id;
 mod transaction_receipt;
 mod util;
-mod assessed_custom_fee;
 
 use account_id::{
     AccountId,
