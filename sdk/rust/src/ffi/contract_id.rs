@@ -7,7 +7,6 @@ use std::ptr::{
     NonNull,
 };
 use std::slice;
-use std::str::FromStr;
 
 use libc::size_t;
 
@@ -47,26 +46,6 @@ impl ContractId {
         // fixme: swift checksum support
         crate::ContractId { shard, realm, num, evm_address, checksum: None }
     }
-}
-
-/// Parse a Hedera `ContractId` from the passed string.
-#[no_mangle]
-pub extern "C" fn hedera_contract_id_from_string(
-    s: *const c_char,
-    contract_id: *mut ContractId,
-) -> Error {
-    assert!(!contract_id.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(crate::ContractId::from_str(&s));
-
-    let parsed = ContractId::from_rust(parsed);
-
-    unsafe {
-        ptr::write(contract_id, parsed);
-    }
-
-    Error::Ok
 }
 
 /// Parse a Hedera `ContractId` from the passed bytes.

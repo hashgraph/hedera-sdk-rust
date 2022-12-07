@@ -260,11 +260,6 @@ size_t hedera_account_balance_to_bytes(struct HederaAccountBalance id,
                                        uint8_t **buf);
 
 /**
- * Parse a Hedera `AccountId` from the passed string.
- */
-enum HederaError hedera_account_id_from_string(const char *s, struct HederaAccountId *id);
-
-/**
  * Parse a Hedera `AccountId` from the passed bytes.
  */
 enum HederaError hedera_account_id_from_bytes(const uint8_t *bytes,
@@ -370,12 +365,6 @@ size_t hedera_client_get_nodes(struct HederaClient *client,
                                struct HederaAccountId **ids);
 
 /**
- * Parse a Hedera `ContractId` from the passed string.
- */
-enum HederaError hedera_contract_id_from_string(const char *s,
-                                                struct HederaContractId *contract_id);
-
-/**
  * Parse a Hedera `ContractId` from the passed bytes.
  *
  * # Safety
@@ -434,14 +423,6 @@ enum HederaError hedera_contract_id_to_solidity_address(struct HederaContractId 
 enum HederaError hedera_contract_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
 enum HederaError hedera_contract_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
-/**
- * Parse a Hedera `EntityId` from the passed string.
- */
-enum HederaError hedera_entity_id_from_string(const char *s,
-                                              uint64_t *id_shard,
-                                              uint64_t *id_realm,
-                                              uint64_t *id_num);
 
 /**
  * Parse a Hedera `FileId` from the passed bytes.
