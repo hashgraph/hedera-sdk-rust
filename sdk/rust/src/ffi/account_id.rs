@@ -19,7 +19,6 @@
  */
 
 use core::slice;
-use std::os::raw::c_char;
 use std::ptr;
 
 use libc::size_t;

@@ -1331,6 +1331,18 @@ size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
  * - `s` must only be freed with `hedera_string_free`,
  *   notably this means it must not be freed with `free`.
  */
+enum HederaError hedera_node_address_book_from_bytes(const uint8_t *bytes,
+                                                     size_t bytes_size,
+                                                     char **s);
+
+enum HederaError hedera_node_address_book_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+/**
+ * # Safety
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ * - `s` must only be freed with `hedera_string_free`,
+ *   notably this means it must not be freed with `free`.
+ */
 enum HederaError hedera_schedule_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
 enum HederaError hedera_schedule_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
@@ -1434,18 +1446,6 @@ enum HederaError hedera_transaction_receipt_from_bytes(const uint8_t *bytes,
 enum HederaError hedera_transaction_receipt_to_bytes(const char *s,
                                                      uint8_t **buf,
                                                      size_t *buf_size);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_node_address_book_from_bytes(const uint8_t *bytes,
-                                                     size_t bytes_size,
-                                                     char **s);
-
-enum HederaError hedera_node_address_book_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
 
 #ifdef __cplusplus
 } // extern "C"
