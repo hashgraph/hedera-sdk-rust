@@ -71,7 +71,10 @@ pub trait AutoValidateChecksum {
     fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 }
 
-impl<ID> AutoValidateChecksum for Option<ID> where ID: AutoValidateChecksum {
+impl<ID> AutoValidateChecksum for Option<ID>
+where
+    ID: AutoValidateChecksum,
+{
     fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.as_ref().map_or(Ok(()), |id| id.validate_checksum_for_ledger_id(ledger_id))
     }
@@ -173,7 +176,7 @@ impl EntityId {
         realm: u64,
         num: u64,
         checksum: &Option<Checksum>,
-        ledger_id: &LedgerId
+        ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
             Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
@@ -187,7 +190,7 @@ impl EntityId {
         realm: u64,
         num: u64,
         present_checksum: &Checksum,
-        ledger_id: &LedgerId
+        ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         let expected_checksum =
             Self::generate_checksum(&format!("{}.{}.{}", shard, realm, num), ledger_id);

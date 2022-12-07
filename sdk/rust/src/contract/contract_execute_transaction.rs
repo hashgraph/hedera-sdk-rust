@@ -23,13 +23,21 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, ContractId, Error, Hbar, LedgerId, ToProtobuf, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    ContractId,
+    Error,
+    Hbar,
+    LedgerId,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Call a function of the given smart contract instance, giving it
 /// parameters as its inputs.

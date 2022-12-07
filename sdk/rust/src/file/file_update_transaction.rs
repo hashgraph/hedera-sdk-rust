@@ -24,14 +24,22 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, FileId, Key, LedgerId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    FileId,
+    Key,
+    LedgerId,
+    Transaction,
+    TransactionId,
+};
 
 /// Modify the metadata and/or the contents of a file.
 ///

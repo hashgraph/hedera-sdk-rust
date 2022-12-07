@@ -28,7 +28,12 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{Error, LedgerId, NetworkVersionInfo, Query};
+use crate::{
+    Error,
+    LedgerId,
+    NetworkVersionInfo,
+    Query,
+};
 
 /// Get information about the versions of protobuf and hedera.
 ///

@@ -23,13 +23,21 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{AccountId, Error, FromProtobuf, LedgerId, Query, ToProtobuf, TransactionRecord};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    FromProtobuf,
+    LedgerId,
+    Query,
+    ToProtobuf,
+    TransactionRecord,
+};
 
 /// Get all the records for an account for any transfers into it and out of it,
 /// that were above the threshold, during the last 25 hours.

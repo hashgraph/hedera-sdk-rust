@@ -23,13 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{AccountId, AllProxyStakers, Error, LedgerId, Query, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    AllProxyStakers,
+    Error,
+    LedgerId,
+    Query,
+    ToProtobuf,
+};
 
 /// Get all the accounts that are proxy staking to this account.
 /// For each of them, give the amount currently staked.

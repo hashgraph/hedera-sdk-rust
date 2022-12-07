@@ -23,14 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     Query,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{Error, FileContentsResponse, FileId, LedgerId, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    Error,
+    FileContentsResponse,
+    FileId,
+    LedgerId,
+    ToProtobuf,
+};
 
 /// Get the contents of a file.
 pub type FileContentsQuery = Query<FileContentsQueryData>;

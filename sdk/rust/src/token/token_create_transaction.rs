@@ -27,6 +27,7 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::token::custom_fees::CustomFee;
 use crate::token::token_supply_type::TokenSupplyType;
@@ -36,8 +37,14 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, Key, LedgerId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    Key,
+    LedgerId,
+    Transaction,
+    TransactionId,
+};
 
 /// Create a new token.
 ///

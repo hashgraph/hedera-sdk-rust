@@ -28,7 +28,15 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, Hbar, LedgerId, ToProtobuf, Transaction, TransactionId};
+use crate::{
+    AccountId,
+    Error,
+    Hbar,
+    LedgerId,
+    ToProtobuf,
+    Transaction,
+    TransactionId,
+};
 
 pub type PaymentTransaction = Transaction<PaymentTransactionData>;
 

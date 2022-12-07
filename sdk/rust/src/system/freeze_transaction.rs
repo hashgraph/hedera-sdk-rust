@@ -24,13 +24,21 @@ use hedera_proto::services::freeze_service_client::FreezeServiceClient;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, FileId, FreezeType, LedgerId, ToProtobuf, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    FileId,
+    FreezeType,
+    LedgerId,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Set the freezing period in which the platform will stop creating
 /// events and accepting transactions.

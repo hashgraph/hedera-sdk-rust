@@ -29,7 +29,16 @@ use crate::query::{
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{Error, FromProtobuf, LedgerId, Query, Status, ToProtobuf, TransactionId, TransactionRecord};
+use crate::{
+    Error,
+    FromProtobuf,
+    LedgerId,
+    Query,
+    Status,
+    ToProtobuf,
+    TransactionId,
+    TransactionRecord,
+};
 
 /// Get the record of a transaction, given its transaction ID.
 ///

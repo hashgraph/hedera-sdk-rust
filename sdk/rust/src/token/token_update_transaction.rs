@@ -27,14 +27,22 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, Key, LedgerId, TokenId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    Key,
+    LedgerId,
+    TokenId,
+    Transaction,
+    TransactionId,
+};
 
 /// At consensus, updates an already created token to the given values.
 ///

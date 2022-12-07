@@ -23,13 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
-use crate::{ContractId, ContractInfo, Error, LedgerId, Query, ToProtobuf};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    ContractId,
+    ContractInfo,
+    Error,
+    LedgerId,
+    Query,
+    ToProtobuf,
+};
 
 /// Get information about a smart contract instance.
 pub type ContractInfoQuery = Query<ContractInfoQueryData>;

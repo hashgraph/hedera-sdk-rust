@@ -29,7 +29,17 @@ use crate::query::{
     AnyQueryData,
     ToQueryProtobuf,
 };
-use crate::{AccountId, Client, Error, FromProtobuf, Hbar, LedgerId, Query, Status, TransactionId};
+use crate::{
+    AccountId,
+    Client,
+    Error,
+    FromProtobuf,
+    Hbar,
+    LedgerId,
+    Query,
+    Status,
+    TransactionId,
+};
 
 #[async_trait]
 pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQueryProtobuf {

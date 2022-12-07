@@ -24,13 +24,22 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use time::Duration;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, FileId, Hbar, Key, LedgerId, ToProtobuf, Transaction};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    FileId,
+    Hbar,
+    Key,
+    LedgerId,
+    ToProtobuf,
+    Transaction,
+};
 
 /// Start a new smart contract instance.
 pub type ContractCreateTransaction = Transaction<ContractCreateTransactionData>;

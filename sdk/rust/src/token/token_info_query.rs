@@ -23,14 +23,20 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
 use crate::token::token_info::TokenInfo;
-use crate::{Query, ToProtobuf, TokenId, LedgerId, Error};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    Error,
+    LedgerId,
+    Query,
+    ToProtobuf,
+    TokenId,
+};
 
 /// Gets information about Token instance.
 ///

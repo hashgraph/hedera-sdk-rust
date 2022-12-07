@@ -24,14 +24,21 @@ use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use time::Duration;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{AccountId, Error, Key, LedgerId, Transaction, TransactionId};
-use crate::entity_id::AutoValidateChecksum;
+use crate::{
+    AccountId,
+    Error,
+    Key,
+    LedgerId,
+    Transaction,
+    TransactionId,
+};
 
 /// Create a topic to be used for consensus.
 ///
