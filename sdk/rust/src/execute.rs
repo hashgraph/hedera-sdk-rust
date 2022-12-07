@@ -30,6 +30,7 @@ use crate::{
     AccountId,
     Client,
     Error,
+    LedgerId,
     Status,
     TransactionId,
 };
@@ -106,8 +107,7 @@ pub(crate) trait Execute {
     /// Extract the pre-check status from the GRPC response.
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
 
-    // TODO: validate_checksums(), implemented for Transaction and Query, which make use of
-    //       TransactionExecute::validate_checksums() and QueryExecute::validate_checksums(), respectively
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 }
 
 pub(crate) async fn execute<E>(
@@ -129,7 +129,13 @@ where
         ExponentialBackoff { max_elapsed_time: Some(timeout), ..ExponentialBackoff::default() };
     let mut last_error: Option<Error> = None;
 
-    // TODO: make use of validate_checksums()
+    if client.auto_validate_checksums() {
+        if let Some(ledger_id) = client.ledger_id().await {
+            executable.validate_checksums_for_ledger_id(&ledger_id)?;
+        } else {
+            return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksums" });
+        }
+    }
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
 

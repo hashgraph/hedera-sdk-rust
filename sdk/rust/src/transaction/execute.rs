@@ -32,6 +32,7 @@ use tonic::{
     Status,
 };
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::execute::Execute;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
@@ -42,6 +43,7 @@ use crate::{
     Error,
     Hbar,
     HbarUnit,
+    LedgerId,
     PublicKey,
     ToProtobuf,
     Transaction,
@@ -86,7 +88,7 @@ pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransa
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
 
-    // TODO: validate_checksums(), default implementation does nothing
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 
     async fn execute(
         &self,
@@ -205,6 +207,17 @@ where
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response.node_transaction_precheck_code)
+    }
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.body.payer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        if let Some(node_account_ids) = &self.body.node_account_ids {
+            for node_account_id in node_account_ids {
+                node_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            }
+        }
+        self.body.transaction_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.body.data.validate_checksums_for_ledger_id(ledger_id)
     }
 }
 

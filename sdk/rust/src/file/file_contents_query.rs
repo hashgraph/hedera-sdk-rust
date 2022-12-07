@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     Query,
@@ -30,8 +31,10 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    Error,
     FileContentsResponse,
     FileId,
+    LedgerId,
     ToProtobuf,
 };
 
@@ -75,6 +78,10 @@ impl ToQueryProtobuf for FileContentsQueryData {
 #[async_trait]
 impl QueryExecute for FileContentsQueryData {
     type Response = FileContentsResponse;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,

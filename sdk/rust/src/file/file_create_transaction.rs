@@ -35,7 +35,9 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    Error,
     Key,
+    LedgerId,
     Transaction,
     TransactionId,
 };
@@ -116,6 +118,10 @@ impl FileCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for FileCreateTransactionData {
+    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
+    }
+
     async fn execute(
         &self,
         channel: Channel,

@@ -28,13 +28,17 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
-use crate::entity_id::Checksum;
+use crate::entity_id::{
+    AutoValidateChecksum,
+    Checksum,
+};
 use crate::evm_address::EvmAddress;
 use crate::{
     Client,
     EntityId,
     Error,
     FromProtobuf,
+    LedgerId,
     ToProtobuf,
 };
 
@@ -142,6 +146,22 @@ impl ContractId {
         } else {
             EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client)
                 .await
+        }
+    }
+}
+
+impl AutoValidateChecksum for ContractId {
+    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        if self.evm_address.is_some() {
+            Ok(())
+        } else {
+            EntityId::validate_checksum_for_ledger_id(
+                self.shard,
+                self.realm,
+                self.num,
+                &self.checksum,
+                ledger_id,
+            )
         }
     }
 }

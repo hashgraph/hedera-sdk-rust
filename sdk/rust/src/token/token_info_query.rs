@@ -23,6 +23,7 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -30,6 +31,8 @@ use crate::query::{
 };
 use crate::token::token_info::TokenInfo;
 use crate::{
+    Error,
+    LedgerId,
     Query,
     ToProtobuf,
     TokenId,
@@ -77,6 +80,10 @@ impl ToQueryProtobuf for TokenInfoQueryData {
 #[async_trait]
 impl QueryExecute for TokenInfoQueryData {
     type Response = TokenInfo;
+
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksum_for_ledger_id(ledger_id)
+    }
 
     async fn execute(
         &self,
