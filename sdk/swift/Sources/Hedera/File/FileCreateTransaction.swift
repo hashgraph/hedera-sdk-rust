@@ -39,7 +39,7 @@ public final class FileCreateTransaction: Transaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    public var keys: [Key] = []
+    public var keys: KeyList = []
 
     /// Sets the keys for this file.
     ///
@@ -48,7 +48,7 @@ public final class FileCreateTransaction: Transaction {
     /// can sign to delete the file.
     ///
     @discardableResult
-    public func keys(_ keys: [Key]) -> Self {
+    public func keys(_ keys: KeyList) -> Self {
         self.keys = keys
 
         return self
