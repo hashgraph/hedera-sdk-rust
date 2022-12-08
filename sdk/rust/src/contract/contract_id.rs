@@ -93,7 +93,7 @@ impl ContractId {
         })
     }
 
-    /// create a `ContractId` from a solidity address.
+    /// Create a `ContractId` from a solidity address.
     pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
         let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
 

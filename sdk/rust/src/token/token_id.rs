@@ -32,14 +32,7 @@ use crate::entity_id::{
     AutoValidateChecksum,
     Checksum,
 };
-use crate::{
-    Client,
-    EntityId,
-    Error,
-    FromProtobuf,
-    LedgerId,
-    ToProtobuf,
-};
+use crate::{Client, EntityId, Error, FromProtobuf, LedgerId, NftId, ToProtobuf};
 
 /// The unique identifier for a token on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -69,10 +62,23 @@ impl TokenId {
         FromProtobuf::from_bytes(bytes)
     }
 
+    /// Create a `TokenId` from a solidity address.
+    pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
+        let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
+
+        Ok(Self { shard, realm, num, checksum })
+    }
+
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
+    }
+
+    /// Convert `self` into a solidity `address`
+    pub fn to_solidity_address(&self) -> crate::Result<String> {
+        EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
+            .to_solidity_address()
     }
 
     /// Convert `self` to a string with a valid checksum.
@@ -88,6 +94,11 @@ impl TokenId {
     /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
     pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
         EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client).await
+    }
+
+    /// Create an NFT ID
+    pub fn nft(&self, serial: u64) -> NftId {
+        NftId{token_id: self.clone(), serial}
     }
 }
 
