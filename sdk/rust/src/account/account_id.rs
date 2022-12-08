@@ -72,10 +72,23 @@ impl AccountId {
         FromProtobuf::from_bytes(bytes)
     }
 
+    /// Create an `AccountId` from a solidity address.
+    pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
+        let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
+
+        Ok(Self { shard, realm, num, alias: None, checksum })
+    }
+
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
+    }
+
+    /// Convert `self` into a solidity `address`
+    pub fn to_solidity_address(&self) -> crate::Result<String> {
+        EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
+            .to_solidity_address()
     }
 
     /// Convert `self` to a string with a valid checksum.
