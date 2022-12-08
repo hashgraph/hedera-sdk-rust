@@ -27,6 +27,7 @@ use hedera_proto::services::{
 };
 use time::OffsetDateTime;
 use tonic::transport::Channel;
+use hedera_proto::services::transaction_body::Data;
 
 use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
@@ -301,6 +302,9 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
                 transaction_body::Data::ContractCall(data) => {
                     Some(schedulable_transaction_body::Data::ContractCall(data))
                 }
+                // TODO: implement these
+                Data::NodeStakeUpdate(_) => {unimplemented!("NodeStakeUpdate has not been implemented")}
+                Data::UtilPrng(_) => {unimplemented!("UtilPrng has not been implemented")}
             };
 
             services::SchedulableTransactionBody {
