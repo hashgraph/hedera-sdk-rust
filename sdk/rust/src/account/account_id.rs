@@ -27,6 +27,7 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
+use hedera_proto::services::account_id::Account;
 
 use crate::entity_id::{
     AutoValidateChecksum,
@@ -175,6 +176,7 @@ impl FromProtobuf<services::AccountId> for AccountId {
             services::account_id::Account::Alias(alias) => {
                 (0, Some(PublicKey::from_bytes(&alias)?))
             }
+            Account::EvmAddress(_) => {unimplemented!("AccountId::evm_address has not been implemented")}
         };
 
         Ok(Self {
