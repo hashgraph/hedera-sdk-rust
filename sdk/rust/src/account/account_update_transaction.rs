@@ -76,6 +76,8 @@ pub struct AccountUpdateTransactionData {
     )]
     pub auto_renew_period: Option<Duration>,
 
+    pub auto_renew_account_id: Option<AccountId>,
+
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     #[cfg_attr(
         feature = "ffi",
@@ -132,6 +134,11 @@ impl AccountUpdateTransaction {
     /// Set the auto renew period for this account.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(period);
+        self
+    }
+
+    pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.auto_renew_account_id = Some(id);
         self
     }
 
@@ -193,6 +200,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
         let account_id = self.account_id.to_protobuf();
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
         let expiration_time = self.expiration_time.to_protobuf();
 
         let receiver_signature_required = self.receiver_signature_required.map(|required| {
@@ -221,6 +229,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
                 proxy_account_id: None,
                 proxy_fraction: 0,
                 auto_renew_period,
+                auto_renew_account,
                 expiration_time,
                 memo: self.account_memo.clone(),
                 max_automatic_token_associations: self
@@ -231,6 +240,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
                 receive_record_threshold_field: None,
                 receiver_sig_required_field: receiver_signature_required,
                 staked_id,
+                virtual_address_update: None, // TODO
             },
         )
     }
