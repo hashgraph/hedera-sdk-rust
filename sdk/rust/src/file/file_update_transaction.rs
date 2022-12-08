@@ -36,6 +36,7 @@ use crate::{
     Error,
     FileId,
     Key,
+    KeyList,
     LedgerId,
     Transaction,
     TransactionId,
@@ -62,7 +63,8 @@ pub struct FileUpdateTransactionData {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    keys: Option<Vec<Key>>,
+    #[cfg_attr(feature = "ffi", serde(default))]
+    keys: Option<KeyList>,
 
     /// The bytes that are to be the contents of the file.
     #[cfg_attr(
@@ -142,8 +144,6 @@ impl ToTransactionDataProtobuf for FileUpdateTransactionData {
 
         let keys = self.keys.to_protobuf().unwrap_or_default();
 
-        let keys = services::KeyList { keys };
-
         services::transaction_body::Data::FileUpdate(services::FileUpdateTransactionBody {
             file_id,
             expiration_time,
@@ -185,11 +185,13 @@ mod tests {
   "$type": "fileUpdate",
   "fileId": "0.0.1001",
   "fileMemo": "File memo",
-  "keys": [
-    {
-      "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-    }
-  ],
+  "keys": {
+    "keys": [
+      {
+        "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+      }
+    ]
+  },
   "contents": "SGVsbG8sIHdvcmxkIQ==",
   "expirationTime": 1656352251277559886
 }"#;

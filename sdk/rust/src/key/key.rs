@@ -24,12 +24,13 @@ use crate::{
     ContractId,
     Error,
     FromProtobuf,
+    KeyList,
     PublicKey,
     ToProtobuf,
 };
 
 /// Any method that can be used to authorize an operation on Hedera.
-#[derive(Debug, Clone)]
+#[derive(Eq, PartialEq, Debug, Clone, Hash)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub enum Key {
@@ -42,8 +43,9 @@ pub enum Key {
 
     /// A delegatable contract ID.
     DelegatableContractId(ContractId),
-    // TODO: KeyList
-    // TODO: ThresholdKey
+
+    /// A key list.
+    KeyList(KeyList),
 }
 
 impl Key {
@@ -65,15 +67,16 @@ impl ToProtobuf for Key {
                 Self::Single(key) => {
                     let bytes = key.to_bytes_raw();
 
-                    if key.is_ed25519() {
-                        Ed25519(bytes)
-                    } else {
-                        EcdsaSecp256k1(bytes)
+                    match key.kind() {
+                        crate::key::KeyKind::Ed25519 => Ed25519(bytes),
+                        crate::key::KeyKind::Ecdsa => EcdsaSecp256k1(bytes),
                     }
                 }
 
                 Self::ContractId(id) => ContractId(id.to_protobuf()),
                 Self::DelegatableContractId(id) => DelegatableContractId(id.to_protobuf()),
+                // `KeyList`s are special and can be both a key list and a threshold key.
+                Self::KeyList(key) => key.to_protobuf_key(),
             }),
         }
     }
@@ -88,6 +91,12 @@ impl From<PublicKey> for Key {
 impl From<ContractId> for Key {
     fn from(id: ContractId) -> Self {
         Self::ContractId(id)
+    }
+}
+
+impl From<KeyList> for Key {
+    fn from(value: KeyList) -> Self {
+        Self::KeyList(value)
     }
 }
 
@@ -110,8 +119,8 @@ impl FromProtobuf<services::Key> for Key {
             Some(Ecdsa384(_)) => {
                 Err(Error::from_protobuf("unexpected unsupported ECDSA-384 key in Key"))
             }
-            Some(ThresholdKey(_)) => todo!(),
-            Some(KeyList(_)) => todo!(),
+            Some(ThresholdKey(it)) => Ok(Self::KeyList(crate::KeyList::from_protobuf(it)?)),
+            Some(KeyList(it)) => Ok(Self::KeyList(crate::KeyList::from_protobuf(it)?)),
             Some(EcdsaSecp256k1(bytes)) => Ok(Self::Single(PublicKey::from_bytes_ecdsa(&bytes)?)),
             None => Err(Error::from_protobuf("unexpected empty key in Key")),
         }

@@ -27,6 +27,7 @@ use crate::{
     AccountId,
     FromProtobuf,
     Key,
+    KeyList,
     LedgerId,
     ScheduleId,
     TransactionId,
@@ -48,7 +49,7 @@ pub struct ScheduleInfo {
 
     /// The signatories that have provided signatures so far for the schedule
     /// transaction.
-    pub signatories: Vec<Key>,
+    pub signatories: KeyList,
 
     /// The key which is able to delete the schedule transaction if set.
     pub admin_key: Option<Key>,
@@ -108,7 +109,7 @@ impl ScheduleInfo {
             memo: self.schedule_memo.clone(),
             admin_key: self.admin_key.to_protobuf(),
             signers: (!self.signatories.is_empty())
-                .then(|| services::KeyList { keys: self.signatories.to_protobuf() }),
+                .then(|| services::KeyList { keys: self.signatories.keys.to_protobuf() }),
             creator_account_id: Some(self.creator_account_id.to_protobuf()),
             payer_account_id: self.payer_account_id.to_protobuf(),
             scheduled_transaction_id: Some(self.scheduled_transaction_id.to_protobuf()),
@@ -149,8 +150,7 @@ impl FromProtobuf<services::ScheduleInfo> for ScheduleInfo {
         let scheduled_transaction_id =
             TransactionId::from_protobuf(pb_getf!(pb, scheduled_transaction_id)?)?;
 
-        let signatories =
-            pb.signers.map(|kl| Vec::from_protobuf(kl.keys)).transpose()?.unwrap_or_default();
+        let signatories = pb.signers.map(KeyList::from_protobuf).transpose()?.unwrap_or_default();
 
         let (executed_at, deleted_at) = match pb.data {
             Some(services::schedule_info::Data::DeletionTime(deleted)) => {

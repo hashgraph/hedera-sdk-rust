@@ -26,6 +26,7 @@ use crate::protobuf::ToProtobuf;
 use crate::{
     FileId,
     FromProtobuf,
+    KeyList,
     LedgerId,
 };
 
@@ -50,8 +51,9 @@ pub struct FileInfo {
     /// True if deleted but not yet expired.
     pub is_deleted: bool,
 
-    // /// One of these keys must sign in order to modify or delete the file.
-    // TODO: pub keys: KeyList, (Not implemented in key.rs yet)
+    /// One of these keys must sign in order to modify or delete the file.
+    pub keys: KeyList,
+
     /// Memo associated with the file.
     pub file_memo: String,
 
@@ -108,15 +110,6 @@ impl FromProtobuf<services::file_get_info_response::FileInfo> for FileInfo {
         let file_id = pb_getf!(pb, file_id)?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
 
-        // TODO: KeyList
-        // let keys = info
-        //     .keys
-        //     .unwrap_or_default()
-        //     .keys
-        //     .into_iter()
-        //     .map(Key::from_protobuf)
-        //     .collect::<crate::Result<Vec<_>>>()?;
-
         Ok(Self {
             file_id: FileId::from_protobuf(file_id)?,
             size: pb.size as u64,
@@ -124,6 +117,7 @@ impl FromProtobuf<services::file_get_info_response::FileInfo> for FileInfo {
             is_deleted: pb.deleted,
             file_memo: pb.memo,
             ledger_id,
+            keys: KeyList::from_protobuf(pb.keys.unwrap_or_default())?,
         })
     }
 }
