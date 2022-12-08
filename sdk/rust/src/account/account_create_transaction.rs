@@ -31,14 +31,7 @@ use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionExecute,
 };
-use crate::{
-    AccountId,
-    Error,
-    Hbar,
-    Key,
-    LedgerId,
-    Transaction,
-};
+use crate::{AccountId, Error, Hbar, Key, LedgerId, PublicKey, Transaction};
 
 /// Create a new Hedera™ account.
 pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
@@ -71,6 +64,8 @@ pub struct AccountCreateTransactionData {
     )]
     pub auto_renew_period: Option<Duration>,
 
+    pub auto_renew_account_id: Option<AccountId>,
+
     /// The memo associated with the account.
     pub account_memo: String,
 
@@ -79,6 +74,10 @@ pub struct AccountCreateTransactionData {
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     ///
     pub max_automatic_token_associations: u16,
+
+    pub alias_key: Option<PublicKey>,
+
+    pub alias_evm_address: Option<[u8; 20]>,
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
@@ -99,8 +98,11 @@ impl Default for AccountCreateTransactionData {
             initial_balance: Hbar::ZERO,
             receiver_signature_required: false,
             auto_renew_period: Some(Duration::days(90)),
+            auto_renew_account_id: None,
             account_memo: String::new(),
             max_automatic_token_associations: 0,
+            alias_key: None,
+            alias_evm_address: None,
             staked_account_id: None,
             staked_node_id: None,
             decline_staking_reward: false,
@@ -133,6 +135,11 @@ impl AccountCreateTransaction {
         self
     }
 
+    pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.auto_renew_account_id = Some(id);
+        self
+    }
+
     /// Set the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.account_memo = memo.into();
@@ -142,6 +149,16 @@ impl AccountCreateTransaction {
     /// Set the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
         self.body.data.max_automatic_token_associations = amount;
+        self
+    }
+
+    pub fn alias_key(&mut self, key: PublicKey) -> &mut Self {
+        self.body.data.alias_key = Some(key);
+        self
+    }
+
+    pub fn alias_evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
+        self.body.data.alias_evm_address = Some(evm_address);
         self
     }
 
@@ -213,12 +230,15 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 send_record_threshold: i64::MAX as u64,
                 receive_record_threshold: i64::MAX as u64,
                 receiver_sig_required: self.receiver_signature_required,
-                auto_renew_period,
+                auto_renew_period: self.auto_renew_period.to_protobuf(),
+                auto_renew_account: self.auto_renew_account_id.to_protobuf(),
                 shard_id: None,
                 realm_id: None,
                 new_realm_admin_key: None,
                 memo: self.account_memo.clone(),
                 max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
+                alias: self.alias_key.map_or(vec![], |key| key.to_bytes_raw()),
+                evm_address: self.alias_evm_address.map_or(vec![], |b| Vec::from(b)),
                 decline_reward: self.decline_staking_reward,
                 staked_id,
             },
