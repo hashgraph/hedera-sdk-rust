@@ -33,6 +33,7 @@ use crate::entity_id::{
     AutoValidateChecksum,
     Checksum,
 };
+use crate::evm_address::EvmAddress;
 use crate::{
     Client,
     EntityId,
@@ -59,6 +60,8 @@ pub struct AccountId {
     /// An alias for `num` if the account was created from a public key directly.
     pub alias: Option<PublicKey>,
 
+    pub evm_address: Option<[u8; 20]>,
+
     /// A checksum if the account ID was read from a user inputted string which inclueded a checksum
     pub checksum: Option<Checksum>,
 }
@@ -77,7 +80,7 @@ impl AccountId {
     pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
         let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
 
-        Ok(Self { shard, realm, num, alias: None, checksum })
+        Ok(Self { shard, realm, num, alias: None, evm_address: None, checksum })
     }
 
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
@@ -146,6 +149,8 @@ impl Display for AccountId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(alias) = &self.alias {
             write!(f, "{}.{}.{}", self.shard, self.realm, alias)
+        } else if let Some(evm_address) = &self.evm_address {
+            write!(f, "{}.{}.{}", self.shard, self.realm, EvmAddress::from_ref(evm_address))
         } else {
             write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
         }
@@ -161,7 +166,7 @@ impl ToProtobuf for AccountId {
             shard_num: self.shard as i64,
             account: Some(match &self.alias {
                 None => services::account_id::Account::AccountNum(self.num as i64),
-                Some(alias) => services::account_id::Account::Alias(alias.to_bytes_raw()),
+                Some(alias) => services::account_id::Account::Alias(ToProtobuf::to_bytes(alias)),
             }),
         }
     }
@@ -171,17 +176,20 @@ impl FromProtobuf<services::AccountId> for AccountId {
     fn from_protobuf(pb: services::AccountId) -> crate::Result<Self> {
         let account = pb_getf!(pb, account)?;
 
-        let (num, alias) = match account {
-            services::account_id::Account::AccountNum(num) => (num, None),
+        let (num, alias, evm_address) = match account {
+            services::account_id::Account::AccountNum(num) => (num, None, None),
             services::account_id::Account::Alias(alias) => {
-                (0, Some(PublicKey::from_bytes(&alias)?))
+                (0, Some(FromProtobuf::from_bytes(&alias)?), None)
             }
-            Account::EvmAddress(_) => {unimplemented!("AccountId::evm_address has not been implemented")}
+            Account::EvmAddress(evm_address) => {
+                (0, None, Some(EvmAddress::try_from(evm_address)?.0))
+            }
         };
 
         Ok(Self {
             num: num as u64,
             alias,
+            evm_address,
             shard: pb.shard_num as u64,
             realm: pb.realm_num as u64,
             checksum: None,
@@ -191,13 +199,13 @@ impl FromProtobuf<services::AccountId> for AccountId {
 
 impl From<u64> for AccountId {
     fn from(num: u64) -> Self {
-        Self { num, alias: None, checksum: None, shard: 0, realm: 0 }
+        Self { num, alias: None, evm_address: None, checksum: None, shard: 0, realm: 0 }
     }
 }
 
 impl From<PublicKey> for AccountId {
     fn from(alias: PublicKey) -> Self {
-        Self { num: 0, shard: 0, realm: 0, alias: Some(alias), checksum: None }
+        Self { num: 0, shard: 0, realm: 0, evm_address: None, alias: Some(alias), checksum: None }
     }
 }
 
@@ -206,7 +214,7 @@ impl FromStr for AccountId {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         account_num_from_str(s)
-            .or_else(|| account_alias_from_str(s))
+            .or_else(|| account_alias_or_evm_address_from_str(s))
             .ok_or_else(|| Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`) or <shard>.<realm>.<alias> (ex. `0.0.0a410c8fe4912e3652b61dd222b1b4d7773261537d7ebad59df6cd33622a693e`)"))
     }
 }
@@ -218,22 +226,32 @@ fn account_num_from_str(s: &str) -> Option<AccountId> {
             realm,
             num,
             alias: None,
+            evm_address: None,
             checksum,
         })
         .ok()
 }
 
-fn account_alias_from_str(s: &str) -> Option<AccountId> {
+fn account_alias_or_evm_address(shard: u64, realm: u64, s: &str) -> Option<AccountId> {
+    let b = hex::decode(s).ok()?;
+    if b.len() == 20 {
+        let evm_address = Some(EvmAddress::try_from(b).ok()?.0);
+        Some(AccountId { shard, realm, num: 0, alias: None, evm_address, checksum: None })
+    } else {
+        let alias = Some(PublicKey::from_bytes(b.as_slice()).ok()?);
+        Some(AccountId { shard, realm, num: 0, alias, evm_address: None, checksum: None })
+    }
+}
+
+fn account_alias_or_evm_address_from_str(s: &str) -> Option<AccountId> {
     let parts: Vec<&str> = s.splitn(3, '.').collect();
 
     if parts.len() == 1 {
-        Some(AccountId::from(PublicKey::from_str(parts[0]).ok()?))
+        account_alias_or_evm_address(0, 0, parts[0])
     } else if parts.len() == 3 {
         let shard = parts[0].parse().map_err(Error::basic_parse).ok()?;
         let realm = parts[1].parse().map_err(Error::basic_parse).ok()?;
-        let alias = parts[2].parse().map_err(Error::basic_parse).ok()?;
-
-        Some(AccountId { shard, realm, alias: Some(alias), num: 0, checksum: None })
+        account_alias_or_evm_address(shard, realm, parts[2])
     } else {
         None
     }
@@ -254,13 +272,27 @@ mod tests {
 
         assert_eq!(
             account_id,
-            AccountId { shard: 0, realm: 0, num: 1001, alias: None, checksum: None }
+            AccountId {
+                shard: 0,
+                realm: 0,
+                num: 1001,
+                alias: None,
+                evm_address: None,
+                checksum: None
+            }
         );
     }
 
     #[test]
     fn to_from_bytes_roundtrip() {
-        let account_id = AccountId { shard: 0, realm: 0, num: 1001, alias: None, checksum: None };
+        let account_id = AccountId {
+            shard: 0,
+            realm: 0,
+            num: 1001,
+            alias: None,
+            evm_address: None,
+            checksum: None,
+        };
 
         assert_eq!(account_id, AccountId::from_bytes(&account_id.to_bytes()).unwrap());
     }

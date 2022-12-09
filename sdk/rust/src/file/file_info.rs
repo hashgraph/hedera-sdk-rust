@@ -20,10 +20,18 @@
 
 use hedera_proto::services;
 use prost::Message;
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, FileId, FromProtobuf, LedgerId};
+use crate::{
+    AccountId,
+    FileId,
+    FromProtobuf,
+    LedgerId,
+};
 
 /// Response from [`FileInfoQuery`][crate::FileInfoQuery].
 #[derive(Debug, Clone)]

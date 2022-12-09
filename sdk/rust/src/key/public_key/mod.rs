@@ -304,7 +304,7 @@ impl PublicKey {
     /// ```
     #[must_use]
     pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
-        AccountId { shard, realm, alias: Some(*self), num: 0, checksum: None }
+        AccountId { shard, realm, alias: Some(*self), evm_address: None, num: 0, checksum: None }
     }
 
     /// Verify a `signature` on a `msg` with this public key.

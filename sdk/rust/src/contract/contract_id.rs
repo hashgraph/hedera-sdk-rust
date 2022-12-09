@@ -260,8 +260,7 @@ fn contract_evm_address_from_str(s: &str) -> Option<ContractId> {
     if parts.len() == 3 {
         let shard = parts[0].parse().map_err(Error::basic_parse).ok()?;
         let realm = parts[1].parse().map_err(Error::basic_parse).ok()?;
-        let evm_address = hex::decode(parts[2].strip_prefix("0x").unwrap_or(parts[2])).ok()?;
-        let evm_address = EvmAddress::try_from(evm_address).ok()?.0;
+        let evm_address = EvmAddress::from_str(parts[2]).ok()?.0;
 
         Some(ContractId { shard, realm, evm_address: Some(evm_address), num: 0, checksum: None })
     } else {
