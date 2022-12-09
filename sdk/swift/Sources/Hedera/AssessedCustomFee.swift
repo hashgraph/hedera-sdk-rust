@@ -1,3 +1,4 @@
+import CHedera
 import Foundation
 
 /// A custom transfer fee that was assessed during the handling of a ``TransferTransaction``.
