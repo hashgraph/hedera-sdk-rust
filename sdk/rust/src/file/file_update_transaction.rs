@@ -122,11 +122,14 @@ impl FileUpdateTransaction {
         self
     }
 
+    /// Sets the account to be used at the files's expiration time to extend the
+    /// life of the file.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(id);
         self
     }
 
+    /// Set the auto renew period for this file.
     pub fn auto_renew_period(&mut self, duration: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(duration);
         self

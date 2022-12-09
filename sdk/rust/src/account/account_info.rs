@@ -116,6 +116,7 @@ impl AccountInfo {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
+        #[allow(deprecated)]
         services::crypto_get_info_response::AccountInfo {
             account_id: Some(self.account_id.to_protobuf()),
             contract_account_id: self.contract_account_id.clone(),

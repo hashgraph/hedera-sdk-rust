@@ -137,6 +137,8 @@ impl AccountUpdateTransaction {
         self
     }
 
+    /// Sets the account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(id);
         self

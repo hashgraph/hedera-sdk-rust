@@ -54,6 +54,7 @@ impl AccountBalance {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
+        #[allow(deprecated)]
         services::CryptoGetAccountBalanceResponse {
             header: None,
             account_id: Some(self.account_id.to_protobuf()),

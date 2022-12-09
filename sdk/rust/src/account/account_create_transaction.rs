@@ -143,6 +143,8 @@ impl AccountCreateTransaction {
         self
     }
 
+    /// Sets the account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(id);
         self
@@ -160,11 +162,19 @@ impl AccountCreateTransaction {
         self
     }
 
+    /// The bytes to be used as the account's alias.
+    ///
+    /// A given alias can map to at most one account on the network at a time. This uniqueness will be enforced
+    /// relative to aliases currently on the network at alias assignment.
+    ///
+    /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
+    /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
     pub fn alias_key(&mut self, key: PublicKey) -> &mut Self {
         self.body.data.alias_key = Some(key);
         self
     }
 
+    /// EOA 20-byte address to create that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub fn alias_evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
         self.body.data.alias_evm_address = Some(evm_address);
         self
@@ -214,6 +224,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
     ) -> services::transaction_body::Data {
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
 
         let staked_id = match (&self.staked_account_id, self.staked_node_id) {
             (_, Some(node_id)) => Some(
@@ -238,8 +249,8 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 send_record_threshold: i64::MAX as u64,
                 receive_record_threshold: i64::MAX as u64,
                 receiver_sig_required: self.receiver_signature_required,
-                auto_renew_period: self.auto_renew_period.to_protobuf(),
-                auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+                auto_renew_period,
+                auto_renew_account,
                 shard_id: None,
                 realm_id: None,
                 new_realm_admin_key: None,
