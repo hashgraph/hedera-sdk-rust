@@ -51,8 +51,11 @@ pub struct FileInfo {
     )]
     pub expiration_time: Option<OffsetDateTime>,
 
+    /// The auto renew period for this account.
     pub auto_renew_period: Option<Duration>,
 
+    /// The account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub auto_renew_account_id: Option<AccountId>,
 
     /// True if deleted but not yet expired.

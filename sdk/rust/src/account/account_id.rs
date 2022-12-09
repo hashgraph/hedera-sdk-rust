@@ -60,6 +60,7 @@ pub struct AccountId {
     /// An alias for `num` if the account was created from a public key directly.
     pub alias: Option<PublicKey>,
 
+    /// EOA 20-byte address to create that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub evm_address: Option<[u8; 20]>,
 
     /// A checksum if the account ID was read from a user inputted string which inclueded a checksum
@@ -295,6 +296,42 @@ mod tests {
         };
 
         assert_eq!(account_id, AccountId::from_bytes(&account_id.to_bytes()).unwrap());
+    }
+
+    #[test]
+    fn from_evm_address_string() {
+        let mut evm_address = [0; 20];
+        hex::decode_to_slice("302a300506032b6570032100114e6abc371b82da", &mut evm_address).unwrap();
+        assert_eq!(
+            AccountId::from_str("0.0.302a300506032b6570032100114e6abc371b82da").unwrap(),
+            AccountId {
+                shard: 0,
+                realm: 0,
+                num: 0,
+                alias: None,
+                evm_address: Some(evm_address),
+                checksum: None
+            }
+        )
+    }
+
+    #[test]
+    fn to_evm_address_string() {
+        let mut evm_address = [0; 20];
+        hex::decode_to_slice("302a300506032b6570032100114e6abc371b82da", &mut evm_address).unwrap();
+        assert_eq!(
+            AccountId {
+                shard: 0,
+                realm: 0,
+                num: 0,
+                alias: None,
+                evm_address: Some(evm_address),
+                checksum: None
+            }
+            .to_string()
+            .as_str(),
+            "0.0.302a300506032b6570032100114e6abc371b82da"
+        )
     }
 
     #[tokio::test]

@@ -265,3 +265,32 @@ impl FromStr for EntityId {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::EntityId;
+
+    #[test]
+    fn from_solidity_address() {
+        assert_eq!(
+            EntityId::from_solidity_address("000000000000000000000000000000000000138D").unwrap(),
+            EntityId { shard: 0, realm: 0, num: 5005, checksum: None }
+        );
+    }
+
+    #[test]
+    fn from_solidity_address_with_0x() {
+        assert_eq!(
+            EntityId::from_solidity_address("0x000000000000000000000000000000000000138D").unwrap(),
+            EntityId { shard: 0, realm: 0, num: 5005, checksum: None }
+        );
+    }
+
+    #[test]
+    fn to_solidity_address() {
+        assert!(EntityId { shard: 0, realm: 0, num: 5005, checksum: None }
+            .to_solidity_address()
+            .unwrap()
+            .eq_ignore_ascii_case("000000000000000000000000000000000000138D"));
+    }
+}
