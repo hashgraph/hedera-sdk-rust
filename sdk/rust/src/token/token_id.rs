@@ -32,7 +32,15 @@ use crate::entity_id::{
     AutoValidateChecksum,
     Checksum,
 };
-use crate::{Client, EntityId, Error, FromProtobuf, LedgerId, NftId, ToProtobuf};
+use crate::{
+    Client,
+    EntityId,
+    Error,
+    FromProtobuf,
+    LedgerId,
+    NftId,
+    ToProtobuf,
+};
 
 /// The unique identifier for a token on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -98,7 +106,7 @@ impl TokenId {
 
     /// Create an NFT ID
     pub fn nft(&self, serial: u64) -> NftId {
-        NftId{token_id: self.clone(), serial}
+        NftId { token_id: self.clone(), serial }
     }
 }
 

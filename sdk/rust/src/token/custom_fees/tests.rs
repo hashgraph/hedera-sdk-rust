@@ -21,6 +21,7 @@ fn custom_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let custom_fee = AnyCustomFee {
         fee_collector_account_id: Some(AccountId::from(1)),
         fee: FixedFeeData { denominating_token_id: TokenId::from(2), amount: 1000 }.into(),
+        all_collectors_are_exempt: false,
     };
 
     let custom_fee_proto = custom_fee.to_protobuf();
@@ -42,6 +43,7 @@ fn custom_fixed_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
             amount: 1000,
         })),
         fee_collector_account_id: Some(AccountId::from(1).to_protobuf()),
+        all_collectors_are_exempt: false,
     };
 
     let custom_fee = CustomFee::from_protobuf(custom_fee_proto.clone()).unwrap();
