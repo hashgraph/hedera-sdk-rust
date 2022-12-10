@@ -153,4 +153,18 @@ public struct ContractId: EntityId {
             return defaultDescription
         }
     }
+
+    public func toStringWithChecksum(_ client: Client) -> String {
+        precondition(evmAddress == nil, "cannot create a checksum for a `ContractId` with an evmAddress")
+
+        return defaultToStringWithChecksum(client)
+    }
+
+    public func validateChecksum(_ client: Client) throws {
+        if evmAddress != nil {
+            return
+        }
+
+        try defaultValidateChecksum(client)
+    }
 }

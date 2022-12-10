@@ -117,6 +117,20 @@ public struct AccountId: EntityId {
         }
     }
 
+    public func toStringWithChecksum(_ client: Client) -> String {
+        precondition(alias == nil, "cannot create a checksum for an `AccountId` with an alias")
+
+        return defaultToStringWithChecksum(client)
+    }
+
+    public func validateChecksum(_ client: Client) throws {
+        if alias != nil {
+            return
+        }
+
+        try defaultValidateChecksum(client)
+    }
+
     public static func == (lhs: AccountId, rhs: AccountId) -> Bool {
         lhs.shard == rhs.shard && lhs.realm == rhs.realm && lhs.num == lhs.num && lhs.alias == rhs.alias
     }

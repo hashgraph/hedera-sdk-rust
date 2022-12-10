@@ -56,7 +56,7 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         data
     }
 
-    internal static func generate<E: EntityId>(for entity: E, and ledgerId: LedgerId) -> Self {
+    internal static func generate<E: EntityId>(for entity: E, on ledgerId: LedgerId) -> Self {
         // 3 digits in base 26
         let p3 = 26.toPower(of: 3)
         // 5 digits in base 26
@@ -172,7 +172,7 @@ where
 
     func toStringWithChecksum(_ client: Client) -> String
 
-    func validateChecksum() throws
+    func validateChecksum(_ client: Client) throws
 }
 
 extension EntityId {
@@ -223,20 +223,31 @@ extension EntityId {
     }
 
     // sometimes you need a partial override *sigh*.
+    // note: this *expicitly* ignores the current checksum.
     internal func defaultToStringWithChecksum(_ client: Client) -> String {
-        ""
+        let checksum = self.generateChecksum(for: client.getLedgerId()!)
+        return "\(self.defaultDescription)-\(checksum)"
     }
 
     internal func generateChecksum(for ledgerId: LedgerId) -> Checksum {
-        Checksum.generate(for: self, and: ledgerId)
+        Checksum.generate(for: self, on: ledgerId)
     }
 
     public func toStringWithChecksum(_ client: Client) -> String {
         defaultToStringWithChecksum(client)
     }
 
-    public func validateChecksum() throws {
+    internal func defaultValidateChecksum(_ client: Client) throws {
+        if let checksum = self.checksum {
+            let expected = generateChecksum(for: client.getLedgerId()!)
+            if checksum != expected {
+                throw HError(kind: .badEntityId, description: "expected entity id `\(self)` to have checksum `\(expected)`")
+            }
+        }
+    }
 
+    public func validateChecksum(_ client: Client) throws {
+        try defaultValidateChecksum(client)
     }
 }
 

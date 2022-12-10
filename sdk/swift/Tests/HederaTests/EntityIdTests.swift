@@ -40,7 +40,7 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), and: LedgerId.mainnet).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId.mainnet).data
 
             XCTAssertEqual(expected, actual)
         }
@@ -83,7 +83,7 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), and: LedgerId.testnet).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId.testnet).data
 
             XCTAssertEqual(expected, actual)
         }
@@ -126,7 +126,7 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), and: LedgerId.previewnet).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId.previewnet).data
 
             XCTAssertEqual(expected, actual)
         }
@@ -169,7 +169,7 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), and: LedgerId(Data([12, 31, 0, 2]))).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId(Data([12, 31, 0, 2]))).data
 
             XCTAssertEqual(expected, actual)
         }
