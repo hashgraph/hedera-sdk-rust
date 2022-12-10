@@ -378,6 +378,12 @@ void hedera_client_set_operator(struct HederaClient *client,
 size_t hedera_client_get_nodes(struct HederaClient *client,
                                struct HederaAccountId **ids);
 
+void hedera_client_set_ledger_id(struct HederaClient *client,
+                                 const uint8_t *ledger_id_bytes,
+                                 size_t ledger_id_size);
+
+size_t hedera_client_get_ledger_id(struct HederaClient *client, uint8_t **ledger_id_bytes);
+
 /**
  * Parse a Hedera `ContractId` from the passed bytes.
  *

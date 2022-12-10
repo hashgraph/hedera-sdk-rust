@@ -69,7 +69,7 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         }
     }
 
-    private let bytes: Data
+    internal let bytes: Data
 
     public func isMainnet() -> Bool {
         self == Self.mainnet

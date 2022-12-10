@@ -7,12 +7,18 @@ public struct ContractId: EntityId {
     public let realm: UInt64
     public let num: UInt64
     public let evmAddress: Data?
+    public let checksum: Checksum?
 
-    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
         self.shard = shard
         self.realm = realm
         self.num = num
         evmAddress = nil
+        self.checksum = checksum
+    }
+
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.init(shard: shard, realm: realm, num: num, checksum: nil)
     }
 
     private init(shard: UInt64, realm: UInt64, evmAddress: Data) {
@@ -21,6 +27,7 @@ public struct ContractId: EntityId {
         self.realm = realm
         num = 0
         self.evmAddress = evmAddress
+        self.checksum = nil
     }
 
     public init<S: StringProtocol>(parsing description: S) throws {
@@ -28,9 +35,9 @@ public struct ContractId: EntityId {
         case .short(let num):
             self.init(num: num)
 
-        case .long(let shard, let realm, let last):
+        case .long(let shard, let realm, let last, let checksum):
             if let num = UInt64(last) {
-                self.init(shard: shard, realm: realm, num: num)
+                self.init(shard: shard, realm: realm, num: num, checksum: checksum)
             } else {
                 // might have `evmAddress`
                 guard let evmAddress = Data(hexEncoded: last.stripPrefix("0x") ?? last) else {
@@ -44,6 +51,11 @@ public struct ContractId: EntityId {
                     throw HError(
                         kind: .basicParse,
                         description: "expected `20` byte evm address, got `\(evmAddress.count)` bytes")
+                }
+
+                guard checksum == nil else {
+                    throw HError(
+                        kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<evmAddress>`")
                 }
 
                 self.init(shard: shard, realm: realm, evmAddress: evmAddress)
@@ -67,6 +79,8 @@ public struct ContractId: EntityId {
             self.num = hedera.num
             self.evmAddress = nil
         }
+
+        self.checksum = nil
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaContractId) throws -> Result) rethrows -> Result {

@@ -114,6 +114,23 @@ public final class Client {
         }
     }
 
+    public func setLedgerId(_ ledgerId: LedgerId?) {
+        if let ledgerId = ledgerId {
+            ledgerId.bytes.withUnsafeTypedBytes {
+                hedera_client_set_ledger_id(ptr, $0.baseAddress, $0.count)
+            }
+        } else {
+            hedera_client_set_ledger_id(ptr, nil, 0)
+        }
+    }
+
+    public func getLedgerId() -> LedgerId? {
+        var bytes: UnsafeMutablePointer<UInt8>?
+        let count = hedera_client_get_ledger_id(ptr, &bytes)
+
+        return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: Data.unsafeCHederaBytesFree)) }
+    }
+
     deinit {
         hedera_client_free(ptr)
     }
