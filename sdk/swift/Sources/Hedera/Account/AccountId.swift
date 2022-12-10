@@ -26,20 +26,27 @@ public struct AccountId: EntityId {
     public let shard: UInt64
     public let realm: UInt64
     public let num: UInt64
+    public let checksum: Checksum?
     public let alias: PublicKey?
+
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
+        alias = nil
+        self.checksum = checksum
+    }
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, alias: PublicKey) {
         self.shard = shard
         self.realm = realm
         num = 0
         self.alias = alias
+        self.checksum = nil
     }
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
-        self.shard = shard
-        self.realm = realm
-        self.num = num
-        alias = nil
+        self.init(shard: shard, realm: realm, num: num, checksum: nil)
     }
 
     public init<S: StringProtocol>(parsing description: S) throws {
@@ -47,10 +54,15 @@ public struct AccountId: EntityId {
         case .short(let num):
             self.init(num: num)
 
-        case .long(let shard, let realm, let last):
+        case .long(let shard, let realm, let last, let checksum):
             if let num = UInt64(last) {
-                self.init(shard: shard, realm: realm, num: num)
+                self.init(shard: shard, realm: realm, num: num, checksum: checksum)
             } else {
+                guard checksum == nil else {
+                    throw HError(
+                        kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<alias>`")
+                }
+
                 // might have `evmAddress`
                 self.init(
                     shard: shard,
@@ -71,6 +83,7 @@ public struct AccountId: EntityId {
         realm = hedera.realm
         num = hedera.num
         alias = hedera.alias.map(PublicKey.unsafeFromPtr)
+        self.checksum = nil
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaAccountId) throws -> Result) rethrows -> Result {
@@ -109,5 +122,4 @@ public struct AccountId: EntityId {
     }
 }
 
-// TODO: checksum
 // TODO: to evm address
