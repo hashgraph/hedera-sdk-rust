@@ -241,7 +241,8 @@ extension EntityId {
         if let checksum = self.checksum {
             let expected = generateChecksum(for: client.getLedgerId()!)
             if checksum != expected {
-                throw HError(kind: .badEntityId, description: "expected entity id `\(self)` to have checksum `\(expected)`")
+                throw HError(
+                    kind: .badEntityId, description: "expected entity id `\(self)` to have checksum `\(expected)`")
             }
         }
     }

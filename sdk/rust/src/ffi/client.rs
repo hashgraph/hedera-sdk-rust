@@ -157,3 +157,10 @@ pub unsafe extern "C" fn hedera_client_get_ledger_id(
 
     len
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_client_get_auto_validate_checksums(client: *mut Client) -> bool {
+    let client = unsafe { client.as_ref() }.unwrap();
+
+    client.auto_validate_checksums()
+}
