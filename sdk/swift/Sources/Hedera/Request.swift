@@ -21,8 +21,24 @@
 import CHedera
 import Foundation
 
+internal protocol ValidateChecksums {
+    func validateChecksum(on ledgerId: LedgerId) throws
+
+    func validateChecksum(on client: Client) throws
+}
+
+extension ValidateChecksums {
+    func validateChecksum(on client: Client) throws {
+        try validateChecksum(on: client.getLedgerId()!)
+    }
+}
+
 /// A transaction or query that can be executed on the Hedera network.
-public protocol Request: Encodable {
+///
+/// Do *not* implement this protocol.
+/// This protocol is semantically sealed (even if Swift does not support *actually* sealing it).
+/// Implementing this protocol may break in any way without warning in any future version of this SDK.
+internal protocol Request: Encodable {
     associatedtype Response: Decodable
 
     func execute(_ client: Client, _ timeout: TimeInterval?) async throws -> Response
@@ -66,6 +82,14 @@ extension Request {
 
     /// Execute this request against the provided client of the Hedera network.
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+        if client.isAutoValidateChecksumsEnabled() {
+            if let validatable = self as? ValidateChecksums {
+                try validatable.validateChecksum(on: client)
+            } else {
+                fatalError("")
+            }
+        }
+
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 

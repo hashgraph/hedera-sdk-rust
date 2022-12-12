@@ -384,6 +384,8 @@ void hedera_client_set_ledger_id(struct HederaClient *client,
 
 size_t hedera_client_get_ledger_id(struct HederaClient *client, uint8_t **ledger_id_bytes);
 
+bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
+
 /**
  * Parse a Hedera `ContractId` from the passed bytes.
  *

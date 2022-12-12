@@ -130,10 +130,6 @@ public struct AccountId: EntityId {
 
         try defaultValidateChecksum(client)
     }
-
-    public static func == (lhs: AccountId, rhs: AccountId) -> Bool {
-        lhs.shard == rhs.shard && lhs.realm == rhs.realm && lhs.num == lhs.num && lhs.alias == rhs.alias
-    }
 }
 
 // TODO: to evm address

@@ -21,7 +21,7 @@
 import Foundation
 
 /// A transaction that can be executed on the Hedera network.
-public class Transaction: Request {
+public class Transaction: Request, ValidateChecksum {
     private var signers: [Signer] = []
 
     public typealias Response = TransactionResponse

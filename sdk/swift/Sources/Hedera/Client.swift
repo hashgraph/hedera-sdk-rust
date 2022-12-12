@@ -131,6 +131,10 @@ public final class Client {
         return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: Data.unsafeCHederaBytesFree)) }
     }
 
+    public func isAutoValidateChecksumsEnabled() -> Bool {
+        return hedera_client_get_auto_validate_checksums(ptr)
+    }
+
     deinit {
         hedera_client_free(ptr)
     }
