@@ -18,12 +18,48 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 // TODO: exchangeRate
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 public struct TransactionReceipt: Codable {
+    internal init(
+        transactionId: TransactionId? = nil,
+        status: Status,
+        accountId: AccountId? = nil,
+        fileId: FileId? = nil,
+        contractId: ContractId? = nil,
+        topicId: TopicId? = nil,
+        topicSequenceNumber: UInt64,
+        topicRunningHash: String? = nil,
+        topicRunningHashVersion: UInt64,
+        tokenId: TokenId? = nil,
+        totalSupply: UInt64,
+        scheduleId: ScheduleId? = nil,
+        scheduledTransactionId: TransactionId? = nil,
+        serials: [UInt64]? = nil,
+        duplicates: [TransactionReceipt],
+        children: [TransactionReceipt]
+    ) {
+        self.transactionId = transactionId
+        self.status = status
+        self.accountId = accountId
+        self.fileId = fileId
+        self.contractId = contractId
+        self.topicId = topicId
+        self.topicSequenceNumber = topicSequenceNumber
+        self.topicRunningHash = topicRunningHash
+        self.topicRunningHashVersion = topicRunningHashVersion
+        self.tokenId = tokenId
+        self.totalSupply = totalSupply
+        self.scheduleId = scheduleId
+        self.scheduledTransactionId = scheduledTransactionId
+        self.serials = serials
+        self.duplicates = duplicates
+        self.children = children
+    }
+
     /// The ID of the transaction that this is a receipt for.
     public let transactionId: TransactionId?
 
@@ -47,6 +83,7 @@ public struct TransactionReceipt: Codable {
     /// that received the message.
     public let topicSequenceNumber: UInt64
 
+    // fixme: make this a `Data``
     // TODO: hash type (?)
     /// In the receipt for a `TopicMessageSubmitTransaction`, the new running hash of the
     /// topic that received the message.
@@ -84,6 +121,41 @@ public struct TransactionReceipt: Codable {
     /// given top-level id, in consensus order.
     public let children: [TransactionReceipt]
 
+    internal init(
+        protobuf proto: Proto_TransactionReceipt,
+        duplicates: [TransactionReceipt],
+        children: [TransactionReceipt],
+        transactionId: TransactionId?
+    ) throws {
+        let accountId = proto.hasAccountID ? proto.accountID : nil
+        let fileId = proto.hasFileID ? proto.fileID : nil
+        let contractId = proto.hasContractID ? proto.contractID : nil
+        let topicId = proto.hasTopicID ? proto.topicID : nil
+        let topicRunningHash = !proto.topicRunningHash.isEmpty ? proto.topicRunningHash : nil
+        let tokenId = proto.hasTokenID ? proto.tokenID : nil
+        let scheduleId = proto.hasScheduleID ? proto.scheduleID : nil
+        let scheduledTransactionId = proto.hasScheduledTransactionID ? proto.scheduledTransactionID : nil
+        let serials = !proto.serialNumbers.isEmpty ? proto.serialNumbers : nil
+        self.init(
+            transactionId: transactionId,
+            status: Status(rawValue: Int32(proto.status.rawValue)),
+            accountId: try .fromProtobuf(accountId),
+            fileId: .fromProtobuf(fileId),
+            contractId: try .fromProtobuf(contractId),
+            topicId: .fromProtobuf(topicId),
+            topicSequenceNumber: proto.topicSequenceNumber,
+            topicRunningHash: topicRunningHash?.base64EncodedString(),
+            topicRunningHashVersion: proto.topicRunningHashVersion,
+            tokenId: .fromProtobuf(tokenId),
+            totalSupply: proto.newTotalSupply,
+            scheduleId: .fromProtobuf(scheduleId),
+            scheduledTransactionId: try .fromProtobuf(scheduledTransactionId),
+            serials: serials?.map(UInt64.init),
+            duplicates: duplicates,
+            children: children
+        )
+    }
+
     @discardableResult
     public func validateStatus(_ doValidate: Bool) throws -> Self {
         if doValidate && status != Status.ok {
@@ -98,17 +170,35 @@ public struct TransactionReceipt: Codable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension TransactionReceipt: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_transaction_receipt_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_transaction_receipt_to_bytes }
+extension TransactionReceipt: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TransactionReceipt
+
+    internal init(protobuf proto: Protobuf) throws {
+        try self.init(protobuf: proto, duplicates: [], children: [], transactionId: nil)
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.status = Proto_ResponseCodeEnum(rawValue: Int(status.rawValue))!
+            accountId?.toProtobufInto(&proto.accountID)
+            fileId?.toProtobufInto(&proto.fileID)
+            contractId?.toProtobufInto(&proto.contractID)
+            topicId?.toProtobufInto(&proto.topicID)
+            proto.topicSequenceNumber = topicSequenceNumber
+            proto.topicRunningHashVersion = topicRunningHashVersion
+            tokenId?.toProtobufInto(&proto.tokenID)
+            proto.newTotalSupply = totalSupply
+            scheduleId?.toProtobufInto(&proto.scheduleID)
+            scheduledTransactionId?.toProtobufInto(&proto.scheduledTransactionID)
+            proto.serialNumbers = serials?.map(Int64.init) ?? []
+        }
+    }
 }
