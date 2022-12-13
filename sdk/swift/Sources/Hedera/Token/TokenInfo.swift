@@ -210,7 +210,6 @@ extension TokenInfo: TryProtobufCodable {
         let pauseStatus: Bool?
 
         switch proto.pauseStatus {
-
         case .pauseNotApplicable:
             pauseStatus = nil
         case .paused:
