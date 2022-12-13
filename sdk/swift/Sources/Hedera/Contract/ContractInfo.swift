@@ -18,10 +18,42 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 public final class ContractInfo: Codable {
+    internal init(
+        contractId: ContractId,
+        accountId: AccountId,
+        contractAccountId: String,
+        adminKey: Key?,
+        expirationTime: Timestamp?,
+        autoRenewPeriod: Duration?,
+        storage: UInt64,
+        contractMemo: String,
+        balance: Hbar,
+        isDeleted: Bool,
+        autoRenewAccountId: AccountId?,
+        maxAutomaticTokenAssociations: UInt32,
+        ledgerId: LedgerId,
+        stakingInfo: StakingInfo
+    ) {
+        self.contractId = contractId
+        self.accountId = accountId
+        self.contractAccountId = contractAccountId
+        self.adminKey = adminKey
+        self.expirationTime = expirationTime
+        self.autoRenewPeriod = autoRenewPeriod
+        self.storage = storage
+        self.contractMemo = contractMemo
+        self.balance = balance
+        self.isDeleted = isDeleted
+        self.autoRenewAccountId = autoRenewAccountId
+        self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+        self.ledgerId = ledgerId
+        self.stakingInfo = stakingInfo
+    }
+
     /// ID of the contract instance, in the format used by transactions.
     public let contractId: ContractId
 
@@ -66,17 +98,57 @@ public final class ContractInfo: Codable {
     public let stakingInfo: StakingInfo
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension ContractInfo: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_contract_info_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_contract_info_to_bytes }
+extension ContractInfo: TryProtobufCodable {
+    internal typealias Protobuf = Proto_ContractGetInfoResponse.ContractInfo
+
+    internal convenience init(fromProtobuf proto: Protobuf) throws {
+        let adminKey = proto.hasAdminKey ? proto.adminKey : nil
+        let expirationTime = proto.hasExpirationTime ? proto.expirationTime : nil
+        let autoRenewPeriod = proto.hasAutoRenewPeriod ? proto.autoRenewPeriod : nil
+        let autoRenewAccountId = proto.hasAutoRenewAccountID ? proto.autoRenewAccountID : nil
+
+        self.init(
+            contractId: try .fromProtobuf(proto.contractID),
+            accountId: try .fromProtobuf(proto.accountID),
+            contractAccountId: proto.contractAccountID,
+            adminKey: try .fromProtobuf(adminKey),
+            expirationTime: .fromProtobuf(expirationTime),
+            autoRenewPeriod: .fromProtobuf(autoRenewPeriod),
+            storage: UInt64(proto.storage),
+            contractMemo: proto.memo,
+            balance: .fromTinybars(Int64(proto.balance)),
+            isDeleted: proto.deleted,
+            autoRenewAccountId: try .fromProtobuf(autoRenewAccountId),
+            maxAutomaticTokenAssociations: UInt32(proto.maxAutomaticTokenAssociations),
+            ledgerId: .fromBytes(proto.ledgerID),
+            stakingInfo: try .fromProtobuf(proto.stakingInfo)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.contractID = contractId.toProtobuf()
+            proto.accountID = accountId.toProtobuf()
+            proto.contractAccountID = contractAccountId
+            adminKey?.toProtobufInto(&proto.adminKey)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            proto.storage = Int64(storage)
+            proto.memo = contractMemo
+            proto.balance = UInt64(balance.toTinybars())
+            proto.deleted = isDeleted
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+            proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+            proto.ledgerID = ledgerId.bytes
+            proto.stakingInfo = stakingInfo.toProtobuf()
+        }
+    }
 }

@@ -26,7 +26,6 @@ mod account_id;
 mod c_util;
 mod callback;
 mod client;
-mod contract_info;
 mod contract_log_info;
 mod crypto;
 mod execute;
