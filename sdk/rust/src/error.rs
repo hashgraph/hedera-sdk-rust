@@ -143,6 +143,24 @@ pub enum Error {
         task: &'static str,
     },
 
+    /// A task cannot be performed because no `evm_address` field is present.
+    #[error("can't {task} because evm_address is not present")]
+    NoEvmAddressPresent {
+        /// The task that can't be performed
+        task: &'static str,
+    },
+
+    /// A task cannot be performed because a key is of the wrong type.
+    #[error("can't {task} because key {key_enum} cannot be of type {key_variant}")]
+    WrongKeyType {
+        /// The task that can't be performed
+        task: &'static str,
+        /// The name of the key enum (EG `PublicKey` or `PrivateKey`)
+        key_enum: &'static str,
+        /// The type of the key enum
+        key_variant: &'static str,
+    },
+
     /// Failed to parse a [`PublicKey`](crate::PublicKey) or [`PrivateKey`](crate::PrivateKey).
     #[error("failed to parse a key: {0}")]
     KeyParse(#[source] BoxStdError),

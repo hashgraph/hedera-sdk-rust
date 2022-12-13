@@ -74,6 +74,16 @@ fn ecdsa_from_str_variants() {
 }
 
 #[test]
+fn to_evm_address() {
+    let key = PublicKey::from_str_ecdsa(
+        "029469a657510f3bf199a0e29b21e11e7039d8883f3547d59c3568f9c89f704cbc",
+    )
+    .unwrap();
+    let evm_address = key.to_evm_address().unwrap();
+    assert_eq!(evm_address, "0x83e31378423cf9c51ec36b074b89e16f31560cbb");
+}
+
+#[test]
 fn ed25519_verify() {
     let pk = PublicKey::from_str(
         "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
