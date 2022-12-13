@@ -103,20 +103,23 @@ extension Key: TryProtobufCodable {
     }
 
     internal func toProtobuf() -> Protobuf {
-        let key: Protobuf.OneOf_Key
-        switch self {
-        case .single(let single):
-            let bytes = single.toBytesRaw()
-            key = single.isEd25519() ? .ed25519(bytes) : .ecdsaSecp256K1(bytes)
-        case .contractId(let contractId):
-            key = .contractID(contractId.toProtobuf())
-        case .delegatableContractId(let delegatableContractId):
-            key = .delegatableContractID(delegatableContractId.toProtobuf())
-        case .keyList(let keyList):
-            key = keyList.toProtobufKey()
+        .with { proto in
+            // this is make sure we set the property by having a `let` constant that *must* be assigned to
+            // (we get a compiler error otherwise)
+            let key: Protobuf.OneOf_Key
+            switch self {
+            case .single(let single):
+                let bytes = single.toBytesRaw()
+                key = single.isEd25519() ? .ed25519(bytes) : .ecdsaSecp256K1(bytes)
+            case .contractId(let contractId):
+                key = .contractID(contractId.toProtobuf())
+            case .delegatableContractId(let delegatableContractId):
+                key = .delegatableContractID(delegatableContractId.toProtobuf())
+            case .keyList(let keyList):
+                key = keyList.toProtobufKey()
+            }
 
+            proto.key = key
         }
-
-        return .with { $0.key = key }
     }
 }
