@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Response from `ScheduleInfoQuery`.
 public final class ScheduleInfo: Codable {
@@ -75,7 +76,7 @@ public final class ScheduleInfo: Codable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try .fromJsonBytes(bytes)
     }
 
     public func toBytes() -> Data {

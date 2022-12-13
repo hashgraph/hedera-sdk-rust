@@ -48,10 +48,7 @@ mod transaction_id;
 mod transaction_receipt;
 mod util;
 
-use account_id::{
-    AccountId,
-    RefAccountId,
-};
+use account_id::AccountId;
 use semantic_version::SemanticVersion;
 pub(crate) use signer::CSigner;
 use timestamp::Timestamp;

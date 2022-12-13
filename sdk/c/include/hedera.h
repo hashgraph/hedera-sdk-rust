@@ -1388,12 +1388,6 @@ void hedera_transaction_sources_free(const struct HederaTransactionSources *sour
 enum HederaError hedera_transaction_id_from_string(const char *s,
                                                    struct HederaTransactionId *transation_id);
 
-enum HederaError hedera_transaction_id_from_bytes(const uint8_t *bytes,
-                                                  size_t bytes_size,
-                                                  struct HederaTransactionId *transation_id);
-
-size_t hedera_transaction_id_to_bytes(struct HederaTransactionId id, uint8_t **buf);
-
 /**
  * # Safety
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
