@@ -20,8 +20,25 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 public struct StakingInfo: Codable {
+    internal init(
+        declineStakingReward: Bool,
+        stakePeriodStart: Timestamp?,
+        pendingReward: Hbar,
+        stakedToMe: Hbar,
+        stakedAccountId: AccountId?,
+        stakedNodeId: UInt64?
+    ) {
+        self.declineStakingReward = declineStakingReward
+        self.stakePeriodStart = stakePeriodStart
+        self.pendingReward = pendingReward
+        self.stakedToMe = stakedToMe
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+    }
+
     /// If true, the contract declines receiving a staking reward. The default value is false.
     public let declineStakingReward: Bool
 
@@ -55,17 +72,56 @@ public struct StakingInfo: Codable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension StakingInfo: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_staking_info_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_staking_info_to_bytes }
+extension StakingInfo: TryProtobufCodable {
+    internal typealias Protobuf = Proto_StakingInfo
+
+    internal init(fromProtobuf proto: Protobuf) throws {
+        let stakePeriodStart = proto.hasStakePeriodStart ? proto.stakePeriodStart : nil
+        let stakedAccountId: Proto_AccountID?
+        let stakedNodeId: UInt64?
+        switch proto.stakedID {
+        case .none:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        case .some(.stakedNodeID(let nodeId)):
+            stakedAccountId = nil
+            stakedNodeId = UInt64(nodeId)
+        case .some(.stakedAccountID(let accountId)):
+            stakedAccountId = accountId
+            stakedNodeId = nil
+        }
+
+        self.init(
+            declineStakingReward: proto.declineReward,
+            stakePeriodStart: .fromProtobuf(stakePeriodStart),
+            pendingReward: Hbar.fromTinybars(proto.pendingReward),
+            stakedToMe: Hbar.fromTinybars(proto.stakedToMe),
+            stakedAccountId: try .fromProtobuf(stakedAccountId),
+            stakedNodeId: stakedNodeId
+        )
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.declineReward = declineStakingReward
+            stakePeriodStart?.toProtobufInto(&proto.stakePeriodStart)
+            proto.pendingReward = pendingReward.toTinybars()
+            proto.stakedToMe = stakedToMe.toTinybars()
+
+            stakedAccountId?.toProtobufInto(&proto.stakedAccountID)
+
+            // node ID wins, so it goes last.
+            if let nodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(nodeId)
+            }
+        }
+    }
 }

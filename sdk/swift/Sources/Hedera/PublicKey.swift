@@ -77,6 +77,20 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         try Self(unsafeFromBytes: bytes, hedera_public_key_from_bytes_der)
     }
 
+    internal static func fromAliasBytes(_ bytes: Data) throws -> PublicKey? {
+        if bytes.isEmpty {
+            return nil
+        }
+
+        switch try Key(fromProtobufBytes: bytes) {
+        case .single(let key):
+            return key
+
+        default:
+            throw HError(kind: .fromProtobuf, description: "Unexpected key kind in Account alias")
+        }
+    }
+
     private init(parsing description: String) throws {
         var key: OpaquePointer?
         try HError.throwing(error: hedera_public_key_from_string(description, &key))

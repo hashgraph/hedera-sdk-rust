@@ -23,8 +23,6 @@ mod error;
 
 mod account_balance;
 mod account_id;
-mod account_info;
-mod assessed_custom_fee;
 mod c_util;
 mod callback;
 mod client;
@@ -41,7 +39,6 @@ mod runtime;
 mod schedule_info;
 mod semantic_version;
 mod signer;
-mod staking_info;
 mod subscribe;
 mod timestamp;
 mod token_association;

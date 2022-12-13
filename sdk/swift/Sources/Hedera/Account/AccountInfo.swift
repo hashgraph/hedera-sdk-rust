@@ -20,9 +20,52 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Response from `AccountInfoQuery`.
 public final class AccountInfo: Codable {
+    internal init(
+        accountId: AccountId,
+        contractAccountId: String,
+        isDeleted: Bool,
+        proxyAccountId: AccountId?,
+        proxyReceived: Hbar,
+        key: Key,
+        balance: Hbar,
+        sendRecordThreshold: Hbar,
+        receiveRecordThreshold: Hbar,
+        isReceiverSignatureRequired: Bool,
+        expirationTime: Timestamp?,
+        autoRenewPeriod: Duration?,
+        accountMemo: String,
+        ownedNfts: UInt64,
+        maxAutomaticTokenAssociations: UInt32,
+        aliasKey: PublicKey?,
+        ethereumNonce: UInt64,
+        ledgerId: LedgerId,
+        staking: StakingInfo?
+    ) {
+        self.accountId = accountId
+        self.contractAccountId = contractAccountId
+        self.isDeleted = isDeleted
+        self.proxyAccountId = proxyAccountId
+        self.proxyReceived = proxyReceived
+        self.key = key
+        self.balance = balance
+        self.sendRecordThreshold = sendRecordThreshold
+        self.receiveRecordThreshold = receiveRecordThreshold
+        self.isReceiverSignatureRequired = isReceiverSignatureRequired
+        self.expirationTime = expirationTime
+        self.autoRenewPeriod = autoRenewPeriod
+        self.accountMemo = accountMemo
+        self.ownedNfts = ownedNfts
+        self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+        self.aliasKey = aliasKey
+        self.ethereumNonce = ethereumNonce
+        self.ledgerId = ledgerId
+        self.staking = staking
+    }
+
     /// The account that is being referenced.
     public let accountId: AccountId
 
@@ -42,7 +85,7 @@ public final class AccountInfo: Codable {
     ///
     /// If the `proxy_account_id` account refuses to accept proxy staking, or if it is not currently
     /// running a node, then it will behave as if `proxy_account_id` is `None`.
-    @available(*, deprecated)
+    // @available(*, deprecated)
     public let proxyAccountId: AccountId?
 
     /// The total number of HBARs proxy staked to this account.
@@ -57,12 +100,12 @@ public final class AccountInfo: Codable {
 
     /// The threshold amount for which an account record is created (and this account
     /// charged for them) for any send/withdraw transaction.
-    @available(*, deprecated)
+    // @available(*, deprecated)
     public let sendRecordThreshold: Hbar
 
     /// The threshold amount for which an account record is created
     /// (and this account charged for them) for any transaction above this amount.
-    @available(*, deprecated)
+    // @available(*, deprecated)
     public let receiveRecordThreshold: Hbar
 
     /// If true, no transaction can transfer to this account unless signed by
@@ -97,17 +140,67 @@ public final class AccountInfo: Codable {
     public let staking: StakingInfo?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        self.toProtobufBytes()
     }
 }
 
-extension AccountInfo: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_account_info_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_account_info_to_bytes }
+extension AccountInfo: TryProtobufCodable {
+    internal typealias Protobuf = Proto_CryptoGetInfoResponse.AccountInfo
+
+    internal convenience init(fromProtobuf proto: Protobuf) throws {
+        let expirationTime = proto.hasExpirationTime ? proto.expirationTime : nil
+        let autoRenewPeriod = proto.hasAutoRenewPeriod ? proto.autoRenewPeriod : nil
+        let staking = proto.hasStakingInfo ? proto.stakingInfo : nil
+        let proxyAccountId = proto.hasProxyAccountID ? proto.proxyAccountID : nil
+
+        self.init(
+            accountId: try .fromProtobuf(proto.accountID),
+            contractAccountId: proto.contractAccountID,
+            isDeleted: proto.deleted,
+            proxyAccountId: try .fromProtobuf(proxyAccountId),
+            proxyReceived: Hbar.fromTinybars(proto.proxyReceived),
+            key: try .fromProtobuf(proto.key),
+            balance: .fromTinybars(Int64(proto.balance)),
+            sendRecordThreshold: Hbar.fromTinybars(Int64(proto.generateSendRecordThreshold)),
+            receiveRecordThreshold: Hbar.fromTinybars(Int64(proto.generateReceiveRecordThreshold)),
+            isReceiverSignatureRequired: proto.receiverSigRequired,
+            expirationTime: .fromProtobuf(expirationTime),
+            autoRenewPeriod: .fromProtobuf(autoRenewPeriod),
+            accountMemo: proto.memo,
+            ownedNfts: UInt64(proto.ownedNfts),
+            maxAutomaticTokenAssociations: UInt32(proto.maxAutomaticTokenAssociations),
+            aliasKey: try .fromAliasBytes(proto.alias),
+            ethereumNonce: UInt64(proto.ethereumNonce),
+            ledgerId: .fromBytes(proto.ledgerID),
+            staking: try .fromProtobuf(staking)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.contractAccountID = contractAccountId
+            proto.deleted = isDeleted
+            proxyAccountId?.toProtobufInto(&proto.proxyAccountID)
+            proto.proxyReceived = proxyReceived.toTinybars()
+            proto.key = key.toProtobuf()
+            proto.balance = UInt64(balance.toTinybars())
+            proto.generateSendRecordThreshold = UInt64(sendRecordThreshold.toTinybars())
+            proto.generateReceiveRecordThreshold = UInt64(receiveRecordThreshold.toTinybars())
+            proto.receiverSigRequired = isReceiverSignatureRequired
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            proto.memo = accountMemo
+            proto.ownedNfts = Int64(ownedNfts)
+            proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+            proto.alias = aliasKey?.toProtobufBytes() ?? Data()
+            proto.ethereumNonce = Int64(ethereumNonce)
+            proto.ledgerID = ledgerId.bytes
+            staking?.toProtobufInto(&proto.stakingInfo)
+        }
+    }
 }

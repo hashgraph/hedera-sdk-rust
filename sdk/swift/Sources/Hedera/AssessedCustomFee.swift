@@ -1,5 +1,6 @@
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// A custom transfer fee that was assessed during the handling of a ``TransferTransaction``.
 public struct AssessedCustomFee: Equatable, Codable {
@@ -16,17 +17,35 @@ public struct AssessedCustomFee: Equatable, Codable {
     public let payerAccountIdList: [AccountId]
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension AssessedCustomFee: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_assessed_custom_fee_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_assessed_custom_fee_to_bytes }
+extension AssessedCustomFee: TryProtobufCodable {
+    internal typealias Protobuf = Proto_AssessedCustomFee
+
+    internal init(fromProtobuf proto: Protobuf) throws {
+        let tokenId = proto.hasTokenID ? proto.tokenID : nil
+        let feeCollectorAccountId = proto.hasFeeCollectorAccountID ? proto.feeCollectorAccountID : nil
+
+        self.init(
+            amount: proto.amount,
+            tokenId: .fromProtobuf(tokenId),
+            feeCollectorAccountId: try .fromProtobuf(feeCollectorAccountId),
+            payerAccountIdList: try .fromProtobuf(proto.effectivePayerAccountID)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.amount = amount
+            tokenId?.toProtobufInto(&proto.tokenID)
+            feeCollectorAccountId?.toProtobufInto(&proto.feeCollectorAccountID)
+            proto.effectivePayerAccountID = payerAccountIdList.toProtobuf()
+        }
+    }
 }
