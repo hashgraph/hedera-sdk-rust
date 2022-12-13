@@ -35,10 +35,8 @@ mod semantic_version;
 mod signer;
 mod subscribe;
 mod timestamp;
-mod token_info;
 mod transaction;
 mod transaction_id;
-mod transaction_receipt;
 mod util;
 
 use account_id::AccountId;

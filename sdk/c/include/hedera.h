@@ -1129,16 +1129,6 @@ enum HederaError hedera_subscribe(const struct HederaClient *client,
                                   void (*callback)(const void *context, enum HederaError err, const char *message));
 
 /**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_token_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
-
-enum HederaError hedera_token_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
-/**
  * Convert the provided transaction to protobuf-encoded bytes.
  *
  * # Safety
@@ -1183,20 +1173,6 @@ void hedera_transaction_sources_free(struct HederaTransactionSources *sources);
  */
 enum HederaError hedera_transaction_id_from_string(const char *s,
                                                    struct HederaTransactionId *transation_id);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_transaction_receipt_from_bytes(const uint8_t *bytes,
-                                                       size_t bytes_size,
-                                                       char **s);
-
-enum HederaError hedera_transaction_receipt_to_bytes(const char *s,
-                                                     uint8_t **buf,
-                                                     size_t *buf_size);
 
 #ifdef __cplusplus
 } // extern "C"
