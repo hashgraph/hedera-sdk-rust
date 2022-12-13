@@ -43,7 +43,7 @@ extension ToJsonBytes {
         var buf: UnsafeMutablePointer<UInt8>?
         var bufSize: Int = 0
 
-        try HError.throwing(error: hedera_schedule_info_to_bytes(json, &buf, &bufSize))
+        try HError.throwing(error: Self.cToBytes(json, &buf, &bufSize))
 
         return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
     }
