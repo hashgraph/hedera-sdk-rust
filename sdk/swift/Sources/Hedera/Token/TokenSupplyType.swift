@@ -52,5 +52,4 @@ extension TokenSupplyType: TryProtobufCodable {
             return .finite
         }
     }
-
 }

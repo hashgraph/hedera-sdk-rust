@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 private struct TokenBalance: Codable {
     fileprivate let id: TokenId
@@ -31,22 +32,23 @@ private struct TokenBalance: Codable {
         self.balance = balance
         self.decimals = decimals
     }
+}
 
-    fileprivate init(fromCHedera hedera: HederaTokenBalance) {
-        id = TokenId(shard: hedera.id_shard, realm: hedera.id_realm, num: hedera.id_num)
-        balance = hedera.amount
-        decimals = hedera.decimals
+extension TokenBalance: ProtobufCodable {
+    internal typealias Protobuf = Proto_TokenBalance
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(id: .fromProtobuf(proto.tokenID), balance: proto.balance, decimals: proto.decimals)
     }
 
-    fileprivate func toCHedera() -> HederaTokenBalance {
-        HederaTokenBalance(
-            id_shard: id.shard,
-            id_realm: id.realm,
-            id_num: id.num,
-            amount: balance,
-            decimals: decimals
-        )
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.tokenID = id.toProtobuf()
+            proto.balance = balance
+            proto.decimals = decimals
+        }
     }
+
 }
 
 extension Array where Element == TokenBalance {
@@ -97,22 +99,11 @@ public struct AccountBalance {
     public var tokenDecimals: [TokenId: UInt32] { tokenDecimalsInner }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var balance = HederaAccountBalance()
-
-            try HError.throwing(error: hedera_account_balance_from_bytes(pointer.baseAddress, pointer.count, &balance))
-
-            return Self(unsafeFromCHedera: balance)
-        }
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        self.unsafeWithCHedera { hedera in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_account_balance_to_bytes(hedera, &buf)
-
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-        }
+        self.toProtobufBytes()
     }
 
     public func toString() -> String {
@@ -139,7 +130,7 @@ extension AccountBalance: Codable {
         self.init(
             accountId: accountId,
             hbars: hbars,
-            tokensInner: .from(balances: tokenBalances, decimals: tokenDecimals)
+            tokensInner: [TokenBalance].from(balances: tokenBalances, decimals: tokenDecimals)
         )
     }
 
@@ -153,34 +144,21 @@ extension AccountBalance: Codable {
     }
 }
 
-extension AccountBalance {
-    internal init(unsafeFromCHedera hedera: HederaAccountBalance) {
-        accountId = AccountId(unsafeFromCHedera: hedera.id)
-        hbars = Hbar.fromTinybars(hedera.hbars)
+extension AccountBalance: TryProtobufCodable {
+    internal typealias Protobuf = Proto_CryptoGetAccountBalanceResponse
 
-        tokensInner = UnsafeBufferPointer(start: hedera.token_balances, count: hedera.token_balances_len)
-            .map(TokenBalance.init(fromCHedera:))
-
-        hedera_account_balance_token_balances_free(
-            UnsafeMutablePointer(mutating: hedera.token_balances),
-            hedera.token_balances_len
+    internal init(fromProtobuf proto: Protobuf) throws {
+        self.init(
+            accountId: try .fromProtobuf(proto.accountID),
+            hbars: .fromTinybars(Int64(proto.balance)),
+            tokensInner: .fromProtobuf(proto.tokenBalances)
         )
     }
 
-    internal func unsafeWithCHedera<Result>(_ body: (HederaAccountBalance) throws -> Result) rethrows -> Result {
-        try accountId.unsafeWithCHedera { hederaAccountId in
-            try tokensInner
-                .map { $0.toCHedera() }
-                .withUnsafeBufferPointer { buffer in
-                    try body(
-                        HederaAccountBalance(
-                            id: hederaAccountId,
-                            hbars: hbars.toTinybars(),
-                            token_balances: buffer.baseAddress,
-                            token_balances_len: buffer.count
-                        )
-                    )
-                }
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.balance = UInt64(hbars.toTinybars())
         }
     }
 }

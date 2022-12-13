@@ -21,7 +21,6 @@
 #[macro_use]
 mod error;
 
-mod account_balance;
 mod account_id;
 mod c_util;
 mod callback;

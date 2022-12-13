@@ -261,6 +261,7 @@ public struct FixedFee: CustomFee, Codable, ValidateChecksums {
         allCollectorsAreExempt: Bool
     ) {
         let denominatingTokenId = proto.hasDenominatingTokenID ? proto.denominatingTokenID : nil
+
         self.init(
             amount: UInt64(proto.amount),
             denominatingTokenId: .fromProtobuf(denominatingTokenId),
