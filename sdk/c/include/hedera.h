@@ -1157,16 +1157,6 @@ enum HederaError hedera_node_address_book_from_bytes(const uint8_t *bytes,
 
 enum HederaError hedera_node_address_book_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
 
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_schedule_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
-
-enum HederaError hedera_schedule_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
 enum HederaError hedera_semantic_version_from_bytes(const uint8_t *bytes,
                                                     size_t bytes_size,
                                                     struct HederaSemanticVersion *semver);
@@ -1252,12 +1242,6 @@ void hedera_transaction_sources_free(struct HederaTransactionSources *sources);
  */
 enum HederaError hedera_transaction_id_from_string(const char *s,
                                                    struct HederaTransactionId *transation_id);
-
-enum HederaError hedera_transaction_id_from_bytes(const uint8_t *bytes,
-                                                  size_t bytes_size,
-                                                  struct HederaTransactionId *transation_id);
-
-size_t hedera_transaction_id_to_bytes(struct HederaTransactionId id, uint8_t **buf);
 
 /**
  * # Safety

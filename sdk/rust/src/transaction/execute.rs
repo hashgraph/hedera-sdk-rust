@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::borrow::Cow;
-
 use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
