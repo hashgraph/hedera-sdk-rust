@@ -60,7 +60,7 @@ pub struct AccountId {
     /// An alias for `num` if the account was created from a public key directly.
     pub alias: Option<PublicKey>,
 
-    /// EOA 20-byte address to create that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub evm_address: Option<[u8; 20]>,
 
     /// A checksum if the account ID was read from a user inputted string which inclueded a checksum
@@ -84,6 +84,20 @@ impl AccountId {
         Ok(Self { shard, realm, num, alias: None, evm_address: None, checksum })
     }
 
+    /// Accepts "0x___" or "___" Ethereum public address.
+    pub fn from_evm_address(address: &str) -> crate::Result<Self> {
+        let evm_address = EvmAddress::from_str(address)?;
+
+        Ok(Self {
+            shard: 0,
+            realm: 0,
+            num: 0,
+            alias: None,
+            evm_address: Some(evm_address.0),
+            checksum: None,
+        })
+    }
+
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
@@ -94,6 +108,15 @@ impl AccountId {
     pub fn to_solidity_address(&self) -> crate::Result<String> {
         EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
             .to_solidity_address()
+    }
+
+    /// Returns "0x_____" string Ethereum public address.
+    pub fn to_evm_address(&self) -> crate::Result<String> {
+        if let Some(evm_address) = &self.evm_address {
+            Ok(format!("0x{}", EvmAddress::from_ref(evm_address)))
+        } else {
+            Err(Error::NoEvmAddressPresent { task: "convert account ID to evm address string" })
+        }
     }
 
     /// Convert `self` to a string with a valid checksum.
@@ -234,7 +257,7 @@ fn account_num_from_str(s: &str) -> Option<AccountId> {
 }
 
 fn account_alias_or_evm_address(shard: u64, realm: u64, s: &str) -> Option<AccountId> {
-    let b = hex::decode(s).ok()?;
+    let b = hex::decode(s.strip_prefix("0x").unwrap_or(s)).ok()?;
     if b.len() == 20 {
         let evm_address = Some(EvmAddress::try_from(b).ok()?.0);
         Some(AccountId { shard, realm, num: 0, alias: None, evm_address, checksum: None })

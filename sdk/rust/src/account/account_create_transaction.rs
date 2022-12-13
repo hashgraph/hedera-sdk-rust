@@ -174,7 +174,7 @@ impl AccountCreateTransaction {
         self
     }
 
-    /// EOA 20-byte address to create that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub fn alias_evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
         self.body.data.alias_evm_address = Some(evm_address);
         self
