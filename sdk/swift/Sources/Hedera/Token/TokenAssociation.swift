@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// A token <-> account association.
 public struct TokenAssociation: Codable {
@@ -30,12 +31,22 @@ public struct TokenAssociation: Codable {
     public let accountId: AccountId
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension TokenAssociation: ToJsonBytes {
-    internal static var cToBytes: ToJsonBytesFunc { hedera_token_association_to_bytes }
+extension TokenAssociation: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TokenAssociation
+
+    internal init(fromProtobuf protobuf: Protobuf) throws {
+        tokenId = .fromProtobuf(protobuf.tokenID)
+        accountId = try .fromProtobuf(protobuf.accountID)
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.tokenID = tokenId.toProtobuf()
+            proto.accountID = accountId.toProtobuf()
+        }
+    }
 }

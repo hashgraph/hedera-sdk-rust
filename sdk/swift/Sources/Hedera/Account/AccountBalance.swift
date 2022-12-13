@@ -159,6 +159,7 @@ extension AccountBalance: TryProtobufCodable {
         .with { proto in
             proto.accountID = accountId.toProtobuf()
             proto.balance = UInt64(hbars.toTinybars())
+            proto.tokenBalances = tokensInner.toProtobuf()
         }
     }
 }

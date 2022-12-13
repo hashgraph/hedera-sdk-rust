@@ -38,7 +38,6 @@ mod semantic_version;
 mod signer;
 mod subscribe;
 mod timestamp;
-mod token_association;
 mod token_info;
 mod transaction;
 mod transaction_id;
