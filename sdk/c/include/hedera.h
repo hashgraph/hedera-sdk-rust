@@ -319,30 +319,6 @@ void hedera_account_balance_token_balances_free(struct HederaTokenBalance *token
 void hedera_account_id_array_free(struct HederaAccountId *ids, size_t size);
 
 /**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_account_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
-
-enum HederaError hedera_account_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_assessed_custom_fee_from_bytes(const uint8_t *bytes,
-                                                       size_t bytes_size,
-                                                       char **s);
-
-enum HederaError hedera_assessed_custom_fee_to_bytes(const char *s,
-                                                     uint8_t **buf,
-                                                     size_t *buf_size);
-
-/**
  * Free a string returned from a hedera API.
  *
  * A function will tell you if the string needs to be freed with this method.
@@ -1348,16 +1324,6 @@ enum HederaError hedera_semantic_version_from_string(const char *s,
                                                      struct HederaSemanticVersion *semver);
 
 size_t hedera_semantic_version_to_bytes(struct HederaSemanticVersion semver, uint8_t **buf);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_staking_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
-
-enum HederaError hedera_staking_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
 
 /**
  * Subscribe with this request against the provided client of the Hedera network.
