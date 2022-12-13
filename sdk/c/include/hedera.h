@@ -138,21 +138,6 @@ typedef struct HederaErrorDetails {
   };
 } HederaErrorDetails;
 
-typedef struct HederaTokenBalance {
-  uint64_t id_shard;
-  uint64_t id_realm;
-  uint64_t id_num;
-  uint64_t amount;
-  uint32_t decimals;
-} HederaTokenBalance;
-
-typedef struct HederaAccountBalance {
-  struct HederaAccountId id;
-  int64_t hbars;
-  const struct HederaTokenBalance *token_balances;
-  size_t token_balances_len;
-} HederaAccountBalance;
-
 typedef struct HederaSigner {
   /**
    * Safety:
@@ -278,35 +263,6 @@ extern "C" {
 char *hedera_error_message(void);
 
 struct HederaErrorDetails hedera_last_error_details(void);
-
-/**
- * Parse a Hedera `AccountBalance` from the passed bytes.
- */
-enum HederaError hedera_account_balance_from_bytes(const uint8_t *bytes,
-                                                   size_t bytes_size,
-                                                   struct HederaAccountBalance *id);
-
-/**
- * Serialize the passed `AccountBalance` as bytes
- *
- * # Safety
- * - `id` must uphold the safety requirements of `AccountBalance`.
- * - `buf` must be valid for writes.
- * - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
- */
-size_t hedera_account_balance_to_bytes(struct HederaAccountBalance id,
-                                       uint8_t **buf);
-
-/**
- * Free an array of `TokenBalance`s.
- *
- * # Safety
- * - `token_balances` must point to an allocation made by `hedera`.
- * - `token_balances` must not already have been freed.
- * - `token_balances` must be valid for `size` elements.
- */
-void hedera_account_balance_token_balances_free(struct HederaTokenBalance *token_balances,
-                                                size_t size);
 
 /**
  * Free an array of account IDs.
