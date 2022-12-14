@@ -21,7 +21,10 @@
 use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
 use futures_core::Stream;
-use futures_util::TryStreamExt;
+use futures_util::{
+    TryFutureExt,
+    TryStreamExt,
+};
 use hedera_proto::{
     mirror,
     services,
@@ -41,6 +44,7 @@ use crate::{
     FileId,
     MirrorQuery,
     NodeAddress,
+    NodeAddressBook,
     ToProtobuf,
 };
 
@@ -107,7 +111,7 @@ impl MirrorRequest for NodeAddressBookQueryData {
 
     type Item = NodeAddress;
 
-    type Response = Vec<NodeAddress>;
+    type Response = NodeAddressBook;
 
     type ItemStream<'a> = BoxStream<'a, crate::Result<NodeAddress>>;
 
@@ -133,7 +137,11 @@ impl MirrorRequest for NodeAddressBookQueryData {
         S: Stream<Item = crate::Result<Self::GrpcItem>> + Send + 'a,
     {
         // this doesn't reuse the work in `make_item_stream`
-        Box::pin(Self::map_stream(stream).try_collect())
+        Box::pin(
+            Self::map_stream(stream)
+                .try_collect()
+                .map_ok(|addresses| NodeAddressBook { node_addresses: addresses }),
+        )
     }
 }
 
@@ -143,8 +151,8 @@ impl From<NodeAddress> for AnyMirrorQueryMessage {
     }
 }
 
-impl From<Vec<NodeAddress>> for AnyMirrorQueryResponse {
-    fn from(value: Vec<NodeAddress>) -> Self {
+impl From<NodeAddressBook> for AnyMirrorQueryResponse {
+    fn from(value: NodeAddressBook) -> Self {
         Self::NodeAddressBook(value)
     }
 }
