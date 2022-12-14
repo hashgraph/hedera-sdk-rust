@@ -39,6 +39,18 @@ pub(crate) struct MirrorNetwork {
 }
 
 impl MirrorNetwork {
+    pub(super) fn mainnet() -> Self {
+        Self::from_static(&[MAINNET])
+    }
+
+    pub(super) fn testnet() -> Self {
+        Self::from_static(&[TESTNET])
+    }
+
+    pub(super) fn previewnet() -> Self {
+        Self::from_static(&[PREVIEWNET])
+    }
+
     pub(crate) fn from_static(network: &[&'static str]) -> Self {
         let mut addresses = Vec::with_capacity(network.len());
 
