@@ -208,11 +208,23 @@ impl Network {
     pub(crate) fn channel(&self, index: usize) -> (AccountId, Channel) {
         let id = self.nodes[index];
 
+        // Double lock check: We'd really rather not take a write lock if possible.
+        // (paired with the below comment)
         if let Some(channel) = &*self.channels[index].read_recursive() {
             return (id, channel.clone());
         }
 
         let mut slot = self.channels[index].write();
+
+        // Double lock check: We'd rather not replace the channel if one exists already, they aren't free.
+        // (paired with the above comment)
+        // Between returning `None` in the above `read` and getting
+        // the `WriteGuard` some *other* write to this channel could've happened
+        // causing the channel to be `Some` here, despite this thread not
+        // changing it.
+        if let Some(channel) = &*slot {
+            return (id, channel.clone());
+        }
 
         let addresses = &self.addresses[index];
 
