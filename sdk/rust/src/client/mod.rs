@@ -18,12 +18,14 @@
  * ‍
  */
 
+use std::iter;
 use std::sync::atomic::{
     AtomicBool,
     AtomicU64,
     Ordering,
 };
 use std::sync::Arc;
+use std::time::Duration;
 
 use tokio::sync::RwLock as AsyncRwLock;
 use tokio::task::block_in_place;
@@ -98,6 +100,16 @@ impl Client {
         )
     }
 
+    /// Construct a hedera client pre-configured for access to the given network.
+    pub fn for_name(name: &str) -> crate::Result<Self> {
+        match name {
+            "mainnet" => Ok(Self::for_mainnet()),
+            "testnet" => Ok(Self::for_testnet()),
+            "previewnet" => Ok(Self::for_previewnet()),
+            _ => Err(crate::Error::basic_parse(format!("Unknown network name {name}"))),
+        }
+    }
+
     pub(crate) async fn ledger_id(&self) -> Option<LedgerId> {
         self.0.ledger_id.read().await.clone()
     }
@@ -162,8 +174,54 @@ impl Client {
     }
 
     #[allow(clippy::unused_self)]
-    pub(crate) fn get_request_timeout(&self) -> Option<std::time::Duration> {
+    pub(crate) fn get_request_timeout(&self) -> Option<Duration> {
         // todo: implement this.
         None
+    }
+
+    /// Send a ping to the given node.
+    pub async fn ping(&self, node_account_id: AccountId) -> crate::Result<()> {
+        crate::AccountBalanceQuery::new()
+            .account_id(node_account_id)
+            .node_account_ids(iter::once(node_account_id))
+            .execute(self)
+            .await?;
+
+        Ok(())
+    }
+
+    /// Send a ping to the given node, canceling the ping after `timeout` has elapsed.
+    pub async fn ping_with_timeout(
+        &self,
+        node_account_id: AccountId,
+        timeout: Duration,
+    ) -> crate::Result<()> {
+        crate::AccountBalanceQuery::new()
+            .account_id(node_account_id)
+            .node_account_ids(iter::once(node_account_id))
+            .execute_with_timeout(self, timeout)
+            .await?;
+
+        Ok(())
+    }
+
+    /// Send a ping to all nodes.
+    pub async fn ping_all(&self) -> crate::Result<()> {
+        futures_util::future::try_join_all(
+            self.network().node_ids().into_iter().map(|it| self.ping(dbg!(*it))),
+        )
+        .await?;
+
+        Ok(())
+    }
+
+    /// Send a ping to all nodes, canceling the ping after `timeout` has elapsed.
+    pub async fn ping_all_with_timeout(&self, timeout: Duration) -> crate::Result<()> {
+        futures_util::future::try_join_all(
+            self.network().node_ids().into_iter().map(|it| self.ping_with_timeout(*it, timeout)),
+        )
+        .await?;
+
+        Ok(())
     }
 }

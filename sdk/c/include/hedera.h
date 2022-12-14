@@ -283,6 +283,16 @@ size_t hedera_account_id_to_bytes(struct HederaAccountId id,
                                   uint8_t **buf);
 
 /**
+ * Free an array of account IDs.
+ *
+ * # Safety
+ * - `ids` must point to an allocation made by `hedera`.
+ * - `ids` must not already have been freed.
+ * - `ids` must be valid for `size` elements.
+ */
+void hedera_account_id_array_free(struct HederaAccountId *ids, size_t size);
+
+/**
  * # Safety
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
  * - `s` must only be freed with `hedera_string_free`,
@@ -345,6 +355,19 @@ void hedera_client_set_operator(struct HederaClient *client,
                                 uint64_t id_realm,
                                 uint64_t id_num,
                                 struct HederaPrivateKey *key);
+
+/**
+ * Get all the nodes for the `Client`
+ *
+ * For internal use _only_.
+ *
+ * # Safety:
+ * - `Client` must be valid for reads.
+ * - `ids` must be freed by using `hedera_account_id_array_free`, notably this means that it must *not* be freed with `free`.
+ * - the length of `ids` must not be changed.
+ */
+size_t hedera_client_get_nodes(struct HederaClient *client,
+                               struct HederaAccountId **ids);
 
 /**
  * Parse a Hedera `ContractId` from the passed string.

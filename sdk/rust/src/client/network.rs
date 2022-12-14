@@ -178,6 +178,10 @@ impl Network {
         Self { map, nodes, addresses, channels, healthy }
     }
 
+    pub(crate) fn node_ids(&self) -> &[AccountId] {
+        &self.nodes
+    }
+
     pub(crate) fn node_indexes_for_ids(&self, ids: &[AccountId]) -> crate::Result<Vec<usize>> {
         let mut indexes = Vec::new();
         for id in ids {
