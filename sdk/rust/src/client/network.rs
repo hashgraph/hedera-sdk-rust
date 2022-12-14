@@ -146,6 +146,18 @@ pub(crate) struct Network {
 }
 
 impl Network {
+    pub(super) fn mainnet() -> Self {
+        Self::from_static(MAINNET)
+    }
+
+    pub(super) fn testnet() -> Self {
+        Self::from_static(TESTNET)
+    }
+
+    pub(super) fn previewnet() -> Self {
+        Self::from_static(PREVIEWNET)
+    }
+
     pub(crate) fn from_static(network: &'static [(u64, &'static [&'static str])]) -> Self {
         let mut map = HashMap::with_capacity(network.len());
         let mut nodes = Vec::with_capacity(network.len());
