@@ -21,7 +21,7 @@
 import Foundation
 import Network
 
-public struct SocketAddressV4: LosslessStringConvertible, Decodable {
+public struct SocketAddressV4: LosslessStringConvertible, Codable {
     // name is is to match the other SDKs.
     // swiftlint:disable:next identifier_name
     public var ip: IPv4Address
@@ -54,9 +54,15 @@ public struct SocketAddressV4: LosslessStringConvertible, Decodable {
     public var description: String {
         "\(ip):\(port)"
     }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        try container.encode(String(describing: self))
+    }
 }
 
-public struct NodeAddress: Decodable {
+public struct NodeAddress: Codable {
     /// A non-sequential, unique, static identifier for the node
     public var nodeId: UInt64
 

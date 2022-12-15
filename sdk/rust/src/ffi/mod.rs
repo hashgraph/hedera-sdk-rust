@@ -36,6 +36,7 @@ mod key;
 mod mnemonic;
 mod network_version_info;
 mod nft_id;
+mod node_address_book;
 mod runtime;
 mod schedule_info;
 mod semantic_version;
