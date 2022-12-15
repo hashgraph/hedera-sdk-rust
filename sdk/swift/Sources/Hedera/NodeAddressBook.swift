@@ -18,32 +18,26 @@
  * ‍
  */
 
+import CHedera
 import Foundation
 
-public class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
-    private var fileId: FileId
-    private var limit: UInt32
+/// A list of nodes and their metadata.
+public struct NodeAddressBook: Codable {
+    /// all the nodes this address book contains.
+    public let nodeAddresses: [NodeAddress]
 
-    public init(_ fileId: FileId = FileId.addressBook, _ limit: UInt32 = 0) {
-        self.fileId = fileId
-        self.limit = limit
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
     }
 
-    public func getFileId() -> FileId {
-        fileId
+    public func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
+        try! toJsonBytes()
     }
+}
 
-    public func setFileId(_ fileId: FileId) -> Self {
-        self.fileId = fileId
-        return self
-    }
-
-    public func getLimit() -> UInt32 {
-        limit
-    }
-
-    public func setLimit(_ limit: UInt32) -> Self {
-        self.limit = limit
-        return self
-    }
+extension NodeAddressBook: ToFromJsonBytes {
+    static var cFromBytes: FromJsonBytesFunc { hedera_node_address_book_from_bytes }
+    static var cToBytes: ToJsonBytesFunc { hedera_node_address_book_to_bytes }
 }
