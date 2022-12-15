@@ -60,7 +60,7 @@ extension Data {
     }
 
     // (sr): swift compiler wins the "useless acl vs explicit acl debate
-    internal init?(hexEncoded: String) {
+    internal init?<S: StringProtocol>(hexEncoded: S) {
         let chars = Array(hexEncoded.utf8)
         // note: hex check is done character by character
         let count = chars.count

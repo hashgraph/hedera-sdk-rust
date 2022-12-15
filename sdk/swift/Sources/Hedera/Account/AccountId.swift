@@ -22,72 +22,67 @@ import CHedera
 import Foundation
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-public final class AccountId: EntityId {
-    public override func hash(into hasher: inout Hasher) {
-        super.hash(into: &hasher)
-        hasher.combine(alias)
-    }
-
+public struct AccountId: EntityId {
+    public let shard: UInt64
+    public let realm: UInt64
+    public let num: UInt64
     public let alias: PublicKey?
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, alias: PublicKey) {
+        self.shard = shard
+        self.realm = realm
+        num = 0
         self.alias = alias
-
-        super.init(shard: shard, realm: realm, num: 0)
     }
 
-    public required init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+    public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
+        self.shard = shard
+        self.realm = realm
+        self.num = num
         alias = nil
-
-        super.init(shard: shard, realm: realm, num: num)
     }
 
-    private convenience init(parsing description: String) throws {
-        var id = HederaAccountId()
+    public init<S: StringProtocol>(parsing description: S) throws {
+        switch try PartialEntityId<S.SubSequence>(parsing: description) {
+        case .short(let num):
+            self.init(num: num)
 
-        try HError.throwing(error: hedera_account_id_from_string(description, &id))
+        case .long(let shard, let realm, let last):
+            if let num = UInt64(last) {
+                self.init(shard: shard, realm: realm, num: num)
+            } else {
+                // might have `evmAddress`
+                self.init(
+                    shard: shard,
+                    realm: realm,
+                    alias: try PublicKey.fromString(String(last))
+                )
+            }
 
-        self.init(unsafeFromCHedera: id)
-    }
-
-    public required convenience init?(_ description: String) {
-        try? self.init(parsing: description)
-    }
-
-    public required convenience init(integerLiteral value: IntegerLiteralType) {
-        self.init(num: UInt64(value))
-    }
-
-    public required convenience init(stringLiteral value: StringLiteralType) {
-        // swiftlint:disable:next force_try
-        try! self.init(parsing: value)
-    }
-
-    public required convenience init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
+        // check for `evmAddress` eventually
+        case .other(let description):
+            throw HError(
+                kind: .basicParse, description: "expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
+        }
     }
 
     internal init(unsafeFromCHedera hedera: HederaAccountId) {
+        shard = hedera.shard
+        realm = hedera.realm
+        num = hedera.num
         alias = hedera.alias.map(PublicKey.unsafeFromPtr)
-        super.init(shard: hedera.shard, realm: hedera.realm, num: hedera.num)
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaAccountId) throws -> Result) rethrows -> Result {
         try body(HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr))
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
-    }
-
-    public override var description: String {
+    public var description: String {
         if let alias = alias {
             return "\(shard).\(realm).\(alias)"
         }
 
-        return super.description
+        return defaultDescription
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
