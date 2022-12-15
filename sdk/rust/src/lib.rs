@@ -143,6 +143,7 @@ pub use hbar::{
 pub use hedera_proto::services::ResponseCodeEnum as Status;
 pub use key::{
     Key,
+    KeyList,
     PrivateKey,
     PublicKey,
 };

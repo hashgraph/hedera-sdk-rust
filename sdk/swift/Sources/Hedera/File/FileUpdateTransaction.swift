@@ -54,7 +54,7 @@ public final class FileUpdateTransaction: Transaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    public var keys: [Key] = []
+    public var keys: KeyList? = nil
 
     /// Sets the keys for this file.
     ///
@@ -63,7 +63,7 @@ public final class FileUpdateTransaction: Transaction {
     /// can sign to delete the file.
     ///
     @discardableResult
-    public func keys(_ keys: [Key]) -> Self {
+    public func keys(_ keys: KeyList) -> Self {
         self.keys = keys
 
         return self
@@ -104,7 +104,7 @@ public final class FileUpdateTransaction: Transaction {
 
         try container.encode(fileId, forKey: .fileId)
         try container.encode(fileMemo, forKey: .fileMemo)
-        try container.encode(keys, forKey: .keys)
+        try container.encodeIfPresent(keys, forKey: .keys)
         try container.encode(contents.base64EncodedString(), forKey: .contents)
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
 
