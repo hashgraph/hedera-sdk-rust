@@ -37,6 +37,9 @@ public final class FileInfo: Codable {
     /// True if deleted but not yet expired.
     public let isDeleted: Bool
 
+    /// One of these keys must sign in order to modify or delete the file.
+    public let keys: KeyList
+
     /// Memo associated with the file.
     public let fileMemo: String
 

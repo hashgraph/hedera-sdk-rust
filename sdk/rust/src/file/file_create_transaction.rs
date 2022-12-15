@@ -37,6 +37,7 @@ use crate::{
     AccountId,
     Error,
     Key,
+    KeyList,
     LedgerId,
     Transaction,
     TransactionId,
@@ -57,7 +58,7 @@ pub struct FileCreateTransactionData {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    keys: Option<Vec<Key>>,
+    keys: Option<KeyList>,
 
     /// The bytes that are to be the contents of the file.
     #[cfg_attr(
@@ -139,13 +140,9 @@ impl ToTransactionDataProtobuf for FileCreateTransactionData {
     ) -> services::transaction_body::Data {
         let expiration_time = self.expiration_time.to_protobuf();
 
-        let keys = self.keys.to_protobuf().unwrap_or_default();
-
-        let keys = services::KeyList { keys };
-
         services::transaction_body::Data::FileCreate(services::FileCreateTransactionBody {
             expiration_time,
-            keys: Some(keys),
+            keys: self.keys.to_protobuf(),
             contents: self.contents.clone().unwrap_or_default(),
             shard_id: None,
             realm_id: None,
@@ -189,11 +186,13 @@ mod tests {
         const FILE_CREATE_TRANSACTION_JSON: &str = r#"{
   "$type": "fileCreate",
   "fileMemo": "File memo",
-  "keys": [
-    {
-      "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-    }
-  ],
+  "keys": {
+    "keys": [
+      {
+        "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
+      }
+    ]
+  },
   "contents": "SGVsbG8sIHdvcmxkIQ==",
   "expirationTime": 1656352251277559886
 }"#;

@@ -21,12 +21,11 @@
 import CHedera
 import Foundation
 
-// TODO: KeyList
-// TODO: ThresholdKey
-public enum Key {
+public enum Key: Equatable {
     case single(PublicKey)
     case contractId(ContractId)
     case delegatableContractId(ContractId)
+    case keyList(KeyList)
 }
 
 extension Key: Codable {
@@ -34,6 +33,7 @@ extension Key: Codable {
         case single
         case contractId
         case delegatableContractId
+        case keyList
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -48,6 +48,9 @@ extension Key: Codable {
 
         case .delegatableContractId(let contractId):
             try container.encode(contractId, forKey: .delegatableContractId)
+
+        case .keyList(let keyList):
+            try container.encode(keyList, forKey: .keyList)
         }
     }
 
@@ -60,6 +63,8 @@ extension Key: Codable {
             self = .contractId(contractId)
         } else if let contractId = try container.decodeIfPresent(ContractId.self, forKey: .delegatableContractId) {
             self = .delegatableContractId(contractId)
+        } else if let keyList = try container.decodeIfPresent(KeyList.self, forKey: .keyList) {
+            self = .keyList(keyList)
         } else {
             fatalError("(BUG) unexpected variant for Key")
         }
