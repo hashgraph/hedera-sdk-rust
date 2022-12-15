@@ -83,9 +83,9 @@ pub struct AccountCreateTransactionData {
     ///
     pub max_automatic_token_associations: u16,
 
-    pub alias_key: Option<PublicKey>,
+    pub alias: Option<PublicKey>,
 
-    pub alias_evm_address: Option<[u8; 20]>,
+    pub evm_address: Option<[u8; 20]>,
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
@@ -109,8 +109,8 @@ impl Default for AccountCreateTransactionData {
             auto_renew_account_id: None,
             account_memo: String::new(),
             max_automatic_token_associations: 0,
-            alias_key: None,
-            alias_evm_address: None,
+            alias: None,
+            evm_address: None,
             staked_account_id: None,
             staked_node_id: None,
             decline_staking_reward: false,
@@ -170,13 +170,13 @@ impl AccountCreateTransaction {
     /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
     /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
     pub fn alias_key(&mut self, key: PublicKey) -> &mut Self {
-        self.body.data.alias_key = Some(key);
+        self.body.data.alias = Some(key);
         self
     }
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub fn alias_evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
-        self.body.data.alias_evm_address = Some(evm_address);
+        self.body.data.evm_address = Some(evm_address);
         self
     }
 
@@ -256,8 +256,8 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 new_realm_admin_key: None,
                 memo: self.account_memo.clone(),
                 max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
-                alias: self.alias_key.map_or(vec![], |key| key.to_bytes_raw()),
-                evm_address: self.alias_evm_address.map_or(vec![], |b| Vec::from(b)),
+                alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
+                evm_address: self.evm_address.map_or(vec![], |b| Vec::from(b)),
                 decline_reward: self.decline_staking_reward,
                 staked_id,
             },
