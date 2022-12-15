@@ -11,7 +11,7 @@ use crate::{
 
 /// A custom transfer fee that was assessed during the handling of a `CryptoTransfer`.
 #[derive(Debug, Eq, PartialEq, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AssessedCustomFee {
     /// The amount of currency charged to each payer.

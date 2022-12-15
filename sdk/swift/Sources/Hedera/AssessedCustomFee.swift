@@ -1,3 +1,6 @@
+import CHedera
+import Foundation
+
 /// A custom transfer fee that was assessed during the handling of a ``TransferTransaction``.
 public struct AssessedCustomFee: Equatable, Codable {
     /// The amount of currency charged to each payer.
@@ -12,6 +15,18 @@ public struct AssessedCustomFee: Equatable, Codable {
     /// A list of all accounts that were charged this fee.
     public let payerAccountIdList: [AccountId]
 
-    // todo: fromBytes
-    // todo: toBytes
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
+    }
+
+    public func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
+        try! toJsonBytes()
+    }
+}
+
+extension AssessedCustomFee: ToFromJsonBytes {
+    static var cFromBytes: FromJsonBytesFunc { hedera_assessed_custom_fee_from_bytes }
+    static var cToBytes: ToJsonBytesFunc { hedera_assessed_custom_fee_to_bytes }
 }
