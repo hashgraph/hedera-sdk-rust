@@ -107,7 +107,7 @@ pub unsafe extern "C" fn hedera_execute(
                     .map(|response| serde_json::to_string(&response).unwrap())
             }
 
-            AnyRequest::MirrorQuery(mut mirror_query) => mirror_query
+            AnyRequest::MirrorQuery(mirror_query) => mirror_query
                 .execute_with_optional_timeout(client, timeout)
                 .await
                 .map(|response| serde_json::to_string(&response).unwrap()),

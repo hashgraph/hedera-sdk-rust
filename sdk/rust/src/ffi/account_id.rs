@@ -21,12 +21,10 @@
 use core::slice;
 use std::os::raw::c_char;
 use std::ptr;
-use std::str::FromStr;
 
 use libc::size_t;
 
 use crate::ffi::error::Error;
-use crate::ffi::util::cstr_from_ptr;
 use crate::protobuf::ToProtobuf;
 use crate::PublicKey;
 
@@ -94,24 +92,6 @@ impl<'a> ToProtobuf for RefAccountId<'a> {
             }),
         }
     }
-}
-
-/// Parse a Hedera `AccountId` from the passed string.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_account_id_from_string(
-    s: *const c_char,
-    id: *mut AccountId,
-) -> Error {
-    assert!(!id.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(crate::AccountId::from_str(&s)).into();
-
-    unsafe {
-        ptr::write(id, parsed);
-    }
-
-    Error::Ok
 }
 
 /// Parse a Hedera `AccountId` from the passed bytes.
