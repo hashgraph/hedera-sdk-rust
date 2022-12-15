@@ -34,6 +34,17 @@ public final class AccountInfo: Codable {
     /// transactions for it will fail except the transaction to extend its expiration date.
     public let isDeleted: Bool
 
+    /// The Account ID of the account to which this is proxy staked.
+    ///
+    /// If `proxy_account_id` is `None`, an invalid account, or an account that isn't a node,
+    /// then this account is automatically proxy staked to a node chosen by the network,
+    /// but without earning payments.
+    ///
+    /// If the `proxy_account_id` account refuses to accept proxy staking, or if it is not currently
+    /// running a node, then it will behave as if `proxy_account_id` is `None`.
+    @available(*, deprecated)
+    public let proxyAccountId: AccountId?
+
     /// The total number of HBARs proxy staked to this account.
     public let proxyReceived: Hbar
 
@@ -43,6 +54,16 @@ public final class AccountInfo: Codable {
 
     /// Current balance of the referenced account.
     public let balance: Hbar
+
+    /// The threshold amount for which an account record is created (and this account
+    /// charged for them) for any send/withdraw transaction.
+    @available(*, deprecated)
+    public let sendRecordThreshold: Hbar
+
+    /// The threshold amount for which an account record is created
+    /// (and this account charged for them) for any transaction above this amount.
+    @available(*, deprecated)
+    public let receiveRecordThreshold: Hbar
 
     /// If true, no transaction can transfer to this account unless signed by
     /// this account's key.
