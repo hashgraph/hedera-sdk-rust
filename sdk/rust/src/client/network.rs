@@ -146,6 +146,18 @@ pub(crate) struct Network {
 }
 
 impl Network {
+    pub(super) fn mainnet() -> Self {
+        Self::from_static(MAINNET)
+    }
+
+    pub(super) fn testnet() -> Self {
+        Self::from_static(TESTNET)
+    }
+
+    pub(super) fn previewnet() -> Self {
+        Self::from_static(PREVIEWNET)
+    }
+
     pub(crate) fn from_static(network: &'static [(u64, &'static [&'static str])]) -> Self {
         let mut map = HashMap::with_capacity(network.len());
         let mut nodes = Vec::with_capacity(network.len());
@@ -164,6 +176,10 @@ impl Network {
         }
 
         Self { map, nodes, addresses, channels, healthy }
+    }
+
+    pub(crate) fn node_ids(&self) -> &[AccountId] {
+        &self.nodes
     }
 
     pub(crate) fn node_indexes_for_ids(&self, ids: &[AccountId]) -> crate::Result<Vec<usize>> {
@@ -196,11 +212,23 @@ impl Network {
     pub(crate) fn channel(&self, index: usize) -> (AccountId, Channel) {
         let id = self.nodes[index];
 
+        // Double lock check: We'd really rather not take a write lock if possible.
+        // (paired with the below comment)
         if let Some(channel) = &*self.channels[index].read_recursive() {
             return (id, channel.clone());
         }
 
         let mut slot = self.channels[index].write();
+
+        // Double lock check: We'd rather not replace the channel if one exists already, they aren't free.
+        // (paired with the above comment)
+        // Between returning `None` in the above `read` and getting
+        // the `WriteGuard` some *other* write to this channel could've happened
+        // causing the channel to be `Some` here, despite this thread not
+        // changing it.
+        if let Some(channel) = &*slot {
+            return (id, channel.clone());
+        }
 
         let addresses = &self.addresses[index];
 
