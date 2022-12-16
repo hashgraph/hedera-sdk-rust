@@ -445,7 +445,8 @@ mod tests {
       "$type": "fixed",
       "amount": 1,
       "denominatingTokenId": "0.0.7",
-      "feeCollectorAccountId": "0.0.8"
+      "feeCollectorAccountId": "0.0.8",
+      "allCollectorsAreExempt": false
     }
   ],
   "pauseKey": {
@@ -495,6 +496,7 @@ mod tests {
                 .custom_fees([CustomFee {
                     fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
                     fee_collector_account_id: Some(AccountId::from(8)),
+                    all_collectors_are_exempt: false,
                 }])
                 .pause_key(PublicKey::from_str(PAUSE_KEY)?);
 
@@ -560,6 +562,7 @@ mod tests {
                 [CustomFee {
                     fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
                     fee_collector_account_id: Some(AccountId::from(8)),
+                    all_collectors_are_exempt: false,
                 }]
             );
 
