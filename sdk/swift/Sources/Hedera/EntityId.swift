@@ -49,6 +49,7 @@ public struct Checksum: LosslessStringConvertible, Hashable {
 
     internal init(bytes: (UInt8, UInt8, UInt8, UInt8, UInt8)) {
         let (a, b, c, d, e) = bytes
+        // fixme: check for ascii-alphanumeric
         self.data = String(data: Data([a, b, c, d, e]), encoding: .ascii)!
     }
 
@@ -58,9 +59,9 @@ public struct Checksum: LosslessStringConvertible, Hashable {
 
     internal static func generate<E: EntityId>(for entity: E, on ledgerId: LedgerId) -> Self {
         // 3 digits in base 26
-        let p3 = 26.toPower(of: 3)
+        let p3 = 26 * 26 * 26
         // 5 digits in base 26
-        let p5 = 26.toPower(of: 5)
+        let p5 = 26 * 26 * 26 * 26 * 26
 
         // min prime greater than a million. Used for the final permutation.
         let m = 1_000_003
@@ -73,11 +74,11 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         // don't need the six 0 bytes.
         let h = ledgerId.bytes
 
-        let d = entity.description.map {
-            if $0 == "." {
+        let d = entity.description.map { char -> Int in
+            if char == "." {
                 return 10
             } else {
-                return $0.wholeNumberValue!
+                return char.wholeNumberValue!
             }
         }
 
