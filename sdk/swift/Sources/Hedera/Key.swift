@@ -78,5 +78,5 @@ extension Key: Codable {
 }
 
 extension Key: ToJsonBytes {
-    static var cToBytes: ToJsonBytesFunc { hedera_key_to_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_key_to_bytes }
 }

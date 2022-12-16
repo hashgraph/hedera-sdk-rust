@@ -66,6 +66,6 @@ public struct StakingInfo: Codable {
 }
 
 extension StakingInfo: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_staking_info_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_staking_info_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_staking_info_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_staking_info_to_bytes }
 }

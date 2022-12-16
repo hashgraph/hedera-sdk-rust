@@ -28,6 +28,8 @@ extension KeyList: Collection, RandomAccessCollection {
         }
     }
 
+    // i is *the* identifier name to use here.
+    // swiftlint:disable:next identifier_name
     public func index(after i: Int) -> Int {
         self.keys.index(after: i)
     }

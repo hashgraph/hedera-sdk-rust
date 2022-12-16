@@ -57,6 +57,6 @@ public final class FileInfo: Codable {
 }
 
 extension FileInfo: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_file_info_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_file_info_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_file_info_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_file_info_to_bytes }
 }

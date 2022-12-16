@@ -91,7 +91,7 @@ extension Request {
     }
 
     /// Execute this request against the provided client of the Hedera network.
-    func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+    internal func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 
@@ -100,7 +100,7 @@ extension Request {
         return try await executeEncoded(client, request: request, signers: [], timeout: timeout)
     }
 
-    public static func decodeResponse(_ responseBytes: Data) throws -> Response {
+    internal static func decodeResponse(_ responseBytes: Data) throws -> Response {
         // decode the response as the generic output type of this query types
         try JSONDecoder().decode(Response.self, from: responseBytes)
     }
