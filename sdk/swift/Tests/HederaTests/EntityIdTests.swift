@@ -3,7 +3,7 @@ import XCTest
 @testable import Hedera
 
 public final class EntityIdTests: XCTestCase {
-    func testChecksumOnMainnet() {
+    internal func testChecksumOnMainnet() {
         let expected: [String] = [
             "uvnqa", "dfkxr", "lpifi", "tzfmz", "cjcuq", "ktach", "tcxjy", "bmurp",
             "jwrzg", "sgpgx", "hiafh", "rdxmy", "uuuup", "eqscg", "ompjx", "yimro",
@@ -40,13 +40,13 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId.mainnet).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: .mainnet).data
 
             XCTAssertEqual(expected, actual)
         }
     }
 
-    func testChecksumOnTestnet() {
+    internal func testChecksumOnTestnet() {
         let expected: [String] = [
             "eiyxj", "mswfa", "vctmr", "dmqui", "lwobz", "ugljq", "cqirh", "lafyy",
             "tkdgp", "buaog", "qvlmq", "ariuh", "eigby", "oedjp", "yaarg", "hvxyx",
@@ -83,13 +83,13 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId.testnet).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: .testnet).data
 
             XCTAssertEqual(expected, actual)
         }
     }
 
-    func testChecksumOnPreviewnet() {
+    internal func testChecksumOnPreviewnet() {
         let expected: [String] = [
             "nwkes", "wghmj", "eqeua", "nacbr", "vjzji", "dtwqz", "mdtyq", "unrgh",
             "cxony", "lhlvp", "aiwtz", "keubq", "nvrjh", "xroqy", "hnlyp", "rjjgg",
@@ -132,7 +132,7 @@ public final class EntityIdTests: XCTestCase {
         }
     }
 
-    func testChecksumOnCustomNetwork() {
+    internal func testChecksumOnCustomNetwork() {
         let expected: [String] = [
             "kenvf", "solcw", "ayikn", "jifse", "rsczv", "acahm", "ilxpd", "qvuwu",
             "zfsel", "hppmc", "wrakm", "gmxsd", "kduzu", "tzshl", "dvppc", "nrmwt",

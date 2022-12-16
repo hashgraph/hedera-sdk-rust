@@ -29,7 +29,7 @@ public enum AnyCustomFee {
 }
 
 extension AnyCustomFee: Codable {
-    enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey {
         case type = "$type"
     }
 

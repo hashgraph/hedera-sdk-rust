@@ -54,7 +54,7 @@ public final class FileUpdateTransaction: Transaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    public var keys: KeyList? = nil
+    public var keys: KeyList?
 
     /// Sets the keys for this file.
     ///

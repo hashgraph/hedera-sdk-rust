@@ -135,8 +135,8 @@ public final class Client {
 
         set(value) {
             if let ledgerId = value {
-                ledgerId.bytes.withUnsafeTypedBytes {
-                    hedera_client_set_ledger_id(ptr, $0.baseAddress, $0.count)
+                ledgerId.bytes.withUnsafeTypedBytes { ledgerIdPtr in
+                    hedera_client_set_ledger_id(ptr, ledgerIdPtr.baseAddress, ledgerIdPtr.count)
                 }
             } else {
                 hedera_client_set_ledger_id(ptr, nil, 0)

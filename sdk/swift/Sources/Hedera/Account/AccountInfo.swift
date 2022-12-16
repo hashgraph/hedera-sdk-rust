@@ -97,7 +97,7 @@ public final class AccountInfo: Codable {
     public let staking: StakingInfo?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try fromJsonBytes(bytes)
     }
 
     public func toBytes() -> Data {
@@ -108,6 +108,6 @@ public final class AccountInfo: Codable {
 }
 
 extension AccountInfo: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_account_info_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_account_info_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_account_info_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_account_info_to_bytes }
 }

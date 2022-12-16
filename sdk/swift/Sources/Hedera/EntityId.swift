@@ -48,6 +48,7 @@ public struct Checksum: LosslessStringConvertible, Hashable {
     }
 
     internal init(bytes: (UInt8, UInt8, UInt8, UInt8, UInt8)) {
+        // swiftlint:disable:next identifier_name
         let (a, b, c, d, e) = bytes
         // fixme: check for ascii-alphanumeric
         self.data = String(data: Data([a, b, c, d, e]), encoding: .ascii)!

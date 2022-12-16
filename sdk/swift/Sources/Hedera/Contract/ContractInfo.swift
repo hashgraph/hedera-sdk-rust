@@ -77,6 +77,6 @@ public final class ContractInfo: Codable {
 }
 
 extension ContractInfo: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_contract_info_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_contract_info_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_contract_info_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_contract_info_to_bytes }
 }
