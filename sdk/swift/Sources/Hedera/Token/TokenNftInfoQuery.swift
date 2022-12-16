@@ -49,4 +49,9 @@ public final class TokenNftInfoQuery: Query<TokenNftInfo> {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try nftId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

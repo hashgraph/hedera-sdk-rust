@@ -47,4 +47,9 @@ public final class FileContentsQuery: Query<FileContentsResponse> {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try fileId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

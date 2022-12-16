@@ -237,9 +237,9 @@ extension EntityId {
         defaultToStringWithChecksum(client)
     }
 
-    internal func defaultValidateChecksum(_ client: Client) throws {
+    internal func defaultValidateChecksum(on ledgerId: LedgerId) throws {
         if let checksum = self.checksum {
-            let expected = generateChecksum(for: client.getLedgerId()!)
+            let expected = generateChecksum(for: ledgerId)
             if checksum != expected {
                 throw HError(
                     kind: .badEntityId, description: "expected entity id `\(self)` to have checksum `\(expected)`")
@@ -248,7 +248,7 @@ extension EntityId {
     }
 
     public func validateChecksum(_ client: Client) throws {
-        try defaultValidateChecksum(client)
+        try defaultValidateChecksum(on: client.getLedgerId()!)
     }
 }
 
@@ -317,7 +317,7 @@ internal enum PartialEntityId<S> {
 // fixme(sr): How do DRY?
 
 /// The unique identifier for a file on Hedera.
-public struct FileId: EntityId {
+public struct FileId: EntityId, ValidateChecksums {
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
         self.shard = shard
         self.realm = realm
@@ -360,10 +360,14 @@ public struct FileId: EntityId {
 
         return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
     }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try defaultValidateChecksum(on: ledgerId)
+    }
 }
 
 /// The unique identifier for a topic on Hedera.
-public struct TopicId: EntityId {
+public struct TopicId: EntityId, ValidateChecksums {
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
         self.shard = shard
         self.realm = realm
@@ -402,10 +406,14 @@ public struct TopicId: EntityId {
 
         return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
     }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try defaultValidateChecksum(on: ledgerId)
+    }
 }
 
 /// The unique identifier for a token on Hedera.
-public struct TokenId: EntityId {
+public struct TokenId: EntityId, ValidateChecksums {
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
         self.shard = shard
         self.realm = realm
@@ -448,10 +456,14 @@ public struct TokenId: EntityId {
     public func nft(_ serial: UInt64) -> NftId {
         NftId(tokenId: self, serial: serial)
     }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try defaultValidateChecksum(on: ledgerId)
+    }
 }
 
 /// The unique identifier for a schedule on Hedera.
-public struct ScheduleId: EntityId {
+public struct ScheduleId: EntityId, ValidateChecksums {
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
         self.shard = shard
         self.realm = realm
@@ -489,5 +501,9 @@ public struct ScheduleId: EntityId {
         let size = hedera_schedule_id_to_bytes(shard, realm, num, &buf)
 
         return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try defaultValidateChecksum(on: ledgerId)
     }
 }

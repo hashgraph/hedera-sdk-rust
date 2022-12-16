@@ -49,4 +49,9 @@ public final class TokenInfoQuery: Query<TokenInfo> {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try tokenId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

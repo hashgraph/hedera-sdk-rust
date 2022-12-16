@@ -83,4 +83,10 @@ public final class SystemDeleteTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try fileId?.validateChecksums(on: ledgerId)
+        try contractId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

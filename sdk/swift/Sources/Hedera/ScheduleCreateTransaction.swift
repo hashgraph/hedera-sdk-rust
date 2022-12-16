@@ -137,4 +137,10 @@ public final class ScheduleCreateTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try payerAccountId?.validateChecksums(on: ledgerId)
+        try scheduledTransaction?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

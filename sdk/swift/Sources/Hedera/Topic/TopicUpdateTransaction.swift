@@ -132,4 +132,10 @@ public final class TopicUpdateTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try topicId?.validateChecksums(on: ledgerId)
+        try autoRenewAccountId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

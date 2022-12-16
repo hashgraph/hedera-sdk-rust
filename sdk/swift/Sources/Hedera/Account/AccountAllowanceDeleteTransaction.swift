@@ -64,4 +64,9 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    public override func validateChecksums(on ledgerId: LedgerId) throws {
+        try nftAllowances.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

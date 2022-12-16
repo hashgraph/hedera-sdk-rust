@@ -84,4 +84,9 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try transactionId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

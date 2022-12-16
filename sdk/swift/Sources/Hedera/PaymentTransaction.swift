@@ -20,7 +20,7 @@
 
 import Foundation
 
-internal final class PaymentTransaction: Codable {
+internal final class PaymentTransaction: Codable, ValidateChecksums {
     internal var nodeAccountIds: [AccountId]?
     internal var amount: Hbar?
     internal var maxAmount: Hbar?
@@ -42,5 +42,11 @@ internal final class PaymentTransaction: Codable {
         try container.encodeIfPresent(payerAccountId, forKey: .payerAccountId)
         try container.encodeIfPresent(transactionId, forKey: .transactionId)
         try container.encodeIfPresent(transactionValidDuration, forKey: .transactionValidDuration)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try nodeAccountIds?.validateChecksums(on: ledgerId)
+        try payerAccountId?.validateChecksums(on: ledgerId)
+        try transactionId?.validateChecksums(on: ledgerId)
     }
 }
