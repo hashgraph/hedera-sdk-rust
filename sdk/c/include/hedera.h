@@ -351,11 +351,6 @@ struct HederaClient *hedera_client_for_testnet(void);
 struct HederaClient *hedera_client_for_previewnet(void);
 
 /**
- * Release memory associated with the previously-opened Hedera client.
- */
-void hedera_client_free(struct HederaClient *client);
-
-/**
  * Sets the account that will, by default, be paying for transactions and queries built with
  * this client.
  */
@@ -384,7 +379,15 @@ void hedera_client_set_ledger_id(struct HederaClient *client,
 
 size_t hedera_client_get_ledger_id(struct HederaClient *client, uint8_t **ledger_id_bytes);
 
+void hedera_client_set_auto_validate_checksums(struct HederaClient *client,
+                                               bool auto_validate_checksums);
+
 bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
+
+/**
+ * Release memory associated with the previously-opened Hedera client.
+ */
+void hedera_client_free(struct HederaClient *client);
 
 /**
  * Parse a Hedera `ContractId` from the passed bytes.

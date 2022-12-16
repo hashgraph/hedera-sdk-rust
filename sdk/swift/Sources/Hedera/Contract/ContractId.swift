@@ -161,7 +161,7 @@ public struct ContractId: EntityId {
     }
 
     public func validateChecksum(_ client: Client) throws {
-        try validateChecksums(on: client.getLedgerId()!)
+        try validateChecksums(on: client.ledgerId!)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
