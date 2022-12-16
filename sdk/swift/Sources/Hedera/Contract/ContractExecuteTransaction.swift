@@ -105,4 +105,10 @@ public final class ContractExecuteTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try contractId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
+
 }

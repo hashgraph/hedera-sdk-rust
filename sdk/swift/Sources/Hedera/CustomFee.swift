@@ -95,9 +95,22 @@ extension AnyCustomFee: CustomFee {
     }
 }
 
+extension AnyCustomFee: ValidateChecksums {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        switch self {
+        case .fixed(let fee):
+            try fee.validateChecksums(on: ledgerId)
+        case .fractional(let fee):
+            try fee.validateChecksums(on: ledgerId)
+        case .royalty(let fee):
+            try fee.validateChecksums(on: ledgerId)
+        }
+    }
+}
+
 /// A fixed number of units (hbar or token) to assess as a fee during a `TransferTransaction` that transfers
 /// units of the token to which this fixed fee is attached.
-public struct FixedFee: CustomFee, Codable {
+public struct FixedFee: CustomFee, Codable, ValidateChecksums {
     public var feeCollectorAccountId: AccountId?
 
     /// Create a new `CustomFixedFee`.
@@ -137,6 +150,11 @@ public struct FixedFee: CustomFee, Codable {
 
         return self
     }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try denominatingTokenId?.validateChecksums(on: ledgerId)
+        try feeCollectorAccountId?.validateChecksums(on: ledgerId)
+    }
 }
 
 /// A fraction of the transferred units of a token to assess as a fee.
@@ -146,7 +164,7 @@ public struct FixedFee: CustomFee, Codable {
 ///
 /// The denomination is always in units of the token to which this fractional fee is attached.
 ///
-public struct FractionalFee: CustomFee, Codable {
+public struct FractionalFee: CustomFee, Codable, ValidateChecksums {
     public var feeCollectorAccountId: AccountId?
 
     /// Create a new `CustomFixedFee`.
@@ -254,6 +272,10 @@ public struct FractionalFee: CustomFee, Codable {
 
         return self
     }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try feeCollectorAccountId?.validateChecksums(on: ledgerId)
+    }
 }
 
 /// A fee to assess during a `TransferTransaction` that changes ownership of an NFT.
@@ -350,5 +372,10 @@ public struct RoyaltyFee: CustomFee, Codable {
         self.fallbackFee = fallbackFee
 
         return self
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try fallbackFee?.validateChecksums(on: ledgerId)
+        try feeCollectorAccountId?.validateChecksums(on: ledgerId)
     }
 }

@@ -22,7 +22,7 @@ import CHedera
 import Foundation
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-public struct AccountId: EntityId {
+public struct AccountId: EntityId, ValidateChecksums {
     public let shard: UInt64
     public let realm: UInt64
     public let num: UInt64
@@ -124,11 +124,15 @@ public struct AccountId: EntityId {
     }
 
     public func validateChecksum(_ client: Client) throws {
+        try validateChecksums(on: client.getLedgerId()!)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         if alias != nil {
             return
         }
 
-        try defaultValidateChecksum(client)
+        try defaultValidateChecksum(on: ledgerId)
     }
 }
 

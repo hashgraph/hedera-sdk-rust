@@ -354,4 +354,12 @@ public final class TokenCreateTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try treasuryAccountId?.validateChecksums(on: ledgerId)
+        try autoRenewAccountId?.validateChecksums(on: ledgerId)
+        try customFees.validateChecksums(on: ledgerId)
+
+        try super.validateChecksums(on: ledgerId)
+    }
 }

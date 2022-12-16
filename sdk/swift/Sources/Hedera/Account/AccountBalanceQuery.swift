@@ -74,4 +74,11 @@ public final class AccountBalanceQuery: Query<AccountBalance> {
 
         try super.encode(to: encoder)
     }
+
+    public override func validateChecksums(on ledgerId: LedgerId) throws {
+        try self.accountId?.validateChecksums(on: ledgerId)
+        try self.contractId?.validateChecksums(on: ledgerId)
+
+        try super.validateChecksums(on: ledgerId)
+    }
 }
