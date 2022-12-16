@@ -35,6 +35,7 @@ impl<'a> ToProtobuf for RefAccountBalance<'a> {
     fn to_protobuf(&self) -> Self::Protobuf {
         use hedera_proto::services;
 
+        #[allow(deprecated)]
         services::CryptoGetAccountBalanceResponse {
             header: None,
             account_id: Some(self.id.to_protobuf()),
