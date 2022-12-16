@@ -75,6 +75,8 @@ pub enum Error {
     BadEntityId,
     CannotToStringWithChecksum,
     CannotPerformTaskWithoutLedgerId,
+    NoEvmAddressPresent,
+    WrongKeyType,
 }
 
 impl Error {
@@ -108,6 +110,8 @@ impl Error {
             crate::Error::CannotPerformTaskWithoutLedgerId { .. } => {
                 Self::CannotPerformTaskWithoutLedgerId
             }
+            crate::Error::NoEvmAddressPresent { .. } => Self::NoEvmAddressPresent,
+            crate::Error::WrongKeyType { .. } => Self::WrongKeyType,
         };
 
         set_last_error(error);
