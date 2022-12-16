@@ -169,13 +169,13 @@ impl AccountCreateTransaction {
     ///
     /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
     /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
-    pub fn alias_key(&mut self, key: PublicKey) -> &mut Self {
+    pub fn alias(&mut self, key: PublicKey) -> &mut Self {
         self.body.data.alias = Some(key);
         self
     }
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
-    pub fn alias_evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
+    pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
         self.body.data.evm_address = Some(evm_address);
         self
     }
