@@ -29,7 +29,7 @@ internal protocol ValidateChecksums {
 
 extension ValidateChecksums {
     internal func validateChecksums(on client: Client) throws {
-        try validateChecksums(on: client.getLedgerId()!)
+        try validateChecksums(on: client.ledgerId!)
     }
 }
 

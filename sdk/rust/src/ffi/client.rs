@@ -53,14 +53,6 @@ pub extern "C" fn hedera_client_for_previewnet() -> *mut Client {
     Box::into_raw(Box::new(client))
 }
 
-/// Release memory associated with the previously-opened Hedera client.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_client_free(client: *mut Client) {
-    assert!(!client.is_null());
-
-    let _client = unsafe { Box::from_raw(client) };
-}
-
 /// Sets the account that will, by default, be paying for transactions and queries built with
 /// this client.
 #[no_mangle]
@@ -159,8 +151,26 @@ pub unsafe extern "C" fn hedera_client_get_ledger_id(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn hedera_client_set_auto_validate_checksums(
+    client: *mut Client,
+    auto_validate_checksums: bool,
+) {
+    let client = unsafe { client.as_ref() }.unwrap();
+
+    client.set_auto_validate_checksums(auto_validate_checksums)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn hedera_client_get_auto_validate_checksums(client: *mut Client) -> bool {
     let client = unsafe { client.as_ref() }.unwrap();
 
     client.auto_validate_checksums()
+}
+
+/// Release memory associated with the previously-opened Hedera client.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_client_free(client: *mut Client) {
+    assert!(!client.is_null());
+
+    let _client = unsafe { Box::from_raw(client) };
 }

@@ -76,9 +76,12 @@ public final class Client {
 
     /// Sets the account that will, by default, be paying for transactions and queries built with
     /// this client.
-    public func setOperator(_ accountId: AccountId, _ privateKey: PrivateKey) {
+    @discardableResult
+    public func setOperator(_ accountId: AccountId, _ privateKey: PrivateKey) -> Self {
         hedera_client_set_operator(
             ptr, accountId.shard, accountId.realm, accountId.num, privateKey.ptr)
+
+        return self
     }
 
     public func ping(_ nodeAccountId: AccountId) async throws {
@@ -114,25 +117,42 @@ public final class Client {
         }
     }
 
-    public func setLedgerId(_ ledgerId: LedgerId?) {
-        if let ledgerId = ledgerId {
-            ledgerId.bytes.withUnsafeTypedBytes {
-                hedera_client_set_ledger_id(ptr, $0.baseAddress, $0.count)
+    @discardableResult
+    public func setLedgerId(_ ledgerId: LedgerId?) -> Self {
+        self.ledgerId = ledgerId
+
+        return self
+    }
+
+    // note: matches JS
+    public var ledgerId: LedgerId? {
+        get {
+            var bytes: UnsafeMutablePointer<UInt8>?
+            let count = hedera_client_get_ledger_id(ptr, &bytes)
+
+            return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: Data.unsafeCHederaBytesFree)) }
+        }
+
+        set(value) {
+            if let ledgerId = value {
+                ledgerId.bytes.withUnsafeTypedBytes {
+                    hedera_client_set_ledger_id(ptr, $0.baseAddress, $0.count)
+                }
+            } else {
+                hedera_client_set_ledger_id(ptr, nil, 0)
             }
-        } else {
-            hedera_client_set_ledger_id(ptr, nil, 0)
         }
     }
 
-    public func getLedgerId() -> LedgerId? {
-        var bytes: UnsafeMutablePointer<UInt8>?
-        let count = hedera_client_get_ledger_id(ptr, &bytes)
+    @discardableResult
+    public func setAutoValidateChecksums(_ autoValidateChecksums: Bool) -> Self {
+        hedera_client_set_auto_validate_checksums(ptr, autoValidateChecksums)
 
-        return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: Data.unsafeCHederaBytesFree)) }
+        return self
     }
 
     public func isAutoValidateChecksumsEnabled() -> Bool {
-        return hedera_client_get_auto_validate_checksums(ptr)
+        hedera_client_get_auto_validate_checksums(ptr)
     }
 
     deinit {

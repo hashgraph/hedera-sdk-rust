@@ -226,7 +226,7 @@ extension EntityId {
     // sometimes you need a partial override *sigh*.
     // note: this *expicitly* ignores the current checksum.
     internal func defaultToStringWithChecksum(_ client: Client) -> String {
-        let checksum = self.generateChecksum(for: client.getLedgerId()!)
+        let checksum = self.generateChecksum(for: client.ledgerId!)
         return "\(self.defaultDescription)-\(checksum)"
     }
 
@@ -249,7 +249,7 @@ extension EntityId {
     }
 
     public func validateChecksum(_ client: Client) throws {
-        try defaultValidateChecksum(on: client.getLedgerId()!)
+        try defaultValidateChecksum(on: client.ledgerId!)
     }
 }
 
