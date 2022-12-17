@@ -124,6 +124,7 @@ pub use error::{
     Result,
 };
 pub use ethereum_transaction::EthereumTransaction;
+pub use evm_address::EvmAddress;
 pub use file::{
     FileAppendTransaction,
     FileContentsQuery,

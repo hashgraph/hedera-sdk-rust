@@ -23,6 +23,7 @@ use std::collections::HashMap;
 use hedera_proto::services;
 use time::OffsetDateTime;
 
+use crate::evm_address::EvmAddress;
 use crate::{
     AccountId,
     AssessedCustomFee,
@@ -125,6 +126,8 @@ pub struct TransactionRecord {
     // /// In the record of a PRNG transaction with an output range, the output of a PRNG
     // /// whose input was a 384-bit string.
     // TODO: pub prng_number: i32,
+    /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    pub evm_address: Option<EvmAddress>,
 }
 // TODO: paid_staking_rewards
 
@@ -190,6 +193,12 @@ impl TransactionRecord {
             (token_transfers, token_nft_transfers)
         };
 
+        let evm_address = if record.evm_address.is_empty() {
+            None
+        } else {
+            Some(EvmAddress::try_from(record.evm_address)?)
+        };
+
         Ok(Self {
             receipt,
             transaction_hash: record.transaction_hash,
@@ -209,6 +218,7 @@ impl TransactionRecord {
             token_transfers,
             token_nft_transfers,
             assessed_custom_fees: Vec::from_protobuf(record.assessed_custom_fees)?,
+            evm_address,
         })
     }
 }

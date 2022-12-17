@@ -37,6 +37,7 @@ use crate::{
     Hbar,
     Key,
     LedgerId,
+    PublicKey,
     Transaction,
 };
 
@@ -71,14 +72,23 @@ pub struct AccountCreateTransactionData {
     )]
     pub auto_renew_period: Option<Duration>,
 
+    /// The account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    pub auto_renew_account_id: Option<AccountId>,
+
     /// The memo associated with the account.
     pub account_memo: String,
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
-    ///
     pub max_automatic_token_associations: u16,
+
+    /// A key to be used as the account's alias.
+    pub alias: Option<PublicKey>,
+
+    /// A 20-byte EVM address to be used as the account's evm address.
+    pub evm_address: Option<[u8; 20]>,
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
@@ -99,8 +109,11 @@ impl Default for AccountCreateTransactionData {
             initial_balance: Hbar::ZERO,
             receiver_signature_required: false,
             auto_renew_period: Some(Duration::days(90)),
+            auto_renew_account_id: None,
             account_memo: String::new(),
             max_automatic_token_associations: 0,
+            alias: None,
+            evm_address: None,
             staked_account_id: None,
             staked_node_id: None,
             decline_staking_reward: false,
@@ -133,6 +146,13 @@ impl AccountCreateTransaction {
         self
     }
 
+    /// Sets the account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.auto_renew_account_id = Some(id);
+        self
+    }
+
     /// Set the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.account_memo = memo.into();
@@ -142,6 +162,24 @@ impl AccountCreateTransaction {
     /// Set the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
         self.body.data.max_automatic_token_associations = amount;
+        self
+    }
+
+    /// The bytes to be used as the account's alias.
+    ///
+    /// A given alias can map to at most one account on the network at a time. This uniqueness will be enforced
+    /// relative to aliases currently on the network at alias assignment.
+    ///
+    /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
+    /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
+    pub fn alias(&mut self, key: PublicKey) -> &mut Self {
+        self.body.data.alias = Some(key);
+        self
+    }
+
+    /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
+        self.body.data.evm_address = Some(evm_address);
         self
     }
 
@@ -189,6 +227,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
     ) -> services::transaction_body::Data {
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
 
         let staked_id = match (&self.staked_account_id, self.staked_node_id) {
             (_, Some(node_id)) => Some(
@@ -214,11 +253,14 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 receive_record_threshold: i64::MAX as u64,
                 receiver_sig_required: self.receiver_signature_required,
                 auto_renew_period,
+                auto_renew_account,
                 shard_id: None,
                 realm_id: None,
                 new_realm_admin_key: None,
                 memo: self.account_memo.clone(),
                 max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
+                alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
+                evm_address: self.evm_address.map_or(vec![], |b| Vec::from(b)),
                 decline_reward: self.decline_staking_reward,
                 staked_id,
             },

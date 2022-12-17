@@ -67,6 +67,10 @@ pub struct FileCreateTransactionData {
     )]
     contents: Option<Vec<u8>>,
 
+    auto_renew_period: Option<Duration>,
+
+    auto_renew_account_id: Option<AccountId>,
+
     /// The time at which this file should expire.
     #[cfg_attr(
         feature = "ffi",
@@ -81,6 +85,8 @@ impl Default for FileCreateTransactionData {
             file_memo: String::new(),
             keys: None,
             contents: None,
+            auto_renew_period: None,
+            auto_renew_account_id: None,
             expiration_time: Some(OffsetDateTime::now_utc() + Duration::days(90)),
         }
     }
@@ -107,6 +113,19 @@ impl FileCreateTransaction {
     ///
     pub fn keys<K: Into<Key>>(&mut self, keys: impl IntoIterator<Item = K>) -> &mut Self {
         self.body.data.keys = Some(keys.into_iter().map(Into::into).collect());
+        self
+    }
+
+    /// Set the auto renew period for this file.
+    pub fn auto_renew_period(&mut self, duration: Duration) -> &mut Self {
+        self.body.data.auto_renew_period = Some(duration);
+        self
+    }
+
+    /// Sets the account to be used at the files's expiration time to extend the
+    /// life of the file.
+    pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.auto_renew_account_id = Some(id);
         self
     }
 
@@ -141,6 +160,8 @@ impl ToTransactionDataProtobuf for FileCreateTransactionData {
         let expiration_time = self.expiration_time.to_protobuf();
 
         services::transaction_body::Data::FileCreate(services::FileCreateTransactionBody {
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
             expiration_time,
             keys: self.keys.to_protobuf(),
             contents: self.contents.clone().unwrap_or_default(),

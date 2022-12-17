@@ -7,14 +7,27 @@ public protocol CustomFee {
     /// The account to receive the custom fee.
     var feeCollectorAccountId: AccountId? { get set }
 
+    /// True if all collectors are exempt from fees, false otherwise.
+    var allCollectorsAreExempt: Bool { get set }
+
     /// Sets the account to recieve the custom fee.
     @discardableResult
     mutating func feeCollectorAccountId(_ feeCollectorAccountId: AccountId) -> Self
+
+    /// Set to `true` if all collectors should be exempt from fees, or to false otherwise.
+    @discardableResult
+    mutating func allCollectorsAreExempt(_ allCollectorsAreExempt: Bool) -> Self
 }
 
 extension CustomFee {
     public mutating func feeCollectorAccountId(_ feeCollectorAccountId: AccountId) -> Self {
         self.feeCollectorAccountId = feeCollectorAccountId
+
+        return self
+    }
+
+    public mutating func allCollectorsAreExempt(_ allCollectorsAreExempt: Bool) -> Self {
+        self.allCollectorsAreExempt = true
 
         return self
     }
@@ -93,6 +106,30 @@ extension AnyCustomFee: CustomFee {
             }
         }
     }
+
+    public var allCollectorsAreExempt: Bool {
+        get {
+            switch self {
+            case .fixed(let fee):
+                return fee.allCollectorsAreExempt
+            case .fractional(let fee):
+                return fee.allCollectorsAreExempt
+            case .royalty(let fee):
+                return fee.allCollectorsAreExempt
+            }
+
+        }
+        set(newValue) {
+            switch self {
+            case .fixed(var fee):
+                fee.allCollectorsAreExempt = newValue
+            case .fractional(var fee):
+                fee.allCollectorsAreExempt = newValue
+            case .royalty(var fee):
+                fee.allCollectorsAreExempt = newValue
+            }
+        }
+    }
 }
 
 /// A fixed number of units (hbar or token) to assess as a fee during a `TransferTransaction` that transfers
@@ -100,15 +137,19 @@ extension AnyCustomFee: CustomFee {
 public struct FixedFee: CustomFee, Codable {
     public var feeCollectorAccountId: AccountId?
 
+    public var allCollectorsAreExempt: Bool
+
     /// Create a new `CustomFixedFee`.
     public init(
         amount: UInt64 = 0,
         denominatingTokenId: TokenId? = nil,
-        feeCollectorAccountId: AccountId? = nil
+        feeCollectorAccountId: AccountId? = nil,
+        allCollectorsAreExempt: Bool = false
     ) {
         self.amount = amount
         self.denominatingTokenId = denominatingTokenId
         self.feeCollectorAccountId = feeCollectorAccountId
+        self.allCollectorsAreExempt = allCollectorsAreExempt
     }
 
     /// The number of units to assess as a fee.
@@ -149,13 +190,16 @@ public struct FixedFee: CustomFee, Codable {
 public struct FractionalFee: CustomFee, Codable {
     public var feeCollectorAccountId: AccountId?
 
+    public var allCollectorsAreExempt: Bool
+
     /// Create a new `CustomFixedFee`.
     public init(
         amount: Rational<UInt64> = "1/1",
         minimumAmount: UInt64 = 0,
         maximumAmount: UInt64 = 0,
         netOfTransfers: Bool = false,
-        feeCollectorAccountId: AccountId? = nil
+        feeCollectorAccountId: AccountId? = nil,
+        allCollectorsAreExempt: Bool = false
     ) {
         self.denominator = amount.denominator
         self.numerator = amount.numerator
@@ -163,6 +207,7 @@ public struct FractionalFee: CustomFee, Codable {
         self.maximumAmount = maximumAmount
         self.netOfTransfers = netOfTransfers
         self.feeCollectorAccountId = feeCollectorAccountId
+        self.allCollectorsAreExempt = allCollectorsAreExempt
     }
 
     /// The fraction of the transferred units to assess as a fee.
@@ -263,15 +308,18 @@ public struct FractionalFee: CustomFee, Codable {
 public struct RoyaltyFee: CustomFee, Codable {
     public var feeCollectorAccountId: AccountId?
 
+    public var allCollectorsAreExempt: Bool
+
     /// Create a new `CustomRoyaltyFee`.
     public init(
         exchangeValue: Rational<UInt64> = "1/1",
         fallbackFee: FixedFee? = nil,
-        feeCollectorAccountId: AccountId? = nil
+        feeCollectorAccountId: AccountId? = nil,
+        allCollectorsAreExempt: Bool = false
     ) {
         self.init(
             numerator: exchangeValue.numerator, denominator: exchangeValue.denominator, fallbackFee: fallbackFee,
-            feeCollectorAccountId: feeCollectorAccountId
+            feeCollectorAccountId: feeCollectorAccountId, allCollectorsAreExempt: allCollectorsAreExempt
         )
     }
 
@@ -280,12 +328,14 @@ public struct RoyaltyFee: CustomFee, Codable {
         numerator: UInt64 = 1,
         denominator: UInt64 = 1,
         fallbackFee: FixedFee? = nil,
-        feeCollectorAccountId: AccountId? = nil
+        feeCollectorAccountId: AccountId? = nil,
+        allCollectorsAreExempt: Bool = false
     ) {
         self.numerator = numerator
         self.denominator = denominator
         self.fallbackFee = fallbackFee
         self.feeCollectorAccountId = feeCollectorAccountId
+        self.allCollectorsAreExempt = allCollectorsAreExempt
     }
 
     /// The fraction of fungible value exchanged for an NFT to collect as royalty.

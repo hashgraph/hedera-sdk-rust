@@ -65,6 +65,8 @@ pub struct CustomFee<Fee> {
 
     /// The account to receive the custom fee.
     pub fee_collector_account_id: Option<AccountId>,
+
+    pub all_collectors_are_exempt: bool,
 }
 
 impl AnyCustomFee {
@@ -94,7 +96,11 @@ impl FromProtobuf<services::CustomFee> for AnyCustomFee {
             services::custom_fee::Fee::RoyaltyFee(pb) => RoyaltyFeeData::from_protobuf(pb)?.into(),
         };
 
-        Ok(Self { fee, fee_collector_account_id })
+        Ok(Self {
+            fee,
+            fee_collector_account_id,
+            all_collectors_are_exempt: pb.all_collectors_are_exempt,
+        })
     }
 }
 
@@ -105,25 +111,38 @@ impl ToProtobuf for AnyCustomFee {
         services::CustomFee {
             fee_collector_account_id: self.fee_collector_account_id.to_protobuf(),
             fee: Some(self.fee.to_protobuf().into()),
+            all_collectors_are_exempt: self.all_collectors_are_exempt,
         }
     }
 }
 
 impl From<FixedFee> for AnyCustomFee {
     fn from(v: FixedFee) -> Self {
-        Self { fee: v.fee.into(), fee_collector_account_id: v.fee_collector_account_id }
+        Self {
+            fee: v.fee.into(),
+            fee_collector_account_id: v.fee_collector_account_id,
+            all_collectors_are_exempt: v.all_collectors_are_exempt,
+        }
     }
 }
 
 impl From<FractionalFee> for AnyCustomFee {
     fn from(v: FractionalFee) -> Self {
-        Self { fee: v.fee.into(), fee_collector_account_id: v.fee_collector_account_id }
+        Self {
+            fee: v.fee.into(),
+            fee_collector_account_id: v.fee_collector_account_id,
+            all_collectors_are_exempt: v.all_collectors_are_exempt,
+        }
     }
 }
 
 impl From<RoyaltyFee> for AnyCustomFee {
     fn from(v: RoyaltyFee) -> Self {
-        Self { fee: v.fee.into(), fee_collector_account_id: v.fee_collector_account_id }
+        Self {
+            fee: v.fee.into(),
+            fee_collector_account_id: v.fee_collector_account_id,
+            all_collectors_are_exempt: v.all_collectors_are_exempt,
+        }
     }
 }
 

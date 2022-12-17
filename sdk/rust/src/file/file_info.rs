@@ -20,10 +20,14 @@
 
 use hedera_proto::services;
 use prost::Message;
-use time::OffsetDateTime;
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 
 use crate::protobuf::ToProtobuf;
 use crate::{
+    AccountId,
     FileId,
     FromProtobuf,
     KeyList,
@@ -47,6 +51,13 @@ pub struct FileInfo {
         serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
     )]
     pub expiration_time: Option<OffsetDateTime>,
+
+    /// The auto renew period for this account.
+    pub auto_renew_period: Option<Duration>,
+
+    /// The account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    pub auto_renew_account_id: Option<AccountId>,
 
     /// True if deleted but not yet expired.
     pub is_deleted: bool,
@@ -78,6 +89,8 @@ impl FileInfo {
             file_id: Some(self.file_id.to_protobuf()),
             size: self.size as i64,
             expiration_time: self.expiration_time.to_protobuf(),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
             deleted: self.is_deleted,
             memo: self.file_memo.clone(),
             ledger_id: self.ledger_id.to_bytes(),
@@ -109,11 +122,14 @@ impl FromProtobuf<services::file_get_info_response::FileInfo> for FileInfo {
     {
         let file_id = pb_getf!(pb, file_id)?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
+        let auto_renew_account_id = Option::from_protobuf(pb.auto_renew_account)?;
 
         Ok(Self {
             file_id: FileId::from_protobuf(file_id)?,
             size: pb.size as u64,
             expiration_time: pb.expiration_time.map(Into::into),
+            auto_renew_account_id,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
             is_deleted: pb.deleted,
             file_memo: pb.memo,
             ledger_id,

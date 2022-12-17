@@ -21,7 +21,10 @@
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use time::OffsetDateTime;
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
@@ -79,6 +82,10 @@ pub struct FileUpdateTransactionData {
         serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
     )]
     expiration_time: Option<OffsetDateTime>,
+
+    auto_renew_account_id: Option<AccountId>,
+
+    auto_renew_period: Option<Duration>,
 }
 
 impl FileUpdateTransaction {
@@ -116,6 +123,19 @@ impl FileUpdateTransaction {
         self.body.data.expiration_time = Some(at);
         self
     }
+
+    /// Sets the account to be used at the files's expiration time to extend the
+    /// life of the file.
+    pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
+        self.body.data.auto_renew_account_id = Some(id);
+        self
+    }
+
+    /// Set the auto renew period for this file.
+    pub fn auto_renew_period(&mut self, duration: Duration) -> &mut Self {
+        self.body.data.auto_renew_period = Some(duration);
+        self
+    }
 }
 
 #[async_trait]
@@ -147,6 +167,8 @@ impl ToTransactionDataProtobuf for FileUpdateTransactionData {
         services::transaction_body::Data::FileUpdate(services::FileUpdateTransactionBody {
             file_id,
             expiration_time,
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
             keys: Some(keys),
             contents: self.contents.clone().unwrap_or_default(),
             memo: self.file_memo.clone(),
