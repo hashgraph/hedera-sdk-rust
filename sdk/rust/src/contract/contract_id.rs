@@ -31,8 +31,9 @@ use hedera_proto::services;
 use crate::entity_id::{
     AutoValidateChecksum,
     Checksum,
+    PartialEntityId,
 };
-use crate::evm_address::EvmAddress;
+use crate::evm_address::IdEvmAddress;
 use crate::{
     Client,
     EntityId,
@@ -88,7 +89,7 @@ impl ContractId {
             shard,
             realm,
             num: 0,
-            evm_address: Some(EvmAddress::from_str(address)?.0),
+            evm_address: Some(IdEvmAddress::from_str(address)?.to_bytes()),
             checksum: None,
         })
     }
@@ -175,7 +176,7 @@ impl Debug for ContractId {
 impl Display for ContractId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(address) = &self.evm_address {
-            write!(f, "{}.{}.{}", self.shard, self.realm, EvmAddress::from_ref(address))
+            write!(f, "{}.{}.{}", self.shard, self.realm, IdEvmAddress::from_ref(address))
         } else {
             write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
         }
@@ -189,7 +190,7 @@ impl FromProtobuf<services::ContractId> for ContractId {
         let (num, evm_address) = match contract {
             services::contract_id::Contract::ContractNum(it) => (it as u64, None),
             services::contract_id::Contract::EvmAddress(it) => {
-                (0, Some(EvmAddress::try_from(it)?.0))
+                (0, Some(IdEvmAddress::try_from(it)?.to_bytes()))
             }
         };
 
@@ -234,36 +235,32 @@ impl FromStr for ContractId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        contract_num_from_str(s).or_else(|| contract_evm_address_from_str(s)).ok_or_else(|| {
+        // override the error message for better context.
+        let partial = PartialEntityId::from_str(s).map_err(|_| {
             Error::basic_parse(format!(
                 "expecting <shard>.<realm>.<num> or <shard>.<realm>.<evm_address>, got `{s}`"
             ))
-        })
+        })?;
+
+        match partial {
+            PartialEntityId::ShortNum(it) => Ok(Self::from(it)),
+            PartialEntityId::LongNum(it) => Ok(Self::from(it)),
+            PartialEntityId::ShortOther(_) => Err(Error::basic_parse(format!(
+                "expecting <shard>.<realm>.<num> or <shard>.<realm>.<evm_address>, got `{s}`"
+            ))),
+            PartialEntityId::LongOther { shard, realm, last } => {
+                let evm_address = Some(IdEvmAddress::from_str(last)?.to_bytes());
+
+                Ok(Self { shard, realm, num: 0, evm_address, checksum: None })
+            }
+        }
     }
 }
 
-fn contract_num_from_str(s: &str) -> Option<ContractId> {
-    s.parse()
-        .map(|EntityId { shard, realm, num, checksum }| ContractId {
-            shard,
-            realm,
-            num,
-            evm_address: None,
-            checksum,
-        })
-        .ok()
-}
+impl From<EntityId> for ContractId {
+    fn from(value: EntityId) -> Self {
+        let EntityId { shard, realm, num, checksum } = value;
 
-fn contract_evm_address_from_str(s: &str) -> Option<ContractId> {
-    let parts: Vec<&str> = s.splitn(3, '.').collect();
-
-    if parts.len() == 3 {
-        let shard = parts[0].parse().map_err(Error::basic_parse).ok()?;
-        let realm = parts[1].parse().map_err(Error::basic_parse).ok()?;
-        let evm_address = EvmAddress::from_str(parts[2]).ok()?.0;
-
-        Some(ContractId { shard, realm, evm_address: Some(evm_address), num: 0, checksum: None })
-    } else {
-        None
+        Self { shard, realm, num, evm_address: None, checksum }
     }
 }

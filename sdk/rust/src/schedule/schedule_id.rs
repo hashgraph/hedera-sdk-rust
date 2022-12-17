@@ -161,11 +161,14 @@ impl FromStr for ScheduleId {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|EntityId { shard, realm, num, checksum }| Self {
-            shard,
-            realm,
-            num,
-            checksum,
-        })
+        EntityId::from_str(s).map(Self::from)
+    }
+}
+
+impl From<EntityId> for ScheduleId {
+    fn from(value: EntityId) -> Self {
+        let EntityId { shard, realm, num, checksum } = value;
+
+        Self { shard, realm, num, checksum }
     }
 }

@@ -72,6 +72,8 @@ pub struct AccountCreateTransactionData {
     )]
     pub auto_renew_period: Option<Duration>,
 
+    /// The account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub auto_renew_account_id: Option<AccountId>,
 
     /// The memo associated with the account.
@@ -80,11 +82,12 @@ pub struct AccountCreateTransactionData {
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
-    ///
     pub max_automatic_token_associations: u16,
 
+    /// A key to be used as the account's alias.
     pub alias: Option<PublicKey>,
 
+    /// A 20-byte EVM address to be used as the account's evm address.
     pub evm_address: Option<[u8; 20]>,
 
     /// ID of the account to which this account is staking.

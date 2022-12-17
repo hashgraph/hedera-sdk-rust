@@ -127,7 +127,7 @@ pub struct TransactionRecord {
     // /// whose input was a 384-bit string.
     // TODO: pub prng_number: i32,
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
-    pub evm_address: Option<[u8; 20]>,
+    pub evm_address: Option<EvmAddress>,
 }
 // TODO: paid_staking_rewards
 
@@ -196,7 +196,7 @@ impl TransactionRecord {
         let evm_address = if record.evm_address.is_empty() {
             None
         } else {
-            Some(EvmAddress::try_from(record.evm_address)?.0)
+            Some(EvmAddress::try_from(record.evm_address)?)
         };
 
         Ok(Self {
