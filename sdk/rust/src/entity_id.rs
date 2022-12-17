@@ -26,10 +26,9 @@ use std::fmt::{
 };
 use std::str::FromStr;
 
-use itertools::Itertools;
 use tinystr::TinyAsciiStr;
 
-use crate::evm_address::EvmAddress;
+use crate::evm_address::IdEvmAddress;
 use crate::{
     Client,
     Error,
@@ -100,13 +99,72 @@ pub struct EntityId {
     pub checksum: Option<Checksum>,
 }
 
+#[derive(Copy, Clone)]
+pub(crate) enum PartialEntityId<'a> {
+    ShortNum(u64),
+    LongNum(EntityId),
+    ShortOther(&'a str),
+    LongOther { shard: u64, realm: u64, last: &'a str },
+}
+
+impl<'a> PartialEntityId<'a> {
+    pub(crate) fn finish<T>(self) -> crate::Result<T>
+    where
+        EntityId: Into<T>,
+    {
+        match self {
+            Self::ShortNum(num) => Ok(EntityId::from(num).into()),
+            Self::LongNum(id) => Ok(id.into()),
+            _ => Err(Error::basic_parse(format!("expected `<shard>.<realm>.<num>`"))),
+        }
+    }
+
+    // `FromStr` doesn't allow lifetime bounds.
+    pub(crate) fn from_str(s: &'a str) -> crate::Result<Self> {
+        let expecting =
+            || Error::basic_parse(format!("expected `<shard>.<realm>.<num>`, got `{s}`"));
+
+        // entity ID parsing is painful because there are 4 formats...
+        // This way avoids allocations at the code of an extra layer of nesting.
+        match s.split_once('.') {
+            Some((shard, rest)) => {
+                let (realm, last) = rest.split_once('.').ok_or_else(expecting)?;
+
+                let shard = shard.parse().map_err(|_| expecting())?;
+                let realm = realm.parse().map_err(|_| expecting())?;
+
+                match last.rsplit_once('-') {
+                    Some((num, checksum)) => {
+                        let num = num.parse().map_err(|_| expecting())?;
+                        let checksum = Some(checksum.parse()?);
+
+                        Ok(Self::LongNum(EntityId { shard, realm, num, checksum }))
+                    }
+
+                    None => match last.parse() {
+                        Ok(num) => {
+                            Ok(Self::LongNum(EntityId { shard, realm, num, checksum: None }))
+                        }
+
+                        Err(_) => Ok(Self::LongOther { shard, realm, last }),
+                    },
+                }
+            }
+            None => match s.parse() {
+                Ok(it) => return Ok(Self::ShortNum(it)),
+                Err(_) => return Ok(Self::ShortOther(s)),
+            },
+        }
+    }
+}
+
 impl EntityId {
     pub(crate) fn from_solidity_address(address: &str) -> crate::Result<Self> {
-        EvmAddress::from_str(address).map(Self::from)
+        IdEvmAddress::from_str(address).map(Self::from)
     }
 
     pub(crate) fn to_solidity_address(self) -> crate::Result<String> {
-        EvmAddress::try_from(self).map(|it| it.to_string())
+        IdEvmAddress::try_from(self).map(|it| it.to_string())
     }
 
     pub(crate) fn generate_checksum(entity_id_string: &str, ledger_id: &LedgerId) -> Checksum {
@@ -248,21 +306,7 @@ impl FromStr for EntityId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let from_nums_and_checksum = |nums: &str, checksum| {
-            let parts: Vec<u64> =
-                nums.splitn(3, '.').map(u64::from_str).try_collect().map_err(Error::basic_parse)?;
-            match *parts.as_slice() {
-                [num] => Ok(Self::from(num)),
-                [shard, realm, num] => Ok(Self { shard, realm, num, checksum }),
-                _ => Err(Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`)")),
-            }
-        };
-
-        if let Some((nums, raw_checksum)) = s.split_once('-') {
-            from_nums_and_checksum(nums, Some(Checksum::from_str(raw_checksum)?))
-        } else {
-            from_nums_and_checksum(s, None)
-        }
+        PartialEntityId::from_str(s)?.finish()
     }
 }
 

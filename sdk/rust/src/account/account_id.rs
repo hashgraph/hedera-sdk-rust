@@ -32,8 +32,12 @@ use hedera_proto::services::account_id::Account;
 use crate::entity_id::{
     AutoValidateChecksum,
     Checksum,
+    PartialEntityId,
 };
-use crate::evm_address::EvmAddress;
+use crate::evm_address::{
+    EvmAddress,
+    IdEvmAddress,
+};
 use crate::{
     Client,
     EntityId,
@@ -61,7 +65,7 @@ pub struct AccountId {
     pub alias: Option<PublicKey>,
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
-    pub evm_address: Option<[u8; 20]>,
+    pub evm_address: Option<EvmAddress>,
 
     /// A checksum if the account ID was read from a user inputted string which inclueded a checksum
     pub checksum: Option<Checksum>,
@@ -84,18 +88,18 @@ impl AccountId {
         Ok(Self { shard, realm, num, alias: None, evm_address: None, checksum })
     }
 
-    /// Accepts "0x___" or "___" Ethereum public address.
-    pub fn from_evm_address(address: &str) -> crate::Result<Self> {
-        let evm_address = EvmAddress::from_str(address)?;
-
-        Ok(Self {
+    /// Create an `AccountId` from an evm address.
+    ///
+    /// Accepts "0x___" Ethereum public address.
+    pub fn from_evm_address(address: &EvmAddress) -> Self {
+        Self {
             shard: 0,
             realm: 0,
             num: 0,
             alias: None,
-            evm_address: Some(evm_address.0),
+            evm_address: Some(*address),
             checksum: None,
-        })
+        }
     }
 
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
@@ -110,10 +114,12 @@ impl AccountId {
             .to_solidity_address()
     }
 
+    // todo: note: the specifics of this function are undecided (should it even exist?)
+    // followup discussion required as per https://github.com/hashgraph/hedera-sdk-reference/issues/70.
     /// Returns "0x_____" string Ethereum public address.
-    pub fn to_evm_address(&self) -> crate::Result<String> {
+    pub(crate) fn _to_evm_address(&self) -> crate::Result<String> {
         if let Some(evm_address) = &self.evm_address {
-            Ok(format!("0x{}", EvmAddress::from_ref(evm_address)))
+            Ok(evm_address.to_string())
         } else {
             Err(Error::NoEvmAddressPresent { task: "convert account ID to evm address string" })
         }
@@ -121,7 +127,7 @@ impl AccountId {
 
     /// Convert `self` to a string with a valid checksum.
     pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
-        if self.alias.is_some() {
+        if self.alias.is_some() || self.evm_address.is_some() {
             Err(Error::CannotToStringWithChecksum)
         } else {
             EntityId::to_string_with_checksum(self.to_string(), client).await
@@ -135,7 +141,7 @@ impl AccountId {
     ///
     /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
     pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
-        if self.alias.is_some() {
+        if self.alias.is_some() || self.evm_address.is_some() {
             Ok(())
         } else {
             EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client)
@@ -146,7 +152,7 @@ impl AccountId {
 
 impl AutoValidateChecksum for AccountId {
     fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        if self.alias.is_some() {
+        if self.alias.is_some() || self.evm_address.is_some() {
             Ok(())
         } else {
             EntityId::validate_checksum_for_ledger_id(
@@ -174,7 +180,7 @@ impl Display for AccountId {
         if let Some(alias) = &self.alias {
             write!(f, "{}.{}.{}", self.shard, self.realm, alias)
         } else if let Some(evm_address) = &self.evm_address {
-            write!(f, "{}.{}.{}", self.shard, self.realm, EvmAddress::from_ref(evm_address))
+            write!(f, "{evm_address}")
         } else {
             write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
         }
@@ -206,7 +212,7 @@ impl FromProtobuf<services::AccountId> for AccountId {
                 (0, Some(FromProtobuf::from_bytes(&alias)?), None)
             }
             Account::EvmAddress(evm_address) => {
-                (0, None, Some(EvmAddress::try_from(evm_address)?.0))
+                (0, None, Some(IdEvmAddress::try_from(evm_address)?.0))
             }
         };
 
@@ -237,47 +243,36 @@ impl FromStr for AccountId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        account_num_from_str(s)
-            .or_else(|| account_alias_or_evm_address_from_str(s))
-            .ok_or_else(|| Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`) or <shard>.<realm>.<alias> (ex. `0.0.0a410c8fe4912e3652b61dd222b1b4d7773261537d7ebad59df6cd33622a693e`)"))
+        // override the error message for better context.
+        let partial = PartialEntityId::from_str(s)
+        .map_err(|_| Error::basic_parse("expecting <shard>.<realm>.<num> (ex. `0.0.1001`) or <shard>.<realm>.<alias> (ex. `0.0.0a410c8fe4912e3652b61dd222b1b4d7773261537d7ebad59df6cd33622a693e"))?;
+
+        match partial {
+            PartialEntityId::ShortNum(it) => Ok(it.into()),
+            PartialEntityId::LongNum(it) => Ok(it.into()),
+
+            // 0x<evm_address>
+            PartialEntityId::ShortOther(evm_address) => {
+                Ok(Self::from_evm_address(&evm_address.parse()?))
+            }
+
+            // <shard>.<realm>.<alias>
+            PartialEntityId::LongOther { shard, realm, last } => Ok(Self {
+                shard,
+                realm,
+                num: 0,
+                alias: Some(last.parse()?),
+                evm_address: None,
+                checksum: None,
+            }),
+        }
     }
 }
 
-fn account_num_from_str(s: &str) -> Option<AccountId> {
-    s.parse()
-        .map(|EntityId { shard, realm, num, checksum }| AccountId {
-            shard,
-            realm,
-            num,
-            alias: None,
-            evm_address: None,
-            checksum,
-        })
-        .ok()
-}
-
-fn account_alias_or_evm_address(shard: u64, realm: u64, s: &str) -> Option<AccountId> {
-    let b = hex::decode(s.strip_prefix("0x").unwrap_or(s)).ok()?;
-    if b.len() == 20 {
-        let evm_address = Some(EvmAddress::try_from(b).ok()?.0);
-        Some(AccountId { shard, realm, num: 0, alias: None, evm_address, checksum: None })
-    } else {
-        let alias = Some(PublicKey::from_bytes(b.as_slice()).ok()?);
-        Some(AccountId { shard, realm, num: 0, alias, evm_address: None, checksum: None })
-    }
-}
-
-fn account_alias_or_evm_address_from_str(s: &str) -> Option<AccountId> {
-    let parts: Vec<&str> = s.splitn(3, '.').collect();
-
-    if parts.len() == 1 {
-        account_alias_or_evm_address(0, 0, parts[0])
-    } else if parts.len() == 3 {
-        let shard = parts[0].parse().map_err(Error::basic_parse).ok()?;
-        let realm = parts[1].parse().map_err(Error::basic_parse).ok()?;
-        account_alias_or_evm_address(shard, realm, parts[2])
-    } else {
-        None
+impl From<EntityId> for AccountId {
+    fn from(value: EntityId) -> Self {
+        let EntityId { shard, realm, num, checksum } = value;
+        Self { shard, realm, num, checksum, alias: None, evm_address: None }
     }
 }
 
@@ -285,6 +280,9 @@ fn account_alias_or_evm_address_from_str(s: &str) -> Option<AccountId> {
 mod tests {
     use std::str::FromStr;
 
+    use hex_literal::hex;
+
+    use crate::evm_address::EvmAddress;
     use crate::{
         AccountId,
         Client,
@@ -323,16 +321,15 @@ mod tests {
 
     #[test]
     fn from_evm_address_string() {
-        let mut evm_address = [0; 20];
-        hex::decode_to_slice("302a300506032b6570032100114e6abc371b82da", &mut evm_address).unwrap();
+        let evm_address = hex!("302a300506032b6570032100114e6abc371b82da");
         assert_eq!(
-            AccountId::from_str("0.0.302a300506032b6570032100114e6abc371b82da").unwrap(),
+            AccountId::from_str("302a300506032b6570032100114e6abc371b82da").unwrap(),
             AccountId {
                 shard: 0,
                 realm: 0,
                 num: 0,
                 alias: None,
-                evm_address: Some(evm_address),
+                evm_address: Some(EvmAddress(evm_address)),
                 checksum: None
             }
         )
@@ -340,20 +337,17 @@ mod tests {
 
     #[test]
     fn to_evm_address_string() {
-        let mut evm_address = [0; 20];
-        hex::decode_to_slice("302a300506032b6570032100114e6abc371b82da", &mut evm_address).unwrap();
         assert_eq!(
-            AccountId {
+            &AccountId {
                 shard: 0,
                 realm: 0,
                 num: 0,
                 alias: None,
-                evm_address: Some(evm_address),
+                evm_address: Some(EvmAddress(hex!("302a300506032b6570032100114e6abc371b82da"))),
                 checksum: None
             }
-            .to_string()
-            .as_str(),
-            "0.0.302a300506032b6570032100114e6abc371b82da"
+            .to_string(),
+            "302a300506032b6570032100114e6abc371b82da"
         )
     }
 

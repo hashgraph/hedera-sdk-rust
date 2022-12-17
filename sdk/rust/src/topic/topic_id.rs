@@ -58,6 +58,7 @@ pub struct TopicId {
     /// A checksum if the topic ID was read from a user inputted string which inclueded a checksum
     pub checksum: Option<Checksum>,
 }
+
 impl TopicId {
     /// Create a new `TopicId` from protobuf-encoded `bytes`.
     ///
@@ -160,11 +161,14 @@ impl FromStr for TopicId {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|EntityId { shard, realm, num, checksum }| Self {
-            shard,
-            realm,
-            num,
-            checksum,
-        })
+        EntityId::from_str(s).map(Self::from)
+    }
+}
+
+impl From<EntityId> for TopicId {
+    fn from(value: EntityId) -> Self {
+        let EntityId { shard, realm, num, checksum } = value;
+
+        Self { shard, realm, num, checksum }
     }
 }
