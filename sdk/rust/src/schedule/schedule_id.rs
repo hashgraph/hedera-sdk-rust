@@ -69,10 +69,23 @@ impl ScheduleId {
         FromProtobuf::from_bytes(bytes)
     }
 
+    /// Create a `ScheduleId` from a solidity address.
+    pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
+        let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
+
+        Ok(Self { shard, realm, num, checksum })
+    }
+
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
+    }
+
+    /// Convert `self` into a solidity `address`
+    pub fn to_solidity_address(&self) -> crate::Result<String> {
+        EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
+            .to_solidity_address()
     }
 
     /// Convert `self` to a string with a valid checksum.
@@ -148,11 +161,14 @@ impl FromStr for ScheduleId {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse().map(|EntityId { shard, realm, num, checksum }| Self {
-            shard,
-            realm,
-            num,
-            checksum,
-        })
+        EntityId::from_str(s).map(Self::from)
+    }
+}
+
+impl From<EntityId> for ScheduleId {
+    fn from(value: EntityId) -> Self {
+        let EntityId { shard, realm, num, checksum } = value;
+
+        Self { shard, realm, num, checksum }
     }
 }

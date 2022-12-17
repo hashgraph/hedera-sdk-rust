@@ -304,7 +304,21 @@ impl PublicKey {
     /// ```
     #[must_use]
     pub fn to_account_id(&self, shard: u64, realm: u64) -> AccountId {
-        AccountId { shard, realm, alias: Some(*self), num: 0, checksum: None }
+        AccountId { shard, realm, alias: Some(*self), evm_address: None, num: 0, checksum: None }
+    }
+
+    /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
+    pub fn to_evm_address(&self) -> crate::Result<String> {
+        if let PublicKeyData::Ecdsa(ecdsa_key) = &self.0 {
+            let hash = sha3::Keccak256::digest(&ecdsa_key.to_bytes());
+            Ok(format!("0x{}", hex::encode(hash.get(12..32).unwrap())))
+        } else {
+            Err(Error::WrongKeyType {
+                task: "convert to evm address",
+                key_enum: "PublicKey",
+                key_variant: "Ed25519",
+            })
+        }
     }
 
     /// Verify a `signature` on a `msg` with this public key.

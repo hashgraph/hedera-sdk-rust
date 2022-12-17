@@ -20,6 +20,7 @@
 
 use async_trait::async_trait;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
+use hedera_proto::services::transaction_body::Data;
 use hedera_proto::services::{
     self,
     schedulable_transaction_body,
@@ -300,6 +301,13 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
                 }
                 transaction_body::Data::ContractCall(data) => {
                     Some(schedulable_transaction_body::Data::ContractCall(data))
+                }
+                // TODO: implement these
+                Data::NodeStakeUpdate(_) => {
+                    unimplemented!("NodeStakeUpdate has not been implemented")
+                }
+                Data::UtilPrng(_) => {
+                    unimplemented!("UtilPrng has not been implemented")
                 }
             };
 
