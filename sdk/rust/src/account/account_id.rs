@@ -323,7 +323,7 @@ mod tests {
     fn from_evm_address_string() {
         let evm_address = hex!("302a300506032b6570032100114e6abc371b82da");
         assert_eq!(
-            AccountId::from_str("302a300506032b6570032100114e6abc371b82da").unwrap(),
+            AccountId::from_str("0x302a300506032b6570032100114e6abc371b82da").unwrap(),
             AccountId {
                 shard: 0,
                 realm: 0,
@@ -347,7 +347,7 @@ mod tests {
                 checksum: None
             }
             .to_string(),
-            "302a300506032b6570032100114e6abc371b82da"
+            "0x302a300506032b6570032100114e6abc371b82da"
         )
     }
 
