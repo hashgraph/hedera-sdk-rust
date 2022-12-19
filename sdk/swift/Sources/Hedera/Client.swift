@@ -130,7 +130,7 @@ public final class Client {
             var bytes: UnsafeMutablePointer<UInt8>?
             let count = hedera_client_get_ledger_id(ptr, &bytes)
 
-            return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: Data.unsafeCHederaBytesFree)) }
+            return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: .unsafeCHederaBytesFree)) }
         }
 
         set(value) {

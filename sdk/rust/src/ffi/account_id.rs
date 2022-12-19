@@ -38,6 +38,13 @@ pub struct AccountId {
     ///   - be dereferenceable
     ///   - point to a valid instance of `PublicKey` (any `PublicKey` that `hedera` provides which hasn't been freed yet)
     alias: *mut PublicKey,
+
+    /// Safety:
+    /// - if `evm_address` is not null, it must:
+    /// - be properly aligned
+    /// - be dereferencable
+    /// - point to an array of 20 bytes
+    evm_address: *mut u8,
 }
 
 impl AccountId {
@@ -45,8 +52,10 @@ impl AccountId {
     pub(super) fn borrow_ref<'a>(&'a self) -> RefAccountId<'a> {
         // safety: invariants of self require a non-null `PublicKey` to follow the required invariants of `NonNull::as_ref`.
         let alias = unsafe { self.alias.as_ref() };
+        // safety: invariants of self require a non-null `evm_address` to follow the required invariants of `NonNull::as_ref`.
+        let evm_address = unsafe { self.alias.cast::<[u8; 20]>().as_ref() };
 
-        RefAccountId { shard: self.shard, realm: self.realm, num: self.num, alias }
+        RefAccountId { shard: self.shard, realm: self.realm, num: self.num, alias, evm_address }
     }
 }
 
@@ -57,6 +66,10 @@ impl From<crate::AccountId> for AccountId {
             realm: id.realm,
             num: id.num,
             alias: id.alias.map(Box::new).map_or_else(ptr::null_mut, Box::into_raw),
+            evm_address: id
+                .evm_address
+                .map(|it| it.to_bytes().to_vec().into_boxed_slice())
+                .map_or_else(ptr::null_mut, |it| Box::leak(it).as_mut_ptr()),
         }
     }
 }
@@ -67,6 +80,7 @@ pub(super) struct RefAccountId<'a> {
     realm: u64,
     num: u64,
     alias: Option<&'a PublicKey>,
+    evm_address: Option<&'a [u8; 20]>,
 }
 
 impl<'a> RefAccountId<'a> {
@@ -86,7 +100,10 @@ impl<'a> ToProtobuf for RefAccountId<'a> {
             realm_num: self.realm as i64,
             shard_num: self.shard as i64,
             account: Some(match self.alias {
-                None => services::account_id::Account::AccountNum(self.num as i64),
+                None => match self.evm_address {
+                    Some(evm_address) => services::account_id::Account::Alias(evm_address.to_vec()),
+                    None => services::account_id::Account::AccountNum(self.num as i64),
+                },
                 Some(alias) => services::account_id::Account::Alias(alias.to_bytes_raw()),
             }),
         }

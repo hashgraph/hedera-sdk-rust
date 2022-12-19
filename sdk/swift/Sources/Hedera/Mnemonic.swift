@@ -93,7 +93,7 @@ public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiter
 
     public var description: String {
         let descriptionBytes = hedera_mnemonic_to_string(ptr)
-        return String(hString: descriptionBytes!)!
+        return String(hString: descriptionBytes!)
     }
 
     deinit {

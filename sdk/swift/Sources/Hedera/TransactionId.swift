@@ -75,7 +75,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_transaction_id_to_bytes(hedera, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 

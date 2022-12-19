@@ -74,7 +74,7 @@ public struct ContractId: EntityId {
 
         if let evmAddress = hedera.evm_address {
             self.num = 0
-            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: Data.unsafeCHederaBytesFree)
+            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: .unsafeCHederaBytesFree)
         } else {
             self.num = hedera.num
             self.evmAddress = nil
@@ -142,7 +142,7 @@ public struct ContractId: EntityId {
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_contract_id_to_bytes(hedera, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 
