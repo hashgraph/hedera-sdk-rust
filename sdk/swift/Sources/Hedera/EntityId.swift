@@ -175,6 +175,12 @@ where
     func toStringWithChecksum(_ client: Client) -> String
 
     func validateChecksum(_ client: Client) throws
+
+    /// Create `Self` from a solidity address.
+    static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self
+
+    /// Convert `self` into a solidity `address`
+    func toSolidityAddress() throws -> String
 }
 
 extension EntityId {
@@ -251,6 +257,34 @@ extension EntityId {
 
     public func validateChecksum(_ client: Client) throws {
         try defaultValidateChecksum(on: client.ledgerId!)
+    }
+
+    public static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self {
+        let description = description.stripPrefix("0x") ?? description[...]
+
+        guard let bytes = Data(hexEncoded: description) else {
+            throw HError(kind: .basicParse, description: "Expected hex encoded solidity address")
+        }
+
+        guard bytes.count == 20 else {
+            throw HError(kind: .basicParse, description: "Expected solidity address to be 20 bytes")
+        }
+
+        let shard = UInt32(bigEndianBytes: bytes[..<4])!
+        // eww copies, but, what can we do?
+        let realm = UInt64(bigEndianBytes: Data(bytes[4..<12]))!
+        let num = UInt64(bigEndianBytes: Data(bytes[12...]))!
+
+        return Self(shard: UInt64(shard), realm: realm, num: num)
+    }
+
+    public func toSolidityAddress() throws -> String {
+        guard let shard = UInt32(exactly: shard) else {
+            // todo: use a proper error kind
+            throw HError(kind: .basicParse, description: "Shard too big for `toSolidityAddress`")
+        }
+
+        return (shard.bigEndianBytes + realm.bigEndianBytes + num.bigEndianBytes).hexStringEncoded()
     }
 }
 
@@ -360,7 +394,7 @@ public struct FileId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_file_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
@@ -406,7 +440,7 @@ public struct TopicId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_topic_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
@@ -452,7 +486,7 @@ public struct TokenId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_token_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public func nft(_ serial: UInt64) -> NftId {
@@ -502,7 +536,7 @@ public struct ScheduleId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_schedule_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {

@@ -112,7 +112,7 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_semantic_version_to_bytes(info, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 

@@ -59,7 +59,7 @@ public struct NetworkVersionInfo: Codable {
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_network_version_info_to_bytes(info, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 }

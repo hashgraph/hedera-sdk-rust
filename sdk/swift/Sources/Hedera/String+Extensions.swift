@@ -28,12 +28,12 @@ extension String {
     ///
     /// - Parameter hString: A pointer to a CString
     ///
-    internal init!(hString: UnsafeMutablePointer<CChar>) {
+    internal init(hString: UnsafeMutablePointer<CChar>) {
         // `String.init(validatingUTF8)` copies the string:
         // https://developer.apple.com/documentation/swift/string/init(validatingutf8:)-208fn
         // > Creates a new string by copying and validating
         //   the null-terminated UTF-8 data referenced by the given pointer.
-        self.init(validatingUTF8: hString)
+        self.init(validatingUTF8: hString)!
 
         hedera_string_free(hString)
     }

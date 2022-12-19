@@ -131,26 +131,26 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_private_key_to_bytes_der(ptr, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public func toBytes() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_private_key_to_bytes(ptr, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public func toBytesRaw() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_private_key_to_bytes_raw(ptr, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public var description: String {
         let descriptionBytes = hedera_private_key_to_string(ptr)
-        return String(hString: descriptionBytes!)!
+        return String(hString: descriptionBytes!)
     }
 
     public func toString() -> String {
@@ -159,12 +159,12 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
 
     public func toStringDer() -> String {
         let stringBytes = hedera_private_key_to_string_der(ptr)
-        return String(hString: stringBytes!)!
+        return String(hString: stringBytes!)
     }
 
     public func toStringRaw() -> String {
         let stringBytes = hedera_private_key_to_string_raw(ptr)
-        return String(hString: stringBytes!)!
+        return String(hString: stringBytes!)
     }
 
     public func toAccountId(shard: UInt64, realm: UInt64) -> AccountId {
@@ -183,7 +183,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         message.withUnsafeTypedBytes { pointer in
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_private_key_sign(ptr, pointer.baseAddress, pointer.count, &buf)
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 

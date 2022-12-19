@@ -73,6 +73,14 @@ typedef struct HederaAccountId {
    *   - point to a valid instance of `PublicKey` (any `PublicKey` that `hedera` provides which hasn't been freed yet)
    */
   struct HederaPublicKey *alias;
+  /**
+   * Safety:
+   * - if `evm_address` is not null, it must:
+   * - be properly aligned
+   * - be dereferencable
+   * - point to an array of 20 bytes
+   */
+  uint8_t *evm_address;
 } HederaAccountId;
 
 typedef struct HederaAccountBalance {
@@ -1182,6 +1190,20 @@ bool hedera_public_key_is_ed25519(struct HederaPublicKey *key);
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
 bool hedera_public_key_is_ecdsa(struct HederaPublicKey *key);
+
+/**
+ * Convert this public key into an evm address. The evm address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
+ *
+ * # Safety
+ * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
+ * - `evm_address` must be valid for writes according to the [*Rust* pointer rules].
+ * - the length of `evm_address` string must not be modified.
+ * - `evm_address` must NOT be freed with `free`.
+ *
+ * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+ */
+enum HederaError hedera_public_key_to_evm_address(struct HederaPublicKey *key,
+                                                  char **evm_address);
 
 /**
  * Releases memory associated with the public key.

@@ -28,6 +28,7 @@ public struct AccountId: EntityId, ValidateChecksums {
     public let num: UInt64
     public let checksum: Checksum?
     public let alias: PublicKey?
+    public let evmAddress: EvmAddress?
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64, checksum: Checksum?) {
         self.shard = shard
@@ -35,6 +36,7 @@ public struct AccountId: EntityId, ValidateChecksums {
         self.num = num
         alias = nil
         self.checksum = checksum
+        evmAddress = nil
     }
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, alias: PublicKey) {
@@ -42,11 +44,21 @@ public struct AccountId: EntityId, ValidateChecksums {
         self.realm = realm
         num = 0
         self.alias = alias
-        self.checksum = nil
+        checksum = nil
+        evmAddress = nil
     }
 
     public init(shard: UInt64 = 0, realm: UInt64 = 0, num: UInt64) {
         self.init(shard: shard, realm: realm, num: num, checksum: nil)
+    }
+
+    public init(evmAddress: EvmAddress) {
+        shard = 0
+        realm = 0
+        num = 0
+        alias = nil
+        self.evmAddress = evmAddress
+        checksum = nil
     }
 
     public init<S: StringProtocol>(parsing description: S) throws {
@@ -73,8 +85,8 @@ public struct AccountId: EntityId, ValidateChecksums {
 
         // check for `evmAddress` eventually
         case .other(let description):
-            throw HError(
-                kind: .basicParse, description: "expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
+            let evmAddress = try EvmAddress(parsing: description)
+            self.init(evmAddress: evmAddress)
         }
     }
 
@@ -83,11 +95,23 @@ public struct AccountId: EntityId, ValidateChecksums {
         realm = hedera.realm
         num = hedera.num
         alias = hedera.alias.map(PublicKey.unsafeFromPtr)
-        self.checksum = nil
+        checksum = nil
+        evmAddress = hedera.evm_address.map { ptr in
+            // swiftlint:disable:next force_try
+            try! EvmAddress(Data(bytesNoCopy: ptr, count: 20, deallocator: .unsafeCHederaBytesFree))
+        }
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaAccountId) throws -> Result) rethrows -> Result {
-        try body(HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr))
+        if let evmAddress = evmAddress {
+            return try evmAddress.data.withUnsafeTypedBytes { evmAddress in
+                let evmAddress = UnsafeMutablePointer(mutating: evmAddress.baseAddress)
+                return try body(
+                    HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr, evm_address: evmAddress))
+            }
+        }
+
+        return try body(HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr, evm_address: nil))
     }
 
     public var description: String {
@@ -113,12 +137,13 @@ public struct AccountId: EntityId, ValidateChecksums {
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_account_id_to_bytes(hedera, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 
     public func toStringWithChecksum(_ client: Client) -> String {
         precondition(alias == nil, "cannot create a checksum for an `AccountId` with an alias")
+        precondition(evmAddress == nil, "cannot create a checksum for an `AccountId` with an evmAddress")
 
         return defaultToStringWithChecksum(client)
     }
@@ -128,11 +153,24 @@ public struct AccountId: EntityId, ValidateChecksums {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        if alias != nil {
+        if alias != nil || evmAddress != nil {
             return
         }
 
         try defaultValidateChecksum(on: ledgerId)
+    }
+
+    /// Create an `AccountId` from an evm address.
+    ///
+    /// Accepts an Ethereum public address.
+    public static func fromEvmAddress(_ evmAddress: EvmAddress) -> Self {
+        Self(evmAddress: evmAddress)
+    }
+
+    // todo: public func `toEvmAddress`/`getEvmAddress`
+
+    public static func == (lhs: AccountId, rhs: AccountId) -> Bool {
+        lhs.shard == rhs.shard && lhs.realm == rhs.realm && lhs.num == lhs.num && lhs.alias == rhs.alias
     }
 }
 

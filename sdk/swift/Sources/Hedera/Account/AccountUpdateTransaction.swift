@@ -75,6 +75,19 @@ public final class AccountUpdateTransaction: Transaction {
         return self
     }
 
+    /// The account to be used at this account's expiration time to extend the
+    /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    public var autoRenewAccountId: AccountId? = nil
+
+    /// Sets the account to be used at this account's expiration time to extend the
+    /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    @discardableResult
+    public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
+        self.autoRenewAccountId = autoRenewAccountId
+
+        return self
+    }
+
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     public var expirationTime: Timestamp?
 
@@ -155,6 +168,7 @@ public final class AccountUpdateTransaction: Transaction {
         case stakedAccountId
         case stakedNodeId
         case declineStakingReward
+        case autoRenewAccountId
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -168,6 +182,7 @@ public final class AccountUpdateTransaction: Transaction {
         try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
         try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
         try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
+        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
 
         try super.encode(to: encoder)
     }
@@ -175,6 +190,7 @@ public final class AccountUpdateTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try accountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
+        try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
 }
