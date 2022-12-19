@@ -108,7 +108,6 @@ public final class AccountUpdateTransaction: Transaction {
         return self
     }
 
-
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     public var expirationTime: Timestamp?
 
