@@ -119,7 +119,7 @@ public struct AccountId: EntityId, ValidateChecksums {
             return "\(shard).\(realm).\(alias)"
         }
 
-        return defaultDescription
+        return helper.description
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
@@ -145,7 +145,7 @@ public struct AccountId: EntityId, ValidateChecksums {
         precondition(alias == nil, "cannot create a checksum for an `AccountId` with an alias")
         precondition(evmAddress == nil, "cannot create a checksum for an `AccountId` with an evmAddress")
 
-        return defaultToStringWithChecksum(client)
+        return helper.toStringWithChecksum(client)
     }
 
     public func validateChecksum(_ client: Client) throws {
@@ -157,7 +157,7 @@ public struct AccountId: EntityId, ValidateChecksums {
             return
         }
 
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 
     /// Create an `AccountId` from an evm address.

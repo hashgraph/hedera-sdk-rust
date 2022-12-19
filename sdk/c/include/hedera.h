@@ -423,31 +423,12 @@ enum HederaError hedera_contract_id_from_evm_address(uint64_t shard,
                                                      struct HederaContractId *contract_id);
 
 /**
- * create a `ContractId` from a solidity address.
- *
- * # Safety
- * - `contract_id` must be valid for writes.
- * - `address` must be valid for reads up until the first `\0` character.
- */
-enum HederaError hedera_contract_id_from_solidity_address(const char *address,
-                                                          struct HederaContractId *contract_id);
-
-/**
  * Serialize the passed `ContractId` as bytes
  *
  * # Safety
  * - `buf` must be valid for writes.
  */
 size_t hedera_contract_id_to_bytes(struct HederaContractId contract_id, uint8_t **buf);
-
-/**
- * Serialize the passed `ContractId` as a solidity `address`
- *
- * # Safety
- * - `s` must be valid for writes
- */
-enum HederaError hedera_contract_id_to_solidity_address(struct HederaContractId contract_id,
-                                                        char **s);
 
 /**
  * # Safety

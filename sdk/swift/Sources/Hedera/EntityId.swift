@@ -176,7 +176,7 @@ where
 
     func validateChecksum(_ client: Client) throws
 
-    /// Create `Self` from a solidity address.
+    /// Create `Self` from a solidity `address`.
     static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self
 
     /// Convert `self` into a solidity `address`
@@ -184,6 +184,10 @@ where
 }
 
 extension EntityId {
+    internal typealias Helper = EntityIdHelper<Self>
+
+    internal var helper: Helper { Helper(self) }
+
     public init(integerLiteral value: IntegerLiteralType) {
         self.init(num: value)
     }
@@ -210,7 +214,7 @@ extension EntityId {
         try Self(parsing: description)
     }
 
-    public var description: String { defaultDescription }
+    public var description: String { helper.description }
 
     public init(from decoder: Decoder) throws {
         try self.init(parsing: decoder.singleValueContainer().decode(String.self))
@@ -222,19 +226,12 @@ extension EntityId {
         try container.encode(String(describing: self))
     }
 
-    internal var defaultDescription: String {
-        "\(shard).\(realm).\(num)"
+    public static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self {
+        try Helper.fromSolidityAddress(description)
     }
 
     public func toString() -> String {
         self.description
-    }
-
-    // sometimes you need a partial override *sigh*.
-    // note: this *expicitly* ignores the current checksum.
-    internal func defaultToStringWithChecksum(_ client: Client) -> String {
-        let checksum = self.generateChecksum(for: client.ledgerId!)
-        return "\(self.defaultDescription)-\(checksum)"
     }
 
     internal func generateChecksum(for ledgerId: LedgerId) -> Checksum {
@@ -242,24 +239,38 @@ extension EntityId {
     }
 
     public func toStringWithChecksum(_ client: Client) -> String {
-        defaultToStringWithChecksum(client)
-    }
-
-    internal func defaultValidateChecksum(on ledgerId: LedgerId) throws {
-        if let checksum = self.checksum {
-            let expected = generateChecksum(for: ledgerId)
-            if checksum != expected {
-                throw HError(
-                    kind: .badEntityId, description: "expected entity id `\(self)` to have checksum `\(expected)`")
-            }
-        }
+        helper.toStringWithChecksum(client)
     }
 
     public func validateChecksum(_ client: Client) throws {
-        try defaultValidateChecksum(on: client.ledgerId!)
+        try helper.validateChecksum(on: client)
     }
 
-    public static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self {
+    public func toSolidityAddress() throws -> String {
+        try helper.toSolidityAddress()
+    }
+}
+
+// this exists purely for convinence purposes lol.
+internal struct EntityIdHelper<E: EntityId> {
+    internal init(_ id: E) {
+        self.id = id
+    }
+
+    private let id: E
+
+    internal var description: String {
+        "\(id.shard).\(id.realm).\(id.num)"
+    }
+
+    // note: this *expicitly* ignores the current checksum.
+    internal func toStringWithChecksum(_ client: Client) -> String {
+        let checksum = id.generateChecksum(for: client.ledgerId!)
+        return "\(description)-\(checksum)"
+    }
+
+
+    internal static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> E {
         let description = description.stripPrefix("0x") ?? description[...]
 
         guard let bytes = Data(hexEncoded: description) else {
@@ -275,16 +286,30 @@ extension EntityId {
         let realm = UInt64(bigEndianBytes: Data(bytes[4..<12]))!
         let num = UInt64(bigEndianBytes: Data(bytes[12...]))!
 
-        return Self(shard: UInt64(shard), realm: realm, num: num)
+        return .init(shard: UInt64(shard), realm: realm, num: num)
     }
 
-    public func toSolidityAddress() throws -> String {
-        guard let shard = UInt32(exactly: shard) else {
+    internal func toSolidityAddress() throws -> String {
+        guard let shard = UInt32(exactly: id.shard) else {
             // todo: use a proper error kind
             throw HError(kind: .basicParse, description: "Shard too big for `toSolidityAddress`")
         }
 
-        return (shard.bigEndianBytes + realm.bigEndianBytes + num.bigEndianBytes).hexStringEncoded()
+        return (shard.bigEndianBytes + id.realm.bigEndianBytes + id.num.bigEndianBytes).hexStringEncoded()
+    }
+
+    internal func validateChecksum(on ledgerId: LedgerId) throws {
+        if let checksum = id.checksum {
+            let expected = id.generateChecksum(for: ledgerId)
+            if checksum != expected {
+                throw HError(
+                    kind: .badEntityId, description: "expected entity id `\(id)` to have checksum `\(expected)`")
+            }
+        }
+    }
+
+    internal func validateChecksum(on client: Client) throws {
+        try validateChecksum(on: client.ledgerId!)
     }
 }
 
@@ -398,7 +423,7 @@ public struct FileId: EntityId, ValidateChecksums {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
 
@@ -444,7 +469,7 @@ public struct TopicId: EntityId, ValidateChecksums {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
 
@@ -494,7 +519,7 @@ public struct TokenId: EntityId, ValidateChecksums {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
 
@@ -540,6 +565,6 @@ public struct ScheduleId: EntityId, ValidateChecksums {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
