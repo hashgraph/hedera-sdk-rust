@@ -1,7 +1,4 @@
-use std::ffi::{
-    c_char,
-    CString,
-};
+use std::ffi::c_char;
 use std::ptr::{
     self,
     NonNull,
@@ -63,32 +60,6 @@ pub unsafe extern "C" fn hedera_contract_id_from_bytes(
     let bytes = unsafe { slice::from_raw_parts(bytes, bytes_size) };
 
     let parsed = ffi_try!(crate::ContractId::from_bytes(bytes));
-
-    let parsed = ContractId::from_rust(parsed);
-
-    unsafe {
-        ptr::write(contract_id, parsed);
-    }
-
-    Error::Ok
-}
-
-/// Create a `ContractId` from a `shard.realm.evm_address` set.
-///
-/// # Safety
-/// - `contract_id` must be valid for writes.
-/// - `address` must be valid for reads up until the first `\0` character.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_contract_id_from_evm_address(
-    shard: u64,
-    realm: u64,
-    evm_address: *const c_char,
-    contract_id: *mut ContractId,
-) -> Error {
-    assert!(!contract_id.is_null());
-
-    let evm_address = unsafe { cstr_from_ptr(evm_address) };
-    let parsed = ffi_try!(crate::ContractId::from_evm_address(shard, realm, &evm_address));
 
     let parsed = ContractId::from_rust(parsed);
 

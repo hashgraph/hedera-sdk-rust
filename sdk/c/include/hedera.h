@@ -411,18 +411,6 @@ enum HederaError hedera_contract_id_from_bytes(const uint8_t *bytes,
                                                struct HederaContractId *contract_id);
 
 /**
- * Create a `ContractId` from a `shard.realm.evm_address` set.
- *
- * # Safety
- * - `contract_id` must be valid for writes.
- * - `address` must be valid for reads up until the first `\0` character.
- */
-enum HederaError hedera_contract_id_from_evm_address(uint64_t shard,
-                                                     uint64_t realm,
-                                                     const char *evm_address,
-                                                     struct HederaContractId *contract_id);
-
-/**
  * Serialize the passed `ContractId` as bytes
  *
  * # Safety

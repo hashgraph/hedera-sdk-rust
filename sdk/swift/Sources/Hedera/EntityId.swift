@@ -227,7 +227,7 @@ extension EntityId {
     }
 
     public static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self {
-        try Helper.fromSolidityAddress(description)
+        try SolidityAddress(parsing: description).toEntityId()
     }
 
     public func toString() -> String {
@@ -247,7 +247,7 @@ extension EntityId {
     }
 
     public func toSolidityAddress() throws -> String {
-        try helper.toSolidityAddress()
+        try String(describing: SolidityAddress(self))
     }
 }
 
@@ -267,35 +267,6 @@ internal struct EntityIdHelper<E: EntityId> {
     internal func toStringWithChecksum(_ client: Client) -> String {
         let checksum = id.generateChecksum(for: client.ledgerId!)
         return "\(description)-\(checksum)"
-    }
-
-
-    internal static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> E {
-        let description = description.stripPrefix("0x") ?? description[...]
-
-        guard let bytes = Data(hexEncoded: description) else {
-            throw HError(kind: .basicParse, description: "Expected hex encoded solidity address")
-        }
-
-        guard bytes.count == 20 else {
-            throw HError(kind: .basicParse, description: "Expected solidity address to be 20 bytes")
-        }
-
-        let shard = UInt32(bigEndianBytes: bytes[..<4])!
-        // eww copies, but, what can we do?
-        let realm = UInt64(bigEndianBytes: Data(bytes[4..<12]))!
-        let num = UInt64(bigEndianBytes: Data(bytes[12...]))!
-
-        return .init(shard: UInt64(shard), realm: realm, num: num)
-    }
-
-    internal func toSolidityAddress() throws -> String {
-        guard let shard = UInt32(exactly: id.shard) else {
-            // todo: use a proper error kind
-            throw HError(kind: .basicParse, description: "Shard too big for `toSolidityAddress`")
-        }
-
-        return (shard.bigEndianBytes + id.realm.bigEndianBytes + id.num.bigEndianBytes).hexStringEncoded()
     }
 
     internal func validateChecksum(on ledgerId: LedgerId) throws {

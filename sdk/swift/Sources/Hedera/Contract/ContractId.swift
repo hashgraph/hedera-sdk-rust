@@ -112,11 +112,7 @@ public struct ContractId: EntityId {
     }
 
     public static func fromEvmAddress(_ shard: UInt64, _ realm: UInt64, _ address: String) throws -> Self {
-        var hedera = HederaContractId()
-
-        try HError.throwing(error: hedera_contract_id_from_evm_address(shard, realm, address, &hedera))
-
-        return Self(unsafeFromCHedera: hedera)
+        Self(shard: shard, realm: realm, evmAddress: try SolidityAddress(parsing: address).data)
     }
 
     public func toSolidityAddress() throws -> String {
@@ -124,7 +120,8 @@ public struct ContractId: EntityId {
             return evmAddress.hexStringEncoded()
         }
 
-        return try helper.toSolidityAddress()
+        return String(describing: try SolidityAddress(self))
+
     }
 
     public func toBytes() -> Data {
