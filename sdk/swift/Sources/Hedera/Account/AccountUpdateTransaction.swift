@@ -88,6 +88,27 @@ public final class AccountUpdateTransaction: Transaction {
         return self
     }
 
+    /// The ID of the account to which this account is proxy staked.
+    ///
+    /// If `proxy_account_id` is `None`, or is an invalid account, or is an account
+    /// that isn't a node, then this account is automatically proxy staked to
+    /// a node chosen by the network, but without earning payments.
+    ///
+    /// If the `proxy_account_id` account refuses to accept proxy staking, or
+    /// if it is not currently running a node, then it
+    /// will behave as if `proxy_account_id` was `None`.
+    @available(*, deprecated)
+    public var proxyAccountId: AccountId?
+
+    ///  Set the proxy account ID for this account
+    @available(*, deprecated)
+    public func proxyAccountId(_ proxyAccountId: AccountId) -> Self {
+        self.proxyAccountId = proxyAccountId
+
+        return self
+    }
+
+
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     public var expirationTime: Timestamp?
 
