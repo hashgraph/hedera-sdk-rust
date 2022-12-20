@@ -114,6 +114,7 @@ pub use contract::{
     ContractId,
     ContractInfo,
     ContractInfoQuery,
+    ContractLogInfo,
     ContractUpdateTransaction,
 };
 pub use entity_id::EntityId;

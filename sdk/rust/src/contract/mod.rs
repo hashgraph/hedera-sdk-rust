@@ -27,6 +27,7 @@ mod contract_function_result;
 mod contract_id;
 mod contract_info;
 mod contract_info_query;
+mod contract_log_info;
 mod contract_update_transaction;
 
 pub use contract_bytecode_query::ContractBytecodeQuery;
@@ -44,5 +45,6 @@ pub use contract_id::ContractId;
 pub use contract_info::ContractInfo;
 pub use contract_info_query::ContractInfoQuery;
 pub(crate) use contract_info_query::ContractInfoQueryData;
+pub use contract_log_info::ContractLogInfo;
 pub use contract_update_transaction::ContractUpdateTransaction;
 pub(crate) use contract_update_transaction::ContractUpdateTransactionData;
