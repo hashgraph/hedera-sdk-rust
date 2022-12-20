@@ -58,4 +58,9 @@ public final class ContractBytecodeQuery: Query<Data> {
 
         return bytecode
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try contractId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

@@ -114,6 +114,12 @@ impl Client {
         self.0.ledger_id.read().await.clone()
     }
 
+    // don't expose, this is just for swift and therefor is temporary.
+    #[cfg(feature = "ffi")]
+    pub(crate) fn ledger_id_blocking(&self) -> Option<LedgerId> {
+        self.0.ledger_id.blocking_read().clone()
+    }
+
     /// Sets the ledger ID for the Client's network.
     pub fn set_ledger_id(&self, ledger_id: Option<LedgerId>) {
         block_in_place(|| *self.0.ledger_id.blocking_write() = ledger_id);

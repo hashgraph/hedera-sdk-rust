@@ -54,7 +54,7 @@ public final class FileUpdateTransaction: Transaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    public var keys: KeyList? = nil
+    public var keys: KeyList?
 
     /// Sets the keys for this file.
     ///
@@ -109,5 +109,10 @@ public final class FileUpdateTransaction: Transaction {
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try fileId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
     }
 }

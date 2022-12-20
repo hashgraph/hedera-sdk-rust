@@ -54,19 +54,19 @@ public final class TopicInfo: Codable {
     /// The ledger ID the response was returned from
     public let ledgerId: LedgerId
 
-    static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try .fromJsonBytes(bytes)
     }
 
-    func toBytes() -> Data {
+    public func toBytes() -> Data {
         // can't have `throws` because that's the wrong function signature.
         // swiftlint:disable force_try
-        try! self.toJsonBytes()
+        try! toJsonBytes()
     }
 }
 
 extension TopicInfo: ToFromJsonBytes {
-    static var cToBytes: ToJsonBytesFunc { hedera_topic_info_to_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_topic_info_to_bytes }
 
-    static var cFromBytes: FromJsonBytesFunc { hedera_topic_info_from_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_topic_info_from_bytes }
 }

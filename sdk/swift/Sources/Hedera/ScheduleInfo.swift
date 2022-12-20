@@ -73,6 +73,6 @@ public final class ScheduleInfo: Codable {
 }
 
 extension ScheduleInfo: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_schedule_info_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_schedule_info_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_schedule_info_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_schedule_info_to_bytes }
 }

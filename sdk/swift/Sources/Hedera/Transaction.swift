@@ -21,7 +21,7 @@
 import Foundation
 
 /// A transaction that can be executed on the Hedera network.
-public class Transaction: Request {
+public class Transaction: Request, ValidateChecksums {
     private var signers: [Signer] = []
 
     public typealias Response = TransactionResponse
@@ -54,7 +54,11 @@ public class Transaction: Request {
         return self
     }
 
-    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse {
+    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+        try await executeInternal(client, timeout)
+    }
+
+    public func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 
@@ -71,5 +75,9 @@ public class Transaction: Request {
 
         try container.encode(requestName, forKey: .type)
         try container.encode(maxTransactionFee, forKey: .maxTransactionFee)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        // do nothing
     }
 }

@@ -1,11 +1,11 @@
 import CHedera
 import Foundation
 
-typealias FromJsonBytesFunc = @convention(c)
+internal typealias FromJsonBytesFunc = @convention(c)
 (_ bytes: UnsafePointer<UInt8>?, _ bytes_size: Int, _ s: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?) ->
     HederaError
 
-typealias ToJsonBytesFunc = @convention(c)
+internal typealias ToJsonBytesFunc = @convention(c)
 (
     _ s: UnsafePointer<CChar>?, _ buf: UnsafeMutablePointer<UnsafeMutablePointer<UInt8>?>?,
     _ buf_size: UnsafeMutablePointer<Int>?
@@ -21,10 +21,10 @@ internal protocol ToJsonBytes: Encodable {
     func toJsonBytes() throws -> Data
 }
 
-typealias ToFromJsonBytes = ToJsonBytes & FromJsonBytes
+internal typealias ToFromJsonBytes = ToJsonBytes & FromJsonBytes
 
 extension FromJsonBytes {
-    static func fromJsonBytes(_ bytes: Data) throws -> Self {
+    internal static func fromJsonBytes(_ bytes: Data) throws -> Self {
         let json: String = try bytes.withUnsafeTypedBytes { pointer in
             var ptr: UnsafeMutablePointer<CChar>?
             try HError.throwing(error: cFromBytes(pointer.baseAddress, pointer.count, &ptr))
@@ -37,7 +37,7 @@ extension FromJsonBytes {
 }
 
 extension ToJsonBytes {
-    func toJsonBytes() throws -> Data {
+    internal func toJsonBytes() throws -> Data {
         let jsonBytes = try JSONEncoder().encode(self)
         let json = String(data: jsonBytes, encoding: .utf8)!
         var buf: UnsafeMutablePointer<UInt8>?

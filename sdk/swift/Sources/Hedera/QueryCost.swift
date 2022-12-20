@@ -20,12 +20,20 @@
 
 import Foundation
 
-final internal class QueryCost<T: Decodable, U: Query<T>>: Request {
+final internal class QueryCost<T: Decodable, U: Query<T>>: Request, ValidateChecksums {
     internal typealias Response = Hbar
 
     private let query: U
 
     internal init(query: U) {
         self.query = query
+    }
+
+    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+        try await executeInternal(client, timeout)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try query.validateChecksums(on: ledgerId)
     }
 }

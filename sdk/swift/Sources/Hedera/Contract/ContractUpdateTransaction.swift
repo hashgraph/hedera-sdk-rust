@@ -244,4 +244,12 @@ public final class ContractUpdateTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try contractId?.validateChecksums(on: ledgerId)
+        try autoRenewAccountId?.validateChecksums(on: ledgerId)
+        try proxyAccountId?.validateChecksums(on: ledgerId)
+        try stakedAccountId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

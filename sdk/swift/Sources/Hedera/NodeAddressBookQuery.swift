@@ -46,4 +46,9 @@ public class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
         self.limit = limit
         return self
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try fileId.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

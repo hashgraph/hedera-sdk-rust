@@ -2,8 +2,8 @@ import Hedera
 import SwiftDotenv
 
 @main
-enum Program {
-    static func main() async throws {
+public enum Program {
+    public static func main() async throws {
         let env = try Dotenv.load()
 
         // todo: network from name

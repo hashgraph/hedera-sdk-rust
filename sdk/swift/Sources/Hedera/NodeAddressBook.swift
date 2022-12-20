@@ -38,6 +38,6 @@ public struct NodeAddressBook: Codable {
 }
 
 extension NodeAddressBook: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_node_address_book_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_node_address_book_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_node_address_book_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_node_address_book_to_bytes }
 }

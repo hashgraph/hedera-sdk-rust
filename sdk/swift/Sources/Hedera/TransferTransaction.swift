@@ -27,24 +27,39 @@
 ///
 public final class TransferTransaction: Transaction {
     // avoid scope collisions by nesting :/
-    private struct Transfer: Encodable {
+    private struct Transfer: Encodable, ValidateChecksums {
         let accountId: AccountId
         let amount: Int64
         let isApproval: Bool
+
+        internal func validateChecksums(on ledgerId: LedgerId) throws {
+            try accountId.validateChecksums(on: ledgerId)
+        }
     }
 
-    private struct TokenTransfer: Encodable {
+    private struct TokenTransfer: Encodable, ValidateChecksums {
         let tokenId: TokenId
         var transfers: [TransferTransaction.Transfer]
         var nftTransfers: [TransferTransaction.NftTransfer]
         var expectedDecimals: UInt32?
+
+        internal func validateChecksums(on ledgerId: LedgerId) throws {
+            try tokenId.validateChecksums(on: ledgerId)
+            try transfers.validateChecksums(on: ledgerId)
+            try nftTransfers.validateChecksums(on: ledgerId)
+        }
     }
 
-    private struct NftTransfer: Encodable {
+    private struct NftTransfer: Encodable, ValidateChecksums {
         let senderAccountId: AccountId
         let receiverAccountId: AccountId
         let serial: UInt64
         let isApproval: Bool
+
+        internal func validateChecksums(on ledgerId: LedgerId) throws {
+            try senderAccountId.validateChecksums(on: ledgerId)
+            try receiverAccountId.validateChecksums(on: ledgerId)
+        }
     }
 
     private var transfers: [TransferTransaction.Transfer] = []
@@ -185,5 +200,11 @@ public final class TransferTransaction: Transaction {
         try container.encode(tokenTransfers, forKey: .tokenTransfers)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try transfers.validateChecksums(on: ledgerId)
+        try tokenTransfers.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
     }
 }
