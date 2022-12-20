@@ -37,7 +37,7 @@ ed25519-dalek = { version = "1.0.1", features = ["rand"] }
 fraction = "0.11.0"
 futures-core = "0.3.21"
 futures-util = "0.3.21"
-hedera-proto = { path = "./protobufs", version = "0.4.0", features = [
+hedera-proto = { path = "./protobufs", version = "0.5.0", features = [
   "time_0_3",
   "fraction",
 ] }
