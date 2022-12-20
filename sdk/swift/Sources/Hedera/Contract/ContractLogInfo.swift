@@ -1,3 +1,4 @@
+import CHedera
 import Foundation
 
 /// The log information for an event returned by a smart contract function call.
@@ -14,6 +15,16 @@ public struct ContractLogInfo: Equatable {
 
     /// The log's data payload.
     public let data: Data
+
+    public static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self.fromJsonBytes(bytes)
+    }
+
+    public func toBytes() -> Data {
+        // can't have `throws` because that's the wrong function signature.
+        // swiftlint:disable force_try
+        try! toJsonBytes()
+    }
 }
 
 extension ContractLogInfo: Codable {
@@ -41,4 +52,9 @@ extension ContractLogInfo: Codable {
         try container.encode(topics.map { $0.base64EncodedString() }, forKey: .topics)
         try container.encode(data.base64EncodedString(), forKey: .data)
     }
+}
+
+extension ContractLogInfo: ToFromJsonBytes {
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_contract_log_info_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_contract_log_info_to_bytes }
 }
