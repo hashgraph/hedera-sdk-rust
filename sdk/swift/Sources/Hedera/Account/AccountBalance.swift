@@ -55,7 +55,7 @@ public final class AccountBalance: Codable {
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_account_balance_to_bytes(hedera, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 

@@ -117,26 +117,26 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_public_key_to_bytes_der(ptr, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public func toBytes() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_public_key_to_bytes(ptr, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public func toBytesRaw() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_public_key_to_bytes_raw(ptr, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public var description: String {
         let descriptionBytes = hedera_public_key_to_string(ptr)
-        return String(hString: descriptionBytes!)!
+        return String(hString: descriptionBytes!)
     }
 
     public func toString() -> String {
@@ -145,16 +145,16 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     public func toStringDer() -> String {
         let stringBytes = hedera_public_key_to_string_der(ptr)
-        return String(hString: stringBytes!)!
+        return String(hString: stringBytes!)
     }
 
     public func toStringRaw() -> String {
         let stringBytes = hedera_public_key_to_string_raw(ptr)
-        return String(hString: stringBytes!)!
+        return String(hString: stringBytes!)
     }
 
     public func toAccountId(shard: UInt64, realm: UInt64) -> AccountId {
-        AccountId.init(shard: shard, realm: realm, alias: self)
+        AccountId(shard: shard, realm: realm, alias: self)
     }
 
     public func verify(_ message: Data, _ signature: Data) throws {
@@ -191,6 +191,14 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     public func hash(into hasher: inout Hasher) {
         hasher.combine(toBytesDer())
+    }
+
+    /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
+    public func toEvmAddress() throws -> String {
+        var stringPtr: UnsafeMutablePointer<CChar>?
+        try HError.throwing(error: hedera_public_key_to_evm_address(ptr, &stringPtr))
+
+        return String(hString: stringPtr!)
     }
 
     deinit {

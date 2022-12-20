@@ -312,7 +312,11 @@ impl FromStr for EntityId {
 
 #[cfg(test)]
 mod tests {
-    use crate::EntityId;
+    use crate::{
+        EntityId,
+        LedgerId,
+        TopicId,
+    };
 
     #[test]
     fn from_solidity_address() {
@@ -337,15 +341,6 @@ mod tests {
             .unwrap()
             .eq_ignore_ascii_case("000000000000000000000000000000000000138D"));
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::{
-        EntityId,
-        LedgerId,
-        TopicId,
-    };
 
     #[test]
     fn generate_checksum_mainnet() {

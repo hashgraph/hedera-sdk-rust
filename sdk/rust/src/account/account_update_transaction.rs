@@ -78,6 +78,18 @@ pub struct AccountUpdateTransactionData {
 
     pub auto_renew_account_id: Option<AccountId>,
 
+    /// The ID of the account to which this account is proxy staked.
+    ///
+    /// If `proxy_account_id` is `None`, or is an invalid account, or is an account
+    /// that isn't a node, then this account is automatically proxy staked to
+    /// a node chosen by the network, but without earning payments.
+    ///
+    /// If the `proxy_account_id` account refuses to accept proxy staking, or
+    /// if it is not currently running a node, then it
+    /// will behave as if `proxy_account_id` was `None`.
+    #[deprecated]
+    pub proxy_account_id: Option<AccountId>,
+
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     #[cfg_attr(
         feature = "ffi",
@@ -131,6 +143,15 @@ impl AccountUpdateTransaction {
         self
     }
 
+    ///  Set the proxy account ID for this account
+    ///
+    /// See [`proxy_account_id`](AccountUpdateTransactionData.proxy_account_id) for more info
+    #[deprecated]
+    #[allow(deprecated)]
+    pub fn proxy_account_id(&mut self, proxy_account_id: AccountId) -> &mut Self {
+        self.body.data.proxy_account_id = Some(proxy_account_id);
+        self
+    }
     /// Set the auto renew period for this account.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(period);
@@ -228,7 +249,7 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
             services::CryptoUpdateTransactionBody {
                 account_id_to_update: account_id,
                 key,
-                proxy_account_id: None,
+                proxy_account_id: self.proxy_account_id.to_protobuf(),
                 proxy_fraction: 0,
                 auto_renew_period,
                 auto_renew_account,
@@ -286,6 +307,7 @@ mod tests {
   },
   "receiverSignatureRequired": true,
   "autoRenewPeriod": 7776000,
+  "proxyAccountId": "0.0.3141",
   "expirationTime": 1656352251277559886,
   "accountMemo": "An account memo",
   "maxAutomaticTokenAssociations": 256,
@@ -298,6 +320,7 @@ mod tests {
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
         #[test]
+        #[allow(deprecated)]
         fn it_should_serialize() -> anyhow::Result<()> {
             let mut transaction = AccountUpdateTransaction::new();
 
@@ -311,6 +334,7 @@ mod tests {
                 .max_automatic_token_associations(256)
                 .staked_account_id(AccountId::from(1002))
                 .staked_node_id(7)
+                .proxy_account_id(AccountId::from(3141))
                 .decline_staking_reward(false);
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
@@ -321,6 +345,7 @@ mod tests {
         }
 
         #[test]
+        #[allow(deprecated)]
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction =
                 serde_json::from_str(ACCOUNT_UPDATE_TRANSACTION_JSON)?;
@@ -339,6 +364,7 @@ mod tests {
             assert_eq!(data.decline_staking_reward.unwrap(), false);
             assert_eq!(data.account_id, Some(AccountId::from(1001)));
             assert_eq!(data.staked_account_id, Some(AccountId::from(1002)));
+            assert_eq!(data.proxy_account_id, Some(AccountId::from(3141)));
 
             let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
             assert_eq!(key, PublicKey::from_str(KEY)?);

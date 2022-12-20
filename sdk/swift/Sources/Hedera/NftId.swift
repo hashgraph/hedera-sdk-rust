@@ -87,7 +87,7 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_nft_id_to_bytes(tokenId.shard, tokenId.realm, tokenId.num, serial, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public static func == (lhs: NftId, rhs: NftId) -> Bool {

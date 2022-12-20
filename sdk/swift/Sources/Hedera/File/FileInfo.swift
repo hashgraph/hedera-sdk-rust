@@ -45,6 +45,13 @@ public final class FileInfo: Codable {
 
     public let ledgerId: LedgerId
 
+    /// The auto renew period for this file.
+    public let autoRenewPeriod: Duration?
+
+    /// The account to be used at this file's expiration time to extend the
+    /// life of the file.
+    public let autoRenewAccountId: AccountId?
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try Self.fromJsonBytes(bytes)
     }

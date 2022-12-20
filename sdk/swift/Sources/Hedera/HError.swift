@@ -58,6 +58,7 @@ public struct HError: Error, CustomStringConvertible {
         case badEntityId
         case cannotToStringWithChecksum
         case cannotPerformTaskWithoutLedgerId
+        case wrongKeyType
     }
 
     public let description: String
@@ -142,6 +143,9 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_CANNOT_PERFORM_TASK_WITHOUT_LEDGER_ID:
             kind = .cannotPerformTaskWithoutLedgerId
+
+        case HEDERA_ERROR_WRONG_KEY_TYPE:
+            kind = .wrongKeyType
 
         case HEDERA_ERROR_OK:
             return nil

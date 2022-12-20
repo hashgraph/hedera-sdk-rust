@@ -88,6 +88,9 @@ public struct TransactionRecord: Codable {
     /// `EthereumTransaction`.
     public let ethereumHash: Data?
 
+    /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    public let evmAddress: EvmAddress?
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
@@ -105,6 +108,7 @@ public struct TransactionRecord: Codable {
         scheduleRef = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleRef)
         assessedCustomFees = try container.decode([AssessedCustomFee].self, forKey: .assessedCustomFees)
         automaticTokenAssociations = try container.decode([TokenAssociation].self, forKey: .automaticTokenAssociations)
+        evmAddress = try container.decode(EvmAddress.self, forKey: .evmAddress)
 
         parentConsensusTimestamp = try container.decodeIfPresent(Timestamp.self, forKey: .parentConsensusTimestamp)
 
