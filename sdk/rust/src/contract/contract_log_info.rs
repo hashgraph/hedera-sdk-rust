@@ -13,12 +13,15 @@ pub struct ContractLogInfo {
     pub contract_id: ContractId,
 
     /// Bloom filter for this log.
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub bloom: Vec<u8>,
 
     /// A list of topics this log is relevent to.
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<Vec<serde_with::base64::Base64>>"))]
     pub topics: Vec<Vec<u8>>,
 
     /// The log's data payload.
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub data: Vec<u8>,
 }
 
