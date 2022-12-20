@@ -353,11 +353,6 @@ struct HederaClient *hedera_client_for_testnet(void);
 struct HederaClient *hedera_client_for_previewnet(void);
 
 /**
- * Release memory associated with the previously-opened Hedera client.
- */
-void hedera_client_free(struct HederaClient *client);
-
-/**
  * Sets the account that will, by default, be paying for transactions and queries built with
  * this client.
  */
@@ -379,6 +374,22 @@ void hedera_client_set_operator(struct HederaClient *client,
  */
 size_t hedera_client_get_nodes(struct HederaClient *client,
                                struct HederaAccountId **ids);
+
+void hedera_client_set_ledger_id(struct HederaClient *client,
+                                 const uint8_t *ledger_id_bytes,
+                                 size_t ledger_id_size);
+
+size_t hedera_client_get_ledger_id(struct HederaClient *client, uint8_t **ledger_id_bytes);
+
+void hedera_client_set_auto_validate_checksums(struct HederaClient *client,
+                                               bool auto_validate_checksums);
+
+bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
+
+/**
+ * Release memory associated with the previously-opened Hedera client.
+ */
+void hedera_client_free(struct HederaClient *client);
 
 /**
  * Parse a Hedera `ContractId` from the passed bytes.
@@ -1333,6 +1344,18 @@ size_t hedera_nft_id_to_bytes(uint64_t token_id_shard,
  * - `s` must only be freed with `hedera_string_free`,
  *   notably this means it must not be freed with `free`.
  */
+enum HederaError hedera_node_address_book_from_bytes(const uint8_t *bytes,
+                                                     size_t bytes_size,
+                                                     char **s);
+
+enum HederaError hedera_node_address_book_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+/**
+ * # Safety
+ * - `bytes` must be valid for reads of up to `bytes_size` bytes.
+ * - `s` must only be freed with `hedera_string_free`,
+ *   notably this means it must not be freed with `free`.
+ */
 enum HederaError hedera_schedule_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
 enum HederaError hedera_schedule_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
@@ -1436,18 +1459,6 @@ enum HederaError hedera_transaction_receipt_from_bytes(const uint8_t *bytes,
 enum HederaError hedera_transaction_receipt_to_bytes(const char *s,
                                                      uint8_t **buf,
                                                      size_t *buf_size);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_node_address_book_from_bytes(const uint8_t *bytes,
-                                                     size_t bytes_size,
-                                                     char **s);
-
-enum HederaError hedera_node_address_book_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
 
 #ifdef __cplusplus
 } // extern "C"

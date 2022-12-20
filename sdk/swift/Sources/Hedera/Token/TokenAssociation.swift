@@ -37,5 +37,5 @@ public struct TokenAssociation: Codable {
 }
 
 extension TokenAssociation: ToJsonBytes {
-    static var cToBytes: ToJsonBytesFunc { hedera_token_association_to_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_token_association_to_bytes }
 }

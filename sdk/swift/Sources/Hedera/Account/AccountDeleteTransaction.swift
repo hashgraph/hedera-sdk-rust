@@ -64,4 +64,10 @@ public final class AccountDeleteTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try transferAccountId?.validateChecksums(on: ledgerId)
+        try accountId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

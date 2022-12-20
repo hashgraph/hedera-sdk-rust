@@ -338,3 +338,102 @@ mod tests {
             .eq_ignore_ascii_case("000000000000000000000000000000000000138D"));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        EntityId,
+        LedgerId,
+        TopicId,
+    };
+
+    #[test]
+    fn generate_checksum_mainnet() {
+        const EXPECTED: [&str; 256] = [
+            "uvnqa", "dfkxr", "lpifi", "tzfmz", "cjcuq", "ktach", "tcxjy", "bmurp", "jwrzg",
+            "sgpgx", "hiafh", "rdxmy", "uuuup", "eqscg", "ompjx", "yimro", "iejzf", "sahgw",
+            "bweon", "lsbwe", "diuio", "nerqf", "qvoxw", "armfn", "knjne", "ujguv", "efecm",
+            "obbkd", "xwyru", "hsvzl", "zjolv", "jfltm", "mwjbd", "wsgiu", "godql", "qkayc",
+            "afyft", "kbvnk", "txsvb", "dtqcs", "vkipc", "fgfwt", "ixdek", "stamb", "coxts",
+            "mkvbj", "wgsja", "gcpqr", "pymyi", "zukfz", "rlcsj", "tqaaa", "xgxhr", "hcupi",
+            "qyrwz", "aupeq", "kqmmh", "umjty", "eihbp", "oeejg", "fuwvq", "pqudh", "thrky",
+            "ddosp", "mzmag", "wvjhx", "grgpo", "qndxf", "ajbew", "keymn", "bvqyx", "lrogo",
+            "pilof", "zeivw", "jagdn", "swdle", "csasv", "mnyam", "wjvid", "gfspu", "xwlce",
+            "hsijv", "ljfrm", "vfczd", "fbagu", "owxol", "ysuwc", "iosdt", "skplk", "cgmtb",
+            "txffl", "dtcnc", "hjzut", "rfxck", "bbukb", "kxrrs", "utozj", "epmha", "oljor",
+            "yhgwi", "hhghj", "prdpa", "ybawr", "gkyei", "ouvlz", "xestq", "foqbh", "nyniy",
+            "wikqp", "eshyg", "euakq", "ndxsh", "vnuzy", "dxshp", "mhppg", "urmwx", "dbkeo",
+            "llhmf", "tvetw", "cfcbn", "wbunx", "elrvo", "mvpdf", "vfmkw", "dpjsn", "lzhae",
+            "ujehv", "ctbpm", "lcyxd", "tmweu", "toore", "bylyv", "kijgm", "ssgod", "bcdvu",
+            "jmbdl", "rvylc", "afvst", "iptak", "qzqib", "rbiul", "zlgcc", "hvdjt", "qfark",
+            "yoxzb", "gyvgs", "pisoj", "xspwa", "gcndr", "omkli", "oocxs", "wyafj", "fhxna",
+            "nruur", "wbsci", "elpjz", "mvmrq", "vfjzh", "dphgy", "lzeop", "maxaz", "ukuiq",
+            "curqh", "leoxy", "tomfp", "byjng", "kigux", "sseco", "bcbkf", "jlyrw", "jnreg",
+            "rxolx", "ahlto", "irjbf", "rbgiw", "zldqn", "hvaye", "qeyfv", "yovnm", "gysvd",
+            "halhn", "pkipe", "xufwv", "gedem", "ooamd", "wxxtu", "fhvbl", "nrsjc", "wbpqt",
+            "elmyk", "enfku", "mxcsl", "vhaac", "dqxht", "maupk", "ukrxb", "cupes", "lemmj",
+            "tojua", "byhbr", "klges", "svdmj", "bfaua", "joybr", "ryvji", "aisqz", "ispyq",
+            "rcngh", "zmkny", "rthvp", "hyahz", "qhxpq", "yruxh", "hbsey", "plpmp", "xvmug",
+            "gfkbx", "ophjo", "wzerf", "pgbyw", "zfulg", "hprsx", "pzpao", "yjmif", "gtjpw",
+            "pdgxn", "xnefe", "fxbmv", "ogyum", "gnwcd", "wsoon", "fclwe", "nmjdv", "vwglm",
+            "egdtd", "mqbau", "uzyil", "djvqc", "ltsxt", "eaqfk", "ufiru", "cpfzl", "kzdhc",
+            "tjaot", "bsxwk", "kcveb", "smsls", "awptj", "jgnba", "bnkir", "rscvb", "acacs",
+            "ilxkj", "qvusa", "zfrzr", "hpphi",
+        ];
+
+        for (index, expected) in EXPECTED.iter().enumerate() {
+            let actual = EntityId::generate_checksum(
+                &TopicId::from(index as u64).to_string(),
+                &LedgerId::mainnet(),
+            )
+            .to_string();
+
+            assert_eq!(expected, &actual);
+        }
+    }
+
+    #[test]
+    fn generate_checksum_testnet() {
+        const EXPECTED: [&str; 256] = [
+            "eiyxj", "mswfa", "vctmr", "dmqui", "lwobz", "ugljq", "cqirh", "lafyy", "tkdgp",
+            "buaog", "qvlmq", "ariuh", "eigby", "oedjp", "yaarg", "hvxyx", "rrvgo", "bnsof",
+            "ljpvw", "vfndn", "mwfpx", "wscxo", "ajaff", "kexmw", "uauun", "dwsce", "nspjv",
+            "xomrm", "hkjzd", "rghgu", "iwzte", "ssxav", "wjuim", "gfrqd", "qboxu", "zxmfl",
+            "jtjnc", "tpgut", "dleck", "nhbkb", "extwl", "otrec", "skolt", "cgltk", "mcjbb",
+            "vygis", "fudqj", "pqaya", "zlyfr", "jhvni", "aynzs", "ddlhj", "guipa", "qqfwr",
+            "amdei", "kialz", "udxtq", "dzvbh", "nvsiy", "xrpqp", "piicz", "zefkq", "cvcsh",
+            "mqzzy", "wmxhp", "giupg", "qerwx", "aapeo", "jwmmf", "tsjtw", "ljcgg", "veznx",
+            "yvwvo", "irudf", "snrkw", "cjosn", "mfmae", "wbjhv", "fxgpm", "ptdxd", "hjwjn",
+            "rftre", "uwqyv", "esogm", "oolod", "ykivu", "iggdl", "scdlc", "byast", "ltyak",
+            "dkqmu", "ngnul", "qxlcc", "atijt", "kpfrk", "ulczb", "ehags", "ocxoj", "xyuwa",
+            "husdr", "quros", "zeowj", "homea", "pyjlr", "yigti", "gseaz", "pcbiq", "xlyqh",
+            "fvvxy", "oftfp", "ohlrz", "wrizq", "fbghh", "nldoy", "vvawp", "eeyeg", "movlx",
+            "uysto", "diqbf", "lsniw", "fpfvg", "nzdcx", "wjako", "esxsf", "ncuzw", "vmshn",
+            "dwppe", "mgmwv", "uqkem", "dahmd", "dbzyn", "llxge", "tvunv", "cfrvm", "kppdd",
+            "szmku", "bjjsl", "jthac", "sdeht", "anbpk", "aoubu", "iyrjl", "riorc", "zslyt",
+            "icjgk", "qmgob", "ywdvs", "hgbdj", "ppyla", "xzvsr", "ybofb", "gllms", "oviuj",
+            "xfgca", "fpdjr", "nzari", "wixyz", "esvgq", "ncsoh", "vmpvy", "voiii", "dyfpz",
+            "micxq", "usafh", "dbxmy", "lluup", "tvscg", "cfpjx", "kpmro", "szjzf", "tbclp",
+            "bkztg", "juxax", "seuio", "aorqf", "iyoxw", "rimfn", "zsjne", "icguv", "qmecm",
+            "qnwow", "yxtwn", "hhree", "prolv", "ybltm", "gljbd", "ovgiu", "xfdql", "fpayc",
+            "nyyft", "oaqsd", "wknzu", "eulhl", "neipc", "vofwt", "dydek", "miamb", "urxts",
+            "dbvbj", "llsja", "tyrmb", "ciots", "ksmbj", "tcjja", "bmgqr", "jwdyi", "sgbfz",
+            "apynq", "izvvh", "bgtcy", "rllpi", "zviwz", "ifgeq", "qpdmh", "yzaty", "hiybp",
+            "psvjg", "ycsqx", "gmpyo", "ytngf", "itfsp", "rddag", "znahx", "hwxpo", "qguxf",
+            "yqsew", "hapmn", "pkmue", "xukbv", "qbhjm", "gfzvw", "opxdn", "wzule", "fjrsv",
+            "ntpam", "wdmid", "enjpu", "mxgxl", "vhefc", "nobmt", "dstzd", "mcrgu", "umool",
+            "cwlwc", "lgjdt", "tqglk", "cadtb", "kkbas", "styij", "lavqa", "bfock", "jplkb",
+            "rzirs", "ajfzj", "itdha", "rdaor",
+        ];
+
+        for (index, expected) in EXPECTED.iter().enumerate() {
+            let actual = EntityId::generate_checksum(
+                &TopicId::from(index as u64).to_string(),
+                &LedgerId::testnet(),
+            )
+            .to_string();
+
+            assert_eq!(expected, &actual);
+        }
+    }
+}

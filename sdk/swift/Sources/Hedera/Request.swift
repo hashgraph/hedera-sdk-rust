@@ -21,19 +21,45 @@
 import CHedera
 import Foundation
 
+internal protocol ValidateChecksums {
+    func validateChecksums(on ledgerId: LedgerId) throws
+
+    func validateChecksums(on client: Client) throws
+}
+
+extension ValidateChecksums {
+    internal func validateChecksums(on client: Client) throws {
+        try validateChecksums(on: client.ledgerId!)
+    }
+}
+
+extension Array: ValidateChecksums where Self.Element: ValidateChecksums {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try forEach { element in try element.validateChecksums(on: ledgerId) }
+    }
+}
+
 /// A transaction or query that can be executed on the Hedera network.
-public protocol Request: Encodable {
+///
+/// Do *not* implement this protocol.
+/// This protocol is semantically sealed (even if Swift does not support *actually* sealing it).
+/// Implementing this protocol may break in any way without warning in any future version of this SDK.
+internal protocol Request: Encodable, ValidateChecksums {
     associatedtype Response: Decodable
 
-    func execute(_ client: Client, _ timeout: TimeInterval?) async throws -> Response
+    func executeInternal(_ client: Client, _ timeout: TimeInterval?) async throws -> Response
 
-    func decodeResponse(_ responseBytes: Data) throws -> Response
+    static func decodeResponse(_ responseBytes: Data) throws -> Response
 }
 
 extension Request {
     internal func executeEncoded(_ client: Client, request: String, signers: [Signer], timeout: TimeInterval?)
         async throws -> Response
     {
+        if client.isAutoValidateChecksumsEnabled() {
+            try self.validateChecksums(on: client)
+        }
+
         // start an unmanaged continuation to bridge a C callback with Swift async
         let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
             // invoke `hedera_execute`, callback will be invoked on request completion
@@ -61,11 +87,11 @@ extension Request {
             }
         }
 
-        return try decodeResponse(responseBytes)
+        return try Self.decodeResponse(responseBytes)
     }
 
     /// Execute this request against the provided client of the Hedera network.
-    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+    internal func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 
@@ -74,7 +100,7 @@ extension Request {
         return try await executeEncoded(client, request: request, signers: [], timeout: timeout)
     }
 
-    public func decodeResponse(_ responseBytes: Data) throws -> Response {
+    internal static func decodeResponse(_ responseBytes: Data) throws -> Response {
         // decode the response as the generic output type of this query types
         try JSONDecoder().decode(Response.self, from: responseBytes)
     }

@@ -137,4 +137,12 @@ public class Query<Response: Decodable>: Request {
         try container.encode(requestName, forKey: .type)
         try container.encode(payment, forKey: .payment)
     }
+
+    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+        try await executeInternal(client, timeout)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try payment.validateChecksums(on: ledgerId)
+    }
 }

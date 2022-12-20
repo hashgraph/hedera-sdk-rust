@@ -50,7 +50,7 @@ public final class HbarTests: XCTestCase {
 
     public func testNanHbarThrowsError() {
         // todo: test the exact error.
-        XCTAssertThrowsError(try Hbar(Decimal.quietNaN))
+        XCTAssertThrowsError(try Hbar(.quietNaN))
     }
 
     public func testInitUnit() throws {

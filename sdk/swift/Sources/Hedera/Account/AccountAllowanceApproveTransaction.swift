@@ -145,4 +145,12 @@ public final class AccountAllowanceApproveTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try hbarAllowances.validateChecksums(on: ledgerId)
+        try tokenAllowances.validateChecksums(on: ledgerId)
+        try nftAllowances.validateChecksums(on: ledgerId)
+
+        try super.validateChecksums(on: ledgerId)
+    }
 }

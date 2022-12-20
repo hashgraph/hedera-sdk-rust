@@ -27,6 +27,6 @@ public struct AssessedCustomFee: Equatable, Codable {
 }
 
 extension AssessedCustomFee: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_assessed_custom_fee_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_assessed_custom_fee_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_assessed_custom_fee_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_assessed_custom_fee_to_bytes }
 }

@@ -52,13 +52,13 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
     public init?(_ description: String) {
         switch description {
         case "mainnet":
-            self = Self.mainnet
+            self = .mainnet
             return
         case "testnet":
-            self = Self.testnet
+            self = .testnet
             return
         case "previewnet":
-            self = Self.previewnet
+            self = .previewnet
             return
         default:
             guard let bytes = Data(hexEncoded: description) else {
@@ -69,18 +69,18 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         }
     }
 
-    private let bytes: Data
+    internal let bytes: Data
 
     public func isMainnet() -> Bool {
-        self == Self.mainnet
+        self == .mainnet
     }
 
     public func isTestnet() -> Bool {
-        self == Self.testnet
+        self == .testnet
     }
 
     public func isPreviewnet() -> Bool {
-        self == Self.previewnet
+        self == .previewnet
     }
 
     public static func == (lhs: Self, rhs: Self) -> Bool {

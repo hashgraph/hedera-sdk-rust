@@ -171,4 +171,10 @@ public final class AccountUpdateTransaction: Transaction {
 
         try super.encode(to: encoder)
     }
+
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try accountId?.validateChecksums(on: ledgerId)
+        try stakedAccountId?.validateChecksums(on: ledgerId)
+        try super.validateChecksums(on: ledgerId)
+    }
 }

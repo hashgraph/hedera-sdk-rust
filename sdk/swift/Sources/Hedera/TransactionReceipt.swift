@@ -107,6 +107,6 @@ public struct TransactionReceipt: Codable {
 }
 
 extension TransactionReceipt: ToFromJsonBytes {
-    static var cFromBytes: FromJsonBytesFunc { hedera_transaction_receipt_from_bytes }
-    static var cToBytes: ToJsonBytesFunc { hedera_transaction_receipt_to_bytes }
+    internal static var cFromBytes: FromJsonBytesFunc { hedera_transaction_receipt_from_bytes }
+    internal static var cToBytes: ToJsonBytesFunc { hedera_transaction_receipt_to_bytes }
 }
