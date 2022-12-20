@@ -30,10 +30,10 @@ use num_bigint::{
 use crate::{
     AccountId,
     ContractId,
+    ContractLogInfo,
     FromProtobuf,
 };
 
-// TODO: log info
 /// The result returned by a call to a smart contract function.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
@@ -71,6 +71,9 @@ pub struct ContractFunctionResult {
 
     /// The account that is the "sender." If not present it is the accountId from the transactionId.
     pub sender_account_id: Option<AccountId>,
+
+    /// Logs that this call and any called functions produced.
+    pub logs: Vec<ContractLogInfo>,
 }
 
 impl ContractFunctionResult {
@@ -239,6 +242,7 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
             contract_function_parameters_bytes: pb.function_parameters,
             sender_account_id,
             evm_address,
+            logs: Vec::from_protobuf(pb.log_info)?,
         })
     }
 }
