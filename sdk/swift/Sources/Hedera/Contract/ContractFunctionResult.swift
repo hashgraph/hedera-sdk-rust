@@ -99,7 +99,8 @@ extension ContractFunctionResult: Codable {
         try container.encode(gas, forKey: .gas)
         try container.encode(logs, forKey: .logs)
         try container.encode(hbarAmount, forKey: .hbarAmount)
-        try container.encode(contractFunctionParametersBytes.base64EncodedString(), forKey: .contractFunctionParametersBytes)
+        try container.encode(
+            contractFunctionParametersBytes.base64EncodedString(), forKey: .contractFunctionParametersBytes)
         try container.encode(bytes.base64EncodedString(), forKey: .bytes)
         try container.encodeIfPresent(senderAccountId, forKey: .senderAccountId)
     }

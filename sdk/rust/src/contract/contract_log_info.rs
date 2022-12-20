@@ -1,6 +1,9 @@
 use hedera_proto::services;
 
-use crate::protobuf::FromProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::ContractId;
 
 /// The log information for an event returned by a smart contract function call.
@@ -25,6 +28,23 @@ pub struct ContractLogInfo {
     pub data: Vec<u8>,
 }
 
+impl ContractLogInfo {
+    /// Create a new `ContractLogInfo` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+}
+
 impl FromProtobuf<services::ContractLoginfo> for ContractLogInfo {
     fn from_protobuf(pb: services::ContractLoginfo) -> crate::Result<Self>
     where
@@ -36,5 +56,18 @@ impl FromProtobuf<services::ContractLoginfo> for ContractLogInfo {
             topics: pb.topic,
             data: pb.data,
         })
+    }
+}
+
+impl ToProtobuf for ContractLogInfo {
+    type Protobuf = services::ContractLoginfo;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        Self::Protobuf {
+            contract_id: Some(self.contract_id.to_protobuf()),
+            bloom: self.bloom.clone(),
+            topic: self.topics.clone(),
+            data: self.data.clone(),
+        }
     }
 }
