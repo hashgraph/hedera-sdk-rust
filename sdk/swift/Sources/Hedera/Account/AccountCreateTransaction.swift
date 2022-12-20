@@ -28,8 +28,11 @@ public final class AccountCreateTransaction: Transaction {
         initialBalance: Hbar = 0,
         receiverSignatureRequired: Bool = false,
         autoRenewPeriod: Duration? = nil,
+        autoRenewAccountId: AccountId? = nil,
         accountMemo: String = "",
         maxAutomaticTokenAssociations: UInt32 = 0,
+        alias: PublicKey? = nil,
+        evmAddress: EvmAddress? = nil,
         stakedAccountId: AccountId? = nil,
         stakedNodeId: UInt64? = nil,
         declineStakingReward: Bool = false
@@ -89,6 +92,19 @@ public final class AccountCreateTransaction: Transaction {
         return self
     }
 
+    /// The account to be used at this account's expiration time to extend the
+    /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    public var autoRenewAccountId: AccountId? = nil
+
+    /// Sets the account to be used at this account's expiration time to extend the
+    /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    @discardableResult
+    public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
+        self.autoRenewAccountId = autoRenewAccountId
+
+        return self
+    }
+
     /// The memo associated with the account.
     public var accountMemo: String
 
@@ -107,6 +123,27 @@ public final class AccountCreateTransaction: Transaction {
     @discardableResult
     public func maxAutomaticTokenAssociations(_ maxAutomaticTokenAssociations: UInt32) -> Self {
         self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+
+        return self
+    }
+
+    /// A key to be used as the account's alias.
+    public var alias: PublicKey?
+
+    /// Sets the key to be used as the account's alias.
+    @discardableResult
+    public func alias(_ alias: PublicKey) -> Self {
+        self.alias = alias
+
+        return self
+    }
+
+    /// A 20-byte EVM address to be used as the account's evm address.
+    public var evmAddress: EvmAddress?
+
+    @discardableResult
+    public func evmAddress(_ evmAddress: EvmAddress) -> Self {
+        self.evmAddress = evmAddress
 
         return self
     }
@@ -157,6 +194,9 @@ public final class AccountCreateTransaction: Transaction {
         case stakedAccountId
         case stakedNodeId
         case declineStakingReward
+        case alias
+        case evmAddress
+        case autoRenewAccountId
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -170,12 +210,15 @@ public final class AccountCreateTransaction: Transaction {
         try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
         try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
         try container.encode(declineStakingReward, forKey: .declineStakingReward)
+        try container.encodeIfPresent(alias, forKey: .alias)
+        try container.encodeIfPresent(evmAddress, forKey: .evmAddress)
 
         try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try stakedAccountId?.validateChecksums(on: ledgerId)
+        try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
 }

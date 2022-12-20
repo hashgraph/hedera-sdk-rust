@@ -65,6 +65,28 @@ public final class FileCreateTransaction: Transaction {
         return self
     }
 
+    /// The auto renew period for this file.
+    public var autoRenewPeriod: Duration?
+
+    /// Set the auto renew period for this file.
+    public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
+        self.autoRenewPeriod = autoRenewPeriod
+
+        return self
+    }
+
+    /// The account to be used at the files's expiration time to extend the
+    /// life of the file.
+    public var autoRenewAccountId: AccountId?
+
+    /// Sets the account to be used at the files's expiration time to extend the
+    /// life of the file.
+    public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
+        self.autoRenewAccountId = autoRenewAccountId
+
+        return self
+    }
+
     /// The time at which this file should expire.
     public var expirationTime: Timestamp? = Timestamp(
         from: Calendar.current.date(byAdding: .day, value: 90, to: Date())!)
@@ -82,6 +104,7 @@ public final class FileCreateTransaction: Transaction {
         case keys
         case contents
         case expirationTime
+        case autoRenewAccountId
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -90,8 +113,13 @@ public final class FileCreateTransaction: Transaction {
         try container.encode(fileMemo, forKey: .fileMemo)
         try container.encode(keys, forKey: .keys)
         try container.encode(contents.base64EncodedString(), forKey: .contents)
+        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
 
         try super.encode(to: encoder)
+    }
+
+    override func validateChecksums(on ledgerId: LedgerId) throws {
+        try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
     }
 }

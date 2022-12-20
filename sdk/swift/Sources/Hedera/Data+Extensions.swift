@@ -42,12 +42,6 @@ private func hexVal(_ char: UInt8) -> UInt8? {
 }
 
 extension Data {
-    // safety: `hedera_bytes_free` needs to be called so...
-    // perf: might as well enable use of the no copy constructor.
-    internal static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
-        hedera_bytes_free(buf.bindMemory(to: UInt8.self, capacity: size), size)
-    }
-
     private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
 
     // (sr): swift compiler wins the "useless acl vs explicit acl debate
@@ -95,5 +89,13 @@ extension Data {
         try self.withUnsafeBytes { pointer in
             try body(pointer.bindMemory(to: UInt8.self))
         }
+    }
+}
+
+extension Data.Deallocator {
+    // safety: `hedera_bytes_free` needs to be called so...
+    // perf: might as well enable use of the no copy constructor.
+    internal static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
+        hedera_bytes_free(buf.bindMemory(to: UInt8.self, capacity: size), size)
     }
 }

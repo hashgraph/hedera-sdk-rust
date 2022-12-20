@@ -74,7 +74,7 @@ public struct ContractId: EntityId {
 
         if let evmAddress = hedera.evm_address {
             self.num = 0
-            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: Data.unsafeCHederaBytesFree)
+            self.evmAddress = Data(bytesNoCopy: evmAddress, count: 20, deallocator: .unsafeCHederaBytesFree)
         } else {
             self.num = hedera.num
             self.evmAddress = nil
@@ -112,29 +112,16 @@ public struct ContractId: EntityId {
     }
 
     public static func fromEvmAddress(_ shard: UInt64, _ realm: UInt64, _ address: String) throws -> Self {
-        var hedera = HederaContractId()
-
-        try HError.throwing(error: hedera_contract_id_from_evm_address(shard, realm, address, &hedera))
-
-        return Self(unsafeFromCHedera: hedera)
-    }
-
-    public static func fromSolidityAddress(_ address: String) throws -> Self {
-        var hedera = HederaContractId()
-
-        try HError.throwing(error: hedera_contract_id_from_solidity_address(address, &hedera))
-
-        return Self(unsafeFromCHedera: hedera)
+        Self(shard: shard, realm: realm, evmAddress: try SolidityAddress(parsing: address).data)
     }
 
     public func toSolidityAddress() throws -> String {
-        try unsafeWithCHedera { hedera in
-            var out: UnsafeMutablePointer<CChar>?
-
-            try HError.throwing(error: hedera_contract_id_to_solidity_address(hedera, &out))
-
-            return String(hString: out!)
+        if let evmAddress = evmAddress {
+            return evmAddress.hexStringEncoded()
         }
+
+        return String(describing: try SolidityAddress(self))
+
     }
 
     public func toBytes() -> Data {
@@ -142,7 +129,7 @@ public struct ContractId: EntityId {
             var buf: UnsafeMutablePointer<UInt8>?
             let size = hedera_contract_id_to_bytes(hedera, &buf)
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
         }
     }
 
@@ -150,14 +137,14 @@ public struct ContractId: EntityId {
         if let evmAddress = evmAddress {
             return "\(shard).\(realm).\(evmAddress)"
         } else {
-            return defaultDescription
+            return helper.description
         }
     }
 
     public func toStringWithChecksum(_ client: Client) -> String {
         precondition(evmAddress == nil, "cannot create a checksum for a `ContractId` with an evmAddress")
 
-        return defaultToStringWithChecksum(client)
+        return helper.toStringWithChecksum(client)
     }
 
     public func validateChecksum(_ client: Client) throws {
@@ -169,6 +156,6 @@ public struct ContractId: EntityId {
             return
         }
 
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }

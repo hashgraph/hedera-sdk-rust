@@ -45,6 +45,6 @@ extension ToJsonBytes {
 
         try HError.throwing(error: Self.cToBytes(json, &buf, &bufSize))
 
-        return Data(bytesNoCopy: buf!, count: bufSize, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: bufSize, deallocator: .unsafeCHederaBytesFree)
     }
 }

@@ -175,9 +175,19 @@ where
     func toStringWithChecksum(_ client: Client) -> String
 
     func validateChecksum(_ client: Client) throws
+
+    /// Create `Self` from a solidity `address`.
+    static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self
+
+    /// Convert `self` into a solidity `address`
+    func toSolidityAddress() throws -> String
 }
 
 extension EntityId {
+    internal typealias Helper = EntityIdHelper<Self>
+
+    internal var helper: Helper { Helper(self) }
+
     public init(integerLiteral value: IntegerLiteralType) {
         self.init(num: value)
     }
@@ -204,7 +214,7 @@ extension EntityId {
         try Self(parsing: description)
     }
 
-    public var description: String { defaultDescription }
+    public var description: String { helper.description }
 
     public init(from decoder: Decoder) throws {
         try self.init(parsing: decoder.singleValueContainer().decode(String.self))
@@ -216,19 +226,12 @@ extension EntityId {
         try container.encode(String(describing: self))
     }
 
-    internal var defaultDescription: String {
-        "\(shard).\(realm).\(num)"
+    public static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self {
+        try SolidityAddress(parsing: description).toEntityId()
     }
 
     public func toString() -> String {
         self.description
-    }
-
-    // sometimes you need a partial override *sigh*.
-    // note: this *expicitly* ignores the current checksum.
-    internal func defaultToStringWithChecksum(_ client: Client) -> String {
-        let checksum = self.generateChecksum(for: client.ledgerId!)
-        return "\(self.defaultDescription)-\(checksum)"
     }
 
     internal func generateChecksum(for ledgerId: LedgerId) -> Checksum {
@@ -236,21 +239,48 @@ extension EntityId {
     }
 
     public func toStringWithChecksum(_ client: Client) -> String {
-        defaultToStringWithChecksum(client)
+        helper.toStringWithChecksum(client)
     }
 
-    internal func defaultValidateChecksum(on ledgerId: LedgerId) throws {
-        if let checksum = self.checksum {
-            let expected = generateChecksum(for: ledgerId)
+    public func validateChecksum(_ client: Client) throws {
+        try helper.validateChecksum(on: client)
+    }
+
+    public func toSolidityAddress() throws -> String {
+        try String(describing: SolidityAddress(self))
+    }
+}
+
+// this exists purely for convinence purposes lol.
+internal struct EntityIdHelper<E: EntityId> {
+    internal init(_ id: E) {
+        self.id = id
+    }
+
+    private let id: E
+
+    internal var description: String {
+        "\(id.shard).\(id.realm).\(id.num)"
+    }
+
+    // note: this *expicitly* ignores the current checksum.
+    internal func toStringWithChecksum(_ client: Client) -> String {
+        let checksum = id.generateChecksum(for: client.ledgerId!)
+        return "\(description)-\(checksum)"
+    }
+
+    internal func validateChecksum(on ledgerId: LedgerId) throws {
+        if let checksum = id.checksum {
+            let expected = id.generateChecksum(for: ledgerId)
             if checksum != expected {
                 throw HError(
-                    kind: .badEntityId, description: "expected entity id `\(self)` to have checksum `\(expected)`")
+                    kind: .badEntityId, description: "expected entity id `\(id)` to have checksum `\(expected)`")
             }
         }
     }
 
-    public func validateChecksum(_ client: Client) throws {
-        try defaultValidateChecksum(on: client.ledgerId!)
+    internal func validateChecksum(on client: Client) throws {
+        try validateChecksum(on: client.ledgerId!)
     }
 }
 
@@ -360,11 +390,11 @@ public struct FileId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_file_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
 
@@ -406,11 +436,11 @@ public struct TopicId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_topic_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
 
@@ -452,7 +482,7 @@ public struct TokenId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_token_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     public func nft(_ serial: UInt64) -> NftId {
@@ -460,7 +490,7 @@ public struct TokenId: EntityId, ValidateChecksums {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
 
@@ -502,10 +532,10 @@ public struct ScheduleId: EntityId, ValidateChecksums {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_schedule_id_to_bytes(shard, realm, num, &buf)
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: Data.unsafeCHederaBytesFree)
+        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try defaultValidateChecksum(on: ledgerId)
+        try helper.validateChecksum(on: ledgerId)
     }
 }
