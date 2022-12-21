@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// A list of nodes and their metadata.
 public struct NodeAddressBook: Codable {
@@ -27,17 +27,22 @@ public struct NodeAddressBook: Codable {
     public let nodeAddresses: [NodeAddress]
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension NodeAddressBook: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_node_address_book_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_node_address_book_to_bytes }
+extension NodeAddressBook: TryProtobufCodable {
+    internal typealias Protobuf = Proto_NodeAddressBook
+
+    internal init(fromProtobuf proto: Protobuf) throws {
+        self.nodeAddresses = try .fromProtobuf(proto.nodeAddress)
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in proto.nodeAddress = nodeAddresses.toProtobuf() }
+    }
 }

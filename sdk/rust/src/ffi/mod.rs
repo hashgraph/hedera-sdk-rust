@@ -31,7 +31,6 @@ mod execute;
 mod key;
 mod mnemonic;
 mod nft_id;
-mod node_address_book;
 mod runtime;
 mod semantic_version;
 mod signer;
