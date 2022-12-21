@@ -20,7 +20,6 @@
 
 use std::ffi::{
     c_char,
-    CStr,
     CString,
 };
 use std::ptr;
@@ -77,29 +76,6 @@ pub struct SemanticVersion {
 }
 
 impl SemanticVersion {
-    // todo(sr): avoid a copy, we don't need it (see how it was done in `AccountInfo`).
-    pub(super) unsafe fn to_rust(self) -> crate::SemanticVersion {
-        unsafe fn string_from_ptr(string: *const c_char) -> String {
-            let string = match string.is_null() {
-                true => None,
-                false => {
-                    let prerelease = unsafe { CStr::from_ptr(string) };
-                    let prerelease = prerelease.to_str().unwrap().to_owned();
-                    Some(prerelease)
-                }
-            };
-
-            string.unwrap_or_default()
-        }
-
-        let Self { major, minor, patch, prerelease, build } = self;
-
-        let prerelease = unsafe { string_from_ptr(prerelease) };
-        let build = unsafe { string_from_ptr(build) };
-
-        crate::SemanticVersion { major, minor, patch, prerelease, build }
-    }
-
     pub(super) fn from_rust(semver: crate::SemanticVersion) -> Self {
         fn string_to_ptr(string: String) -> *mut c_char {
             match string.is_empty() {

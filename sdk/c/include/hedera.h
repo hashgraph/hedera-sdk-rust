@@ -235,17 +235,6 @@ typedef struct HederaSemanticVersion {
   char *build;
 } HederaSemanticVersion;
 
-typedef struct HederaNetworkVersionInfo {
-  /**
-   * Version of the protobuf schema in use by the network.
-   */
-  struct HederaSemanticVersion protobuf_version;
-  /**
-   * Version of the Hedera services in use by the network.
-   */
-  struct HederaSemanticVersion services_version;
-} HederaNetworkVersionInfo;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -1224,12 +1213,6 @@ char *hedera_mnemonic_to_string(struct HederaMnemonic *mnemonic);
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
 void hedera_mnemonic_free(struct HederaMnemonic *mnemonic);
-
-enum HederaError hedera_network_version_info_from_bytes(const uint8_t *bytes,
-                                                        size_t bytes_size,
-                                                        struct HederaNetworkVersionInfo *info);
-
-size_t hedera_network_version_info_to_bytes(struct HederaNetworkVersionInfo info, uint8_t **buf);
 
 /**
  * Parse a Hedera `NftId` from the passed string.
