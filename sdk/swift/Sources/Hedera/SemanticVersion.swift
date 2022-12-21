@@ -81,19 +81,6 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
         build = hedera.build.map { String(hString: $0) } ?? ""
     }
 
-    internal func unsafeWithCHedera<Result>(_ body: (HederaSemanticVersion) throws -> Result) rethrows -> Result {
-        try prerelease.withCString { (prerelease) in
-            try build.withCString { (build) in
-                let mutPrerelease = UnsafeMutablePointer(mutating: prerelease)
-                let mutBuild = UnsafeMutablePointer(mutating: build)
-                let csemver = HederaSemanticVersion(
-                    major: major, minor: minor, patch: patch, prerelease: mutPrerelease, build: mutBuild)
-
-                return try body(csemver)
-            }
-        }
-    }
-
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try Self(fromProtobufBytes: bytes)
     }

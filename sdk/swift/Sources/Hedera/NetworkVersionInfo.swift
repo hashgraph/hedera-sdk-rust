@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 public struct NetworkVersionInfo: Codable {
     /// Version of the protobuf schema in use by the network.
@@ -28,38 +28,27 @@ public struct NetworkVersionInfo: Codable {
     /// Version of the Hedera services in use by the network.
     public let servicesVersion: SemanticVersion
 
-    private init(unsafeFromCHedera hedera: HederaNetworkVersionInfo) {
-        protobufVersion = SemanticVersion(unsafeFromCHedera: hedera.protobuf_version)
-        servicesVersion = SemanticVersion(unsafeFromCHedera: hedera.services_version)
-    }
-
-    private func unsafeWithCHedera<Result>(_ body: (HederaNetworkVersionInfo) throws -> Result) rethrows -> Result {
-        try protobufVersion.unsafeWithCHedera { (protobufVersion) in
-            try servicesVersion.unsafeWithCHedera { (servicesVersion) in
-                let info = HederaNetworkVersionInfo(
-                    protobuf_version: protobufVersion, services_version: servicesVersion)
-                return try body(info)
-            }
-        }
-    }
-
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var info = HederaNetworkVersionInfo()
-
-            try HError.throwing(
-                error: hedera_network_version_info_from_bytes(pointer.baseAddress, pointer.count, &info))
-
-            return Self(unsafeFromCHedera: info)
-        }
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        unsafeWithCHedera { info in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_network_version_info_to_bytes(info, &buf)
+        toProtobufBytes()
+    }
+}
 
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+extension NetworkVersionInfo: ProtobufCodable {
+    internal typealias Protobuf = Proto_NetworkGetVersionInfoResponse
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.protobufVersion = SemanticVersion.fromProtobuf(proto.hapiProtoVersion)
+        self.servicesVersion = SemanticVersion.fromProtobuf(proto.hederaServicesVersion)
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.hapiProtoVersion = protobufVersion.toProtobuf()
+            proto.hederaServicesVersion = servicesVersion.toProtobuf()
         }
     }
 }
