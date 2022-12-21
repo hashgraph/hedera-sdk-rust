@@ -64,3 +64,24 @@ or [apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 licensed as above, without any additional terms or conditions.
+
+## Development (HederaProtobufs)
+
+HederaProtobufs is entirely generated
+
+### Required tooling
+protoc
+protoc-gen-swift (from https://github.com/apple/swift-protobuf)
+protoc-gen-grpc-swift (from https://github.com/grpc/grpc-swift)
+
+### Generate services
+```bash
+# cwd: `$REPO/sdk/swift`
+protoc --swift_opt=Visibility=Public --swift_out=./Sources/HederaProtobufs/Services --proto_path=../../protobufs/services ../../protobufs/services/*
+```
+
+### Generate Mirror
+todo
+
+### Generate SDK
+todo
