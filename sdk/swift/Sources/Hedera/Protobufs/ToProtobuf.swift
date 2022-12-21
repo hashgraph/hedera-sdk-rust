@@ -5,6 +5,14 @@ internal protocol ToProtobuf {
     associatedtype Protobuf
 
     func toProtobuf() -> Protobuf
+
+    func toProtobufInto(_ place: inout Protobuf)
+}
+
+extension ToProtobuf {
+    func toProtobufInto(_ place: inout Protobuf) {
+        place = toProtobuf()
+    }
 }
 
 extension ToProtobuf where Protobuf: Message {
