@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Hedera follows semantic versioning for both the HAPI protobufs and
 /// the Services software.
@@ -53,35 +54,31 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     }
 
     // internal API, do NOT expose.
-    private static func fromString(_ description: String) throws -> Self {
+    private init(parsing description: String) throws {
         var csemver = HederaSemanticVersion()
 
         try HError.throwing(error: hedera_semantic_version_from_string(description, &csemver))
 
-        return Self(unsafeFromCHedera: csemver)
+        self.init(unsafeFromCHedera: csemver)
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // If you're using a string literal this will either *always* fail or *never* fail, so, force try makes sense.
+        // swiftlint:disable:next force_try
+        try! self.init(parsing: value)
     }
 
     // semver parsing is shockingly hard. So the FFI really does carry its weight.
     public init?(_ description: String) {
-        let res = try? Self.fromString(description)
-
-        if res == nil {
-            return nil
-        }
-
-        self = res!
+        try? self.init(parsing: description)
     }
 
     internal init(unsafeFromCHedera hedera: HederaSemanticVersion) {
         major = hedera.major
         minor = hedera.minor
         patch = hedera.patch
-        prerelease = hedera.prerelease == nil ? "" : String(hString: hedera.prerelease!)
-        build = hedera.build == nil ? "" : String(hString: hedera.build!)
+        prerelease = hedera.prerelease.map { String(hString: $0) } ?? ""
+        build = hedera.build.map { String(hString: $0) } ?? ""
     }
 
     internal func unsafeWithCHedera<Result>(_ body: (HederaSemanticVersion) throws -> Result) rethrows -> Result {
@@ -98,22 +95,11 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var semver = HederaSemanticVersion()
-
-            try HError.throwing(error: hedera_semantic_version_from_bytes(pointer.baseAddress, pointer.count, &semver))
-
-            return Self(unsafeFromCHedera: semver)
-        }
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        unsafeWithCHedera { info in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_semantic_version_to_bytes(info, &buf)
-
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-        }
+        toProtobufBytes()
     }
 
     public var description: String {
@@ -124,5 +110,29 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
 
     public func toString() -> String {
         description
+    }
+}
+
+extension SemanticVersion: ProtobufCodable {
+    internal typealias Protobuf = Proto_SemanticVersion
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(
+            major: UInt32(proto.major),
+            minor: UInt32(proto.minor),
+            patch: UInt32(proto.patch),
+            prerelease: proto.pre,
+            build: proto.build
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.major = Int32(major)
+            proto.minor = Int32(minor)
+            proto.patch = Int32(patch)
+            proto.pre = prerelease
+            proto.build = build
+        }
     }
 }
