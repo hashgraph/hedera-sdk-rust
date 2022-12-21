@@ -33,7 +33,7 @@ public struct Duration: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
-        try container.encode(self.seconds)
+        try container.encode(seconds)
     }
 }
 
@@ -41,7 +41,7 @@ extension Duration: ProtobufCodable {
     internal typealias Protobuf = Proto_Duration
 
     internal init(protobuf proto: Protobuf) {
-        self.seconds = UInt64(proto.seconds)
+        seconds = UInt64(proto.seconds)
     }
 
     internal func toProtobuf() -> Protobuf {
