@@ -33,7 +33,6 @@ mod fee_schedules;
 mod key;
 mod mnemonic;
 mod nft_id;
-mod node_address_book;
 mod runtime;
 mod schedule_info;
 mod semantic_version;
