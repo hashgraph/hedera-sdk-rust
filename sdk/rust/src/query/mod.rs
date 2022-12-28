@@ -87,7 +87,7 @@ where
     /// will not return any remainder (over the actual cost for this query).
     ///
     pub fn payment_amount(&mut self, amount: Hbar) -> &mut Self {
-        self.payment.body.data.amount = Some(amount);
+        self.payment.amount(amount);
         self
     }
 
@@ -105,7 +105,7 @@ where
     /// Set to `None` to allow unlimited payment amounts.
     ///
     pub fn max_payment_amount(&mut self, max: impl Into<Option<Hbar>>) -> &mut Self {
-        self.payment.body.data.max_amount = max.into();
+        self.payment.max_amount(max);
         self
     }
 
@@ -189,12 +189,12 @@ where
         client: &Client,
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<D::Response> {
-        if self.payment.body.data.amount.is_none() && self.data.is_payment_required() {
+        if self.payment.get_amount().is_none() && self.data.is_payment_required() {
             // should this inherit the timeout?
             // payment is required but none was specified, query the cost
             let cost = QueryCost::new(self).execute(client, None).await?;
 
-            if let Some(max_amount) = self.payment.body.data.max_amount {
+            if let Some(max_amount) = self.payment.get_max_amount() {
                 if cost > max_amount {
                     return Err(Error::MaxQueryPaymentExceeded {
                         query_cost: cost,
@@ -203,7 +203,7 @@ where
                 }
             }
 
-            self.payment.body.data.amount = Some(cost);
+            self.payment.amount(cost);
         }
 
         execute(client, self, timeout).await
