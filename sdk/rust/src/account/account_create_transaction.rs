@@ -57,49 +57,49 @@ pub struct AccountCreateTransactionData {
     ///
     /// If `receiver_signature_required` is true, then it must also sign any transfer
     /// into the account.
-    pub key: Option<Key>,
+    key: Option<Key>,
 
     /// The initial number of Hbar to put into the account.
-    pub initial_balance: Hbar,
+    initial_balance: Hbar,
 
     /// If true, this account's key must sign any transaction depositing into this account.
-    pub receiver_signature_required: bool,
+    receiver_signature_required: bool,
 
     /// The account is charged to extend its expiration date every this many seconds.
     #[cfg_attr(
         feature = "ffi",
         serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
     )]
-    pub auto_renew_period: Option<Duration>,
+    auto_renew_period: Option<Duration>,
 
     /// The account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
-    pub auto_renew_account_id: Option<AccountId>,
+    auto_renew_account_id: Option<AccountId>,
 
     /// The memo associated with the account.
-    pub account_memo: String,
+    account_memo: String,
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
-    pub max_automatic_token_associations: u16,
+    max_automatic_token_associations: u16,
 
     /// A key to be used as the account's alias.
-    pub alias: Option<PublicKey>,
+    alias: Option<PublicKey>,
 
     /// A 20-byte EVM address to be used as the account's evm address.
-    pub evm_address: Option<[u8; 20]>,
+    evm_address: Option<[u8; 20]>,
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
-    pub staked_account_id: Option<AccountId>,
+    staked_account_id: Option<AccountId>,
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
-    pub staked_node_id: Option<u64>,
+    staked_node_id: Option<u64>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
-    pub decline_staking_reward: bool,
+    decline_staking_reward: bool,
 }
 
 impl Default for AccountCreateTransactionData {
@@ -122,28 +122,63 @@ impl Default for AccountCreateTransactionData {
 }
 
 impl AccountCreateTransaction {
-    /// Set the key for this account.
+    /// Get the key this account will be created with.
+    ///
+    /// Returns `Some(key)` if previously set, `None` otherwise.
+    #[must_use]
+    pub fn get_key(&self) -> Option<&Key> {
+        self.body.data.key.as_ref()
+    }
+
+    /// Sets the key for this account.
     pub fn key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.body.data.key = Some(key.into());
         self
     }
 
-    /// Set the initial amount to transfer into this account.
+    /// Get the balance that will be transferred to this account on creation.
+    ///
+    /// Returns `initial_balance` if previously set, `0` otherwise.
+    #[must_use]
+    pub fn get_initial_balance(&self) -> Hbar {
+        self.body.data.initial_balance
+    }
+
+    /// Sets the balance that will be transferred to this account on creation.
     pub fn initial_balance(&mut self, balance: Hbar) -> &mut Self {
         self.body.data.initial_balance = balance;
         self
     }
 
-    /// Set to true to require this account to sign any transfer of hbars to this account.
+    /// Returns `true` if this account must sign any transfer of hbars _to_ itself.
+    #[must_use]
+    pub fn get_receiver_signature_required(&self) -> bool {
+        self.body.data.receiver_signature_required
+    }
+
+    /// Sets to true to require this account to sign any transfer of hbars to this account.
     pub fn receiver_signature_required(&mut self, required: bool) -> &mut Self {
         self.body.data.receiver_signature_required = required;
         self
     }
 
-    /// Set the auto renew period for this account.
+    /// Returns the auto renew period for this account.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Option<Duration> {
+        self.body.data.auto_renew_period
+    }
+
+    /// Sets the auto renew period for this account.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(period);
         self
+    }
+
+    /// Gets the account to be used at this account's expiration time to extend the
+    /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.body.data.auto_renew_account_id
     }
 
     /// Sets the account to be used at this account's expiration time to extend the
@@ -153,16 +188,36 @@ impl AccountCreateTransaction {
         self
     }
 
-    /// Set the memo associated with the account.
+    /// Get the memo associated with the account
+    #[must_use]
+    pub fn get_account_memo(&self) -> &str {
+        &self.body.data.account_memo
+    }
+
+    /// Sets the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.account_memo = memo.into();
         self
     }
 
-    /// Set the maximum number of tokens that an Account can be implicitly associated with.
+    /// Get the maximum number of tokens that an Account can be implicitly associated with.
+    ///
+    /// Defaults to `0`. Allows up to a maximum value of `1000`.
+    #[must_use]
+    pub fn get_max_automatic_token_associations(&self) -> u16 {
+        self.body.data.max_automatic_token_associations
+    }
+
+    /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
         self.body.data.max_automatic_token_associations = amount;
         self
+    }
+
+    /// Returns the public key to be used as the account's alias.
+    #[must_use]
+    pub fn get_alias(&self) -> Option<&PublicKey> {
+        self.body.data.alias.as_ref()
     }
 
     /// The bytes to be used as the account's alias.
@@ -177,27 +232,55 @@ impl AccountCreateTransaction {
         self
     }
 
+    /// Returns the evm address the account will be created with.
+    #[must_use]
+    pub fn get_evm_address(&self) -> Option<[u8; 20]> {
+        self.body.data.evm_address
+    }
+
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
         self.body.data.evm_address = Some(evm_address);
         self
     }
 
-    /// Set the ID of the account to which this account is staking.
+    /// Returns the ID of the account to which this account is staking.
+    /// This is mutually exclusive with `staked_node_id`.
+    #[must_use]
+    pub fn get_staked_account_id(&self) -> Option<AccountId> {
+        self.body.data.staked_account_id
+    }
+
+    /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.staked_account_id = Some(id);
+        self.body.data.staked_node_id = None;
         self
     }
 
-    /// Set the ID of the node to which this account is staking.
+    /// Returns the ID of the node to which this account is staking.
+    /// This is mutually exclusive with `staked_account_id`.
+    #[must_use]
+    pub fn get_staked_node_id(&self) -> Option<u64> {
+        self.body.data.staked_node_id
+    }
+
+    /// Sets the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
+        self.body.data.staked_account_id = None;
         self.body.data.staked_node_id = Some(id);
         self
     }
 
-    /// Set to true, the account declines receiving a staking reward. The default value is false.
+    /// Returns `true` if the account should decline receiving staking rewards, `false` otherwise.
+    #[must_use]
+    pub fn get_decline_staking_reward(&self) -> bool {
+        self.body.data.decline_staking_reward
+    }
+
+    /// If `true`, the account declines receiving a staking reward. The default value is false.
     pub fn decline_staking_reward(&mut self, decline: bool) -> &mut Self {
         self.body.data.decline_staking_reward = decline;
         self
@@ -260,7 +343,7 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
                 memo: self.account_memo.clone(),
                 max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
                 alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
-                evm_address: self.evm_address.map_or(vec![], |b| Vec::from(b)),
+                evm_address: self.evm_address.map_or(vec![], Vec::from),
                 decline_reward: self.decline_staking_reward,
                 staked_id,
             },

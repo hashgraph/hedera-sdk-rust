@@ -63,10 +63,23 @@ impl From<TransactionRecordQueryData> for AnyQueryData {
 }
 
 impl TransactionRecordQuery {
-    /// Set the ID of the transaction for which the record is being requested.
+    /// Get the ID of the transaction for which the record is being requested.
+    #[must_use]
+    pub fn get_transaction_id(&self) -> Option<TransactionId> {
+        self.data.transaction_id
+    }
+
+    /// Sets the ID of the transaction for which the record is being requested.
     pub fn transaction_id(&mut self, transaction_id: TransactionId) -> &mut Self {
         self.data.transaction_id = Some(transaction_id);
         self
+    }
+
+    /// Whether the response should include the records of any child transactions spawned by the
+    /// top-level transaction with the given transaction.
+    #[must_use]
+    pub fn get_include_children(&self) -> bool {
+        self.data.include_children
     }
 
     /// Whether the response should include the records of any child transactions spawned by the
@@ -77,9 +90,21 @@ impl TransactionRecordQuery {
     }
 
     /// Whether records of processing duplicate transactions should be returned.
+    #[must_use]
+    pub fn get_include_duplicates(&self) -> bool {
+        self.data.include_duplicates
+    }
+
+    /// Whether records of processing duplicate transactions should be returned.
     pub fn include_duplicates(&mut self, include: bool) -> &mut Self {
         self.data.include_duplicates = include;
         self
+    }
+
+    /// Whether records of processing duplicate transactions should be returned.
+    #[must_use]
+    pub fn get_validate_status(&self) -> bool {
+        self.data.validate_status
     }
 
     /// Whether the record status should be validated.

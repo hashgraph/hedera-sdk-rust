@@ -51,6 +51,12 @@ pub struct ContractBytecodeQueryData {
 }
 
 impl ContractBytecodeQuery {
+    /// Gets the contract for which information is requested.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        self.data.contract_id
+    }
+
     /// Sets the contract for which information is requested.
     pub fn contract_id(&mut self, contract_id: ContractId) -> &mut Self {
         self.data.contract_id = Some(contract_id);

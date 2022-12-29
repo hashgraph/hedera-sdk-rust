@@ -46,40 +46,58 @@ pub type EthereumTransaction = Transaction<EthereumTransactionData>;
 pub struct EthereumTransactionData {
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
-    pub ethereum_data: Vec<u8>,
+    ethereum_data: Vec<u8>,
 
     /// For large transactions (for example contract create) this should be used to
-    /// set the FileId of an HFS file containing the callData
-    /// of the ethereumData. The data in the ethereumData will be re-written with
-    /// the callData element as a zero length string with the original contents in
-    /// the referenced file at time of execution. The ethereumData will need to be
-    /// "rehydrated" with the callData for signature validation to pass.
-    pub call_data_file_id: Option<FileId>,
+    /// set the FileId of an HFS file containing the call_data
+    /// of the ethereum_data. The data in the ethereum_data will be re-written with
+    /// the call_data element as a zero length string with the original contents in
+    /// the referenced file at time of execution. The ethereum_data will need to be
+    /// "rehydrated" with the call_data for signature validation to pass.
+    call_data_file_id: Option<FileId>,
 
     /// The maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
-    pub max_gas_allowance_hbar: u64,
+    max_gas_allowance_hbar: u64,
 }
 
 impl EthereumTransaction {
+    /// Returns the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
+    #[must_use]
+    pub fn get_ethereum_data(&self) -> &[u8] {
+        &self.body.data.ethereum_data
+    }
+
     /// Sets the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     pub fn ethereum_data(&mut self, data: Vec<u8>) -> &mut Self {
         self.body.data.ethereum_data = data;
         self
     }
 
+    /// Returns the file ID to find the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
+    #[must_use]
+    pub fn get_call_data_file_id(&self) -> Option<FileId> {
+        self.body.data.call_data_file_id
+    }
+
     /// Sets a file ID to find the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     ///
     /// For large transactions (for example contract create) this should be used to
-    /// set the [`FileId`] of an HFS file containing the callData
-    /// of the ethereumData. The data in the ethereumData will be re-written with
-    /// the callData element as a zero length string with the original contents in
-    /// the referenced file at time of execution. The ethereumData will need to be
-    /// "rehydrated" with the callData for signature validation to pass.
-    ///
+    /// set the [`FileId`] of an HFS file containing the `call_data`
+    /// of the `ethereum_data`. The data in `the ethereum_data` will be re-written with
+    /// the `call_data` element as a zero length string with the original contents in
+    /// the referenced file at time of execution. `The ethereum_data` will need to be
+    /// "rehydrated" with the `call_data` for signature validation to pass.
     pub fn call_data_file_id(&mut self, id: FileId) -> &mut Self {
         self.body.data.call_data_file_id = Some(id);
         self
+    }
+
+    /// Returns the maximum amount that the payer of the hedera transaction
+    /// is willing to pay to complete the transaction.
+    #[must_use]
+    pub fn get_max_gas_allowance_hbar(&self) -> u64 {
+        self.body.data.max_gas_allowance_hbar
     }
 
     /// Sets the maximum amount that the payer of the hedera transaction

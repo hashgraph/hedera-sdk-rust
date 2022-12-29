@@ -48,27 +48,45 @@ pub type ContractDeleteTransaction = Transaction<ContractDeleteTransactionData>;
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct ContractDeleteTransactionData {
-    pub contract_id: Option<ContractId>,
+    contract_id: Option<ContractId>,
 
-    pub transfer_account_id: Option<AccountId>,
+    transfer_account_id: Option<AccountId>,
 
-    pub transfer_contract_id: Option<ContractId>,
+    transfer_contract_id: Option<ContractId>,
 }
 
 impl ContractDeleteTransaction {
-    /// Sets the contract ID which should be deleted.
+    /// Returns the ID of the contract that should be deleted.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        self.body.data.contract_id
+    }
+
+    /// Sets ID of the contract which should be deleted.
     pub fn contract_id(&mut self, id: ContractId) -> &mut Self {
         self.body.data.contract_id = Some(id);
         self
     }
 
-    /// Sets the account ID which will receive all remaining hbars.
+    /// Returns the ID of the account which will receive all remaining hbars.
+    #[must_use]
+    pub fn get_transfer_account_id(&self) -> Option<AccountId> {
+        self.body.data.transfer_account_id
+    }
+
+    /// Sets the ID of the account which will receive all remaining hbars.
     pub fn transfer_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.transfer_account_id = Some(id);
         self
     }
 
-    /// Sets the contract ID which will receive all remaining hbars.
+    /// Returns ID of the contract which will receive all rmaining hbars.
+    #[must_use]
+    pub fn get_transfer_contract_id(&self) -> Option<ContractId> {
+        self.body.data.transfer_contract_id
+    }
+
+    /// Sets the the ID of the contract which will receive all remaining hbars.
     pub fn transfer_contract_id(&mut self, id: ContractId) -> &mut Self {
         self.body.data.transfer_contract_id = Some(id);
         self

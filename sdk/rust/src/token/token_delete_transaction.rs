@@ -60,6 +60,12 @@ pub struct TokenDeleteTransactionData {
 }
 
 impl TokenDeleteTransaction {
+    /// Returns the token to be deleted.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
+    }
+
     /// Sets the token to be deleted.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());

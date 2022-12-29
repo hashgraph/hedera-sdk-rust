@@ -91,6 +91,7 @@ impl AccountId {
     /// Create an `AccountId` from an evm address.
     ///
     /// Accepts "0x___" Ethereum public address.
+    #[must_use]
     pub fn from_evm_address(address: &EvmAddress) -> Self {
         Self {
             shard: 0,

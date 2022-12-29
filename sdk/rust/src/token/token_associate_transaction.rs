@@ -67,10 +67,22 @@ pub struct TokenAssociateTransactionData {
 }
 
 impl TokenAssociateTransaction {
+    /// Returns the account to be associated with the provided tokens.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.body.data.account_id
+    }
+
     /// Sets the account to be associated with the provided tokens.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id);
         self
+    }
+
+    /// Returns the tokens to be associated with the provided account.
+    #[must_use]
+    pub fn get_token_ids(&self) -> &[TokenId] {
+        &self.body.data.token_ids
     }
 
     /// Sets the tokens to be associated with the provided account.

@@ -60,10 +60,22 @@ pub struct FileAppendTransactionData {
 }
 
 impl FileAppendTransaction {
+    /// Returns the file to which the bytes will be appended.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.body.data.file_id
+    }
+
     /// Sets the file to which the bytes will be appended.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
         self.body.data.file_id = Some(id.into());
         self
+    }
+
+    /// Retuns the bytes that will be appended to the end of the specified file.
+    #[must_use]
+    pub fn get_contents(&self) -> Option<&[u8]> {
+        self.body.data.contents.as_deref()
     }
 
     /// Sets the bytes that will be appended to the end of the specified file.

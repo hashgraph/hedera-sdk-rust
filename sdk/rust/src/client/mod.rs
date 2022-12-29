@@ -131,7 +131,7 @@ impl Client {
 
     /// Enable or disable automatic entity ID checksum validation.
     pub fn set_auto_validate_checksums(&self, value: bool) {
-        self.0.auto_validate_checksums.store(value, Ordering::Relaxed)
+        self.0.auto_validate_checksums.store(value, Ordering::Relaxed);
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with
@@ -214,7 +214,7 @@ impl Client {
     /// Send a ping to all nodes.
     pub async fn ping_all(&self) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().into_iter().map(|it| self.ping(dbg!(*it))),
+            self.network().node_ids().iter().map(|it| self.ping(dbg!(*it))),
         )
         .await?;
 
@@ -224,7 +224,7 @@ impl Client {
     /// Send a ping to all nodes, canceling the ping after `timeout` has elapsed.
     pub async fn ping_all_with_timeout(&self, timeout: Duration) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().into_iter().map(|it| self.ping_with_timeout(*it, timeout)),
+            self.network().node_ids().iter().map(|it| self.ping_with_timeout(*it, timeout)),
         )
         .await?;
 

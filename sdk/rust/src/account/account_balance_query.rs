@@ -43,9 +43,8 @@ use crate::{
 /// Get the balance of a cryptocurrency account.
 ///
 /// This returns only the balance, so it is a smaller reply
-/// than [`AccountInfoQuery`][crate::AccountInfoQuery], which returns the balance plus
-/// additional information.
-///
+/// than [`AccountInfoQuery`][crate::AccountInfoQuery],
+/// which returns the balance plus additional information.
 pub type AccountBalanceQuery = Query<AccountBalanceQueryData>;
 
 #[derive(Clone, Debug)]
@@ -77,12 +76,30 @@ enum AccountBalanceSource {
 }
 
 impl AccountBalanceQuery {
+    /// Get the account ID for which information is requested.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        match self.data.source {
+            AccountBalanceSource::AccountId(it) => Some(it),
+            AccountBalanceSource::ContractId(_) => None,
+        }
+    }
+
     /// Sets the account ID for which information is requested.
     ///
     /// This is mutually exclusive with [`contract_id`](Self::contract_id).
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.data.source = AccountBalanceSource::AccountId(id);
         self
+    }
+
+    /// Get the contract ID for which information is requested.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        match self.data.source {
+            AccountBalanceSource::ContractId(it) => Some(it),
+            AccountBalanceSource::AccountId(_) => None,
+        }
     }
 
     /// Sets the contract ID for which information is requested.

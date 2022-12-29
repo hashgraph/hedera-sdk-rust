@@ -89,16 +89,34 @@ pub struct FileUpdateTransactionData {
 }
 
 impl FileUpdateTransaction {
-    /// Set the file ID which is being updated.
+    /// Returns the ID of the file which is being updated.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.body.data.file_id
+    }
+
+    /// Sets the ID of the file which is being updated.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
         self.body.data.file_id = Some(id.into());
         self
     }
 
-    /// Sets the memo associated with the file.
+    /// Returns the new memo for the file.
+    #[must_use]
+    pub fn get_file_memo(&self) -> Option<&str> {
+        self.body.data.file_memo.as_deref()
+    }
+
+    /// Sets the new memo to be associated with the file.
     pub fn file_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.file_memo = Some(memo.into());
         self
+    }
+
+    /// Returns the bytes that are to be the contents of the file.
+    #[must_use]
+    pub fn get_contents(&self) -> Option<&[u8]> {
+        self.body.data.contents.as_deref()
     }
 
     /// Sets the bytes that are to be the contents of the file.
@@ -107,21 +125,39 @@ impl FileUpdateTransaction {
         self
     }
 
+    /// Returns the keys for this file.
+    #[must_use]
+    pub fn get_keys(&self) -> Option<&KeyList> {
+        self.body.data.keys.as_ref()
+    }
+
     /// Sets the keys for this file.
     ///
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    ///
     pub fn keys<K: Into<Key>>(&mut self, keys: impl IntoIterator<Item = K>) -> &mut Self {
         self.body.data.keys = Some(keys.into_iter().map(Into::into).collect());
         self
+    }
+
+    /// Returns the time at which this file should expire.
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.body.data.expiration_time
     }
 
     /// Sets the time at which this file should expire.
     pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
         self.body.data.expiration_time = Some(at);
         self
+    }
+
+    /// Returns the account to be used at the file's expiration time to extend the
+    /// life of the file.
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.body.data.auto_renew_account_id
     }
 
     /// Sets the account to be used at the files's expiration time to extend the
@@ -131,7 +167,13 @@ impl FileUpdateTransaction {
         self
     }
 
-    /// Set the auto renew period for this file.
+    /// Returns the auto renew period for this file.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Option<Duration> {
+        self.body.data.auto_renew_period
+    }
+
+    /// Sets the auto renew period for this file.
     pub fn auto_renew_period(&mut self, duration: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(duration);
         self

@@ -60,6 +60,12 @@ pub struct TokenUnpauseTransactionData {
 }
 
 impl TokenUnpauseTransaction {
+    /// Returns the token to be unpaused.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
+    }
+
     /// Sets the token to be unpaused.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());

@@ -67,10 +67,21 @@ pub struct TokenRevokeKycTransactionData {
 }
 
 impl TokenRevokeKycTransaction {
+    /// Returns the account to have their KYC revoked.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.body.data.account_id
+    }
     /// Sets the account to have their KYC revoked.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id);
         self
+    }
+
+    /// Returns the token for which the account will have their KYC revoked.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
     }
 
     /// Sets the token for which this account will have their KYC revoked.

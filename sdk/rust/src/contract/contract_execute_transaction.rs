@@ -70,10 +70,22 @@ pub struct ContractExecuteTransactionData {
 }
 
 impl ContractExecuteTransaction {
+    /// Returns the contract instance to call.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        self.body.data.contract_id
+    }
+
     /// Sets the contract instance to call.
     pub fn contract_id(&mut self, contract_id: ContractId) -> &mut Self {
         self.body.data.contract_id = Some(contract_id);
         self
+    }
+
+    /// Returns the maximum amount of gas to use for the call.
+    #[must_use]
+    pub fn get_gas(&self) -> u64 {
+        self.body.data.gas
     }
 
     /// Sets the maximum amount of gas to use for the call.
@@ -82,10 +94,22 @@ impl ContractExecuteTransaction {
         self
     }
 
-    /// Sets the number of hbars sent with this function call.
+    /// Returns the number of hbars to be sent with this function call.
+    #[must_use]
+    pub fn get_payable_amount(&self) -> Hbar {
+        self.body.data.payable_amount
+    }
+
+    /// Sets the number of hbars to be sent with this function call.
     pub fn payable_amount(&mut self, amount: Hbar) -> &mut Self {
         self.body.data.payable_amount = amount;
         self
+    }
+
+    /// Returns the function parameters as their raw bytes.
+    #[must_use]
+    pub fn get_function_parameters(&self) -> &[u8] {
+        &self.body.data.function_parameters
     }
 
     /// Sets the function parameters as their raw bytes.

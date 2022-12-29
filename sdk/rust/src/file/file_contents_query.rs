@@ -57,6 +57,12 @@ impl From<FileContentsQueryData> for AnyQueryData {
 }
 
 impl FileContentsQuery {
+    /// Returns the ID of the file for which contents are requested.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.data.file_id
+    }
+
     /// Sets the file ID for which contents are requested.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
         self.data.file_id = Some(id.into());

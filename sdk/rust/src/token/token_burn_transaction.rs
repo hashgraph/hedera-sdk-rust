@@ -80,16 +80,34 @@ pub struct TokenBurnTransactionData {
 }
 
 impl TokenBurnTransaction {
+    /// Returns the token for which to burn tokens.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
+    }
+
     /// Sets the token for which to burn tokens.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
     }
 
+    /// Returns the amount of a fungible token to burn from the treasury account.
+    #[must_use]
+    pub fn get_amount(&self) -> u64 {
+        self.body.data.amount
+    }
+
     /// Sets the amount of a fungible token to burn from the treasury account.
     pub fn amount(&mut self, amount: impl Into<u64>) -> &mut Self {
         self.body.data.amount = amount.into();
         self
+    }
+
+    /// Returns the serial numbers of a non-fungible token to burn from the treasury account.
+    #[must_use]
+    pub fn get_serials(&self) -> &[i64] {
+        &self.body.data.serials
     }
 
     /// Sets the serial numbers of a non-fungible token to burn from the treasury account.

@@ -48,16 +48,28 @@ pub type SystemUndeleteTransaction = Transaction<SystemUndeleteTransactionData>;
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct SystemUndeleteTransactionData {
-    pub file_id: Option<FileId>,
-    pub contract_id: Option<ContractId>,
+    file_id: Option<FileId>,
+    contract_id: Option<ContractId>,
 }
 
 impl SystemUndeleteTransaction {
+    /// Returns the contract ID to undelete.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        self.body.data.contract_id
+    }
+
     /// Sets the contract ID to undelete.
     pub fn contract_id(&mut self, id: impl Into<ContractId>) -> &mut Self {
         self.body.data.file_id = None;
         self.body.data.contract_id = Some(id.into());
         self
+    }
+
+    /// Returns the file ID to undelete.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.body.data.file_id
     }
 
     /// Sets the file ID to undelete.

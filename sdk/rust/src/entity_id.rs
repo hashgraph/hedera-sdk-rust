@@ -49,7 +49,7 @@ impl FromStr for Checksum {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         s.parse()
-            .map(|tiny_s| Checksum(tiny_s))
+            .map(Checksum)
             .map_err(|_| Error::basic_parse("Expected checksum to be exactly 5 characters"))
     }
 }
@@ -115,7 +115,7 @@ impl<'a> PartialEntityId<'a> {
         match self {
             Self::ShortNum(num) => Ok(EntityId::from(num).into()),
             Self::LongNum(id) => Ok(id.into()),
-            _ => Err(Error::basic_parse(format!("expected `<shard>.<realm>.<num>`"))),
+            _ => Err(Error::basic_parse("expected `<shard>.<realm>.<num>`".to_owned())),
         }
     }
 
@@ -223,7 +223,7 @@ impl EntityId {
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
             if let Some(ledger_id) = client.ledger_id().await {
-                Self::validate_checksum_internal(shard, realm, num, present_checksum, &ledger_id)
+                Self::validate_checksum_internal(shard, realm, num, *present_checksum, &ledger_id)
             } else {
                 Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" })
             }
@@ -240,7 +240,7 @@ impl EntityId {
         ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
-            Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
+            Self::validate_checksum_internal(shard, realm, num, *present_checksum, ledger_id)
         } else {
             Ok(())
         }
@@ -250,21 +250,15 @@ impl EntityId {
         shard: u64,
         realm: u64,
         num: u64,
-        present_checksum: &Checksum,
+        present_checksum: Checksum,
         ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         let expected_checksum =
             Self::generate_checksum(&format!("{shard}.{realm}.{num}"), ledger_id);
-        if present_checksum != &expected_checksum {
-            Err(Error::BadEntityId {
-                shard,
-                realm,
-                num,
-                present_checksum: present_checksum.clone(),
-                expected_checksum,
-            })
-        } else {
+        if present_checksum == expected_checksum {
             Ok(())
+        } else {
+            Err(Error::BadEntityId { shard, realm, num, present_checksum, expected_checksum })
         }
     }
 

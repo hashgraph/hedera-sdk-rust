@@ -56,6 +56,12 @@ impl From<ScheduleInfoQueryData> for AnyQueryData {
 }
 
 impl ScheduleInfoQuery {
+    /// Returns the schedule ID for which information is requested.
+    #[must_use]
+    pub fn get_schedule_id(&self) -> Option<ScheduleId> {
+        self.data.schedule_id
+    }
+
     /// Sets the schedule ID for which information is requested.
     pub fn schedule_id(&mut self, id: impl Into<ScheduleId>) -> &mut Self {
         self.data.schedule_id = Some(id.into());

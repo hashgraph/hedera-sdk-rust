@@ -94,10 +94,22 @@ impl Default for TopicMessageSubmitTransactionData {
 }
 
 impl TopicMessageSubmitTransaction {
+    /// Returns the ID of the topic this message will be submitted to.
+    #[must_use]
+    pub fn get_topic_id(&self) -> Option<TopicId> {
+        self.body.data.topic_id
+    }
+
     /// Sets the topic ID to submit this message to.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.body.data.topic_id = Some(id.into());
         self
+    }
+
+    /// Returns the message to be submitted.
+    #[must_use]
+    pub fn get_message(&self) -> Option<&[u8]> {
+        self.body.data.message.as_deref()
     }
 
     /// Sets the message to be submitted.
@@ -106,16 +118,34 @@ impl TopicMessageSubmitTransaction {
         self
     }
 
+    /// Returns the `TransactionId` of the first chunk.
+    #[must_use]
+    pub fn get_initial_transaction_id(&self) -> Option<TransactionId> {
+        self.body.data.initial_transaction_id
+    }
+
     /// Sets the `TransactionId` of the first chunk.
     pub fn initial_transaction_id(&mut self, id: impl Into<TransactionId>) -> &mut Self {
         self.body.data.initial_transaction_id = Some(id.into());
         self
     }
 
+    /// Returns the total number of chunks in the message.
+    #[must_use]
+    pub fn get_chunk_total(&self) -> u32 {
+        self.body.data.chunk_total as u32
+    }
+
     /// Sets the total number of chunks in the message.
     pub fn chunk_total(&mut self, total: u32) -> &mut Self {
         self.body.data.chunk_total = total as i32;
         self
+    }
+
+    /// Returns the sequence number (from 1 to total) of the current chunk in the message.
+    #[must_use]
+    pub fn get_chunk_number(&self) -> u32 {
+        self.body.data.chunk_number as u32
     }
 
     /// Sets the sequence number (from 1 to total) of the current chunk in the message.
