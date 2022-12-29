@@ -40,7 +40,7 @@ use crate::{
     Transaction,
 };
 
-/// Set the freezing period in which the platform will stop creating
+/// Sets the freezing period in which the platform will stop creating
 /// events and accepting transactions.
 ///
 /// This is used before safely shut down the platform for maintenance.
@@ -62,10 +62,22 @@ pub struct FreezeTransactionData {
 }
 
 impl FreezeTransaction {
+    /// Returns the start time.
+    #[must_use]
+    pub fn get_start_time(&self) -> Option<OffsetDateTime> {
+        self.body.data.start_time
+    }
+
     /// Sets the start time.
     pub fn start_time(&mut self, time: OffsetDateTime) -> &mut Self {
         self.body.data.start_time = Some(time);
         self
+    }
+
+    /// Returns the freeze type.
+    #[must_use]
+    pub fn get_freeze_type(&self) -> FreezeType {
+        self.body.data.freeze_type
     }
 
     /// Sets the freeze type.
@@ -74,10 +86,22 @@ impl FreezeTransaction {
         self
     }
 
+    /// Returns the file ID.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.body.data.file_id
+    }
+
     /// Sets the file ID.
     pub fn file_id(&mut self, id: FileId) -> &mut Self {
         self.body.data.file_id = Some(id);
         self
+    }
+
+    /// Returns the file hash.
+    #[must_use]
+    pub fn get_file_hash(&self) -> Option<&[u8]> {
+        self.body.data.file_hash.as_deref()
     }
 
     /// Sets the file hash.

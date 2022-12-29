@@ -557,6 +557,8 @@ pub(crate) struct AnyTransactionBody<D> {
     #[cfg_attr(feature = "ffi", serde(flatten))]
     data: D,
 
+    is_frozen: bool,
+
     #[cfg_attr(feature = "ffi", serde(default))]
     node_account_ids: Option<Vec<AccountId>>,
 
@@ -596,6 +598,7 @@ where
     fn from(body: TransactionBody<D>) -> Self {
         Self {
             data: body.data,
+            is_frozen: body.is_frozen,
             node_account_ids: body.node_account_ids,
             transaction_valid_duration: body.transaction_valid_duration,
             max_transaction_fee: body.max_transaction_fee,
@@ -613,6 +616,7 @@ where
     fn from(body: AnyTransactionBody<D>) -> Self {
         Self {
             data: body.data,
+            is_frozen: body.is_frozen,
             node_account_ids: body.node_account_ids,
             transaction_valid_duration: body.transaction_valid_duration,
             max_transaction_fee: body.max_transaction_fee,

@@ -33,11 +33,13 @@ impl std::ops::Deref for KeyList {
 
 impl KeyList {
     /// Create a new empty key list.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Returns `true` if this keylist is empty.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.keys.is_empty()
     }

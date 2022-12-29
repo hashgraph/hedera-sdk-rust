@@ -110,7 +110,7 @@ impl ToProtobuf for AnyCustomFee {
     fn to_protobuf(&self) -> Self::Protobuf {
         services::CustomFee {
             fee_collector_account_id: self.fee_collector_account_id.to_protobuf(),
-            fee: Some(self.fee.to_protobuf().into()),
+            fee: Some(self.fee.to_protobuf()),
             all_collectors_are_exempt: self.all_collectors_are_exempt,
         }
     }

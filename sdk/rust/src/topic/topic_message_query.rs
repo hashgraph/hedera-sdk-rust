@@ -88,23 +88,47 @@ impl TopicMessageQueryData {
 }
 
 impl TopicMessageQuery {
+    /// Returns the ID of the topic to retrieve messages for.
+    #[must_use]
+    pub fn get_topic_id(&self) -> Option<TopicId> {
+        self.data.topic_id
+    }
+
     /// Sets the topic ID to retrieve messages for.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.data.topic_id = Some(id.into());
         self
     }
 
-    /// Set to include messages which reached consensus on or after this time.
+    /// Returns the minimum `consensus_timestamp` of the messages to return.
+    #[must_use]
+    pub fn get_start_time(&self) -> Option<OffsetDateTime> {
+        self.data.start_time
+    }
+
+    /// Sets to include messages which reached consensus on or after this time.
     /// Defaults to the current time.
     pub fn start_time(&mut self, time: OffsetDateTime) -> &mut Self {
         self.data.start_time = Some(time);
         self
     }
 
-    /// Set to include messages which reached consensus before this time.
+    /// Returns the maximum `consensus_timestamp` of the messages to return.
+    #[must_use]
+    pub fn get_end_time(&self) -> Option<OffsetDateTime> {
+        self.data.end_time
+    }
+
+    /// Sets to include messages which reached consensus before this time.
     pub fn end_time(&mut self, time: OffsetDateTime) -> &mut Self {
         self.data.end_time = Some(time);
         self
+    }
+
+    /// Returns maximum number of messages to be returned.
+    #[must_use]
+    pub fn get_limit(&self) -> u64 {
+        self.data.limit
     }
 
     /// Sets the maximum number of messages to be returned, before closing the subscription.

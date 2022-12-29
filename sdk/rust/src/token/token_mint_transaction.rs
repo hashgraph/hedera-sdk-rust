@@ -76,16 +76,34 @@ pub struct TokenMintTransactionData {
 }
 
 impl TokenMintTransaction {
+    /// Returns the token for which to mint tokens.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
+    }
+
     /// Sets the token for which to mint tokens.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
     }
 
+    /// Returns the amount of a fungible token to mint to the treasury account.
+    #[must_use]
+    pub fn get_amount(&self) -> u64 {
+        self.body.data.amount
+    }
+
     /// Sets the amount of a fungible token to mint to the treasury account.
     pub fn amount(&mut self, amount: u64) -> &mut Self {
         self.body.data.amount = amount;
         self
+    }
+
+    /// Returns the list of metadata for a non-fungible token to mint to the treasury account.
+    #[must_use]
+    pub fn get_metadata(&self) -> &[Vec<u8>] {
+        &self.body.data.metadata
     }
 
     /// Sets the list of metadata for a non-fungible token to mint to the treasury account.

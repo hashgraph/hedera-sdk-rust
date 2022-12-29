@@ -89,10 +89,22 @@ pub struct TokenWipeTransactionData {
 }
 
 impl TokenWipeTransaction {
+    /// Returns the account to be wiped.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.body.data.account_id
+    }
+
     /// Sets the account to be wiped.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id);
         self
+    }
+
+    /// Returns the token for which the account will be wiped.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
     }
 
     /// Sets the token for which the account will be wiped.
@@ -101,11 +113,23 @@ impl TokenWipeTransaction {
         self
     }
 
+    /// Returns the amount of a fungible token to wipe from the specified account.
+    #[must_use]
+    pub fn get_amount(&self) -> Option<u64> {
+        self.body.data.amount
+    }
+
     // TODO remove `impl Into<_>`
     /// Sets the amount of a fungible token to wipe from the specified account.
     pub fn amount(&mut self, amount: impl Into<u64>) -> &mut Self {
         self.body.data.amount = Some(amount.into());
         self
+    }
+
+    /// Returns the serial numbers of a non-fungible token to wipe from the specified account.
+    #[must_use]
+    pub fn get_serials(&self) -> &[u64] {
+        &self.body.data.serials
     }
 
     /// Sets the serial numbers of a non-fungible token to wipe from the specified account.

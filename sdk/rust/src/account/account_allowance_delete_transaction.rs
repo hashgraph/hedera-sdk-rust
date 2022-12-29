@@ -50,7 +50,7 @@ pub type AccountAllowanceDeleteTransaction = Transaction<AccountAllowanceDeleteT
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountAllowanceDeleteTransactionData {
-    pub nft_allowances: Vec<NftRemoveAllowance>,
+    nft_allowances: Vec<NftRemoveAllowance>,
 }
 
 #[derive(Debug, Clone)]
@@ -68,6 +68,12 @@ pub struct NftRemoveAllowance {
 }
 
 impl AccountAllowanceDeleteTransaction {
+    /// Get the nft allowances that will be removed.
+    #[must_use]
+    pub fn get_nft_allowances(&self) -> &[NftRemoveAllowance] {
+        &self.body.data.nft_allowances
+    }
+
     /// Remove all nft token allowances.
     pub fn delete_all_token_nft_allowances(
         &mut self,

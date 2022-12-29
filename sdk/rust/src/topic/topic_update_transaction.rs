@@ -88,10 +88,22 @@ pub struct TopicUpdateTransactionData {
 }
 
 impl TopicUpdateTransaction {
-    /// Set the topic ID which is being updated.
+    /// Returns the topic ID which is being updated.
+    #[must_use]
+    pub fn get_topic_id(&self) -> Option<TopicId> {
+        self.body.data.topic_id
+    }
+
+    /// Sets the topic ID which is being updated.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.body.data.topic_id = Some(id.into());
         self
+    }
+
+    /// Returns the new expiration time to extend to (ignored if equal to or before the current one).
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.body.data.expiration_time
     }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
@@ -100,13 +112,24 @@ impl TopicUpdateTransaction {
         self
     }
 
+    /// Returns the new topic memo for the topic.
+    #[must_use]
+    pub fn get_topic_memo(&self) -> Option<&str> {
+        self.body.data.topic_memo.as_deref()
+    }
+
     /// Sets the short publicly visible memo about the topic.
     ///
     /// No guarantee of uniqueness.
-    ///
     pub fn topic_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.topic_memo = Some(memo.into());
         self
+    }
+
+    /// Returns the access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
+    #[must_use]
+    pub fn get_admin_key(&self) -> Option<&Key> {
+        self.body.data.admin_key.as_ref()
     }
 
     /// Sets the access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
@@ -115,10 +138,23 @@ impl TopicUpdateTransaction {
         self
     }
 
+    /// Returns the access control for `TopicMessageSubmitTransaction`.
+    #[must_use]
+    pub fn get_submit_key(&self) -> Option<&Key> {
+        self.body.data.submit_key.as_ref()
+    }
+
     /// Sets the access control for `TopicMessageSubmitTransaction`.
     pub fn submit_key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.body.data.submit_key = Some(key.into());
         self
+    }
+
+    /// Returns the initial lifetime of the topic and the amount of time to attempt to
+    /// extend the topic's lifetime by automatically at the topic's expiration time.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Option<Duration> {
+        self.body.data.auto_renew_period
     }
 
     /// Sets the initial lifetime of the topic and the amount of time to attempt to
@@ -126,6 +162,12 @@ impl TopicUpdateTransaction {
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(period);
         self
+    }
+
+    /// Returns the account to be used at the topic's expiration time to extend the life of the topic.
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.body.data.auto_renew_account_id
     }
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.

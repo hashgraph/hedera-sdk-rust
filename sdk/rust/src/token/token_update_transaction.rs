@@ -128,24 +128,50 @@ pub struct TokenUpdateTransactionData {
 }
 
 impl TokenUpdateTransaction {
+    /// Returns the token to be updated.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
+    }
+
     /// Sets the token to be updated.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
     }
 
+    /// Returns the new publicly visible name of the token.
+    #[must_use]
+    pub fn get_token_name(&self) -> &str {
+        &self.body.data.token_name
+    }
+
     /// Sets the new publicly visible name of the token.
+    ///
     /// Maximum 100 characters.
     pub fn token_name(&mut self, token_name: impl Into<String>) -> &mut Self {
         self.body.data.token_name = token_name.into();
         self
     }
 
+    ///Returns the new publicly visible token symbol.
+    #[must_use]
+    pub fn get_token_symbol(&self) -> &str {
+        &self.body.data.token_symbol
+    }
+
     /// Sets the new publicly visible token symbol.
+    ///
     /// Maximum 100 characters.
     pub fn token_symbol(&mut self, token_symbol: impl Into<String>) -> &mut Self {
         self.body.data.token_symbol = token_symbol.into();
         self
+    }
+
+    /// Returns the new account which will act as a treasury for the token.
+    #[must_use]
+    pub fn get_treasury_account_id(&self) -> Option<AccountId> {
+        self.body.data.treasury_account_id
     }
 
     /// Sets the new account which will act as a treasury for the token.
@@ -160,12 +186,24 @@ impl TokenUpdateTransaction {
         self
     }
 
+    /// Returns the new key which can perform update/delete operations on the token.
+    #[must_use]
+    pub fn get_admin_key(&self) -> Option<&Key> {
+        self.body.data.admin_key.as_ref()
+    }
+
     /// Sets the new key which can perform update/delete operations on the token.
     ///
     /// If the token is immutable, transaction will resolve to `TokenIsImmutable`.
     pub fn admin_key(&mut self, admin_key: impl Into<Key>) -> &mut Self {
         self.body.data.admin_key = Some(admin_key.into());
         self
+    }
+
+    /// Returns the new key which can grant or revoke KYC of an account for the token's transactions.
+    #[must_use]
+    pub fn get_kyc_key(&self) -> Option<&Key> {
+        self.body.data.kyc_key.as_ref()
     }
 
     /// Sets the new key which can grant or revoke KYC of an account for the token's transactions.
@@ -176,12 +214,24 @@ impl TokenUpdateTransaction {
         self
     }
 
+    /// Returns the new key which can sign to freeze or unfreeze an account for token transactions.
+    #[must_use]
+    pub fn get_freeze_key(&self) -> Option<&Key> {
+        self.body.data.freeze_key.as_ref()
+    }
+
     /// Sets the new key which can sign to freeze or unfreeze an account for token transactions.
     ///
     /// If the token does not currently have a Freeze key, transaction will resolve to `TokenHasNoFreezeKey`.
     pub fn freeze_key(&mut self, freeze_key: impl Into<Key>) -> &mut Self {
         self.body.data.freeze_key = Some(freeze_key.into());
         self
+    }
+
+    /// Returns the new key which can wipe the token balance of an account.
+    #[must_use]
+    pub fn get_wipe_key(&self) -> Option<&Key> {
+        self.body.data.wipe_key.as_ref()
     }
 
     /// Sets the new key which can wipe the token balance of an account.
@@ -192,6 +242,12 @@ impl TokenUpdateTransaction {
         self
     }
 
+    /// Returns the new key which can change the supply of a token.
+    #[must_use]
+    pub fn get_supply_key(&self) -> Option<&Key> {
+        self.body.data.supply_key.as_ref()
+    }
+
     /// Sets the new key which can change the supply of a token.
     ///
     /// If the token does not currently have a Supply key, transaction will resolve to `TokenHasNoSupplyKey`.
@@ -200,10 +256,22 @@ impl TokenUpdateTransaction {
         self
     }
 
+    /// Returns the new account which will be automatically charged to renew the token's expiration.
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.body.data.auto_renew_account_id
+    }
+
     /// Sets the new account which will be automatically charged to renew the token's expiration.
     pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
         self.body.data.auto_renew_account_id = Some(auto_renew_account_id);
         self
+    }
+
+    /// Returns the new interval at which the auto renew account will be charged to extend the token's expiry.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Option<Duration> {
+        self.body.data.auto_renew_period
     }
 
     /// Sets the new interval at which the auto renew account will be charged to extend
@@ -211,6 +279,12 @@ impl TokenUpdateTransaction {
     pub fn auto_renew_period(&mut self, auto_renew_period: Duration) -> &mut Self {
         self.body.data.auto_renew_period = Some(auto_renew_period);
         self
+    }
+
+    /// Returns the new time at which the token should expire.
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.body.data.expiration_time
     }
 
     /// Sets the new time at which the token should expire.
@@ -224,10 +298,24 @@ impl TokenUpdateTransaction {
         self
     }
 
-    /// Sets the new memo associated with the token (UTF-8 encoding max 100 bytes).
+    /// Returns the new memo associated with the token.
+    #[must_use]
+    pub fn get_token_memo(&self) -> &str {
+        &self.body.data.token_memo
+    }
+
+    /// Sets the new memo associated with the token.
+    ///
+    /// Maximum of 100 bytes.
     pub fn token_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.token_memo = memo.into();
         self
+    }
+
+    /// Returns the new key which can change the token's custom fee schedule.
+    #[must_use]
+    pub fn get_fee_schedule_key(&self) -> Option<&Key> {
+        self.body.data.fee_schedule_key.as_ref()
     }
 
     /// Sets the new key which can change the token's custom fee schedule.
@@ -237,6 +325,12 @@ impl TokenUpdateTransaction {
     pub fn fee_schedule_key(&mut self, fee_schedule_key: impl Into<Key>) -> &mut Self {
         self.body.data.fee_schedule_key = Some(fee_schedule_key.into());
         self
+    }
+
+    /// Returns the new key which can pause and unpause the token.
+    #[must_use]
+    pub fn get_pause_key(&self) -> Option<&Key> {
+        self.body.data.pause_key.as_ref()
     }
 
     /// Sets the new key which can pause and unpause the Token.

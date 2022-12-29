@@ -139,6 +139,8 @@ impl AccountAllowanceApproveTransaction {
         owner_account_id: AccountId,
         spender_account_id: AccountId,
     ) -> &mut Self {
+        self.require_not_frozen();
+
         let owner_account_id = owner_account_id;
         let spender_account_id = spender_account_id;
 

@@ -65,10 +65,23 @@ impl From<TransactionReceiptQueryData> for AnyQueryData {
 }
 
 impl TransactionReceiptQuery {
-    /// Set the ID of the transaction for which the receipt is being requested.
+    /// Get the ID of the transaction for which the receipt is being requested.
+    #[must_use]
+    pub fn get_transaction_id(&self) -> Option<TransactionId> {
+        self.data.transaction_id
+    }
+
+    /// Sets the ID of the transaction for which the receipt is being requested.
     pub fn transaction_id(&mut self, transaction_id: TransactionId) -> &mut Self {
         self.data.transaction_id = Some(transaction_id);
         self
+    }
+
+    /// Whether the response should include the receipts of any child transactions spawned by the
+    /// top-level transaction with the given transaction.
+    #[must_use]
+    pub fn get_include_children(&self) -> bool {
+        self.data.include_children
     }
 
     /// Whether the response should include the receipts of any child transactions spawned by the
@@ -79,9 +92,21 @@ impl TransactionReceiptQuery {
     }
 
     /// Whether receipts of processing duplicate transactions should be returned.
+    #[must_use]
+    pub fn get_include_duplicates(&self) -> bool {
+        self.data.include_duplicates
+    }
+
+    /// Whether receipts of processing duplicate transactions should be returned.
     pub fn include_duplicates(&mut self, include: bool) -> &mut Self {
         self.data.include_duplicates = include;
         self
+    }
+
+    /// Whether the receipt status should be validated.
+    #[must_use]
+    pub fn get_validate_status(&self) -> bool {
+        self.data.validate_status
     }
 
     /// Whether the receipt status should be validated.

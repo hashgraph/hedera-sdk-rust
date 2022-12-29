@@ -148,12 +148,26 @@ impl<D> Transaction<D>
 where
     D: TransactionExecute,
 {
-    /// Set the account IDs of the nodes that this transaction may be submitted to.
+    /// Returns the account IDs of the nodes that this transaction may be submitted to.
+    ///
+    /// `None` means any node configured on the client.
+    #[must_use]
+    pub fn get_node_account_ids(&self) -> Option<&[AccountId]> {
+        self.body.node_account_ids.as_deref()
+    }
+
+    /// Sets the account IDs of the nodes that this transaction may be submitted to.
     ///
     /// Defaults to the full list of nodes configured on the client.
     pub fn node_account_ids(&mut self, ids: impl IntoIterator<Item = AccountId>) -> &mut Self {
         self.body.node_account_ids = Some(ids.into_iter().collect());
         self
+    }
+
+    /// Returns the duration that this transaction is valid for, once finalized and signed.
+    #[must_use]
+    pub fn get_transaction_valid_duration(&self) -> Option<Duration> {
+        self.body.transaction_valid_duration
     }
 
     /// Sets the duration that this transaction is valid for, once finalized and signed.
@@ -164,22 +178,45 @@ where
         self
     }
 
-    /// Set the maximum transaction fee the paying account is willing to pay.
+    /// Returns the maximum transaction fee the paying account is willing to pay.
+    #[must_use]
+    pub fn get_max_transaction_fee(&self) -> Option<Hbar> {
+        self.body.max_transaction_fee
+    }
+
+    /// Sets the maximum transaction fee the paying account is willing to pay.
     pub fn max_transaction_fee(&mut self, fee: Hbar) -> &mut Self {
         self.body.max_transaction_fee = Some(fee);
         self
     }
 
-    /// Set a note or description that should be recorded in the transaction record (maximum length
-    /// of 100 characters).
+    /// Sets a note / description that should be recorded in the transaction record.
+    ///
+    /// Maximum length of 100 characters.
+    #[must_use]
+    pub fn get_transaction_memo(&self) -> &str {
+        &self.body.transaction_memo
+    }
+
+    /// Sets a note or description that should be recorded in the transaction record.
+    ///
+    /// Maximum length of 100 characters.
     pub fn transaction_memo(&mut self, memo: impl AsRef<str>) -> &mut Self {
         self.body.transaction_memo = memo.as_ref().to_owned();
         self
     }
 
-    /// Set an explicit transaction ID to use to identify this transaction.
+    /// Returns the explicit transaction ID to use to identify this transaction.
     ///
-    /// Overrides payer account defined on this transaction or on the client.
+    /// Overrides the payer account defined on this transaction or on the client.
+    #[must_use]
+    pub fn get_transaction_id(&self) -> Option<TransactionId> {
+        self.body.transaction_id
+    }
+
+    /// Sets an explicit transaction ID to use to identify this transaction.
+    ///
+    /// Overrides the payer account defined on this transaction or on the client.
     pub fn transaction_id(&mut self, id: TransactionId) -> &mut Self {
         self.body.transaction_id = Some(id);
         self
@@ -191,11 +228,16 @@ where
     }
 
     /// Sign the transaction.
-    pub fn sign_with<F>(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
+    pub fn sign_with(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
         self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), signer))
     }
 
     pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {
+        // skip the signer if we already have it.
+        if self.signers.iter().any(|it| it.public_key() == signer.public_key()) {
+            return self;
+        }
+
         self.signers.push(signer);
         self
     }

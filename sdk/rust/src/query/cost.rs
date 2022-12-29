@@ -47,6 +47,7 @@ impl<'a, D> QueryCost<'a, D>
 where
     D: QueryExecute,
 {
+    #[must_use]
     pub(super) fn new(query: &'a Query<D>) -> Self {
         Self(query)
     }

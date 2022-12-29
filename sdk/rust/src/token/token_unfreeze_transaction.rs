@@ -66,10 +66,22 @@ pub struct TokenUnfreezeTransactionData {
 }
 
 impl TokenUnfreezeTransaction {
+    /// Returns the account to be unfrozen.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.body.data.account_id
+    }
+
     /// Sets the account to be unfrozen.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(account_id);
         self
+    }
+
+    /// Returns the token for which the account will be unfrozen.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
     }
 
     /// Sets the token for which this account will be unfrozen.

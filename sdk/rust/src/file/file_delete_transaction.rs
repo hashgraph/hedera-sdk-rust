@@ -57,7 +57,13 @@ pub struct FileDeleteTransactionData {
 }
 
 impl FileDeleteTransaction {
-    /// Set the file to delete.
+    /// Returns the ID of the file to be deleted.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.body.data.file_id
+    }
+
+    /// Sets the ID of the file to be deleted.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
         self.body.data.file_id = Some(id.into());
         self

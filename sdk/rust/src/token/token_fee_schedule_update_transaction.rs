@@ -63,10 +63,23 @@ pub struct TokenFeeScheduleUpdateTransactionData {
 }
 
 impl TokenFeeScheduleUpdateTransaction {
-    /// Sets the token whose fee schedule is to be updated.
+    /// Returns the ID of the token that's being updated.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.body.data.token_id
+    }
+
+    // note(sr): what is being updated is implicit.
+    /// Sets the ID of the token that's being updated.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
         self.body.data.token_id = Some(token_id.into());
         self
+    }
+
+    /// Returns the new custom fees to be assessed during a transfer.
+    #[must_use]
+    pub fn get_custom_fees(&self) -> &[AnyCustomFee] {
+        &self.body.data.custom_fees
     }
 
     /// Sets the new custom fees to be assessed during a transfer.

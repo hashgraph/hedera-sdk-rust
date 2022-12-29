@@ -106,10 +106,22 @@ impl Default for ContractCreateTransactionData {
 }
 
 impl ContractCreateTransaction {
+    /// Returns the `FileId` to be used as the bytecode for this smart contract.
+    #[must_use]
+    pub fn get_bytecode_file_id(&self) -> Option<FileId> {
+        self.body.data.bytecode_file_id
+    }
+
     /// Sets the file to use as the bytes for the smart contract.
     pub fn bytecode_file_id(&mut self, file_id: FileId) -> &mut Self {
         self.body.data.bytecode_file_id = Some(file_id);
         self
+    }
+
+    /// Returns the bytecode for the smart contract.
+    #[must_use]
+    pub fn get_bytecode(&self) -> Option<&[u8]> {
+        self.body.data.bytecode.as_deref()
     }
 
     /// Sets the bytes of the smart contract.
@@ -118,16 +130,34 @@ impl ContractCreateTransaction {
         self
     }
 
+    /// Returns the admin key.
+    #[must_use]
+    pub fn get_admin_key(&self) -> Option<&Key> {
+        self.body.data.admin_key.as_ref()
+    }
+
     /// Sets the admin key.
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.body.data.admin_key = Some(key.into());
         self
     }
 
+    /// Returns the gas limit to deploy the smart contract.
+    #[must_use]
+    pub fn get_gas(&self) -> u64 {
+        self.body.data.gas
+    }
+
     /// Sets the gas limit to deploy the smart contract.
     pub fn gas(&mut self, gas: u64) -> &mut Self {
         self.body.data.gas = gas;
         self
+    }
+
+    /// Returns the initial balance to put into the cryptocurrency account associated with the new smart contract.
+    #[must_use]
+    pub fn get_initial_balance(&self) -> Hbar {
+        self.body.data.initial_balance
     }
 
     /// Sets the initial balance to put into the cryptocurrency account associated with the new
@@ -137,10 +167,22 @@ impl ContractCreateTransaction {
         self
     }
 
-    /// Set the auto renew period for this smart contract.
+    /// Returns the auto renew period for this smart contract.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Duration {
+        self.body.data.auto_renew_period
+    }
+
+    /// Sets the auto renew period for this smart contract.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
         self.body.data.auto_renew_period = period;
         self
+    }
+
+    /// Returns the parameters to pass to the constructor.
+    #[must_use]
+    pub fn get_constructor_parameters(&self) -> &[u8] {
+        self.body.data.constructor_parameters.as_ref()
     }
 
     /// Sets the parameters to pass to the constructor.
@@ -149,16 +191,35 @@ impl ContractCreateTransaction {
         self
     }
 
+    /// Returns the memo for the new smart contract.
+    #[must_use]
+    pub fn get_contract_memo(&self) -> &str {
+        self.body.data.contract_memo.as_str()
+    }
+
     /// Sets the memo for the new smart contract.
     pub fn contract_memo(&mut self, memo: impl Into<String>) -> &mut Self {
         self.body.data.contract_memo = memo.into();
         self
     }
 
+    /// Returns the maximum number of tokens that the contract can be automatically associated with.
+    #[must_use]
+    pub fn get_max_automatic_token_associations(&self) -> u32 {
+        self.body.data.max_automatic_token_associations
+    }
+
     /// Sets the maximum number of tokens that this contract can be automatically associated with.
     pub fn max_automatic_token_associations(&mut self, max: u32) -> &mut Self {
         self.body.data.max_automatic_token_associations = max;
         self
+    }
+
+    /// Returns the account ot be used at the contract's expiration time to extend the
+    /// life of the contract
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.body.data.auto_renew_account_id
     }
 
     /// Sets the account to be used at the contract's expiration time to extend the
@@ -168,21 +229,42 @@ impl ContractCreateTransaction {
         self
     }
 
-    /// Set the ID of the account to which this contract is staking.
+    /// Returns the ID of the account to which this contract is staking.
+    #[must_use]
+    pub fn get_staked_account_id(&self) -> Option<AccountId> {
+        self.body.data.staked_account_id
+    }
+
+    /// Sets the ID of the account to which this contract is staking.
+    ///
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.staked_account_id = Some(id);
+        self.body.data.staked_node_id = None;
         self
     }
 
-    /// Set the ID of the node to which this contract is staking.
+    /// Returns the ID of the node to which this contract is staking.
+    #[must_use]
+    pub fn get_staked_node_id(&self) -> Option<u64> {
+        self.body.data.staked_node_id
+    }
+
+    /// Sets the ID of the node to which this contract is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
         self.body.data.staked_node_id = Some(id);
+        self.body.data.staked_account_id = None;
         self
     }
 
-    /// Set to true, the contract declines receiving a staking reward. The default value is false.
+    /// Returns `true` if the contract will decline receiving staking rewards, `false` otherwise.
+    #[must_use]
+    pub fn get_decline_staking_reward(&self) -> bool {
+        self.body.data.decline_staking_reward
+    }
+
+    /// If `true` the contract should declie receiving staking rewards. The default value is `false`.
     pub fn decline_staking_reward(&mut self, decline: bool) -> &mut Self {
         self.body.data.decline_staking_reward = decline;
         self

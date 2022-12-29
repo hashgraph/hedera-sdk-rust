@@ -50,17 +50,29 @@ pub type AccountDeleteTransaction = Transaction<AccountDeleteTransactionData>;
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct AccountDeleteTransactionData {
     /// The account ID which will receive all remaining hbars.
-    pub transfer_account_id: Option<AccountId>,
+    transfer_account_id: Option<AccountId>,
 
     /// The account ID which should be deleted.
-    pub account_id: Option<AccountId>,
+    account_id: Option<AccountId>,
 }
 
 impl AccountDeleteTransaction {
+    /// Get the account ID which should be deleted.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.body.data.account_id
+    }
+
     /// Sets the account ID which should be deleted.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.body.data.account_id = Some(id);
         self
+    }
+
+    /// Get the account ID which will receive all remaining hbars.
+    #[must_use]
+    pub fn get_transfer_account_id(&self) -> Option<AccountId> {
+        self.body.data.transfer_account_id
     }
 
     /// Sets the account ID which will receive all remaining hbars.
