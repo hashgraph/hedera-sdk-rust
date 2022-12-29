@@ -66,20 +66,20 @@ impl TokenFeeScheduleUpdateTransaction {
     /// Returns the ID of the token that's being updated.
     #[must_use]
     pub fn get_token_id(&self) -> Option<TokenId> {
-        self.body.data.token_id
+        self.data().token_id
     }
 
     // note(sr): what is being updated is implicit.
     /// Sets the ID of the token that's being updated.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
     }
 
     /// Returns the new custom fees to be assessed during a transfer.
     #[must_use]
     pub fn get_custom_fees(&self) -> &[AnyCustomFee] {
-        &self.body.data.custom_fees
+        &self.data().custom_fees
     }
 
     /// Sets the new custom fees to be assessed during a transfer.
@@ -87,7 +87,7 @@ impl TokenFeeScheduleUpdateTransaction {
         &mut self,
         custom_fees: impl IntoIterator<Item = AnyCustomFee>,
     ) -> &mut Self {
-        self.body.data.custom_fees = custom_fees.into_iter().collect();
+        self.data_mut().custom_fees = custom_fees.into_iter().collect();
         self
     }
 }
@@ -186,7 +186,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
             assert_eq!(

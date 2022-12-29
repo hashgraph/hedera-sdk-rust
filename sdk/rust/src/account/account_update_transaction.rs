@@ -122,48 +122,48 @@ impl AccountUpdateTransaction {
     /// Returns the ID for the account that is being updated.
     #[must_use]
     pub fn get_account_id(&self) -> Option<AccountId> {
-        self.body.data.account_id
+        self.data().account_id
     }
 
     /// Sets the ID for the account that is being updated.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(id);
+        self.data_mut().account_id = Some(id);
         self
     }
 
     /// Gets the new expiration time to extend to (ignored if equal to or before the current one).
     #[must_use]
     pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
-        self.body.data.expiration_time
+        self.data().expiration_time
     }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(at);
+        self.data_mut().expiration_time = Some(at);
         self
     }
 
     /// Returns the key that the account will be updated to.
     #[must_use]
     pub fn get_key(&self) -> Option<&Key> {
-        self.body.data.key.as_ref()
+        self.data().key.as_ref()
     }
 
     /// Sets the key for this account.
     pub fn key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.key = Some(key.into());
+        self.data_mut().key = Some(key.into());
         self
     }
 
     /// If true, this account's key must sign any transaction depositing hbar into this account.
     #[must_use]
     pub fn get_receiver_signature_required(&self) -> Option<bool> {
-        self.body.data.receiver_signature_required
+        self.data().receiver_signature_required
     }
 
     /// Set to true to require this account to sign any transfer of hbars to this account.
     pub fn receiver_signature_required(&mut self, required: bool) -> &mut Self {
-        self.body.data.receiver_signature_required = Some(required);
+        self.data_mut().receiver_signature_required = Some(required);
         self
     }
 
@@ -172,7 +172,7 @@ impl AccountUpdateTransaction {
     #[allow(deprecated)]
     #[must_use]
     pub fn get_proxy_account_id(&self) -> Option<AccountId> {
-        self.body.data.proxy_account_id
+        self.data().proxy_account_id
     }
 
     /// Sets the proxy account ID for this account.
@@ -187,56 +187,56 @@ impl AccountUpdateTransaction {
     #[deprecated]
     #[allow(deprecated)]
     pub fn proxy_account_id(&mut self, proxy_account_id: AccountId) -> &mut Self {
-        self.body.data.proxy_account_id = Some(proxy_account_id);
+        self.data_mut().proxy_account_id = Some(proxy_account_id);
         self
     }
 
     /// Returns the new auto renew period.
     #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
-        self.body.data.auto_renew_period
+        self.data().auto_renew_period
     }
 
     /// Sets the auto renew period for this account.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(period);
+        self.data_mut().auto_renew_period = Some(period);
         self
     }
 
     /// Returns the new auto renew account id.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
-        self.body.data.auto_renew_account_id
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(id);
+        self.data_mut().auto_renew_account_id = Some(id);
         self
     }
 
     /// Returns the memo associated with the account.
     #[must_use]
     pub fn get_account_memo(&self) -> Option<&str> {
-        self.body.data.account_memo.as_deref()
+        self.data().account_memo.as_deref()
     }
 
     /// Sets the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.account_memo = Some(memo.into());
+        self.data_mut().account_memo = Some(memo.into());
         self
     }
 
     /// Returns the maximum number of tokens that an Account can be implicitly associated with.
     #[must_use]
     pub fn get_max_automatic_token_associations(&self) -> Option<u16> {
-        self.body.data.max_automatic_token_associations
+        self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
-        self.body.data.max_automatic_token_associations = Some(amount);
+        self.data_mut().max_automatic_token_associations = Some(amount);
         self
     }
 
@@ -244,13 +244,13 @@ impl AccountUpdateTransaction {
     /// This is mutually exclusive with `staked_node_id`.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.body.data.staked_account_id
+        self.data().staked_account_id
     }
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id);
+        self.data_mut().staked_account_id = Some(id);
         self
     }
 
@@ -258,13 +258,13 @@ impl AccountUpdateTransaction {
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.body.data.staked_node_id
+        self.data().staked_node_id
     }
 
     /// Sets the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        self.body.data.staked_node_id = Some(id);
+        self.data_mut().staked_node_id = Some(id);
         self
     }
 
@@ -273,12 +273,12 @@ impl AccountUpdateTransaction {
     /// and `None` if the value should remain unchanged.
     #[must_use]
     pub fn get_decline_staking_reward(&self) -> Option<bool> {
-        self.body.data.decline_staking_reward
+        self.data().decline_staking_reward
     }
 
     /// If set to true, the account declines receiving a staking reward. The default value is false.
     pub fn decline_staking_reward(&mut self, decline: bool) -> &mut Self {
-        self.body.data.decline_staking_reward = Some(decline);
+        self.data_mut().decline_staking_reward = Some(decline);
         self
     }
 }
@@ -435,7 +435,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(ACCOUNT_UPDATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountUpdate(transaction) => transaction);
 
             assert_eq!(
                 data.expiration_time.unwrap(),
@@ -443,7 +443,7 @@ mod tests {
             );
             assert_eq!(data.receiver_signature_required.unwrap(), true);
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-            assert_eq!(data.account_memo.unwrap(), "An account memo");
+            assert_eq!(data.account_memo.as_deref(), Some("An account memo"));
             assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
             assert_eq!(data.staked_node_id.unwrap(), 7);
             assert_eq!(data.decline_staking_reward.unwrap(), false);
@@ -451,7 +451,7 @@ mod tests {
             assert_eq!(data.staked_account_id, Some(AccountId::from(1002)));
             assert_eq!(data.proxy_account_id, Some(AccountId::from(3141)));
 
-            let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+            let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);
             assert_eq!(key, PublicKey::from_str(KEY)?);
 
             Ok(())

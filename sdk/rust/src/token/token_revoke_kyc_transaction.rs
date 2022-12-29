@@ -70,23 +70,23 @@ impl TokenRevokeKycTransaction {
     /// Returns the account to have their KYC revoked.
     #[must_use]
     pub fn get_account_id(&self) -> Option<AccountId> {
-        self.body.data.account_id
+        self.data().account_id
     }
     /// Sets the account to have their KYC revoked.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(account_id);
+        self.data_mut().account_id = Some(account_id);
         self
     }
 
     /// Returns the token for which the account will have their KYC revoked.
     #[must_use]
     pub fn get_token_id(&self) -> Option<TokenId> {
-        self.body.data.token_id
+        self.data().token_id
     }
 
     /// Sets the token for which this account will have their KYC revoked.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
     }
 }
@@ -170,7 +170,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(TOKEN_REVOKE_KYC_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenRevokeKyc(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenRevokeKyc(transaction) => transaction);
 
             assert_eq!(data.token_id, Some(TokenId::from(1002)));
             assert_eq!(data.account_id, Some(AccountId::from(1001)));

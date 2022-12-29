@@ -60,24 +60,24 @@ impl AccountDeleteTransaction {
     /// Get the account ID which should be deleted.
     #[must_use]
     pub fn get_account_id(&self) -> Option<AccountId> {
-        self.body.data.account_id
+        self.data().account_id
     }
 
     /// Sets the account ID which should be deleted.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(id);
+        self.data_mut().account_id = Some(id);
         self
     }
 
     /// Get the account ID which will receive all remaining hbars.
     #[must_use]
     pub fn get_transfer_account_id(&self) -> Option<AccountId> {
-        self.body.data.transfer_account_id
+        self.data().transfer_account_id
     }
 
     /// Sets the account ID which will receive all remaining hbars.
     pub fn transfer_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.transfer_account_id = Some(id);
+        self.data_mut().transfer_account_id = Some(id);
         self
     }
 }
@@ -162,7 +162,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(ACCOUNT_DELETE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountDelete(transaction) => transaction);
 
             assert_eq!(data.transfer_account_id, Some(AccountId::from(1001)));
             assert_eq!(data.account_id, Some(AccountId::from(1002)));

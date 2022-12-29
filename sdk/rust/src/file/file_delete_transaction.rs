@@ -60,12 +60,12 @@ impl FileDeleteTransaction {
     /// Returns the ID of the file to be deleted.
     #[must_use]
     pub fn get_file_id(&self) -> Option<FileId> {
-        self.body.data.file_id
+        self.data().file_id
     }
 
     /// Sets the ID of the file to be deleted.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
-        self.body.data.file_id = Some(id.into());
+        self.data_mut().file_id = Some(id.into());
         self
     }
 }
@@ -143,7 +143,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(FILE_DELETE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::FileDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::FileDelete(transaction) => transaction);
 
             assert_eq!(data.file_id.unwrap(), FileId::from(1001));
 

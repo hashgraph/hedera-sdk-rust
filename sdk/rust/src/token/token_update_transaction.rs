@@ -131,47 +131,47 @@ impl TokenUpdateTransaction {
     /// Returns the token to be updated.
     #[must_use]
     pub fn get_token_id(&self) -> Option<TokenId> {
-        self.body.data.token_id
+        self.data().token_id
     }
 
     /// Sets the token to be updated.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
     }
 
     /// Returns the new publicly visible name of the token.
     #[must_use]
     pub fn get_token_name(&self) -> &str {
-        &self.body.data.token_name
+        &self.data().token_name
     }
 
     /// Sets the new publicly visible name of the token.
     ///
     /// Maximum 100 characters.
     pub fn token_name(&mut self, token_name: impl Into<String>) -> &mut Self {
-        self.body.data.token_name = token_name.into();
+        self.data_mut().token_name = token_name.into();
         self
     }
 
     ///Returns the new publicly visible token symbol.
     #[must_use]
     pub fn get_token_symbol(&self) -> &str {
-        &self.body.data.token_symbol
+        &self.data().token_symbol
     }
 
     /// Sets the new publicly visible token symbol.
     ///
     /// Maximum 100 characters.
     pub fn token_symbol(&mut self, token_symbol: impl Into<String>) -> &mut Self {
-        self.body.data.token_symbol = token_symbol.into();
+        self.data_mut().token_symbol = token_symbol.into();
         self
     }
 
     /// Returns the new account which will act as a treasury for the token.
     #[must_use]
     pub fn get_treasury_account_id(&self) -> Option<AccountId> {
-        self.body.data.treasury_account_id
+        self.data().treasury_account_id
     }
 
     /// Sets the new account which will act as a treasury for the token.
@@ -182,109 +182,109 @@ impl TokenUpdateTransaction {
     /// If successful, the token balance held in the previous treasury account is transferred to the
     /// new one.
     pub fn treasury_account_id(&mut self, treasury_account_id: AccountId) -> &mut Self {
-        self.body.data.treasury_account_id = Some(treasury_account_id);
+        self.data_mut().treasury_account_id = Some(treasury_account_id);
         self
     }
 
     /// Returns the new key which can perform update/delete operations on the token.
     #[must_use]
     pub fn get_admin_key(&self) -> Option<&Key> {
-        self.body.data.admin_key.as_ref()
+        self.data().admin_key.as_ref()
     }
 
     /// Sets the new key which can perform update/delete operations on the token.
     ///
     /// If the token is immutable, transaction will resolve to `TokenIsImmutable`.
     pub fn admin_key(&mut self, admin_key: impl Into<Key>) -> &mut Self {
-        self.body.data.admin_key = Some(admin_key.into());
+        self.data_mut().admin_key = Some(admin_key.into());
         self
     }
 
     /// Returns the new key which can grant or revoke KYC of an account for the token's transactions.
     #[must_use]
     pub fn get_kyc_key(&self) -> Option<&Key> {
-        self.body.data.kyc_key.as_ref()
+        self.data().kyc_key.as_ref()
     }
 
     /// Sets the new key which can grant or revoke KYC of an account for the token's transactions.
     ///
     /// If the token does not currently have a KYC key, transaction will resolve to `TokenHasNoKycKey`.
     pub fn kyc_key(&mut self, kyc_key: impl Into<Key>) -> &mut Self {
-        self.body.data.kyc_key = Some(kyc_key.into());
+        self.data_mut().kyc_key = Some(kyc_key.into());
         self
     }
 
     /// Returns the new key which can sign to freeze or unfreeze an account for token transactions.
     #[must_use]
     pub fn get_freeze_key(&self) -> Option<&Key> {
-        self.body.data.freeze_key.as_ref()
+        self.data().freeze_key.as_ref()
     }
 
     /// Sets the new key which can sign to freeze or unfreeze an account for token transactions.
     ///
     /// If the token does not currently have a Freeze key, transaction will resolve to `TokenHasNoFreezeKey`.
     pub fn freeze_key(&mut self, freeze_key: impl Into<Key>) -> &mut Self {
-        self.body.data.freeze_key = Some(freeze_key.into());
+        self.data_mut().freeze_key = Some(freeze_key.into());
         self
     }
 
     /// Returns the new key which can wipe the token balance of an account.
     #[must_use]
     pub fn get_wipe_key(&self) -> Option<&Key> {
-        self.body.data.wipe_key.as_ref()
+        self.data().wipe_key.as_ref()
     }
 
     /// Sets the new key which can wipe the token balance of an account.
     ///
     /// If the token does not currently have a Wipe key, transaction will resolve to `TokenHasNoWipeKey`.
     pub fn wipe_key(&mut self, wipe_key: impl Into<Key>) -> &mut Self {
-        self.body.data.wipe_key = Some(wipe_key.into());
+        self.data_mut().wipe_key = Some(wipe_key.into());
         self
     }
 
     /// Returns the new key which can change the supply of a token.
     #[must_use]
     pub fn get_supply_key(&self) -> Option<&Key> {
-        self.body.data.supply_key.as_ref()
+        self.data().supply_key.as_ref()
     }
 
     /// Sets the new key which can change the supply of a token.
     ///
     /// If the token does not currently have a Supply key, transaction will resolve to `TokenHasNoSupplyKey`.
     pub fn supply_key(&mut self, supply_key: impl Into<Key>) -> &mut Self {
-        self.body.data.supply_key = Some(supply_key.into());
+        self.data_mut().supply_key = Some(supply_key.into());
         self
     }
 
     /// Returns the new account which will be automatically charged to renew the token's expiration.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
-        self.body.data.auto_renew_account_id
+        self.data().auto_renew_account_id
     }
 
     /// Sets the new account which will be automatically charged to renew the token's expiration.
     pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(auto_renew_account_id);
+        self.data_mut().auto_renew_account_id = Some(auto_renew_account_id);
         self
     }
 
     /// Returns the new interval at which the auto renew account will be charged to extend the token's expiry.
     #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
-        self.body.data.auto_renew_period
+        self.data().auto_renew_period
     }
 
     /// Sets the new interval at which the auto renew account will be charged to extend
     /// the token's expiry.
     pub fn auto_renew_period(&mut self, auto_renew_period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(auto_renew_period);
+        self.data_mut().auto_renew_period = Some(auto_renew_period);
         self
     }
 
     /// Returns the new time at which the token should expire.
     #[must_use]
     pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
-        self.body.data.expiration_time
+        self.data().expiration_time
     }
 
     /// Sets the new time at which the token should expire.
@@ -292,8 +292,9 @@ impl TokenUpdateTransaction {
     /// If the new expiration time is earlier than the current expiration time, transaction
     /// will resolve to `InvalidExpirationTime`.
     pub fn expiration_time(&mut self, expiration_time: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(expiration_time);
-        self.body.data.auto_renew_period = None;
+        let data = self.data_mut();
+        data.expiration_time = Some(expiration_time);
+        data.auto_renew_period = None;
 
         self
     }
@@ -301,21 +302,21 @@ impl TokenUpdateTransaction {
     /// Returns the new memo associated with the token.
     #[must_use]
     pub fn get_token_memo(&self) -> &str {
-        &self.body.data.token_memo
+        &self.data().token_memo
     }
 
     /// Sets the new memo associated with the token.
     ///
     /// Maximum of 100 bytes.
     pub fn token_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.token_memo = memo.into();
+        self.data_mut().token_memo = memo.into();
         self
     }
 
     /// Returns the new key which can change the token's custom fee schedule.
     #[must_use]
     pub fn get_fee_schedule_key(&self) -> Option<&Key> {
-        self.body.data.fee_schedule_key.as_ref()
+        self.data().fee_schedule_key.as_ref()
     }
 
     /// Sets the new key which can change the token's custom fee schedule.
@@ -323,21 +324,21 @@ impl TokenUpdateTransaction {
     /// If the token does not currently have a fee schedule key, transaction will resolve to
     /// `TokenHasNoFeeScheduleKey`.
     pub fn fee_schedule_key(&mut self, fee_schedule_key: impl Into<Key>) -> &mut Self {
-        self.body.data.fee_schedule_key = Some(fee_schedule_key.into());
+        self.data_mut().fee_schedule_key = Some(fee_schedule_key.into());
         self
     }
 
     /// Returns the new key which can pause and unpause the token.
     #[must_use]
     pub fn get_pause_key(&self) -> Option<&Key> {
-        self.body.data.pause_key.as_ref()
+        self.data().pause_key.as_ref()
     }
 
     /// Sets the new key which can pause and unpause the Token.
     ///
     /// If the token does not currently have a pause key, transaction will resolve to `TokenHasNoPauseKey`.
     pub fn pause_key(&mut self, pause_key: impl Into<Key>) -> &mut Self {
-        self.body.data.pause_key = Some(pause_key.into());
+        self.data_mut().pause_key = Some(pause_key.into());
         self
     }
 }
@@ -496,7 +497,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_UPDATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenUpdate(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TokenUpdate(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
             assert_eq!(data.token_name, "Pound");

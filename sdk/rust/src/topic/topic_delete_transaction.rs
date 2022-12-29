@@ -61,12 +61,12 @@ impl TopicDeleteTransaction {
     /// Returns the ID of the topic which is being deleted in this transaction.
     #[must_use]
     pub fn get_topic_id(&self) -> Option<TopicId> {
-        self.body.data.topic_id
+        self.data().topic_id
     }
 
     /// Sets the topic ID which is being deleted in this transaction.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
-        self.body.data.topic_id = Some(id.into());
+        self.data_mut().topic_id = Some(id.into());
         self
     }
 }
@@ -144,7 +144,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOPIC_DELETE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicDelete(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TopicDelete(transaction) => transaction);
 
             assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
 

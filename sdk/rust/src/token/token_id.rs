@@ -102,7 +102,7 @@ impl TokenId {
     /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
     pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
         EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client).await
-    } 
+    }
 
     /// Create an NFT ID
     #[must_use]
