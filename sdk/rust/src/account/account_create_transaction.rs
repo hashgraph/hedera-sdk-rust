@@ -127,12 +127,12 @@ impl AccountCreateTransaction {
     /// Returns `Some(key)` if previously set, `None` otherwise.
     #[must_use]
     pub fn get_key(&self) -> Option<&Key> {
-        self.body.data.key.as_ref()
+        self.data().key.as_ref()
     }
 
     /// Sets the key for this account.
     pub fn key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.key = Some(key.into());
+        self.data_mut().key = Some(key.into());
         self
     }
 
@@ -141,36 +141,36 @@ impl AccountCreateTransaction {
     /// Returns `initial_balance` if previously set, `0` otherwise.
     #[must_use]
     pub fn get_initial_balance(&self) -> Hbar {
-        self.body.data.initial_balance
+        self.data().initial_balance
     }
 
     /// Sets the balance that will be transferred to this account on creation.
     pub fn initial_balance(&mut self, balance: Hbar) -> &mut Self {
-        self.body.data.initial_balance = balance;
+        self.data_mut().initial_balance = balance;
         self
     }
 
     /// Returns `true` if this account must sign any transfer of hbars _to_ itself.
     #[must_use]
     pub fn get_receiver_signature_required(&self) -> bool {
-        self.body.data.receiver_signature_required
+        self.data().receiver_signature_required
     }
 
     /// Sets to true to require this account to sign any transfer of hbars to this account.
     pub fn receiver_signature_required(&mut self, required: bool) -> &mut Self {
-        self.body.data.receiver_signature_required = required;
+        self.data_mut().receiver_signature_required = required;
         self
     }
 
     /// Returns the auto renew period for this account.
     #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
-        self.body.data.auto_renew_period
+        self.data().auto_renew_period
     }
 
     /// Sets the auto renew period for this account.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(period);
+        self.data_mut().auto_renew_period = Some(period);
         self
     }
 
@@ -178,25 +178,25 @@ impl AccountCreateTransaction {
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
-        self.body.data.auto_renew_account_id
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(id);
+        self.data_mut().auto_renew_account_id = Some(id);
         self
     }
 
     /// Get the memo associated with the account
     #[must_use]
     pub fn get_account_memo(&self) -> &str {
-        &self.body.data.account_memo
+        &self.data().account_memo
     }
 
     /// Sets the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.account_memo = memo.into();
+        self.data_mut().account_memo = memo.into();
         self
     }
 
@@ -205,19 +205,19 @@ impl AccountCreateTransaction {
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     #[must_use]
     pub fn get_max_automatic_token_associations(&self) -> u16 {
-        self.body.data.max_automatic_token_associations
+        self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
-        self.body.data.max_automatic_token_associations = amount;
+        self.data_mut().max_automatic_token_associations = amount;
         self
     }
 
     /// Returns the public key to be used as the account's alias.
     #[must_use]
     pub fn get_alias(&self) -> Option<&PublicKey> {
-        self.body.data.alias.as_ref()
+        self.data().alias.as_ref()
     }
 
     /// The bytes to be used as the account's alias.
@@ -228,19 +228,19 @@ impl AccountCreateTransaction {
     /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
     /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
     pub fn alias(&mut self, key: PublicKey) -> &mut Self {
-        self.body.data.alias = Some(key);
+        self.data_mut().alias = Some(key);
         self
     }
 
     /// Returns the evm address the account will be created with.
     #[must_use]
     pub fn get_evm_address(&self) -> Option<[u8; 20]> {
-        self.body.data.evm_address
+        self.data().evm_address
     }
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
-        self.body.data.evm_address = Some(evm_address);
+        self.data_mut().evm_address = Some(evm_address);
         self
     }
 
@@ -248,14 +248,15 @@ impl AccountCreateTransaction {
     /// This is mutually exclusive with `staked_node_id`.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.body.data.staked_account_id
+        self.data().staked_account_id
     }
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id);
-        self.body.data.staked_node_id = None;
+        let data = self.data_mut();
+        data.staked_account_id = Some(id);
+        data.staked_node_id = None;
         self
     }
 
@@ -263,26 +264,27 @@ impl AccountCreateTransaction {
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.body.data.staked_node_id
+        self.data().staked_node_id
     }
 
     /// Sets the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        self.body.data.staked_account_id = None;
-        self.body.data.staked_node_id = Some(id);
+        let data = self.data_mut();
+        data.staked_account_id = None;
+        data.staked_node_id = Some(id);
         self
     }
 
     /// Returns `true` if the account should decline receiving staking rewards, `false` otherwise.
     #[must_use]
     pub fn get_decline_staking_reward(&self) -> bool {
-        self.body.data.decline_staking_reward
+        self.data().decline_staking_reward
     }
 
     /// If `true`, the account declines receiving a staking reward. The default value is false.
     pub fn decline_staking_reward(&mut self, decline: bool) -> &mut Self {
-        self.body.data.decline_staking_reward = decline;
+        self.data_mut().decline_staking_reward = decline;
         self
     }
 }
@@ -394,7 +396,6 @@ mod tests {
   "autoRenewPeriod": 7776000,
   "accountMemo": "An account memo",
   "maxAutomaticTokenAssociations": 256,
-  "stakedAccountId": "0.0.1001",
   "stakedNodeId": 7,
   "declineStakingReward": false
 }"#;
@@ -407,7 +408,7 @@ mod tests {
         fn it_should_deserialize_empty() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_EMPTY)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountCreate(transaction) => transaction);
 
             assert_eq!(data.auto_renew_period, Some(Duration::days(90)));
 
@@ -425,7 +426,6 @@ mod tests {
                 .auto_renew_period(Duration::days(90))
                 .account_memo("An account memo")
                 .max_automatic_token_associations(256)
-                .staked_account_id(AccountId::from(1001))
                 .staked_node_id(7)
                 .decline_staking_reward(false);
 
@@ -441,7 +441,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(ACCOUNT_CREATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountCreate(transaction) => transaction);
 
             assert_eq!(data.initial_balance.to_tinybars(), 1000);
             assert_eq!(data.receiver_signature_required, true);
@@ -451,10 +451,9 @@ mod tests {
             assert_eq!(data.staked_node_id.unwrap(), 7);
             assert_eq!(data.decline_staking_reward, false);
 
-            let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+            let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);
 
             assert_eq!(key, PublicKey::from_str(KEY)?);
-            assert_eq!(data.staked_account_id, Some(AccountId::from(1001)));
 
             Ok(())
         }

@@ -73,48 +73,48 @@ impl ContractExecuteTransaction {
     /// Returns the contract instance to call.
     #[must_use]
     pub fn get_contract_id(&self) -> Option<ContractId> {
-        self.body.data.contract_id
+        self.data().contract_id
     }
 
     /// Sets the contract instance to call.
     pub fn contract_id(&mut self, contract_id: ContractId) -> &mut Self {
-        self.body.data.contract_id = Some(contract_id);
+        self.data_mut().contract_id = Some(contract_id);
         self
     }
 
     /// Returns the maximum amount of gas to use for the call.
     #[must_use]
     pub fn get_gas(&self) -> u64 {
-        self.body.data.gas
+        self.data().gas
     }
 
     /// Sets the maximum amount of gas to use for the call.
     pub fn gas(&mut self, gas: u64) -> &mut Self {
-        self.body.data.gas = gas;
+        self.data_mut().gas = gas;
         self
     }
 
     /// Returns the number of hbars to be sent with this function call.
     #[must_use]
     pub fn get_payable_amount(&self) -> Hbar {
-        self.body.data.payable_amount
+        self.data().payable_amount
     }
 
     /// Sets the number of hbars to be sent with this function call.
     pub fn payable_amount(&mut self, amount: Hbar) -> &mut Self {
-        self.body.data.payable_amount = amount;
+        self.data_mut().payable_amount = amount;
         self
     }
 
     /// Returns the function parameters as their raw bytes.
     #[must_use]
     pub fn get_function_parameters(&self) -> &[u8] {
-        &self.body.data.function_parameters
+        &self.data().function_parameters
     }
 
     /// Sets the function parameters as their raw bytes.
     pub fn function_parameters(&mut self, data: Vec<u8>) -> &mut Self {
-        self.body.data.function_parameters = data;
+        self.data_mut().function_parameters = data;
         self
     }
 }
@@ -222,7 +222,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(CONTRACT_EXECUTE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractExecute(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::ContractExecute(transaction) => transaction);
 
             assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
             assert_eq!(data.gas, 1000);

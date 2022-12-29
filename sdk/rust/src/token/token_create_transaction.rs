@@ -181,124 +181,124 @@ impl TokenCreateTransaction {
     /// Returns the publicly visible name of the token.
     #[must_use]
     pub fn get_name(&self) -> &str {
-        &self.body.data.name
+        &self.data().name
     }
 
     /// Sets the publicly visible name of the token.
     ///
     /// Maximum 100 characters.
     pub fn name(&mut self, name: impl Into<String>) -> &mut Self {
-        self.body.data.name = name.into();
+        self.data_mut().name = name.into();
         self
     }
 
     /// Returns the publicly visible token symbol.
     #[must_use]
     pub fn get_symbol(&self) -> &str {
-        &self.body.data.symbol
+        &self.data().symbol
     }
 
     /// Sets the publicly visible token symbol.
     ///
     /// Maximum 100 characters.
     pub fn symbol(&mut self, symbol: impl Into<String>) -> &mut Self {
-        self.body.data.symbol = symbol.into();
+        self.data_mut().symbol = symbol.into();
         self
     }
 
     /// Returns the number of decimal places the token is divisble by.
     #[must_use]
     pub fn get_decimals(&self) -> u32 {
-        self.body.data.decimals
+        self.data().decimals
     }
 
     /// Sets the number of decimal places a token is divisible by.
     pub fn decimals(&mut self, decimals: u32) -> &mut Self {
-        self.body.data.decimals = decimals;
+        self.data_mut().decimals = decimals;
         self
     }
 
     /// Returns the initial supply of tokens to be put into circulation.
     #[must_use]
     pub fn get_initial_supply(&self) -> u64 {
-        self.body.data.initial_supply
+        self.data().initial_supply
     }
 
     /// Sets the initial supply of tokens to be put in circulation.
     pub fn initial_supply(&mut self, initial_supply: u64) -> &mut Self {
-        self.body.data.initial_supply = initial_supply;
+        self.data_mut().initial_supply = initial_supply;
         self
     }
 
     /// Returns the account which will act as a treasury for the token.
     #[must_use]
     pub fn get_treasury_account_id(&self) -> Option<AccountId> {
-        self.body.data.treasury_account_id
+        self.data().treasury_account_id
     }
 
     /// Sets the account which will act as a treasury for the token.
     pub fn treasury_account_id(&mut self, treasury_account_id: AccountId) -> &mut Self {
-        self.body.data.treasury_account_id = Some(treasury_account_id);
+        self.data_mut().treasury_account_id = Some(treasury_account_id);
         self
     }
 
     /// Returns the key whcih can perform update/delete operations on the token.
     #[must_use]
     pub fn get_admin_key(&self) -> Option<&Key> {
-        self.body.data.admin_key.as_ref()
+        self.data().admin_key.as_ref()
     }
 
     /// Sets the key which can perform update/delete operations on the token.
     pub fn admin_key(&mut self, admin_key: impl Into<Key>) -> &mut Self {
-        self.body.data.admin_key = Some(admin_key.into());
+        self.data_mut().admin_key = Some(admin_key.into());
         self
     }
 
     /// Returns the key which can grant or revoke KYC of an account for the token's transactions.
     #[must_use]
     pub fn get_kyc_key(&self) -> Option<&Key> {
-        self.body.data.kyc_key.as_ref()
+        self.data().kyc_key.as_ref()
     }
 
     /// Sets the key which can grant or revoke KYC of an account for the token's transactions.
     pub fn kyc_key(&mut self, kyc_key: impl Into<Key>) -> &mut Self {
-        self.body.data.kyc_key = Some(kyc_key.into());
+        self.data_mut().kyc_key = Some(kyc_key.into());
         self
     }
 
     /// Returns the key which can sign to freeze or unfreeze an account for token transactions.
     #[must_use]
     pub fn get_freeze_key(&self) -> Option<&Key> {
-        self.body.data.freeze_key.as_ref()
+        self.data().freeze_key.as_ref()
     }
 
     /// Sets the key which can sign to freeze or unfreeze an account for token transactions.
     pub fn freeze_key(&mut self, freeze_key: impl Into<Key>) -> &mut Self {
-        self.body.data.freeze_key = Some(freeze_key.into());
+        self.data_mut().freeze_key = Some(freeze_key.into());
         self
     }
 
     /// Returns the key which can wipe the token balance of an account.
     #[must_use]
     pub fn get_wipe_key(&self) -> Option<&Key> {
-        self.body.data.wipe_key.as_ref()
+        self.data().wipe_key.as_ref()
     }
 
     /// Sets the key which can wipe the token balance of an account.
     pub fn wipe_key(&mut self, wipe_key: impl Into<Key>) -> &mut Self {
-        self.body.data.wipe_key = Some(wipe_key.into());
+        self.data_mut().wipe_key = Some(wipe_key.into());
         self
     }
 
     /// Returns the key which can change the supply of the token.
     #[must_use]
     pub fn get_supply_key(&self) -> Option<&Key> {
-        self.body.data.supply_key.as_ref()
+        self.data().supply_key.as_ref()
     }
 
     /// Sets the key which can change the supply of the token.
     pub fn supply_key(&mut self, supply_key: impl Into<Key>) -> &mut Self {
-        self.body.data.supply_key = Some(supply_key.into());
+        self.data_mut().supply_key = Some(supply_key.into());
         self
     }
 
@@ -306,26 +306,27 @@ impl TokenCreateTransaction {
     /// relative to this token. If true, an account must be unfrozen before it can receive the token.
     #[must_use]
     pub fn get_freeze_default(&self) -> bool {
-        self.body.data.freeze_default
+        self.data().freeze_default
     }
 
     /// Sets the default freeze status (frozen or unfrozen) of hedera accounts
     /// relative to this token. If true, an account must be unfrozen before it can receive the token.
     pub fn freeze_default(&mut self, freeze_default: bool) -> &mut Self {
-        self.body.data.freeze_default = freeze_default;
+        self.data_mut().freeze_default = freeze_default;
         self
     }
 
     /// Returns the time at which the token should expire.
     #[must_use]
     pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
-        self.body.data.expiration_time
+        self.data().expiration_time
     }
 
     /// Sets the time at which the token should expire.
     pub fn expiration_time(&mut self, expiration_time: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(expiration_time);
-        self.body.data.auto_renew_period = None;
+        let data = self.data_mut();
+        data.expiration_time = Some(expiration_time);
+        data.auto_renew_period = None;
 
         self
     }
@@ -333,32 +334,32 @@ impl TokenCreateTransaction {
     /// Returns the account which will be automatically charged to renew the token's expiration.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
-        self.body.data.auto_renew_account_id
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account which will be automatically charged to renew the token's expiration.
     pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(auto_renew_account_id);
+        self.data_mut().auto_renew_account_id = Some(auto_renew_account_id);
         self
     }
 
     /// Returns the interval at which the auto renew account will be charged to extend the token's expiry.
     #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
-        self.body.data.auto_renew_period
+        self.data().auto_renew_period
     }
 
     /// Sets the interval at which the auto renew account will be charged to extend
     /// the token's expiry.
     pub fn auto_renew_period(&mut self, auto_renew_period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(auto_renew_period);
+        self.data_mut().auto_renew_period = Some(auto_renew_period);
         self
     }
 
     /// Returns the memo associated with the token.
     #[must_use]
     pub fn get_token_memo(&self) -> &str {
-        &self.body.data.token_memo
+        &self.data().token_memo
     }
 
     // note(sr): I got rid of the comment stating UTF-8, since this is a Rust string, which implies UTF-8.
@@ -366,62 +367,62 @@ impl TokenCreateTransaction {
     ///
     /// Maximum 100 bytes.
     pub fn token_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.token_memo = memo.into();
+        self.data_mut().token_memo = memo.into();
         self
     }
 
     /// Returns the token type.
     #[must_use]
     pub fn get_token_type(&self) -> TokenType {
-        self.body.data.token_type
+        self.data().token_type
     }
 
     /// Sets the token type. Defaults to `FungibleCommon`.
     pub fn token_type(&mut self, token_type: TokenType) -> &mut Self {
-        self.body.data.token_type = token_type;
+        self.data_mut().token_type = token_type;
         self
     }
 
     /// Returns the token supply type.
     #[must_use]
     pub fn get_token_supply_type(&self) -> TokenSupplyType {
-        self.body.data.token_supply_type
+        self.data().token_supply_type
     }
 
     /// Sets the token supply type. Defaults to `Infinite`.
     pub fn token_supply_type(&mut self, token_supply_type: TokenSupplyType) -> &mut Self {
-        self.body.data.token_supply_type = token_supply_type;
+        self.data_mut().token_supply_type = token_supply_type;
         self
     }
 
     /// Returns the maximum number of tokens that can be in circulation.
     #[must_use]
     pub fn get_max_supply(&self) -> u64 {
-        self.body.data.max_supply
+        self.data().max_supply
     }
 
     /// Sets the maximum number of tokens that can be in circulation.
     pub fn max_supply(&mut self, max_supply: u64) -> &mut Self {
-        self.body.data.max_supply = max_supply;
+        self.data_mut().max_supply = max_supply;
         self
     }
 
     /// Returns the key which can change the token's custom fee schedule.
     #[must_use]
     pub fn get_fee_schedule_key(&self) -> Option<&Key> {
-        self.body.data.fee_schedule_key.as_ref()
+        self.data().fee_schedule_key.as_ref()
     }
 
     /// Sets the key which can change the token's custom fee schedule.
     pub fn fee_schedule_key(&mut self, fee_schedule_key: impl Into<Key>) -> &mut Self {
-        self.body.data.fee_schedule_key = Some(fee_schedule_key.into());
+        self.data_mut().fee_schedule_key = Some(fee_schedule_key.into());
         self
     }
 
     /// Returns the custom fees to be assessed during a transfer.
     #[must_use]
     pub fn get_custom_fees(&self) -> &[AnyCustomFee] {
-        &self.body.data.custom_fees
+        &self.data().custom_fees
     }
 
     /// Sets the custom fees to be assessed during a transfer.
@@ -429,19 +430,19 @@ impl TokenCreateTransaction {
         &mut self,
         custom_fees: impl IntoIterator<Item = AnyCustomFee>,
     ) -> &mut Self {
-        self.body.data.custom_fees = custom_fees.into_iter().collect();
+        self.data_mut().custom_fees = custom_fees.into_iter().collect();
         self
     }
 
     /// Returns the key which can pause and unpause the token.
     #[must_use]
     pub fn get_pause_key(&self) -> Option<&Key> {
-        self.body.data.pause_key.as_ref()
+        self.data().pause_key.as_ref()
     }
 
     /// Sets the key which can pause and unpause the token.
     pub fn pause_key(&mut self, pause_key: impl Into<Key>) -> &mut Self {
-        self.body.data.pause_key = Some(pause_key.into());
+        self.data_mut().pause_key = Some(pause_key.into());
         self
     }
 }
@@ -641,7 +642,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_CREATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TokenCreate(transaction) => transaction);
 
             assert_eq!(data.name, "Pound");
             assert_eq!(data.symbol, "LB");
@@ -704,7 +705,7 @@ mod tests {
         fn it_should_deserialize_empty() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_CREATE_EMPTY)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenCreate(transaction) => transaction);
 
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
             assert_eq!(data.token_type, TokenType::FungibleCommon);

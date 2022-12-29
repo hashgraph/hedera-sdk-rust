@@ -70,24 +70,24 @@ impl TokenAssociateTransaction {
     /// Returns the account to be associated with the provided tokens.
     #[must_use]
     pub fn get_account_id(&self) -> Option<AccountId> {
-        self.body.data.account_id
+        self.data().account_id
     }
 
     /// Sets the account to be associated with the provided tokens.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(account_id);
+        self.data_mut().account_id = Some(account_id);
         self
     }
 
     /// Returns the tokens to be associated with the provided account.
     #[must_use]
     pub fn get_token_ids(&self) -> &[TokenId] {
-        &self.body.data.token_ids
+        &self.data().token_ids
     }
 
     /// Sets the tokens to be associated with the provided account.
     pub fn token_ids(&mut self, token_ids: impl IntoIterator<Item = TokenId>) -> &mut Self {
-        self.body.data.token_ids = token_ids.into_iter().collect();
+        self.data_mut().token_ids = token_ids.into_iter().collect();
         self
     }
 }
@@ -176,7 +176,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(TOKEN_ASSOCIATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenAssociate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenAssociate(transaction) => transaction);
 
             assert_eq!(data.token_ids[0], TokenId::from(1002));
             assert_eq!(data.account_id, Some(AccountId::from(1001)));

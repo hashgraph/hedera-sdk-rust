@@ -112,14 +112,13 @@ impl TransferTransaction {
         expected_decimals: Option<u32>,
     ) -> &mut Self {
         let transfer = Transfer { account_id, amount, is_approval: approved };
+        let data = self.data_mut();
 
-        if let Some(tt) =
-            self.body.data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id)
-        {
+        if let Some(tt) = data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id) {
             tt.expected_decimals = expected_decimals;
             tt.transfers.push(transfer);
         } else {
-            self.body.data.token_transfers.push(TokenTransfer {
+            data.token_transfers.push(TokenTransfer {
                 token_id,
                 expected_decimals,
                 nft_transfers: Vec::new(),
@@ -183,12 +182,12 @@ impl TransferTransaction {
         let transfer =
             NftTransfer { serial, sender_account_id, receiver_account_id, is_approval: approved };
 
-        if let Some(tt) =
-            self.body.data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id)
-        {
+        let data = self.data_mut();
+
+        if let Some(tt) = data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id) {
             tt.nft_transfers.push(transfer);
         } else {
-            self.body.data.token_transfers.push(TokenTransfer {
+            data.token_transfers.push(TokenTransfer {
                 token_id,
                 expected_decimals: None,
                 transfers: Vec::new(),
@@ -220,7 +219,7 @@ impl TransferTransaction {
     }
 
     fn _hbar_transfer(&mut self, account_id: AccountId, amount: Hbar, approved: bool) -> &mut Self {
-        self.body.data.transfers.push(Transfer {
+        self.data_mut().transfers.push(Transfer {
             account_id,
             amount: amount.to_tinybars(),
             is_approval: approved,

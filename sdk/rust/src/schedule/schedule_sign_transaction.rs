@@ -53,12 +53,12 @@ impl ScheduleSignTransaction {
     /// Returns the schedule to add signing keys to.
     #[must_use]
     pub fn get_schedule_id(&self) -> Option<ScheduleId> {
-        self.body.data.schedule_id
+        self.data().schedule_id
     }
 
     /// Sets the schedule to add signing keys to.
     pub fn schedule_id(&mut self, id: ScheduleId) -> &mut Self {
-        self.body.data.schedule_id = Some(id);
+        self.data_mut().schedule_id = Some(id);
         self
     }
 }

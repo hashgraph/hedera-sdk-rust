@@ -71,7 +71,7 @@ impl AccountAllowanceDeleteTransaction {
     /// Get the nft allowances that will be removed.
     #[must_use]
     pub fn get_nft_allowances(&self) -> &[NftRemoveAllowance] {
-        &self.body.data.nft_allowances
+        &self.data().nft_allowances
     }
 
     /// Remove all nft token allowances.
@@ -80,14 +80,15 @@ impl AccountAllowanceDeleteTransaction {
         nft_id: NftId,
         owner_account_id: AccountId,
     ) -> &mut Self {
+        let data = self.data_mut();
         let owner_account_id = owner_account_id;
 
-        if let Some(allowance) = self.body.data.nft_allowances.iter_mut().find(|allowance| {
+        if let Some(allowance) = data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id && allowance.owner_account_id == owner_account_id
         }) {
             allowance.serials.push(nft_id.serial as i64);
         } else {
-            self.body.data.nft_allowances.push(NftRemoveAllowance {
+            data.nft_allowances.push(NftRemoveAllowance {
                 token_id: nft_id.token_id,
                 serials: vec![nft_id.serial as i64],
                 owner_account_id,

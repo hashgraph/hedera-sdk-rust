@@ -79,31 +79,31 @@ impl TokenMintTransaction {
     /// Returns the token for which to mint tokens.
     #[must_use]
     pub fn get_token_id(&self) -> Option<TokenId> {
-        self.body.data.token_id
+        self.data().token_id
     }
 
     /// Sets the token for which to mint tokens.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
     }
 
     /// Returns the amount of a fungible token to mint to the treasury account.
     #[must_use]
     pub fn get_amount(&self) -> u64 {
-        self.body.data.amount
+        self.data().amount
     }
 
     /// Sets the amount of a fungible token to mint to the treasury account.
     pub fn amount(&mut self, amount: u64) -> &mut Self {
-        self.body.data.amount = amount;
+        self.data_mut().amount = amount;
         self
     }
 
     /// Returns the list of metadata for a non-fungible token to mint to the treasury account.
     #[must_use]
     pub fn get_metadata(&self) -> &[Vec<u8>] {
-        &self.body.data.metadata
+        &self.data().metadata
     }
 
     /// Sets the list of metadata for a non-fungible token to mint to the treasury account.
@@ -111,7 +111,7 @@ impl TokenMintTransaction {
     where
         Bytes: AsRef<[u8]>,
     {
-        self.body.data.metadata =
+        self.data_mut().metadata =
             metadata.into_iter().map(|bytes| bytes.as_ref().to_vec()).collect();
 
         self
@@ -202,7 +202,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_MINT_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenMint(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenMint(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1981));
             assert_eq!(data.amount, 8675309);

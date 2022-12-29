@@ -97,60 +97,60 @@ impl TopicMessageSubmitTransaction {
     /// Returns the ID of the topic this message will be submitted to.
     #[must_use]
     pub fn get_topic_id(&self) -> Option<TopicId> {
-        self.body.data.topic_id
+        self.data().topic_id
     }
 
     /// Sets the topic ID to submit this message to.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
-        self.body.data.topic_id = Some(id.into());
+        self.data_mut().topic_id = Some(id.into());
         self
     }
 
     /// Returns the message to be submitted.
     #[must_use]
     pub fn get_message(&self) -> Option<&[u8]> {
-        self.body.data.message.as_deref()
+        self.data().message.as_deref()
     }
 
     /// Sets the message to be submitted.
     pub fn message(&mut self, bytes: impl Into<Vec<u8>>) -> &mut Self {
-        self.body.data.message = Some(bytes.into());
+        self.data_mut().message = Some(bytes.into());
         self
     }
 
     /// Returns the `TransactionId` of the first chunk.
     #[must_use]
     pub fn get_initial_transaction_id(&self) -> Option<TransactionId> {
-        self.body.data.initial_transaction_id
+        self.data().initial_transaction_id
     }
 
     /// Sets the `TransactionId` of the first chunk.
     pub fn initial_transaction_id(&mut self, id: impl Into<TransactionId>) -> &mut Self {
-        self.body.data.initial_transaction_id = Some(id.into());
+        self.data_mut().initial_transaction_id = Some(id.into());
         self
     }
 
     /// Returns the total number of chunks in the message.
     #[must_use]
     pub fn get_chunk_total(&self) -> u32 {
-        self.body.data.chunk_total as u32
+        self.data().chunk_total as u32
     }
 
     /// Sets the total number of chunks in the message.
     pub fn chunk_total(&mut self, total: u32) -> &mut Self {
-        self.body.data.chunk_total = total as i32;
+        self.data_mut().chunk_total = total as i32;
         self
     }
 
     /// Returns the sequence number (from 1 to total) of the current chunk in the message.
     #[must_use]
     pub fn get_chunk_number(&self) -> u32 {
-        self.body.data.chunk_number as u32
+        self.data().chunk_number as u32
     }
 
     /// Sets the sequence number (from 1 to total) of the current chunk in the message.
     pub fn chunk_number(&mut self, number: u32) -> &mut Self {
-        self.body.data.chunk_number = number as i32;
+        self.data_mut().chunk_number = number as i32;
         self
     }
 }
@@ -262,7 +262,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
 
             assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
             assert_eq!(
@@ -282,7 +282,7 @@ mod tests {
         fn it_should_deserialize_empty() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOPIC_MESSAGE_SUBMIT_EMPTY)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
 
             assert_eq!(data.chunk_number, 1);
             assert_eq!(data.chunk_total, 1);

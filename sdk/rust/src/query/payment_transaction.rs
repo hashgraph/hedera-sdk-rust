@@ -51,20 +51,20 @@ pub struct PaymentTransactionData {
 
 impl PaymentTransaction {
     pub(super) fn get_amount(&self) -> Option<Hbar> {
-        self.body.data.amount
+        self.data().amount
     }
 
     pub(super) fn amount(&mut self, amount: Hbar) -> &mut Self {
-        self.body.data.amount = Some(amount);
+        self.data_mut().amount = Some(amount);
         self
     }
 
     pub(super) fn get_max_amount(&self) -> Option<Hbar> {
-        self.body.data.max_amount
+        self.data().max_amount
     }
 
     pub(super) fn max_amount(&mut self, amount: impl Into<Option<Hbar>>) -> &mut Self {
-        self.body.data.max_amount = amount.into();
+        self.data_mut().max_amount = amount.into();
         self
     }
 }

@@ -65,19 +65,19 @@ impl EthereumTransaction {
     /// Returns the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     #[must_use]
     pub fn get_ethereum_data(&self) -> &[u8] {
-        &self.body.data.ethereum_data
+        &self.data().ethereum_data
     }
 
     /// Sets the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     pub fn ethereum_data(&mut self, data: Vec<u8>) -> &mut Self {
-        self.body.data.ethereum_data = data;
+        self.data_mut().ethereum_data = data;
         self
     }
 
     /// Returns the file ID to find the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     #[must_use]
     pub fn get_call_data_file_id(&self) -> Option<FileId> {
-        self.body.data.call_data_file_id
+        self.data().call_data_file_id
     }
 
     /// Sets a file ID to find the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
@@ -89,7 +89,7 @@ impl EthereumTransaction {
     /// the referenced file at time of execution. `The ethereum_data` will need to be
     /// "rehydrated" with the `call_data` for signature validation to pass.
     pub fn call_data_file_id(&mut self, id: FileId) -> &mut Self {
-        self.body.data.call_data_file_id = Some(id);
+        self.data_mut().call_data_file_id = Some(id);
         self
     }
 
@@ -97,13 +97,13 @@ impl EthereumTransaction {
     /// is willing to pay to complete the transaction.
     #[must_use]
     pub fn get_max_gas_allowance_hbar(&self) -> u64 {
-        self.body.data.max_gas_allowance_hbar
+        self.data().max_gas_allowance_hbar
     }
 
     /// Sets the maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
     pub fn max_gas_allowance_hbar(&mut self, allowance: u64) -> &mut Self {
-        self.body.data.max_gas_allowance_hbar = allowance;
+        self.data_mut().max_gas_allowance_hbar = allowance;
         self
     }
 }

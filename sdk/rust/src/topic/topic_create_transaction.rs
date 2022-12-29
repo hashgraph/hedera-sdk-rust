@@ -94,14 +94,14 @@ impl TopicCreateTransaction {
     /// Returns the short, publicly visible, memo about the topic.
     #[must_use]
     pub fn get_topic_memo(&self) -> &str {
-        &self.body.data.topic_memo
+        &self.data().topic_memo
     }
 
     /// Sets the short publicly visible memo about the topic.
     ///
     /// No guarantee of uniqueness.
     pub fn topic_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.topic_memo = memo.into();
+        self.data_mut().topic_memo = memo.into();
         self
     }
 
@@ -109,25 +109,25 @@ impl TopicCreateTransaction {
     /// and [`TopicDeleteTransaction`](crate::TopicDeleteTransaction).
     #[must_use]
     pub fn get_admin_key(&self) -> Option<&Key> {
-        self.body.data.admin_key.as_ref()
+        self.data().admin_key.as_ref()
     }
 
     /// Sets the access control for [`TopicUpdateTransaction`](crate::TopicUpdateTransaction)
     /// and [`TopicDeleteTransaction`](crate::TopicDeleteTransaction).
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.admin_key = Some(key.into());
+        self.data_mut().admin_key = Some(key.into());
         self
     }
 
     /// Returns the access control for [`TopicMessageSubmitTransaction`](crate::TopicMessageSubmitTransaction)
     #[must_use]
     pub fn get_submit_key(&self) -> Option<&Key> {
-        self.body.data.submit_key.as_ref()
+        self.data().submit_key.as_ref()
     }
 
     /// Sets the access control for [`TopicMessageSubmitTransaction`](crate::TopicMessageSubmitTransaction).
     pub fn submit_key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.submit_key = Some(key.into());
+        self.data_mut().submit_key = Some(key.into());
         self
     }
 
@@ -135,25 +135,25 @@ impl TopicCreateTransaction {
     /// extend the topic's lifetime by automatically at the topic's expiration time.
     #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
-        self.body.data.auto_renew_period
+        self.data().auto_renew_period
     }
 
     /// Sets the initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(period);
+        self.data_mut().auto_renew_period = Some(period);
         self
     }
 
     /// Returns the account to be used at the topic's expiration time to extend the life of the topic.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
-        self.body.data.auto_renew_account_id
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(id);
+        self.data_mut().auto_renew_account_id = Some(id);
         self
     }
 }
@@ -268,7 +268,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TopicCreate(transaction) => transaction);
 
             assert_eq!(data.topic_memo, "A topic memo");
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
@@ -291,7 +291,7 @@ mod tests {
         fn it_should_deserialize_empty() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOPIC_CREATE_EMPTY)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TopicCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TopicCreate(transaction) => transaction);
 
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
 
