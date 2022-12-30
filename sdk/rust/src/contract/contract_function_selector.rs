@@ -3,10 +3,17 @@ use sha3::{
     Keccak256,
 };
 
+#[derive(Debug, Clone)]
 pub struct ContractFunctionSelector {
     digest: Option<Keccak256>,
     needs_comma: bool,
     finished_bytes: Option<[u8; 4]>,
+}
+
+impl From<[u8; 4]> for ContractFunctionSelector {
+    fn from(value: [u8; 4]) -> Self {
+        Self { digest: None, needs_comma: false, finished_bytes: Some(value) }
+    }
 }
 
 impl ContractFunctionSelector {

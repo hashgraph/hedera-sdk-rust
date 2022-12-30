@@ -44,6 +44,8 @@
     clippy::module_name_repetitions
 )]
 
+extern crate core;
+
 #[macro_use]
 mod protobuf;
 
