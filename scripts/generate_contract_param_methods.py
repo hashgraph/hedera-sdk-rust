@@ -11,24 +11,28 @@ uint_array_versions = []
 def add_methods_for_bit_width(solidity_bit_width, rust_signed_type, rust_unsigned_type):
     int_versions.append(
         "/// Add an `int" + str(solidity_bit_width) + "` argument to the `ContractFunctionParameters`\n"
-        "pub fn add_int" + str(solidity_bit_width) + "(&mut self, val: &" + rust_signed_type + ") -> &mut Self {\n"
-        "    self.add_int(val, \"int" + str(solidity_bit_width) + "\", " + str(solidity_bit_width//8) + ")\n"
+        "#[allow(dead_code)]\n"
+        "pub fn add_int" + str(solidity_bit_width) + "(&mut self, val: " + rust_signed_type + ") -> &mut Self {\n"
+        "    self.add_int(&val, \"int" + str(solidity_bit_width) + "\", " + str(solidity_bit_width//8) + ")\n"
         "}\n"
     )
     uint_versions.append(
         "/// Add a `uint" + str(solidity_bit_width) + "` argument to the `ContractFunctionParameters`\n"
-        "pub fn add_uint" + str(solidity_bit_width) + "(&mut self, val: &" + rust_unsigned_type + ") -> &mut Self {\n"
-        "    self.add_int(val, \"uint" + str(solidity_bit_width) + "\", " + str(solidity_bit_width//8) + ")\n"
+        "#[allow(dead_code)]\n"
+        "pub fn add_uint" + str(solidity_bit_width) + "(&mut self, val: " + rust_unsigned_type + ") -> &mut Self {\n"
+        "    self.add_int(&val, \"uint" + str(solidity_bit_width) + "\", " + str(solidity_bit_width//8) + ")\n"
         "}\n"
     )
     int_array_versions.append(
         "/// Add an `int" + str(solidity_bit_width) + "[]` argument to the `ContractFunctionParameters`\n"
+        "#[allow(dead_code)]\n"
         "pub fn add_int" + str(solidity_bit_width) + "_array(&mut self, val_array: &[" + rust_signed_type + "]) -> &mut Self {\n"
         "    self.add_int_array(val_array, \"int" + str(solidity_bit_width) + "[]\", " + str(solidity_bit_width//8) + ")\n"
         "}\n"
     )
     uint_array_versions.append(
         "/// Add a `uint" + str(solidity_bit_width) + "[]` argument to the `ContractFunctionParameters`\n"
+        "#[allow(dead_code)]\n"
         "pub fn add_uint" + str(solidity_bit_width) + "_array(&mut self, val_array: &[" + rust_unsigned_type + "]) -> &mut Self {\n"
         "    self.add_int_array(val_array, \"uint" + str(solidity_bit_width) + "[]\", " + str(solidity_bit_width//8) + ")\n"
         "}\n"
