@@ -26,6 +26,7 @@ use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
+use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -90,13 +91,9 @@ pub struct AccountCreateTransactionData {
     /// A 20-byte EVM address to be used as the account's evm address.
     evm_address: Option<[u8; 20]>,
 
-    /// ID of the account to which this account is staking.
-    /// This is mutually exclusive with `staked_node_id`.
-    staked_account_id: Option<AccountId>,
-
-    /// ID of the node this account is staked to.
-    /// This is mutually exclusive with `staked_account_id`.
-    staked_node_id: Option<u64>,
+    /// ID of the account or node to which this account is staking, if any.
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    staked_id: Option<StakedId>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
     decline_staking_reward: bool,
@@ -114,8 +111,7 @@ impl Default for AccountCreateTransactionData {
             max_automatic_token_associations: 0,
             alias: None,
             evm_address: None,
-            staked_account_id: None,
-            staked_node_id: None,
+            staked_id: None,
             decline_staking_reward: false,
         }
     }
@@ -248,15 +244,13 @@ impl AccountCreateTransaction {
     /// This is mutually exclusive with `staked_node_id`.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_account_id
+        self.data().staked_id.and_then(|it| it.to_account_id())
     }
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        let data = self.data_mut();
-        data.staked_account_id = Some(id);
-        data.staked_node_id = None;
+        self.data_mut().staked_id = Some(StakedId::AccountId(id));
         self
     }
 
@@ -264,15 +258,13 @@ impl AccountCreateTransaction {
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_node_id
+        self.data().staked_id.and_then(|it| it.to_node_id())
     }
 
     /// Sets the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        let data = self.data_mut();
-        data.staked_account_id = None;
-        data.staked_node_id = Some(id);
+        self.data_mut().staked_id = Some(StakedId::NodeId(id));
         self
     }
 
@@ -292,7 +284,7 @@ impl AccountCreateTransaction {
 #[async_trait]
 impl TransactionExecute for AccountCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
     }
 
     async fn execute(
@@ -313,20 +305,16 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
         let auto_renew_account = self.auto_renew_account_id.to_protobuf();
-
-        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
-            (_, Some(node_id)) => Some(
-                services::crypto_create_transaction_body::StakedId::StakedNodeId(node_id as i64),
-            ),
-
-            (Some(account_id), _) => {
-                Some(services::crypto_create_transaction_body::StakedId::StakedAccountId(
-                    account_id.to_protobuf(),
-                ))
+        let staked_id = self.staked_id.map(|it| match it {
+            StakedId::NodeId(id) => {
+                services::crypto_create_transaction_body::StakedId::StakedNodeId(id as i64)
             }
-
-            _ => None,
-        };
+            StakedId::AccountId(id) => {
+                services::crypto_create_transaction_body::StakedId::StakedAccountId(
+                    id.to_protobuf(),
+                )
+            }
+        });
 
         services::transaction_body::Data::CryptoCreateAccount(
             #[allow(deprecated)]
@@ -374,7 +362,6 @@ mod tests {
         };
         use crate::{
             AccountCreateTransaction,
-            AccountId,
             Hbar,
             Key,
             PublicKey,
@@ -448,7 +435,7 @@ mod tests {
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
             assert_eq!(data.account_memo, "An account memo");
             assert_eq!(data.max_automatic_token_associations, 256);
-            assert_eq!(data.staked_node_id.unwrap(), 7);
+            assert_eq!(data.staked_id, Some(7.into()));
             assert_eq!(data.decline_staking_reward, false);
 
             let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);

@@ -25,6 +25,7 @@ use time::Duration;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -78,9 +79,9 @@ pub struct ContractCreateTransactionData {
 
     auto_renew_account_id: Option<AccountId>,
 
-    staked_account_id: Option<AccountId>,
-
-    staked_node_id: Option<u64>,
+    /// ID of the account or node to which this contract is staking, if any.
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    staked_id: Option<StakedId>,
 
     decline_staking_reward: bool,
 }
@@ -98,8 +99,7 @@ impl Default for ContractCreateTransactionData {
             contract_memo: String::new(),
             max_automatic_token_associations: 0,
             auto_renew_account_id: None,
-            staked_account_id: None,
-            staked_node_id: None,
+            staked_id: None,
             decline_staking_reward: false,
         }
     }
@@ -232,31 +232,27 @@ impl ContractCreateTransaction {
     /// Returns the ID of the account to which this contract is staking.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_account_id
+        self.data().staked_id.and_then(|it| it.to_account_id())
     }
 
     /// Sets the ID of the account to which this contract is staking.
     ///
-    /// This is mutually exclusive with `staked_node_id`.
+    /// This is mutually exclusive with [`staked_node_id`](Self::staked_node_id).
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        let data = self.data_mut();
-        data.staked_account_id = Some(id);
-        data.staked_node_id = None;
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
     /// Returns the ID of the node to which this contract is staking.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_node_id
+        self.data().staked_id.and_then(|it| it.to_node_id())
     }
 
     /// Sets the ID of the node to which this contract is staking.
-    /// This is mutually exclusive with `staked_account_id`.
+    /// This is mutually exclusive with [`staked_account_id`](Self::staked_account_id).
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        let data = self.data_mut();
-        data.staked_node_id = Some(id);
-        data.staked_account_id = None;
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
@@ -278,7 +274,7 @@ impl TransactionExecute for ContractCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.bytecode_file_id.validate_checksum_for_ledger_id(ledger_id)?;
         self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
     }
 
     async fn execute(
@@ -316,12 +312,12 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
             _ => None,
         };
 
-        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
-            (_, Some(node_id)) => Some(
+        let staked_id = match self.staked_id {
+            Some(StakedId::NodeId(node_id)) => Some(
                 services::contract_create_transaction_body::StakedId::StakedNodeId(node_id as i64),
             ),
 
-            (Some(account_id), _) => {
+            Some(StakedId::AccountId(account_id)) => {
                 Some(services::contract_create_transaction_body::StakedId::StakedAccountId(
                     account_id.to_protobuf(),
                 ))
@@ -368,6 +364,7 @@ mod tests {
         use assert_matches::assert_matches;
         use time::Duration;
 
+        use crate::staked_id::StakedId;
         use crate::transaction::{
             AnyTransaction,
             AnyTransactionData,
@@ -457,7 +454,7 @@ mod tests {
             assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
             assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
-            assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
+            assert_eq!(data.staked_id, Some(StakedId::AccountId(AccountId::from(1003))));
 
             Ok(())
         }
