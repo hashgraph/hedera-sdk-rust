@@ -295,6 +295,17 @@ where
         self.signers.push(signer);
         self
     }
+
+    pub(crate) fn _freeze(&mut self) -> &mut Self {
+        self.freeze_with(None)
+    }
+
+    pub(crate) fn freeze_with(&mut self, _client: Option<&Client>) -> &mut Self {
+        // todo: do more here.
+        self.is_frozen = true;
+
+        self
+    }
 }
 
 impl<D> Transaction<D>
@@ -305,6 +316,10 @@ where
     // todo:
     #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
+        if !self.is_frozen() {
+            self.freeze_with(Some(client));
+        }
+
         execute(client, self, None).await
     }
 
@@ -314,6 +329,10 @@ where
         client: &Client,
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<TransactionResponse> {
+        if !self.is_frozen() {
+            self.freeze_with(Some(client));
+        }
+
         execute(client, self, timeout).await
     }
 
@@ -326,6 +345,10 @@ where
         // fixme: be consistent with `time::Duration`? Except `tokio::time` is `std::time`, and we depend on tokio.
         timeout: std::time::Duration,
     ) -> crate::Result<TransactionResponse> {
+        if !self.is_frozen() {
+            self.freeze_with(Some(client));
+        }
+
         execute(client, self, timeout).await
     }
 }
