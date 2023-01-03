@@ -69,6 +69,7 @@ mod query;
 mod schedule;
 mod semantic_version;
 mod signer;
+mod staked_id;
 mod staking_info;
 mod system;
 mod token;

@@ -29,6 +29,7 @@ use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
+use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -106,13 +107,9 @@ pub struct AccountUpdateTransactionData {
     ///
     max_automatic_token_associations: Option<u16>,
 
-    /// ID of the account to which this account is staking.
-    /// This is mutually exclusive with `staked_node_id`.
-    staked_account_id: Option<AccountId>,
-
-    /// ID of the node this account is staked to.
-    /// This is mutually exclusive with `staked_account_id`.
-    staked_node_id: Option<u64>,
+    /// ID of the account or node to which this account is staking, if any.
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    staked_id: Option<StakedId>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
     decline_staking_reward: Option<bool>,
@@ -244,13 +241,13 @@ impl AccountUpdateTransaction {
     /// This is mutually exclusive with `staked_node_id`.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_account_id
+        self.data().staked_id.and_then(|it| it.to_account_id())
     }
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.data_mut().staked_account_id = Some(id);
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
@@ -258,13 +255,13 @@ impl AccountUpdateTransaction {
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_node_id
+        self.data().staked_id.and_then(|it| it.to_node_id())
     }
 
     /// Sets the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        self.data_mut().staked_node_id = Some(id);
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
@@ -287,7 +284,7 @@ impl AccountUpdateTransaction {
 impl TransactionExecute for AccountUpdateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
     }
 
     async fn execute(
@@ -315,19 +312,16 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
             services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
         });
 
-        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
-            (_, Some(node_id)) => Some(
-                services::crypto_update_transaction_body::StakedId::StakedNodeId(node_id as i64),
-            ),
-
-            (Some(account_id), _) => {
-                Some(services::crypto_update_transaction_body::StakedId::StakedAccountId(
-                    account_id.to_protobuf(),
-                ))
+        let staked_id = self.staked_id.map(|id| match id {
+            StakedId::NodeId(id) => {
+                services::crypto_update_transaction_body::StakedId::StakedNodeId(id as i64)
             }
-
-            _ => None,
-        };
+            StakedId::AccountId(id) => {
+                services::crypto_update_transaction_body::StakedId::StakedAccountId(
+                    id.to_protobuf(),
+                )
+            }
+        });
 
         services::transaction_body::Data::CryptoUpdateAccount(
             #[allow(deprecated)]
@@ -397,7 +391,6 @@ mod tests {
   "accountMemo": "An account memo",
   "maxAutomaticTokenAssociations": 256,
   "stakedAccountId": "0.0.1002",
-  "stakedNodeId": 7,
   "declineStakingReward": false
 }"#;
 
@@ -417,8 +410,8 @@ mod tests {
                 .auto_renew_period(Duration::days(90))
                 .account_memo("An account memo")
                 .max_automatic_token_associations(256)
-                .staked_account_id(AccountId::from(1002))
                 .staked_node_id(7)
+                .staked_account_id(AccountId::from(1002))
                 .proxy_account_id(AccountId::from(3141))
                 .decline_staking_reward(false);
 
@@ -445,10 +438,9 @@ mod tests {
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
             assert_eq!(data.account_memo.as_deref(), Some("An account memo"));
             assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
-            assert_eq!(data.staked_node_id.unwrap(), 7);
             assert_eq!(data.decline_staking_reward.unwrap(), false);
             assert_eq!(data.account_id, Some(AccountId::from(1001)));
-            assert_eq!(data.staked_account_id, Some(AccountId::from(1002)));
+            assert_eq!(data.staked_id, Some(AccountId::from(1002).into()));
             assert_eq!(data.proxy_account_id, Some(AccountId::from(3141)));
 
             let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);
