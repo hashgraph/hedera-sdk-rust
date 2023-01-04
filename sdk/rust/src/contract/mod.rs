@@ -41,6 +41,7 @@ pub use contract_delete_transaction::ContractDeleteTransaction;
 pub(crate) use contract_delete_transaction::ContractDeleteTransactionData;
 pub use contract_execute_transaction::ContractExecuteTransaction;
 pub(crate) use contract_execute_transaction::ContractExecuteTransactionData;
+pub use contract_function_parameters::ContractFunctionParameters;
 pub use contract_function_result::ContractFunctionResult;
 pub use contract_id::ContractId;
 pub use contract_info::ContractInfo;

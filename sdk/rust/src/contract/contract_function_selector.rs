@@ -3,16 +3,24 @@ use sha3::{
     Keccak256,
 };
 
+/// Builder class for Solidity function selectors.
 #[derive(Debug, Clone)]
-pub struct ContractFunctionSelector {
-    digest: Option<Keccak256>,
-    needs_comma: bool,
-    finished_bytes: Option<[u8; 4]>,
+pub struct ContractFunctionSelector(ContractFunctionSelectorState);
+
+#[derive(Debug, Clone)]
+enum ContractFunctionSelectorState {
+    Building { digest: sha3::Keccak256, needs_comma: bool },
+    Finished([u8; 4]),
 }
+
+use ContractFunctionSelectorState::{
+    Building,
+    Finished,
+};
 
 impl From<[u8; 4]> for ContractFunctionSelector {
     fn from(value: [u8; 4]) -> Self {
-        Self { digest: None, needs_comma: false, finished_bytes: Some(value) }
+        Self(Finished(value))
     }
 }
 
@@ -20,29 +28,35 @@ impl ContractFunctionSelector {
     #[allow(dead_code)]
     pub fn new(func_name: &str) -> Self {
         let mut digest = <Keccak256 as Digest>::new_with_prefix(func_name.as_bytes());
-        digest.update("(".as_bytes());
-        ContractFunctionSelector { digest: Some(digest), needs_comma: false, finished_bytes: None }
+        digest.update(b"(");
+        Self(Building { digest, needs_comma: false })
     }
 
     #[allow(dead_code)]
     pub(crate) fn add_param_type(&mut self, param_type_name: &str) -> &mut Self {
-        if let Some(digest) = &mut self.digest {
-            if self.needs_comma {
-                digest.update(",".as_bytes())
+        if let Building { digest, needs_comma } = &mut self.0 {
+            if *needs_comma {
+                digest.update(b",")
             }
             digest.update(param_type_name.as_bytes());
-            self.needs_comma = true;
+            *needs_comma = true;
+        } else {
+            panic!("Cannot add param type to finished ContractFunctionSelector")
         }
         self
     }
 
     #[allow(dead_code)]
     pub fn finish(&mut self) -> [u8; 4] {
-        if let Some(mut digest) = self.digest.take() {
-            digest.update(")".as_bytes());
-            self.finished_bytes = Some(digest.finalize()[0..4].try_into().unwrap());
+        match &mut self.0 {
+            Building { digest, .. } => {
+                digest.update(b")");
+                let finished_bytes = digest.clone().finalize()[0..4].try_into().unwrap();
+                self.0 = Finished(finished_bytes);
+                finished_bytes
+            }
+            Finished(finished_bytes) => *finished_bytes,
         }
-        self.finished_bytes.clone().unwrap()
     }
 
     #[allow(dead_code)]

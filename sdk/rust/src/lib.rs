@@ -44,8 +44,6 @@
     clippy::module_name_repetitions
 )]
 
-extern crate core;
-
 #[macro_use]
 mod protobuf;
 
@@ -112,6 +110,7 @@ pub use contract::{
     ContractCallQuery,
     ContractCreateTransaction,
     ContractExecuteTransaction,
+    ContractFunctionParameters,
     ContractFunctionResult,
     ContractId,
     ContractInfo,
