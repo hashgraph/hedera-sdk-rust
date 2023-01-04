@@ -30,6 +30,7 @@ mod callback;
 mod client;
 mod contract_id;
 mod contract_info;
+mod contract_log_info;
 mod entity_id;
 mod execute;
 mod file_info;
