@@ -1,5 +1,4 @@
 use std::cmp::max;
-use std::iter;
 use std::str::FromStr;
 
 use num_bigint::{
@@ -11,6 +10,7 @@ use num_bigint::{
 use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::evm_address::IdEvmAddress;
 
+/// Builder for encoding parameters for a Solidity contract constructor/function call.
 #[derive(Debug, Clone)]
 pub struct ContractFunctionParameters {
     args: Vec<Argument>,
@@ -106,25 +106,28 @@ impl ContractFunctionParameters {
         ContractFunctionParameters { args: vec![] }
     }
 
-    fn left_pad_32_bytes(bytes: &[u8], is_negative: bool) -> Vec<u8> {
+    fn left_pad_32_bytes(bytes: &[u8], is_negative: bool) -> [u8; 32] {
         let pad_byte = if is_negative { 0xFF } else { 0x00 };
-        iter::repeat(pad_byte).take(32 - bytes.len()).chain(bytes.iter().map(|b| *b)).collect()
+
+        let mut result = [pad_byte; 32];
+        result[(32 - bytes.len())..].copy_from_slice(&bytes);
+        result
     }
 
-    fn right_pad_32_bytes(bytes: &[u8]) -> Vec<u8> {
-        bytes.iter().map(|b| *b).chain(iter::repeat(0x00).take(32 - (bytes.len() % 32))).collect()
+    fn right_pad_32_bytes(bytes: &[u8]) -> [u8; 32] {
+        let mut result = [0_u8; 32];
+        result[..bytes.len()].copy_from_slice(&bytes);
+        result
     }
 
-    fn encode_address(address_string: &str) -> Vec<u8> {
-        Self::left_pad_32_bytes(
-            IdEvmAddress::from_str(address_string).unwrap().0 .0.as_slice(),
-            false,
-        )
+    fn encode_address(address: &str) -> [u8; 32] {
+        Self::left_pad_32_bytes(IdEvmAddress::from_str(address).unwrap().0 .0.as_slice(), false)
     }
 
     fn encode_dynamic_bytes(bytes: &[u8]) -> Vec<u8> {
-        let mut out_bytes = Self::left_pad_32_bytes(bytes.len().to_be_bytes().as_slice(), false);
-        out_bytes.append(&mut Self::right_pad_32_bytes(bytes));
+        let mut out_bytes =
+            Self::left_pad_32_bytes(bytes.len().to_be_bytes().as_slice(), false).to_vec();
+        out_bytes.extend_from_slice(Self::right_pad_32_bytes(bytes).as_slice());
         out_bytes
     }
 
@@ -135,16 +138,16 @@ impl ContractFunctionParameters {
     {
         let head_len = (elements_len + 1) * 32;
         let mut out_bytes = Vec::with_capacity(head_len);
-        out_bytes
-            .append(&mut Self::left_pad_32_bytes(elements_len.to_be_bytes().as_slice(), false));
+        out_bytes.extend_from_slice(
+            Self::left_pad_32_bytes(elements_len.to_be_bytes().as_slice(), false).as_slice(),
+        );
         let mut current_offset = elements_len * 32;
         let mut body_bytes: Vec<u8> = Vec::new();
         for element in elements {
             let element = element.as_ref();
-            out_bytes.append(&mut Self::left_pad_32_bytes(
-                current_offset.to_be_bytes().as_slice(),
-                false,
-            ));
+            out_bytes.extend_from_slice(
+                Self::left_pad_32_bytes(current_offset.to_be_bytes().as_slice(), false).as_slice(),
+            );
             current_offset += element.len();
             body_bytes.extend(element)
         }
@@ -154,9 +157,10 @@ impl ContractFunctionParameters {
 
     fn encode_array_of_32_byte_elements<I>(elements: I, elements_len: usize) -> Vec<u8>
     where
-        I: IntoIterator<Item = Vec<u8>>,
+        I: IntoIterator<Item = [u8; 32]>,
     {
-        let mut out_bytes = Self::left_pad_32_bytes(elements_len.to_be_bytes().as_slice(), false);
+        let mut out_bytes =
+            Self::left_pad_32_bytes(elements_len.to_be_bytes().as_slice(), false).to_vec();
         out_bytes.reserve(out_bytes.len() + (elements_len * 32));
         out_bytes.extend(elements.into_iter().flatten());
         out_bytes
@@ -172,10 +176,13 @@ impl ContractFunctionParameters {
                 selector.add_param_type(arg.type_name);
             }
             if arg.is_dynamic {
-                arg_bytes.append(&mut Self::left_pad_32_bytes(
-                    current_dynamic_offset.to_be_bytes().as_slice(),
-                    false,
-                ));
+                arg_bytes.extend_from_slice(
+                    &mut Self::left_pad_32_bytes(
+                        current_dynamic_offset.to_be_bytes().as_slice(),
+                        false,
+                    )
+                    .as_slice(),
+                );
                 dynamic_arg_bytes.extend_from_slice(arg.value_bytes.as_slice());
                 current_dynamic_offset += arg.value_bytes.len();
             } else {
@@ -194,10 +201,10 @@ impl ContractFunctionParameters {
 
     /// Add a `string` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_string(&mut self, val: &str) -> &mut Self {
+    pub fn add_string<T: AsRef<str>>(&mut self, val: T) -> &mut Self {
         self.args.push(Argument {
             type_name: "string",
-            value_bytes: Self::encode_dynamic_bytes(val.as_bytes()),
+            value_bytes: Self::encode_dynamic_bytes(val.as_ref().as_bytes()),
             is_dynamic: true,
         });
         self
@@ -205,11 +212,11 @@ impl ContractFunctionParameters {
 
     /// Add a `string[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_string_array(&mut self, val: &[&str]) -> &mut Self {
+    pub fn add_string_array<T: AsRef<str>>(&mut self, val: &[T]) -> &mut Self {
         self.args.push(Argument {
             type_name: "string[]",
             value_bytes: Self::encode_array_of_dynamic_byte_arrays(
-                val.into_iter().map(|s| s.as_bytes()),
+                val.into_iter().map(|s| s.as_ref().as_bytes()),
                 val.len(),
             ),
             is_dynamic: true,
@@ -256,7 +263,7 @@ impl ContractFunctionParameters {
         self.args.push(Argument {
             type_name: "bytes32",
             value_bytes: Self::encode_array_of_32_byte_elements(
-                val.into_iter().map(|b| b.to_vec()),
+                val.into_iter().copied(),
                 val.len(),
             ),
             is_dynamic: true,
@@ -273,13 +280,14 @@ impl ContractFunctionParameters {
                 // a bool in rust is guaranteed to be of value 0 or 1
                 (val as u32).to_be_bytes().as_slice(),
                 false,
-            ),
+            )
+            .to_vec(),
             is_dynamic: false,
         });
         self
     }
 
-    fn truncate_and_left_pad_32_bytes<T>(val: &T, byte_count: isize) -> Vec<u8>
+    fn truncate_and_left_pad_32_bytes<T>(val: &T, byte_count: isize) -> [u8; 32]
     where
         T: IntEncode,
     {
@@ -295,7 +303,7 @@ impl ContractFunctionParameters {
     {
         self.args.push(Argument {
             type_name,
-            value_bytes: Self::truncate_and_left_pad_32_bytes(val, byte_count),
+            value_bytes: Self::truncate_and_left_pad_32_bytes(val, byte_count).to_vec(),
             is_dynamic: false,
         });
         self
@@ -303,7 +311,7 @@ impl ContractFunctionParameters {
 
     fn add_int_array<T>(
         &mut self,
-        val_array: &[T],
+        values: &[T],
         type_name: &'static str,
         byte_count: isize,
     ) -> &mut Self
@@ -313,10 +321,8 @@ impl ContractFunctionParameters {
         self.args.push(Argument {
             type_name,
             value_bytes: Self::encode_array_of_32_byte_elements(
-                val_array
-                    .into_iter()
-                    .map(|val| Self::truncate_and_left_pad_32_bytes(val, byte_count)),
-                val_array.len(),
+                values.into_iter().map(|val| Self::truncate_and_left_pad_32_bytes(val, byte_count)),
+                values.len(),
             ),
             is_dynamic: true,
         });
@@ -517,194 +523,194 @@ impl ContractFunctionParameters {
 
     /// Add an `int8[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int8_array(&mut self, val_array: &[i8]) -> &mut Self {
-        self.add_int_array(val_array, "int8[]", 1)
+    pub fn add_int8_array(&mut self, values: &[i8]) -> &mut Self {
+        self.add_int_array(values, "int8[]", 1)
     }
 
     /// Add an `int16[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int16_array(&mut self, val_array: &[i16]) -> &mut Self {
-        self.add_int_array(val_array, "int16[]", 2)
+    pub fn add_int16_array(&mut self, values: &[i16]) -> &mut Self {
+        self.add_int_array(values, "int16[]", 2)
     }
 
     /// Add an `int24[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int24_array(&mut self, val_array: &[i32]) -> &mut Self {
-        self.add_int_array(val_array, "int24[]", 3)
+    pub fn add_int24_array(&mut self, values: &[i32]) -> &mut Self {
+        self.add_int_array(values, "int24[]", 3)
     }
 
     /// Add an `int32[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int32_array(&mut self, val_array: &[i32]) -> &mut Self {
-        self.add_int_array(val_array, "int32[]", 4)
+    pub fn add_int32_array(&mut self, values: &[i32]) -> &mut Self {
+        self.add_int_array(values, "int32[]", 4)
     }
 
     /// Add an `int40[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int40_array(&mut self, val_array: &[i64]) -> &mut Self {
-        self.add_int_array(val_array, "int40[]", 5)
+    pub fn add_int40_array(&mut self, values: &[i64]) -> &mut Self {
+        self.add_int_array(values, "int40[]", 5)
     }
 
     /// Add an `int48[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int48_array(&mut self, val_array: &[i64]) -> &mut Self {
-        self.add_int_array(val_array, "int48[]", 6)
+    pub fn add_int48_array(&mut self, values: &[i64]) -> &mut Self {
+        self.add_int_array(values, "int48[]", 6)
     }
 
     /// Add an `int56[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int56_array(&mut self, val_array: &[i64]) -> &mut Self {
-        self.add_int_array(val_array, "int56[]", 7)
+    pub fn add_int56_array(&mut self, values: &[i64]) -> &mut Self {
+        self.add_int_array(values, "int56[]", 7)
     }
 
     /// Add an `int64[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int64_array(&mut self, val_array: &[i64]) -> &mut Self {
-        self.add_int_array(val_array, "int64[]", 8)
+    pub fn add_int64_array(&mut self, values: &[i64]) -> &mut Self {
+        self.add_int_array(values, "int64[]", 8)
     }
 
     /// Add an `int72[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int72_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int72[]", 9)
+    pub fn add_int72_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int72[]", 9)
     }
 
     /// Add an `int80[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int80_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int80[]", 10)
+    pub fn add_int80_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int80[]", 10)
     }
 
     /// Add an `int88[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int88_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int88[]", 11)
+    pub fn add_int88_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int88[]", 11)
     }
 
     /// Add an `int96[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int96_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int96[]", 12)
+    pub fn add_int96_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int96[]", 12)
     }
 
     /// Add an `int104[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int104_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int104[]", 13)
+    pub fn add_int104_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int104[]", 13)
     }
 
     /// Add an `int112[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int112_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int112[]", 14)
+    pub fn add_int112_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int112[]", 14)
     }
 
     /// Add an `int120[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int120_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int120[]", 15)
+    pub fn add_int120_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int120[]", 15)
     }
 
     /// Add an `int128[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int128_array(&mut self, val_array: &[i128]) -> &mut Self {
-        self.add_int_array(val_array, "int128[]", 16)
+    pub fn add_int128_array(&mut self, values: &[i128]) -> &mut Self {
+        self.add_int_array(values, "int128[]", 16)
     }
 
     /// Add an `int136[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int136_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int136[]", 17)
+    pub fn add_int136_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int136[]", 17)
     }
 
     /// Add an `int144[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int144_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int144[]", 18)
+    pub fn add_int144_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int144[]", 18)
     }
 
     /// Add an `int152[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int152_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int152[]", 19)
+    pub fn add_int152_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int152[]", 19)
     }
 
     /// Add an `int160[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int160_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int160[]", 20)
+    pub fn add_int160_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int160[]", 20)
     }
 
     /// Add an `int168[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int168_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int168[]", 21)
+    pub fn add_int168_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int168[]", 21)
     }
 
     /// Add an `int176[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int176_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int176[]", 22)
+    pub fn add_int176_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int176[]", 22)
     }
 
     /// Add an `int184[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int184_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int184[]", 23)
+    pub fn add_int184_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int184[]", 23)
     }
 
     /// Add an `int192[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int192_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int192[]", 24)
+    pub fn add_int192_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int192[]", 24)
     }
 
     /// Add an `int200[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int200_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int200[]", 25)
+    pub fn add_int200_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int200[]", 25)
     }
 
     /// Add an `int208[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int208_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int208[]", 26)
+    pub fn add_int208_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int208[]", 26)
     }
 
     /// Add an `int216[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int216_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int216[]", 27)
+    pub fn add_int216_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int216[]", 27)
     }
 
     /// Add an `int224[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int224_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int224[]", 28)
+    pub fn add_int224_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int224[]", 28)
     }
 
     /// Add an `int232[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int232_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int232[]", 29)
+    pub fn add_int232_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int232[]", 29)
     }
 
     /// Add an `int240[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int240_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int240[]", 30)
+    pub fn add_int240_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int240[]", 30)
     }
 
     /// Add an `int248[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int248_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int248[]", 31)
+    pub fn add_int248_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int248[]", 31)
     }
 
     /// Add an `int256[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_int256_array(&mut self, val_array: &[BigInt]) -> &mut Self {
-        self.add_int_array(val_array, "int256[]", 32)
+    pub fn add_int256_array(&mut self, values: &[BigInt]) -> &mut Self {
+        self.add_int_array(values, "int256[]", 32)
     }
 
     /// Add a `uint8` argument to the `ContractFunctionParameters`
@@ -901,202 +907,202 @@ impl ContractFunctionParameters {
 
     /// Add a `uint8[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint8_array(&mut self, val_array: &[u8]) -> &mut Self {
-        self.add_int_array(val_array, "uint8[]", 1)
+    pub fn add_uint8_array(&mut self, values: &[u8]) -> &mut Self {
+        self.add_int_array(values, "uint8[]", 1)
     }
 
     /// Add a `uint16[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint16_array(&mut self, val_array: &[u16]) -> &mut Self {
-        self.add_int_array(val_array, "uint16[]", 2)
+    pub fn add_uint16_array(&mut self, values: &[u16]) -> &mut Self {
+        self.add_int_array(values, "uint16[]", 2)
     }
 
     /// Add a `uint24[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint24_array(&mut self, val_array: &[u32]) -> &mut Self {
-        self.add_int_array(val_array, "uint24[]", 3)
+    pub fn add_uint24_array(&mut self, values: &[u32]) -> &mut Self {
+        self.add_int_array(values, "uint24[]", 3)
     }
 
     /// Add a `uint32[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint32_array(&mut self, val_array: &[u32]) -> &mut Self {
-        self.add_int_array(val_array, "uint32[]", 4)
+    pub fn add_uint32_array(&mut self, values: &[u32]) -> &mut Self {
+        self.add_int_array(values, "uint32[]", 4)
     }
 
     /// Add a `uint40[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint40_array(&mut self, val_array: &[u64]) -> &mut Self {
-        self.add_int_array(val_array, "uint40[]", 5)
+    pub fn add_uint40_array(&mut self, values: &[u64]) -> &mut Self {
+        self.add_int_array(values, "uint40[]", 5)
     }
 
     /// Add a `uint48[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint48_array(&mut self, val_array: &[u64]) -> &mut Self {
-        self.add_int_array(val_array, "uint48[]", 6)
+    pub fn add_uint48_array(&mut self, values: &[u64]) -> &mut Self {
+        self.add_int_array(values, "uint48[]", 6)
     }
 
     /// Add a `uint56[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint56_array(&mut self, val_array: &[u64]) -> &mut Self {
-        self.add_int_array(val_array, "uint56[]", 7)
+    pub fn add_uint56_array(&mut self, values: &[u64]) -> &mut Self {
+        self.add_int_array(values, "uint56[]", 7)
     }
 
     /// Add a `uint64[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint64_array(&mut self, val_array: &[u64]) -> &mut Self {
-        self.add_int_array(val_array, "uint64[]", 8)
+    pub fn add_uint64_array(&mut self, values: &[u64]) -> &mut Self {
+        self.add_int_array(values, "uint64[]", 8)
     }
 
     /// Add a `uint72[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint72_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint72[]", 9)
+    pub fn add_uint72_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint72[]", 9)
     }
 
     /// Add a `uint80[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint80_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint80[]", 10)
+    pub fn add_uint80_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint80[]", 10)
     }
 
     /// Add a `uint88[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint88_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint88[]", 11)
+    pub fn add_uint88_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint88[]", 11)
     }
 
     /// Add a `uint96[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint96_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint96[]", 12)
+    pub fn add_uint96_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint96[]", 12)
     }
 
     /// Add a `uint104[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint104_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint104[]", 13)
+    pub fn add_uint104_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint104[]", 13)
     }
 
     /// Add a `uint112[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint112_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint112[]", 14)
+    pub fn add_uint112_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint112[]", 14)
     }
 
     /// Add a `uint120[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint120_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint120[]", 15)
+    pub fn add_uint120_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint120[]", 15)
     }
 
     /// Add a `uint128[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint128_array(&mut self, val_array: &[u128]) -> &mut Self {
-        self.add_int_array(val_array, "uint128[]", 16)
+    pub fn add_uint128_array(&mut self, values: &[u128]) -> &mut Self {
+        self.add_int_array(values, "uint128[]", 16)
     }
 
     /// Add a `uint136[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint136_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint136[]", 17)
+    pub fn add_uint136_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint136[]", 17)
     }
 
     /// Add a `uint144[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint144_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint144[]", 18)
+    pub fn add_uint144_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint144[]", 18)
     }
 
     /// Add a `uint152[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint152_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint152[]", 19)
+    pub fn add_uint152_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint152[]", 19)
     }
 
     /// Add a `uint160[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint160_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint160[]", 20)
+    pub fn add_uint160_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint160[]", 20)
     }
 
     /// Add a `uint168[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint168_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint168[]", 21)
+    pub fn add_uint168_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint168[]", 21)
     }
 
     /// Add a `uint176[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint176_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint176[]", 22)
+    pub fn add_uint176_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint176[]", 22)
     }
 
     /// Add a `uint184[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint184_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint184[]", 23)
+    pub fn add_uint184_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint184[]", 23)
     }
 
     /// Add a `uint192[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint192_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint192[]", 24)
+    pub fn add_uint192_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint192[]", 24)
     }
 
     /// Add a `uint200[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint200_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint200[]", 25)
+    pub fn add_uint200_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint200[]", 25)
     }
 
     /// Add a `uint208[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint208_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint208[]", 26)
+    pub fn add_uint208_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint208[]", 26)
     }
 
     /// Add a `uint216[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint216_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint216[]", 27)
+    pub fn add_uint216_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint216[]", 27)
     }
 
     /// Add a `uint224[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint224_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint224[]", 28)
+    pub fn add_uint224_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint224[]", 28)
     }
 
     /// Add a `uint232[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint232_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint232[]", 29)
+    pub fn add_uint232_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint232[]", 29)
     }
 
     /// Add a `uint240[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint240_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint240[]", 30)
+    pub fn add_uint240_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint240[]", 30)
     }
 
     /// Add a `uint248[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint248_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint248[]", 31)
+    pub fn add_uint248_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint248[]", 31)
     }
 
     /// Add a `uint256[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_uint256_array(&mut self, val_array: &[BigUint]) -> &mut Self {
-        self.add_int_array(val_array, "uint256[]", 32)
+    pub fn add_uint256_array(&mut self, values: &[BigUint]) -> &mut Self {
+        self.add_int_array(values, "uint256[]", 32)
     }
 
     /// Add an `address` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_address(&mut self, address_string: &str) -> &mut Self {
+    pub fn add_address(&mut self, address: &str) -> &mut Self {
         self.args.push(Argument {
             type_name: "address",
-            value_bytes: Self::encode_address(address_string),
+            value_bytes: Self::encode_address(address).to_vec(),
             is_dynamic: false,
         });
         self
@@ -1104,29 +1110,30 @@ impl ContractFunctionParameters {
 
     /// Add an `address[]` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
-    pub fn add_address_array(&mut self, address_strings: &[&str]) -> &mut Self {
+    pub fn add_address_array(&mut self, addresses: &[&str]) -> &mut Self {
         self.args.push(Argument {
             type_name: "address[]",
             value_bytes: Self::encode_array_of_32_byte_elements(
-                address_strings.iter().map(|addr| Self::encode_address(addr)),
-                address_strings.len(),
+                addresses.iter().map(|addr| Self::encode_address(addr)),
+                addresses.len(),
             ),
             is_dynamic: true,
         });
         self
     }
 
+    /// Add a `function` argument to the `ContractFunctionParameters`
     #[allow(dead_code)]
     pub fn add_function(
         &mut self,
-        address_string: &str,
+        address: &str,
         mut selector: ContractFunctionSelector,
     ) -> &mut Self {
-        let mut value_bytes = IdEvmAddress::from_str(address_string).unwrap().0 .0.to_vec();
+        let mut value_bytes = IdEvmAddress::from_str(address).unwrap().to_bytes().to_vec();
         value_bytes.extend(selector.finish());
         self.args.push(Argument {
             type_name: "function",
-            value_bytes: Self::right_pad_32_bytes(value_bytes.as_slice()),
+            value_bytes: Self::right_pad_32_bytes(value_bytes.as_slice()).to_vec(),
             is_dynamic: false,
         });
         self
