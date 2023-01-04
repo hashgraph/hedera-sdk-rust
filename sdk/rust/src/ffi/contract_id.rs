@@ -1,4 +1,3 @@
-use std::ffi::c_char;
 use std::ptr::{
     self,
     NonNull,
@@ -8,7 +7,6 @@ use std::slice;
 use libc::size_t;
 
 use super::error::Error;
-use crate::ffi::util::cstr_from_ptr;
 
 #[derive(Copy, Clone)]
 #[repr(C)]
