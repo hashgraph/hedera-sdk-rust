@@ -68,7 +68,7 @@ pub type TokenUpdateTransaction = Transaction<TokenUpdateTransactionData>;
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenUpdateTransactionData {
     /// The token to be updated.
     token_id: Option<TokenId>,

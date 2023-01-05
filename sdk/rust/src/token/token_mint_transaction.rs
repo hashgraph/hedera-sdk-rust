@@ -62,7 +62,7 @@ pub type TokenMintTransaction = Transaction<TokenMintTransactionData>;
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenMintTransactionData {
     /// The token for which to mint tokens.
     token_id: Option<TokenId>,

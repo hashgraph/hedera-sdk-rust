@@ -53,7 +53,7 @@ pub type TokenUnpauseTransaction = Transaction<TokenUnpauseTransactionData>;
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenUnpauseTransactionData {
     /// The token to be unpaused.
     token_id: Option<TokenId>,

@@ -44,7 +44,7 @@ pub type ScheduleSignTransaction = Transaction<ScheduleSignTransactionData>;
 
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-// fixme: `rename_all = "camelCase"`
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct ScheduleSignTransactionData {
     schedule_id: Option<ScheduleId>,
 }
