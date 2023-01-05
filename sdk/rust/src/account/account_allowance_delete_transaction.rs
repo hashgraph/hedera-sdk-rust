@@ -48,7 +48,7 @@ pub type AccountAllowanceDeleteTransaction = Transaction<AccountAllowanceDeleteT
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountAllowanceDeleteTransactionData {
     pub nft_allowances: Vec<NftRemoveAllowance>,
 }
