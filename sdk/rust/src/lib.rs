@@ -110,6 +110,7 @@ pub use contract::{
     ContractCallQuery,
     ContractCreateTransaction,
     ContractExecuteTransaction,
+    ContractFunctionParameters,
     ContractFunctionResult,
     ContractId,
     ContractInfo,
