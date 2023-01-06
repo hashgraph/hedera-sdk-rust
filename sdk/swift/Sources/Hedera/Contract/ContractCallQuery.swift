@@ -63,15 +63,42 @@ public final class ContractCallQuery: Query<ContractFunctionResult> {
         return self
     }
 
-    /// The function parameters as their raw bytes.
+    /// The raw bytes of the function parameters.
     public var functionParameters: Data?
 
-    /// Set the function parameters as their raw bytes.
+    /// Sets the function parameters as their raw bytes.
     @discardableResult
     public func functionParameters(_ functionParameters: Data?) -> Self {
         self.functionParameters = functionParameters
 
         return self
+    }
+
+    /// Sets the function name to call.
+    ///
+    /// The function will be called with no parameters.
+    /// Use ``function(_:_)`` to call a function with parameters.
+    ///
+    /// - Parameter name: The name of the function to call.
+    ///
+    /// - Returns: `self`
+    @discardableResult
+    public func function(_ name: String) -> Self {
+        function(name, ContractFunctionParameters())
+    }
+
+    /// Sets the function to call, and the parameters to pass to the function.
+    ///
+    /// This is equivalent to calling `functionParameters(parameters.toBytes(name))`
+    ///
+    /// - Parameters:
+    ///   - name: The name of the function to call.
+    ///   - parameters: The parameters to pass to the function.
+    ///
+    /// - Returns: `self`
+    @discardableResult
+    public func function(_ name: String, _ parameters: ContractFunctionParameters) -> Self {
+        functionParameters(parameters.toBytes(name))
     }
 
     /// The sender for this transaction.
