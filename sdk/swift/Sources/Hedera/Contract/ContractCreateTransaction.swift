@@ -125,11 +125,23 @@ public final class ContractCreateTransaction: Transaction {
     public var constructorParameters: Data?
 
     /// Sets the parameters to pass to the constructor.
+    ///
+    /// - Returns: `self`
     @discardableResult
-    public func constructorParameters(_ constructorParameters: Data) -> Self {
-        self.constructorParameters = constructorParameters
+    public func constructorParameters(_ parameters: Data) -> Self {
+        self.constructorParameters = parameters
 
         return self
+    }
+
+    /// Sets the parameters to pass to the constructor.
+    ///
+    /// This is equivalent to calling `constructorParameters(parameters.toBytes())`
+    ///
+    /// - Returns: `self`
+    @discardableResult
+    public func constructorParameters(_ parameters: ContractFunctionParameters) -> Self {
+        constructorParameters(parameters.toBytes())
     }
 
     /// The memo for the new smart contract.
