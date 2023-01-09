@@ -59,11 +59,11 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_ed25519)
+        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_ecdsa)
     }
 
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_ed25519)
+        try unsafeFromAnyBytes(bytes, hedera_public_key_from_bytes_der)
     }
 
     private init(parsing description: String) throws {
