@@ -410,9 +410,9 @@ impl ToProtobuf for PublicKey {
     type Protobuf = services::Key;
 
     fn to_protobuf(&self) -> Self::Protobuf {
-        let key = match &self.0 {
-            PublicKeyData::Ed25519(_) => services::key::Key::Ed25519(self.to_bytes()),
-            PublicKeyData::Ecdsa(_) => services::key::Key::EcdsaSecp256k1(self.to_bytes()),
+        let key = match self.kind() {
+            super::KeyKind::Ed25519 => services::key::Key::Ed25519(self.to_bytes_raw()),
+            super::KeyKind::Ecdsa => services::key::Key::EcdsaSecp256k1(self.to_bytes_raw()),
         };
 
         Self::Protobuf { key: Some(key) }
