@@ -58,7 +58,7 @@ pub type ScheduleCreateTransaction = Transaction<ScheduleCreateTransactionData>;
 
 #[derive(Default, Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct ScheduleCreateTransactionData {
     scheduled_transaction: Option<SchedulableTransactionBody>,
 
