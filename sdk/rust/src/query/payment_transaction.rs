@@ -43,7 +43,7 @@ pub type PaymentTransaction = Transaction<PaymentTransactionData>;
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct PaymentTransactionData {
     pub(crate) amount: Option<Hbar>,
     pub(crate) max_amount: Option<Hbar>,

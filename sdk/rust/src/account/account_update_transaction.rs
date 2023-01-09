@@ -58,7 +58,7 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountUpdateTransactionData {
     /// The account ID which is being updated in this transaction.
     pub account_id: Option<AccountId>,

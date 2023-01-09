@@ -53,7 +53,7 @@ pub type AccountAllowanceApproveTransaction = Transaction<AccountAllowanceApprov
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountAllowanceApproveTransactionData {
     /// List of hbar allowances approved by the account owner.
     hbar_allowances: Vec<HbarAllowance>,
