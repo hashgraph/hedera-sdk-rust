@@ -62,8 +62,17 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private var transfers: [TransferTransaction.Transfer] = []
-    private var tokenTransfers: [TransferTransaction.TokenTransfer] = []
+    private var transfers: [TransferTransaction.Transfer] = [] {
+        willSet(_it) {
+            ensureNotFrozen(fieldName: "transfers")
+        }
+    }
+
+    private var tokenTransfers: [TransferTransaction.TokenTransfer] = [] {
+        willSet(_it) {
+            ensureNotFrozen(fieldName: "tokenTransfers")
+        }
+    }
 
     /// Create a new `TransferTransaction`.
     public override init() {

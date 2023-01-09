@@ -28,7 +28,11 @@ public final class TokenUnpauseTransaction: Transaction {
     }
 
     /// The token to be paused.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token to be paused.
     @discardableResult

@@ -35,7 +35,11 @@ public final class TopicMessageSubmitTransaction: Transaction {
     public override init() {}
 
     /// The topic ID to submit this message to.
-    public var topicId: TopicId?
+    public var topicId: TopicId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the topic ID to submit this message to.
     @discardableResult
@@ -47,7 +51,11 @@ public final class TopicMessageSubmitTransaction: Transaction {
 
     /// Message to be submitted.
     /// Max size of the Transaction (including signatures) is 6KiB.
-    public var message: Data = Data()
+    public var message: Data = Data() {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the message to be submitted.
     @discardableResult
@@ -60,7 +68,11 @@ public final class TopicMessageSubmitTransaction: Transaction {
     /// The `TransactionId` of the first chunk.
     ///
     /// Should get copied to every subsequent chunk in a fragmented message.
-    public var initialTransactionId: TransactionId?
+    public var initialTransactionId: TransactionId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the `TransactionId` of the first chunk.
     @discardableResult
@@ -72,7 +84,11 @@ public final class TopicMessageSubmitTransaction: Transaction {
 
     /// The total number of chunks in the message.
     /// Defaults to 1.
-    public var chunkTotal: Int = 1
+    public var chunkTotal: Int = 1 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the total number of chunks in the message.
     @discardableResult
@@ -84,7 +100,11 @@ public final class TopicMessageSubmitTransaction: Transaction {
 
     /// The sequence number (from 1 to total) of the current chunk in the message.
     /// Defaults to 1.
-    public var chunkNumber: Int = 1
+    public var chunkNumber: Int = 1 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the sequence number (from 1 to total) of the current chunk in the message.
     @discardableResult

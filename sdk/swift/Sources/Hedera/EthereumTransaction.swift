@@ -33,7 +33,11 @@ public final class EthereumTransaction: Transaction {
     }
 
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
-    public var ethereumData: Data?
+    public var ethereumData: Data? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     @discardableResult
@@ -49,7 +53,11 @@ public final class EthereumTransaction: Transaction {
     /// the callData element as a zero length string with the original contents in
     /// the referenced file at time of execution. The ethereumData will need to be
     /// "rehydrated" with the callData for signature validation to pass.
-    public var callDataFileId: FileId?
+    public var callDataFileId: FileId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets a file ID to find the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     ///
@@ -69,7 +77,11 @@ public final class EthereumTransaction: Transaction {
 
     /// The maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
-    public var maxGasAllowanceHbar: UInt64
+    public var maxGasAllowanceHbar: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.

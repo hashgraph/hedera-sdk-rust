@@ -24,7 +24,11 @@
 /// can be removed by setting the amount to zero in `AccountAllowanceApproveTransaction`.
 ///
 public final class AccountAllowanceDeleteTransaction: Transaction {
-    private var nftAllowances: [NftRemoveAllowance] = []
+    public private(set) var nftAllowances: [NftRemoveAllowance] = [] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Create a new `AccountAllowanceDeleteTransaction`.
     public override init() {
@@ -33,6 +37,7 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
     /// Remove all nft token allowances.
     @discardableResult
     public func deleteAllTokenNftAllowances(_ nftId: NftId, _ ownerAccountId: AccountId) -> Self {
+        ensureNotFrozen()
         if var allowance = nftAllowances.first(where: { (allowance) in
             allowance.tokenId == nftId.tokenId && allowance.ownerAccountId == ownerAccountId
         }) {
@@ -47,10 +52,6 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         }
 
         return self
-    }
-
-    public func getTokenNftAllowanceDeletions() -> [NftRemoveAllowance] {
-        self.nftAllowances
     }
 
     private enum CodingKeys: String, CodingKey {

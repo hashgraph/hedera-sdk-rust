@@ -23,6 +23,7 @@ import Foundation
 /// A transaction that can be executed on the Hedera network.
 public class Transaction: Request, ValidateChecksums {
     private var signers: [Signer] = []
+    public private(set) var isFrozen: Bool = false
 
     public typealias Response = TransactionResponse
 
@@ -32,7 +33,11 @@ public class Transaction: Request, ValidateChecksums {
     }
 
     /// The maximum allowed transaction fee for this transaction.
-    public var maxTransactionFee: Hbar? = 1
+    public var maxTransactionFee: Hbar? = 1 {
+        willSet(_it) {
+            ensureNotFrozen(fieldName: "maxTransactionFee")
+        }
+    }
 
     /// Sets the maximum allowed transaction fee for this transaction.
     @discardableResult
@@ -79,5 +84,14 @@ public class Transaction: Request, ValidateChecksums {
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         // do nothing
+    }
+
+
+    internal func ensureNotFrozen(fieldName: String? = nil) {
+        if let fieldName = fieldName {
+            precondition(!isFrozen, "\(fieldName) cannot be set while `\(type(of: self))` is frozen")
+        } else {
+            precondition(!isFrozen, "`\(type(of: self))` is immutable; it has at least one signature or has been explicitly frozen")
+        }
     }
 }
