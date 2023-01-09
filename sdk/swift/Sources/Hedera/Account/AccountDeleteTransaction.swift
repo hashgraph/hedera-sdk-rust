@@ -30,7 +30,11 @@ public final class AccountDeleteTransaction: Transaction {
     public override init() {}
 
     /// The account ID which will receive all remaining hbars.
-    public var transferAccountId: AccountId?
+    public var transferAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account ID which will receive all remaining hbars.
     @discardableResult
@@ -41,7 +45,11 @@ public final class AccountDeleteTransaction: Transaction {
     }
 
     /// The account ID which should be deleted.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account ID which should be deleted.
     @discardableResult

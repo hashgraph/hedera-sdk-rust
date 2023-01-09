@@ -34,7 +34,11 @@ public final class TokenMintTransaction: Transaction {
     }
 
     /// The token for which to mint tokens.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token for which to mint tokens.
     @discardableResult
@@ -45,7 +49,11 @@ public final class TokenMintTransaction: Transaction {
     }
 
     /// The amount of a fungible token to mint to the treasury account.
-    public var amount: UInt64
+    public var amount: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     //// Sets the amount of a fungible token to mint to the treasury account.
     @discardableResult
@@ -56,7 +64,11 @@ public final class TokenMintTransaction: Transaction {
     }
 
     /// The list of metadata for a non-fungible token to mint to the treasury account.
-    public var metadata: [Data]
+    public var metadata: [Data] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the list of metadata for a non-fungible token to mint to the treasury account.
     @discardableResult

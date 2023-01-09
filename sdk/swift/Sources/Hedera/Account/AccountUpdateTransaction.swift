@@ -32,7 +32,11 @@ public final class AccountUpdateTransaction: Transaction {
     public override init() {}
 
     /// The account ID which is being updated in this transaction.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account ID which is being updated in this transaction.
     @discardableResult
@@ -43,7 +47,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// The new key.
-    public var key: Key?
+    public var key: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the new key.
     @discardableResult
@@ -54,7 +62,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// If true, this account's key must sign any transaction depositing into this account.
-    public var receiverSignatureRequired: Bool?
+    public var receiverSignatureRequired: Bool? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set to true, this account's key must sign any transaction depositing into this account.
     @discardableResult
@@ -65,7 +77,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// The period until the account will be charged to extend its expiration date.
-    public var autoRenewPeriod: Duration?
+    public var autoRenewPeriod: Duration? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the period until the account will be charged to extend its expiration date.
     @discardableResult
@@ -77,7 +93,11 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
-    public var autoRenewAccountId: AccountId? = nil
+    public var autoRenewAccountId: AccountId? = nil {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
@@ -98,7 +118,11 @@ public final class AccountUpdateTransaction: Transaction {
     /// if it is not currently running a node, then it
     /// will behave as if `proxy_account_id` was `None`.
     @available(*, deprecated)
-    public var proxyAccountId: AccountId?
+    public var proxyAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     ///  Set the proxy account ID for this account
     @available(*, deprecated)
@@ -109,7 +133,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
@@ -120,7 +148,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// The memo associated with the account.
-    public var accountMemo: String?
+    public var accountMemo: String? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the memo associated with the account.
     @discardableResult
@@ -131,7 +163,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
-    public var maxAutomaticTokenAssociations: UInt32?
+    public var maxAutomaticTokenAssociations: UInt32? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     @discardableResult
@@ -143,7 +179,11 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
-    public var stakedAccountId: AccountId?
+    public var stakedAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
@@ -156,7 +196,11 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
-    public var stakedNodeId: UInt64?
+    public var stakedNodeId: UInt64? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
@@ -168,7 +212,11 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// If true, the account declines receiving a staking reward. The default value is false.
-    public var declineStakingReward: Bool?
+    public var declineStakingReward: Bool? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set to true, the account declines receiving a staking reward. The default value is false.
     @discardableResult

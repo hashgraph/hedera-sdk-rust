@@ -33,7 +33,11 @@ public final class FileDeleteTransaction: Transaction {
 
     /// The file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.
-    public var fileId: FileId?
+    public var fileId: FileId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.

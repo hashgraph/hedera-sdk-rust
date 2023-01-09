@@ -37,7 +37,11 @@ public final class FreezeTransaction: Transaction {
     }
 
     /// The start time.
-    public var startTime: Timestamp?
+    public var startTime: Timestamp? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the start time.
     @discardableResult
@@ -48,7 +52,11 @@ public final class FreezeTransaction: Transaction {
     }
 
     /// The file ID.
-    public var fileId: FileId?
+    public var fileId: FileId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the file ID.
     @discardableResult
@@ -59,7 +67,11 @@ public final class FreezeTransaction: Transaction {
     }
 
     /// The file hash.
-    public var fileHash: Data?
+    public var fileHash: Data? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the file hash.
     @discardableResult
@@ -70,7 +82,11 @@ public final class FreezeTransaction: Transaction {
     }
 
     /// The freeze type.
-    public var freezeType: FreezeType
+    public var freezeType: FreezeType {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the freeze type.
     @discardableResult

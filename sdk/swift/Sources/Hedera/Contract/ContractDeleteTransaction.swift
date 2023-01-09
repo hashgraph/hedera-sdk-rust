@@ -29,7 +29,11 @@ public final class ContractDeleteTransaction: Transaction {
     }
 
     /// The contract to be deleted.
-    public var contractId: ContractId?
+    public var contractId: ContractId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the contract to be deleted.
     @discardableResult
@@ -40,7 +44,11 @@ public final class ContractDeleteTransaction: Transaction {
     }
 
     /// The account ID which will receive all remaining hbars.
-    public var transferAccountId: AccountId?
+    public var transferAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account ID which will receive all remaining hbars.
     @discardableResult
@@ -51,7 +59,11 @@ public final class ContractDeleteTransaction: Transaction {
     }
 
     /// The contract ID which will receive all remaining hbars.
-    public var transferContractId: ContractId?
+    public var transferContractId: ContractId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the contract ID which will receive all remaining hbars.
     @discardableResult

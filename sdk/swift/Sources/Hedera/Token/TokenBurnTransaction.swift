@@ -32,7 +32,11 @@ public final class TokenBurnTransaction: Transaction {
     }
 
     /// The token for which to burn tokens.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token for which to burn tokens.
     @discardableResult
@@ -43,7 +47,11 @@ public final class TokenBurnTransaction: Transaction {
     }
 
     /// The amount of a fungible token to burn from the treasury account.
-    public var amount: UInt64
+    public var amount: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     //// Sets the amount of a fungible token to burn from the treasury account.
     @discardableResult
@@ -54,7 +62,11 @@ public final class TokenBurnTransaction: Transaction {
     }
 
     /// The serial numbers of a non-fungible token to burn from the treasury account.
-    public var serials: [UInt64]
+    public var serials: [UInt64] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the serial numbers of a non-fungible token to burn from the treasury account.
     @discardableResult
