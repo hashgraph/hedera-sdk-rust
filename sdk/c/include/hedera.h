@@ -252,10 +252,6 @@ int32_t hedera_error_pre_check_status(void);
 
 int32_t hedera_error_receipt_status_status(void);
 
-size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
-                                           size_t bytes_size,
-                                           uint8_t **result_out);
-
 /**
  * Parse a Hedera `AccountBalance` from the passed bytes.
  */
@@ -455,6 +451,10 @@ enum HederaError hedera_contract_log_info_from_bytes(const uint8_t *bytes,
                                                      char **s);
 
 enum HederaError hedera_contract_log_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
+                                           size_t bytes_size,
+                                           uint8_t **result_out);
 
 /**
  * Parse a Hedera `FileId` from the passed bytes.

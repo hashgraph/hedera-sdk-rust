@@ -186,8 +186,7 @@ where
             let node_index = node_indexes[index];
             let (node_account_id, channel) = client.network().channel(node_index);
 
-            let (request, context) =
-                executable.make_request(&transaction_id, node_account_id)?;
+            let (request, context) = executable.make_request(&transaction_id, node_account_id)?;
 
             let response = match executable.execute(channel, request).await {
                 Ok(response) => response.into_inner(),

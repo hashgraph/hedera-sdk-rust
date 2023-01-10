@@ -577,6 +577,7 @@ pub(crate) struct AnyTransactionBody<D> {
     transaction_id: Option<TransactionId>,
 
     #[cfg_attr(feature = "ffi", serde(default))]
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
     is_frozen: bool,
 
     #[cfg_attr(feature = "ffi", serde(default))]
