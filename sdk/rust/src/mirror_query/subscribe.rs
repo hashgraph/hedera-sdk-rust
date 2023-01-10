@@ -135,7 +135,7 @@ where
     where
         Self: 'a,
     {
-        let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
+        let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
             std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
         });
 
@@ -152,7 +152,7 @@ where
         client: &crate::Client,
         timeout: Option<std::time::Duration>,
     ) -> BoxFuture<'a, crate::Result<Self::Response>> {
-        let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
+        let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
             std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
         });
 

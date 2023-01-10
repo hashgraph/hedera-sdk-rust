@@ -21,7 +21,8 @@ impl EvmAddress {
         unsafe { &*(bytes.as_ptr().cast::<EvmAddress>()) }
     }
 
-    /// Get the underlying bytes this EVM address is made from.
+    /// Gets the underlying bytes this EVM address is made from.
+    #[must_use]
     pub fn to_bytes(self) -> [u8; 20] {
         self.0
     }

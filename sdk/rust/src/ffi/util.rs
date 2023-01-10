@@ -29,6 +29,8 @@ use std::{
     slice,
 };
 
+use libc::size_t;
+
 use crate::ffi::error::Error;
 
 pub(crate) unsafe fn cstr_from_ptr<'a>(ptr: *const c_char) -> Cow<'a, str> {
@@ -79,7 +81,20 @@ pub(crate) unsafe fn json_to_bytes<T: serde::de::DeserializeOwned, F: FnOnce(&T)
 
     let data: T = ffi_try!(serde_json::from_str(&s).map_err(crate::Error::request_parse));
 
-    let bytes = f(&data).into_boxed_slice();
+    unsafe { make_bytes2(f(&data), buf, buf_size) };
+
+    Error::Ok
+}
+
+/// Convert something bytes-like into a format C understands
+///
+/// # Safety
+/// - `buf` must be non-null and writable.
+pub(crate) unsafe fn make_bytes<T>(bytes: T, buf: *mut *mut u8) -> libc::size_t
+where
+    T: Into<Box<[u8]>>,
+{
+    let bytes = bytes.into();
 
     let bytes = Box::leak(bytes);
     let len = bytes.len();
@@ -87,8 +102,25 @@ pub(crate) unsafe fn json_to_bytes<T: serde::de::DeserializeOwned, F: FnOnce(&T)
 
     unsafe {
         ptr::write(buf, bytes);
-        ptr::write(buf_size, len);
     }
 
-    Error::Ok
+    len
+}
+
+// fixme: better name
+/// Convert something bytes-like into a format C understands
+///
+/// Unlike [`make_bytes`] this function uses an out-param for `buf_size`
+///
+/// # Safety
+/// - `buf` must be non-null and writable.
+/// - `buf_size` must be non-null and writable.
+pub(crate) unsafe fn make_bytes2<T>(bytes: T, buf: *mut *mut u8, buf_size: *mut size_t)
+where
+    T: Into<Box<[u8]>>,
+{
+    unsafe {
+        let size = make_bytes(bytes.into(), buf);
+        ptr::write(buf_size, size);
+    }
 }

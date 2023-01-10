@@ -44,3 +44,9 @@ pub mod mirror {
 pub mod streams {
     tonic::include_proto!("streams/proto");
 }
+
+// fixme: Do this, just, don't warn 70 times in generated code.
+#[allow(clippy::derive_partial_eq_without_eq)]
+pub mod sdk {
+    tonic::include_proto!("sdk/proto");
+}

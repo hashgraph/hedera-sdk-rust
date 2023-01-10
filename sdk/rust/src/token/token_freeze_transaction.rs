@@ -66,15 +66,27 @@ pub struct TokenFreezeTransactionData {
 }
 
 impl TokenFreezeTransaction {
+    /// Returns the account to be frozen.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.data().account_id
+    }
+
     /// Sets the account to be frozen.
     pub fn account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(account_id);
+        self.data_mut().account_id = Some(account_id);
         self
     }
 
-    /// Sets the token for which this account will be frozen.
+    /// Returns the toke nfor which the account will be frozen.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.data().token_id
+    }
+
+    /// Sets the token for which the account will be frozen.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
     }
 }
@@ -157,7 +169,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_FREEZE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenFreeze(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenFreeze(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
             assert_eq!(data.account_id, Some(AccountId::from(1001)));

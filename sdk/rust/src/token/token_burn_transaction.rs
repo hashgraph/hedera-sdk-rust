@@ -80,21 +80,39 @@ pub struct TokenBurnTransactionData {
 }
 
 impl TokenBurnTransaction {
+    /// Returns the token for which to burn tokens.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.data().token_id
+    }
+
     /// Sets the token for which to burn tokens.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
+    }
+
+    /// Returns the amount of a fungible token to burn from the treasury account.
+    #[must_use]
+    pub fn get_amount(&self) -> u64 {
+        self.data().amount
     }
 
     /// Sets the amount of a fungible token to burn from the treasury account.
     pub fn amount(&mut self, amount: impl Into<u64>) -> &mut Self {
-        self.body.data.amount = amount.into();
+        self.data_mut().amount = amount.into();
         self
+    }
+
+    /// Returns the serial numbers of a non-fungible token to burn from the treasury account.
+    #[must_use]
+    pub fn get_serials(&self) -> &[i64] {
+        &self.data().serials
     }
 
     /// Sets the serial numbers of a non-fungible token to burn from the treasury account.
     pub fn serials(&mut self, serials: impl IntoIterator<Item = i64>) -> &mut Self {
-        self.body.data.serials = serials.into_iter().collect();
+        self.data_mut().serials = serials.into_iter().collect();
         self
     }
 }
@@ -182,7 +200,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_BURN_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenBurn(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenBurn(transaction) => transaction);
 
             assert_eq!(data.token_id, Some(TokenId::from(1002)));
             assert_eq!(data.amount, 100);

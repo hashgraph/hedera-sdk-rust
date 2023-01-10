@@ -69,6 +69,7 @@ mod query;
 mod schedule;
 mod semantic_version;
 mod signer;
+mod staked_id;
 mod staking_info;
 mod system;
 mod token;
@@ -105,6 +106,7 @@ pub use account::{
     ProxyStaker,
 };
 pub use client::Client;
+pub(crate) use client::Operator;
 pub use contract::{
     ContractBytecodeQuery,
     ContractCallQuery,

@@ -31,7 +31,6 @@ use crate::query::{
 };
 use crate::{
     AccountId,
-    Client,
     Error,
     FromProtobuf,
     Hbar,
@@ -123,14 +122,13 @@ where
         self.data.should_retry(response)
     }
 
-    async fn make_request(
+    fn make_request(
         &self,
-        client: &Client,
         transaction_id: &Option<TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         let payment = if self.data.is_payment_required() {
-            Some(self.payment.make_request(client, transaction_id, node_account_id).await?.0)
+            Some(self.payment.make_request(transaction_id, node_account_id)?.0)
         } else {
             None
         };

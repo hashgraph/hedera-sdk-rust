@@ -310,7 +310,7 @@ impl PublicKey {
     /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
     pub fn to_evm_address(&self) -> crate::Result<String> {
         if let PublicKeyData::Ecdsa(ecdsa_key) = &self.0 {
-            let hash = sha3::Keccak256::digest(&ecdsa_key.to_bytes());
+            let hash = sha3::Keccak256::digest(ecdsa_key.to_bytes());
             Ok(format!("0x{}", hex::encode(hash.get(12..32).unwrap())))
         } else {
             Err(Error::WrongKeyType {

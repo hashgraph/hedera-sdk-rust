@@ -28,9 +28,23 @@
 /// Setting the amount to zero will remove the respective allowance for the spender.
 ///
 public final class AccountAllowanceApproveTransaction: Transaction {
-    private var hbarAllowances: [HbarAllowance] = []
-    private var tokenAllowances: [TokenAllowance] = []
-    private var nftAllowances: [TokenNftAllowance] = []
+    private var hbarAllowances: [HbarAllowance] = [] {
+        willSet(_it) {
+            ensureNotFrozen(fieldName: "hbarAllowances")
+        }
+    }
+
+    private var tokenAllowances: [TokenAllowance] = [] {
+        willSet(_it) {
+            ensureNotFrozen(fieldName: "tokenAllowances")
+        }
+    }
+
+    private var nftAllowances: [TokenNftAllowance] = [] {
+        willSet(_it) {
+            ensureNotFrozen(fieldName: "nftAllowances")
+        }
+    }
 
     /// Create a new `AccountAllowanceApproveTransaction`.
     public override init() {
@@ -85,6 +99,8 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         _ ownerAccountId: AccountId,
         _ spenderAccountId: AccountId
     ) -> Self {
+        ensureNotFrozen()
+
         if var allowance = nftAllowances.first(where: { (allowance) in
             allowance.tokenId == nftId.tokenId && allowance.spenderAccountId == spenderAccountId
                 && allowance.ownerAccountId == ownerAccountId && allowance.approvedForAll == nil

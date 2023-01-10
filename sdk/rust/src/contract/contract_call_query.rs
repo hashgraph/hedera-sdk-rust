@@ -54,24 +54,36 @@ pub type ContractCallQuery = Query<ContractCallQueryData>;
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractCallQueryData {
     /// The contract instance to call.
-    pub contract_id: Option<ContractId>,
+    contract_id: Option<ContractId>,
 
     /// The amount of gas to use for the call.
-    pub gas: u64,
+    gas: u64,
 
     /// The function parameters as their raw bytes.
     #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
-    pub function_parameters: Vec<u8>,
+    function_parameters: Vec<u8>,
 
     /// The sender for this transaction.
-    pub sender_account_id: Option<AccountId>,
+    sender_account_id: Option<AccountId>,
 }
 
 impl ContractCallQuery {
+    /// Gets the contract instance to call.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        self.data.contract_id
+    }
+
     /// Sets the contract to make a static call against.
     pub fn contract_id(&mut self, contract_id: ContractId) -> &mut Self {
         self.data.contract_id = Some(contract_id);
         self
+    }
+
+    /// Gets the amount of gas to use for the call.
+    #[must_use]
+    pub fn get_gas(&self) -> u64 {
+        self.data.gas
     }
 
     /// Sets the amount of gas to use for the call.
@@ -80,10 +92,22 @@ impl ContractCallQuery {
         self
     }
 
+    /// Gets the function parameters as their raw bytes.
+    #[must_use]
+    pub fn get_contract_parameters(&self) -> &[u8] {
+        self.data.function_parameters.as_ref()
+    }
+
     /// Sets the function parameters as their raw bytes.
     pub fn function_parameters(&mut self, data: Vec<u8>) -> &mut Self {
         self.data.function_parameters = data;
         self
+    }
+
+    /// Gets the sender for this transaction.
+    #[must_use]
+    pub fn get_sender_account_id(&self) -> Option<AccountId> {
+        self.data.sender_account_id
     }
 
     /// Sets the sender for this transaction.

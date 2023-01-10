@@ -18,6 +18,8 @@
  * ‍
  */
 
+use std::marker::PhantomData;
+
 use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::network_service_client::NetworkServiceClient;
@@ -36,13 +38,15 @@ use crate::{
 };
 
 /// Get information about the versions of protobuf and hedera.
-///
 pub type NetworkVersionInfoQuery = Query<NetworkVersionInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub struct NetworkVersionInfoQueryData {}
+pub struct NetworkVersionInfoQueryData {
+    // make this not publicly constructable.
+    _phantom: PhantomData<()>,
+}
 
 impl From<NetworkVersionInfoQueryData> for AnyQueryData {
     #[inline]

@@ -32,7 +32,11 @@ public final class TopicDeleteTransaction: Transaction {
     public override init() {}
 
     /// The topic ID which is being deleted in this transaction.
-    public var topicId: TopicId?
+    public var topicId: TopicId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the topic ID which is being deleted in this transaction.
     @discardableResult

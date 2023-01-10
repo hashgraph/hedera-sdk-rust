@@ -29,6 +29,7 @@ use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::ToProtobuf;
+use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -61,22 +62,22 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountUpdateTransactionData {
     /// The account ID which is being updated in this transaction.
-    pub account_id: Option<AccountId>,
+    account_id: Option<AccountId>,
 
     /// The new key.
-    pub key: Option<Key>,
+    key: Option<Key>,
 
     /// If true, this account's key must sign any transaction depositing into this account.
-    pub receiver_signature_required: Option<bool>,
+    receiver_signature_required: Option<bool>,
 
     /// The account is charged to extend its expiration date every this many seconds.
     #[cfg_attr(
         feature = "ffi",
         serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
     )]
-    pub auto_renew_period: Option<Duration>,
+    auto_renew_period: Option<Duration>,
 
-    pub auto_renew_account_id: Option<AccountId>,
+    auto_renew_account_id: Option<AccountId>,
 
     /// The ID of the account to which this account is proxy staked.
     ///
@@ -88,112 +89,193 @@ pub struct AccountUpdateTransactionData {
     /// if it is not currently running a node, then it
     /// will behave as if `proxy_account_id` was `None`.
     #[deprecated]
-    pub proxy_account_id: Option<AccountId>,
+    proxy_account_id: Option<AccountId>,
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     #[cfg_attr(
         feature = "ffi",
         serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
     )]
-    pub expiration_time: Option<OffsetDateTime>,
+    expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the account.
-    pub account_memo: Option<String>,
+    account_memo: Option<String>,
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     ///
-    pub max_automatic_token_associations: Option<u16>,
+    max_automatic_token_associations: Option<u16>,
 
-    /// ID of the account to which this account is staking.
-    /// This is mutually exclusive with `staked_node_id`.
-    pub staked_account_id: Option<AccountId>,
-
-    /// ID of the node this account is staked to.
-    /// This is mutually exclusive with `staked_account_id`.
-    pub staked_node_id: Option<u64>,
+    /// ID of the account or node to which this account is staking, if any.
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    staked_id: Option<StakedId>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
-    pub decline_staking_reward: Option<bool>,
+    decline_staking_reward: Option<bool>,
 }
 
 impl AccountUpdateTransaction {
-    /// Set the account ID which is being updated.
+    /// Returns the ID for the account that is being updated.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.data().account_id
+    }
+
+    /// Sets the ID for the account that is being updated.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.account_id = Some(id);
+        self.data_mut().account_id = Some(id);
         self
+    }
+
+    /// Gets the new expiration time to extend to (ignored if equal to or before the current one).
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.data().expiration_time
     }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(at);
+        self.data_mut().expiration_time = Some(at);
         self
     }
 
-    /// Set the key for this account.
+    /// Returns the key that the account will be updated to.
+    #[must_use]
+    pub fn get_key(&self) -> Option<&Key> {
+        self.data().key.as_ref()
+    }
+
+    /// Sets the key for this account.
     pub fn key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.key = Some(key.into());
+        self.data_mut().key = Some(key.into());
         self
+    }
+
+    /// If true, this account's key must sign any transaction depositing hbar into this account.
+    #[must_use]
+    pub fn get_receiver_signature_required(&self) -> Option<bool> {
+        self.data().receiver_signature_required
     }
 
     /// Set to true to require this account to sign any transfer of hbars to this account.
     pub fn receiver_signature_required(&mut self, required: bool) -> &mut Self {
-        self.body.data.receiver_signature_required = Some(required);
+        self.data_mut().receiver_signature_required = Some(required);
         self
     }
 
-    ///  Set the proxy account ID for this account
+    /// Gets the ID of the account to which this account will be updated to be proxy staked to.
+    #[deprecated]
+    #[allow(deprecated)]
+    #[must_use]
+    pub fn get_proxy_account_id(&self) -> Option<AccountId> {
+        self.data().proxy_account_id
+    }
+
+    /// Sets the proxy account ID for this account.
     ///
-    /// See [`proxy_account_id`](AccountUpdateTransactionData.proxy_account_id) for more info
+    /// If `proxy_account_id` is `None`, or is an invalid account, or is an account
+    /// that isn't a node, then this account is automatically proxy staked to
+    /// a node chosen by the network, but without earning payments.
+    ///
+    /// If the `proxy_account_id` account refuses to accept proxy staking, or
+    /// if it is not currently running a node, then it
+    /// will behave as if `proxy_account_id` was `None`.
     #[deprecated]
     #[allow(deprecated)]
     pub fn proxy_account_id(&mut self, proxy_account_id: AccountId) -> &mut Self {
-        self.body.data.proxy_account_id = Some(proxy_account_id);
+        self.data_mut().proxy_account_id = Some(proxy_account_id);
         self
     }
-    /// Set the auto renew period for this account.
+
+    /// Returns the new auto renew period.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Option<Duration> {
+        self.data().auto_renew_period
+    }
+
+    /// Sets the auto renew period for this account.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(period);
+        self.data_mut().auto_renew_period = Some(period);
         self
+    }
+
+    /// Returns the new auto renew account id.
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(id);
+        self.data_mut().auto_renew_account_id = Some(id);
         self
     }
 
-    /// Set the memo associated with the account.
+    /// Returns the memo associated with the account.
+    #[must_use]
+    pub fn get_account_memo(&self) -> Option<&str> {
+        self.data().account_memo.as_deref()
+    }
+
+    /// Sets the memo associated with the account.
     pub fn account_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.account_memo = Some(memo.into());
+        self.data_mut().account_memo = Some(memo.into());
         self
     }
 
-    /// Set the maximum number of tokens that an Account can be implicitly associated with.
+    /// Returns the maximum number of tokens that an Account can be implicitly associated with.
+    #[must_use]
+    pub fn get_max_automatic_token_associations(&self) -> Option<u16> {
+        self.data().max_automatic_token_associations
+    }
+
+    /// Sets the maximum number of tokens that an Account can be implicitly associated with.
     pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
-        self.body.data.max_automatic_token_associations = Some(amount);
+        self.data_mut().max_automatic_token_associations = Some(amount);
         self
     }
 
-    /// Set the ID of the account to which this account is staking.
+    /// Returns the ID of the account to which this account is staking.
+    /// This is mutually exclusive with `staked_node_id`.
+    #[must_use]
+    pub fn get_staked_account_id(&self) -> Option<AccountId> {
+        self.data().staked_id.and_then(|it| it.to_account_id())
+    }
+
+    /// Sets the ID of the account to which this account is staking.
     /// This is mutually exclusive with `staked_node_id`.
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id);
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
-    /// Set the ID of the node to which this account is staking.
+    /// Returns the ID of the node to which this account is staking.
+    /// This is mutually exclusive with `staked_account_id`.
+    #[must_use]
+    pub fn get_staked_node_id(&self) -> Option<u64> {
+        self.data().staked_id.and_then(|it| it.to_node_id())
+    }
+
+    /// Sets the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        self.body.data.staked_node_id = Some(id);
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
-    /// Set to true, the account declines receiving a staking reward. The default value is false.
+    /// Returns `true` if this account should decline receiving a staking reward,
+    /// `false` if it should _not_,
+    /// and `None` if the value should remain unchanged.
+    #[must_use]
+    pub fn get_decline_staking_reward(&self) -> Option<bool> {
+        self.data().decline_staking_reward
+    }
+
+    /// If set to true, the account declines receiving a staking reward. The default value is false.
     pub fn decline_staking_reward(&mut self, decline: bool) -> &mut Self {
-        self.body.data.decline_staking_reward = Some(decline);
+        self.data_mut().decline_staking_reward = Some(decline);
         self
     }
 }
@@ -202,7 +284,7 @@ impl AccountUpdateTransaction {
 impl TransactionExecute for AccountUpdateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
     }
 
     async fn execute(
@@ -230,19 +312,16 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
             services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
         });
 
-        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
-            (_, Some(node_id)) => Some(
-                services::crypto_update_transaction_body::StakedId::StakedNodeId(node_id as i64),
-            ),
-
-            (Some(account_id), _) => {
-                Some(services::crypto_update_transaction_body::StakedId::StakedAccountId(
-                    account_id.to_protobuf(),
-                ))
+        let staked_id = self.staked_id.map(|id| match id {
+            StakedId::NodeId(id) => {
+                services::crypto_update_transaction_body::StakedId::StakedNodeId(id as i64)
             }
-
-            _ => None,
-        };
+            StakedId::AccountId(id) => {
+                services::crypto_update_transaction_body::StakedId::StakedAccountId(
+                    id.to_protobuf(),
+                )
+            }
+        });
 
         services::transaction_body::Data::CryptoUpdateAccount(
             #[allow(deprecated)]
@@ -312,7 +391,6 @@ mod tests {
   "accountMemo": "An account memo",
   "maxAutomaticTokenAssociations": 256,
   "stakedAccountId": "0.0.1002",
-  "stakedNodeId": 7,
   "declineStakingReward": false
 }"#;
 
@@ -332,8 +410,8 @@ mod tests {
                 .auto_renew_period(Duration::days(90))
                 .account_memo("An account memo")
                 .max_automatic_token_associations(256)
-                .staked_account_id(AccountId::from(1002))
                 .staked_node_id(7)
+                .staked_account_id(AccountId::from(1002))
                 .proxy_account_id(AccountId::from(3141))
                 .decline_staking_reward(false);
 
@@ -350,7 +428,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(ACCOUNT_UPDATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::AccountUpdate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountUpdate(transaction) => transaction);
 
             assert_eq!(
                 data.expiration_time.unwrap(),
@@ -358,15 +436,14 @@ mod tests {
             );
             assert_eq!(data.receiver_signature_required.unwrap(), true);
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-            assert_eq!(data.account_memo.unwrap(), "An account memo");
+            assert_eq!(data.account_memo.as_deref(), Some("An account memo"));
             assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
-            assert_eq!(data.staked_node_id.unwrap(), 7);
             assert_eq!(data.decline_staking_reward.unwrap(), false);
             assert_eq!(data.account_id, Some(AccountId::from(1001)));
-            assert_eq!(data.staked_account_id, Some(AccountId::from(1002)));
+            assert_eq!(data.staked_id, Some(AccountId::from(1002).into()));
             assert_eq!(data.proxy_account_id, Some(AccountId::from(3141)));
 
-            let key = assert_matches!(data.key.unwrap(), Key::Single(public_key) => public_key);
+            let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);
             assert_eq!(key, PublicKey::from_str(KEY)?);
 
             Ok(())

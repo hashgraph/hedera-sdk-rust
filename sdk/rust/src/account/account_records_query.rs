@@ -58,6 +58,12 @@ impl From<AccountRecordsQueryData> for AnyQueryData {
 }
 
 impl AccountRecordsQuery {
+    /// Gets the account ID for which the records should be retrieved.
+    #[must_use]
+    pub fn get_account_id(&self) -> Option<AccountId> {
+        self.data.account_id
+    }
+
     /// Sets the account ID for which the records should be retrieved.
     pub fn account_id(&mut self, id: AccountId) -> &mut Self {
         self.data.account_id = Some(id);

@@ -92,49 +92,88 @@ struct SchedulableTransactionBody {
 }
 
 impl ScheduleCreateTransaction {
+    // note(sr): not sure what the right way to go about this is?
+    // pub fn get_scheduled_transaction(&self) -> Option<&SchedulableTransactionBody> {
+    //     self.data().scheduled_transaction.as_ref()
+    // }
+
     /// Sets the scheduled transaction.
     pub fn scheduled_transaction<D>(&mut self, transaction: Transaction<D>) -> &mut Self
     where
         D: TransactionExecute,
     {
-        self.body.data.scheduled_transaction = Some(SchedulableTransactionBody {
-            max_transaction_fee: transaction.body.max_transaction_fee,
-            transaction_memo: transaction.body.transaction_memo,
-            data: Box::new(transaction.body.data.into()),
+        let body = transaction.into_body();
+
+        self.data_mut().scheduled_transaction = Some(SchedulableTransactionBody {
+            max_transaction_fee: body.max_transaction_fee,
+            transaction_memo: body.transaction_memo,
+            data: Box::new(body.data.into()),
         });
 
         self
     }
 
+    /// Returns the timestamp for when the transaction should be evaluated for execution and then expire.
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.data().expiration_time
+    }
+
     /// Sets the timestamp for when the transaction should be evaluated for execution and then expire.
     pub fn expiration_time(&mut self, time: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(time);
+        self.data_mut().expiration_time = Some(time);
         self
+    }
+
+    /// Returns `true` if the transaction will be evaluated at `expiration_time` instead
+    /// of when all the required signatures are received, `false` otherwise.
+    #[must_use]
+    pub fn get_wait_for_expiry(&self) -> bool {
+        self.data().wait_for_expiry
     }
 
     /// Sets if the transaction will be evaluated for execution at `expiration_time` instead
     /// of when all required signatures are received.
     pub fn wait_for_expiry(&mut self, wait: bool) -> &mut Self {
-        self.body.data.wait_for_expiry = wait;
+        self.data_mut().wait_for_expiry = wait;
         self
+    }
+
+    /// Returns the id of the account to be charged the service fee for the scheduled transaction at
+    /// the consensus time it executes (if ever).
+    #[must_use]
+    pub fn get_payer_account_id(&self) -> Option<AccountId> {
+        self.data().payer_account_id
     }
 
     /// Sets the id of the account to be charged the service fee for the scheduled transaction at
     /// the consensus time that it executes (if ever).
     pub fn payer_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.payer_account_id = Some(id);
+        self.data_mut().payer_account_id = Some(id);
         self
+    }
+
+    /// Returns the memo for the schedule entity.
+    #[must_use]
+    pub fn get_schedule_memo(&self) -> Option<&str> {
+        self.data().schedule_memo.as_deref()
     }
 
     /// Sets the memo for the schedule entity.
     pub fn schedule_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.schedule_memo = Some(memo.into());
+        self.data_mut().schedule_memo = Some(memo.into());
         self
+    }
+
+    /// Returns the Hedera key which can be used to sign a `ScheduleDelete` and remove the schedule.
+    #[must_use]
+    pub fn get_admin_key(&self) -> Option<&Key> {
+        self.data().admin_key.as_ref()
     }
 
     /// Sets the Hedera key which can be used to sign a `ScheduleDelete` and remove the schedule.
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.admin_key = Some(key.into());
+        self.data_mut().admin_key = Some(key.into());
         self
     }
 }

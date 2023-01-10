@@ -30,7 +30,11 @@ public final class TokenUnfreezeTransaction: Transaction {
     }
 
     /// The account to be unfrozen.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be unfrozen.
     @discardableResult
@@ -41,7 +45,11 @@ public final class TokenUnfreezeTransaction: Transaction {
     }
 
     /// The token for which this account will be unfrozen.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token for which this account will be unfrozen.
     @discardableResult

@@ -50,7 +50,7 @@ pub type AccountAllowanceDeleteTransaction = Transaction<AccountAllowanceDeleteT
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountAllowanceDeleteTransactionData {
-    pub nft_allowances: Vec<NftRemoveAllowance>,
+    nft_allowances: Vec<NftRemoveAllowance>,
 }
 
 #[derive(Debug, Clone)]
@@ -68,20 +68,27 @@ pub struct NftRemoveAllowance {
 }
 
 impl AccountAllowanceDeleteTransaction {
+    /// Get the nft allowances that will be removed.
+    #[must_use]
+    pub fn get_nft_allowances(&self) -> &[NftRemoveAllowance] {
+        &self.data().nft_allowances
+    }
+
     /// Remove all nft token allowances.
     pub fn delete_all_token_nft_allowances(
         &mut self,
         nft_id: NftId,
         owner_account_id: AccountId,
     ) -> &mut Self {
+        let data = self.data_mut();
         let owner_account_id = owner_account_id;
 
-        if let Some(allowance) = self.body.data.nft_allowances.iter_mut().find(|allowance| {
+        if let Some(allowance) = data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id && allowance.owner_account_id == owner_account_id
         }) {
             allowance.serials.push(nft_id.serial as i64);
         } else {
-            self.body.data.nft_allowances.push(NftRemoveAllowance {
+            data.nft_allowances.push(NftRemoveAllowance {
                 token_id: nft_id.token_id,
                 serials: vec![nft_id.serial as i64],
                 owner_account_id,

@@ -54,7 +54,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The bytes of the smart contract.
-    public var bytecode: Data?
+    public var bytecode: Data? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the bytes of the smart contract.
     @discardableResult
@@ -65,7 +69,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The file to use as the bytes for the smart contract.
-    public var bytecodeFileId: FileId?
+    public var bytecodeFileId: FileId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the file to use as the bytes for the smart contract.
     @discardableResult
@@ -76,7 +84,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The admin key.
-    public var adminKey: Key?
+    public var adminKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the admin key.
     @discardableResult
@@ -87,7 +99,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The gas limit to deploy the smart contract.
-    public var gas: UInt64
+    public var gas: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the gas limit to deploy the smart contract.
     @discardableResult
@@ -99,7 +115,11 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
-    public var initialBalance: Hbar
+    public var initialBalance: Hbar {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
@@ -111,7 +131,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The auto renew period for this smart contract.
-    public var autoRenewPeriod: Duration?
+    public var autoRenewPeriod: Duration? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the auto renew period for this smart contract.
     @discardableResult
@@ -122,7 +146,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The parameters to pass to the constructor.
-    public var constructorParameters: Data?
+    public var constructorParameters: Data? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the parameters to pass to the constructor.
     ///
@@ -145,7 +173,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The memo for the new smart contract.
-    public var contractMemo: String
+    public var contractMemo: String {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the memo for the new smart contract.
     @discardableResult
@@ -156,7 +188,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The maximum number of tokens that this contract can be automatically associated with.
-    public var maxAutomaticTokenAssociations: UInt32
+    public var maxAutomaticTokenAssociations: UInt32 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the maximum number of tokens that this contract can be automatically associated with.
     @discardableResult
@@ -167,7 +203,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The account to be used at the contract's expiration time to extend the life of the contract.
-    public var autoRenewAccountId: AccountId?
+    public var autoRenewAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be used at the contract's expiration time to extend the life of the contract.
     @discardableResult
@@ -178,7 +218,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The ID of the account to which this contract is staking.
-    public var stakedAccountId: AccountId?
+    public var stakedAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the ID of the account to which this contract is staking.
     @discardableResult
@@ -189,7 +233,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// The ID of the node to which this contract is staking.
-    public var stakedNodeId: UInt64?
+    public var stakedNodeId: UInt64? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the ID of the node to which this contract is staking.
     @discardableResult
@@ -200,7 +248,11 @@ public final class ContractCreateTransaction: Transaction {
     }
 
     /// If true, the contract declines receiving a staking reward. The default value is false.
-    public var declineStakingReward: Bool
+    public var declineStakingReward: Bool {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set to true, the contract declines receiving a staking reward. The default value is false.
     @discardableResult

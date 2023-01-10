@@ -18,11 +18,6 @@
  * ‍
  */
 
-use std::sync::atomic::{
-    AtomicU64,
-    Ordering,
-};
-
 use async_trait::async_trait;
 use hedera_proto::services;
 use prost::Message;
@@ -39,7 +34,6 @@ use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
     AccountId,
-    Client,
     Error,
     Hbar,
     HbarUnit,
@@ -79,6 +73,55 @@ impl SignaturePair {
 impl From<(PublicKey, Vec<u8>)> for SignaturePair {
     fn from((public, signature): (PublicKey, Vec<u8>)) -> Self {
         Self { signature, public }
+    }
+}
+
+impl<D> Transaction<D>
+where
+    D: TransactionExecute,
+{
+    pub(crate) fn make_request_inner(
+        &self,
+        transaction_id: TransactionId,
+        node_account_id: AccountId,
+    ) -> crate::Result<(services::Transaction, TransactionHash)> {
+        assert!(self.is_frozen());
+
+        let transaction_body = self.to_transaction_body_protobuf(node_account_id, &transaction_id);
+
+        let body_bytes = transaction_body.encode_to_vec();
+
+        let mut signatures = Vec::with_capacity(1 + self.signers.len());
+
+        if let Some(operator) = &self.body.operator {
+            let operator_signature = operator.sign(&body_bytes);
+
+            // todo: avoid the `.map(xyz).collect()`
+            signatures.push(SignaturePair::from(operator_signature));
+        }
+
+        for signer in &self.signers {
+            if signatures.iter().all(|it| it.public != signer.public_key()) {
+                let signature = signer.sign(&body_bytes);
+                signatures.push(SignaturePair::from(signature));
+            }
+        }
+
+        let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
+
+        let signed_transaction = services::SignedTransaction {
+            body_bytes,
+            sig_map: Some(services::SignatureMap { sig_pair: signatures }),
+        };
+
+        let signed_transaction_bytes = signed_transaction.encode_to_vec();
+
+        let transaction_hash = TransactionHash::new(&signed_transaction_bytes);
+
+        let transaction =
+            services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
+
+        Ok((transaction, transaction_hash))
     }
 }
 
@@ -122,52 +165,17 @@ where
         true
     }
 
-    async fn make_request(
+    fn make_request(
         &self,
-        client: &Client,
         transaction_id: &Option<TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
-        let transaction_id = transaction_id.as_ref().ok_or(Error::NoPayerAccountOrTransactionId)?;
+        assert!(self.is_frozen());
 
-        let transaction_body = self.to_transaction_body_protobuf(
+        self.make_request_inner(
+            transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
             node_account_id,
-            transaction_id,
-            client.max_transaction_fee(),
-        );
-
-        let body_bytes = transaction_body.encode_to_vec();
-
-        let mut signatures = Vec::with_capacity(1 + self.signers.len());
-
-        let operator_signature =
-            client.sign_with_operator(&body_bytes).await.map_err(Error::signature)?;
-
-        // todo: avoid the `.map(xyz).collect()`
-        signatures.push(SignaturePair::from(operator_signature));
-
-        for signer in &self.signers {
-            if signatures.iter().all(|it| it.public != signer.public_key()) {
-                let signature = signer.sign(&body_bytes);
-                signatures.push(SignaturePair::from(signature));
-            }
-        }
-
-        let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
-
-        let signed_transaction = services::SignedTransaction {
-            body_bytes,
-            sig_map: Some(services::SignatureMap { sig_pair: signatures }),
-        };
-
-        let signed_transaction_bytes = signed_transaction.encode_to_vec();
-
-        let transaction_hash = TransactionHash::new(&signed_transaction_bytes);
-
-        let transaction =
-            services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
-
-        Ok((transaction, transaction_hash))
+        )
     }
 
     async fn execute(
@@ -210,7 +218,6 @@ where
     }
 
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.body.payer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
         if let Some(node_account_ids) = &self.body.node_account_ids {
             for node_account_id in node_account_ids {
                 node_account_id.validate_checksum_for_ledger_id(ledger_id)?;
@@ -230,21 +237,14 @@ where
         &self,
         node_account_id: AccountId,
         transaction_id: &TransactionId,
-        client_max_transaction_fee: &AtomicU64,
     ) -> services::TransactionBody {
+        assert!(self.is_frozen());
         let data = self.body.data.to_transaction_data_protobuf(node_account_id, transaction_id);
 
-        let max_transaction_fee = self.body.max_transaction_fee.unwrap_or_else(|| {
-            // no max has been set on the *transaction*
-            // check if there is a global max set on the client
-            match client_max_transaction_fee.load(Ordering::Relaxed) {
-                max if max > 1 => Hbar::from_tinybars(max as i64),
-
-                // no max has been set on the client either
-                // fallback to the hard-coded default for this transaction type
-                _ => self.body.data.default_max_transaction_fee(),
-            }
-        });
+        let max_transaction_fee = self
+            .body
+            .max_transaction_fee
+            .unwrap_or_else(|| self.body.data.default_max_transaction_fee());
 
         services::TransactionBody {
             data: Some(data),
