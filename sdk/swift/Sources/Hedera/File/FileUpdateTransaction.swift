@@ -30,7 +30,11 @@ public final class FileUpdateTransaction: Transaction {
     public override init() {}
 
     /// The file ID which is being updated in this transaction.
-    public var fileId: FileId?
+    public var fileId: FileId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the file ID which is being updated in this transaction.
     @discardableResult
@@ -41,7 +45,11 @@ public final class FileUpdateTransaction: Transaction {
     }
 
     /// The memo associated with the file.
-    public var fileMemo: String = ""
+    public var fileMemo: String = "" {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the memo associated with the file.
     @discardableResult
@@ -54,7 +62,11 @@ public final class FileUpdateTransaction: Transaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    public var keys: KeyList?
+    public var keys: KeyList? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the keys for this file.
     ///
@@ -70,7 +82,11 @@ public final class FileUpdateTransaction: Transaction {
     }
 
     /// The bytes that are to be the contents of the file.
-    public var contents: Data = Data()
+    public var contents: Data = Data() {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the bytes that are to be the contents of the file.
     @discardableResult
@@ -81,7 +97,11 @@ public final class FileUpdateTransaction: Transaction {
     }
 
     /// The auto renew period for this file.
-    public var autoRenewPeriod: Duration?
+    public var autoRenewPeriod: Duration? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the auto renew period for this file.
     public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
@@ -92,7 +112,11 @@ public final class FileUpdateTransaction: Transaction {
 
     /// The account to be used at the files's expiration time to extend the
     /// life of the file.
-    public var autoRenewAccountId: AccountId?
+    public var autoRenewAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be used at the files's expiration time to extend the
     /// life of the file.
@@ -103,7 +127,11 @@ public final class FileUpdateTransaction: Transaction {
     }
 
     /// The time at which this file should expire.
-    private var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the time at which this file should expire.
     @discardableResult

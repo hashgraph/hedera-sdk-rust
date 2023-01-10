@@ -34,6 +34,7 @@ use crate::account::{
     AccountDeleteTransactionData,
     AccountUpdateTransactionData,
 };
+use crate::client::Operator;
 use crate::contract::{
     ContractCreateTransactionData,
     ContractDeleteTransactionData,
@@ -557,7 +558,6 @@ pub(crate) struct AnyTransactionBody<D> {
     #[cfg_attr(feature = "ffi", serde(flatten))]
     data: D,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     node_account_ids: Option<Vec<AccountId>>,
 
     #[cfg_attr(
@@ -574,10 +574,14 @@ pub(crate) struct AnyTransactionBody<D> {
     transaction_memo: String,
 
     #[cfg_attr(feature = "ffi", serde(default))]
-    payer_account_id: Option<AccountId>,
+    transaction_id: Option<TransactionId>,
 
     #[cfg_attr(feature = "ffi", serde(default))]
-    transaction_id: Option<TransactionId>,
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
+    is_frozen: bool,
+
+    #[cfg_attr(feature = "ffi", serde(default))]
+    operator: Option<Operator>,
 }
 
 impl<D> From<AnyTransactionBody<D>> for Transaction<D>
@@ -600,8 +604,9 @@ where
             transaction_valid_duration: body.transaction_valid_duration,
             max_transaction_fee: body.max_transaction_fee,
             transaction_memo: body.transaction_memo,
-            payer_account_id: body.payer_account_id,
             transaction_id: body.transaction_id,
+            is_frozen: body.is_frozen,
+            operator: body.operator,
         }
     }
 }
@@ -617,8 +622,9 @@ where
             transaction_valid_duration: body.transaction_valid_duration,
             max_transaction_fee: body.max_transaction_fee,
             transaction_memo: body.transaction_memo,
-            payer_account_id: body.payer_account_id,
             transaction_id: body.transaction_id,
+            is_frozen: body.is_frozen,
+            operator: body.operator,
         }
     }
 }

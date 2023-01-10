@@ -30,7 +30,11 @@ public final class TokenRevokeKycTransaction: Transaction {
     }
 
     /// The account to have their KYC revoked.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to have their KYC revoked.
     @discardableResult
@@ -41,7 +45,11 @@ public final class TokenRevokeKycTransaction: Transaction {
     }
 
     /// The token for which this account will have their KYC revoked.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token for which this account will have their KYC revoked.
     @discardableResult

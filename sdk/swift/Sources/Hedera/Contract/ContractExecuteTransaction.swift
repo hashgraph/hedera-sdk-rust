@@ -45,7 +45,11 @@ public final class ContractExecuteTransaction: Transaction {
     }
 
     /// The contract instance to call.
-    public var contractId: ContractId?
+    public var contractId: ContractId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the contract instance to call.
     @discardableResult
@@ -56,7 +60,11 @@ public final class ContractExecuteTransaction: Transaction {
     }
 
     /// The maximum amount of gas to use for the call.
-    public var gas: UInt64
+    public var gas: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the maximum amount of gas to use for the call.
     @discardableResult
@@ -67,7 +75,11 @@ public final class ContractExecuteTransaction: Transaction {
     }
 
     /// The number of hbars sent with this function call.
-    public var payableAmount: Hbar
+    public var payableAmount: Hbar {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the number of hbars sent with this function call.
     @discardableResult
@@ -78,7 +90,11 @@ public final class ContractExecuteTransaction: Transaction {
     }
 
     /// The raw bytes of the function parameters.
-    public var functionParameters: Data?
+    public var functionParameters: Data? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the function parameters as their raw bytes.
     @discardableResult

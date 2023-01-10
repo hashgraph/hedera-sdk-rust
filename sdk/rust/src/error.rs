@@ -50,6 +50,11 @@ pub enum Error {
     #[error("failed to create a SDK type from a protobuf response: {0}")]
     FromProtobuf(#[source] BoxStdError),
 
+    // todo: bikeshed this.
+    /// Freeze failed due to there being no explicitly set node account IDs and no client being provided to generate them.
+    #[error("freeze failed due to node account IDs being unset")]
+    FreezeUnsetNodeAccountIds,
+
     /// A transaction failed pre-check.
     ///
     /// The transaction had the ID `transaction_id`.
@@ -264,7 +269,7 @@ impl Error {
         Self::RequestParse(error.into())
     }
 
-    pub(crate) fn signature<E: Into<BoxStdError>>(error: E) -> Self {
+    pub(crate) fn _signature<E: Into<BoxStdError>>(error: E) -> Self {
         Self::Signature(error.into())
     }
 

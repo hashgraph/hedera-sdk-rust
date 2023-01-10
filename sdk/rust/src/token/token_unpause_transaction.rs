@@ -60,9 +60,15 @@ pub struct TokenUnpauseTransactionData {
 }
 
 impl TokenUnpauseTransaction {
+    /// Returns the token to be unpaused.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.data().token_id
+    }
+
     /// Sets the token to be unpaused.
     pub fn token_id(&mut self, token_id: impl Into<TokenId>) -> &mut Self {
-        self.body.data.token_id = Some(token_id.into());
+        self.data_mut().token_id = Some(token_id.into());
         self
     }
 }
@@ -140,7 +146,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(TOKEN_UNPAUSE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::TokenUnpause(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenUnpause(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
 

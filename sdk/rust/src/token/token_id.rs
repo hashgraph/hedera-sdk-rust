@@ -105,8 +105,9 @@ impl TokenId {
     }
 
     /// Create an NFT ID
+    #[must_use]
     pub fn nft(&self, serial: u64) -> NftId {
-        NftId { token_id: self.clone(), serial }
+        NftId { token_id: *self, serial }
     }
 }
 

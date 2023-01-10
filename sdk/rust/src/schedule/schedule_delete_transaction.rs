@@ -52,9 +52,15 @@ pub struct ScheduleDeleteTransactionData {
 }
 
 impl ScheduleDeleteTransaction {
-    /// Set the schedule to delete.
+    /// Returns the schedule to delete.
+    #[must_use]
+    pub fn get_schedule_id(&self) -> Option<ScheduleId> {
+        self.data().schedule_id
+    }
+
+    /// Sets the schedule to delete.
     pub fn schedule_id(&mut self, id: ScheduleId) -> &mut Self {
-        self.body.data.schedule_id = Some(id);
+        self.data_mut().schedule_id = Some(id);
         self
     }
 }

@@ -83,11 +83,23 @@ impl Default for NodeAddressBookQueryData {
 }
 
 impl NodeAddressBookQuery {
+    /// Returns the file ID of the address book file on the network.
+    #[must_use]
+    pub fn get_file_id(&self) -> FileId {
+        self.data.file_id
+    }
+
     /// Sets the ID of the address book file on the network.
     /// Can either be `0.0.101` or `0.0.102`. Defaults to `0.0.102`.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
         self.data.file_id = id.into();
         self
+    }
+
+    /// Returns the configured limit of node addresses to receive.
+    #[must_use]
+    pub fn get_limit(&self) -> u32 {
+        self.data.limit
     }
 
     /// Sets the maximum number of node addresses to receive.

@@ -27,34 +27,29 @@ use std::sync::atomic::{
 use std::sync::Arc;
 use std::time::Duration;
 
-use tokio::sync::RwLock as AsyncRwLock;
-use tokio::task::block_in_place;
+use arc_swap::ArcSwapOption;
+pub(crate) use operator::Operator;
+use rand::thread_rng;
 
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::Network;
-use crate::error::BoxStdError;
 use crate::{
     AccountId,
     LedgerId,
     PrivateKey,
-    PublicKey,
     TransactionId,
 };
 
 mod mirror_network;
 mod network;
-
-struct Operator {
-    account_id: AccountId,
-    signer: PrivateKey,
-}
+mod operator;
 
 struct ClientInner {
     network: Network,
     mirror_network: MirrorNetwork,
-    operator: AsyncRwLock<Option<Operator>>,
+    operator: ArcSwapOption<Operator>,
     max_transaction_fee_tinybar: AtomicU64,
-    ledger_id: AsyncRwLock<Option<LedgerId>>,
+    ledger_id: ArcSwapOption<LedgerId>,
     auto_validate_checksums: AtomicBool,
 }
 
@@ -71,9 +66,9 @@ impl Client {
         Self(Arc::new(ClientInner {
             network,
             mirror_network,
-            operator: AsyncRwLock::new(None),
+            operator: ArcSwapOption::new(None),
             max_transaction_fee_tinybar: AtomicU64::new(0),
-            ledger_id: AsyncRwLock::new(ledger_id.into()),
+            ledger_id: ArcSwapOption::new(ledger_id.into().map(Arc::new)),
             auto_validate_checksums: AtomicBool::new(false),
         }))
     }
@@ -110,19 +105,26 @@ impl Client {
         }
     }
 
-    pub(crate) async fn ledger_id(&self) -> Option<LedgerId> {
-        self.0.ledger_id.read().await.clone()
-    }
-
-    // don't expose, this is just for swift and therefor is temporary.
-    #[cfg(feature = "ffi")]
-    pub(crate) fn ledger_id_blocking(&self) -> Option<LedgerId> {
-        self.0.ledger_id.blocking_read().clone()
+    // optimized function to avoid allocations/pointer chasing.
+    // this shouldn't be exposed because it exposes repr.o
+    pub(crate) fn ledger_id_internal(&self) -> arc_swap::Guard<Option<Arc<LedgerId>>> {
+        self.0.ledger_id.load()
     }
 
     /// Sets the ledger ID for the Client's network.
     pub fn set_ledger_id(&self, ledger_id: Option<LedgerId>) {
-        block_in_place(|| *self.0.ledger_id.blocking_write() = ledger_id);
+        self.0.ledger_id.store(ledger_id.map(Arc::new))
+    }
+
+    pub(crate) fn random_node_ids(&self) -> Vec<AccountId> {
+        let node_ids: Vec<_> = self.network().healthy_node_ids().collect();
+
+        let node_sample_amount = (node_ids.len() + 2) / 3;
+
+        let node_id_indecies =
+            rand::seq::index::sample(&mut thread_rng(), node_ids.len(), node_sample_amount);
+
+        node_id_indecies.into_iter().map(|index| node_ids[index]).collect()
     }
 
     pub(crate) fn auto_validate_checksums(&self) -> bool {
@@ -131,7 +133,7 @@ impl Client {
 
     /// Enable or disable automatic entity ID checksum validation.
     pub fn set_auto_validate_checksums(&self, value: bool) {
-        self.0.auto_validate_checksums.store(value, Ordering::Relaxed)
+        self.0.auto_validate_checksums.store(value, Ordering::Relaxed);
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with
@@ -143,25 +145,12 @@ impl Client {
     /// The operator private key is used to sign all transactions executed by this client.
     ///
     pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
-        block_in_place(|| {
-            *self.0.operator.blocking_write() = Some(Operator { account_id: id, signer: key });
-        });
+        self.0.operator.store(Some(Arc::new(Operator { account_id: id, signer: key })));
     }
 
     /// Generate a new transaction ID from the stored operator account ID, if present.
     pub(crate) async fn generate_transaction_id(&self) -> Option<TransactionId> {
-        self.0.operator.read().await.as_ref().map(|it| it.account_id).map(TransactionId::generate)
-    }
-
-    pub(crate) async fn sign_with_operator(
-        &self,
-        body_bytes: &[u8],
-    ) -> Result<(PublicKey, Vec<u8>), BoxStdError> {
-        if let Some(operator) = &*self.0.operator.read().await {
-            Ok((operator.signer.public_key(), operator.signer.sign(body_bytes)))
-        } else {
-            unreachable!()
-        }
+        self.0.operator.load().as_deref().map(Operator::generate_transaction_id)
     }
 
     /// Gets a reference to the configured network.
@@ -180,9 +169,13 @@ impl Client {
     }
 
     #[allow(clippy::unused_self)]
-    pub(crate) fn get_request_timeout(&self) -> Option<Duration> {
+    pub(crate) fn request_timeout(&self) -> Option<Duration> {
         // todo: implement this.
         None
+    }
+
+    pub(crate) fn operator_internal(&self) -> arc_swap::Guard<Option<Arc<Operator>>> {
+        self.0.operator.load()
     }
 
     /// Send a ping to the given node.
@@ -214,7 +207,7 @@ impl Client {
     /// Send a ping to all nodes.
     pub async fn ping_all(&self) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().into_iter().map(|it| self.ping(dbg!(*it))),
+            self.network().node_ids().iter().map(|it| self.ping(dbg!(*it))),
         )
         .await?;
 
@@ -224,7 +217,7 @@ impl Client {
     /// Send a ping to all nodes, canceling the ping after `timeout` has elapsed.
     pub async fn ping_all_with_timeout(&self, timeout: Duration) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().into_iter().map(|it| self.ping_with_timeout(*it, timeout)),
+            self.network().node_ids().iter().map(|it| self.ping_with_timeout(*it, timeout)),
         )
         .await?;
 

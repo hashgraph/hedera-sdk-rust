@@ -80,11 +80,11 @@ fn main() -> anyhow::Result<()> {
     cfg = cfg.type_attribute(
         "proto.ResponseCodeEnum",
         r#"#[doc = "
-Returned in `TransactionReceipt`, `Error::PreCheckStatus`, and `Error::ReceiptStatus`.
-
-The success variant is `Success` which is what a `TransactionReceipt` will contain for a
-successful transaction.
-    "]"#,
+ Returned in `TransactionReceipt`, `Error::PreCheckStatus`, and `Error::ReceiptStatus`.
+ 
+ The success variant is `Success` which is what a `TransactionReceipt` will contain for a
+ successful transaction.
+     "]"#,
     );
 
     if cfg!(feature = "serde") {
@@ -126,6 +126,8 @@ successful transaction.
             &["./protobufs/mirror/", "./protobufs/services/"],
         )?;
 
+    remove_useless_comments(&mirror_out_dir.join("proto.rs"))?;
+
     // streams
     // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
 
@@ -133,72 +135,94 @@ successful transaction.
     create_dir_all(&streams_out_dir)?;
 
     // NOTE: **ALL** protobufs defined in basic_types must be specified here
-    let mut cfg = tonic_build::configure();
-
-    cfg = cfg
-        .extern_path(".proto.Fraction", "crate::services::Fraction")
-        .extern_path(".proto.Timestamp", "crate::services::Timestamp")
-        .extern_path(".proto.AccountID", "crate::services::AccountId")
-        .extern_path(".proto.TokenID", "crate::services::TokenId")
-        .extern_path(".proto.AccountAmount", "crate::services::AccountAmount")
-        .extern_path(
-            ".proto.CurrentAndNextFeeSchedule",
-            "crate::services::CurrentAndNextFeeSchedule",
-        )
-        .extern_path(".proto.FeeComponents", "crate::services::FeeComponents")
-        .extern_path(".proto.FeeData", "crate::services::FeeData")
-        .extern_path(".proto.FeeSchedule", "crate::services::FeeSchedule")
-        .extern_path(".proto.Key", "crate::services::Key")
-        .extern_path(".proto.FileID", "crate::services::FileId")
-        .extern_path(".proto.KeyList", "crate::services::KeyList")
-        .extern_path(".proto.NftTransfer", "crate::services::NftTransfer")
-        .extern_path(".proto.NodeAddress", "crate::services::NodeAddress")
-        .extern_path(".proto.NodeAddressBook", "crate::services::NodeAddressBook")
-        .extern_path(".proto.RealmID", "crate::services::RealmId")
-        .extern_path(".proto.ScheduleID", "crate::services::ScheduleId")
-        .extern_path(".proto.SemanticVersion", "crate::services::SemanticVersion")
-        .extern_path(".proto.ServiceEndpoint", "crate::services::ServiceEndpoint")
-        .extern_path(
-            ".proto.ServicesConfigurationList",
-            "crate::services::ServicesConfigurationList",
-        )
-        .extern_path(".proto.Setting", "crate::services::Setting")
-        .extern_path(".proto.ShardID", "crate::services::ShardId")
-        .extern_path(".proto.Signature", "crate::services::Signature")
-        .extern_path(".proto.SignatureList", "crate::services::SignatureList")
-        .extern_path(".proto.SignatureMap", "crate::services::SignatureMap")
-        .extern_path(".proto.SignaturePair", "crate::services::SignaturePair")
-        .extern_path(".proto.ThresholdKey", "crate::services::ThresholdKey")
-        .extern_path(".proto.ThresholdSignature", "crate::services::ThresholdSignature")
-        .extern_path(".proto.TimestampSeconds", "crate::services::TimestampSeconds")
-        .extern_path(".proto.TokenBalance", "crate::services::TokenBalance")
-        .extern_path(".proto.TokenBalances", "crate::services::TokenBalances")
-        .extern_path(".proto.TokenRelationship", "crate::services::TokenRelationship")
-        .extern_path(".proto.TokenTransferList", "crate::services::TokenTransferList")
-        .extern_path(".proto.TopicID", "crate::services::TopicId")
-        .extern_path(".proto.TransactionFeeSchedule", "crate::services::TransactionFeeSchedule")
-        .extern_path(".proto.TransactionID", "crate::services::TransactionId")
-        .extern_path(".proto.TransferList", "crate::services::TransferList")
-        .extern_path(".proto.HederaFunctionality", "crate::services::HederaFunctionality")
-        .extern_path(".proto.SubType", "crate::services::SubType")
-        .extern_path(".proto.TokenFreezeStatus", "crate::services::TokenFreezeStatus")
-        .extern_path(".proto.TokenKycStatus", "crate::services::TokenKycStatus")
-        .extern_path(".proto.TokenSupplyType", "crate::services::TokenSupplyType")
-        .extern_path(".proto.TokenType", "crate::services::TokenType")
-        .extern_path(".proto.GrantedCryptoAllowance", "crate::services::GrantedCryptoAllowance")
-        .extern_path(".proto.GrantedTokenAllowance", "crate::services::GrantedTokenAllowance")
-        .extern_path(".proto.CryptoAllowance", "crate::services::CryptoAllowance")
-        .extern_path(".proto.TokenAllowance", "crate::services::TokenAllowance")
-        .extern_path(".proto.GrantedNftAllowance", "crate::services::GrantedNftAllowance")
-        .extern_path(".proto.NftAllowance", "crate::services::NftAllowance")
-        .extern_path(".proto.TokenPauseStatus", "crate::services::TokenPauseStatus")
-        .extern_path(".proto.TokenAssociation", "crate::services::TokenAssociation")
-        .extern_path(".proto.ContractID", "crate::services::ContractId");
+    let cfg = tonic_build::configure();
+    let cfg = builder::extern_basic_types(cfg);
 
     cfg.out_dir(&streams_out_dir).compile(
         &["./protobufs/streams/account_balance_file.proto"],
         &["./protobufs/streams/", "./protobufs/services/"],
     )?;
+
+    // see note wrt services.
+    remove_useless_comments(&streams_out_dir.join("proto.rs"))?;
+
+    // sdk
+    // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
+    let sdk_out_dir = Path::new(&env::var("OUT_DIR")?).join("sdk");
+    create_dir_all(&sdk_out_dir)?;
+
+    // note:
+    // almost everything in services must be specified here.
+    let cfg = tonic_build::configure();
+    let cfg = builder::extern_basic_types(cfg)
+        .services_same("AssessedCustomFee")
+        .services_same("ConsensusCreateTopicTransactionBody")
+        .services_same("ConsensusDeleteTopicTransactionBody")
+        .services_same("ConsensusMessageChunkInfo")
+        .services_same("ConsensusSubmitMessageTransactionBody")
+        .services_same("ConsensusUpdateTopicTransactionBody")
+        .services_same("ContractCallTransactionBody")
+        .services_same("ContractCreateTransactionBody")
+        .services_same("ContractDeleteTransactionBody")
+        .services_same("ContractUpdateTransactionBody")
+        .services_same("CryptoAddLiveHashTransactionBody")
+        .services_same("CryptoApproveAllowanceTransactionBody")
+        .services_same("CryptoCreateTransactionBody")
+        .services_same("CryptoDeleteTransactionBody")
+        .services_same("CryptoDeleteAllowanceTransactionBody")
+        .services_same("CryptoTransferTransactionBody")
+        .services_same("CryptoUpdateTransactionBody")
+        .services_same("CryptoDeleteLiveHashTransactionBody")
+        .services_same("CustomFee")
+        .services_same("Duration")
+        .services_same("EthereumTransactionBody")
+        .services_same("FileAppendTransactionBody")
+        .services_same("FileCreateTransactionBody")
+        .services_same("FileDeleteTransactionBody")
+        .services_same("FileUpdateTransactionBody")
+        .services_same("FixedFee")
+        .services_same("FractionalFee")
+        .services_same("FreezeTransactionBody")
+        .services_same("FreezeType")
+        .services_same("LiveHash")
+        .services_same("NftRemoveAllowance")
+        .services_same("NodeStake")
+        .services_same("NodeStakeUpdateTransactionBody")
+        .services_same("RoyaltyFee")
+        .services_same("SchedulableTransactionBody")
+        .services_same("ScheduleCreateTransactionBody")
+        .services_same("ScheduleDeleteTransactionBody")
+        .services_same("ScheduleSignTransactionBody")
+        .services_same("SystemDeleteTransactionBody")
+        .services_same("SystemUndeleteTransactionBody")
+        .services_same("TokenAssociateTransactionBody")
+        .services_same("TokenBurnTransactionBody")
+        .services_same("TokenCreateTransactionBody")
+        .services_same("TokenDeleteTransactionBody")
+        .services_same("TokenDissociateTransactionBody")
+        .services_same("TokenFeeScheduleUpdateTransactionBody")
+        .services_same("TokenFreezeAccountTransactionBody")
+        .services_same("TokenGrantKycTransactionBody")
+        .services_same("TokenMintTransactionBody")
+        .services_same("TokenPauseTransactionBody")
+        .services_same("TokenRevokeKycTransactionBody")
+        .services_same("TokenUnfreezeAccountTransactionBody")
+        .services_same("TokenUnpauseTransactionBody")
+        .services_same("TokenUpdateTransactionBody")
+        .services_same("TokenWipeAccountTransactionBody")
+        .services_same("Transaction")
+        .services_same("TransactionBody")
+        .services_same("UncheckedSubmitBody")
+        .services_same("UtilPrngTransactionBody")
+        .services_same("VirtualAddress");
+
+    cfg.out_dir(&sdk_out_dir).compile(
+        &["./protobufs/sdk/transaction_list.proto"],
+        &["./protobufs/sdk/", "./protobufs/services/"],
+    )?;
+
+    // see note wrt services.
+    remove_useless_comments(&sdk_out_dir.join("proto.rs"))?;
 
     Ok(())
 }
@@ -206,10 +230,94 @@ successful transaction.
 fn remove_useless_comments(path: &Path) -> anyhow::Result<()> {
     let mut contents = fs::read_to_string(path)?;
 
-    contents = contents.replace("///*", "");
+    contents = contents.replace("///*\n", "");
+    contents = contents.replace("/// *\n", "");
     contents = contents.replace("/// UNDOCUMENTED", "");
 
     fs::write(path, contents)?;
 
     Ok(())
+}
+
+trait BuilderExtensions {
+    fn services_path<T: AsRef<str>, U: AsRef<str>>(self, proto_name: T, rust_name: U) -> Self
+    where
+        Self: Sized;
+
+    fn services_same<T: AsRef<str>>(self, name: T) -> Self
+    where
+        Self: Sized,
+    {
+        self.services_path(&name, &name)
+    }
+}
+
+impl BuilderExtensions for tonic_build::Builder {
+    fn services_path<T: AsRef<str>, U: AsRef<str>>(self, proto_name: T, rust_name: U) -> Self {
+        let proto_name = proto_name.as_ref();
+        let rust_name = rust_name.as_ref();
+
+        self.extern_path(format!(".proto.{proto_name}"), format!("crate::services::{rust_name}"))
+    }
+}
+
+mod builder {
+    use crate::BuilderExtensions;
+
+    pub(super) fn extern_basic_types(builder: tonic_build::Builder) -> tonic_build::Builder {
+        builder
+            .services_same("Fraction")
+            .services_same("Timestamp")
+            .services_path("AccountID", "AccountId")
+            .services_path("TokenID", "TokenId")
+            .services_same("AccountAmount")
+            .services_same("CurrentAndNextFeeSchedule")
+            .services_same("FeeComponents")
+            .services_same("FeeData")
+            .services_same("FeeSchedule")
+            .services_same("Key")
+            .services_path("FileID", "FileId")
+            .services_same("KeyList")
+            .services_same("NftTransfer")
+            .services_same("NodeAddress")
+            .services_same("NodeAddressBook")
+            .services_path("RealmID", "RealmId")
+            .services_path("ScheduleID", "ScheduleId")
+            .services_path("SemanticVersion", "SemanticVersion")
+            .services_path("ServiceEndpoint", "ServiceEndpoint")
+            .services_same("ServicesConfigurationList")
+            .services_path("Setting", "Setting")
+            .services_path("ShardID", "ShardId")
+            .services_path("Signature", "Signature")
+            .services_path("SignatureList", "SignatureList")
+            .services_path("SignatureMap", "SignatureMap")
+            .services_path("SignaturePair", "SignaturePair")
+            .services_path("ThresholdKey", "ThresholdKey")
+            .services_path("ThresholdSignature", "ThresholdSignature")
+            .services_path("TimestampSeconds", "TimestampSeconds")
+            .services_path("TokenBalance", "TokenBalance")
+            .services_path("TokenBalances", "TokenBalances")
+            .services_path("TokenRelationship", "TokenRelationship")
+            .services_path("TokenTransferList", "TokenTransferList")
+            .services_path("TopicID", "TopicId")
+            .services_path("TransactionFeeSchedule", "TransactionFeeSchedule")
+            .services_path("TransactionID", "TransactionId")
+            .services_path("TransferList", "TransferList")
+            .services_path("HederaFunctionality", "HederaFunctionality")
+            .services_path("SubType", "SubType")
+            .services_path("TokenFreezeStatus", "TokenFreezeStatus")
+            .services_path("TokenKycStatus", "TokenKycStatus")
+            .services_path("TokenSupplyType", "TokenSupplyType")
+            .services_path("TokenType", "TokenType")
+            .services_path("GrantedCryptoAllowance", "GrantedCryptoAllowance")
+            .services_path("GrantedTokenAllowance", "GrantedTokenAllowance")
+            .services_path("CryptoAllowance", "CryptoAllowance")
+            .services_path("TokenAllowance", "TokenAllowance")
+            .services_path("GrantedNftAllowance", "GrantedNftAllowance")
+            .services_path("NftAllowance", "NftAllowance")
+            .services_path("TokenPauseStatus", "TokenPauseStatus")
+            .services_path("TokenAssociation", "TokenAssociation")
+            .services_path("ContractID", "ContractId")
+            .services_path("StakingInfo", "StakingInfo")
+    }
 }

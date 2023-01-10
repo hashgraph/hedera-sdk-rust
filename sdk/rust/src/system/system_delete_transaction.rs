@@ -63,30 +63,51 @@ pub struct SystemDeleteTransactionData {
         feature = "ffi",
         serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
     )]
-    pub expiration_time: Option<OffsetDateTime>,
-    pub file_id: Option<FileId>,
-    pub contract_id: Option<ContractId>,
+    expiration_time: Option<OffsetDateTime>,
+    file_id: Option<FileId>,
+    contract_id: Option<ContractId>,
 }
 
 impl SystemDeleteTransaction {
+    /// Returns the contract ID which should be deleted.
+    #[must_use]
+    pub fn get_contract_id(&self) -> Option<ContractId> {
+        self.data().contract_id
+    }
+
     /// Sets the contract ID which should be deleted.
     pub fn contract_id(&mut self, id: impl Into<ContractId>) -> &mut Self {
-        self.body.data.file_id = None;
-        self.body.data.contract_id = Some(id.into());
+        let data = self.data_mut();
+        data.file_id = None;
+        data.contract_id = Some(id.into());
         self
+    }
+
+    /// Returns the file ID which should be deleted.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.data().file_id
     }
 
     /// Sets the file ID which should be deleted.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
-        self.body.data.contract_id = None;
-        self.body.data.file_id = Some(id.into());
+        let data = self.data_mut();
+        data.contract_id = None;
+        data.file_id = Some(id.into());
         self
+    }
+
+    /// Returns the timestamp at which the "deleted" entity should
+    /// truly be permanently deleted.
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.data().expiration_time
     }
 
     /// Sets the timestamp at which the "deleted" file should
     /// truly be permanently deleted.
     pub fn expiration_time(&mut self, expiration_time: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(expiration_time);
+        self.data_mut().expiration_time = Some(expiration_time);
         self
     }
 }

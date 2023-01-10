@@ -30,7 +30,11 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     }
 
     /// The token whose fee schedule is to be updated.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token whose fee schedule is to be updated.
     @discardableResult
@@ -41,7 +45,11 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     }
 
     /// The new custom fees to be assessed during a transfer.
-    public var customFees: [AnyCustomFee]
+    public var customFees: [AnyCustomFee] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the new custom fees to be assessed during a transfer.
     @discardableResult

@@ -57,7 +57,13 @@ impl From<TokenNftInfoQueryData> for AnyQueryData {
 }
 
 impl TokenNftInfoQuery {
-    /// Sets the file ID for which contents are requested.
+    /// Returns the ID of the NFT for which information is requested.
+    #[must_use]
+    pub fn get_nft_id(&self) -> Option<NftId> {
+        self.data.nft_id
+    }
+
+    /// Sets the ID of the NFT for which information is requested.
     pub fn nft_id(&mut self, nft_id: impl Into<NftId>) -> &mut Self {
         self.data.nft_id = Some(nft_id.into());
         self

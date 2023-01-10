@@ -26,7 +26,11 @@ public final class FileAppendTransaction: Transaction {
     public override init() {}
 
     /// The file to which the bytes will be appended.
-    public var fileId: FileId?
+    public var fileId: FileId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the file to which the bytes will be appended.
     @discardableResult
@@ -37,7 +41,11 @@ public final class FileAppendTransaction: Transaction {
     }
 
     /// The bytes that will be appended to the end of the specified file.
-    public var contents: Data = Data()
+    public var contents: Data = Data() {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the bytes that will be appended to the end of the specified file.
     @discardableResult

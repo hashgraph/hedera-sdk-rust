@@ -57,6 +57,12 @@ impl From<TokenInfoQueryData> for AnyQueryData {
 }
 
 impl TokenInfoQuery {
+    /// Returns the token ID for which information is requested.
+    #[must_use]
+    pub fn get_token_id(&self) -> Option<TokenId> {
+        self.data.token_id
+    }
+
     /// Sets the token ID for which information is requested.
     pub fn token_id(&mut self, id: impl Into<TokenId>) -> &mut Self {
         self.data.token_id = Some(id.into());

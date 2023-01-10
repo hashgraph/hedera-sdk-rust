@@ -28,7 +28,11 @@ public final class TokenDeleteTransaction: Transaction {
     }
 
     /// The token to be deleted.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token to be deleted.
     @discardableResult

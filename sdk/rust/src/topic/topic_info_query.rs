@@ -56,7 +56,13 @@ impl From<TopicInfoQueryData> for AnyQueryData {
 }
 
 impl TopicInfoQuery {
-    /// Set the topic to retrieve info about.
+    /// Returns the topic to retrieve info about.
+    #[must_use]
+    pub fn get_topic_id(&self) -> Option<TopicId> {
+        self.data.topic_id
+    }
+
+    /// Sets the topic to retrieve info about.
     pub fn topic_id(&mut self, id: impl Into<TopicId>) -> &mut Self {
         self.data.topic_id = Some(id.into());
         self

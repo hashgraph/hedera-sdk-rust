@@ -25,6 +25,7 @@ use time::Duration;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -78,9 +79,9 @@ pub struct ContractCreateTransactionData {
 
     auto_renew_account_id: Option<AccountId>,
 
-    staked_account_id: Option<AccountId>,
-
-    staked_node_id: Option<u64>,
+    /// ID of the account or node to which this contract is staking, if any.
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    staked_id: Option<StakedId>,
 
     decline_staking_reward: bool,
 }
@@ -98,93 +99,172 @@ impl Default for ContractCreateTransactionData {
             contract_memo: String::new(),
             max_automatic_token_associations: 0,
             auto_renew_account_id: None,
-            staked_account_id: None,
-            staked_node_id: None,
+            staked_id: None,
             decline_staking_reward: false,
         }
     }
 }
 
 impl ContractCreateTransaction {
+    /// Returns the `FileId` to be used as the bytecode for this smart contract.
+    #[must_use]
+    pub fn get_bytecode_file_id(&self) -> Option<FileId> {
+        self.data().bytecode_file_id
+    }
+
     /// Sets the file to use as the bytes for the smart contract.
     pub fn bytecode_file_id(&mut self, file_id: FileId) -> &mut Self {
-        self.body.data.bytecode_file_id = Some(file_id);
+        self.data_mut().bytecode_file_id = Some(file_id);
         self
+    }
+
+    /// Returns the bytecode for the smart contract.
+    #[must_use]
+    pub fn get_bytecode(&self) -> Option<&[u8]> {
+        self.data().bytecode.as_deref()
     }
 
     /// Sets the bytes of the smart contract.
     pub fn bytecode(&mut self, bytecode: impl AsRef<[u8]>) -> &mut Self {
-        self.body.data.bytecode = Some(bytecode.as_ref().to_vec());
+        self.data_mut().bytecode = Some(bytecode.as_ref().to_vec());
         self
+    }
+
+    /// Returns the admin key.
+    #[must_use]
+    pub fn get_admin_key(&self) -> Option<&Key> {
+        self.data().admin_key.as_ref()
     }
 
     /// Sets the admin key.
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
-        self.body.data.admin_key = Some(key.into());
+        self.data_mut().admin_key = Some(key.into());
         self
+    }
+
+    /// Returns the gas limit to deploy the smart contract.
+    #[must_use]
+    pub fn get_gas(&self) -> u64 {
+        self.data().gas
     }
 
     /// Sets the gas limit to deploy the smart contract.
     pub fn gas(&mut self, gas: u64) -> &mut Self {
-        self.body.data.gas = gas;
+        self.data_mut().gas = gas;
         self
+    }
+
+    /// Returns the initial balance to put into the cryptocurrency account associated with the new smart contract.
+    #[must_use]
+    pub fn get_initial_balance(&self) -> Hbar {
+        self.data().initial_balance
     }
 
     /// Sets the initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
     pub fn initial_balance(&mut self, balance: Hbar) -> &mut Self {
-        self.body.data.initial_balance = balance;
+        self.data_mut().initial_balance = balance;
         self
     }
 
-    /// Set the auto renew period for this smart contract.
+    /// Returns the auto renew period for this smart contract.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Duration {
+        self.data().auto_renew_period
+    }
+
+    /// Sets the auto renew period for this smart contract.
     pub fn auto_renew_period(&mut self, period: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = period;
+        self.data_mut().auto_renew_period = period;
         self
+    }
+
+    /// Returns the parameters to pass to the constructor.
+    #[must_use]
+    pub fn get_constructor_parameters(&self) -> &[u8] {
+        self.data().constructor_parameters.as_ref()
     }
 
     /// Sets the parameters to pass to the constructor.
     pub fn constructor_parameters(&mut self, parameters: impl AsRef<[u8]>) -> &mut Self {
-        self.body.data.constructor_parameters = parameters.as_ref().to_vec();
+        self.data_mut().constructor_parameters = parameters.as_ref().to_vec();
         self
+    }
+
+    /// Returns the memo for the new smart contract.
+    #[must_use]
+    pub fn get_contract_memo(&self) -> &str {
+        self.data().contract_memo.as_str()
     }
 
     /// Sets the memo for the new smart contract.
     pub fn contract_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.contract_memo = memo.into();
+        self.data_mut().contract_memo = memo.into();
         self
+    }
+
+    /// Returns the maximum number of tokens that the contract can be automatically associated with.
+    #[must_use]
+    pub fn get_max_automatic_token_associations(&self) -> u32 {
+        self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that this contract can be automatically associated with.
     pub fn max_automatic_token_associations(&mut self, max: u32) -> &mut Self {
-        self.body.data.max_automatic_token_associations = max;
+        self.data_mut().max_automatic_token_associations = max;
         self
+    }
+
+    /// Returns the account ot be used at the contract's expiration time to extend the
+    /// life of the contract
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account to be used at the contract's expiration time to extend the
     /// life of the contract.
     pub fn auto_renew_account_id(&mut self, account_id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(account_id);
+        self.data_mut().auto_renew_account_id = Some(account_id);
         self
     }
 
-    /// Set the ID of the account to which this contract is staking.
-    /// This is mutually exclusive with `staked_node_id`.
+    /// Returns the ID of the account to which this contract is staking.
+    #[must_use]
+    pub fn get_staked_account_id(&self) -> Option<AccountId> {
+        self.data().staked_id.and_then(|it| it.to_account_id())
+    }
+
+    /// Sets the ID of the account to which this contract is staking.
+    ///
+    /// This is mutually exclusive with [`staked_node_id`](Self::staked_node_id).
     pub fn staked_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.staked_account_id = Some(id);
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
-    /// Set the ID of the node to which this contract is staking.
-    /// This is mutually exclusive with `staked_account_id`.
+    /// Returns the ID of the node to which this contract is staking.
+    #[must_use]
+    pub fn get_staked_node_id(&self) -> Option<u64> {
+        self.data().staked_id.and_then(|it| it.to_node_id())
+    }
+
+    /// Sets the ID of the node to which this contract is staking.
+    /// This is mutually exclusive with [`staked_account_id`](Self::staked_account_id).
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
-        self.body.data.staked_node_id = Some(id);
+        self.data_mut().staked_id = Some(id.into());
         self
     }
 
-    /// Set to true, the contract declines receiving a staking reward. The default value is false.
+    /// Returns `true` if the contract will decline receiving staking rewards, `false` otherwise.
+    #[must_use]
+    pub fn get_decline_staking_reward(&self) -> bool {
+        self.data().decline_staking_reward
+    }
+
+    /// If `true` the contract should declie receiving staking rewards. The default value is `false`.
     pub fn decline_staking_reward(&mut self, decline: bool) -> &mut Self {
-        self.body.data.decline_staking_reward = decline;
+        self.data_mut().decline_staking_reward = decline;
         self
     }
 }
@@ -194,7 +274,7 @@ impl TransactionExecute for ContractCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.bytecode_file_id.validate_checksum_for_ledger_id(ledger_id)?;
         self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
     }
 
     async fn execute(
@@ -232,12 +312,12 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
             _ => None,
         };
 
-        let staked_id = match (&self.staked_account_id, self.staked_node_id) {
-            (_, Some(node_id)) => Some(
+        let staked_id = match self.staked_id {
+            Some(StakedId::NodeId(node_id)) => Some(
                 services::contract_create_transaction_body::StakedId::StakedNodeId(node_id as i64),
             ),
 
-            (Some(account_id), _) => {
+            Some(StakedId::AccountId(account_id)) => {
                 Some(services::contract_create_transaction_body::StakedId::StakedAccountId(
                     account_id.to_protobuf(),
                 ))
@@ -284,6 +364,7 @@ mod tests {
         use assert_matches::assert_matches;
         use time::Duration;
 
+        use crate::staked_id::StakedId;
         use crate::transaction::{
             AnyTransaction,
             AnyTransactionData,
@@ -318,7 +399,6 @@ mod tests {
   "maxAutomaticTokenAssociations": 512,
   "autoRenewAccountId": "0.0.1002",
   "stakedAccountId": "0.0.1003",
-  "stakedNodeId": 7,
   "declineStakingReward": false
 }"#;
 
@@ -341,7 +421,6 @@ mod tests {
                 .max_automatic_token_associations(512)
                 .auto_renew_account_id(AccountId::from(1002))
                 .staked_account_id(AccountId::from(1003))
-                .staked_node_id(7)
                 .decline_staking_reward(false);
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
@@ -356,7 +435,7 @@ mod tests {
             let transaction: AnyTransaction =
                 serde_json::from_str(CONTRACT_CREATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::ContractCreate(transaction) => transaction);
 
             assert_eq!(data.bytecode_file_id.unwrap(), FileId::from(1001));
             assert_eq!(data.gas, 1000);
@@ -365,7 +444,6 @@ mod tests {
             assert_eq!(data.constructor_parameters, [5, 10, 15]);
             assert_eq!(data.contract_memo, "A contract memo");
             assert_eq!(data.max_automatic_token_associations, 512);
-            assert_eq!(data.staked_node_id.unwrap(), 7);
             assert_eq!(data.decline_staking_reward, false);
 
             let bytes: Vec<u8> = "Hello, world!".into();
@@ -376,7 +454,7 @@ mod tests {
             assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
 
             assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
-            assert_eq!(data.staked_account_id, Some(AccountId::from(1003)));
+            assert_eq!(data.staked_id, Some(StakedId::AccountId(AccountId::from(1003))));
 
             Ok(())
         }
@@ -385,7 +463,7 @@ mod tests {
         fn it_should_deserialize_empty() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(CONTRACT_CREATE_EMPTY)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::ContractCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.data(), AnyTransactionData::ContractCreate(transaction) => transaction);
 
             assert_eq!(data.auto_renew_period, Duration::days(90));
             assert_eq!(data.decline_staking_reward, false);

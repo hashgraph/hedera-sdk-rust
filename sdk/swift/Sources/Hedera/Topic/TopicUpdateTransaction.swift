@@ -30,7 +30,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// The topic ID which is being updated in this transaction.
-    public var topicId: TopicId?
+    public var topicId: TopicId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the topic ID which is being updated in this transaction.
     @discardableResult
@@ -41,7 +45,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    public var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the new expiration time to extend to (ignored if equal to or before the current one).
     @discardableResult
@@ -52,7 +60,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
-    public var topicMemo: String = ""
+    public var topicMemo: String = "" {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the short publicly visible memo about the topic.
     @discardableResult
@@ -63,7 +75,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// Access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
-    public var adminKey: Key?
+    public var adminKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
     @discardableResult
@@ -74,7 +90,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// Access control for `TopicMessageSubmitTransaction`.
-    public var submitKey: Key?
+    public var submitKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the access control for `TopicMessageSubmitTransaction`.
     @discardableResult
@@ -87,7 +107,11 @@ public final class TopicUpdateTransaction: Transaction {
     /// The initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time, if
     /// the `autoRenewAccountId` is configured.
-    public var autoRenewPeriod: Duration?
+    public var autoRenewPeriod: Duration? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the initial lifetime of the topic and the amount of time to attempt to
     /// extend the topic's lifetime by automatically at the topic's expiration time.
@@ -99,7 +123,11 @@ public final class TopicUpdateTransaction: Transaction {
     }
 
     /// Account to be used at the topic's expiration time to extend the life of the topic.
-    public var autoRenewAccountId: AccountId?
+    public var autoRenewAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be used at the topic's expiration time to extend the life of the topic.
     @discardableResult

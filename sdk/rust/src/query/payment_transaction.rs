@@ -45,8 +45,28 @@ pub type PaymentTransaction = Transaction<PaymentTransactionData>;
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct PaymentTransactionData {
-    pub(crate) amount: Option<Hbar>,
-    pub(crate) max_amount: Option<Hbar>,
+    amount: Option<Hbar>,
+    max_amount: Option<Hbar>,
+}
+
+impl PaymentTransaction {
+    pub(super) fn get_amount(&self) -> Option<Hbar> {
+        self.data().amount
+    }
+
+    pub(super) fn amount(&mut self, amount: Hbar) -> &mut Self {
+        self.data_mut().amount = Some(amount);
+        self
+    }
+
+    pub(super) fn get_max_amount(&self) -> Option<Hbar> {
+        self.data().max_amount
+    }
+
+    pub(super) fn max_amount(&mut self, amount: impl Into<Option<Hbar>>) -> &mut Self {
+        self.data_mut().max_amount = amount.into();
+        self
+    }
 }
 
 #[async_trait]

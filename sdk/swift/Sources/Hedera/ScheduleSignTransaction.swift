@@ -25,6 +25,7 @@ public final class ScheduleSignTransaction: Transaction {
         scheduleId: ScheduleId? = nil
     ) {
         self.scheduleId = scheduleId
+        super.init()
     }
 
     /// The schedule to add signing keys to.

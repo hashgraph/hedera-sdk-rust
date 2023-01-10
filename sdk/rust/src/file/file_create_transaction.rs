@@ -93,16 +93,34 @@ impl Default for FileCreateTransactionData {
 }
 
 impl FileCreateTransaction {
+    /// Returns the memo to be associated with the file.
+    #[must_use]
+    pub fn get_file_memo(&self) -> &str {
+        &self.data().file_memo
+    }
+
     /// Sets the memo associated with the file.
     pub fn file_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.body.data.file_memo = memo.into();
+        self.data_mut().file_memo = memo.into();
         self
+    }
+
+    /// Returns the bytes that are to be the contents of the file.
+    #[must_use]
+    pub fn get_contents(&self) -> Option<&[u8]> {
+        self.data().contents.as_deref()
     }
 
     /// Sets the bytes that are to be the contents of the file.
     pub fn contents(&mut self, contents: impl Into<Vec<u8>>) -> &mut Self {
-        self.body.data.contents = Some(contents.into());
+        self.data_mut().contents = Some(contents.into());
         self
+    }
+
+    /// Returns the keys for this file.
+    #[must_use]
+    pub fn get_keys(&self) -> Option<&KeyList> {
+        self.data().keys.as_ref()
     }
 
     /// Sets the keys for this file.
@@ -110,28 +128,47 @@ impl FileCreateTransaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    ///
     pub fn keys<K: Into<Key>>(&mut self, keys: impl IntoIterator<Item = K>) -> &mut Self {
-        self.body.data.keys = Some(keys.into_iter().map(Into::into).collect());
+        self.data_mut().keys = Some(keys.into_iter().map(Into::into).collect());
         self
     }
 
-    /// Set the auto renew period for this file.
+    /// Returns the auto renew period for this file.
+    #[must_use]
+    pub fn get_auto_renew_period(&self) -> Option<Duration> {
+        self.data().auto_renew_period
+    }
+
+    /// Sets the auto renew period for this file.
     pub fn auto_renew_period(&mut self, duration: Duration) -> &mut Self {
-        self.body.data.auto_renew_period = Some(duration);
+        self.data_mut().auto_renew_period = Some(duration);
         self
+    }
+
+    /// Returns the account to be used at the file's expiration time to extend the
+    /// life of the file.
+    #[must_use]
+    pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
+        self.data().auto_renew_account_id
     }
 
     /// Sets the account to be used at the files's expiration time to extend the
     /// life of the file.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
-        self.body.data.auto_renew_account_id = Some(id);
+        self.data_mut().auto_renew_account_id = Some(id);
         self
+    }
+
+    /// Returns the time at which this file should expire.
+    #[must_use]
+    pub fn get_expiration_time(&self) -> Option<OffsetDateTime> {
+        self.data().expiration_time
     }
 
     /// Sets the time at which this file should expire.
     pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.body.data.expiration_time = Some(at);
+        self.require_not_frozen();
+        self.data_mut().expiration_time = Some(at);
         self
     }
 }
@@ -242,7 +279,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(FILE_CREATE_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::FileCreate(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::FileCreate(transaction) => transaction);
 
             assert_eq!(data.file_memo, "File memo");
             assert_eq!(
@@ -263,7 +300,7 @@ mod tests {
         fn it_should_deserialize_empty() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(FILE_CREATE_EMPTY)?;
 
-            assert_matches!(transaction.body.data, AnyTransactionData::FileCreate(transaction) => transaction);
+            assert_matches!(transaction.data(), AnyTransactionData::FileCreate(transaction) => transaction);
 
             Ok(())
         }

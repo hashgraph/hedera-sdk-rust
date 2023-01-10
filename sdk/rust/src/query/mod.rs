@@ -71,27 +71,49 @@ impl<D> Query<D>
 where
     D: QueryExecute,
 {
-    /// Set the account IDs of the nodes that this query may be submitted to.
+    /// Returns the account IDs of the nodes that this query may be submitted to.
     ///
     /// Defaults to the full list of nodes configured on the client; or, the node account IDs
     /// configured on the query payment transaction (if explicitly provided).
+    #[must_use]
+    pub fn get_node_account_ids(&self) -> Option<&[AccountId]> {
+        self.payment.get_node_account_ids()
+    }
+
+    /// Sets the account IDs of the nodes that this query may be submitted to.
     ///
+    /// Defaults to the full list of nodes configured on the client; or, the node account IDs
+    /// configured on the query payment transaction (if explicitly provided).
     pub fn node_account_ids(&mut self, ids: impl IntoIterator<Item = AccountId>) -> &mut Self {
         self.payment.node_account_ids(ids);
         self
     }
 
-    /// Set an explicit payment amount for this query.
+    /// Returns the explicit payment amount for this query.
     ///
     /// The client will submit exactly this amount for the payment of this query. Hedera
     /// will not return any remainder (over the actual cost for this query).
+    #[must_use]
+    pub fn get_payment_amount(&self) -> Option<Hbar> {
+        self.payment.get_amount()
+    }
+
+    /// Sets the explicit payment amount for this query.
     ///
+    /// The client will submit exactly this amount for the payment of this query. Hedera
+    /// will not return any remainder (over the actual cost for this query).
     pub fn payment_amount(&mut self, amount: Hbar) -> &mut Self {
-        self.payment.body.data.amount = Some(amount);
+        self.payment.amount(amount);
         self
     }
 
-    /// Set the maximum payment allowable for this query.
+    /// Returns the maximum payment allowable for this query.
+    #[must_use]
+    pub fn get_max_amount(&self) -> Option<Hbar> {
+        self.payment.get_max_amount()
+    }
+
+    /// Sets the maximum payment allowable for this query.
     ///
     /// When a query is executed without an explicit payment amount set,
     /// the client will first request the cost of the given query from the node it will be
@@ -102,44 +124,67 @@ where
     ///
     /// Defaults to the maximum payment amount configured on the client.
     ///
-    /// Set to `None` to allow unlimited payment amounts.
-    ///
+    /// Sets to `None` to allow unlimited payment amounts.
     pub fn max_payment_amount(&mut self, max: impl Into<Option<Hbar>>) -> &mut Self {
-        self.payment.body.data.max_amount = max.into();
+        self.payment.max_amount(max);
         self
+    }
+
+    /// Returns the duration that the payment transaction is valid for, once finalized and signed.
+    #[must_use]
+    pub fn get_payment_transaction_valid_duration(&self) -> Option<Duration> {
+        self.payment.get_transaction_valid_duration()
     }
 
     /// Sets the duration that the payment transaction is valid for, once finalized and signed.
     ///
     /// Defaults to 120 seconds (or two minutes).
-    ///
     pub fn payment_transaction_valid_duration(&mut self, duration: Duration) -> &mut Self {
         self.payment.transaction_valid_duration(duration);
         self
     }
 
-    /// Set the maximum transaction fee the payer account is willing to pay for the query
+    /// Returns the maximum transaction fee the payer account is willing to pay
+    /// for the query payment transaction.
+    #[must_use]
+    pub fn get_max_payment_transaction_fee(&self) -> Option<Hbar> {
+        self.payment.get_max_transaction_fee()
+    }
+
+    /// Sets the maximum transaction fee the payer account is willing to pay for the query
     /// payment transaction.
     ///
     /// Defaults to 1 hbar.
-    ///
     pub fn max_payment_transaction_fee(&mut self, fee: Hbar) -> &mut Self {
         self.payment.max_transaction_fee(fee);
         self
     }
 
-    /// Set a note or description that should be recorded in the transaction record (maximum length
-    /// of 100 characters) for the payment transaction.
+    /// Returns the note / description that should be recorded in the transaction record for the payment transaction.
+    #[must_use]
+    pub fn get_payment_transaction_memo(&self) -> &str {
+        self.payment.get_transaction_memo()
+    }
+
+    /// Sets a note / description that should be recorded in the transaction record for the payment transaction.
+    ///
+    /// Maximum length of 100 characters.
     pub fn payment_transaction_memo(&mut self, memo: impl AsRef<str>) -> &mut Self {
         self.payment.transaction_memo(memo);
         self
     }
 
-    /// Set an explicit transaction ID to use to identify the payment transaction
+    /// Returns the explicit transaction ID used to identify this query's payment transaction, if set
+    /// .
+    #[must_use]
+    pub fn get_payment_transaction_id(&self) -> Option<TransactionId> {
+        self.payment.get_transaction_id()
+    }
+
+    /// Sets an explicit transaction ID to use to identify the payment transaction
     /// on this query.
     ///
     /// Overrides payer account defined on this query or on the client.
-    ///
     pub fn payment_transaction_id(&mut self, id: TransactionId) -> &mut Self {
         self.payment.transaction_id(id);
         self
@@ -189,12 +234,12 @@ where
         client: &Client,
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<D::Response> {
-        if self.payment.body.data.amount.is_none() && self.data.is_payment_required() {
+        if self.payment.get_amount().is_none() && self.data.is_payment_required() {
             // should this inherit the timeout?
             // payment is required but none was specified, query the cost
             let cost = QueryCost::new(self).execute(client, None).await?;
 
-            if let Some(max_amount) = self.payment.body.data.max_amount {
+            if let Some(max_amount) = self.payment.get_max_amount() {
                 if cost > max_amount {
                     return Err(Error::MaxQueryPaymentExceeded {
                         query_cost: cost,
@@ -203,7 +248,11 @@ where
                 }
             }
 
-            self.payment.body.data.amount = Some(cost);
+            self.payment.amount(cost);
+        }
+
+        if self.data.is_payment_required() {
+            self.payment.freeze_with(client)?;
         }
 
         execute(client, self, timeout).await

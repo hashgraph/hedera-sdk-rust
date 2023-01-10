@@ -33,7 +33,11 @@ public final class TokenAssociateTransaction: Transaction {
     }
 
     /// The account to be associated with the provided tokens.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be associated with the provided tokens.
     @discardableResult
@@ -44,7 +48,11 @@ public final class TokenAssociateTransaction: Transaction {
     }
 
     /// The tokens to be associated with the provided account.
-    public var tokenIds: [TokenId]
+    public var tokenIds: [TokenId] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the tokens to be associated with the provided account.
     @discardableResult

@@ -60,15 +60,29 @@ pub struct FileAppendTransactionData {
 }
 
 impl FileAppendTransaction {
+    /// Returns the file to which the bytes will be appended.
+    #[must_use]
+    pub fn get_file_id(&self) -> Option<FileId> {
+        self.data().file_id
+    }
+
     /// Sets the file to which the bytes will be appended.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
-        self.body.data.file_id = Some(id.into());
+        self.require_not_frozen();
+        self.data_mut().file_id = Some(id.into());
         self
+    }
+
+    /// Retuns the bytes that will be appended to the end of the specified file.
+    #[must_use]
+    pub fn get_contents(&self) -> Option<&[u8]> {
+        self.data().contents.as_deref()
     }
 
     /// Sets the bytes that will be appended to the end of the specified file.
     pub fn contents(&mut self, contents: Vec<u8>) -> &mut Self {
-        self.body.data.contents = Some(contents);
+        self.require_not_frozen();
+        self.data_mut().contents = Some(contents);
         self
     }
 }
@@ -150,7 +164,7 @@ mod tests {
         fn it_should_deserialize() -> anyhow::Result<()> {
             let transaction: AnyTransaction = serde_json::from_str(FILE_APPEND_TRANSACTION_JSON)?;
 
-            let data = assert_matches!(transaction.body.data, AnyTransactionData::FileAppend(transaction) => transaction);
+            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::FileAppend(transaction) => transaction);
 
             assert_eq!(data.file_id.unwrap(), FileId::from(1001));
 

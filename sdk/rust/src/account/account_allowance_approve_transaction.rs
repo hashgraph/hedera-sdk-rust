@@ -73,7 +73,7 @@ impl AccountAllowanceApproveTransaction {
         spender_account_id: AccountId,
         amount: Hbar,
     ) -> &mut Self {
-        self.body.data.hbar_allowances.push(HbarAllowance {
+        self.data_mut().hbar_allowances.push(HbarAllowance {
             owner_account_id,
             spender_account_id,
             amount,
@@ -90,13 +90,12 @@ impl AccountAllowanceApproveTransaction {
         spender_account_id: AccountId,
         amount: u64,
     ) -> &mut Self {
-        self.body.data.token_allowances.push(TokenAllowance {
+        self.data_mut().token_allowances.push(TokenAllowance {
             token_id,
             owner_account_id,
             spender_account_id,
             amount,
         });
-
         self
     }
 
@@ -108,10 +107,9 @@ impl AccountAllowanceApproveTransaction {
         spender_account_id: AccountId,
     ) -> &mut Self {
         let nft_id = nft_id.into();
-        let owner_account_id = owner_account_id;
-        let spender_account_id = spender_account_id;
+        let data = self.data_mut();
 
-        if let Some(allowance) = self.body.data.nft_allowances.iter_mut().find(|allowance| {
+        if let Some(allowance) = data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id
                 && allowance.owner_account_id == owner_account_id
                 && allowance.spender_account_id == spender_account_id
@@ -119,7 +117,7 @@ impl AccountAllowanceApproveTransaction {
         }) {
             allowance.serials.push(nft_id.serial as i64);
         } else {
-            self.body.data.nft_allowances.push(NftAllowance {
+            data.nft_allowances.push(NftAllowance {
                 serials: vec![nft_id.serial as i64],
                 token_id: nft_id.token_id,
                 spender_account_id,
@@ -127,7 +125,7 @@ impl AccountAllowanceApproveTransaction {
                 delegating_spender_account_id: None,
                 approved_for_all: None,
             });
-        }
+        };
 
         self
     }
@@ -139,10 +137,7 @@ impl AccountAllowanceApproveTransaction {
         owner_account_id: AccountId,
         spender_account_id: AccountId,
     ) -> &mut Self {
-        let owner_account_id = owner_account_id;
-        let spender_account_id = spender_account_id;
-
-        self.body.data.nft_allowances.push(NftAllowance {
+        self.data_mut().nft_allowances.push(NftAllowance {
             approved_for_all: Some(true),
             delegating_spender_account_id: None,
             spender_account_id,

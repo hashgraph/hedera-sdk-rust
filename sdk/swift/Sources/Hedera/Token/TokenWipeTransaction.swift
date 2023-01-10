@@ -32,7 +32,11 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The token for which to wipe tokens.
-    public var tokenId: TokenId?
+    public var tokenId: TokenId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token for which to wipe tokens.
     @discardableResult
@@ -43,7 +47,11 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The account to be wiped.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be wiped.
     @discardableResult
@@ -54,7 +62,11 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The amount of a fungible token to wipe from the specified account.
-    public var amount: UInt64
+    public var amount: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     //// Sets the amount of a fungible token to wipe from the specified account.
     @discardableResult
@@ -65,7 +77,11 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The serial numbers of a non-fungible token to wipe from the specified account.
-    public var serials: [UInt64]
+    public var serials: [UInt64] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the serial numbers of a non-fungible token to wipe from the specified account.
     @discardableResult

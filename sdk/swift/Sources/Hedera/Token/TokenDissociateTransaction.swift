@@ -33,7 +33,11 @@ public final class TokenDissociateTransaction: Transaction {
     }
 
     /// The account to be dissociated with the provided tokens.
-    public var accountId: AccountId?
+    public var accountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account to be dissociated with the provided tokens.
     @discardableResult
@@ -44,7 +48,11 @@ public final class TokenDissociateTransaction: Transaction {
     }
 
     /// The tokens to be dissociated with the provided account.
-    public var tokenIds: [TokenId]
+    public var tokenIds: [TokenId] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the tokens to be dissociated with the provided account.
     @discardableResult

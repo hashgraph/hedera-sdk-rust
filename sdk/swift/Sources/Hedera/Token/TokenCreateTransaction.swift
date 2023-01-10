@@ -70,7 +70,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The publicly visible name of the token.
-    public var name: String
+    public var name: String {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the publicly visible name of the token.
     @discardableResult
@@ -81,7 +85,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The publicly visible token symbol.
-    public var symbol: String
+    public var symbol: String {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the publicly visible token symbol.
     @discardableResult
@@ -92,7 +100,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The number of decimal places a fungible token is divisible by.
-    public var decimals: UInt32
+    public var decimals: UInt32 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the number of decimal places a fungible token is divisible by.
     @discardableResult
@@ -103,7 +115,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The initial supply of fungible tokens to to mint to the treasury account.
-    public var initialSupply: UInt64
+    public var initialSupply: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the initial supply of fungible tokens to to mint to the treasury account.
     @discardableResult
@@ -114,7 +130,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The account which will act as a treasury for the token.
-    public var treasuryAccountId: AccountId?
+    public var treasuryAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account which will act as a treasury for the token.
     @discardableResult
@@ -125,7 +145,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can perform update/delete operations on the token.
-    public var adminKey: Key?
+    public var adminKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can perform update/delete operations on the token.
     @discardableResult
@@ -136,7 +160,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can grant or revoke KYC of an account for the token's transactions.
-    public var kycKey: Key?
+    public var kycKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can grant or revoke KYC of an account for the token's transactions.
     @discardableResult
@@ -147,7 +175,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can sign to freeze or unfreeze an account for token transactions.
-    public var freezeKey: Key?
+    public var freezeKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can sign to freeze or unfreeze an account for token transactions.
     @discardableResult
@@ -158,7 +190,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can wipe the token balance of an account.
-    public var wipeKey: Key?
+    public var wipeKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can wipe the token balance of an account.
     @discardableResult
@@ -169,7 +205,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can change the supply of a token.
-    public var supplyKey: Key?
+    public var supplyKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can change the supply of a token.
     @discardableResult
@@ -181,7 +221,11 @@ public final class TokenCreateTransaction: Transaction {
 
     /// The default freeze status (frozen or unfrozen) of Hedera accounts relative to this token. If
     /// true, an account must be unfrozen before it can receive the token.
-    public var freezeDefault: Bool
+    public var freezeDefault: Bool {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the default freeze status (frozen or unfrozen) of Hedera accounts relative to this token.
     @discardableResult
@@ -192,7 +236,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The time at which the token should expire.
-    public var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the time at which the token should expire.
     @discardableResult
@@ -204,7 +252,11 @@ public final class TokenCreateTransaction: Transaction {
 
     /// An account which will be automatically charged to renew the token's expiration, at
     /// `autoRenewPeriod` interval.
-    public var autoRenewAccountId: AccountId?
+    public var autoRenewAccountId: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the account which will be automatically charged to renew the token's expiration, at
     /// `autoRenewPeriod` interval.
@@ -216,7 +268,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry.
-    public var autoRenewPeriod: Duration?
+    public var autoRenewPeriod: Duration? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the interval at which the auto-renew account will be charged to extend the token's expiry.
     @discardableResult
@@ -227,7 +283,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The memo associated with the token.
-    public var tokenMemo: String
+    public var tokenMemo: String {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the memo associated with the token.
     @discardableResult
@@ -238,7 +298,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The token type. Defaults to FungibleCommon.
-    public var tokenType: TokenType
+    public var tokenType: TokenType {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token type.
     @discardableResult
@@ -249,7 +313,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The token supply type. Defaults to Infinite.
-    public var tokenSupplyType: TokenSupplyType
+    public var tokenSupplyType: TokenSupplyType {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the token supply type.
     @discardableResult
@@ -260,7 +328,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The maximum number of tokens that can be in circulation.
-    public var maxSupply: UInt64
+    public var maxSupply: UInt64 {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the maximum number of tokens that can be in circulation.
     @discardableResult
@@ -271,7 +343,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can change the token's custom fee schedule.
-    public var feeScheduleKey: Key?
+    public var feeScheduleKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can change the token's custom fee schedule.
     @discardableResult
@@ -282,7 +358,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The custom fees to be assessed during a transfer.
-    public var customFees: [AnyCustomFee]
+    public var customFees: [AnyCustomFee] {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the custom fees to be assessed during a transfer.
     @discardableResult
@@ -293,7 +373,11 @@ public final class TokenCreateTransaction: Transaction {
     }
 
     /// The key which can pause and unpause the token.
-    public var pauseKey: Key?
+    public var pauseKey: Key? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
 
     /// Sets the key which can pause and unpause the token.
     @discardableResult

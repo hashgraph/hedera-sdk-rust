@@ -406,7 +406,7 @@ where
     {
         // TODO: remove the clones, should be possible with Cows
 
-        let payment = self.data.is_payment_required().then(|| self.payment.body.clone().into());
+        let payment = self.data.is_payment_required().then(|| self.payment.body().clone().into());
 
         AnyQueryProxy { payment, data: self.data.clone().into() }.serialize(serializer)
     }
@@ -420,10 +420,10 @@ impl<'de> serde::Deserialize<'de> for AnyQuery {
     {
         <AnyQueryProxy as serde::Deserialize>::deserialize(deserializer).map(|query| Self {
             data: query.data,
-            payment: crate::Transaction {
-                body: query.payment.map(Into::into).unwrap_or_default(),
-                signers: Vec::new(),
-            },
+            payment: crate::Transaction::from_parts(
+                query.payment.map(Into::into).unwrap_or_default(),
+                Vec::new(),
+            ),
         })
     }
 }
