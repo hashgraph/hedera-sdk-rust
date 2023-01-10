@@ -18,8 +18,8 @@
  * ‍
  */
 
-import Foundation
 import CHedera
+import Foundation
 
 /// A transaction that can be executed on the Hedera network.
 public class Transaction: Request, ValidateChecksums {
@@ -140,11 +140,12 @@ public class Transaction: Request, ValidateChecksums {
         let requestBytes = try JSONEncoder().encode(self)
 
         let request = String(data: requestBytes, encoding: .utf8)!
-        
+
         var buf: UnsafeMutablePointer<UInt8>?
         var size = 0
 
-        try HError.throwing(error: hedera_transaction_to_bytes(request, makeHederaSignersFromArray(signers: signers), &buf, &size))
+        try HError.throwing(
+            error: hedera_transaction_to_bytes(request, makeHederaSignersFromArray(signers: signers), &buf, &size))
 
         return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
     }
