@@ -25,7 +25,7 @@ import SwiftDotenv
 public enum Program {
     public static func main() async throws {
         let env = try Dotenv.load()
-        let client = Client.forTestnet()
+        let client = try Client.forName(env.networkName)
 
         client.setOperator(env.operatorAccountId, env.operatorKey)
 
@@ -53,5 +53,9 @@ extension Environment {
 
     public var operatorKey: PrivateKey {
         PrivateKey(self["OPERATOR_KEY"]!.stringValue)!
+    }
+
+    public var networkName: String {
+        self["HEDERA_NETWORK"]?.stringValue ?? "testnet"
     }
 }

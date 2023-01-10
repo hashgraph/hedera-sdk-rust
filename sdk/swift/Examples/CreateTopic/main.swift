@@ -5,9 +5,7 @@ import SwiftDotenv
 public enum Program {
     public static func main() async throws {
         let env = try Dotenv.load()
-
-        // todo: network from name
-        let client = Client.forTestnet()
+        let client = try Client.forName(env.networkName)
 
         // Defaults the operator account ID and key such that all generated transactions will be paid for
         // by this account and be signed by this key
@@ -35,5 +33,9 @@ extension Environment {
 
     public var operatorKey: PrivateKey {
         PrivateKey(self["OPERATOR_KEY"]!.stringValue)!
+    }
+
+    public var networkName: String {
+        self["HEDERA_NETWORK"]?.stringValue ?? "testnet"
     }
 }
