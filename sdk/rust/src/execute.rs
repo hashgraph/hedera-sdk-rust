@@ -73,9 +73,9 @@ pub(crate) trait Execute {
     /// A created request is cached per node until any request returns
     /// `TransactionExpired`; in which case, the request cache is cleared.
     ///
-    async fn make_request(
+
+    fn make_request(
         &self,
-        client: &Client,
         transaction_id: &Option<TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)>;
@@ -120,7 +120,7 @@ where
 {
     let timeout: Option<std::time::Duration> = timeout.into();
 
-    let timeout = timeout.or_else(|| client.get_request_timeout()).unwrap_or_else(|| {
+    let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
         std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
     });
 
@@ -130,8 +130,8 @@ where
     let mut last_error: Option<Error> = None;
 
     if client.auto_validate_checksums() {
-        if let Some(ledger_id) = client.ledger_id().await {
-            executable.validate_checksums_for_ledger_id(&ledger_id)?;
+        if let Some(ledger_id) = &*client.ledger_id_internal() {
+            executable.validate_checksums_for_ledger_id(ledger_id)?;
         } else {
             return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksums" });
         }
@@ -166,8 +166,9 @@ where
         // healthy nodes on the client. this set of healthy nodes can change on
         // each iteration
 
-        let healthy_node_indexes =
-            explicit_node_indexes.is_none().then(|| client.network().healthy_node_indexes());
+        let healthy_node_indexes: Option<Vec<_>> = explicit_node_indexes
+            .is_none()
+            .then(|| client.network().healthy_node_indexes().collect());
 
         let node_indexes =
             explicit_node_indexes.as_deref().or(healthy_node_indexes.as_deref()).unwrap();
@@ -186,7 +187,7 @@ where
             let (node_account_id, channel) = client.network().channel(node_index);
 
             let (request, context) =
-                executable.make_request(client, &transaction_id, node_account_id).await?;
+                executable.make_request(&transaction_id, node_account_id)?;
 
             let response = match executable.execute(channel, request).await {
                 Ok(response) => response.into_inner(),

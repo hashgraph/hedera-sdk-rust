@@ -63,6 +63,7 @@ pub enum Error {
     KeyParse,
     KeyDerive,
     NoPayerAccountOrTransactionId,
+    FreezeUnsetNodeAccountIds,
     MaxQueryPaymentExceeded,
     NodeAccountUnknown,
     ResponseStatusUnrecognized,
@@ -112,6 +113,7 @@ impl Error {
             }
             crate::Error::NoEvmAddressPresent { .. } => Self::NoEvmAddressPresent,
             crate::Error::WrongKeyType { .. } => Self::WrongKeyType,
+            crate::Error::FreezeUnsetNodeAccountIds => Self::FreezeUnsetNodeAccountIds,
         };
 
         set_last_error(error);

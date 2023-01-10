@@ -222,7 +222,7 @@ impl EntityId {
         client: &Client,
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
-            if let Some(ledger_id) = client.ledger_id().await {
+            if let Some(ledger_id) = &*client.ledger_id_internal() {
                 Self::validate_checksum_internal(shard, realm, num, *present_checksum, &ledger_id)
             } else {
                 Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" })
@@ -266,7 +266,7 @@ impl EntityId {
         entity_id_string: String,
         client: &Client,
     ) -> Result<String, Error> {
-        if let Some(ledger_id) = client.ledger_id().await {
+        if let Some(ledger_id) = &*client.ledger_id_internal() {
             Ok(format!(
                 "{}-{}",
                 entity_id_string,

@@ -25,6 +25,7 @@ typedef enum HederaError {
   HEDERA_ERROR_KEY_PARSE,
   HEDERA_ERROR_KEY_DERIVE,
   HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID,
+  HEDERA_ERROR_FREEZE_UNSET_NODE_ACCOUNT_IDS,
   HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED,
   HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN,
   HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED,
@@ -369,10 +370,21 @@ struct HederaClient *hedera_client_for_previewnet(void);
  * this client.
  */
 void hedera_client_set_operator(struct HederaClient *client,
-                                uint64_t id_shard,
-                                uint64_t id_realm,
-                                uint64_t id_num,
+                                struct HederaAccountId id,
                                 struct HederaPrivateKey *key);
+
+/**
+ * Returns `true` if there was an operator and `false` if there wasn't.
+ *
+ * If this method returns `false`, variables will not be modified.
+ */
+bool hedera_client_get_operator(struct HederaClient *client,
+                                struct HederaAccountId *id_out,
+                                struct HederaPrivateKey **key_out);
+
+uint64_t hedera_client_get_max_transaction_fee(struct HederaClient *client);
+
+size_t hedera_client_get_random_node_ids(struct HederaClient *client, struct HederaAccountId **ids);
 
 /**
  * Get all the nodes for the `Client`
@@ -1438,6 +1450,17 @@ enum HederaError hedera_token_nft_info_to_bytes(const char *s, uint8_t **buf, si
 enum HederaError hedera_topic_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
 enum HederaError hedera_topic_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
+
+/**
+ * Convert the provided transaction to protobuf-encoded bytes.
+ *
+ * # Safety
+ * - todo(sr): Missing basically everything
+ */
+enum HederaError hedera_transaction_to_bytes(const char *transaction,
+                                             struct HederaSigners signers,
+                                             uint8_t **buf,
+                                             size_t *buf_size);
 
 /**
  * # Safety

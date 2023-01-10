@@ -59,6 +59,7 @@ public struct HError: Error, CustomStringConvertible {
         case cannotToStringWithChecksum
         case cannotPerformTaskWithoutLedgerId
         case wrongKeyType
+        case freezeUnsetNodeAccountIds
     }
 
     public let description: String
@@ -146,6 +147,9 @@ public struct HError: Error, CustomStringConvertible {
 
         case HEDERA_ERROR_WRONG_KEY_TYPE:
             kind = .wrongKeyType
+
+        case HEDERA_ERROR_FREEZE_UNSET_NODE_ACCOUNT_IDS:
+            kind = .freezeUnsetNodeAccountIds
 
         case HEDERA_ERROR_OK:
             return nil

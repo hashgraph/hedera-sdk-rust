@@ -106,6 +106,7 @@ pub use account::{
     ProxyStaker,
 };
 pub use client::Client;
+pub(crate) use client::Operator;
 pub use contract::{
     ContractBytecodeQuery,
     ContractCallQuery,

@@ -79,9 +79,8 @@ where
         false
     }
 
-    async fn make_request(
+    fn make_request(
         &self,
-        _client: &Client,
         _transaction_id: &Option<TransactionId>,
         _node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {

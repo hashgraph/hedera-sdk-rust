@@ -24,14 +24,19 @@ use std::fmt::{
     Formatter,
 };
 
+use prost::Message;
 use time::Duration;
 
-use crate::execute::execute;
+use crate::execute::{
+    execute,
+    Execute,
+};
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Client,
     Hbar,
+    Operator,
     PrivateKey,
     PublicKey,
     Signer,
@@ -65,9 +70,6 @@ where
 
     #[cfg_attr(feature = "ffi", serde(skip))]
     signers: Vec<AnySigner>,
-
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
-    is_frozen: bool,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -100,9 +102,12 @@ where
     #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub(crate) transaction_memo: String,
 
-    pub(crate) payer_account_id: Option<AccountId>,
-
     pub(crate) transaction_id: Option<TransactionId>,
+
+    pub(crate) operator: Option<Operator>,
+
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
+    pub(crate) is_frozen: bool,
 }
 
 impl<D> Default for Transaction<D>
@@ -115,12 +120,12 @@ where
                 data: D::default(),
                 node_account_ids: None,
                 transaction_valid_duration: None,
-                transaction_memo: String::new(),
                 max_transaction_fee: None,
-                payer_account_id: None,
+                transaction_memo: String::new(),
                 transaction_id: None,
+                operator: None,
+                is_frozen: false,
             },
-            is_frozen: false,
             signers: Vec::new(),
         }
     }
@@ -140,7 +145,7 @@ where
     D: Default + TransactionExecute,
 {
     /// Create a new default transaction.
-    ///
+    ///.
     /// Does the same thing as [`default`](Self::default)
     #[inline]
     #[must_use]
@@ -155,11 +160,11 @@ where
 {
     #[cfg(feature = "ffi")]
     pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
-        Self { body, signers, is_frozen: true }
+        Self { body, signers }
     }
 
     pub(crate) fn is_frozen(&self) -> bool {
-        self.is_frozen
+        self.body.is_frozen
     }
 
     /// # Panics
@@ -296,15 +301,104 @@ where
         self
     }
 
-    pub(crate) fn _freeze(&mut self) -> &mut Self {
+    /// Freeze the transaction so that no further modifications can be made.
+    pub fn freeze(&mut self) -> crate::Result<&mut Self> {
         self.freeze_with(None)
     }
 
-    pub(crate) fn freeze_with(&mut self, _client: Option<&Client>) -> &mut Self {
-        // todo: do more here.
-        self.is_frozen = true;
+    /// Freeze the transaction so that no further modifications can be made.
+    pub fn freeze_with<'a>(
+        &mut self,
+        client: impl Into<Option<&'a Client>>,
+    ) -> crate::Result<&mut Self> {
+        if self.is_frozen() {
+            return Ok(self);
+        }
+        let client: Option<&Client> = client.into();
 
-        self
+        let node_account_ids = match &self.body.node_account_ids {
+            // the clone here is the lesser of two evils.
+            Some(it) => it.clone(),
+            None => {
+                client.ok_or_else(|| crate::Error::FreezeUnsetNodeAccountIds)?.random_node_ids()
+            }
+        };
+
+        // note to reviewer: this is intentionally still an option, fallback is used later, swift doesn't *have* default max transaction fee and fixing it is a massive PITA.
+        let max_transaction_fee = self.body.max_transaction_fee.or_else(|| {
+            // no max has been set on the *transaction*
+            // check if there is a global max set on the client
+            let client_max_transaction_fee = client
+                .map(|it| it.max_transaction_fee().load(std::sync::atomic::Ordering::Relaxed));
+
+            match client_max_transaction_fee {
+                Some(max) if max > 1 => Some(Hbar::from_tinybars(max as i64)),
+                // no max has been set on the client either
+                // fallback to the hard-coded default for this transaction type
+                _ => None,
+            }
+        });
+
+        let operator = client.and_then(|it| it.operator_internal().as_deref().map(|it| it.clone()));
+
+        // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
+        self.body.node_account_ids = Some(node_account_ids);
+        self.body.max_transaction_fee = max_transaction_fee;
+        self.body.operator = operator;
+        self.body.is_frozen = true;
+
+        if let Some(client) = client {
+            if client.auto_validate_checksums() {
+                if let Some(ledger_id) = &*client.ledger_id_internal() {
+                    self.validate_checksums_for_ledger_id(ledger_id)?;
+                } else {
+                    return Err(crate::Error::CannotPerformTaskWithoutLedgerId {
+                        task: "validate checksums",
+                    });
+                }
+            }
+        }
+
+        Ok(self)
+    }
+
+    /// Convert `self` to protobuf encoded bytes.
+    ///
+    /// # Errors
+    /// - If `freeze_with` wasn't called with an operator.
+    ///
+    /// # Panics
+    /// - If `!self.is_frozen()`.
+    pub fn to_bytes(&self) -> crate::Result<Vec<u8>> {
+        if !self.is_frozen() {
+            panic!("Transaction must be frozen to call `to_bytes`");
+        }
+
+        let transaction_id = match self.transaction_id() {
+            Some(id) => id,
+            None => self
+                .body
+                .operator
+                .as_ref()
+                .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
+                .generate_transaction_id(),
+        };
+
+        let transaction_list: Result<_, _> = self
+            .body
+            .node_account_ids
+            .as_deref()
+            .unwrap()
+            .iter()
+            .copied()
+            .map(|node_account_id| {
+                self.make_request_inner(transaction_id, node_account_id).map(|it| it.0)
+            })
+            .collect();
+
+        let transaction_list = transaction_list?;
+
+        Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec())
     }
 }
 
@@ -314,24 +408,20 @@ where
 {
     /// Execute this transaction against the provided client of the Hedera network.
     // todo:
-    #[allow(clippy::missing_errors_doc)]
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
-        if !self.is_frozen() {
-            self.freeze_with(Some(client));
-        }
+        // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
+        self.freeze_with(Some(client))?;
 
         execute(client, self, None).await
     }
 
-    #[cfg(feature = "ffi")]
     pub(crate) async fn execute_with_optional_timeout(
         &mut self,
         client: &Client,
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<TransactionResponse> {
-        if !self.is_frozen() {
-            self.freeze_with(Some(client));
-        }
+        // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
+        self.freeze_with(Some(client))?;
 
         execute(client, self, timeout).await
     }
@@ -345,10 +435,6 @@ where
         // fixme: be consistent with `time::Duration`? Except `tokio::time` is `std::time`, and we depend on tokio.
         timeout: std::time::Duration,
     ) -> crate::Result<TransactionResponse> {
-        if !self.is_frozen() {
-            self.freeze_with(Some(client));
-        }
-
-        execute(client, self, timeout).await
+        self.execute_with_optional_timeout(client, Some(timeout)).await
     }
 }

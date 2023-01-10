@@ -251,6 +251,10 @@ where
             self.payment.amount(cost);
         }
 
+        if self.data.is_payment_required() {
+            self.payment.freeze_with(client)?;
+        }
+
         execute(client, self, timeout).await
     }
 
