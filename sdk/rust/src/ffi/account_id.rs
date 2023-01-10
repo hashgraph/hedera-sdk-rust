@@ -23,6 +23,7 @@ use std::ptr;
 
 use libc::size_t;
 
+use super::util::make_bytes;
 use crate::ffi::error::Error;
 use crate::protobuf::ToProtobuf;
 use crate::PublicKey;
@@ -70,6 +71,20 @@ impl From<crate::AccountId> for AccountId {
                 .evm_address
                 .map(|it| it.to_bytes().to_vec().into_boxed_slice())
                 .map_or_else(ptr::null_mut, |it| Box::leak(it).as_mut_ptr()),
+        }
+    }
+}
+
+impl From<AccountId> for crate::AccountId {
+    fn from(value: AccountId) -> Self {
+        let value = value.borrow_ref();
+        crate::AccountId {
+            shard: value.shard,
+            realm: value.realm,
+            num: value.num,
+            alias: value.alias.cloned(),
+            evm_address: value.evm_address.cloned().map(crate::EvmAddress),
+            checksum: None,
         }
     }
 }
@@ -139,18 +154,9 @@ pub unsafe extern "C" fn hedera_account_id_from_bytes(
 /// - `buf` must only be freed with `hedera_bytes_free`, notably this means that it must not be freed with `free`.
 #[no_mangle]
 pub unsafe extern "C" fn hedera_account_id_to_bytes(id: AccountId, buf: *mut *mut u8) -> size_t {
-    let bytes = id.borrow_ref().into_bytes().into_boxed_slice();
+    let bytes = id.borrow_ref().into_bytes();
 
-    let bytes = Box::leak(bytes);
-    let len = bytes.len();
-    let bytes = bytes.as_mut_ptr();
-
-    // safety: invariants promise that `buf` must be valid for writes.
-    unsafe {
-        ptr::write(buf, bytes);
-    }
-
-    len
+    unsafe { make_bytes(bytes, buf) }
 }
 
 /// Free an array of account IDs.

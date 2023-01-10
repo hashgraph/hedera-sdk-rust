@@ -23,7 +23,6 @@ use std::ptr;
 use libc::size_t;
 
 use crate::{
-    AccountId,
     Client,
     LedgerId,
     PrivateKey,
@@ -56,30 +55,72 @@ pub extern "C" fn hedera_client_for_previewnet() -> *mut Client {
 /// Sets the account that will, by default, be paying for transactions and queries built with
 /// this client.
 #[no_mangle]
-pub extern "C" fn hedera_client_set_operator(
+pub unsafe extern "C" fn hedera_client_set_operator(
     client: *mut Client,
-    id_shard: u64,
-    id_realm: u64,
-    id_num: u64,
+    id: super::AccountId,
     key: *mut PrivateKey,
 ) {
     let client = unsafe { client.as_ref() }.unwrap();
-    assert!(!key.is_null());
+    let key = unsafe { key.as_ref() }.unwrap();
 
-    let key = unsafe { &*key };
     let key = key.clone();
 
-    client.set_operator(
-        AccountId {
-            shard: id_shard,
-            realm: id_realm,
-            num: id_num,
-            alias: None,
-            evm_address: None,
-            checksum: None,
-        },
-        key,
-    );
+    client.set_operator(id.into(), key);
+}
+
+/// Returns `true` if there was an operator and `false` if there wasn't.
+///
+/// If this method returns `false`, variables will not be modified.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_client_get_operator(
+    client: *mut Client,
+    id_out: *mut super::AccountId,
+    key_out: *mut *mut PrivateKey,
+) -> bool {
+    let client = unsafe { client.as_ref() }.unwrap();
+    assert!(!id_out.is_null());
+    assert!(!key_out.is_null());
+
+    match client.operator_internal().as_deref().cloned() {
+        Some(it) => {
+            unsafe {
+                key_out.write(Box::leak(Box::new(it.signer)) as *mut PrivateKey);
+                id_out.write(it.account_id.into())
+            }
+
+            true
+        }
+
+        None => false,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_client_get_max_transaction_fee(client: *mut Client) -> u64 {
+    let client = unsafe { client.as_ref() }.unwrap();
+
+    client.max_transaction_fee().load(std::sync::atomic::Ordering::Relaxed)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_client_get_random_node_ids(
+    client: *mut Client,
+    ids: *mut *mut super::AccountId,
+) -> size_t {
+    assert!(!ids.is_null());
+    let client = unsafe { client.as_ref() }.unwrap();
+
+    let buf: Vec<_> = client.random_node_ids().into_iter().map(Into::into).collect();
+
+    let buf = buf.into_boxed_slice();
+
+    let buf = Box::leak(buf);
+    let size = buf.len();
+
+    // safety `ids` must be valid for writes.
+    unsafe { ids.write(buf.as_mut_ptr()) };
+
+    size
 }
 
 /// Get all the nodes for the `Client`
@@ -139,8 +180,8 @@ pub unsafe extern "C" fn hedera_client_get_ledger_id(
 ) -> size_t {
     let client = unsafe { client.as_ref() }.unwrap();
 
-    let ledger_id = match client.ledger_id_blocking() {
-        Some(it) => it,
+    let ledger_id = match &*client.ledger_id_internal() {
+        Some(it) => it.clone(),
         None => {
             unsafe { ptr::write(ledger_id_bytes, ptr::null_mut()) };
             return 0;

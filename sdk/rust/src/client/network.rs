@@ -198,15 +198,17 @@ impl Network {
         );
     }
 
-    pub(crate) fn healthy_node_indexes(&self) -> Vec<usize> {
+    pub(crate) fn healthy_node_indexes(&self) -> impl Iterator<Item = usize> + '_ {
         let now = OffsetDateTime::now_utc().unix_timestamp();
 
-        (0..self.nodes.len())
-            .filter(|index| {
-                // a healthy node has a healthiness of 0
-                self.healthy[*index].load(Ordering::Relaxed) < now
-            })
-            .collect()
+        (0..self.nodes.len()).filter(move |index| {
+            // a healthy node has a healthiness of 0
+            self.healthy[*index].load(Ordering::Relaxed) < now
+        })
+    }
+
+    pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {
+        self.healthy_node_indexes().map(|it| self.nodes[it])
     }
 
     pub(crate) fn channel(&self, index: usize) -> (AccountId, Channel) {

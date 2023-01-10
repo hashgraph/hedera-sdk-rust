@@ -25,7 +25,7 @@ import Foundation
 public final class Client {
     internal let ptr: OpaquePointer
 
-    private init(_ ptr: OpaquePointer) {
+    private init(unsafeFromPtr ptr: OpaquePointer) {
         self.ptr = ptr
     }
 
@@ -42,32 +42,68 @@ public final class Client {
         return nodes
     }
 
+    internal func randomNodeIds() -> [AccountId] {
+        var ids: UnsafeMutablePointer<HederaAccountId>?
+
+        let len = hedera_client_get_random_node_ids(ptr, &ids)
+
+        let nodes = UnsafeMutableBufferPointer(start: ids, count: len).map { AccountId(unsafeFromCHedera: $0) }
+
+        hedera_account_id_array_free(ids, len)
+
+        return nodes
+    }
+
+    internal var `operator`: Operator? {
+        var skPtr: OpaquePointer?
+        var accountId = HederaAccountId()
+
+        if hedera_client_get_operator(ptr, &accountId, &skPtr) {
+            return Operator(
+                accountId: AccountId(unsafeFromCHedera: accountId),
+                signer: .unsafeFromPtr(skPtr!)
+            )
+        } else {
+            return nil
+        }
+    }
+
+    internal var maxTransactionFee: Hbar? {
+        let val = hedera_client_get_max_transaction_fee(ptr)
+
+        if val == 0 {
+            return nil
+        }
+
+        return .fromTinybars(Int64(bitPattern: val))
+    }
+
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
-        Self(hedera_client_for_testnet())
+        Self(unsafeFromPtr: hedera_client_for_testnet())
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Self {
-        Self(hedera_client_for_testnet())
+        Self(unsafeFromPtr: hedera_client_for_testnet())
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     public static func forPreviewnet() -> Self {
-        Self(hedera_client_for_previewnet())
+        Self(unsafeFromPtr: hedera_client_for_previewnet())
     }
 
     // wish I could write `init(for name: String)`
     public static func forName(_ name: String) throws -> Self {
         switch name {
         case "mainnet":
-            return Self.forMainnet()
+            return .forMainnet()
 
         case "testnet":
-            return Self.forTestnet()
+            return .forTestnet()
 
         case "previewnet":
-            return Self.forPreviewnet()
+            return .forPreviewnet()
 
         default:
             throw HError(kind: .basicParse, description: "Unknown network name \(name)")
@@ -78,8 +114,9 @@ public final class Client {
     /// this client.
     @discardableResult
     public func setOperator(_ accountId: AccountId, _ privateKey: PrivateKey) -> Self {
-        hedera_client_set_operator(
-            ptr, accountId.shard, accountId.realm, accountId.num, privateKey.ptr)
+        accountId.unsafeWithCHedera { hAccountId in
+            hedera_client_set_operator(ptr, hAccountId, privateKey.ptr)
+        }
 
         return self
     }
