@@ -24,7 +24,10 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -126,6 +129,12 @@ impl ToTransactionDataProtobuf for TokenRevokeKycTransactionData {
 impl From<TokenRevokeKycTransactionData> for AnyTransactionData {
     fn from(transaction: TokenRevokeKycTransactionData) -> Self {
         Self::TokenRevokeKyc(transaction)
+    }
+}
+
+impl FromProtobuf<services::TokenRevokeKycTransactionBody> for TokenRevokeKycTransactionData {
+    fn from_protobuf(pb: services::TokenRevokeKycTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

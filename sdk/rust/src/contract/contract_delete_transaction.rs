@@ -24,7 +24,7 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{ToProtobuf, FromProtobuf};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -141,6 +141,12 @@ impl ToTransactionDataProtobuf for ContractDeleteTransactionData {
                 obtainers,
             },
         )
+    }
+}
+
+impl FromProtobuf<services::ContractDeleteTransactionBody> for ContractDeleteTransactionData {
+    fn from_protobuf(pb: services::ContractDeleteTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

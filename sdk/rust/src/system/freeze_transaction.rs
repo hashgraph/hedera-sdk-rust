@@ -25,6 +25,7 @@ use time::OffsetDateTime;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -148,5 +149,11 @@ impl ToTransactionDataProtobuf for FreezeTransactionData {
 impl From<FreezeTransactionData> for AnyTransactionData {
     fn from(transaction: FreezeTransactionData) -> Self {
         Self::Freeze(transaction)
+    }
+}
+
+impl FromProtobuf<services::FreezeTransactionBody> for FreezeTransactionData {
+    fn from_protobuf(pb: services::FreezeTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }

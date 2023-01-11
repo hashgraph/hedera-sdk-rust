@@ -24,7 +24,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{ToProtobuf, FromProtobuf};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -135,6 +135,14 @@ impl ToTransactionDataProtobuf for AccountAllowanceDeleteTransactionData {
 impl From<AccountAllowanceDeleteTransactionData> for AnyTransactionData {
     fn from(transaction: AccountAllowanceDeleteTransactionData) -> Self {
         Self::AccountAllowanceDelete(transaction)
+    }
+}
+
+impl FromProtobuf<services::CryptoDeleteAllowanceTransactionBody>
+    for AccountAllowanceDeleteTransactionData
+{
+    fn from_protobuf(pb: services::CryptoDeleteAllowanceTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

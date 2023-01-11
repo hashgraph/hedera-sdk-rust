@@ -24,7 +24,10 @@ use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -97,5 +100,11 @@ impl ToTransactionDataProtobuf for ScheduleDeleteTransactionData {
 impl From<ScheduleDeleteTransactionData> for AnyTransactionData {
     fn from(transaction: ScheduleDeleteTransactionData) -> Self {
         Self::ScheduleDelete(transaction)
+    }
+}
+
+impl FromProtobuf<services::ScheduleDeleteTransactionBody> for ScheduleDeleteTransactionData {
+    fn from_protobuf(pb: services::ScheduleDeleteTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }

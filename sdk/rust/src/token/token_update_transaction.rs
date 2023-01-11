@@ -28,7 +28,7 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{ToProtobuf, FromProtobuf};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -390,6 +390,12 @@ impl From<TokenUpdateTransactionData> for AnyTransactionData {
     fn from(transaction: TokenUpdateTransactionData) -> Self {
         Self::TokenUpdate(transaction)
     }
+}
+
+impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransactionData {
+    fn from_protobuf(pb: services::TokenUpdateTransactionBody) -> crate::Result<Self> {
+        todo!()
+    }    
 }
 
 #[cfg(test)]

@@ -28,7 +28,10 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -223,6 +226,12 @@ impl ToTransactionDataProtobuf for TopicUpdateTransactionData {
 impl From<TopicUpdateTransactionData> for AnyTransactionData {
     fn from(transaction: TopicUpdateTransactionData) -> Self {
         Self::TopicUpdate(transaction)
+    }
+}
+
+impl FromProtobuf<services::ConsensusUpdateTopicTransactionBody> for TopicUpdateTransactionData {
+    fn from_protobuf(pb: services::ConsensusUpdateTopicTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

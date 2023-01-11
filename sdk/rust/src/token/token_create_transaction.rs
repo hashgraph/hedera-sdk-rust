@@ -28,7 +28,10 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::token::custom_fees::AnyCustomFee;
 use crate::token::token_supply_type::TokenSupplyType;
 use crate::token::token_type::TokenType;
@@ -499,6 +502,12 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
 impl From<TokenCreateTransactionData> for AnyTransactionData {
     fn from(transaction: TokenCreateTransactionData) -> Self {
         Self::TokenCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::TokenCreateTransactionBody> for TokenCreateTransactionData {
+    fn from_protobuf(pb: services::TokenCreateTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

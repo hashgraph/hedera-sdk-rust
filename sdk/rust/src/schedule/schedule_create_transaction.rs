@@ -30,7 +30,10 @@ use time::OffsetDateTime;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -379,5 +382,11 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
 impl From<ScheduleCreateTransactionData> for AnyTransactionData {
     fn from(transaction: ScheduleCreateTransactionData) -> Self {
         Self::ScheduleCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::ScheduleCreateTransactionBody> for ScheduleCreateTransactionData {
+    fn from_protobuf(pb: services::ScheduleCreateTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }

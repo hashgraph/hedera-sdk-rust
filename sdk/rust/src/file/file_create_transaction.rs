@@ -27,7 +27,10 @@ use time::{
 };
 use tonic::transport::Channel;
 
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -213,6 +216,15 @@ impl ToTransactionDataProtobuf for FileCreateTransactionData {
 impl From<FileCreateTransactionData> for AnyTransactionData {
     fn from(transaction: FileCreateTransactionData) -> Self {
         Self::FileCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::FileCreateTransactionBody> for FileCreateTransactionData {
+    fn from_protobuf(pb: services::FileCreateTransactionBody) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        todo!()
     }
 }
 

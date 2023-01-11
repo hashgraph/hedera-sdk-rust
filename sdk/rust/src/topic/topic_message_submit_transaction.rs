@@ -24,7 +24,10 @@ use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -203,6 +206,14 @@ impl ToTransactionDataProtobuf for TopicMessageSubmitTransactionData {
 impl From<TopicMessageSubmitTransactionData> for AnyTransactionData {
     fn from(transaction: TopicMessageSubmitTransactionData) -> Self {
         Self::TopicMessageSubmit(transaction)
+    }
+}
+
+impl FromProtobuf<services::ConsensusSubmitMessageTransactionBody>
+    for TopicMessageSubmitTransactionData
+{
+    fn from_protobuf(pb: services::ConsensusSubmitMessageTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

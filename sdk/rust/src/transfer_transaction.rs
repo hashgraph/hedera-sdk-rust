@@ -26,6 +26,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -334,6 +335,12 @@ impl From<TransferTransactionData> for AnyTransactionData {
     fn from(transaction: TransferTransactionData) -> Self {
         Self::Transfer(transaction)
     }
+}
+
+impl FromProtobuf<services::CryptoTransferTransactionBody> for TransferTransactionData {
+    fn from_protobuf(pb: services::CryptoTransferTransactionBody) -> crate::Result<Self> {
+        todo!()
+    }    
 }
 
 // hack(sr): these tests currently don't compile due to `payer_account_id`

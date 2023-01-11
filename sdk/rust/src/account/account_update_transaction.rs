@@ -28,7 +28,7 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{ToProtobuf, FromProtobuf};
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -351,6 +351,12 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
 impl From<AccountUpdateTransactionData> for AnyTransactionData {
     fn from(transaction: AccountUpdateTransactionData) -> Self {
         Self::AccountUpdate(transaction)
+    }
+}
+
+impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransactionData {
+    fn from_protobuf(pb: services::CryptoUpdateTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 
