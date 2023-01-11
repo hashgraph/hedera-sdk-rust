@@ -25,7 +25,10 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -132,5 +135,11 @@ impl ToTransactionDataProtobuf for SystemUndeleteTransactionData {
 impl From<SystemUndeleteTransactionData> for AnyTransactionData {
     fn from(transaction: SystemUndeleteTransactionData) -> Self {
         Self::SystemUndelete(transaction)
+    }
+}
+
+impl FromProtobuf<services::SystemUndeleteTransactionBody> for SystemUndeleteTransactionData {
+    fn from_protobuf(pb: services::SystemUndeleteTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }

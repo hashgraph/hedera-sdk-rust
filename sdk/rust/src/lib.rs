@@ -231,7 +231,10 @@ pub use topic::{
     TopicMessageSubmitTransaction,
     TopicUpdateTransaction,
 };
-pub use transaction::Transaction;
+pub use transaction::{
+    AnyTransaction,
+    Transaction,
+};
 pub use transaction_hash::TransactionHash;
 pub use transaction_id::TransactionId;
 pub use transaction_receipt::TransactionReceipt;

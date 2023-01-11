@@ -24,6 +24,7 @@ use std::fmt::{
     Formatter,
 };
 
+use hedera_proto::services;
 use prost::Message;
 use time::Duration;
 
@@ -31,10 +32,12 @@ use crate::execute::{
     execute,
     Execute,
 };
+use crate::protobuf::FromProtobuf;
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Client,
+    Error,
     Hbar,
     Operator,
     PrivateKey,
@@ -48,15 +51,14 @@ mod any;
 mod execute;
 mod protobuf;
 
-#[cfg(feature = "ffi")]
 pub use any::AnyTransaction;
-#[cfg(feature = "ffi")]
-pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
+
+pub struct TransactionSources(pub(crate) Box<[services::Transaction]>);
 
 /// A transaction that can be executed on the Hedera network.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
@@ -70,6 +72,9 @@ where
 
     #[cfg_attr(feature = "ffi", serde(skip))]
     signers: Vec<AnySigner>,
+
+    #[cfg_attr(feature = "ffi", serde(skip))]
+    sources: Option<TransactionSources>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -127,6 +132,7 @@ where
                 is_frozen: false,
             },
             signers: Vec::new(),
+            sources: None,
         }
     }
 }
@@ -436,5 +442,110 @@ where
         timeout: std::time::Duration,
     ) -> crate::Result<TransactionResponse> {
         self.execute_with_optional_timeout(client, Some(timeout)).await
+    }
+}
+
+// these impls are on `AnyTransaction`, but they're here instead of in `any` because actually implementing them is only possible here.
+impl AnyTransaction {
+    /// # Examples
+    /// ## Decoding a more specific transaction type
+    /// ```
+    /// # fn main() -> hedera::Result<()> {
+    /// use hedera::AnyTransaction;
+    /// use hedera::TransferTransaction;
+    /// # use prost::Message;
+    /// // fixme: use a valid transaction.
+    /// let bytes = hex::decode(concat!(
+    ///     "1acc010a640a2046fe5013b6f6fc796c3e65ec10d2a10d03c07188fc3de13d46",
+    ///     "caad6b8ec4dfb81a4045f1186be5746c9783f68cb71d6a71becd3ffb024906b8",
+    ///     "55ac1fa3a2601273d41b58446e5d6a0aaf421c229885f9e70417353fab2ce6e9",
+    ///     "d8e7b162e9944e19020a640a20f102e75ff7dc3d72c9b7075bb246fcc54e714c",
+    ///     "59714814011e8f4b922d2a6f0a1a40f2e5f061349ab03fa21075020c75cf876d",
+    ///     "80498ae4bac767f35941b8e3c393b0e0a886ede328e44c1df7028ea1474722f2",
+    ///     "dcd493812d04db339480909076a10122500a180a0c08a1cc98830610c092d09e",
+    ///     "0312080800100018e4881d120608001000180418b293072202087872240a220a",
+    ///     "0f0a080800100018e4881d10ff83af5f0a0f0a080800100018eb881d108084af",
+    ///     "5f",
+    /// )).unwrap();
+    /// let tx = AnyTransaction::from_bytes(&bytes)?;
+    /// // let tx = TransferTransaction::try_from(AnyTransaction::from_bytes(&bytes)?)?;
+    /// # let _ = tx;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        let list =
+            hedera_proto::sdk::TransactionList::decode(bytes).map_err(Error::from_protobuf)?;
+
+        dbg!(&list);
+
+        let list = if list.transaction_list.is_empty() {
+            Vec::from([services::Transaction::decode(bytes).map_err(Error::from_protobuf)?])
+        } else {
+            list.transaction_list
+        };
+
+        let first =
+            list.first().cloned().ok_or_else(|| Error::from_protobuf("no transactions found"))?;
+
+        let mut res = Self::from_protobuf(first)?;
+
+        res.sources = Some(TransactionSources(list.into_boxed_slice()));
+
+        Ok(res)
+    }
+}
+
+impl FromProtobuf<services::Transaction> for AnyTransaction {
+    fn from_protobuf(pb: services::Transaction) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        transaction_body_from_transaction(&pb).and_then(Self::from_protobuf)
+    }
+}
+
+#[allow(deprecated)]
+fn transaction_body_from_transaction(
+    tx: &services::Transaction,
+) -> crate::Result<services::TransactionBody> {
+    if !tx.signed_transaction_bytes.is_empty() {
+        let tx = services::SignedTransaction::decode(&*tx.signed_transaction_bytes)
+            .map_err(Error::from_protobuf)?;
+
+        return services::TransactionBody::decode(&*tx.body_bytes).map_err(Error::from_protobuf);
+    }
+
+    // do we even need these? Can Hedera execute these?
+    if !tx.body_bytes.is_empty() {
+        return services::TransactionBody::decode(&*tx.body_bytes).map_err(Error::from_protobuf);
+    }
+
+    if let Some(tx) = &tx.body {
+        return Ok(tx.clone());
+    }
+
+    Err(Error::from_protobuf("transaction had no body"))
+}
+
+impl FromProtobuf<services::TransactionBody> for AnyTransaction {
+    fn from_protobuf(pb: services::TransactionBody) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(Transaction {
+            body: TransactionBody {
+                data: AnyTransactionData::from_protobuf(pb_getf!(pb, data)?)?,
+                node_account_ids: todo!(),
+                transaction_valid_duration: pb.transaction_valid_duration.map(Into::into),
+                max_transaction_fee: Some(Hbar::from_tinybars(pb.transaction_fee as i64)),
+                transaction_memo: pb.memo,
+                transaction_id: Some(TransactionId::from_protobuf(pb_getf!(pb, transaction_id)?)?),
+                operator: None,
+                is_frozen: true,
+            },
+            signers: Vec::new(),
+            sources: None,
+        })
     }
 }

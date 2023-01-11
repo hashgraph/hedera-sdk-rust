@@ -28,6 +28,7 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -288,6 +289,12 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
                 memo_field,
             },
         )
+    }
+}
+
+impl FromProtobuf<services::ContractUpdateTransactionBody> for ContractUpdateTransactionData {
+    fn from_protobuf(pb: services::ContractUpdateTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

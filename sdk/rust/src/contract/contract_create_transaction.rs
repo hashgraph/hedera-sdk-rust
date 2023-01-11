@@ -25,6 +25,7 @@ use time::Duration;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -352,6 +353,12 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
 impl From<ContractCreateTransactionData> for AnyTransactionData {
     fn from(transaction: ContractCreateTransactionData) -> Self {
         Self::ContractCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::ContractCreateTransactionBody> for ContractCreateTransactionData {
+    fn from_protobuf(pb: services::ContractCreateTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
 

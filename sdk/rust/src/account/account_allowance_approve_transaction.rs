@@ -24,6 +24,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -264,6 +265,12 @@ impl From<AccountAllowanceApproveTransactionData> for AnyTransactionData {
     fn from(transaction: AccountAllowanceApproveTransactionData) -> Self {
         Self::AccountAllowanceApprove(transaction)
     }
+}
+
+impl FromProtobuf<services::CryptoApproveAllowanceTransactionBody> for AccountAllowanceApproveTransactionData {
+    fn from_protobuf(pb: services::CryptoApproveAllowanceTransactionBody) -> crate::Result<Self> {
+        todo!()
+    }    
 }
 
 impl ToProtobuf for HbarAllowance {

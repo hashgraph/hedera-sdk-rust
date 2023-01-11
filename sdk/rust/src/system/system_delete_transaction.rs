@@ -26,7 +26,10 @@ use time::OffsetDateTime;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -164,5 +167,11 @@ impl ToTransactionDataProtobuf for SystemDeleteTransactionData {
 impl From<SystemDeleteTransactionData> for AnyTransactionData {
     fn from(transaction: SystemDeleteTransactionData) -> Self {
         Self::SystemDelete(transaction)
+    }
+}
+
+impl FromProtobuf<services::SystemDeleteTransactionBody> for SystemDeleteTransactionData {
+    fn from_protobuf(pb: services::SystemDeleteTransactionBody) -> crate::Result<Self> {
+        todo!()
     }
 }
