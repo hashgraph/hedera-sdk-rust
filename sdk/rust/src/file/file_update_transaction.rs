@@ -28,7 +28,10 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -226,8 +229,16 @@ impl From<FileUpdateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::FileUpdateTransactionBody> for FileUpdateTransactionData {
     fn from_protobuf(pb: services::FileUpdateTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        Ok(Self {
+            file_id: Option::from_protobuf(pb.file_id)?,
+            file_memo: pb.memo,
+            keys: Option::from_protobuf(pb.keys)?,
+            contents: Some(pb.contents),
+            expiration_time: pb.expiration_time.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+        })
+    }
 }
 
 #[cfg(test)]

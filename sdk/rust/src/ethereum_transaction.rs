@@ -149,6 +149,10 @@ impl From<EthereumTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::EthereumTransactionBody> for EthereumTransactionData {
     fn from_protobuf(pb: services::EthereumTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        Ok(Self {
+            ethereum_data: pb.ethereum_data,
+            call_data_file_id: Option::from_protobuf(pb.call_data)?,
+            max_gas_allowance_hbar: pb.max_gas_allowance as u64,
+        })
+    }
 }

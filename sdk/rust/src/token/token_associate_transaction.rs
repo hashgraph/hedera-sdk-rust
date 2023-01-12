@@ -136,7 +136,10 @@ impl From<TokenAssociateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenAssociateTransactionBody> for TokenAssociateTransactionData {
     fn from_protobuf(pb: services::TokenAssociateTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account)?,
+            token_ids: Vec::from_protobuf(pb.tokens)?,
+        })
     }
 }
 

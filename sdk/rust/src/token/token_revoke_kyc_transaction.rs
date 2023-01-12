@@ -134,7 +134,10 @@ impl From<TokenRevokeKycTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenRevokeKycTransactionBody> for TokenRevokeKycTransactionData {
     fn from_protobuf(pb: services::TokenRevokeKycTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account)?,
+            token_id: Option::from_protobuf(pb.token)?,
+        })
     }
 }
 

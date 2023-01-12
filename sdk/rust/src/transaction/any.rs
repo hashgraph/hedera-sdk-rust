@@ -696,27 +696,27 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::ScheduleCreate(pb) => data::ScheduleCreate::from_protobuf(pb)?.into(),
             Data::ScheduleDelete(pb) => data::ScheduleDelete::from_protobuf(pb)?.into(),
             Data::ScheduleSign(pb) => data::ScheduleSign::from_protobuf(pb)?.into(),
-            Data::CryptoAddLiveHash(pb) => {
+            Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
                 ))
             }
-            Data::CryptoDeleteLiveHash(pb) => {
+            Data::CryptoDeleteLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `DeleteLiveHashTransaction`",
                 ))
             }
-            Data::UncheckedSubmit(pb) => {
+            Data::UncheckedSubmit(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `UncheckedSubmitTransaction`",
                 ))
             }
-            Data::NodeStakeUpdate(pb) => {
+            Data::NodeStakeUpdate(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `NodeStakeUpdateTransaction`",
                 ))
             }
-            Data::UtilPrng(pb) => {
+            Data::UtilPrng(_) => {
                 return Err(Error::from_protobuf("unimplemented transaction `PrngTransaction`"))
             }
         };

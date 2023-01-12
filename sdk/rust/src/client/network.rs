@@ -198,13 +198,17 @@ impl Network {
         );
     }
 
-    pub(crate) fn healthy_node_indexes(&self) -> impl Iterator<Item = usize> + '_ {
-        let now = OffsetDateTime::now_utc().unix_timestamp();
+    pub(crate) fn is_node_healthy(&self, node_index: usize, now: OffsetDateTime) -> bool {
+        let now = now.unix_timestamp();
 
-        (0..self.nodes.len()).filter(move |index| {
-            // a healthy node has a healthiness of 0
-            self.healthy[*index].load(Ordering::Relaxed) < now
-        })
+        // a healthy node has a healthiness of 0
+        self.healthy[node_index].load(Ordering::Relaxed) < now
+    }
+
+    pub(crate) fn healthy_node_indexes(&self) -> impl Iterator<Item = usize> + '_ {
+        let now = OffsetDateTime::now_utc();
+
+        (0..self.nodes.len()).filter(move |index| self.is_node_healthy(*index, now))
     }
 
     pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {

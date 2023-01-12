@@ -172,6 +172,13 @@ impl From<SystemDeleteTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::SystemDeleteTransactionBody> for SystemDeleteTransactionData {
     fn from_protobuf(pb: services::SystemDeleteTransactionBody) -> crate::Result<Self> {
-        todo!()
+        use services::system_delete_transaction_body::Id;
+        let (file_id, contract_id) = match pb.id {
+            Some(Id::FileId(it)) => (Some(FileId::from_protobuf(it)?), None),
+            Some(Id::ContractId(it)) => (None, Some(ContractId::from_protobuf(it)?)),
+            None => (None, None),
+        };
+
+        Ok(Self { file_id, contract_id, expiration_time: pb.expiration_time.map(Into::into) })
     }
 }

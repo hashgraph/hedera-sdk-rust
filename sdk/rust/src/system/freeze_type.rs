@@ -52,3 +52,16 @@ pub enum FreezeType {
     /// telemetry/metrics. Does not impact network operations.
     TelemetryUpgrade = 5,
 }
+
+impl From<i32> for FreezeType {
+    fn from(value: i32) -> Self {
+        match value {
+            1 => Self::FreezeOnly,
+            2 => Self::PrepareUpgrade,
+            3 => Self::FreezeUpgrade,
+            4 => Self::FreezeAbort,
+            5 => Self::TelemetryUpgrade,
+            ..=0 | 6.. => Self::Unknown,
+        }
+    }
+}

@@ -140,6 +140,13 @@ impl From<SystemUndeleteTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::SystemUndeleteTransactionBody> for SystemUndeleteTransactionData {
     fn from_protobuf(pb: services::SystemUndeleteTransactionBody) -> crate::Result<Self> {
-        todo!()
+        use services::system_undelete_transaction_body::Id;
+        let (file_id, contract_id) = match pb.id {
+            Some(Id::FileId(it)) => (Some(FileId::from_protobuf(it)?), None),
+            Some(Id::ContractId(it)) => (None, Some(ContractId::from_protobuf(it)?)),
+            None => (None, None),
+        };
+
+        Ok(Self { file_id, contract_id })
     }
 }

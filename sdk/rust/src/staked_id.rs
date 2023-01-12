@@ -47,3 +47,31 @@ impl From<u64> for StakedId {
         Self::NodeId(v)
     }
 }
+
+mod proto {
+    use hedera_proto::services;
+
+    use super::StakedId;
+    use crate::FromProtobuf;
+
+    macro_rules! impl_from_pb {
+        ($ty:ty) => {
+            impl FromProtobuf<$ty> for StakedId {
+                fn from_protobuf(value: $ty) -> crate::Result<Self> {
+                    type PbStakedId = $ty;
+                    match value {
+                        PbStakedId::StakedAccountId(value) => {
+                            Ok(Self::AccountId(FromProtobuf::from_protobuf(value)?))
+                        }
+                        PbStakedId::StakedNodeId(value) => Ok(Self::NodeId(value as u64)),
+                    }
+                }
+            }
+        };
+    }
+
+    impl_from_pb!(services::contract_create_transaction_body::StakedId);
+    impl_from_pb!(services::contract_update_transaction_body::StakedId);
+    impl_from_pb!(services::crypto_create_transaction_body::StakedId);
+    impl_from_pb!(services::crypto_update_transaction_body::StakedId);
+}

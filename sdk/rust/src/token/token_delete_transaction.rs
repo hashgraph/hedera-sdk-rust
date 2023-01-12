@@ -113,7 +113,7 @@ impl From<TokenDeleteTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenDeleteTransactionBody> for TokenDeleteTransactionData {
     fn from_protobuf(pb: services::TokenDeleteTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self { token_id: Option::from_protobuf(pb.token)? })
     }
 }
 #[cfg(test)]

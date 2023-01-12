@@ -24,7 +24,10 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -142,7 +145,20 @@ impl FromProtobuf<services::CryptoDeleteAllowanceTransactionBody>
     for AccountAllowanceDeleteTransactionData
 {
     fn from_protobuf(pb: services::CryptoDeleteAllowanceTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self { nft_allowances: Vec::from_protobuf(pb.nft_allowances)? })
+    }
+}
+
+impl FromProtobuf<services::NftRemoveAllowance> for NftRemoveAllowance {
+    fn from_protobuf(pb: services::NftRemoveAllowance) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(Self {
+            token_id: TokenId::from_protobuf(pb_getf!(pb, token_id)?)?,
+            owner_account_id: AccountId::from_protobuf(pb_getf!(pb, owner)?)?,
+            serials: pb.serial_numbers,
+        })
     }
 }
 

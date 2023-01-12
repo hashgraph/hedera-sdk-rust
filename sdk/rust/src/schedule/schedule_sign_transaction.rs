@@ -103,6 +103,6 @@ impl From<ScheduleSignTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::ScheduleSignTransactionBody> for ScheduleSignTransactionData {
     fn from_protobuf(pb: services::ScheduleSignTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self { schedule_id: Option::from_protobuf(pb.schedule_id)? })
     }
 }

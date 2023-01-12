@@ -28,7 +28,10 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -355,8 +358,30 @@ impl From<AccountUpdateTransactionData> for AnyTransactionData {
 }
 
 impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransactionData {
+    #[allow(deprecated)]
     fn from_protobuf(pb: services::CryptoUpdateTransactionBody) -> crate::Result<Self> {
-        todo!()
+        use services::crypto_update_transaction_body::ReceiverSigRequiredField;
+
+        let receiver_signature_required = pb.receiver_sig_required_field.map(|it| match it {
+            ReceiverSigRequiredField::ReceiverSigRequired(it) => it,
+            ReceiverSigRequiredField::ReceiverSigRequiredWrapper(it) => it,
+        });
+
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account_id_to_update)?,
+            key: Option::from_protobuf(pb.key)?,
+            receiver_signature_required,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            proxy_account_id: Option::from_protobuf(pb.proxy_account_id)?,
+            expiration_time: pb.expiration_time.map(Into::into),
+            account_memo: pb.memo,
+            max_automatic_token_associations: pb
+                .max_automatic_token_associations
+                .map(|it| it as u16),
+            staked_id: Option::from_protobuf(pb.staked_id)?,
+            decline_staking_reward: pb.decline_reward,
+        })
     }
 }
 

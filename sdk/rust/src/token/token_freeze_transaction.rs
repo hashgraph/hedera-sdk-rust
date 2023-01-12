@@ -134,7 +134,10 @@ impl From<TokenFreezeTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenFreezeAccountTransactionBody> for TokenFreezeTransactionData {
     fn from_protobuf(pb: services::TokenFreezeAccountTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account)?,
+            token_id: Option::from_protobuf(pb.token)?,
+        })
     }
 }
 

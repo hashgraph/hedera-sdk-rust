@@ -161,7 +161,11 @@ impl From<TokenBurnTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenBurnTransactionBody> for TokenBurnTransactionData {
     fn from_protobuf(pb: services::TokenBurnTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            token_id: Option::from_protobuf(pb.token)?,
+            amount: pb.amount,
+            serials: pb.serial_numbers,
+        })
     }
 }
 

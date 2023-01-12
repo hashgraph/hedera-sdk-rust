@@ -213,7 +213,22 @@ impl FromProtobuf<services::ConsensusSubmitMessageTransactionBody>
     for TopicMessageSubmitTransactionData
 {
     fn from_protobuf(pb: services::ConsensusSubmitMessageTransactionBody) -> crate::Result<Self> {
-        todo!()
+        let (initial_transaction_id, chunk_total, chunk_number) = match pb.chunk_info {
+            Some(pb) => (
+                Some(TransactionId::from_protobuf(pb_getf!(pb, initial_transaction_id)?)?),
+                pb.total,
+                pb.number,
+            ),
+            None => (None, 1, 1),
+        };
+
+        Ok(Self {
+            topic_id: Option::from_protobuf(pb.topic_id)?,
+            message: (!pb.message.is_empty()).then(|| pb.message),
+            initial_transaction_id,
+            chunk_total,
+            chunk_number,
+        })
     }
 }
 
