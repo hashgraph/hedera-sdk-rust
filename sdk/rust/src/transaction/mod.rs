@@ -50,8 +50,12 @@ use crate::{
 mod any;
 mod execute;
 mod protobuf;
+#[cfg(test)]
+mod tests;
 
 pub use any::AnyTransaction;
+#[cfg(feature = "ffi")]
+pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
@@ -166,7 +170,7 @@ where
 {
     #[cfg(feature = "ffi")]
     pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
-        Self { body, signers }
+        Self { body, signers, sources: None }
     }
 
     pub(crate) fn is_frozen(&self) -> bool {
@@ -380,6 +384,46 @@ where
             panic!("Transaction must be frozen to call `to_bytes`");
         }
 
+        if let Some(sources) = &self.sources {
+            // shortcut: we just re-serialize.
+            if self.signers.is_empty() {
+                return Ok(hedera_proto::sdk::TransactionList {
+                    transaction_list: sources.0.to_vec(),
+                }
+                .encode_to_vec());
+            }
+
+            // todo: avoid the double-collect.
+            let mut signed_transactions: Vec<_> = sources
+                .0
+                .iter()
+                .map(|it| {
+                    if it.signed_transaction_bytes.is_empty() {
+                        // sources can only be non-none if we were created from `from_bytes`.
+                        // from_bytes ensures that all `sources` have `signed_transaction_bytes`.
+                        unreachable!()
+                    } else {
+                        // unreachable: sources can only be non-none if we were created from `from_bytes`.
+                        // from_bytes checks all transaction bodies for equality, which involves desrializing all `signed_transaction_bytes`.
+                        services::SignedTransaction::decode(it.signed_transaction_bytes.as_slice())
+                            .unwrap_or_else(|_| unreachable!())
+                    }
+                })
+                .collect();
+
+            self.sign_all(&mut signed_transactions);
+
+            let transaction_list = signed_transactions
+                .into_iter()
+                .map(|it| services::Transaction {
+                    signed_transaction_bytes: it.encode_to_vec(),
+                    ..Default::default()
+                })
+                .collect();
+
+            return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
+        }
+
         let transaction_id = match self.transaction_id() {
             Some(id) => id,
             None => self
@@ -415,10 +459,7 @@ where
     /// Execute this transaction against the provided client of the Hedera network.
     // todo:
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
-        // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
-        self.freeze_with(Some(client))?;
-
-        execute(client, self, None).await
+        self.execute_with_optional_timeout(client, None).await
     }
 
     pub(crate) async fn execute_with_optional_timeout(
@@ -428,6 +469,10 @@ where
     ) -> crate::Result<TransactionResponse> {
         // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
         self.freeze_with(Some(client))?;
+
+        if let Some(sources) = &self.sources {
+            return self::execute::execute2(client, self, sources, timeout).await;
+        }
 
         execute(client, self, timeout).await
     }
@@ -448,13 +493,9 @@ where
 // these impls are on `AnyTransaction`, but they're here instead of in `any` because actually implementing them is only possible here.
 impl AnyTransaction {
     /// # Examples
-    /// ## Decoding a more specific transaction type
     /// ```
     /// # fn main() -> hedera::Result<()> {
     /// use hedera::AnyTransaction;
-    /// use hedera::TransferTransaction;
-    /// # use prost::Message;
-    /// // fixme: use a valid transaction.
     /// let bytes = hex::decode(concat!(
     ///     "1acc010a640a2046fe5013b6f6fc796c3e65ec10d2a10d03c07188fc3de13d46",
     ///     "caad6b8ec4dfb81a4045f1186be5746c9783f68cb71d6a71becd3ffb024906b8",
@@ -468,16 +509,14 @@ impl AnyTransaction {
     ///     "5f",
     /// )).unwrap();
     /// let tx = AnyTransaction::from_bytes(&bytes)?;
-    /// // let tx = TransferTransaction::try_from(AnyTransaction::from_bytes(&bytes)?)?;
     /// # let _ = tx;
     /// # Ok(())
     /// # }
     /// ```
+    #[allow(deprecated)]
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         let list =
             hedera_proto::sdk::TransactionList::decode(bytes).map_err(Error::from_protobuf)?;
-
-        dbg!(&list);
 
         let list = if list.transaction_list.is_empty() {
             Vec::from([services::Transaction::decode(bytes).map_err(Error::from_protobuf)?])
@@ -485,15 +524,84 @@ impl AnyTransaction {
             list.transaction_list
         };
 
-        let first =
-            list.first().cloned().ok_or_else(|| Error::from_protobuf("no transactions found"))?;
+        let tmp: Result<Vec<_>, _> = list.iter().map(transaction_body_from_transaction).collect();
+        let tmp = tmp?;
 
-        let mut res = Self::from_protobuf(first)?;
+        let node_ids: Result<std::collections::HashSet<_>, _> = tmp
+            .iter()
+            .map(|it| {
+                let node_account_id = it.node_account_id.clone().ok_or_else(|| {
+                    crate::Error::from_protobuf(concat!("unexpected missing `node_account_id`"))
+                })?;
 
+                AccountId::from_protobuf(node_account_id)
+            })
+            .collect();
+
+        let (first, tmp) =
+            tmp.split_first().ok_or_else(|| Error::from_protobuf("no transactions found"))?;
+
+        for it in tmp.iter() {
+            if &first.transaction_id != &it.transaction_id {
+                return Err(Error::from_protobuf("chunked transactions not currently supported"));
+            }
+
+            if !pb_transaction_body_eq(first, it) {
+                return Err(Error::from_protobuf("transaction parts unexpectedly unequal"));
+            }
+        }
+
+        let node_ids: Vec<_> = node_ids?.into_iter().collect();
+
+        // note: this creates the transaction in a frozen state.
+        let mut res = Self::from_protobuf(first.clone())?;
+
+        // note: this doesn't check freeze for obvious reasons.
+        res.body.node_account_ids = Some(node_ids);
         res.sources = Some(TransactionSources(list.into_boxed_slice()));
 
         Ok(res)
     }
+}
+
+/// Returns `true` if lhs == rhs other than `transaction_id` and `node_account_id`, `false` otherwise.
+#[allow(deprecated)]
+fn pb_transaction_body_eq(
+    lhs: &services::TransactionBody,
+    rhs: &services::TransactionBody,
+) -> bool {
+    // destructure one side to ensure we don't miss any fields.
+    let services::TransactionBody {
+        transaction_id: _,
+        node_account_id: _,
+        transaction_fee,
+        transaction_valid_duration,
+        generate_record,
+        memo,
+        data,
+    } = rhs;
+
+    if &lhs.transaction_fee != transaction_fee {
+        return false;
+    }
+
+    if &lhs.transaction_valid_duration != transaction_valid_duration {
+        return false;
+    }
+
+    if &lhs.generate_record != generate_record {
+        return false;
+    }
+
+    if &lhs.memo != memo {
+        return false;
+    }
+
+    if &lhs.data != data {
+        return false;
+    }
+
+    true
 }
 
 impl FromProtobuf<services::Transaction> for AnyTransaction {
@@ -516,16 +624,7 @@ fn transaction_body_from_transaction(
         return services::TransactionBody::decode(&*tx.body_bytes).map_err(Error::from_protobuf);
     }
 
-    // do we even need these? Can Hedera execute these?
-    if !tx.body_bytes.is_empty() {
-        return services::TransactionBody::decode(&*tx.body_bytes).map_err(Error::from_protobuf);
-    }
-
-    if let Some(tx) = &tx.body {
-        return Ok(tx.clone());
-    }
-
-    Err(Error::from_protobuf("transaction had no body"))
+    Err(Error::from_protobuf("Transaction had no signed transaction bytes"))
 }
 
 impl FromProtobuf<services::TransactionBody> for AnyTransaction {
@@ -536,7 +635,7 @@ impl FromProtobuf<services::TransactionBody> for AnyTransaction {
         Ok(Transaction {
             body: TransactionBody {
                 data: AnyTransactionData::from_protobuf(pb_getf!(pb, data)?)?,
-                node_account_ids: todo!(),
+                node_account_ids: None,
                 transaction_valid_duration: pb.transaction_valid_duration.map(Into::into),
                 max_transaction_fee: Some(Hbar::from_tinybars(pb.transaction_fee as i64)),
                 transaction_memo: pb.memo,

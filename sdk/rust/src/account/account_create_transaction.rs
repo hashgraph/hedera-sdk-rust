@@ -25,7 +25,10 @@ use time::Duration;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -349,7 +352,24 @@ impl From<AccountCreateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransactionData {
     fn from_protobuf(pb: services::CryptoCreateTransactionBody) -> crate::Result<Self> {
-        todo!()
+        let evm_address = (!pb.evm_address.is_empty())
+            .then(|| pb.evm_address.as_slice().try_into())
+            .transpose()
+            .map_err(Error::basic_parse)?;
+
+        Ok(Self {
+            key: Option::from_protobuf(pb.key)?,
+            initial_balance: Hbar::from_tinybars(pb.initial_balance as i64),
+            receiver_signature_required: pb.receiver_sig_required,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            account_memo: pb.memo,
+            max_automatic_token_associations: pb.max_automatic_token_associations as u16,
+            alias: PublicKey::from_alias_bytes(&pb.alias)?,
+            evm_address,
+            staked_id: Option::from_protobuf(pb.staked_id)?,
+            decline_staking_reward: pb.decline_reward,
+        })
     }
 }
 

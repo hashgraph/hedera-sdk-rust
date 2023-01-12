@@ -24,7 +24,10 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -125,8 +128,8 @@ impl From<FileAppendTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::FileAppendTransactionBody> for FileAppendTransactionData {
     fn from_protobuf(pb: services::FileAppendTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        Ok(Self { file_id: Option::from_protobuf(pb.file_id)?, contents: Some(pb.contents) })
+    }
 }
 
 #[cfg(test)]

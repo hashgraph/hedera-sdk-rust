@@ -220,11 +220,15 @@ impl From<FileCreateTransactionData> for AnyTransactionData {
 }
 
 impl FromProtobuf<services::FileCreateTransactionBody> for FileCreateTransactionData {
-    fn from_protobuf(pb: services::FileCreateTransactionBody) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        todo!()
+    fn from_protobuf(pb: services::FileCreateTransactionBody) -> crate::Result<Self> {
+        Ok(Self {
+            file_memo: pb.memo,
+            keys: Option::from_protobuf(pb.keys)?,
+            contents: Some(pb.contents),
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            expiration_time: pb.expiration_time.map(Into::into),
+        })
     }
 }
 

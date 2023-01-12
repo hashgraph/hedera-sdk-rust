@@ -24,7 +24,10 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -183,8 +186,13 @@ impl From<TokenWipeTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenWipeAccountTransactionBody> for TokenWipeTransactionData {
     fn from_protobuf(pb: services::TokenWipeAccountTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account)?,
+            token_id: Option::from_protobuf(pb.token)?,
+            amount: Some(pb.amount),
+            serials: pb.serial_numbers.into_iter().map(|it| it as u64).collect(),
+        })
+    }
 }
 
 #[cfg(test)]

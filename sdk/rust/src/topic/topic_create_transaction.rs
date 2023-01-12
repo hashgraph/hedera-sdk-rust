@@ -207,7 +207,13 @@ impl From<TopicCreateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::ConsensusCreateTopicTransactionBody> for TopicCreateTransactionData {
     fn from_protobuf(pb: services::ConsensusCreateTopicTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            topic_memo: pb.memo,
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            submit_key: Option::from_protobuf(pb.submit_key)?,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+        })
     }
 }
 

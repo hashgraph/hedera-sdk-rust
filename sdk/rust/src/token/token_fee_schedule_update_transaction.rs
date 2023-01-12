@@ -136,7 +136,10 @@ impl FromProtobuf<services::TokenFeeScheduleUpdateTransactionBody>
     for TokenFeeScheduleUpdateTransactionData
 {
     fn from_protobuf(pb: services::TokenFeeScheduleUpdateTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            token_id: Option::from_protobuf(pb.token_id)?,
+            custom_fees: Vec::from_protobuf(pb.custom_fees)?,
+        })
     }
 }
 

@@ -154,6 +154,11 @@ impl From<FreezeTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::FreezeTransactionBody> for FreezeTransactionData {
     fn from_protobuf(pb: services::FreezeTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            start_time: pb.start_time.map(Into::into),
+            file_id: Option::from_protobuf(pb.update_file)?,
+            file_hash: Some(pb.file_hash),
+            freeze_type: FreezeType::from(pb.freeze_type),
+        })
     }
 }

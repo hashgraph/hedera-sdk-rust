@@ -53,6 +53,7 @@ use crate::{
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
 #[derive(Debug, Clone, Default)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TransferTransactionData {
@@ -61,6 +62,7 @@ pub struct TransferTransactionData {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct Transfer {
@@ -74,6 +76,7 @@ struct Transfer {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct TokenTransfer {
@@ -90,6 +93,7 @@ struct TokenTransfer {
 }
 
 #[derive(Debug, Clone)]
+#[cfg_attr(test, derive(Eq, PartialEq))]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct NftTransfer {
@@ -269,6 +273,16 @@ impl TransactionExecute for TransferTransactionData {
     }
 }
 
+impl FromProtobuf<services::AccountAmount> for Transfer {
+    fn from_protobuf(pb: services::AccountAmount) -> crate::Result<Self> {
+        Ok(Self {
+            amount: pb.amount,
+            account_id: AccountId::from_protobuf(pb_getf!(pb, account_id)?)?,
+            is_approval: pb.is_approval,
+        })
+    }
+}
+
 impl ToProtobuf for Transfer {
     type Protobuf = services::AccountAmount;
 
@@ -278,6 +292,17 @@ impl ToProtobuf for Transfer {
             account_id: Some(self.account_id.to_protobuf()),
             is_approval: self.is_approval,
         }
+    }
+}
+
+impl FromProtobuf<services::TokenTransferList> for TokenTransfer {
+    fn from_protobuf(pb: services::TokenTransferList) -> crate::Result<Self> {
+        Ok(Self {
+            token_id: TokenId::from_protobuf(pb_getf!(pb, token)?)?,
+            transfers: Vec::from_protobuf(pb.transfers)?,
+            nft_transfers: Vec::from_protobuf(pb.nft_transfers)?,
+            expected_decimals: pb.expected_decimals,
+        })
     }
 }
 
@@ -294,6 +319,17 @@ impl ToProtobuf for TokenTransfer {
             nft_transfers,
             expected_decimals: self.expected_decimals,
         }
+    }
+}
+
+impl FromProtobuf<services::NftTransfer> for NftTransfer {
+    fn from_protobuf(pb: services::NftTransfer) -> crate::Result<Self> {
+        Ok(Self {
+            sender_account_id: AccountId::from_protobuf(pb_getf!(pb, sender_account_id)?)?,
+            receiver_account_id: AccountId::from_protobuf(pb_getf!(pb, receiver_account_id)?)?,
+            serial: pb.serial_number as u64,
+            is_approval: pb.is_approval,
+        })
     }
 }
 
@@ -339,8 +375,11 @@ impl From<TransferTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::CryptoTransferTransactionBody> for TransferTransactionData {
     fn from_protobuf(pb: services::CryptoTransferTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        let transfers = pb.transfers.map(|it| it.account_amounts);
+        let transfers = Option::from_protobuf(transfers)?.unwrap_or_default();
+
+        Ok(Self { transfers, token_transfers: Vec::from_protobuf(pb.token_transfers)? })
+    }
 }
 
 // hack(sr): these tests currently don't compile due to `payer_account_id`

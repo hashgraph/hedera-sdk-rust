@@ -24,7 +24,10 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::{ToProtobuf, FromProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -130,8 +133,11 @@ impl From<TokenGrantKycTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenGrantKycTransactionBody> for TokenGrantKycTransactionData {
     fn from_protobuf(pb: services::TokenGrantKycTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account)?,
+            token_id: Option::from_protobuf(pb.token)?,
+        })
+    }
 }
 
 #[cfg(test)]

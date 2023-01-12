@@ -162,7 +162,11 @@ impl From<TokenMintTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenMintTransactionBody> for TokenMintTransactionData {
     fn from_protobuf(pb: services::TokenMintTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            token_id: Option::from_protobuf(pb.token)?,
+            amount: pb.amount,
+            metadata: pb.metadata,
+        })
     }
 }
 

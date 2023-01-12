@@ -267,10 +267,26 @@ impl From<AccountAllowanceApproveTransactionData> for AnyTransactionData {
     }
 }
 
-impl FromProtobuf<services::CryptoApproveAllowanceTransactionBody> for AccountAllowanceApproveTransactionData {
+impl FromProtobuf<services::CryptoApproveAllowanceTransactionBody>
+    for AccountAllowanceApproveTransactionData
+{
     fn from_protobuf(pb: services::CryptoApproveAllowanceTransactionBody) -> crate::Result<Self> {
-        todo!()
-    }    
+        Ok(Self {
+            hbar_allowances: Vec::from_protobuf(pb.crypto_allowances)?,
+            token_allowances: Vec::from_protobuf(pb.token_allowances)?,
+            nft_allowances: Vec::from_protobuf(pb.nft_allowances)?,
+        })
+    }
+}
+
+impl FromProtobuf<services::CryptoAllowance> for HbarAllowance {
+    fn from_protobuf(pb: services::CryptoAllowance) -> crate::Result<Self> {
+        Ok(Self {
+            owner_account_id: AccountId::from_protobuf(pb_getf!(pb, owner)?)?,
+            spender_account_id: AccountId::from_protobuf(pb_getf!(pb, spender)?)?,
+            amount: Hbar::from_tinybars(pb.amount),
+        })
+    }
 }
 
 impl ToProtobuf for HbarAllowance {
@@ -285,6 +301,17 @@ impl ToProtobuf for HbarAllowance {
     }
 }
 
+impl FromProtobuf<services::TokenAllowance> for TokenAllowance {
+    fn from_protobuf(pb: services::TokenAllowance) -> crate::Result<Self> {
+        Ok(Self {
+            token_id: TokenId::from_protobuf(pb_getf!(pb, token_id)?)?,
+            owner_account_id: AccountId::from_protobuf(pb_getf!(pb, owner)?)?,
+            spender_account_id: AccountId::from_protobuf(pb_getf!(pb, spender)?)?,
+            amount: pb.amount as u64,
+        })
+    }
+}
+
 impl ToProtobuf for TokenAllowance {
     type Protobuf = services::TokenAllowance;
 
@@ -295,6 +322,19 @@ impl ToProtobuf for TokenAllowance {
             spender: Some(self.spender_account_id.to_protobuf()),
             amount: self.amount as i64,
         }
+    }
+}
+
+impl FromProtobuf<services::NftAllowance> for NftAllowance {
+    fn from_protobuf(pb: services::NftAllowance) -> crate::Result<Self> {
+        Ok(Self {
+            token_id: TokenId::from_protobuf(pb_getf!(pb, token_id)?)?,
+            owner_account_id: AccountId::from_protobuf(pb_getf!(pb, owner)?)?,
+            spender_account_id: AccountId::from_protobuf(pb_getf!(pb, spender)?)?,
+            serials: pb.serial_numbers,
+            approved_for_all: pb.approved_for_all,
+            delegating_spender_account_id: Option::from_protobuf(pb.delegating_spender)?,
+        })
     }
 }
 

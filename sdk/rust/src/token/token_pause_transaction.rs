@@ -112,7 +112,7 @@ impl From<TokenPauseTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenPauseTransactionBody> for TokenPauseTransactionData {
     fn from_protobuf(pb: services::TokenPauseTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self { token_id: Option::from_protobuf(pb.token)? })
     }
 }
 

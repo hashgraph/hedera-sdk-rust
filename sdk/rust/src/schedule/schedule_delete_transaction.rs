@@ -105,6 +105,6 @@ impl From<ScheduleDeleteTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::ScheduleDeleteTransactionBody> for ScheduleDeleteTransactionData {
     fn from_protobuf(pb: services::ScheduleDeleteTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self { schedule_id: Option::from_protobuf(pb.schedule_id)? })
     }
 }

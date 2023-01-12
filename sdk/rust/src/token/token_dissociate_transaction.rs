@@ -141,7 +141,10 @@ impl From<TokenDissociateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenDissociateTransactionBody> for TokenDissociateTransactionData {
     fn from_protobuf(pb: services::TokenDissociateTransactionBody) -> crate::Result<Self> {
-        todo!()
+        Ok(Self {
+            account_id: Option::from_protobuf(pb.account)?,
+            token_ids: Vec::from_protobuf(pb.tokens)?,
+        })
     }
 }
 
