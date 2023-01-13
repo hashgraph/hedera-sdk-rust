@@ -55,6 +55,30 @@ public final class TokenUpdateTransaction: Transaction {
         self.tokenMemo = tokenMemo
         self.feeScheduleKey = feeScheduleKey
         self.pauseKey = pauseKey
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+        tokenName = try container.decodeIfPresent(.tokenName) ?? ""
+        tokenSymbol = try container.decodeIfPresent(.tokenSymbol) ?? ""
+        treasuryAccountId = try container.decodeIfPresent(.treasuryAccountId)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        kycKey = try container.decodeIfPresent(.kycKey)
+        freezeKey = try container.decodeIfPresent(.freezeKey)
+        wipeKey = try container.decodeIfPresent(.wipeKey)
+        supplyKey = try container.decodeIfPresent(.supplyKey)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        tokenMemo = try container.decodeIfPresent(.tokenMemo) ?? ""
+        feeScheduleKey = try container.decodeIfPresent(.feeScheduleKey)
+        pauseKey = try container.decodeIfPresent(.pauseKey)
+
+        try super.init(from: decoder)
     }
 
     /// The token to be updated.

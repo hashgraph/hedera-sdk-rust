@@ -23,7 +23,18 @@ import Foundation
 /// Append the given contents to the end of the specified file.
 public final class FileAppendTransaction: Transaction {
     /// Create a new `FileAppendTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        fileId = try container.decodeIfPresent(.fileId)
+        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
+
+        try super.init(from: decoder)
+    }
 
     /// The file to which the bytes will be appended.
     public var fileId: FileId? {

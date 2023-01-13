@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use assert_matches::assert_matches;
+use hex_literal::hex;
 use time::OffsetDateTime;
 
 use crate::transaction::AnyTransactionData;
@@ -80,9 +81,8 @@ fn from_bytes_sign_to_bytes() -> crate::Result<()> {
         .to_bytes()?;
 
     let mut tx2 = AnyTransaction::from_bytes(&bytes)?;
-    dbg!(PrivateKey::generate_ed25519());
 
-    tx2.sign(PrivateKey::generate_ed25519());
+    tx2.sign(PrivateKey::from_bytes(&hex!("302e020100300506032b657004220420e40d4241d093b22910c78135e0501b137cd9205bbb9c0153c5adf2c65e7dc95a")).unwrap());
 
     let _bytes2 = tx2.to_bytes()?;
 

@@ -207,7 +207,7 @@ impl Client {
     /// Send a ping to all nodes.
     pub async fn ping_all(&self) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().iter().map(|it| self.ping(dbg!(*it))),
+            self.network().node_ids().iter().map(|it| self.ping(*it)),
         )
         .await?;
 

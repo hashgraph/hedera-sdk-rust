@@ -294,7 +294,7 @@ where
 
 // Called when a transaction has `sources`
 // but also from FFI.
-pub(super) async fn execute2<D: TransactionExecute>(
+pub(crate) async fn execute2<D: TransactionExecute>(
     client: &Client,
     transaction: &Transaction<D>,
     sources: &TransactionSources,
@@ -360,7 +360,7 @@ pub(super) async fn execute2<D: TransactionExecute>(
             node_account_ids.push(AccountId::from_protobuf(node_account_id).unwrap());
         }
 
-        dbg!(node_account_ids, hashes)
+        (node_account_ids, hashes)
     };
 
     let timeout: Option<std::time::Duration> = timeout.into();

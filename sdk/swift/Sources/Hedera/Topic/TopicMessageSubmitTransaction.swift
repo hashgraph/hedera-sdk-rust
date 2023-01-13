@@ -31,8 +31,38 @@ import Foundation
 /// `topicRunningHash`.
 ///
 public final class TopicMessageSubmitTransaction: Transaction {
+    internal init(
+        topicId: TopicId? = nil,
+        message: Data = Data(),
+        initialTransactionId: TransactionId? = nil,
+        chunkTotal: Int = 1,
+        chunkNumber: Int = 1
+    ) {
+        self.topicId = topicId
+        self.message = message
+        self.initialTransactionId = initialTransactionId
+        self.chunkTotal = chunkTotal
+        self.chunkNumber = chunkNumber
+
+        super.init()
+    }
+
     /// Create a new `TopicMessageSubmitTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        topicId = try container.decodeIfPresent(.topicId)
+        message = try container.decodeIfPresent(.message).map(Data.base64Encoded) ?? Data()
+        initialTransactionId = try container.decodeIfPresent(.initialTransactionId)
+        chunkTotal = try container.decodeIfPresent(.chunkTotal) ?? 1
+        chunkNumber = try container.decodeIfPresent(.chunkNumber) ?? 1
+
+        try super.init(from: decoder)
+    }
 
     /// The topic ID to submit this message to.
     public var topicId: TopicId? {

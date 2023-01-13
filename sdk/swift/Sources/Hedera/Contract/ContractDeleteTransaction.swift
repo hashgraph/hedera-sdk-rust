@@ -26,6 +26,18 @@ public final class ContractDeleteTransaction: Transaction {
         contractId: ContractId? = nil
     ) {
         self.contractId = contractId
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        contractId = try container.decodeIfPresent(.contractId)
+        transferAccountId = try container.decodeIfPresent(.transferAccountId)
+        transferContractId = try container.decodeIfPresent(.transferContractId)
+
+        try super.init(from: decoder)
     }
 
     /// The contract to be deleted.

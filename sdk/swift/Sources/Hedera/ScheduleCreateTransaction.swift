@@ -44,6 +44,21 @@ public final class ScheduleCreateTransaction: Transaction {
         self.scheduledTransaction = scheduledTransaction
         self.adminKey = adminKey
         self.scheduleMemo = scheduleMemo
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        isWaitForExpiry = try container.decodeIfPresent(.isWaitForExpiry) ?? false
+        payerAccountId = try container.decodeIfPresent(.payerAccountId)
+        scheduledTransaction = try container.decodeIfPresent(.scheduledTransaction)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        scheduleMemo = try container.decodeIfPresent(.scheduleMemo) ?? ""
+
+        try super.init(from: decoder)
     }
 
     /// The timestamp for when the transaction should be evaluated for execution and then expire.

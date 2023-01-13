@@ -51,6 +51,28 @@ public final class ContractCreateTransaction: Transaction {
         self.stakedAccountId = stakedAccountId
         self.stakedNodeId = stakedNodeId
         self.declineStakingReward = declineStakingReward
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        bytecode = try container.decodeIfPresent(.bytecode).map(Data.base64Encoded)
+        bytecodeFileId = try container.decodeIfPresent(.bytecodeFileId)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        gas = try container.decodeIfPresent(.gas) ?? 0
+        initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        constructorParameters = try container.decodeIfPresent(.constructorParameters).map(Data.base64Encoded)
+        contractMemo = try container.decodeIfPresent(.contractMemo) ?? ""
+        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
+        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
+        declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
+
+        try super.init(from: decoder)
     }
 
     /// The bytes of the smart contract.

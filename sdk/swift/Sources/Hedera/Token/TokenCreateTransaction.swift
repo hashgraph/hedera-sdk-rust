@@ -67,6 +67,36 @@ public final class TokenCreateTransaction: Transaction {
         self.feeScheduleKey = feeScheduleKey
         self.customFees = customFees
         self.pauseKey = pauseKey
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        name = try container.decodeIfPresent(.name) ?? ""
+        symbol = try container.decodeIfPresent(.symbol) ?? ""
+        decimals = try container.decodeIfPresent(.decimals) ?? 0
+        initialSupply = try container.decodeIfPresent(.initialSupply) ?? 0
+        treasuryAccountId = try container.decodeIfPresent(.treasuryAccountId)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        kycKey = try container.decodeIfPresent(.kycKey)
+        freezeKey = try container.decodeIfPresent(.freezeKey)
+        wipeKey = try container.decodeIfPresent(.wipeKey)
+        supplyKey = try container.decodeIfPresent(.supplyKey)
+        freezeDefault = try container.decodeIfPresent(.freezeDefault) ?? false
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        tokenMemo = try container.decodeIfPresent(.tokenMemo) ?? ""
+        tokenType = try container.decodeIfPresent(.tokenType) ?? .fungibleCommon
+        tokenSupplyType = try container.decodeIfPresent(.tokenSupplyType) ?? .infinite
+        maxSupply = try container.decodeIfPresent(.maxSupply) ?? 0
+        feeScheduleKey = try container.decodeIfPresent(.feeScheduleKey)
+        customFees = try container.decodeIfPresent(.customFees) ?? []
+        pauseKey = try container.decodeIfPresent(.pauseKey)
+
+        try super.init(from: decoder)
     }
 
     /// The publicly visible name of the token.

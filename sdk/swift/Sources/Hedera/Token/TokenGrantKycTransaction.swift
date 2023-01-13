@@ -27,6 +27,17 @@ public final class TokenGrantKycTransaction: Transaction {
     ) {
         self.accountId = accountId
         self.tokenId = tokenId
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        accountId = try container.decodeIfPresent(.accountId)
+        tokenId = try container.decodeIfPresent(.tokenId)
+
+        try super.init(from: decoder)
     }
 
     /// The account to be granted KYC.
@@ -67,8 +78,8 @@ public final class TokenGrantKycTransaction: Transaction {
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encode(accountId, forKey: .accountId)
-        try container.encode(tokenId, forKey: .tokenId)
+        try container.encodeIfPresent(accountId, forKey: .accountId)
+        try container.encodeIfPresent(tokenId, forKey: .tokenId)
 
         try super.encode(to: encoder)
     }

@@ -47,6 +47,26 @@ public final class ContractUpdateTransaction: Transaction {
         self.stakedAccountId = stakedAccountId
         self.stakedNodeId = stakedNodeId
         self.declineStakingReward = declineStakingReward
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        contractId = try container.decodeIfPresent(.contractId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        contractMemo = try container.decodeIfPresent(.contractMemo)
+        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
+        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
+        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
+        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
+
+        try super.init(from: decoder)
     }
 
     /// The contract to be updated.
@@ -270,6 +290,7 @@ public final class ContractUpdateTransaction: Transaction {
         case stakedAccountId
         case stakedNodeId
         case declineStakingReward
+        case proxyAccountId
     }
 
     public override func encode(to encoder: Encoder) throws {

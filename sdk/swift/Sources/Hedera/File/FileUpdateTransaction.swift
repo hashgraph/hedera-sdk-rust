@@ -26,8 +26,44 @@ import Foundation
 /// corresponding file attribute will be unchanged.
 ///
 public final class FileUpdateTransaction: Transaction {
+    internal init(
+        fileId: FileId? = nil,
+        fileMemo: String = "",
+        keys: KeyList? = nil,
+        contents: Data = Data(),
+        autoRenewPeriod: Duration? = nil,
+        autoRenewAccountId: AccountId? = nil,
+        expirationTime: Timestamp? = nil
+    ) {
+        self.fileId = fileId
+        self.fileMemo = fileMemo
+        self.keys = keys
+        self.contents = contents
+        self.autoRenewPeriod = autoRenewPeriod
+        self.autoRenewAccountId = autoRenewAccountId
+        self.expirationTime = expirationTime
+
+        super.init()
+    }
+
     /// Create a new `FileUpdateTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        fileId = try container.decodeIfPresent(.fileId)
+        fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
+        keys = try container.decodeIfPresent(.keys)
+        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+
+        try super.init(from: decoder)
+    }
 
     /// The file ID which is being updated in this transaction.
     public var fileId: FileId? {
@@ -147,6 +183,7 @@ public final class FileUpdateTransaction: Transaction {
         case keys
         case contents
         case expirationTime
+        case autoRenewPeriod
         case autoRenewAccountId
     }
 
@@ -158,6 +195,7 @@ public final class FileUpdateTransaction: Transaction {
         try container.encodeIfPresent(keys, forKey: .keys)
         try container.encode(contents.base64EncodedString(), forKey: .contents)
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
+        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
 
         try super.encode(to: encoder)
