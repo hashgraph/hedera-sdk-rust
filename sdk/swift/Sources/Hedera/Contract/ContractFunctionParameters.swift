@@ -160,8 +160,6 @@ public final class ContractFunctionParameters {
 
     @discardableResult
     private func add(_ arg: Argument) -> Self {
-        print(arg)
-        fflush(stdout)
         self.args.append(arg)
 
         return self

@@ -25,6 +25,15 @@ public final class ScheduleDeleteTransaction: Transaction {
         scheduleId: ScheduleId? = nil
     ) {
         self.scheduleId = scheduleId
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        scheduleId = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleId)
+
+        try super.init(from: decoder)
     }
 
     /// The schedule to delete.

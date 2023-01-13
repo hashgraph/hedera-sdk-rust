@@ -38,6 +38,11 @@ internal func withUnmanagedThrowingContinuation<T>(_ fun: (UnsafeRawPointer) -> 
     }
 }
 
+/// Suspends the current task, then calls the given closure with an unmanaged continuation for the current task.
+internal func withUnmanagedThrowingContinuation<T>(_ ty: T.Type, _ fun: (UnsafeRawPointer) -> Void) async throws -> T {
+    try await withUnmanagedThrowingContinuation(fun)
+}
+
 /// Resumes the current task.
 /// Must be called with a pointer that was returned in the callback from ``withUnmanagedContinuation``.
 internal func resumeUnmanagedContinuation(_ ptr: UnsafeRawPointer!) {

@@ -29,6 +29,16 @@ public final class FileDeleteTransaction: Transaction {
         fileId: FileId? = nil
     ) {
         self.fileId = fileId
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        fileId = try container.decodeIfPresent(.fileId)
+
+        try super.init(from: decoder)
     }
 
     /// The file to delete. It will be marked as deleted until it expires.

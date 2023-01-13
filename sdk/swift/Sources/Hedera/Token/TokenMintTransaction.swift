@@ -31,6 +31,18 @@ public final class TokenMintTransaction: Transaction {
         self.tokenId = tokenId
         self.amount = amount
         self.metadata = metadata
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+        amount = try container.decodeIfPresent(.amount) ?? 0
+        metadata = try container.decodeIfPresent(.metadata) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// The token for which to mint tokens.

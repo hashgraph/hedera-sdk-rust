@@ -27,6 +27,41 @@ import Foundation
 public final class TopicUpdateTransaction: Transaction {
     /// Create a new `TopicUpdateTransaction` ready for configuration.
     public override init() {
+        super.init()
+    }
+
+    public init(
+        topicId: TopicId? = nil,
+        expirationTime: Timestamp? = nil,
+        topicMemo: String = "",
+        adminKey: Key? = nil,
+        submitKey: Key? = nil,
+        autoRenewPeriod: Duration? = nil,
+        autoRenewAccountId: AccountId? = nil
+    ) {
+        self.topicId = topicId
+        self.expirationTime = expirationTime
+        self.topicMemo = topicMemo
+        self.adminKey = adminKey
+        self.submitKey = submitKey
+        self.autoRenewPeriod = autoRenewPeriod
+        self.autoRenewAccountId = autoRenewAccountId
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        topicId = try container.decodeIfPresent(.topicId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        topicMemo = try container.decodeIfPresent(.topicMemo) ?? ""
+        adminKey = try container.decodeIfPresent(.adminKey)
+        submitKey = try container.decodeIfPresent(.submitKey)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+
+        try super.init(from: decoder)
     }
 
     /// The topic ID which is being updated in this transaction.

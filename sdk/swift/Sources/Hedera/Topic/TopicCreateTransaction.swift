@@ -27,10 +27,39 @@ import Foundation
 /// If an `adminKey` is specified, the adminKey must sign the transaction.
 ///
 /// On success, the resulting `TransactionReceipt` contains the newly created `TopicId`.
-///
 public final class TopicCreateTransaction: Transaction {
+    internal init(
+        topicMemo: String = "",
+        adminKey: Key? = nil,
+        submitKey: Key? = nil,
+        autoRenewPeriod: Duration? = nil,
+        autoRenewAccountId: AccountId? = nil
+    ) {
+        self.topicMemo = topicMemo
+        self.adminKey = adminKey
+        self.submitKey = submitKey
+        self.autoRenewPeriod = autoRenewPeriod
+        self.autoRenewAccountId = autoRenewAccountId
+
+        super.init()
+    }
+
     /// Create a new `TopicCreateTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        topicMemo = try container.decodeIfPresent(.topicMemo) ?? ""
+        adminKey = try container.decodeIfPresent(.adminKey)
+        submitKey = try container.decodeIfPresent(.submitKey)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+
+        try super.init(from: decoder)
+    }
 
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
     public var topicMemo: String = "" {

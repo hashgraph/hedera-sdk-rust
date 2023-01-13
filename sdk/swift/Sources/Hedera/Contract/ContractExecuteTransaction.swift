@@ -42,6 +42,19 @@ public final class ContractExecuteTransaction: Transaction {
         self.gas = gas
         self.payableAmount = payableAmount
         self.functionParameters = functionParameters
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        contractId = try container.decodeIfPresent(.contractId)
+        gas = try container.decodeIfPresent(.gas) ?? 0
+        payableAmount = try container.decodeIfPresent(.payableAmount) ?? 0
+        functionParameters = try container.decodeIfPresent(.functionParameters).map(Data.base64Encoded)
+
+        try super.init(from: decoder)
     }
 
     /// The contract instance to call.

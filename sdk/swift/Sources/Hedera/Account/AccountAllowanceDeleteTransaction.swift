@@ -32,6 +32,15 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
 
     /// Create a new `AccountAllowanceDeleteTransaction`.
     public override init() {
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// Remove all nft token allowances.

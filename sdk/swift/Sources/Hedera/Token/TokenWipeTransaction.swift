@@ -29,6 +29,18 @@ public final class TokenWipeTransaction: Transaction {
         self.tokenId = tokenId
         self.amount = amount
         self.serials = serials
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+        amount = try container.decodeIfPresent(.amount) ?? 0
+        serials = try container.decodeIfPresent(.serials) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// The token for which to wipe tokens.

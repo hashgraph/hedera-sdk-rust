@@ -27,7 +27,17 @@ import Foundation
 ///
 public final class AccountDeleteTransaction: Transaction {
     /// Create a new `AccountDeleteTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        transferAccountId = try container.decodeIfPresent(AccountId.self, forKey: .transferAccountId)
+        accountId = try container.decodeIfPresent(AccountId.self, forKey: .accountId)
+        try super.init(from: decoder)
+    }
 
     /// The account ID which will receive all remaining hbars.
     public var transferAccountId: AccountId? {

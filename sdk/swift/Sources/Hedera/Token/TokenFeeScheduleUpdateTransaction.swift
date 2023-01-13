@@ -27,6 +27,17 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     ) {
         self.tokenId = tokenId
         self.customFees = customFees
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+        customFees = try container.decodeIfPresent(.customFees) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// The token whose fee schedule is to be updated.

@@ -25,6 +25,16 @@ public final class TokenUnpauseTransaction: Transaction {
         tokenId: TokenId? = nil
     ) {
         self.tokenId = tokenId
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+
+        try super.init(from: decoder)
     }
 
     /// The token to be paused.

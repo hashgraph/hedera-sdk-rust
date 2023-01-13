@@ -46,6 +46,24 @@ public final class AccountCreateTransaction: Transaction {
         self.stakedAccountId = stakedAccountId
         self.stakedNodeId = stakedNodeId
         self.declineStakingReward = declineStakingReward
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        key = try container.decodeIfPresent(.key)
+        initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
+        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired) ?? false
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        accountMemo = try container.decodeIfPresent(.accountMemo) ?? ""
+        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
+        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
+        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
+        declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
+
+        try super.init(from: decoder)
     }
 
     /// The key that must sign each transfer out of the account.
@@ -236,6 +254,7 @@ public final class AccountCreateTransaction: Transaction {
     private enum CodingKeys: String, CodingKey {
         case key
         case initialBalance
+        case receiverSignatureRequired
         case accountMemo
         case autoRenewPeriod
         case maxAutomaticTokenAssociations

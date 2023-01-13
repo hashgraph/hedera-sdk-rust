@@ -57,11 +57,14 @@ pub use any::AnyTransaction;
 #[cfg(feature = "ffi")]
 pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
+#[cfg(feature = "ffi")]
+pub(crate) use execute::execute2;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
+#[derive(Clone)]
 pub struct TransactionSources(pub(crate) Box<[services::Transaction]>);
 
 /// A transaction that can be executed on the Hedera network.
@@ -175,6 +178,11 @@ where
 
     pub(crate) fn is_frozen(&self) -> bool {
         self.body.is_frozen
+    }
+
+    #[cfg(feature = "ffi")]
+    pub(crate) fn sources(&self) -> Option<&TransactionSources> {
+        self.sources.as_ref()
     }
 
     /// # Panics
@@ -497,16 +505,12 @@ impl AnyTransaction {
     /// # fn main() -> hedera::Result<()> {
     /// use hedera::AnyTransaction;
     /// let bytes = hex::decode(concat!(
-    ///     "1acc010a640a2046fe5013b6f6fc796c3e65ec10d2a10d03c07188fc3de13d46",
-    ///     "caad6b8ec4dfb81a4045f1186be5746c9783f68cb71d6a71becd3ffb024906b8",
-    ///     "55ac1fa3a2601273d41b58446e5d6a0aaf421c229885f9e70417353fab2ce6e9",
-    ///     "d8e7b162e9944e19020a640a20f102e75ff7dc3d72c9b7075bb246fcc54e714c",
-    ///     "59714814011e8f4b922d2a6f0a1a40f2e5f061349ab03fa21075020c75cf876d",
-    ///     "80498ae4bac767f35941b8e3c393b0e0a886ede328e44c1df7028ea1474722f2",
-    ///     "dcd493812d04db339480909076a10122500a180a0c08a1cc98830610c092d09e",
-    ///     "0312080800100018e4881d120608001000180418b293072202087872240a220a",
-    ///     "0f0a080800100018e4881d10ff83af5f0a0f0a080800100018eb881d108084af",
-    ///     "5f",
+    ///     "0a522a500a4c0a120a0c0885c8879e0610a8bdd9840312021865120218061880",
+    ///     "94ebdc0322020877320c686920686173686772617068721a0a180a0a0a021802",
+    ///     "108088debe010a0a0a02186510ff87debe0112000a522a500a4c0a120a0c0885",
+    ///     "c8879e0610a8bdd984031202186512021807188094ebdc0322020877320c6869",
+    ///     "20686173686772617068721a0a180a0a0a021802108088debe010a0a0a021865",
+    ///     "10ff87debe011200"
     /// )).unwrap();
     /// let tx = AnyTransaction::from_bytes(&bytes)?;
     /// # let _ = tx;

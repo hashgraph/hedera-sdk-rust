@@ -28,8 +28,59 @@ import Foundation
 /// signed by both the old key (from before the change) and the new key.
 ///
 public final class AccountUpdateTransaction: Transaction {
+    internal init(
+        accountId: AccountId? = nil,
+        key: Key? = nil,
+        receiverSignatureRequired: Bool? = nil,
+        autoRenewPeriod: Duration? = nil,
+        autoRenewAccountId: AccountId? = nil,
+        proxyAccountId: AccountId? = nil,
+        expirationTime: Timestamp? = nil,
+        accountMemo: String? = nil,
+        maxAutomaticTokenAssociations: UInt32? = nil,
+        stakedAccountId: AccountId? = nil,
+        stakedNodeId: UInt64? = nil,
+        declineStakingReward: Bool? = nil
+    ) {
+        self.accountId = accountId
+        self.key = key
+        self.receiverSignatureRequired = receiverSignatureRequired
+        self.autoRenewPeriod = autoRenewPeriod
+        self.autoRenewAccountId = autoRenewAccountId
+        proxyAccountIdInner = proxyAccountId
+        self.expirationTime = expirationTime
+        self.accountMemo = accountMemo
+        self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = declineStakingReward
+
+        super.init()
+    }
+
     /// Create a new `AccountCreateTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        accountId = try container.decodeIfPresent(.accountId)
+        key = try container.decodeIfPresent(.key)
+        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        proxyAccountIdInner = try container.decodeIfPresent(.proxyAccountId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        accountMemo = try container.decodeIfPresent(.accountMemo)
+        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
+        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
+        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
+        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
+
+        try super.init(from: decoder)
+    }
 
     /// The account ID which is being updated in this transaction.
     public var accountId: AccountId? {
@@ -108,6 +159,13 @@ public final class AccountUpdateTransaction: Transaction {
         return self
     }
 
+    // this is the official recommendation for deprecation while not getting warnings internally.
+    private var proxyAccountIdInner: AccountId? {
+        willSet(_it) {
+            ensureNotFrozen()
+        }
+    }
+
     /// The ID of the account to which this account is proxy staked.
     ///
     /// If `proxy_account_id` is `None`, or is an invalid account, or is an account
@@ -119,9 +177,8 @@ public final class AccountUpdateTransaction: Transaction {
     /// will behave as if `proxy_account_id` was `None`.
     @available(*, deprecated)
     public var proxyAccountId: AccountId? {
-        willSet(_it) {
-            ensureNotFrozen()
-        }
+        get { proxyAccountIdInner }
+        set(it) { proxyAccountIdInner = it }
     }
 
     ///  Set the proxy account ID for this account
@@ -237,6 +294,8 @@ public final class AccountUpdateTransaction: Transaction {
         case stakedNodeId
         case declineStakingReward
         case autoRenewAccountId
+        case receiverSignatureRequired
+        case proxyAccountId
     }
 
     public override func encode(to encoder: Encoder) throws {
@@ -259,6 +318,7 @@ public final class AccountUpdateTransaction: Transaction {
         try accountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
+        try proxyAccountIdInner?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
 }

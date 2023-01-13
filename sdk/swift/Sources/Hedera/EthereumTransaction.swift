@@ -30,6 +30,18 @@ public final class EthereumTransaction: Transaction {
         self.ethereumData = ethereumData
         self.callDataFileId = callDataFileId
         self.maxGasAllowanceHbar = maxGasAllowanceHbar
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        ethereumData = try container.decodeIfPresent(.ethereumData).map(Data.base64Encoded)
+        callDataFileId = try container.decodeIfPresent(.callDataFileId)
+        maxGasAllowanceHbar = try container.decodeIfPresent(.maxGasAllowanceHbar) ?? 0
+
+        try super.init(from: decoder)
     }
 
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).

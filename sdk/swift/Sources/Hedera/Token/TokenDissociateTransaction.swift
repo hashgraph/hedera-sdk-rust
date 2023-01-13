@@ -30,6 +30,17 @@ public final class TokenDissociateTransaction: Transaction {
     ) {
         self.accountId = accountId
         self.tokenIds = tokenIds
+
+        super.init()
+    }
+
+    required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        accountId = try container.decodeIfPresent(.accountId)
+        tokenIds = try container.decodeIfPresent(.tokenIds) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// The account to be dissociated with the provided tokens.
