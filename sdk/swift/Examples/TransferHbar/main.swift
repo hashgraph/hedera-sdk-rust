@@ -52,4 +52,8 @@ extension Environment {
     internal var operatorKey: PrivateKey {
         PrivateKey(self["OPERATOR_KEY"]!.stringValue)!
     }
+
+    public var networkName: String {
+        self["HEDERA_NETWORK"]?.stringValue ?? "testnet"
+    }
 }

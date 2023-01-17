@@ -19,16 +19,24 @@
  */
 
 import Hedera
+import SwiftDotenv
 
 @main
 public enum Program {
     public static func main() async throws {
-        let client = Client.forTestnet()
+        let env = try Dotenv.load()
+        let client = try Client.forName(env.networkName)
 
         let balance = try await AccountBalanceQuery()
             .accountId("0.0.1001")
             .execute(client)
 
         print("balance = \(balance.hbars)")
+    }
+}
+
+extension Environment {
+    public var networkName: String {
+        self["HEDERA_NETWORK"]?.stringValue ?? "testnet"
     }
 }

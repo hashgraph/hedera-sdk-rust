@@ -20,17 +20,26 @@
 
 import Foundation
 import Hedera
+import SwiftDotenv
 
 @main
 public enum Program {
     public static func main() async throws {
-        print("Getting address book for testnet")
+        let env = try Dotenv.load()
+        let client = try Client.forName(env.networkName)
 
-        let client = Client.forTestnet()
+        print("Getting address book for \(env.networkName)")
 
-        let results = try await NodeAddressBookQuery().setFileId(FileId.addressBook)
+        let results = try await NodeAddressBookQuery()
+            .setFileId(FileId.addressBook)
             .execute(client)
 
         print(results)
+    }
+}
+
+extension Environment {
+    public var networkName: String {
+        self["HEDERA_NETWORK"]?.stringValue ?? "testnet"
     }
 }
