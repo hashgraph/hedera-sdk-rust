@@ -34,9 +34,9 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
     }
 
     // note(sr): these have the same abi lol, no "unsafe" here.
-    internal init(fromCHedera ts: HederaTimestamp) {
-        seconds = ts.secs
-        subSecondNanos = ts.nanos
+    internal init(fromCHedera timestamp: HederaTimestamp) {
+        seconds = timestamp.secs
+        subSecondNanos = timestamp.nanos
     }
 
     // todo: what do on overflow?

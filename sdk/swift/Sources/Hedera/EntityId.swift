@@ -47,6 +47,8 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         self.data = str
     }
 
+    // swift doesn't have any other way to do "fixed length array"
+    // swiftlint:disable:next large_tuple
     internal init(bytes: (UInt8, UInt8, UInt8, UInt8, UInt8)) {
         // swiftlint:disable:next identifier_name
         let (a, b, c, d, e) = bytes
@@ -59,6 +61,8 @@ public struct Checksum: LosslessStringConvertible, Hashable {
     }
 
     internal static func generate<E: EntityId>(for entity: E, on ledgerId: LedgerId) -> Self {
+        // todo: fix these
+        // swiftlint:disable identifier_name
         // 3 digits in base 26
         let p3 = 26 * 26 * 26
         // 5 digits in base 26
@@ -127,6 +131,8 @@ public struct Checksum: LosslessStringConvertible, Hashable {
 
         // thanks swift, for not having fixed length arrays
         return Checksum(bytes: (output[0], output[1], output[2], output[3], output[4]))
+
+        // swiftlint:endable identifier_name
     }
 }
 

@@ -18,6 +18,9 @@
  * ‍
  */
 
+// can't get around the file length?
+// swiftlint:disable file_length
+
 import Foundation
 import NumberKit
 
@@ -145,6 +148,8 @@ private struct Argument {
     fileprivate static func address<S: StringProtocol>(_ value: S) -> Self {
         return Self(
             typeName: "address",
+            // we intentionally want to fatal error if this happens.
+            // swiftlint:disable:next force_try
             value: leftPad32Bytes(try! decodeAddress(from: value).data, negative: false),
             dynamic: false
         )
@@ -1246,6 +1251,8 @@ public final class ContractFunctionParameters {
         return add(
             Argument(
                 typeName: "function",
+                // we intentionally want to fatal error if this happens.
+                // swiftlint:disable:next force_try
                 value: rightPad32Bytes(try! decodeAddress(from: address).data + selector),
                 dynamic: false
             )
