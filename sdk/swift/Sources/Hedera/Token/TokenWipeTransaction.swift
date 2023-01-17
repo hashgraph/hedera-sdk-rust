@@ -33,7 +33,7 @@ public final class TokenWipeTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         tokenId = try container.decodeIfPresent(.tokenId)
@@ -45,7 +45,7 @@ public final class TokenWipeTransaction: Transaction {
 
     /// The token for which to wipe tokens.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -60,7 +60,7 @@ public final class TokenWipeTransaction: Transaction {
 
     /// The account to be wiped.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -75,7 +75,7 @@ public final class TokenWipeTransaction: Transaction {
 
     /// The amount of a fungible token to wipe from the specified account.
     public var amount: UInt64 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -90,7 +90,7 @@ public final class TokenWipeTransaction: Transaction {
 
     /// The serial numbers of a non-fungible token to wipe from the specified account.
     public var serials: [UInt64] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

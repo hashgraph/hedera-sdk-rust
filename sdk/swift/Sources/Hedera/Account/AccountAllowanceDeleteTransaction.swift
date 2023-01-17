@@ -25,7 +25,7 @@
 ///
 public final class AccountAllowanceDeleteTransaction: Transaction {
     public private(set) var nftAllowances: [NftRemoveAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -35,7 +35,7 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         self.nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []

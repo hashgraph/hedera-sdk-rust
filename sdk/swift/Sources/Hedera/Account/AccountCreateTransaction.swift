@@ -68,7 +68,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The key that must sign each transfer out of the account.
     public var key: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -83,7 +83,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The initial number of Hbar to put into the account.
     public var initialBalance: Hbar {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -98,7 +98,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// If true, this account's key must sign any transaction depositing into this account.
     public var receiverSignatureRequired: Bool {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -113,7 +113,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The period until the account will be charged to extend its expiration date.
     public var autoRenewPeriod: Duration? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -128,8 +128,8 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
-    public var autoRenewAccountId: AccountId? = nil {
-        willSet(_it) {
+    public var autoRenewAccountId: AccountId? {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -145,7 +145,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The memo associated with the account.
     public var accountMemo: String {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -160,7 +160,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     public var maxAutomaticTokenAssociations: UInt32 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -175,7 +175,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// A key to be used as the account's alias.
     public var alias: PublicKey? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -190,7 +190,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// A 20-byte EVM address to be used as the account's evm address.
     public var evmAddress: EvmAddress? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -205,7 +205,7 @@ public final class AccountCreateTransaction: Transaction {
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
     public var stakedAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -222,7 +222,7 @@ public final class AccountCreateTransaction: Transaction {
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
     public var stakedNodeId: UInt64? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -238,7 +238,7 @@ public final class AccountCreateTransaction: Transaction {
 
     /// If true, the account declines receiving a staking reward. The default value is false.
     public var declineStakingReward: Bool {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

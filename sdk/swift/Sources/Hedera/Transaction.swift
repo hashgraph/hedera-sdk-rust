@@ -55,21 +55,21 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     private var `operator`: Operator?
 
     private var nodeAccountIds: [AccountId]? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "nodeAccountIds")
         }
     }
 
     /// Explicit transaction ID for this transaction.
-    public var transactionId: TransactionId? = nil {
-        willSet(_it) {
+    public var transactionId: TransactionId? {
+        willSet {
             ensureNotFrozen(fieldName: "transactionId")
         }
     }
 
     /// The maximum allowed transaction fee for this transaction.
-    public var maxTransactionFee: Hbar? = nil {
-        willSet(_it) {
+    public var maxTransactionFee: Hbar? {
+        willSet {
             ensureNotFrozen(fieldName: "maxTransactionFee")
         }
     }
@@ -158,14 +158,13 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         }
 
         // start an unmanaged continuation to bridge a C callback with Swift async
-        let responseBytes: Data = try await withUnmanagedThrowingContinuation(Data.self) {
-            (continuation: UnsafeRawPointer) -> Void in
+        let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
+            let signers = makeHederaSignersFromArray(signers: signers)
             // invoke `hedera_execute`, callback will be invoked on request completion
             let err = hedera_transaction_execute(
-                client.ptr, request, continuation, makeHederaSignersFromArray(signers: signers), timeout != nil,
+                client.ptr, request, continuation, signers, timeout != nil,
                 timeout ?? 0.0, sources?.ptr
-            ) {
-                continuation, err, responsePtr in
+            ) { continuation, err, responsePtr in
                 if let err = HError(err) {
                     // an error has occurred, consume from the TLS storage for the error
                     // and throw it up back to the async task
@@ -268,7 +267,9 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 }
 
-internal enum AnyTransaction: Decodable {
+// big type
+// swiftlint:disable:next type_body_length
+internal enum AnyTransaction {
     case accountCreate(AccountCreateTransaction)
     case accountUpdate(AccountUpdateTransaction)
     case accountDelete(AccountDeleteTransaction)
@@ -310,136 +311,212 @@ internal enum AnyTransaction: Decodable {
     case scheduleDelete(ScheduleDeleteTransaction)
     case ethereum(EthereumTransaction)
 
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
     internal init(upcasting transaction: Transaction) {
         if let transaction = transaction as? AccountCreateTransaction {
             self = .accountCreate(transaction)
+            return
         }
+
         if let transaction = transaction as? AccountUpdateTransaction {
             self = .accountUpdate(transaction)
+            return
         }
+
         if let transaction = transaction as? AccountDeleteTransaction {
             self = .accountDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? AccountAllowanceApproveTransaction {
             self = .accountAllowanceApprove(transaction)
+            return
         }
+
         if let transaction = transaction as? AccountAllowanceDeleteTransaction {
             self = .accountAllowanceDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? ContractCreateTransaction {
             self = .contractCreate(transaction)
+            return
         }
+
         if let transaction = transaction as? ContractUpdateTransaction {
             self = .contractUpdate(transaction)
+            return
         }
+
         if let transaction = transaction as? ContractDeleteTransaction {
             self = .contractDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? ContractExecuteTransaction {
             self = .contractExecute(transaction)
+            return
         }
+
         if let transaction = transaction as? TransferTransaction {
             self = .transfer(transaction)
+            return
         }
+
         if let transaction = transaction as? TopicCreateTransaction {
             self = .topicCreate(transaction)
+            return
         }
+
         if let transaction = transaction as? TopicUpdateTransaction {
             self = .topicUpdate(transaction)
+            return
         }
+
         if let transaction = transaction as? TopicDeleteTransaction {
             self = .topicDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? TopicMessageSubmitTransaction {
             self = .topicMessageSubmit(transaction)
+            return
         }
+
         if let transaction = transaction as? FileAppendTransaction {
             self = .fileAppend(transaction)
+            return
         }
+
         if let transaction = transaction as? FileCreateTransaction {
             self = .fileCreate(transaction)
+            return
         }
+
         if let transaction = transaction as? FileUpdateTransaction {
             self = .fileUpdate(transaction)
+            return
         }
+
         if let transaction = transaction as? FileDeleteTransaction {
             self = .fileDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenAssociateTransaction {
             self = .tokenAssociate(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenBurnTransaction {
             self = .tokenBurn(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenCreateTransaction {
             self = .tokenCreate(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenDeleteTransaction {
             self = .tokenDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenDissociateTransaction {
             self = .tokenDissociate(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenFeeScheduleUpdateTransaction {
             self = .tokenFeeScheduleUpdate(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenFreezeTransaction {
             self = .tokenFreeze(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenGrantKycTransaction {
             self = .tokenGrantKyc(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenMintTransaction {
             self = .tokenMint(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenPauseTransaction {
             self = .tokenPause(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenRevokeKycTransaction {
             self = .tokenRevokeKyc(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenUnfreezeTransaction {
             self = .tokenUnfreeze(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenUnpauseTransaction {
             self = .tokenUnpause(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenUpdateTransaction {
             self = .tokenUpdate(transaction)
+            return
         }
+
         if let transaction = transaction as? TokenWipeTransaction {
             self = .tokenWipe(transaction)
+            return
         }
+
         if let transaction = transaction as? SystemDeleteTransaction {
             self = .systemDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? SystemUndeleteTransaction {
             self = .systemUndelete(transaction)
+            return
         }
+
         if let transaction = transaction as? FreezeTransaction {
             self = .freeze(transaction)
+            return
         }
+
         if let transaction = transaction as? ScheduleCreateTransaction {
             self = .scheduleCreate(transaction)
+            return
         }
+
         if let transaction = transaction as? ScheduleSignTransaction {
             self = .scheduleSign(transaction)
+            return
         }
+
         if let transaction = transaction as? ScheduleDeleteTransaction {
             self = .scheduleDelete(transaction)
+            return
         }
+
         if let transaction = transaction as? EthereumTransaction {
             self = .ethereum(transaction)
+            return
         }
 
         fatalError("Unrecognized transaction type")
     }
 
-    enum CodingKeys: String, CodingKey {
-        case type = "$type"
-    }
-
-    enum Kind: String, Codable {
+    internal enum Kind: String, Codable {
         case accountCreate
         case accountUpdate
         case accountDelete
@@ -482,7 +559,99 @@ internal enum AnyTransaction: Decodable {
         case ethereum
     }
 
-    init(from decoder: Decoder) throws {
+    fileprivate var transaction: Transaction {
+        switch self {
+        case .accountCreate(let transaction):
+            return transaction
+        case .accountUpdate(let transaction):
+            return transaction
+        case .accountDelete(let transaction):
+            return transaction
+        case .accountAllowanceApprove(let transaction):
+            return transaction
+        case .accountAllowanceDelete(let transaction):
+            return transaction
+        case .contractCreate(let transaction):
+            return transaction
+        case .contractUpdate(let transaction):
+            return transaction
+        case .contractDelete(let transaction):
+            return transaction
+        case .contractExecute(let transaction):
+            return transaction
+        case .transfer(let transaction):
+            return transaction
+        case .topicCreate(let transaction):
+            return transaction
+        case .topicUpdate(let transaction):
+            return transaction
+        case .topicDelete(let transaction):
+            return transaction
+        case .topicMessageSubmit(let transaction):
+            return transaction
+        case .fileAppend(let transaction):
+            return transaction
+        case .fileCreate(let transaction):
+            return transaction
+        case .fileUpdate(let transaction):
+            return transaction
+        case .fileDelete(let transaction):
+            return transaction
+        case .tokenAssociate(let transaction):
+            return transaction
+        case .tokenBurn(let transaction):
+            return transaction
+        case .tokenCreate(let transaction):
+            return transaction
+        case .tokenDelete(let transaction):
+            return transaction
+        case .tokenDissociate(let transaction):
+            return transaction
+        case .tokenFeeScheduleUpdate(let transaction):
+            return transaction
+        case .tokenFreeze(let transaction):
+            return transaction
+        case .tokenGrantKyc(let transaction):
+            return transaction
+        case .tokenMint(let transaction):
+            return transaction
+        case .tokenPause(let transaction):
+            return transaction
+        case .tokenRevokeKyc(let transaction):
+            return transaction
+        case .tokenUnfreeze(let transaction):
+            return transaction
+        case .tokenUnpause(let transaction):
+            return transaction
+        case .tokenUpdate(let transaction):
+            return transaction
+        case .tokenWipe(let transaction):
+            return transaction
+        case .systemDelete(let transaction):
+            return transaction
+        case .systemUndelete(let transaction):
+            return transaction
+        case .freeze(let transaction):
+            return transaction
+        case .scheduleCreate(let transaction):
+            return transaction
+        case .scheduleSign(let transaction):
+            return transaction
+        case .scheduleDelete(let transaction):
+            return transaction
+        case .ethereum(let transaction):
+            return transaction
+        }
+    }
+}
+
+extension AnyTransaction: Decodable {
+    internal enum CodingKeys: String, CodingKey {
+        case type = "$type"
+    }
+
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         let kind = try container.decode(Kind.self, forKey: .type)
@@ -568,91 +737,6 @@ internal enum AnyTransaction: Decodable {
             self = .scheduleDelete(try ScheduleDeleteTransaction(from: decoder))
         case .ethereum:
             self = .ethereum(try EthereumTransaction(from: decoder))
-        }
-    }
-
-    fileprivate var transaction: Transaction {
-        switch self {
-        case .accountCreate(let transaction):
-            return transaction
-        case .accountUpdate(let transaction):
-            return transaction
-        case .accountDelete(let transaction):
-            return transaction
-        case .accountAllowanceApprove(let transaction):
-            return transaction
-        case .accountAllowanceDelete(let transaction):
-            return transaction
-        case .contractCreate(let transaction):
-            return transaction
-        case .contractUpdate(let transaction):
-            return transaction
-        case .contractDelete(let transaction):
-            return transaction
-        case .contractExecute(let transaction):
-            return transaction
-        case .transfer(let transaction):
-            return transaction
-        case .topicCreate(let transaction):
-            return transaction
-        case .topicUpdate(let transaction):
-            return transaction
-        case .topicDelete(let transaction):
-            return transaction
-        case .topicMessageSubmit(let transaction):
-            return transaction
-        case .fileAppend(let transaction):
-            return transaction
-        case .fileCreate(let transaction):
-            return transaction
-        case .fileUpdate(let transaction):
-            return transaction
-        case .fileDelete(let transaction):
-            return transaction
-        case .tokenAssociate(let transaction):
-            return transaction
-        case .tokenBurn(let transaction):
-            return transaction
-        case .tokenCreate(let transaction):
-            return transaction
-        case .tokenDelete(let transaction):
-            return transaction
-        case .tokenDissociate(let transaction):
-            return transaction
-        case .tokenFeeScheduleUpdate(let transaction):
-            return transaction
-        case .tokenFreeze(let transaction):
-            return transaction
-        case .tokenGrantKyc(let transaction):
-            return transaction
-        case .tokenMint(let transaction):
-            return transaction
-        case .tokenPause(let transaction):
-            return transaction
-        case .tokenRevokeKyc(let transaction):
-            return transaction
-        case .tokenUnfreeze(let transaction):
-            return transaction
-        case .tokenUnpause(let transaction):
-            return transaction
-        case .tokenUpdate(let transaction):
-            return transaction
-        case .tokenWipe(let transaction):
-            return transaction
-        case .systemDelete(let transaction):
-            return transaction
-        case .systemUndelete(let transaction):
-            return transaction
-        case .freeze(let transaction):
-            return transaction
-        case .scheduleCreate(let transaction):
-            return transaction
-        case .scheduleSign(let transaction):
-            return transaction
-        case .scheduleDelete(let transaction):
-            return transaction
-        case .ethereum(let transaction):
-            return transaction
         }
     }
 }

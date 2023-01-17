@@ -51,7 +51,7 @@ public final class FileUpdateTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         fileId = try container.decodeIfPresent(.fileId)
@@ -67,7 +67,7 @@ public final class FileUpdateTransaction: Transaction {
 
     /// The file ID which is being updated in this transaction.
     public var fileId: FileId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -82,7 +82,7 @@ public final class FileUpdateTransaction: Transaction {
 
     /// The memo associated with the file.
     public var fileMemo: String = "" {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -99,7 +99,7 @@ public final class FileUpdateTransaction: Transaction {
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
     public var keys: KeyList? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -119,7 +119,7 @@ public final class FileUpdateTransaction: Transaction {
 
     /// The bytes that are to be the contents of the file.
     public var contents: Data = Data() {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -134,7 +134,7 @@ public final class FileUpdateTransaction: Transaction {
 
     /// The auto renew period for this file.
     public var autoRenewPeriod: Duration? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -149,7 +149,7 @@ public final class FileUpdateTransaction: Transaction {
     /// The account to be used at the files's expiration time to extend the
     /// life of the file.
     public var autoRenewAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -164,7 +164,7 @@ public final class FileUpdateTransaction: Transaction {
 
     /// The time at which this file should expire.
     public var expirationTime: Timestamp? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

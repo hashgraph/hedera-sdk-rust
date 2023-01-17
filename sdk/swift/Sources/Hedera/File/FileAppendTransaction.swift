@@ -27,7 +27,7 @@ public final class FileAppendTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         fileId = try container.decodeIfPresent(.fileId)
@@ -38,7 +38,7 @@ public final class FileAppendTransaction: Transaction {
 
     /// The file to which the bytes will be appended.
     public var fileId: FileId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -53,7 +53,7 @@ public final class FileAppendTransaction: Transaction {
 
     /// The bytes that will be appended to the end of the specified file.
     public var contents: Data = Data() {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

@@ -63,7 +63,7 @@ public final class AccountUpdateTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         accountId = try container.decodeIfPresent(.accountId)
@@ -84,7 +84,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The account ID which is being updated in this transaction.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -99,7 +99,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The new key.
     public var key: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -114,7 +114,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// If true, this account's key must sign any transaction depositing into this account.
     public var receiverSignatureRequired: Bool? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -129,7 +129,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The period until the account will be charged to extend its expiration date.
     public var autoRenewPeriod: Duration? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -144,8 +144,8 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
-    public var autoRenewAccountId: AccountId? = nil {
-        willSet(_it) {
+    public var autoRenewAccountId: AccountId? {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -161,7 +161,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     // this is the official recommendation for deprecation while not getting warnings internally.
     private var proxyAccountIdInner: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -178,7 +178,7 @@ public final class AccountUpdateTransaction: Transaction {
     @available(*, deprecated)
     public var proxyAccountId: AccountId? {
         get { proxyAccountIdInner }
-        set(it) { proxyAccountIdInner = it }
+        set(value) { proxyAccountIdInner = value }
     }
 
     ///  Set the proxy account ID for this account
@@ -191,7 +191,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     public var expirationTime: Timestamp? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -206,7 +206,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The memo associated with the account.
     public var accountMemo: String? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -221,7 +221,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The maximum number of tokens that an Account can be implicitly associated with.
     public var maxAutomaticTokenAssociations: UInt32? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -237,7 +237,7 @@ public final class AccountUpdateTransaction: Transaction {
     /// ID of the account to which this account is staking.
     /// This is mutually exclusive with `stakedNodeId`.
     public var stakedAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -254,7 +254,7 @@ public final class AccountUpdateTransaction: Transaction {
     /// ID of the node this account is staked to.
     /// This is mutually exclusive with `staked_account_id`.
     public var stakedNodeId: UInt64? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -270,7 +270,7 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// If true, the account declines receiving a staking reward. The default value is false.
     public var declineStakingReward: Bool? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

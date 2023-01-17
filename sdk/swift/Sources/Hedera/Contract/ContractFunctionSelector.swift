@@ -21,8 +21,8 @@
 import CHedera
 import Foundation
 
-/// Builder for Solidity function selectors.
 // note: this is a class in order to enable the builder pattern.
+/// Builder for Solidity function selectors.
 public final class ContractFunctionSelector {
     private var state: ContractFunctionSelectorState
 
@@ -53,7 +53,7 @@ public final class ContractFunctionSelector {
             hasher.update(solidityTypeName.data(using: .utf8)!)
             needsComma = true
             self.state = .building(hasher: hasher, needsComma: needsComma)
-        case .finished(_):
+        case .finished:
             fatalError("Cannot add `\(solidityTypeName)` to finished `ContractFunctionSelector`")
         }
 
@@ -79,7 +79,7 @@ public final class ContractFunctionSelector {
     /// If ``finish`` has been called, this will return the selector created, otherwise, this will return `nil`.
     public var output: Data? {
         switch state {
-        case .building(_, _):
+        case .building:
             return nil
         case .finished(let data):
             return data

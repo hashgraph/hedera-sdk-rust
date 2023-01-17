@@ -45,7 +45,8 @@ public final class FileCreateTransaction: Transaction {
     public override init() {
         super.init()
     }
-    required init(from decoder: Decoder) throws {
+
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
@@ -154,7 +155,7 @@ public final class FileCreateTransaction: Transaction {
         try super.encode(to: encoder)
     }
 
-    override func validateChecksums(on ledgerId: LedgerId) throws {
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
     }
 }

@@ -29,19 +29,19 @@
 ///
 public final class AccountAllowanceApproveTransaction: Transaction {
     private var hbarAllowances: [HbarAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "hbarAllowances")
         }
     }
 
     private var tokenAllowances: [TokenAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "tokenAllowances")
         }
     }
 
     private var nftAllowances: [TokenNftAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "nftAllowances")
         }
     }

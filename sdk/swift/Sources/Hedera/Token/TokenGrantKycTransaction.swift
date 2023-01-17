@@ -31,7 +31,7 @@ public final class TokenGrantKycTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         accountId = try container.decodeIfPresent(.accountId)
@@ -42,7 +42,7 @@ public final class TokenGrantKycTransaction: Transaction {
 
     /// The account to be granted KYC.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -57,7 +57,7 @@ public final class TokenGrantKycTransaction: Transaction {
 
     /// The token for which this account will be granted KYC.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
