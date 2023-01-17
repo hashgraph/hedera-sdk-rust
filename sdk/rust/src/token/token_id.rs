@@ -61,6 +61,12 @@ pub struct TokenId {
 }
 
 impl TokenId {
+    /// Create a `TokenId` from the given `shard`, `realm`, and `num`.
+    #[must_use]
+    pub fn new(shard: u64, realm: u64, num: u64) -> Self {
+        Self { shard, realm, num, checksum: None }
+    }
+
     /// Create a new `TokenId` from protobuf-encoded `bytes`.
     ///
     /// # Errors

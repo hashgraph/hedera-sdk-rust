@@ -32,14 +32,6 @@ use crate::{
     TokenId,
 };
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub struct TokenBalance {
-    pub decimals: u32,
-    pub balance: u64,
-}
-
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
@@ -116,15 +108,5 @@ impl FromProtobuf<services::response::Response> for AccountBalance {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
         Self::from_protobuf(response)
-    }
-}
-
-#[allow(deprecated)]
-impl FromProtobuf<services::TokenBalance> for TokenBalance {
-    fn from_protobuf(pb: services::TokenBalance) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        Ok(Self { decimals: pb.decimals, balance: pb.balance })
     }
 }
