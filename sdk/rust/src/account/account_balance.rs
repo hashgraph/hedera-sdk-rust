@@ -18,6 +18,8 @@
  * ‍
  */
 
+use std::collections::HashMap;
+
 use hedera_proto::services;
 use prost::Message;
 
@@ -27,7 +29,16 @@ use crate::{
     FromProtobuf,
     Hbar,
     Tinybar,
+    TokenId,
 };
+
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+pub struct TokenBalance {
+    pub decimals: u32,
+    pub balance: u64,
+}
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone)]
@@ -39,6 +50,16 @@ pub struct AccountBalance {
 
     /// Current balance of the referenced account.
     pub hbars: Hbar,
+
+    /// Token balances for the referenced account.
+    #[deprecated = "use a mirror query"]
+    #[allow(deprecated)]
+    pub tokens: HashMap<TokenId, u64>,
+
+    /// Token decimals for the referenced account.
+    #[deprecated = "use a mirror query"]
+    #[allow(deprecated)]
+    pub token_decimals: HashMap<TokenId, u32>,
 }
 
 impl AccountBalance {
@@ -66,6 +87,7 @@ impl AccountBalance {
 }
 
 impl FromProtobuf<services::CryptoGetAccountBalanceResponse> for AccountBalance {
+    #[allow(deprecated)]
     fn from_protobuf(pb: services::CryptoGetAccountBalanceResponse) -> crate::Result<Self>
     where
         Self: Sized,
@@ -75,7 +97,17 @@ impl FromProtobuf<services::CryptoGetAccountBalanceResponse> for AccountBalance 
 
         let balance = Hbar::from_tinybars(pb.balance as Tinybar);
 
-        Ok(Self { account_id, hbars: balance })
+        let mut tokens = HashMap::with_capacity(pb.token_balances.len());
+        let mut token_decimals = HashMap::with_capacity(pb.token_balances.len());
+
+        for token in pb.token_balances {
+            let token_id = TokenId::from_protobuf(pb_getf!(token, token_id)?)?;
+
+            tokens.insert(token_id, token.balance);
+            token_decimals.insert(token_id, token.decimals);
+        }
+
+        Ok(Self { account_id, hbars: balance, tokens, token_decimals })
     }
 }
 
@@ -84,5 +116,15 @@ impl FromProtobuf<services::response::Response> for AccountBalance {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
         Self::from_protobuf(response)
+    }
+}
+
+#[allow(deprecated)]
+impl FromProtobuf<services::TokenBalance> for TokenBalance {
+    fn from_protobuf(pb: services::TokenBalance) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(Self { decimals: pb.decimals, balance: pb.balance })
     }
 }
