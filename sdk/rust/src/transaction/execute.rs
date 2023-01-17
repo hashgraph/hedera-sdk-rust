@@ -56,7 +56,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-struct SignaturePair {
+pub(super) struct SignaturePair {
     signature: Vec<u8>,
     public: PublicKey,
 }
@@ -89,26 +89,6 @@ impl<D> Transaction<D>
 where
     D: TransactionExecute,
 {
-    pub(super) fn sign_all(&self, txs: &mut [services::SignedTransaction]) {
-        // todo: don't be `O(nmk)`, we can do `O(m(n+k))` if we know all transactions already have the same signers.
-        for tx in txs {
-            let sig_map = tx.sig_map.get_or_insert_with(services::SignatureMap::default);
-
-            for signer in &self.signers {
-                let pk = signer.public_key().to_bytes_raw();
-
-                if sig_map.sig_pair.iter().any(|it| pk.starts_with(&it.pub_key_prefix)) {
-                    continue;
-                }
-
-                // todo: reuse `pk_bytes` instead of re-serializing them.
-                let sig_pair = SignaturePair::from(signer.sign(&tx.body_bytes));
-
-                sig_map.sig_pair.push(sig_pair.into_protobuf());
-            }
-        }
-    }
-
     pub(crate) fn make_request_inner(
         &self,
         transaction_id: TransactionId,
@@ -303,49 +283,15 @@ pub(crate) async fn execute2<D: TransactionExecute>(
     use crate::Status;
 
     // fixme: be way more lazy.
-    let sources = if transaction.signers.is_empty() {
-        Cow::Borrowed(&sources.0)
-    } else {
-        // todo: it hurts to duplicate so much code, dedup this with the logic in `to_bytes`.
-
-        // todo: avoid the double-collect.
-        let mut signed_transactions: Vec<_> = sources
-            .0
-            .iter()
-            .map(|it| {
-                if it.signed_transaction_bytes.is_empty() {
-                    // sources can only be non-none if we were created from `from_bytes`.
-                    // from_bytes ensures that all `sources` have `signed_transaction_bytes`.
-                    unreachable!()
-                } else {
-                    // unreachable: sources can only be non-none if we were created from `from_bytes`.
-                    // from_bytes checks all transaction bodies for equality, which involves desrializing all `signed_transaction_bytes`.
-                    services::SignedTransaction::decode(it.signed_transaction_bytes.as_slice())
-                        .unwrap_or_else(|_| unreachable!())
-                }
-            })
-            .collect();
-
-        transaction.sign_all(&mut signed_transactions);
-
-        let transaction_list: Vec<_> = signed_transactions
-            .into_iter()
-            .map(|it| services::Transaction {
-                signed_transaction_bytes: it.encode_to_vec(),
-                ..Default::default()
-            })
-            .collect();
-
-        Cow::Owned(transaction_list.into_boxed_slice())
-    };
+    let sources = sources.sign_with(&transaction.signers);
 
     // note: the transaction's node indexes have to match the ones in sources, but we don't know what order they're in, so, we have to do it like this
     // fixme: should `from_bytes` error if a node index is duplicated?
     let (node_account_ids, hashes) = {
-        let mut node_account_ids = Vec::with_capacity(sources.len());
-        let mut hashes = Vec::with_capacity(sources.len());
+        let mut node_account_ids = Vec::with_capacity(sources.0.len());
+        let mut hashes = Vec::with_capacity(sources.0.len());
 
-        for source in &**sources {
+        for source in &*sources.0 {
             let tx =
                 services::SignedTransaction::decode(source.signed_transaction_bytes.as_slice())
                     .unwrap();
@@ -397,27 +343,27 @@ pub(crate) async fn execute2<D: TransactionExecute>(
 
             let (node_account_id, channel) = network.channel(node_index);
 
-            let response = match transaction.execute(channel, sources[request_index].clone()).await
-            {
-                Ok(response) => response.into_inner(),
-                Err(status) => {
-                    match status.code() {
-                        tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                            // NOTE: this is an "unhealthy" node
-                            network.mark_node_unhealthy(node_index);
+            let response =
+                match transaction.execute(channel, sources.0[request_index].clone()).await {
+                    Ok(response) => response.into_inner(),
+                    Err(status) => {
+                        match status.code() {
+                            tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
+                                // NOTE: this is an "unhealthy" node
+                                network.mark_node_unhealthy(node_index);
 
-                            // try the next node in our allowed list, immediately
-                            last_error = Some(status.into());
-                            continue;
-                        }
+                                // try the next node in our allowed list, immediately
+                                last_error = Some(status.into());
+                                continue;
+                            }
 
-                        _ => {
-                            // fail immediately
-                            return Err(status.into());
+                            _ => {
+                                // fail immediately
+                                return Err(status.into());
+                            }
                         }
                     }
-                }
-            };
+                };
 
             let pre_check_status = Transaction::<D>::response_pre_check_status(&response)?;
 
