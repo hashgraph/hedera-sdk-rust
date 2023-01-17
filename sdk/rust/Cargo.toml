@@ -15,7 +15,19 @@ bench = false
 crate-type = ["lib", "staticlib"]
 
 [features]
-ffi = ["anyhow", "cbindgen", "libc", "fraction/with-serde-support", "ed25519-dalek/serde", "hedera-proto/serde", "serde", "serde_with", "serde_json", "time/serde", "serde/derive"]
+ffi = [
+  "anyhow",
+  "cbindgen",
+  "libc",
+  "fraction/with-serde-support",
+  "ed25519-dalek/serde",
+  "hedera-proto/serde",
+  "serde",
+  "serde_with",
+  "serde_json",
+  "time/serde",
+  "serde/derive",
+]
 
 [dependencies]
 async-stream = "0.3.3"
@@ -40,7 +52,6 @@ once_cell = "1.10.0"
 parking_lot = "0.12.0"
 pbkdf2 = { version = "0.11.0", default-features = false }
 pem-rfc7468 = { version = "0.6.0", features = ["std"] }
-pkcs8 = "0.9.0"
 prost = "0.11.0"
 rand = "0.8.5"
 rust_decimal = "1.26.1"
@@ -55,6 +66,11 @@ tinystr = "0.7.0"
 # for ed25519-dalek
 rand_0_7 = { version = "0.7", package = "rand" }
 arc-swap = "1.6.0"
+
+[dependencies.pkcs8]
+version = "0.9.0"
+default_features = false
+features = ["encryption"]
 
 [dependencies.serde_json]
 version = "1.0.79"
