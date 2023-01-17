@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
     Debug,
@@ -66,6 +67,64 @@ const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 #[derive(Clone)]
 pub struct TransactionSources(pub(crate) Box<[services::Transaction]>);
+
+impl TransactionSources {
+    pub(crate) fn sign_all(txs: &mut [services::SignedTransaction], signers: &[AnySigner]) {
+        // todo: don't be `O(nmk)`, we can do `O(m(n+k))` if we know all transactions already have the same signers.
+        for tx in txs {
+            let sig_map = tx.sig_map.get_or_insert_with(services::SignatureMap::default);
+
+            for signer in signers {
+                let pk = signer.public_key().to_bytes_raw();
+
+                if sig_map.sig_pair.iter().any(|it| pk.starts_with(&it.pub_key_prefix)) {
+                    continue;
+                }
+
+                // todo: reuse `pk_bytes` instead of re-serializing them.
+                let sig_pair = execute::SignaturePair::from(signer.sign(&tx.body_bytes));
+
+                sig_map.sig_pair.push(sig_pair.into_protobuf());
+            }
+        }
+    }
+
+    pub(crate) fn sign_with(&self, signers: &[AnySigner]) -> Cow<'_, Self> {
+        if signers.is_empty() {
+            return Cow::Borrowed(self);
+        }
+
+        // todo: avoid the double-collect.
+        let mut signed_transactions: Vec<_> = self
+            .0
+            .iter()
+            .map(|it| {
+                if it.signed_transaction_bytes.is_empty() {
+                    // sources can only be non-none if we were created from `from_bytes`.
+                    // from_bytes ensures that all `sources` have `signed_transaction_bytes`.
+                    unreachable!()
+                } else {
+                    // unreachable: sources can only be non-none if we were created from `from_bytes`.
+                    // from_bytes checks all transaction bodies for equality, which involves desrializing all `signed_transaction_bytes`.
+                    services::SignedTransaction::decode(it.signed_transaction_bytes.as_slice())
+                        .unwrap_or_else(|_| unreachable!())
+                }
+            })
+            .collect();
+
+        Self::sign_all(&mut signed_transactions, signers);
+
+        let transaction_list = signed_transactions
+            .into_iter()
+            .map(|it| services::Transaction {
+                signed_transaction_bytes: it.encode_to_vec(),
+                ..Default::default()
+            })
+            .collect();
+
+        Cow::Owned(Self(transaction_list))
+    }
+}
 
 /// A transaction that can be executed on the Hedera network.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
@@ -393,41 +452,7 @@ where
         }
 
         if let Some(sources) = &self.sources {
-            // shortcut: we just re-serialize.
-            if self.signers.is_empty() {
-                return Ok(hedera_proto::sdk::TransactionList {
-                    transaction_list: sources.0.to_vec(),
-                }
-                .encode_to_vec());
-            }
-
-            // todo: avoid the double-collect.
-            let mut signed_transactions: Vec<_> = sources
-                .0
-                .iter()
-                .map(|it| {
-                    if it.signed_transaction_bytes.is_empty() {
-                        // sources can only be non-none if we were created from `from_bytes`.
-                        // from_bytes ensures that all `sources` have `signed_transaction_bytes`.
-                        unreachable!()
-                    } else {
-                        // unreachable: sources can only be non-none if we were created from `from_bytes`.
-                        // from_bytes checks all transaction bodies for equality, which involves desrializing all `signed_transaction_bytes`.
-                        services::SignedTransaction::decode(it.signed_transaction_bytes.as_slice())
-                            .unwrap_or_else(|_| unreachable!())
-                    }
-                })
-                .collect();
-
-            self.sign_all(&mut signed_transactions);
-
-            let transaction_list = signed_transactions
-                .into_iter()
-                .map(|it| services::Transaction {
-                    signed_transaction_bytes: it.encode_to_vec(),
-                    ..Default::default()
-                })
-                .collect();
+            let transaction_list = sources.sign_with(&self.signers).0.to_vec();
 
             return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
         }
