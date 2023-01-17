@@ -19,6 +19,14 @@
  */
 
 import Foundation
+import NumberKit
+
+private let slotSize: UInt = 32
+
+private func rangeFromSlot(slot: UInt, size: UInt) -> Range<Int> {
+    let start = slot * slotSize + (slotSize - size)
+    return Int(start)..<Int(start + size)
+}
 
 /// Result of invoking a contract via `ContractCallQuery`, `ContractExecuteTransaction`,
 /// or `ContractCreateTransaction`.
@@ -55,6 +63,137 @@ public struct ContractFunctionResult {
 
     /// The account that is the "sender." If not present it is the accountId from the transactionId.
     public let senderAccountId: AccountId?
+
+    internal init(
+        contractId: ContractId,
+        evmAddress: ContractId? = nil,
+        errorMessage: String? = nil,
+        bloom: Data,
+        gasUsed: UInt64,
+        gas: UInt64,
+        hbarAmount: Hbar,
+        contractFunctionParametersBytes: Data,
+        bytes: Data,
+        senderAccountId: AccountId? = nil,
+        logs: [ContractLogInfo] = []
+    ) {
+        self.contractId = contractId
+        self.evmAddress = evmAddress
+        self.errorMessage = errorMessage
+        self.bloom = bloom
+        self.gasUsed = gasUsed
+        self.gas = gas
+        self.hbarAmount = hbarAmount
+        self.contractFunctionParametersBytes = contractFunctionParametersBytes
+        self.bytes = bytes
+        self.senderAccountId = senderAccountId
+        self.logs = logs
+    }
+
+    private func getFixedBytesAt(slot: UInt, size: UInt) -> Data? {
+        return self.bytes[safe: rangeFromSlot(slot: slot, size: size)]
+    }
+
+    private func getAt<T: FixedWidthInteger>(slot: UInt) -> T? {
+        let size = UInt(MemoryLayout<T>.size)
+        let range = rangeFromSlot(slot: slot, size: size)
+
+        return bytes.safeSubdata(in: range).flatMap { T(bigEndianBytes: $0) }
+    }
+
+    public func asBytes() -> Data {
+        bytes
+    }
+
+    public func getUInt8(_ index: UInt) -> UInt8? {
+        getAt(slot: index)
+    }
+
+    public func getInt8(_ index: UInt) -> Int8? {
+        getAt(slot: index)
+    }
+
+    public func getBool(_ index: UInt) -> Bool? {
+        getUInt8(index).map { $0 != 0 }
+    }
+
+    public func getUInt32(_ index: UInt) -> UInt32? {
+        getAt(slot: index)
+    }
+
+    private func getUIntAt(slot: UInt) -> UInt? {
+        getUInt32(slot).map(UInt.init)
+    }
+
+    private func getUInt32At(offset: UInt) -> UInt32? {
+        let size = UInt(MemoryLayout<UInt32>.size)
+        let offset = offset + 28
+        let range = Int(offset)..<Int(offset + size)
+
+        return bytes.safeSubdata(in: range).map { UInt32(bigEndianBytes: $0)! }
+    }
+
+    private func getUIntAt(offset: UInt) -> UInt? {
+        getUInt32At(offset: offset).map(UInt.init)
+    }
+
+    public func getInt32(_ index: UInt) -> Int32? {
+        self.getAt(slot: index)
+    }
+
+    public func getUInt64(_ index: UInt) -> UInt64? {
+        self.getAt(slot: index)
+    }
+
+    public func getInt64(_ index: UInt) -> Int64? {
+        self.getAt(slot: index)
+    }
+
+    public func getBytes32(_ index: UInt) -> Data? {
+        self.getFixedBytesAt(slot: index, size: 32)
+    }
+
+    public func getAddress(_ index: UInt) -> String? {
+        self.getFixedBytesAt(slot: index, size: 20)?.hexStringEncoded()
+    }
+
+    public func getBytes(_ index: UInt) -> Data? {
+        guard let offset = getUIntAt(slot: index) else { return nil }
+        guard let len = getUIntAt(offset: offset) else { return nil }
+
+        return bytes.safeSubdata(in: Int(offset + slotSize)..<Int(offset + len + slotSize))
+    }
+
+    public func getString(_ index: UInt) -> String? {
+        getBytes(index).map { String(decoding: $0, as: UTF8.self) }
+    }
+
+    public func getStringArray(_ index: UInt) -> [String]? {
+        guard let offset = getUIntAt(slot: index) else { return nil }
+        guard let count = getUIntAt(offset: offset) else { return nil }
+
+        var array: [String] = []
+
+        for i in 0..<count {
+            guard let strOffset = getUIntAt(offset: offset + slotSize + (i * slotSize)) else { return nil }
+            guard let len = getUIntAt(offset: offset + strOffset + slotSize) else { return nil }
+            let range = Int(offset + strOffset + slotSize * 2)..<Int(offset + strOffset + slotSize * 2 + len)
+
+            guard let bytes = bytes.safeSubdata(in: range) else { return nil }
+
+            array.append(String(decoding: bytes, as: UTF8.self))
+        }
+
+        return array
+    }
+
+    public func getInt256(_ index: UInt) -> BigInt? {
+        self.getBytes32(index).map { BigInt(signedBEBytes: $0) }
+    }
+
+    public func getUInt256(_ index: UInt) -> BigInt? {
+        self.getBytes32(index).map { BigInt(unsignedBEBytes: $0) }
+    }
 }
 
 extension ContractFunctionResult: Codable {
@@ -105,18 +244,3 @@ extension ContractFunctionResult: Codable {
         try container.encodeIfPresent(senderAccountId, forKey: .senderAccountId)
     }
 }
-
-// TODO: func getString(_ index: UInt) -> String
-// TODO: func getStringArray(_ index: UInt) -> [String]
-// TODO: func getBytes(_ index: UInt) -> Data
-// TODO: func getBytes32(_ index: UInt) -> Data
-// TODO: func getBool(_ index: UInt) -> Bool
-// TODO: func getInt8(_ index: UInt) -> Int8
-// TODO: func getInt32(_ index: UInt) -> Int32
-// TODO: func getInt64(_ index: UInt) -> Int64
-// TODO: func getInt256(_ index: UInt) -> BigInt
-// TODO: func getUInt8(_ index: UInt) -> UInt8
-// TODO: func getUInt32(_ index: UInt) -> UInt32
-// TODO: func getUInt64(_ index: UInt) -> UInt64
-// TODO: func getUInt256(_ index: UInt) -> BigUInt
-// TODO: func getAddress(_ index: UInt) -> String
