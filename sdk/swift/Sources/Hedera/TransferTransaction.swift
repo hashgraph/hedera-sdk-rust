@@ -63,13 +63,13 @@ public final class TransferTransaction: Transaction {
     }
 
     private var transfers: [TransferTransaction.Transfer] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "transfers")
         }
     }
 
     private var tokenTransfers: [TransferTransaction.TokenTransfer] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "tokenTransfers")
         }
     }

@@ -33,7 +33,7 @@ public final class SystemUndeleteTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         fileId = try container.decodeIfPresent(.fileId)

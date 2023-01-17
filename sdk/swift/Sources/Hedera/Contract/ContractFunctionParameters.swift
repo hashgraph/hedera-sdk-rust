@@ -26,11 +26,11 @@ private struct Argument {
     fileprivate let value: Data
     fileprivate let dynamic: Bool
 
-    fileprivate static func typeName<I: FixedWidthInteger & UnsignedInteger>(for ty: I.Type, _ bits: Int) -> String {
+    fileprivate static func typeName<I: FixedWidthInteger & UnsignedInteger>(for: I.Type, _ bits: Int) -> String {
         "uint\(bits)"
     }
 
-    fileprivate static func typeName<I: FixedWidthInteger & SignedInteger>(for ty: I.Type, _ bits: Int) -> String {
+    fileprivate static func typeName<I: FixedWidthInteger & SignedInteger>(for: I.Type, _ bits: Int) -> String {
         "int\(bits)"
     }
 

@@ -48,7 +48,7 @@ public final class ScheduleCreateTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         expirationTime = try container.decodeIfPresent(.expirationTime)

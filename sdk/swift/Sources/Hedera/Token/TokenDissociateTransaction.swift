@@ -34,7 +34,7 @@ public final class TokenDissociateTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         accountId = try container.decodeIfPresent(.accountId)
@@ -45,7 +45,7 @@ public final class TokenDissociateTransaction: Transaction {
 
     /// The account to be dissociated with the provided tokens.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -60,7 +60,7 @@ public final class TokenDissociateTransaction: Transaction {
 
     /// The tokens to be dissociated with the provided account.
     public var tokenIds: [TokenId] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

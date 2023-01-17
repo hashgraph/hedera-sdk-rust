@@ -43,7 +43,7 @@ public final class TopicDeleteTransaction: Transaction {
 
     /// The topic ID which is being deleted in this transaction.
     public var topicId: TopicId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

@@ -46,7 +46,7 @@ public final class ContractExecuteTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         contractId = try container.decodeIfPresent(.contractId)
@@ -59,7 +59,7 @@ public final class ContractExecuteTransaction: Transaction {
 
     /// The contract instance to call.
     public var contractId: ContractId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -74,7 +74,7 @@ public final class ContractExecuteTransaction: Transaction {
 
     /// The maximum amount of gas to use for the call.
     public var gas: UInt64 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -89,7 +89,7 @@ public final class ContractExecuteTransaction: Transaction {
 
     /// The number of hbars sent with this function call.
     public var payableAmount: Hbar {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -104,7 +104,7 @@ public final class ContractExecuteTransaction: Transaction {
 
     /// The raw bytes of the function parameters.
     public var functionParameters: Data? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

@@ -29,7 +29,7 @@ public final class TokenDeleteTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         tokenId = try container.decodeIfPresent(.tokenId)
@@ -39,7 +39,7 @@ public final class TokenDeleteTransaction: Transaction {
 
     /// The token to be deleted.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

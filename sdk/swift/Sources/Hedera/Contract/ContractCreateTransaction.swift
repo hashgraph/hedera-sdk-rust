@@ -77,7 +77,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The bytes of the smart contract.
     public var bytecode: Data? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -92,7 +92,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The file to use as the bytes for the smart contract.
     public var bytecodeFileId: FileId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -107,7 +107,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The admin key.
     public var adminKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -122,7 +122,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The gas limit to deploy the smart contract.
     public var gas: UInt64 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -138,7 +138,7 @@ public final class ContractCreateTransaction: Transaction {
     /// The initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
     public var initialBalance: Hbar {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -154,7 +154,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The auto renew period for this smart contract.
     public var autoRenewPeriod: Duration? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -169,7 +169,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The parameters to pass to the constructor.
     public var constructorParameters: Data? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -196,7 +196,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The memo for the new smart contract.
     public var contractMemo: String {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -211,7 +211,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The maximum number of tokens that this contract can be automatically associated with.
     public var maxAutomaticTokenAssociations: UInt32 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -226,7 +226,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The account to be used at the contract's expiration time to extend the life of the contract.
     public var autoRenewAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -241,7 +241,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The ID of the account to which this contract is staking.
     public var stakedAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -256,7 +256,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// The ID of the node to which this contract is staking.
     public var stakedNodeId: UInt64? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -271,7 +271,7 @@ public final class ContractCreateTransaction: Transaction {
 
     /// If true, the contract declines receiving a staking reward. The default value is false.
     public var declineStakingReward: Bool {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

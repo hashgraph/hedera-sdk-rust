@@ -33,7 +33,7 @@ public final class TokenBurnTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         tokenId = try container.decodeIfPresent(.tokenId)
@@ -45,7 +45,7 @@ public final class TokenBurnTransaction: Transaction {
 
     /// The token for which to burn tokens.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -60,7 +60,7 @@ public final class TokenBurnTransaction: Transaction {
 
     /// The amount of a fungible token to burn from the treasury account.
     public var amount: UInt64 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -75,7 +75,7 @@ public final class TokenBurnTransaction: Transaction {
 
     /// The serial numbers of a non-fungible token to burn from the treasury account.
     public var serials: [UInt64] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

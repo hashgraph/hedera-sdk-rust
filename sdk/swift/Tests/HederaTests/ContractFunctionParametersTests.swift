@@ -24,7 +24,8 @@ import XCTest
 @testable import Hedera
 
 public final class ContractFunctionParametersTests: XCTestCase {
-    func testMiscArgs() {
+    // swiftlint:disable:next function_body_length
+    internal func testMiscArgs() {
         let result = ContractFunctionParameters()
             .addUint8(0xfa)
             .addInt8(0x2c)
@@ -122,7 +123,7 @@ public final class ContractFunctionParametersTests: XCTestCase {
         )
     }
 
-    func testAddressParams() {
+    internal func testAddressParams() {
         let result = ContractFunctionParameters()
             .addAddress("0x4a17b15b0cb6bbaed6863ec4b876f67963784082")
             .addAddress("0x26b78c151e57b95db43a8a66787d1a8e3e618b55")
@@ -148,7 +149,7 @@ public final class ContractFunctionParametersTests: XCTestCase {
         )
     }
 
-    func testFunctionParams() {
+    internal func testFunctionParams() {
         let result = ContractFunctionParameters()
             .addFunction("3a29e764b2a8ed36cff67b613fa086db02fdd1b7", Data([1, 2, 3, 4]))
             .addFunction("3a29e764b2a8ed36cff67b613fa086db02fdd1b7", ContractFunctionSelector(Data([1, 2, 3, 4])))

@@ -31,7 +31,7 @@ public final class AccountDeleteTransaction: Transaction {
         super.init()
     }
 
-    required init(from decoder: Decoder) throws {
+    public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         transferAccountId = try container.decodeIfPresent(AccountId.self, forKey: .transferAccountId)
@@ -41,7 +41,7 @@ public final class AccountDeleteTransaction: Transaction {
 
     /// The account ID which will receive all remaining hbars.
     public var transferAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -56,7 +56,7 @@ public final class AccountDeleteTransaction: Transaction {
 
     /// The account ID which should be deleted.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
