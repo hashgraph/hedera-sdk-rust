@@ -49,7 +49,7 @@ private struct TokenBalance: Codable {
     }
 }
 
-extension [TokenBalance] {
+extension Array where Element == TokenBalance {
     fileprivate static func from(balances: [TokenId: UInt64], decimals: [TokenId: UInt32]) -> Self {
         precondition(balances.count == decimals.count)
 
