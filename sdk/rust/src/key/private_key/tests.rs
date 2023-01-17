@@ -162,6 +162,20 @@ MC4CAQAwBQYDK2VwBCIEINtIS4KOZLLY8SzjwKDpOguMznrxu485yXcyOUSCU44Q
 }
 
 #[test]
+fn ed25519_from_pem_with_password() {
+    const PEM: &[u8] = b"-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIGbMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAjeB6TNNQX+1gICCAAw
+DAYIKoZIhvcNAgkFADAdBglghkgBZQMEAQIEENfMacg1/Txd/LhKkxZtJe0EQEVL
+mez3xb+sfUIF3TKEIDJtw7H0xBNlbAfLxTV11pofiar0z1/WRBHFFUuGIYSiKjlU
+V9RQhAnemO84zcZfTYs=
+-----END ENCRYPTED PRIVATE KEY-----";
+
+    let pk = PrivateKey::from_pem_with_password(PEM, "test").unwrap();
+
+    assert_eq!(pk.to_string(), "302e020100300506032b6570042204208d8df406a762e36dfbf6dda2239f38a266db369e09bca6a8569e9e79b4826152");
+}
+
+#[test]
 fn ecdsa_from_pem() {
     const PEM: &[u8] = br#"-----BEGIN PRIVATE KEY-----
 MDACAQAwBwYFK4EEAAoEIgQgh3bGuDGhthrBDawDBKKEPeRxb1SxkZu5GiaF0P4/
