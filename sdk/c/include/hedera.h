@@ -84,9 +84,19 @@ typedef struct HederaAccountId {
   uint8_t *evm_address;
 } HederaAccountId;
 
+typedef struct HederaTokenBalance {
+  uint64_t id_shard;
+  uint64_t id_realm;
+  uint64_t id_num;
+  uint64_t amount;
+  uint32_t decimals;
+} HederaTokenBalance;
+
 typedef struct HederaAccountBalance {
   struct HederaAccountId id;
   int64_t hbars;
+  const struct HederaTokenBalance *token_balances;
+  size_t token_balances_len;
 } HederaAccountBalance;
 
 typedef struct HederaContractId {
@@ -269,6 +279,17 @@ enum HederaError hedera_account_balance_from_bytes(const uint8_t *bytes,
  */
 size_t hedera_account_balance_to_bytes(struct HederaAccountBalance id,
                                        uint8_t **buf);
+
+/**
+ * Free an array of `TokenBalance`s.
+ *
+ * # Safety
+ * - `token_balances` must point to an allocation made by `hedera`.
+ * - `token_balances` must not already have been freed.
+ * - `token_balances` must be valid for `size` elements.
+ */
+void hedera_account_balance_token_balances_free(struct HederaTokenBalance *token_balances,
+                                                size_t size);
 
 /**
  * Parse a Hedera `AccountId` from the passed bytes.
