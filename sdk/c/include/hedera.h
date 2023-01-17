@@ -750,6 +750,26 @@ enum HederaError hedera_private_key_from_string_ecdsa(const char *s, struct Hede
 enum HederaError hedera_private_key_from_pem(const char *pem, struct HederaPrivateKey **key);
 
 /**
+ * Parse a Hedera private key from the passed pem encoded string with the given password.
+ *
+ * # Safety
+ * - `pem` must be a valid string
+ * - `password` must be a valid string
+ * - `key` must be a valid for writes according to [*Rust* pointer rules].
+ *   The inner pointer need not point to a valid `PrivateKey`, however.
+ *
+ * # Errors
+ * - [`Error::KeyParse`] if `pem` is not valid PEM.
+ * - [`Error::KeyParse`] if the type label (`BEGIN XYZ`) is not `ENCRYPTED PRIVATE KEY`.
+ * - [`Error::KeyParse`] if decrypting the private key fails.
+ *
+ * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+ */
+enum HederaError hedera_private_key_from_pem_with_password(const char *pem,
+                                                           const char *password,
+                                                           struct HederaPrivateKey **key);
+
+/**
  * Return `key`, serialized as der encoded bytes.
  *
  * Note: the returned `buf` must be freed via `hedera_bytes_free` in order to prevent a memory leak.

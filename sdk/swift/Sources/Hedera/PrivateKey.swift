@@ -119,10 +119,18 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return Self(key!)
     }
 
-    /// Parse a `PrivateKey` from [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded bytes.
+    /// Parse a `PrivateKey` from a [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded string.
     public static func fromPem(_ pem: String) throws -> Self {
         var key: OpaquePointer?
         try HError.throwing(error: hedera_private_key_from_pem(pem, &key))
+
+        return Self(key!)
+    }
+
+    /// Parse a `PrivateKey` from a password protected [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-11) encoded string.
+    public static func fromPem(_ pem: String, _ password: String) throws -> Self {
+        var key: OpaquePointer?
+        try HError.throwing(error: hedera_private_key_from_pem_with_password(pem, password, &key))
 
         return Self(key!)
     }
