@@ -1,4 +1,7 @@
-use std::ptr;
+use std::{
+    ptr,
+    slice,
+};
 
 use libc::size_t;
 
@@ -7,26 +10,67 @@ use crate::ffi::error::Error;
 use crate::protobuf::ToProtobuf;
 
 #[repr(C)]
+pub struct TokenBalance {
+    id_shard: u64,
+    id_realm: u64,
+    id_num: u64,
+
+    amount: u64,
+    decimals: u32,
+}
+
+#[repr(C)]
 pub struct AccountBalance {
     id: ffi::AccountId,
     hbars: i64,
+
+    token_balances: *const TokenBalance,
+    token_balances_len: size_t,
 }
 
 impl AccountBalance {
     fn borrow_ref<'a>(&'a self) -> RefAccountBalance<'a> {
-        RefAccountBalance { id: self.id.borrow_ref(), hbars: self.hbars }
+        // note: `token_balances` is *technically* `&'static` if it came from us, but it could be `&'a` if it came from swift.
+        // safety: immediate library UB to have invalid token_balances/token_balances_len.
+        let token_balances =
+            unsafe { slice::from_raw_parts(self.token_balances, self.token_balances_len) };
+        RefAccountBalance { id: self.id.borrow_ref(), hbars: self.hbars, token_balances }
     }
 }
 
 impl From<crate::AccountBalance> for AccountBalance {
+    #[allow(deprecated)]
     fn from(it: crate::AccountBalance) -> Self {
-        Self { id: it.account_id.into(), hbars: it.hbars.to_tinybars() }
+        let token_balances: Vec<_> = it
+            .tokens
+            .iter()
+            .map(|(&id, &balance)| (id, balance, it.token_decimals[&id]))
+            .map(|(id, amount, decimals)| TokenBalance {
+                id_shard: id.shard,
+                id_realm: id.realm,
+                id_num: id.num,
+                amount,
+                decimals,
+            })
+            .collect();
+
+        let token_balances_len = token_balances.len();
+
+        let token_balances = Box::leak(token_balances.into_boxed_slice()).as_ptr();
+
+        Self {
+            id: it.account_id.into(),
+            hbars: it.hbars.to_tinybars(),
+            token_balances,
+            token_balances_len,
+        }
     }
 }
 
 struct RefAccountBalance<'a> {
     id: ffi::RefAccountId<'a>,
     hbars: i64,
+    token_balances: &'a [TokenBalance],
 }
 
 impl<'a> ToProtobuf for RefAccountBalance<'a> {
@@ -40,7 +84,17 @@ impl<'a> ToProtobuf for RefAccountBalance<'a> {
             header: None,
             account_id: Some(self.id.to_protobuf()),
             balance: self.hbars as u64,
-            token_balances: Vec::new(),
+            token_balances: self
+                .token_balances
+                .iter()
+                .map(|it| services::TokenBalance {
+                    token_id: Some(
+                        crate::TokenId::new(it.id_shard, it.id_realm, it.id_num).to_protobuf(),
+                    ),
+                    balance: it.amount,
+                    decimals: it.decimals,
+                })
+                .collect(),
         }
     }
 }
@@ -96,4 +150,26 @@ pub unsafe extern "C" fn hedera_account_balance_to_bytes(
     }
 
     len
+}
+
+/// Free an array of `TokenBalance`s.
+///
+/// # Safety
+/// - `token_balances` must point to an allocation made by `hedera`.
+/// - `token_balances` must not already have been freed.
+/// - `token_balances` must be valid for `size` elements.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_account_balance_token_balances_free(
+    token_balances: *mut TokenBalance,
+    size: size_t,
+) {
+    assert!(!token_balances.is_null());
+
+    // safety: function contract promises that we own this `Box<[TokenBalance]>`.
+    let buf = unsafe {
+        let token_balances = slice::from_raw_parts_mut(token_balances, size);
+        Box::from_raw(token_balances)
+    };
+
+    drop(buf);
 }
