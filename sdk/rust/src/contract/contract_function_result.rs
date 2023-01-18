@@ -116,7 +116,7 @@ impl ContractFunctionResult {
     ///
     /// Theoretically, all strings here should be utf8, but this function does _lossy_ conversion.
     pub fn get_str_array(&self, index: usize) -> Option<Vec<Cow<str>>> {
-        let (offset, len) = dbg!(self.offset_len_pair(index)?);
+        let (offset, len) = self.offset_len_pair(index)?;
 
         let mut v = Vec::with_capacity(len);
         for i in 0..len {

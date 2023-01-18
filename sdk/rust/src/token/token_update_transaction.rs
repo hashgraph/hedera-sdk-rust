@@ -28,7 +28,10 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -389,6 +392,28 @@ impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
 impl From<TokenUpdateTransactionData> for AnyTransactionData {
     fn from(transaction: TokenUpdateTransactionData) -> Self {
         Self::TokenUpdate(transaction)
+    }
+}
+
+impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransactionData {
+    fn from_protobuf(pb: services::TokenUpdateTransactionBody) -> crate::Result<Self> {
+        Ok(Self {
+            token_id: Option::from_protobuf(pb.token)?,
+            token_name: pb.name,
+            token_symbol: pb.symbol,
+            treasury_account_id: Option::from_protobuf(pb.treasury)?,
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            kyc_key: Option::from_protobuf(pb.kyc_key)?,
+            freeze_key: Option::from_protobuf(pb.freeze_key)?,
+            wipe_key: Option::from_protobuf(pb.wipe_key)?,
+            supply_key: Option::from_protobuf(pb.supply_key)?,
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            expiration_time: pb.expiry.map(Into::into),
+            token_memo: pb.memo.unwrap_or_default(),
+            fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
+            pause_key: Option::from_protobuf(pb.pause_key)?,
+        })
     }
 }
 

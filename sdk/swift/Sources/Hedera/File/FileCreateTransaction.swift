@@ -22,8 +22,42 @@ import Foundation
 
 /// Create a new file, containing the given contents.
 public final class FileCreateTransaction: Transaction {
+    internal init(
+        fileMemo: String = "",
+        keys: KeyList = [],
+        contents: Data = Data(),
+        autoRenewPeriod: Duration? = nil,
+        autoRenewAccountId: AccountId? = nil,
+        expirationTime: Timestamp? = Timestamp(
+            from: Calendar.current.date(byAdding: .day, value: 90, to: Date())!)
+    ) {
+        self.fileMemo = fileMemo
+        self.keys = keys
+        self.contents = contents
+        self.autoRenewPeriod = autoRenewPeriod
+        self.autoRenewAccountId = autoRenewAccountId
+        self.expirationTime = expirationTime
+
+        super.init()
+    }
+
     /// Create a new `FileCreateTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
+        keys = try container.decodeIfPresent(.keys) ?? []
+        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+
+        try super.init(from: decoder)
+    }
 
     /// The memo associated with the file.
     public var fileMemo: String = ""
@@ -104,6 +138,7 @@ public final class FileCreateTransaction: Transaction {
         case keys
         case contents
         case expirationTime
+        case autoRenewPeriod
         case autoRenewAccountId
     }
 
@@ -114,12 +149,13 @@ public final class FileCreateTransaction: Transaction {
         try container.encode(keys, forKey: .keys)
         try container.encode(contents.base64EncodedString(), forKey: .contents)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
+        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
         try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
 
         try super.encode(to: encoder)
     }
 
-    override func validateChecksums(on ledgerId: LedgerId) throws {
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
     }
 }

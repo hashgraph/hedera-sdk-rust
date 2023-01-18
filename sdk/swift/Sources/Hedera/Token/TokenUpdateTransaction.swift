@@ -55,11 +55,35 @@ public final class TokenUpdateTransaction: Transaction {
         self.tokenMemo = tokenMemo
         self.feeScheduleKey = feeScheduleKey
         self.pauseKey = pauseKey
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+        tokenName = try container.decodeIfPresent(.tokenName) ?? ""
+        tokenSymbol = try container.decodeIfPresent(.tokenSymbol) ?? ""
+        treasuryAccountId = try container.decodeIfPresent(.treasuryAccountId)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        kycKey = try container.decodeIfPresent(.kycKey)
+        freezeKey = try container.decodeIfPresent(.freezeKey)
+        wipeKey = try container.decodeIfPresent(.wipeKey)
+        supplyKey = try container.decodeIfPresent(.supplyKey)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        tokenMemo = try container.decodeIfPresent(.tokenMemo) ?? ""
+        feeScheduleKey = try container.decodeIfPresent(.feeScheduleKey)
+        pauseKey = try container.decodeIfPresent(.pauseKey)
+
+        try super.init(from: decoder)
     }
 
     /// The token to be updated.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -74,7 +98,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The publicly visible name of the token.
     public var tokenName: String {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -89,7 +113,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The publicly visible token symbol.
     public var tokenSymbol: String {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -104,7 +128,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The account which will act as a treasury for the token.
     public var treasuryAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -119,7 +143,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The key which can perform update/delete operations on the token.
     public var adminKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -134,7 +158,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The key which can grant or revoke KYC of an account for the token's transactions.
     public var kycKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -149,7 +173,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The key which can sign to freeze or unfreeze an account for token transactions.
     public var freezeKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -164,7 +188,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The key which can wipe the token balance of an account.
     public var wipeKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -179,7 +203,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The key which can change the supply of a token.
     public var supplyKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -194,7 +218,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The new account which will be automatically charged to renew the token's expiration.
     public var autoRenewAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -210,7 +234,7 @@ public final class TokenUpdateTransaction: Transaction {
     /// The new interval at which the auto renew account will be charged to extend
     /// the token's expiry.
     public var autoRenewPeriod: Duration? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -226,7 +250,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The new time at which the token should expire.
     public var expirationTime: Timestamp? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -241,7 +265,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The new memo associated with the token (UTF-8 encoding max 100 bytes).
     public var tokenMemo: String {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -263,7 +287,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The new key which can change the token's custom fee schedule.
     public var feeScheduleKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -278,7 +302,7 @@ public final class TokenUpdateTransaction: Transaction {
 
     /// The new key which can pause and unpause the Token.
     public var pauseKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

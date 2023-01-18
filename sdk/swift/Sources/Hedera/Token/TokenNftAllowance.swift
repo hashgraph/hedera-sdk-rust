@@ -14,7 +14,7 @@ public struct TokenNftAllowance: Codable, ValidateChecksums {
     }
 }
 
-public struct NftRemoveAllowance: Encodable, ValidateChecksums {
+public struct NftRemoveAllowance: Codable, ValidateChecksums {
     public let tokenId: TokenId
     public let ownerAccountId: AccountId
     public var serials: [UInt64]

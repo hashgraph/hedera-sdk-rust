@@ -30,11 +30,22 @@ public final class TokenAssociateTransaction: Transaction {
     ) {
         self.accountId = accountId
         self.tokenIds = tokenIds
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        accountId = try container.decodeIfPresent(.accountId)
+        tokenIds = try container.decodeIfPresent(.tokenIds) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// The account to be associated with the provided tokens.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -49,7 +60,7 @@ public final class TokenAssociateTransaction: Transaction {
 
     /// The tokens to be associated with the provided account.
     public var tokenIds: [TokenId] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

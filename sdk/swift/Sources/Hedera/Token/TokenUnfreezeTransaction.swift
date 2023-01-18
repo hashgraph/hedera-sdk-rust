@@ -27,13 +27,22 @@ public final class TokenUnfreezeTransaction: Transaction {
     ) {
         self.accountId = accountId
         self.tokenId = tokenId
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        accountId = try container.decodeIfPresent(.accountId)
+        tokenId = try container.decodeIfPresent(.tokenId)
+
+        try super.init(from: decoder)
     }
 
     /// The account to be unfrozen.
     public var accountId: AccountId? {
-        willSet(_it) {
-            ensureNotFrozen()
-        }
+        willSet { ensureNotFrozen() }
     }
 
     /// Sets the account to be unfrozen.
@@ -46,7 +55,7 @@ public final class TokenUnfreezeTransaction: Transaction {
 
     /// The token for which this account will be unfrozen.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

@@ -214,18 +214,20 @@ extension ContractFunctionResult: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        contractId = try container.decode(ContractId.self, forKey: .contractId)
-        evmAddress = try container.decodeIfPresent(ContractId.self, forKey: .evmAddress)
-        errorMessage = try container.decodeIfPresent(String.self, forKey: .errorMessage)
-        bloom = Data(base64Encoded: try container.decode(String.self, forKey: .bloom))!
-        gasUsed = try container.decode(UInt64.self, forKey: .gasUsed)
-        gas = try container.decode(UInt64.self, forKey: .gas)
-        logs = try container.decode([ContractLogInfo].self, forKey: .logs)
-        hbarAmount = try container.decode(Hbar.self, forKey: .hbarAmount)
-        contractFunctionParametersBytes = Data(
-            base64Encoded: try container.decode(String.self, forKey: .contractFunctionParametersBytes))!
-        bytes = Data(base64Encoded: try container.decode(String.self, forKey: .bytes))!
-        senderAccountId = try container.decodeIfPresent(AccountId.self, forKey: .senderAccountId)
+        contractId = try container.decode(.contractId)
+        evmAddress = try container.decodeIfPresent(.evmAddress)
+        errorMessage = try container.decodeIfPresent(.errorMessage)
+        bloom = try container.decodeIfPresent(.bloom).map(Data.base64Encoded) ?? Data()
+        gasUsed = try container.decodeIfPresent(.gasUsed) ?? 0
+        gas = try container.decodeIfPresent(.gas) ?? 0
+        logs = try container.decodeIfPresent(.logs) ?? []
+        hbarAmount = try container.decode(.hbarAmount)
+        contractFunctionParametersBytes =
+            try container.decodeIfPresent(.contractFunctionParametersBytes)
+            .map(Data.base64Encoded)
+            ?? Data()
+        bytes = try container.decodeIfPresent(.bytes).map(Data.base64Encoded) ?? Data()
+        senderAccountId = try container.decodeIfPresent(.senderAccountId)
     }
 
     public func encode(to encoder: Encoder) throws {

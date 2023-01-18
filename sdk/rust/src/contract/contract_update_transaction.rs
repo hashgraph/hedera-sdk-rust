@@ -28,6 +28,7 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -288,6 +289,31 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
                 memo_field,
             },
         )
+    }
+}
+
+impl FromProtobuf<services::ContractUpdateTransactionBody> for ContractUpdateTransactionData {
+    #[allow(deprecated)]
+    fn from_protobuf(pb: services::ContractUpdateTransactionBody) -> crate::Result<Self> {
+        use services::contract_update_transaction_body::MemoField;
+
+        Ok(Self {
+            contract_id: Option::from_protobuf(pb.contract_id)?,
+            expiration_time: pb.expiration_time.map(Into::into),
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            contract_memo: pb.memo_field.map(|it| match it {
+                MemoField::Memo(it) => it,
+                MemoField::MemoWrapper(it) => it,
+            }),
+            max_automatic_token_associations: pb
+                .max_automatic_token_associations
+                .map(|it| it as u32),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account_id)?,
+            proxy_account_id: Option::from_protobuf(pb.proxy_account_id)?,
+            staked_id: Option::from_protobuf(pb.staked_id)?,
+            decline_staking_reward: pb.decline_reward,
+        })
     }
 }
 

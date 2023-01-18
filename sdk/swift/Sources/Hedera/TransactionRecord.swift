@@ -94,32 +94,26 @@ public struct TransactionRecord: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        receipt = try container.decode(TransactionReceipt.self, forKey: .receipt)
-        transactionHash = Data(base64Encoded: try container.decode(String.self, forKey: .transactionHash))!
-        consensusTimestamp = try container.decode(Timestamp.self, forKey: .consensusTimestamp)
-        contractFunctionResult = try container.decodeIfPresent(
-            ContractFunctionResult.self, forKey: .contractFunctionResult)
-        transfers = try container.decode([Transfer].self, forKey: .transfers)
-        tokenTransfers = try container.decode(Dictionary.self, forKey: .tokenTransfers)
-        tokenNftTransfers = try container.decode(Dictionary.self, forKey: .tokenNftTransfers)
-        transactionId = try container.decode(TransactionId.self, forKey: .transactionId)
-        transactionMemo = try container.decode(String.self, forKey: .transactionMemo)
-        transactionFee = try container.decode(Hbar.self, forKey: .transactionFee)
-        scheduleRef = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleRef)
-        assessedCustomFees = try container.decode([AssessedCustomFee].self, forKey: .assessedCustomFees)
-        automaticTokenAssociations = try container.decode([TokenAssociation].self, forKey: .automaticTokenAssociations)
-        evmAddress = try container.decode(EvmAddress.self, forKey: .evmAddress)
+        receipt = try container.decode(.receipt)
+        transactionHash = try container.decodeIfPresent(.transactionHash).map(Data.base64Encoded) ?? Data()
+        consensusTimestamp = try container.decode(.consensusTimestamp)
+        contractFunctionResult = try container.decodeIfPresent(.contractFunctionResult)
+        transfers = try container.decode(.transfers)
+        tokenTransfers = try container.decode(.tokenTransfers)
+        tokenNftTransfers = try container.decode(.tokenNftTransfers)
+        transactionId = try container.decode(.transactionId)
+        transactionMemo = try container.decode(.transactionMemo)
+        transactionFee = try container.decode(.transactionFee)
+        scheduleRef = try container.decodeIfPresent(.scheduleRef)
+        assessedCustomFees = try container.decode(.assessedCustomFees)
+        automaticTokenAssociations = try container.decode(.automaticTokenAssociations)
+        evmAddress = try container.decode(.evmAddress)
 
-        parentConsensusTimestamp = try container.decodeIfPresent(Timestamp.self, forKey: .parentConsensusTimestamp)
+        parentConsensusTimestamp = try container.decodeIfPresent(.parentConsensusTimestamp)
 
-        aliasKey = try container.decodeIfPresent(PublicKey.self, forKey: .aliasKey)
-        children = try container.decode([TransactionRecord].self, forKey: .children)
-        duplicates = try container.decode([TransactionRecord].self, forKey: .duplicates)
-
-        if let ethereumHashB64 = try container.decodeIfPresent(String.self, forKey: .ethereumHash) {
-            ethereumHash = Data(base64Encoded: ethereumHashB64)!
-        } else {
-            ethereumHash = nil
-        }
+        aliasKey = try container.decodeIfPresent(.aliasKey)
+        children = try container.decodeIfPresent(.children) ?? []
+        duplicates = try container.decodeIfPresent(.duplicates) ?? []
+        ethereumHash = try container.decodeIfPresent(.ethereumHash).map(Data.base64Encoded) ?? Data()
     }
 }

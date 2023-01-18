@@ -27,66 +27,13 @@ use tonic::{
     Status,
 };
 
-use crate::account::{
-    AccountAllowanceApproveTransactionData,
-    AccountAllowanceDeleteTransactionData,
-    AccountCreateTransactionData,
-    AccountDeleteTransactionData,
-    AccountUpdateTransactionData,
-};
 use crate::client::Operator;
-use crate::contract::{
-    ContractCreateTransactionData,
-    ContractDeleteTransactionData,
-    ContractExecuteTransactionData,
-    ContractUpdateTransactionData,
-};
-use crate::ethereum_transaction::EthereumTransactionData;
-use crate::file::{
-    FileAppendTransactionData,
-    FileCreateTransactionData,
-    FileDeleteTransactionData,
-    FileUpdateTransactionData,
-};
-use crate::schedule::{
-    ScheduleCreateTransactionData,
-    ScheduleDeleteTransactionData,
-    ScheduleSignTransactionData,
-};
-use crate::system::{
-    FreezeTransactionData,
-    SystemDeleteTransactionData,
-    SystemUndeleteTransactionData,
-};
-use crate::token::{
-    TokenAssociateTransactionData,
-    TokenBurnTransactionData,
-    TokenCreateTransactionData,
-    TokenDeleteTransactionData,
-    TokenDissociateTransactionData,
-    TokenFeeScheduleUpdateTransactionData,
-    TokenFreezeTransactionData,
-    TokenGrantKycTransactionData,
-    TokenMintTransactionData,
-    TokenPauseTransactionData,
-    TokenRevokeKycTransactionData,
-    TokenUnfreezeTransactionData,
-    TokenUnpauseTransactionData,
-    TokenUpdateTransactionData,
-    TokenWipeTransactionData,
-};
-use crate::topic::{
-    TopicCreateTransactionData,
-    TopicDeleteTransactionData,
-    TopicMessageSubmitTransactionData,
-    TopicUpdateTransactionData,
-};
+use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     ToTransactionDataProtobuf,
     TransactionBody,
     TransactionExecute,
 };
-use crate::transfer_transaction::TransferTransactionData;
 use crate::{
     AccountId,
     Error,
@@ -96,7 +43,63 @@ use crate::{
     TransactionId,
 };
 
-#[cfg(feature = "ffi")]
+mod data {
+    pub(super) use crate::account::{
+        AccountAllowanceApproveTransactionData as AccountAllowanceApprove,
+        AccountAllowanceDeleteTransactionData as AccountAllowanceDelete,
+        AccountCreateTransactionData as AccountCreate,
+        AccountDeleteTransactionData as AccountDelete,
+        AccountUpdateTransactionData as AccountUpdate,
+    };
+    pub(super) use crate::contract::{
+        ContractCreateTransactionData as ContractCreate,
+        ContractDeleteTransactionData as ContractDelete,
+        ContractExecuteTransactionData as ContractExecute,
+        ContractUpdateTransactionData as ContractUpdate,
+    };
+    pub(super) use crate::ethereum_transaction::EthereumTransactionData as Ethereum;
+    pub(super) use crate::file::{
+        FileAppendTransactionData as FileAppend,
+        FileCreateTransactionData as FileCreate,
+        FileDeleteTransactionData as FileDelete,
+        FileUpdateTransactionData as FileUpdate,
+    };
+    pub(super) use crate::schedule::{
+        ScheduleCreateTransactionData as ScheduleCreate,
+        ScheduleDeleteTransactionData as ScheduleDelete,
+        ScheduleSignTransactionData as ScheduleSign,
+    };
+    pub(super) use crate::system::{
+        FreezeTransactionData as Freeze,
+        SystemDeleteTransactionData as SystemDelete,
+        SystemUndeleteTransactionData as SystemUndelete,
+    };
+    pub(super) use crate::token::{
+        TokenAssociateTransactionData as TokenAssociate,
+        TokenBurnTransactionData as TokenBurn,
+        TokenCreateTransactionData as TokenCreate,
+        TokenDeleteTransactionData as TokenDelete,
+        TokenDissociateTransactionData as TokenDissociate,
+        TokenFeeScheduleUpdateTransactionData as TokenFeeScheduleUpdate,
+        TokenFreezeTransactionData as TokenFreeze,
+        TokenGrantKycTransactionData as TokenGrantKyc,
+        TokenMintTransactionData as TokenMint,
+        TokenPauseTransactionData as TokenPause,
+        TokenRevokeKycTransactionData as TokenRevokeKyc,
+        TokenUnfreezeTransactionData as TokenUnfreeze,
+        TokenUnpauseTransactionData as TokenUnpause,
+        TokenUpdateTransactionData as TokenUpdate,
+        TokenWipeTransactionData as TokenWipe,
+    };
+    pub(super) use crate::topic::{
+        TopicCreateTransactionData as TopicCreate,
+        TopicDeleteTransactionData as TopicDelete,
+        TopicMessageSubmitTransactionData as TopicMessageSubmit,
+        TopicUpdateTransactionData as TopicUpdate,
+    };
+    pub(super) use crate::transfer_transaction::TransferTransactionData as Transfer;
+}
+
 /// Any possible transaction that may be executed on the Hedera network.
 pub type AnyTransaction = Transaction<AnyTransactionData>;
 
@@ -104,46 +107,46 @@ pub type AnyTransaction = Transaction<AnyTransactionData>;
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyTransactionData {
-    AccountCreate(AccountCreateTransactionData),
-    AccountUpdate(AccountUpdateTransactionData),
-    AccountDelete(AccountDeleteTransactionData),
-    AccountAllowanceApprove(AccountAllowanceApproveTransactionData),
-    AccountAllowanceDelete(AccountAllowanceDeleteTransactionData),
-    ContractCreate(ContractCreateTransactionData),
-    ContractUpdate(ContractUpdateTransactionData),
-    ContractDelete(ContractDeleteTransactionData),
-    ContractExecute(ContractExecuteTransactionData),
-    Transfer(TransferTransactionData),
-    TopicCreate(TopicCreateTransactionData),
-    TopicUpdate(TopicUpdateTransactionData),
-    TopicDelete(TopicDeleteTransactionData),
-    TopicMessageSubmit(TopicMessageSubmitTransactionData),
-    FileAppend(FileAppendTransactionData),
-    FileCreate(FileCreateTransactionData),
-    FileUpdate(FileUpdateTransactionData),
-    FileDelete(FileDeleteTransactionData),
-    TokenAssociate(TokenAssociateTransactionData),
-    TokenBurn(TokenBurnTransactionData),
-    TokenCreate(TokenCreateTransactionData),
-    TokenDelete(TokenDeleteTransactionData),
-    TokenDissociate(TokenDissociateTransactionData),
-    TokenFeeScheduleUpdate(TokenFeeScheduleUpdateTransactionData),
-    TokenFreeze(TokenFreezeTransactionData),
-    TokenGrantKyc(TokenGrantKycTransactionData),
-    TokenMint(TokenMintTransactionData),
-    TokenPause(TokenPauseTransactionData),
-    TokenRevokeKyc(TokenRevokeKycTransactionData),
-    TokenUnfreeze(TokenUnfreezeTransactionData),
-    TokenUnpause(TokenUnpauseTransactionData),
-    TokenUpdate(TokenUpdateTransactionData),
-    TokenWipe(TokenWipeTransactionData),
-    SystemDelete(SystemDeleteTransactionData),
-    SystemUndelete(SystemUndeleteTransactionData),
-    Freeze(FreezeTransactionData),
-    ScheduleCreate(ScheduleCreateTransactionData),
-    ScheduleSign(ScheduleSignTransactionData),
-    ScheduleDelete(ScheduleDeleteTransactionData),
-    Ethereum(EthereumTransactionData),
+    AccountCreate(data::AccountCreate),
+    AccountUpdate(data::AccountUpdate),
+    AccountDelete(data::AccountDelete),
+    AccountAllowanceApprove(data::AccountAllowanceApprove),
+    AccountAllowanceDelete(data::AccountAllowanceDelete),
+    ContractCreate(data::ContractCreate),
+    ContractUpdate(data::ContractUpdate),
+    ContractDelete(data::ContractDelete),
+    ContractExecute(data::ContractExecute),
+    Transfer(data::Transfer),
+    TopicCreate(data::TopicCreate),
+    TopicUpdate(data::TopicUpdate),
+    TopicDelete(data::TopicDelete),
+    TopicMessageSubmit(data::TopicMessageSubmit),
+    FileAppend(data::FileAppend),
+    FileCreate(data::FileCreate),
+    FileUpdate(data::FileUpdate),
+    FileDelete(data::FileDelete),
+    TokenAssociate(data::TokenAssociate),
+    TokenBurn(data::TokenBurn),
+    TokenCreate(data::TokenCreate),
+    TokenDelete(data::TokenDelete),
+    TokenDissociate(data::TokenDissociate),
+    TokenFeeScheduleUpdate(data::TokenFeeScheduleUpdate),
+    TokenFreeze(data::TokenFreeze),
+    TokenGrantKyc(data::TokenGrantKyc),
+    TokenMint(data::TokenMint),
+    TokenPause(data::TokenPause),
+    TokenRevokeKyc(data::TokenRevokeKyc),
+    TokenUnfreeze(data::TokenUnfreeze),
+    TokenUnpause(data::TokenUnpause),
+    TokenUpdate(data::TokenUpdate),
+    TokenWipe(data::TokenWipe),
+    SystemDelete(data::SystemDelete),
+    SystemUndelete(data::SystemUndelete),
+    Freeze(data::Freeze),
+    ScheduleCreate(data::ScheduleCreate),
+    ScheduleSign(data::ScheduleSign),
+    ScheduleDelete(data::ScheduleDelete),
+    Ethereum(data::Ethereum),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -589,7 +592,7 @@ where
     D: TransactionExecute,
 {
     fn from(body: AnyTransactionBody<D>) -> Self {
-        Self { body: body.into(), signers: Vec::new() }
+        Self { body: body.into(), signers: Vec::new(), sources: None }
     }
 }
 
@@ -637,5 +640,87 @@ impl<'de> serde::Deserialize<'de> for AnyTransaction {
     {
         <AnyTransactionBody<AnyTransactionData> as serde::Deserialize>::deserialize(deserializer)
             .map(AnyTransactionBody::into)
+    }
+}
+
+impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
+    fn from_protobuf(pb: services::transaction_body::Data) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        use services::transaction_body::Data;
+        let data = match pb {
+            Data::ContractCall(pb) => data::ContractExecute::from_protobuf(pb)?.into(),
+            Data::ContractCreateInstance(pb) => data::ContractCreate::from_protobuf(pb)?.into(),
+            Data::ContractUpdateInstance(pb) => data::ContractUpdate::from_protobuf(pb)?.into(),
+            Data::ContractDeleteInstance(pb) => data::ContractDelete::from_protobuf(pb)?.into(),
+            Data::EthereumTransaction(pb) => data::Ethereum::from_protobuf(pb)?.into(),
+            Data::CryptoApproveAllowance(pb) => {
+                data::AccountAllowanceApprove::from_protobuf(pb)?.into()
+            }
+            Data::CryptoDeleteAllowance(pb) => {
+                data::AccountAllowanceDelete::from_protobuf(pb)?.into()
+            }
+            Data::CryptoCreateAccount(pb) => data::AccountCreate::from_protobuf(pb)?.into(),
+            Data::CryptoDelete(pb) => data::AccountDelete::from_protobuf(pb)?.into(),
+            Data::CryptoTransfer(pb) => data::Transfer::from_protobuf(pb)?.into(),
+            Data::CryptoUpdateAccount(pb) => data::AccountUpdate::from_protobuf(pb)?.into(),
+            Data::FileAppend(pb) => data::FileAppend::from_protobuf(pb)?.into(),
+            Data::FileCreate(pb) => data::FileCreate::from_protobuf(pb)?.into(),
+            Data::FileDelete(pb) => data::FileDelete::from_protobuf(pb)?.into(),
+            Data::FileUpdate(pb) => data::FileUpdate::from_protobuf(pb)?.into(),
+            Data::SystemDelete(pb) => data::SystemDelete::from_protobuf(pb)?.into(),
+            Data::SystemUndelete(pb) => data::SystemUndelete::from_protobuf(pb)?.into(),
+            Data::Freeze(pb) => data::Freeze::from_protobuf(pb)?.into(),
+            Data::ConsensusCreateTopic(pb) => data::TopicCreate::from_protobuf(pb)?.into(),
+            Data::ConsensusUpdateTopic(pb) => data::TopicUpdate::from_protobuf(pb)?.into(),
+            Data::ConsensusDeleteTopic(pb) => data::TopicDelete::from_protobuf(pb)?.into(),
+            Data::ConsensusSubmitMessage(pb) => data::TopicMessageSubmit::from_protobuf(pb)?.into(),
+            Data::TokenCreation(pb) => data::TokenCreate::from_protobuf(pb)?.into(),
+            Data::TokenFreeze(pb) => data::TokenFreeze::from_protobuf(pb)?.into(),
+            Data::TokenUnfreeze(pb) => data::TokenUnfreeze::from_protobuf(pb)?.into(),
+            Data::TokenGrantKyc(pb) => data::TokenGrantKyc::from_protobuf(pb)?.into(),
+            Data::TokenRevokeKyc(pb) => data::TokenRevokeKyc::from_protobuf(pb)?.into(),
+            Data::TokenDeletion(pb) => data::TokenDelete::from_protobuf(pb)?.into(),
+            Data::TokenUpdate(pb) => data::TokenUpdate::from_protobuf(pb)?.into(),
+            Data::TokenMint(pb) => data::TokenMint::from_protobuf(pb)?.into(),
+            Data::TokenBurn(pb) => data::TokenBurn::from_protobuf(pb)?.into(),
+            Data::TokenWipe(pb) => data::TokenWipe::from_protobuf(pb)?.into(),
+            Data::TokenAssociate(pb) => data::TokenAssociate::from_protobuf(pb)?.into(),
+            Data::TokenDissociate(pb) => data::TokenDissociate::from_protobuf(pb)?.into(),
+            Data::TokenFeeScheduleUpdate(pb) => {
+                data::TokenFeeScheduleUpdate::from_protobuf(pb)?.into()
+            }
+            Data::TokenPause(pb) => data::TokenPause::from_protobuf(pb)?.into(),
+            Data::TokenUnpause(pb) => data::TokenUnpause::from_protobuf(pb)?.into(),
+            Data::ScheduleCreate(pb) => data::ScheduleCreate::from_protobuf(pb)?.into(),
+            Data::ScheduleDelete(pb) => data::ScheduleDelete::from_protobuf(pb)?.into(),
+            Data::ScheduleSign(pb) => data::ScheduleSign::from_protobuf(pb)?.into(),
+            Data::CryptoAddLiveHash(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `AddLiveHashTransaction`",
+                ))
+            }
+            Data::CryptoDeleteLiveHash(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `DeleteLiveHashTransaction`",
+                ))
+            }
+            Data::UncheckedSubmit(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `UncheckedSubmitTransaction`",
+                ))
+            }
+            Data::NodeStakeUpdate(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `NodeStakeUpdateTransaction`",
+                ))
+            }
+            Data::UtilPrng(_) => {
+                return Err(Error::from_protobuf("unimplemented transaction `PrngTransaction`"))
+            }
+        };
+
+        Ok(data)
     }
 }

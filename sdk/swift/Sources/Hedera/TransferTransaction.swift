@@ -27,7 +27,7 @@
 ///
 public final class TransferTransaction: Transaction {
     // avoid scope collisions by nesting :/
-    private struct Transfer: Encodable, ValidateChecksums {
+    private struct Transfer: Codable, ValidateChecksums {
         let accountId: AccountId
         let amount: Int64
         let isApproval: Bool
@@ -37,7 +37,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private struct TokenTransfer: Encodable, ValidateChecksums {
+    private struct TokenTransfer: Codable, ValidateChecksums {
         let tokenId: TokenId
         var transfers: [TransferTransaction.Transfer]
         var nftTransfers: [TransferTransaction.NftTransfer]
@@ -50,7 +50,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private struct NftTransfer: Encodable, ValidateChecksums {
+    private struct NftTransfer: Codable, ValidateChecksums {
         let senderAccountId: AccountId
         let receiverAccountId: AccountId
         let serial: UInt64
@@ -63,19 +63,29 @@ public final class TransferTransaction: Transaction {
     }
 
     private var transfers: [TransferTransaction.Transfer] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "transfers")
         }
     }
 
     private var tokenTransfers: [TransferTransaction.TokenTransfer] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "tokenTransfers")
         }
     }
 
     /// Create a new `TransferTransaction`.
     public override init() {
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        transfers = try container.decodeIfPresent(.transfers) ?? []
+        tokenTransfers = try container.decodeIfPresent(.tokenTransfers) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// Add a non-approved hbar transfer to the transaction.

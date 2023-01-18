@@ -30,7 +30,10 @@ use time::OffsetDateTime;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -379,5 +382,71 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
 impl From<ScheduleCreateTransactionData> for AnyTransactionData {
     fn from(transaction: ScheduleCreateTransactionData) -> Self {
         Self::ScheduleCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::SchedulableTransactionBody> for SchedulableTransactionBody {
+    fn from_protobuf(pb: services::SchedulableTransactionBody) -> crate::Result<Self> {
+        use schedulable_transaction_body::Data;
+        let data = pb_getf!(pb, data)?;
+        let data = match data {
+            Data::ContractCall(it) => transaction_body::Data::ContractCall(it),
+            Data::ContractCreateInstance(it) => transaction_body::Data::ContractCreateInstance(it),
+            Data::ContractUpdateInstance(it) => transaction_body::Data::ContractUpdateInstance(it),
+            Data::ContractDeleteInstance(it) => transaction_body::Data::ContractDeleteInstance(it),
+            Data::CryptoApproveAllowance(it) => transaction_body::Data::CryptoApproveAllowance(it),
+            Data::CryptoDeleteAllowance(it) => transaction_body::Data::CryptoDeleteAllowance(it),
+            Data::CryptoCreateAccount(it) => transaction_body::Data::CryptoCreateAccount(it),
+            Data::CryptoDelete(it) => transaction_body::Data::CryptoDelete(it),
+            Data::CryptoTransfer(it) => transaction_body::Data::CryptoTransfer(it),
+            Data::CryptoUpdateAccount(it) => transaction_body::Data::CryptoUpdateAccount(it),
+            Data::FileAppend(it) => transaction_body::Data::FileAppend(it),
+            Data::FileCreate(it) => transaction_body::Data::FileCreate(it),
+            Data::FileDelete(it) => transaction_body::Data::FileDelete(it),
+            Data::FileUpdate(it) => transaction_body::Data::FileUpdate(it),
+            Data::SystemDelete(it) => transaction_body::Data::SystemDelete(it),
+            Data::SystemUndelete(it) => transaction_body::Data::SystemUndelete(it),
+            Data::Freeze(it) => transaction_body::Data::Freeze(it),
+            Data::ConsensusCreateTopic(it) => transaction_body::Data::ConsensusCreateTopic(it),
+            Data::ConsensusUpdateTopic(it) => transaction_body::Data::ConsensusUpdateTopic(it),
+            Data::ConsensusDeleteTopic(it) => transaction_body::Data::ConsensusDeleteTopic(it),
+            Data::ConsensusSubmitMessage(it) => transaction_body::Data::ConsensusSubmitMessage(it),
+            Data::TokenCreation(it) => transaction_body::Data::TokenCreation(it),
+            Data::TokenFreeze(it) => transaction_body::Data::TokenFreeze(it),
+            Data::TokenUnfreeze(it) => transaction_body::Data::TokenUnfreeze(it),
+            Data::TokenGrantKyc(it) => transaction_body::Data::TokenGrantKyc(it),
+            Data::TokenRevokeKyc(it) => transaction_body::Data::TokenRevokeKyc(it),
+            Data::TokenDeletion(it) => transaction_body::Data::TokenDeletion(it),
+            Data::TokenUpdate(it) => transaction_body::Data::TokenUpdate(it),
+            Data::TokenMint(it) => transaction_body::Data::TokenMint(it),
+            Data::TokenBurn(it) => transaction_body::Data::TokenBurn(it),
+            Data::TokenWipe(it) => transaction_body::Data::TokenWipe(it),
+            Data::TokenAssociate(it) => transaction_body::Data::TokenAssociate(it),
+            Data::TokenDissociate(it) => transaction_body::Data::TokenDissociate(it),
+            Data::TokenFeeScheduleUpdate(it) => transaction_body::Data::TokenFeeScheduleUpdate(it),
+            Data::TokenPause(it) => transaction_body::Data::TokenPause(it),
+            Data::TokenUnpause(it) => transaction_body::Data::TokenUnpause(it),
+            Data::ScheduleDelete(it) => transaction_body::Data::ScheduleDelete(it),
+            Data::UtilPrng(it) => transaction_body::Data::UtilPrng(it),
+        };
+
+        Ok(Self {
+            data: Box::new(AnyTransactionData::from_protobuf(data)?),
+            max_transaction_fee: Some(Hbar::from_tinybars(pb.transaction_fee as i64)),
+            transaction_memo: pb.memo,
+        })
+    }
+}
+
+impl FromProtobuf<services::ScheduleCreateTransactionBody> for ScheduleCreateTransactionData {
+    fn from_protobuf(pb: services::ScheduleCreateTransactionBody) -> crate::Result<Self> {
+        Ok(Self {
+            scheduled_transaction: Option::from_protobuf(pb.scheduled_transaction_body)?,
+            schedule_memo: Some(pb.memo),
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            payer_account_id: Option::from_protobuf(pb.payer_account_id)?,
+            expiration_time: pb.expiration_time.map(Into::into),
+            wait_for_expiry: pb.wait_for_expiry,
+        })
     }
 }

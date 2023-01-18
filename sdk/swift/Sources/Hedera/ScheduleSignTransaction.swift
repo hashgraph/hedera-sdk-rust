@@ -28,6 +28,14 @@ public final class ScheduleSignTransaction: Transaction {
         super.init()
     }
 
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        scheduleId = try container.decodeIfPresent(.scheduleId)
+
+        try super.init(from: decoder)
+    }
+
     /// The schedule to add signing keys to.
     public var scheduleId: ScheduleId?
 

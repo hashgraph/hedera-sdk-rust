@@ -29,11 +29,21 @@ import Foundation
 ///
 public final class TopicDeleteTransaction: Transaction {
     /// Create a new `TopicDeleteTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        topicId = try container.decodeIfPresent(.topicId)
+
+        try super.init(from: decoder)
+    }
 
     /// The topic ID which is being deleted in this transaction.
     public var topicId: TopicId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

@@ -24,7 +24,10 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -102,6 +105,12 @@ impl ToTransactionDataProtobuf for FileDeleteTransactionData {
 impl From<FileDeleteTransactionData> for AnyTransactionData {
     fn from(transaction: FileDeleteTransactionData) -> Self {
         Self::FileDelete(transaction)
+    }
+}
+
+impl FromProtobuf<services::FileDeleteTransactionBody> for FileDeleteTransactionData {
+    fn from_protobuf(pb: services::FileDeleteTransactionBody) -> crate::Result<Self> {
+        Ok(Self { file_id: Option::from_protobuf(pb.file_id)? })
     }
 }
 

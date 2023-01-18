@@ -62,6 +62,8 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
+typedef struct HederaTransactionSources HederaTransactionSources;
+
 typedef struct HederaAccountId {
   uint64_t shard;
   uint64_t realm;
@@ -1461,6 +1463,33 @@ enum HederaError hedera_transaction_to_bytes(const char *transaction,
                                              struct HederaSigners signers,
                                              uint8_t **buf,
                                              size_t *buf_size);
+
+enum HederaError hedera_transaction_from_bytes(const uint8_t *bytes,
+                                               size_t bytes_size,
+                                               struct HederaTransactionSources **sources_out,
+                                               char **transaction_out);
+
+/**
+ * Execute this request against the provided client of the Hedera network.
+ *
+ * # Safety
+ * - todo(sr): Missing basically everything
+ * - `callback` must not store `response` after it returns.
+ */
+enum HederaError hedera_transaction_execute(const struct HederaClient *client,
+                                            const char *request,
+                                            const void *context,
+                                            struct HederaSigners signers,
+                                            bool has_timeout,
+                                            double timeout,
+                                            const struct HederaTransactionSources *sources,
+                                            void (*callback)(const void *context, enum HederaError err, const char *response));
+
+/**
+ * # Safety
+ * - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
+ */
+void hedera_transaction_sources_free(struct HederaTransactionSources *sources);
 
 /**
  * # Safety

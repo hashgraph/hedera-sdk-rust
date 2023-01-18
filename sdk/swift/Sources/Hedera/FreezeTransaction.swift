@@ -34,11 +34,24 @@ public final class FreezeTransaction: Transaction {
         self.fileId = fileId
         self.fileHash = fileHash
         self.freezeType = freezeType
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        startTime = try container.decodeIfPresent(.startTime)
+        fileId = try container.decodeIfPresent(.fileId)
+        fileHash = try container.decodeIfPresent(.fileHash).map(Data.base64Encoded)
+        freezeType = try container.decodeIfPresent(.freezeType) ?? .unknown
+
+        try super.init(from: decoder)
     }
 
     /// The start time.
     public var startTime: Timestamp? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -53,7 +66,7 @@ public final class FreezeTransaction: Transaction {
 
     /// The file ID.
     public var fileId: FileId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -68,7 +81,7 @@ public final class FreezeTransaction: Transaction {
 
     /// The file hash.
     public var fileHash: Data? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -83,7 +96,7 @@ public final class FreezeTransaction: Transaction {
 
     /// The freeze type.
     public var freezeType: FreezeType {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

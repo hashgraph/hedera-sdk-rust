@@ -47,11 +47,31 @@ public final class ContractUpdateTransaction: Transaction {
         self.stakedAccountId = stakedAccountId
         self.stakedNodeId = stakedNodeId
         self.declineStakingReward = declineStakingReward
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        contractId = try container.decodeIfPresent(.contractId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+        adminKey = try container.decodeIfPresent(.adminKey)
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
+        contractMemo = try container.decodeIfPresent(.contractMemo)
+        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
+        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
+        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
+        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
+
+        try super.init(from: decoder)
     }
 
     /// The contract to be updated.
     public var contractId: ContractId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -66,7 +86,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
     public var expirationTime: Timestamp? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -81,7 +101,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// The new admin key.
     public var adminKey: Key? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -96,7 +116,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// The auto renew period for this smart contract.
     public var autoRenewPeriod: Duration? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -111,7 +131,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// The memo for the new smart contract.
     public var contractMemo: String? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -133,7 +153,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// The maximum number of tokens that this contract can be automatically associated with.
     public var maxAutomaticTokenAssociations: UInt32? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -149,7 +169,7 @@ public final class ContractUpdateTransaction: Transaction {
     /// The account to be used at the contract's expiration time to extend the
 
     public var autoRenewAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -172,7 +192,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// The ID of the account to which this account is proxy staked.
     public var proxyAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -188,7 +208,7 @@ public final class ContractUpdateTransaction: Transaction {
     /// The ID of the account to which this contract is staking.
     /// This is mutually exclusive with `staked_node_id`.
     public var stakedAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -214,7 +234,7 @@ public final class ContractUpdateTransaction: Transaction {
     /// The ID of the node to which this contract is staking.
     /// This is mutually exclusive with `staked_account_id`.
     public var stakedNodeId: Int64? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -239,7 +259,7 @@ public final class ContractUpdateTransaction: Transaction {
 
     /// If true, the contract declines receiving a staking reward. The default value is false.
     public var declineStakingReward: Bool? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -270,6 +290,7 @@ public final class ContractUpdateTransaction: Transaction {
         case stakedAccountId
         case stakedNodeId
         case declineStakingReward
+        case proxyAccountId
     }
 
     public override func encode(to encoder: Encoder) throws {

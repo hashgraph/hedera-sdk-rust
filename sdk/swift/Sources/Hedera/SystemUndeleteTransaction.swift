@@ -29,6 +29,17 @@ public final class SystemUndeleteTransaction: Transaction {
     ) {
         self.fileId = fileId
         self.contractId = contractId
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        fileId = try container.decodeIfPresent(.fileId)
+        contractId = try container.decodeIfPresent(.contractId)
+
+        try super.init(from: decoder)
     }
 
     /// The file ID to undelete.

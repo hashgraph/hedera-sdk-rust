@@ -25,7 +25,10 @@ use time::Duration;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -199,6 +202,18 @@ impl ToTransactionDataProtobuf for TopicCreateTransactionData {
 impl From<TopicCreateTransactionData> for AnyTransactionData {
     fn from(transaction: TopicCreateTransactionData) -> Self {
         Self::TopicCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::ConsensusCreateTopicTransactionBody> for TopicCreateTransactionData {
+    fn from_protobuf(pb: services::ConsensusCreateTopicTransactionBody) -> crate::Result<Self> {
+        Ok(Self {
+            topic_memo: pb.memo,
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            submit_key: Option::from_protobuf(pb.submit_key)?,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+        })
     }
 }
 

@@ -31,11 +31,23 @@ public final class TokenMintTransaction: Transaction {
         self.tokenId = tokenId
         self.amount = amount
         self.metadata = metadata
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        tokenId = try container.decodeIfPresent(.tokenId)
+        amount = try container.decodeIfPresent(.amount) ?? 0
+        metadata = try container.decodeIfPresent(.metadata) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// The token for which to mint tokens.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -50,7 +62,7 @@ public final class TokenMintTransaction: Transaction {
 
     /// The amount of a fungible token to mint to the treasury account.
     public var amount: UInt64 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -65,7 +77,7 @@ public final class TokenMintTransaction: Transaction {
 
     /// The list of metadata for a non-fungible token to mint to the treasury account.
     public var metadata: [Data] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
