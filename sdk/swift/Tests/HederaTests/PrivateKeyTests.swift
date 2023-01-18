@@ -82,6 +82,25 @@ public final class PrivateKeyTests: XCTestCase {
             "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10")
     }
 
+    public func testEd25519FromPemWithPassword() throws {
+        let pemString =
+            """
+            -----BEGIN ENCRYPTED PRIVATE KEY-----
+            MIGbMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAjeB6TNNQX+1gICCAAw
+            DAYIKoZIhvcNAgkFADAdBglghkgBZQMEAQIEENfMacg1/Txd/LhKkxZtJe0EQEVL
+            mez3xb+sfUIF3TKEIDJtw7H0xBNlbAfLxTV11pofiar0z1/WRBHFFUuGIYSiKjlU
+            V9RQhAnemO84zcZfTYs=
+            -----END ENCRYPTED PRIVATE KEY-----
+            """
+
+        let privateKey = try PrivateKey.fromPem(pemString, "test")
+
+        XCTAssertEqual(
+            privateKey.description,
+            "302e020100300506032b6570042204208d8df406a762e36dfbf6dda2239f38a266db369e09bca6a8569e9e79b4826152"
+        )
+    }
+
     public func testEcdsaFromPem() throws {
         let pemString = """
             -----BEGIN PRIVATE KEY-----
