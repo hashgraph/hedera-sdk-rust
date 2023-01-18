@@ -264,16 +264,81 @@ impl PrivateKey {
     /// - [`Error::KeyParse`] if `pem` is not valid PEM.
     /// - [`Error::KeyParse`] if the type label (BEGIN XYZ) is not `PRIVATE KEY`.
     /// - [`Error::KeyParse`] if the data contained inside the PEM is not a valid `PrivateKey`.
-    pub fn from_pem(pem: &[u8]) -> crate::Result<Self> {
-        let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
+    pub fn from_pem(pem: impl AsRef<[u8]>) -> crate::Result<Self> {
+        fn inner(pem: &[u8]) -> crate::Result<PrivateKey> {
+            let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
 
-        if type_label != "PRIVATE KEY" {
-            return Err(Error::key_parse(format!(
-                "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
-            )));
+            if type_label != "PRIVATE KEY" {
+                return Err(Error::key_parse(format!(
+                    "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
+                )));
+            }
+
+            PrivateKey::from_bytes_der(&der)
         }
 
-        Self::from_bytes_der(&der)
+        inner(pem.as_ref())
+    }
+
+    /// Parse a `PrivateKey` from encrypted [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-11) encoded bytes.
+    /// # Errors
+    /// - [`Error::KeyParse`] if `pem` is not valid PEM.
+    /// - [`Error::KeyParse`] if the type label (`BEGIN XYZ`) is not `ENCRYPTED PRIVATE KEY`.
+    /// - [`Error::KeyParse`] if decrypting the private key fails.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// use hedera::PrivateKey;
+    /// use hex_literal::hex;
+    ///
+    /// // ⚠️ WARNING ⚠️
+    /// // don't use this private key in your applications, it is compromised by virtue of being here.
+    /// let pem = "-----BEGIN ENCRYPTED PRIVATE KEY-----
+    /// MIGbMFcGCSqGSIb3DQEFDTBKMCkGCSqGSIb3DQEFDDAcBAjeB6TNNQX+1gICCAAw
+    /// DAYIKoZIhvcNAgkFADAdBglghkgBZQMEAQIEENfMacg1/Txd/LhKkxZtJe0EQEVL
+    /// mez3xb+sfUIF3TKEIDJtw7H0xBNlbAfLxTV11pofiar0z1/WRBHFFUuGIYSiKjlU
+    /// V9RQhAnemO84zcZfTYs=
+    /// -----END ENCRYPTED PRIVATE KEY-----";
+    ///
+    /// let password = "test";
+    ///
+    /// let sk = PrivateKey::from_pem_with_password(pem, password)?;
+    ///
+    /// let expected_signature = hex!(
+    ///     "a0e5f7d1cf06a4334be4f856aeb427f7"
+    ///     "fd53ea7e5c66f10eaad083d736a5adfd"
+    ///     "0ac7e4fd3fa90f6b6aad8f1df4149ecd"
+    ///     "330a91d5ebff832b11bf14d43eaf5600"
+    /// );
+    /// assert_eq!(sk.sign(b"message").as_slice(), expected_signature.as_slice());
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn from_pem_with_password(
+        pem: impl AsRef<[u8]>,
+        password: impl AsRef<[u8]>,
+    ) -> crate::Result<Self> {
+        fn inner(pem: &[u8], password: &[u8]) -> crate::Result<PrivateKey> {
+            let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
+
+            if type_label != "ENCRYPTED PRIVATE KEY" {
+                return Err(Error::key_parse(format!(
+                    "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
+                )));
+            }
+
+            let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
+                .map_err(|e| Error::key_parse(e.to_string()))?;
+
+            let decrypted = info.decrypt(password).map_err(|e| Error::key_parse(e.to_string()))?;
+
+            PrivateKey::from_bytes_der(decrypted.as_bytes())
+        }
+
+        inner(pem.as_ref(), password.as_ref())
     }
 
     /// Return this `PrivateKey`, serialized as der encoded bytes.
@@ -406,7 +471,8 @@ impl PrivateKey {
         matches!(self.0.data, PrivateKeyData::Ecdsa(_))
     }
 
-    pub(crate) fn sign(&self, message: &[u8]) -> Vec<u8> {
+    /// Signs the given `message`.
+    pub fn sign(&self, message: &[u8]) -> Vec<u8> {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => key.sign(message).to_bytes().as_slice().to_vec(),
             PrivateKeyData::Ecdsa(key) => {

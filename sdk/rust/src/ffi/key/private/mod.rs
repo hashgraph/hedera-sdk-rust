@@ -278,6 +278,44 @@ pub unsafe extern "C" fn hedera_private_key_from_pem(
     Error::Ok
 }
 
+/// Parse a Hedera private key from the passed pem encoded string with the given password.
+///
+/// # Safety
+/// - `pem` must be a valid string
+/// - `password` must be a valid string
+/// - `key` must be a valid for writes according to [*Rust* pointer rules].
+///   The inner pointer need not point to a valid `PrivateKey`, however.
+///
+/// # Errors
+/// - [`Error::KeyParse`] if `pem` is not valid PEM.
+/// - [`Error::KeyParse`] if the type label (`BEGIN XYZ`) is not `ENCRYPTED PRIVATE KEY`.
+/// - [`Error::KeyParse`] if decrypting the private key fails.
+///
+/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
+#[no_mangle]
+pub unsafe extern "C" fn hedera_private_key_from_pem_with_password(
+    pem: *const c_char,
+    password: *const c_char,
+    key: *mut *mut PrivateKey,
+) -> Error {
+    assert!(!key.is_null());
+
+    // safety: function contract requires that pem is a valid `CStr`.
+    let pem = unsafe { CStr::from_ptr(pem) };
+    // safety: function contract requires that password is a valid `CStr`.
+    let password = unsafe { CStr::from_ptr(password) };
+    let parsed = ffi_try!(PrivateKey::from_pem_with_password(pem.to_bytes(), password.to_bytes()));
+
+    let parsed = Box::into_raw(Box::new(parsed));
+    // safety:
+    // function contract requires that `key` points to a valid `*mut *mut PrivateKey`
+    // function contract requires us *not* to inspect the old value.
+    //  ^ and we don't, which is good.
+    unsafe { ptr::write(key, parsed) }
+
+    Error::Ok
+}
+
 /// Return `key`, serialized as der encoded bytes.
 ///
 /// Note: the returned `buf` must be freed via `hedera_bytes_free` in order to prevent a memory leak.
