@@ -18,6 +18,8 @@
  * ‍
  */
 
+use std::collections::HashMap;
+
 use hedera_proto::services;
 use prost::Message;
 
@@ -27,6 +29,7 @@ use crate::{
     FromProtobuf,
     Hbar,
     Tinybar,
+    TokenId,
 };
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
@@ -39,6 +42,16 @@ pub struct AccountBalance {
 
     /// Current balance of the referenced account.
     pub hbars: Hbar,
+
+    /// Token balances for the referenced account.
+    #[deprecated = "use a mirror query"]
+    #[allow(deprecated)]
+    pub tokens: HashMap<TokenId, u64>,
+
+    /// Token decimals for the referenced account.
+    #[deprecated = "use a mirror query"]
+    #[allow(deprecated)]
+    pub token_decimals: HashMap<TokenId, u32>,
 }
 
 impl AccountBalance {
@@ -66,6 +79,7 @@ impl AccountBalance {
 }
 
 impl FromProtobuf<services::CryptoGetAccountBalanceResponse> for AccountBalance {
+    #[allow(deprecated)]
     fn from_protobuf(pb: services::CryptoGetAccountBalanceResponse) -> crate::Result<Self>
     where
         Self: Sized,
@@ -75,7 +89,17 @@ impl FromProtobuf<services::CryptoGetAccountBalanceResponse> for AccountBalance 
 
         let balance = Hbar::from_tinybars(pb.balance as Tinybar);
 
-        Ok(Self { account_id, hbars: balance })
+        let mut tokens = HashMap::with_capacity(pb.token_balances.len());
+        let mut token_decimals = HashMap::with_capacity(pb.token_balances.len());
+
+        for token in pb.token_balances {
+            let token_id = TokenId::from_protobuf(pb_getf!(token, token_id)?)?;
+
+            tokens.insert(token_id, token.balance);
+            token_decimals.insert(token_id, token.decimals);
+        }
+
+        Ok(Self { account_id, hbars: balance, tokens, token_decimals })
     }
 }
 
