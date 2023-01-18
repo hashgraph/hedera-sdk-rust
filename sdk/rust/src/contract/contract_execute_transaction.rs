@@ -24,6 +24,7 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -158,6 +159,20 @@ impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
 impl From<ContractExecuteTransactionData> for AnyTransactionData {
     fn from(transaction: ContractExecuteTransactionData) -> Self {
         Self::ContractExecute(transaction)
+    }
+}
+
+impl FromProtobuf<services::ContractCallTransactionBody> for ContractExecuteTransactionData {
+    fn from_protobuf(pb: services::ContractCallTransactionBody) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(Self {
+            contract_id: Option::from_protobuf(pb.contract_id)?,
+            gas: pb.gas as u64,
+            payable_amount: Hbar::from_tinybars(pb.amount),
+            function_parameters: pb.function_parameters,
+        })
     }
 }
 

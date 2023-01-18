@@ -23,7 +23,7 @@ import XCTest
 @testable import Hedera
 
 public final class ContractFunctionSelectorTests: XCTestCase {
-    func testMiscParams() {
+    internal func testMiscParams() {
         let result = ContractFunctionSelector("foo")
             .addUint8()
             .addInt8()
@@ -46,13 +46,13 @@ public final class ContractFunctionSelectorTests: XCTestCase {
         XCTAssertEqual(result.hexStringEncoded(), "11bcd903")
     }
 
-    func testAddress() {
+    internal func testAddress() {
         let result = ContractFunctionSelector("foo").addAddress().addAddress().addAddressArray().finish()
 
         XCTAssertEqual(result.hexStringEncoded(), "7d48c86d")
     }
 
-    func testFunction() {
+    internal func testFunction() {
         let result = ContractFunctionSelector("foo").addFunction().addFunction().finish()
 
         XCTAssertEqual(result.hexStringEncoded(), "c99c40cd")

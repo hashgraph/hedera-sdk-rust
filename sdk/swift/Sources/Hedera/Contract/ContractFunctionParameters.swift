@@ -18,6 +18,9 @@
  * ‍
  */
 
+// can't get around the file length?
+// swiftlint:disable file_length
+
 import Foundation
 import NumberKit
 
@@ -26,11 +29,11 @@ private struct Argument {
     fileprivate let value: Data
     fileprivate let dynamic: Bool
 
-    fileprivate static func typeName<I: FixedWidthInteger & UnsignedInteger>(for ty: I.Type, _ bits: Int) -> String {
+    fileprivate static func typeName<I: FixedWidthInteger & UnsignedInteger>(for: I.Type, _ bits: Int) -> String {
         "uint\(bits)"
     }
 
-    fileprivate static func typeName<I: FixedWidthInteger & SignedInteger>(for ty: I.Type, _ bits: Int) -> String {
+    fileprivate static func typeName<I: FixedWidthInteger & SignedInteger>(for: I.Type, _ bits: Int) -> String {
         "int\(bits)"
     }
 
@@ -145,6 +148,8 @@ private struct Argument {
     fileprivate static func address<S: StringProtocol>(_ value: S) -> Self {
         return Self(
             typeName: "address",
+            // we intentionally want to fatal error if this happens.
+            // swiftlint:disable:next force_try
             value: leftPad32Bytes(try! decodeAddress(from: value).data, negative: false),
             dynamic: false
         )
@@ -160,8 +165,6 @@ public final class ContractFunctionParameters {
 
     @discardableResult
     private func add(_ arg: Argument) -> Self {
-        print(arg)
-        fflush(stdout)
         self.args.append(arg)
 
         return self
@@ -1248,6 +1251,8 @@ public final class ContractFunctionParameters {
         return add(
             Argument(
                 typeName: "function",
+                // we intentionally want to fatal error if this happens.
+                // swiftlint:disable:next force_try
                 value: rightPad32Bytes(try! decodeAddress(from: address).data + selector),
                 dynamic: false
             )

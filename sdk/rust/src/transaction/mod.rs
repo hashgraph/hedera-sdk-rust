@@ -18,12 +18,14 @@
  * ‍
  */
 
+use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
     Debug,
     Formatter,
 };
 
+use hedera_proto::services;
 use prost::Message;
 use time::Duration;
 
@@ -31,10 +33,12 @@ use crate::execute::{
     execute,
     Execute,
 };
+use crate::protobuf::FromProtobuf;
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Client,
+    Error,
     Hbar,
     Operator,
     PrivateKey,
@@ -47,16 +51,80 @@ use crate::{
 mod any;
 mod execute;
 mod protobuf;
+#[cfg(test)]
+mod tests;
 
-#[cfg(feature = "ffi")]
 pub use any::AnyTransaction;
 #[cfg(feature = "ffi")]
 pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
+#[cfg(feature = "ffi")]
+pub(crate) use execute::execute2;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
+
+#[derive(Clone)]
+pub struct TransactionSources(pub(crate) Box<[services::Transaction]>);
+
+impl TransactionSources {
+    pub(crate) fn sign_all(txs: &mut [services::SignedTransaction], signers: &[AnySigner]) {
+        // todo: don't be `O(nmk)`, we can do `O(m(n+k))` if we know all transactions already have the same signers.
+        for tx in txs {
+            let sig_map = tx.sig_map.get_or_insert_with(services::SignatureMap::default);
+
+            for signer in signers {
+                let pk = signer.public_key().to_bytes_raw();
+
+                if sig_map.sig_pair.iter().any(|it| pk.starts_with(&it.pub_key_prefix)) {
+                    continue;
+                }
+
+                // todo: reuse `pk_bytes` instead of re-serializing them.
+                let sig_pair = execute::SignaturePair::from(signer.sign(&tx.body_bytes));
+
+                sig_map.sig_pair.push(sig_pair.into_protobuf());
+            }
+        }
+    }
+
+    pub(crate) fn sign_with(&self, signers: &[AnySigner]) -> Cow<'_, Self> {
+        if signers.is_empty() {
+            return Cow::Borrowed(self);
+        }
+
+        // todo: avoid the double-collect.
+        let mut signed_transactions: Vec<_> = self
+            .0
+            .iter()
+            .map(|it| {
+                if it.signed_transaction_bytes.is_empty() {
+                    // sources can only be non-none if we were created from `from_bytes`.
+                    // from_bytes ensures that all `sources` have `signed_transaction_bytes`.
+                    unreachable!()
+                } else {
+                    // unreachable: sources can only be non-none if we were created from `from_bytes`.
+                    // from_bytes checks all transaction bodies for equality, which involves desrializing all `signed_transaction_bytes`.
+                    services::SignedTransaction::decode(it.signed_transaction_bytes.as_slice())
+                        .unwrap_or_else(|_| unreachable!())
+                }
+            })
+            .collect();
+
+        Self::sign_all(&mut signed_transactions, signers);
+
+        let transaction_list = signed_transactions
+            .into_iter()
+            .map(|it| services::Transaction {
+                signed_transaction_bytes: it.encode_to_vec(),
+                ..Default::default()
+            })
+            .collect();
+
+        Cow::Owned(Self(transaction_list))
+    }
+}
 
 /// A transaction that can be executed on the Hedera network.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
@@ -70,6 +138,9 @@ where
 
     #[cfg_attr(feature = "ffi", serde(skip))]
     signers: Vec<AnySigner>,
+
+    #[cfg_attr(feature = "ffi", serde(skip))]
+    sources: Option<TransactionSources>,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -127,6 +198,7 @@ where
                 is_frozen: false,
             },
             signers: Vec::new(),
+            sources: None,
         }
     }
 }
@@ -160,11 +232,16 @@ where
 {
     #[cfg(feature = "ffi")]
     pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
-        Self { body, signers }
+        Self { body, signers, sources: None }
     }
 
     pub(crate) fn is_frozen(&self) -> bool {
         self.body.is_frozen
+    }
+
+    #[cfg(feature = "ffi")]
+    pub(crate) fn sources(&self) -> Option<&TransactionSources> {
+        self.sources.as_ref()
     }
 
     /// # Panics
@@ -374,6 +451,12 @@ where
             panic!("Transaction must be frozen to call `to_bytes`");
         }
 
+        if let Some(sources) = &self.sources {
+            let transaction_list = sources.sign_with(&self.signers).0.to_vec();
+
+            return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
+        }
+
         let transaction_id = match self.transaction_id() {
             Some(id) => id,
             None => self
@@ -409,10 +492,7 @@ where
     /// Execute this transaction against the provided client of the Hedera network.
     // todo:
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
-        // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
-        self.freeze_with(Some(client))?;
-
-        execute(client, self, None).await
+        self.execute_with_optional_timeout(client, None).await
     }
 
     pub(crate) async fn execute_with_optional_timeout(
@@ -422,6 +502,10 @@ where
     ) -> crate::Result<TransactionResponse> {
         // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
         self.freeze_with(Some(client))?;
+
+        if let Some(sources) = &self.sources {
+            return self::execute::execute2(client, self, sources, timeout).await;
+        }
 
         execute(client, self, timeout).await
     }
@@ -436,5 +520,160 @@ where
         timeout: std::time::Duration,
     ) -> crate::Result<TransactionResponse> {
         self.execute_with_optional_timeout(client, Some(timeout)).await
+    }
+}
+
+// these impls are on `AnyTransaction`, but they're here instead of in `any` because actually implementing them is only possible here.
+impl AnyTransaction {
+    /// # Examples
+    /// ```
+    /// # fn main() -> hedera::Result<()> {
+    /// use hedera::AnyTransaction;
+    /// let bytes = hex::decode(concat!(
+    ///     "0a522a500a4c0a120a0c0885c8879e0610a8bdd9840312021865120218061880",
+    ///     "94ebdc0322020877320c686920686173686772617068721a0a180a0a0a021802",
+    ///     "108088debe010a0a0a02186510ff87debe0112000a522a500a4c0a120a0c0885",
+    ///     "c8879e0610a8bdd984031202186512021807188094ebdc0322020877320c6869",
+    ///     "20686173686772617068721a0a180a0a0a021802108088debe010a0a0a021865",
+    ///     "10ff87debe011200"
+    /// )).unwrap();
+    /// let tx = AnyTransaction::from_bytes(&bytes)?;
+    /// # let _ = tx;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[allow(deprecated)]
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        let list =
+            hedera_proto::sdk::TransactionList::decode(bytes).map_err(Error::from_protobuf)?;
+
+        let list = if list.transaction_list.is_empty() {
+            Vec::from([services::Transaction::decode(bytes).map_err(Error::from_protobuf)?])
+        } else {
+            list.transaction_list
+        };
+
+        let tmp: Result<Vec<_>, _> = list.iter().map(transaction_body_from_transaction).collect();
+        let tmp = tmp?;
+
+        let node_ids: Result<std::collections::HashSet<_>, _> = tmp
+            .iter()
+            .map(|it| {
+                let node_account_id = it.node_account_id.clone().ok_or_else(|| {
+                    crate::Error::from_protobuf(concat!("unexpected missing `node_account_id`"))
+                })?;
+
+                AccountId::from_protobuf(node_account_id)
+            })
+            .collect();
+
+        let (first, tmp) =
+            tmp.split_first().ok_or_else(|| Error::from_protobuf("no transactions found"))?;
+
+        for it in tmp.iter() {
+            if &first.transaction_id != &it.transaction_id {
+                return Err(Error::from_protobuf("chunked transactions not currently supported"));
+            }
+
+            if !pb_transaction_body_eq(first, it) {
+                return Err(Error::from_protobuf("transaction parts unexpectedly unequal"));
+            }
+        }
+
+        let node_ids: Vec<_> = node_ids?.into_iter().collect();
+
+        // note: this creates the transaction in a frozen state.
+        let mut res = Self::from_protobuf(first.clone())?;
+
+        // note: this doesn't check freeze for obvious reasons.
+        res.body.node_account_ids = Some(node_ids);
+        res.sources = Some(TransactionSources(list.into_boxed_slice()));
+
+        Ok(res)
+    }
+}
+
+/// Returns `true` if lhs == rhs other than `transaction_id` and `node_account_id`, `false` otherwise.
+#[allow(deprecated)]
+fn pb_transaction_body_eq(
+    lhs: &services::TransactionBody,
+    rhs: &services::TransactionBody,
+) -> bool {
+    // destructure one side to ensure we don't miss any fields.
+    let services::TransactionBody {
+        transaction_id: _,
+        node_account_id: _,
+        transaction_fee,
+        transaction_valid_duration,
+        generate_record,
+        memo,
+        data,
+    } = rhs;
+
+    if &lhs.transaction_fee != transaction_fee {
+        return false;
+    }
+
+    if &lhs.transaction_valid_duration != transaction_valid_duration {
+        return false;
+    }
+
+    if &lhs.generate_record != generate_record {
+        return false;
+    }
+
+    if &lhs.memo != memo {
+        return false;
+    }
+
+    if &lhs.data != data {
+        return false;
+    }
+
+    true
+}
+
+impl FromProtobuf<services::Transaction> for AnyTransaction {
+    fn from_protobuf(pb: services::Transaction) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        transaction_body_from_transaction(&pb).and_then(Self::from_protobuf)
+    }
+}
+
+#[allow(deprecated)]
+fn transaction_body_from_transaction(
+    tx: &services::Transaction,
+) -> crate::Result<services::TransactionBody> {
+    if !tx.signed_transaction_bytes.is_empty() {
+        let tx = services::SignedTransaction::decode(&*tx.signed_transaction_bytes)
+            .map_err(Error::from_protobuf)?;
+
+        return services::TransactionBody::decode(&*tx.body_bytes).map_err(Error::from_protobuf);
+    }
+
+    Err(Error::from_protobuf("Transaction had no signed transaction bytes"))
+}
+
+impl FromProtobuf<services::TransactionBody> for AnyTransaction {
+    fn from_protobuf(pb: services::TransactionBody) -> crate::Result<Self>
+    where
+        Self: Sized,
+    {
+        Ok(Transaction {
+            body: TransactionBody {
+                data: AnyTransactionData::from_protobuf(pb_getf!(pb, data)?)?,
+                node_account_ids: None,
+                transaction_valid_duration: pb.transaction_valid_duration.map(Into::into),
+                max_transaction_fee: Some(Hbar::from_tinybars(pb.transaction_fee as i64)),
+                transaction_memo: pb.memo,
+                transaction_id: Some(TransactionId::from_protobuf(pb_getf!(pb, transaction_id)?)?),
+                operator: None,
+                is_frozen: true,
+            },
+            signers: Vec::new(),
+            sources: None,
+        })
     }
 }

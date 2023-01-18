@@ -30,11 +30,23 @@ public final class EthereumTransaction: Transaction {
         self.ethereumData = ethereumData
         self.callDataFileId = callDataFileId
         self.maxGasAllowanceHbar = maxGasAllowanceHbar
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        ethereumData = try container.decodeIfPresent(.ethereumData).map(Data.base64Encoded)
+        callDataFileId = try container.decodeIfPresent(.callDataFileId)
+        maxGasAllowanceHbar = try container.decodeIfPresent(.maxGasAllowanceHbar) ?? 0
+
+        try super.init(from: decoder)
     }
 
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     public var ethereumData: Data? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -54,7 +66,7 @@ public final class EthereumTransaction: Transaction {
     /// the referenced file at time of execution. The ethereumData will need to be
     /// "rehydrated" with the callData for signature validation to pass.
     public var callDataFileId: FileId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -78,7 +90,7 @@ public final class EthereumTransaction: Transaction {
     /// The maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
     public var maxGasAllowanceHbar: UInt64 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

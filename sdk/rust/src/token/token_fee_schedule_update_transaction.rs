@@ -24,7 +24,10 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::token::custom_fees::AnyCustomFee;
 use crate::transaction::{
     AnyTransactionData,
@@ -126,6 +129,17 @@ impl ToTransactionDataProtobuf for TokenFeeScheduleUpdateTransactionData {
 impl From<TokenFeeScheduleUpdateTransactionData> for AnyTransactionData {
     fn from(transaction: TokenFeeScheduleUpdateTransactionData) -> Self {
         Self::TokenFeeScheduleUpdate(transaction)
+    }
+}
+
+impl FromProtobuf<services::TokenFeeScheduleUpdateTransactionBody>
+    for TokenFeeScheduleUpdateTransactionData
+{
+    fn from_protobuf(pb: services::TokenFeeScheduleUpdateTransactionBody) -> crate::Result<Self> {
+        Ok(Self {
+            token_id: Option::from_protobuf(pb.token_id)?,
+            custom_fees: Vec::from_protobuf(pb.custom_fees)?,
+        })
     }
 }
 

@@ -31,12 +31,42 @@ import Foundation
 /// `topicRunningHash`.
 ///
 public final class TopicMessageSubmitTransaction: Transaction {
+    internal init(
+        topicId: TopicId? = nil,
+        message: Data = Data(),
+        initialTransactionId: TransactionId? = nil,
+        chunkTotal: Int = 1,
+        chunkNumber: Int = 1
+    ) {
+        self.topicId = topicId
+        self.message = message
+        self.initialTransactionId = initialTransactionId
+        self.chunkTotal = chunkTotal
+        self.chunkNumber = chunkNumber
+
+        super.init()
+    }
+
     /// Create a new `TopicMessageSubmitTransaction` ready for configuration.
-    public override init() {}
+    public override init() {
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        topicId = try container.decodeIfPresent(.topicId)
+        message = try container.decodeIfPresent(.message).map(Data.base64Encoded) ?? Data()
+        initialTransactionId = try container.decodeIfPresent(.initialTransactionId)
+        chunkTotal = try container.decodeIfPresent(.chunkTotal) ?? 1
+        chunkNumber = try container.decodeIfPresent(.chunkNumber) ?? 1
+
+        try super.init(from: decoder)
+    }
 
     /// The topic ID to submit this message to.
     public var topicId: TopicId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -52,7 +82,7 @@ public final class TopicMessageSubmitTransaction: Transaction {
     /// Message to be submitted.
     /// Max size of the Transaction (including signatures) is 6KiB.
     public var message: Data = Data() {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -69,7 +99,7 @@ public final class TopicMessageSubmitTransaction: Transaction {
     ///
     /// Should get copied to every subsequent chunk in a fragmented message.
     public var initialTransactionId: TransactionId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -85,7 +115,7 @@ public final class TopicMessageSubmitTransaction: Transaction {
     /// The total number of chunks in the message.
     /// Defaults to 1.
     public var chunkTotal: Int = 1 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -101,7 +131,7 @@ public final class TopicMessageSubmitTransaction: Transaction {
     /// The sequence number (from 1 to total) of the current chunk in the message.
     /// Defaults to 1.
     public var chunkNumber: Int = 1 {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

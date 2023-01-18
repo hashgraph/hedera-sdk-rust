@@ -8,7 +8,7 @@ extension FixedWidthInteger {
 
         self = 0
 
-        let _ = withUnsafeMutableBytes(of: &self, { bytes.copyBytes(to: $0) })
+        _ = withUnsafeMutableBytes(of: &self, { bytes.copyBytes(to: $0) })
 
         self = littleEndian
 
@@ -21,7 +21,7 @@ extension FixedWidthInteger {
 
         self = 0
 
-        let _ = withUnsafeMutableBytes(of: &self, { bytes.copyBytes(to: $0) })
+        _ = withUnsafeMutableBytes(of: &self, { bytes.copyBytes(to: $0) })
     }
 
     internal init?(bigEndianBytes bytes: Data) {
@@ -31,7 +31,7 @@ extension FixedWidthInteger {
 
         self = 0
 
-        let _ = withUnsafeMutableBytes(of: &self, { bytes.copyBytes(to: $0) })
+        _ = withUnsafeMutableBytes(of: &self, { bytes.copyBytes(to: $0) })
 
         self = bigEndian
 

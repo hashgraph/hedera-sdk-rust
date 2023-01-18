@@ -25,6 +25,7 @@ use time::Duration;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
@@ -352,6 +353,32 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
 impl From<ContractCreateTransactionData> for AnyTransactionData {
     fn from(transaction: ContractCreateTransactionData) -> Self {
         Self::ContractCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::ContractCreateTransactionBody> for ContractCreateTransactionData {
+    fn from_protobuf(pb: services::ContractCreateTransactionBody) -> crate::Result<Self> {
+        use services::contract_create_transaction_body::InitcodeSource;
+        let (bytecode, bytecode_file_id) = match pb.initcode_source {
+            Some(InitcodeSource::FileId(it)) => (None, Some(FileId::from_protobuf(it)?)),
+            Some(InitcodeSource::Initcode(it)) => (Some(it), None),
+            None => (None, None),
+        };
+
+        Ok(Self {
+            bytecode,
+            bytecode_file_id,
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            gas: pb.gas as u64,
+            initial_balance: Hbar::from_tinybars(pb.initial_balance),
+            auto_renew_period: pb_getf!(pb, auto_renew_period)?.into(),
+            constructor_parameters: pb.constructor_parameters,
+            contract_memo: pb.memo,
+            max_automatic_token_associations: pb.max_automatic_token_associations as u32,
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account_id)?,
+            staked_id: Option::from_protobuf(pb.staked_id)?,
+            decline_staking_reward: pb.decline_reward,
+        })
     }
 }
 

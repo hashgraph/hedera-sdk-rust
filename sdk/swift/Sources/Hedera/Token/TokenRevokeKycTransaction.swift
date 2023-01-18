@@ -27,11 +27,22 @@ public final class TokenRevokeKycTransaction: Transaction {
     ) {
         self.accountId = accountId
         self.tokenId = tokenId
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        accountId = try container.decodeIfPresent(.accountId)
+        tokenId = try container.decodeIfPresent(.tokenId)
+
+        try super.init(from: decoder)
     }
 
     /// The account to have their KYC revoked.
     public var accountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -46,7 +57,7 @@ public final class TokenRevokeKycTransaction: Transaction {
 
     /// The token for which this account will have their KYC revoked.
     public var tokenId: TokenId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

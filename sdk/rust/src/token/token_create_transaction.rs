@@ -28,7 +28,10 @@ use time::{
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::token::custom_fees::AnyCustomFee;
 use crate::token::token_supply_type::TokenSupplyType;
 use crate::token::token_type::TokenType;
@@ -499,6 +502,62 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
 impl From<TokenCreateTransactionData> for AnyTransactionData {
     fn from(transaction: TokenCreateTransactionData) -> Self {
         Self::TokenCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::TokenCreateTransactionBody> for TokenCreateTransactionData {
+    fn from_protobuf(pb: services::TokenCreateTransactionBody) -> crate::Result<Self> {
+        let services::TokenCreateTransactionBody {
+            name,
+            symbol,
+            decimals,
+            initial_supply,
+            treasury,
+            admin_key,
+            kyc_key,
+            freeze_key,
+            wipe_key,
+            supply_key,
+            freeze_default,
+            expiry,
+            auto_renew_account,
+            auto_renew_period,
+            memo,
+            token_type,
+            supply_type,
+            max_supply,
+            fee_schedule_key,
+            custom_fees,
+            pause_key,
+        } = pb;
+
+        let token_type = services::TokenType::from_i32(token_type).unwrap_or_default();
+        let token_supply_type =
+            services::TokenSupplyType::from_i32(supply_type).unwrap_or_default();
+
+        Ok(Self {
+            name,
+            symbol,
+            decimals,
+            initial_supply,
+            treasury_account_id: Option::from_protobuf(treasury)?,
+            admin_key: Option::from_protobuf(admin_key)?,
+            kyc_key: Option::from_protobuf(kyc_key)?,
+            freeze_key: Option::from_protobuf(freeze_key)?,
+            wipe_key: Option::from_protobuf(wipe_key)?,
+            supply_key: Option::from_protobuf(supply_key)?,
+            freeze_default,
+            expiration_time: expiry.map(Into::into),
+            auto_renew_account_id: Option::from_protobuf(auto_renew_account)?,
+            auto_renew_period: auto_renew_period.map(Into::into),
+            token_memo: memo,
+            token_type: TokenType::from_protobuf(token_type)?,
+            token_supply_type: TokenSupplyType::from_protobuf(token_supply_type)?,
+            max_supply: max_supply as u64,
+            fee_schedule_key: Option::from_protobuf(fee_schedule_key)?,
+            custom_fees: Vec::from_protobuf(custom_fees)?,
+            pause_key: Option::from_protobuf(pause_key)?,
+        })
     }
 }
 

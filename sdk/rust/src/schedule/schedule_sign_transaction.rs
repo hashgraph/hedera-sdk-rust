@@ -24,7 +24,10 @@ use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -95,5 +98,11 @@ impl ToTransactionDataProtobuf for ScheduleSignTransactionData {
 impl From<ScheduleSignTransactionData> for AnyTransactionData {
     fn from(transaction: ScheduleSignTransactionData) -> Self {
         Self::ScheduleSign(transaction)
+    }
+}
+
+impl FromProtobuf<services::ScheduleSignTransactionBody> for ScheduleSignTransactionData {
+    fn from_protobuf(pb: services::ScheduleSignTransactionBody) -> crate::Result<Self> {
+        Ok(Self { schedule_id: Option::from_protobuf(pb.schedule_id)? })
     }
 }

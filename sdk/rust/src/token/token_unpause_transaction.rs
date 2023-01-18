@@ -24,7 +24,10 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
-use crate::protobuf::ToProtobuf;
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -105,6 +108,12 @@ impl ToTransactionDataProtobuf for TokenUnpauseTransactionData {
 impl From<TokenUnpauseTransactionData> for AnyTransactionData {
     fn from(transaction: TokenUnpauseTransactionData) -> Self {
         Self::TokenUnpause(transaction)
+    }
+}
+
+impl FromProtobuf<services::TokenUnpauseTransactionBody> for TokenUnpauseTransactionData {
+    fn from_protobuf(pb: services::TokenUnpauseTransactionBody) -> crate::Result<Self> {
+        Ok(Self { token_id: Option::from_protobuf(pb.token)? })
     }
 }
 

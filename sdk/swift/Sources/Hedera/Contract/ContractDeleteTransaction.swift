@@ -22,15 +22,25 @@
 /// a designated receiver.
 public final class ContractDeleteTransaction: Transaction {
     /// Create a new `ContractDeleteTransaction`.
-    public init(
-        contractId: ContractId? = nil
-    ) {
+    public init(contractId: ContractId? = nil) {
         self.contractId = contractId
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        contractId = try container.decodeIfPresent(.contractId)
+        transferAccountId = try container.decodeIfPresent(.transferAccountId)
+        transferContractId = try container.decodeIfPresent(.transferContractId)
+
+        try super.init(from: decoder)
     }
 
     /// The contract to be deleted.
     public var contractId: ContractId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -45,7 +55,7 @@ public final class ContractDeleteTransaction: Transaction {
 
     /// The account ID which will receive all remaining hbars.
     public var transferAccountId: AccountId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }
@@ -60,7 +70,7 @@ public final class ContractDeleteTransaction: Transaction {
 
     /// The contract ID which will receive all remaining hbars.
     public var transferContractId: ContractId? {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen()
         }
     }

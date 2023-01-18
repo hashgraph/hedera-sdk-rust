@@ -31,6 +31,18 @@ public final class SystemDeleteTransaction: Transaction {
         self.fileId = fileId
         self.contractId = contractId
         self.expirationTime = expirationTime
+
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        fileId = try container.decodeIfPresent(.fileId)
+        contractId = try container.decodeIfPresent(.contractId)
+        expirationTime = try container.decodeIfPresent(.expirationTime)
+
+        try super.init(from: decoder)
     }
 
     /// The file ID which should be deleted.

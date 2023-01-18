@@ -24,6 +24,7 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::entity_id::AutoValidateChecksum;
+use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
@@ -143,5 +144,15 @@ impl ToTransactionDataProtobuf for EthereumTransactionData {
 impl From<EthereumTransactionData> for AnyTransactionData {
     fn from(transaction: EthereumTransactionData) -> Self {
         Self::Ethereum(transaction)
+    }
+}
+
+impl FromProtobuf<services::EthereumTransactionBody> for EthereumTransactionData {
+    fn from_protobuf(pb: services::EthereumTransactionBody) -> crate::Result<Self> {
+        Ok(Self {
+            ethereum_data: pb.ethereum_data,
+            call_data_file_id: Option::from_protobuf(pb.call_data)?,
+            max_gas_allowance_hbar: pb.max_gas_allowance as u64,
+        })
     }
 }

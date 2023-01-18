@@ -29,25 +29,36 @@
 ///
 public final class AccountAllowanceApproveTransaction: Transaction {
     private var hbarAllowances: [HbarAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "hbarAllowances")
         }
     }
 
     private var tokenAllowances: [TokenAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "tokenAllowances")
         }
     }
 
     private var nftAllowances: [TokenNftAllowance] = [] {
-        willSet(_it) {
+        willSet {
             ensureNotFrozen(fieldName: "nftAllowances")
         }
     }
 
     /// Create a new `AccountAllowanceApproveTransaction`.
     public override init() {
+        super.init()
+    }
+
+    public required init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        hbarAllowances = try container.decodeIfPresent(.hbarAllowances) ?? []
+        tokenAllowances = try container.decodeIfPresent(.tokenAllowances) ?? []
+        nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []
+
+        try super.init(from: decoder)
     }
 
     /// Approves the hbar allowance.

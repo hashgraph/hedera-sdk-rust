@@ -18,22 +18,31 @@
  * ‍
  */
 
+use std::borrow::Cow;
+
 use async_trait::async_trait;
+use backoff::backoff::Backoff;
+use backoff::ExponentialBackoff;
 use hedera_proto::services;
 use prost::Message;
+use time::OffsetDateTime;
+use tokio::time::sleep;
 use tonic::transport::Channel;
 use tonic::{
     Response,
     Status,
 };
 
+use super::TransactionSources;
 use crate::entity_id::AutoValidateChecksum;
 use crate::execute::Execute;
+use crate::protobuf::FromProtobuf;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
     AccountId,
+    Client,
     Error,
     Hbar,
     HbarUnit,
@@ -47,7 +56,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-struct SignaturePair {
+pub(super) struct SignaturePair {
     signature: Vec<u8>,
     public: PublicKey,
 }
@@ -260,5 +269,164 @@ where
             generate_record: false,
             transaction_fee: max_transaction_fee.to_tinybars() as u64,
         }
+    }
+}
+
+// Called when a transaction has `sources`
+// but also from FFI.
+pub(crate) async fn execute2<D: TransactionExecute>(
+    client: &Client,
+    transaction: &Transaction<D>,
+    sources: &TransactionSources,
+    timeout: Option<std::time::Duration>,
+) -> crate::Result<TransactionResponse> {
+    use crate::Status;
+
+    // fixme: be way more lazy.
+    let sources = sources.sign_with(&transaction.signers);
+
+    // note: the transaction's node indexes have to match the ones in sources, but we don't know what order they're in, so, we have to do it like this
+    // fixme: should `from_bytes` error if a node index is duplicated?
+    let (node_account_ids, hashes) = {
+        let mut node_account_ids = Vec::with_capacity(sources.0.len());
+        let mut hashes = Vec::with_capacity(sources.0.len());
+
+        for source in &*sources.0 {
+            let tx =
+                services::SignedTransaction::decode(source.signed_transaction_bytes.as_slice())
+                    .unwrap();
+
+            hashes.push(TransactionHash::new(&tx.body_bytes));
+
+            let node_account_id = services::TransactionBody::decode(tx.body_bytes.as_slice())
+                .unwrap()
+                .node_account_id
+                .unwrap();
+
+            node_account_ids.push(AccountId::from_protobuf(node_account_id).unwrap());
+        }
+
+        (node_account_ids, hashes)
+    };
+
+    let timeout: Option<std::time::Duration> = timeout.into();
+
+    let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
+        std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
+    });
+
+    // the overall timeout for the backoff starts measuring from here
+    let mut backoff =
+        ExponentialBackoff { max_elapsed_time: Some(timeout), ..ExponentialBackoff::default() };
+    let mut last_error: Option<Error> = None;
+
+    let mut include_unhealty = false;
+
+    // the outer loop continues until we timeout or reach the maximum number of "attempts"
+    // an attempt is counted when we have a successful response from a node that must either
+    // be retried immediately (on a new node) or retried after a backoff.
+    loop {
+        // if no explicit set of node account IDs, we randomly sample 1/3 of all
+        // healthy nodes on the client. this set of healthy nodes can change on
+        // each iteration
+
+        // fixme: if the nodes in the `network` change this invalidates(!), but that doesn't happen at all right now.
+        // this `network` handle ensures that it _doesn't_ change.
+        let network = client.network();
+        let node_indexes = network.node_indexes_for_ids(&node_account_ids)?;
+
+        for (request_index, node_index) in node_indexes.into_iter().enumerate() {
+            if !include_unhealty && !network.is_node_healthy(node_index, OffsetDateTime::now_utc())
+            {
+                continue;
+            }
+
+            let (node_account_id, channel) = network.channel(node_index);
+
+            let response =
+                match transaction.execute(channel, sources.0[request_index].clone()).await {
+                    Ok(response) => response.into_inner(),
+                    Err(status) => {
+                        match status.code() {
+                            tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
+                                // NOTE: this is an "unhealthy" node
+                                network.mark_node_unhealthy(node_index);
+
+                                // try the next node in our allowed list, immediately
+                                last_error = Some(status.into());
+                                continue;
+                            }
+
+                            _ => {
+                                // fail immediately
+                                return Err(status.into());
+                            }
+                        }
+                    }
+                };
+
+            let pre_check_status = Transaction::<D>::response_pre_check_status(&response)?;
+
+            match Status::from_i32(pre_check_status) {
+                Some(status) => match status {
+                    Status::Ok if transaction.should_retry(&response) => {
+                        last_error = Some(
+                            transaction.make_error_pre_check(status, transaction.transaction_id()),
+                        );
+                        break;
+                    }
+
+                    Status::Ok => {
+                        return transaction.make_response(
+                            response,
+                            hashes[request_index],
+                            node_account_id,
+                            transaction.transaction_id(),
+                        );
+                    }
+
+                    Status::Busy | Status::PlatformNotActive => {
+                        // NOTE: this is a "busy" node
+                        // try the next node in our allowed list, immediately
+                        last_error = Some(
+                            transaction.make_error_pre_check(status, transaction.transaction_id()),
+                        );
+                        continue;
+                    }
+
+                    _ if transaction.should_retry_pre_check(status) => {
+                        // conditional retry on pre-check should back-off and try again
+                        last_error = Some(
+                            transaction.make_error_pre_check(status, transaction.transaction_id()),
+                        );
+                        break;
+                    }
+
+                    _ => {
+                        // any other pre-check is an error that the user needs to fix, fail immediately
+                        return Err(
+                            transaction.make_error_pre_check(status, transaction.transaction_id())
+                        );
+                    }
+                },
+
+                None => {
+                    // not sure how to proceed, fail immediately
+                    return Err(Error::ResponseStatusUnrecognized(pre_check_status));
+                }
+            }
+        }
+
+        // we tried each node, suspend execution until the next backoff interval
+        if let Some(duration) = backoff.next_backoff() {
+            sleep(duration).await;
+        } else {
+            // maximum time allowed has elapsed
+            // NOTE: it should be impossible to reach here without capturing at least one error
+            return Err(Error::TimedOut(last_error.unwrap().into()));
+        }
+
+        // we've gone through healthy nodes at least once, now we have to try other nodes.
+        include_unhealty = true;
     }
 }
