@@ -150,7 +150,7 @@ private struct Argument {
             typeName: "address",
             // we intentionally want to fatal error if this happens.
             // swiftlint:disable:next force_try
-            value: leftPad32Bytes(try! decodeAddress(from: value).data, negative: false),
+            value: leftPad32Bytes(try! SolidityAddress(parsing: value).data, negative: false),
             dynamic: false
         )
     }
@@ -1253,7 +1253,7 @@ public final class ContractFunctionParameters {
                 typeName: "function",
                 // we intentionally want to fatal error if this happens.
                 // swiftlint:disable:next force_try
-                value: rightPad32Bytes(try! decodeAddress(from: address).data + selector),
+                value: rightPad32Bytes(try! SolidityAddress(parsing: address).data + selector),
                 dynamic: false
             )
         )
@@ -1301,18 +1301,6 @@ public final class ContractFunctionParameters {
 
         return staticArgs + dynamicArgs
     }
-}
-
-private func decodeAddress<S: StringProtocol>(from description: S) throws -> EvmAddress {
-    let description = description.stripPrefix("0x") ?? description[...]
-
-    guard let bytes = Data(hexEncoded: description) else {
-        // todo: better error message
-        throw HError(kind: .basicParse, description: "invalid evm address")
-    }
-
-    return try EvmAddress(bytes)
-
 }
 
 private func leftPad32Bytes(_ bytes: Data, negative: Bool) -> Data {

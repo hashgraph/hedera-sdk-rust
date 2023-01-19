@@ -37,9 +37,8 @@ public struct NftId: Codable, LosslessStringConvertible, ExpressibleByStringLite
 
     private init<S: StringProtocol>(parsing description: S) throws {
         guard let (tokenId, serial) = description.splitOnce(on: "/") ?? description.splitOnce(on: "@") else {
-            throw HError(
-                kind: .basicParse,
-                description: "unexpected NftId format - expected [tokenId]/[serialSumber] or [tokenId]@[serialNumber]")
+            throw HError.basicParse(
+                "unexpected NftId format - expected [tokenId]/[serialSumber] or [tokenId]@[serialNumber]")
         }
 
         self.tokenId = try .fromString(tokenId)

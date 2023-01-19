@@ -5,7 +5,7 @@ public struct EvmAddress: CustomStringConvertible, LosslessStringConvertible, Ex
 
     internal init(_ data: Data) throws {
         guard data.count == 20 else {
-            throw HError(kind: .basicParse, description: "expected evm address to have 20 bytes, it had \(data.count)")
+            throw HError.basicParse("expected evm address to have 20 bytes, it had \(data.count)")
         }
 
         self.data = data
@@ -13,12 +13,12 @@ public struct EvmAddress: CustomStringConvertible, LosslessStringConvertible, Ex
 
     internal init<S: StringProtocol>(parsing description: S) throws {
         guard let description = description.stripPrefix("0x") else {
-            throw HError(kind: .basicParse, description: "expected evm address to have `0x` prefix")
+            throw HError.basicParse("expected evm address to have `0x` prefix")
         }
 
         guard let bytes = Data(hexEncoded: description) else {
             // todo: better error message
-            throw HError(kind: .basicParse, description: "invalid evm address")
+            throw HError.basicParse("invalid evm address")
         }
 
         try self.init(bytes)

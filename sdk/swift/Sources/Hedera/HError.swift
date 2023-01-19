@@ -164,6 +164,10 @@ public struct HError: Error, CustomStringConvertible {
         description = lastErrorMessage()!
     }
 
+    internal static func basicParse(_ description: String) -> Self {
+        Self(kind: .basicParse, description: description)
+    }
+
     internal static func throwing(error: HederaError) throws {
         if let err = Self(error) {
             throw err

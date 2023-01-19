@@ -5,7 +5,7 @@ internal struct SolidityAddress: CustomStringConvertible {
 
     internal init(_ data: Data) throws {
         guard data.count == 20 else {
-            throw HError(kind: .basicParse, description: "expected evm address to have 20 bytes, it had \(data.count)")
+            throw HError.basicParse("expected evm address to have 20 bytes, it had \(data.count)")
         }
 
         self.data = data
@@ -14,7 +14,7 @@ internal struct SolidityAddress: CustomStringConvertible {
     internal init<E: EntityId>(_ id: E) throws {
         guard let shard = UInt32(exactly: id.shard) else {
             // todo: use a proper error kind
-            throw HError(kind: .basicParse, description: "Shard too big for `toSolidityAddress`")
+            throw HError.basicParse("Shard too big for `toSolidityAddress`")
         }
 
         self.data = (shard.bigEndianBytes + id.realm.bigEndianBytes + id.num.bigEndianBytes)
@@ -25,7 +25,7 @@ internal struct SolidityAddress: CustomStringConvertible {
 
         guard let bytes = Data(hexEncoded: description) else {
             // todo: better error message
-            throw HError(kind: .basicParse, description: "invalid solidity address")
+            throw HError.basicParse("invalid solidity address")
         }
 
         try self.init(bytes)

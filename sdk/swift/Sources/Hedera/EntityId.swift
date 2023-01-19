@@ -303,8 +303,7 @@ internal enum PartialEntityId<S> {
         case .some((let shard, let rest)):
             // `shard.realm.num` format
             guard let (realm, rest) = rest.splitOnce(on: ".") else {
-                throw HError(
-                    kind: .basicParse, description: "expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
+                throw HError.basicParse("expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
             }
 
             let last: S
@@ -315,7 +314,7 @@ internal enum PartialEntityId<S> {
                 if let cs = Checksum(String(cs)) {
                     checksum = cs
                 } else {
-                    throw HError(kind: .basicParse, description: "Invalid checksum string \(cs)")
+                    throw HError.basicParse("Invalid checksum string \(cs)")
                 }
 
             case .none:
@@ -346,8 +345,7 @@ internal enum PartialEntityId<S> {
         case .long(let shard, let realm, last: let num, let checksum):
             return E(shard: shard, realm: realm, num: try UInt64(parsing: num), checksum: checksum)
         case .other(let description):
-            throw HError(
-                kind: .basicParse, description: "expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
+            throw HError.basicParse("expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
         }
     }
 }

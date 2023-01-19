@@ -71,8 +71,7 @@ public struct AccountId: EntityId, ValidateChecksums {
                 self.init(shard: shard, realm: realm, num: num, checksum: checksum)
             } else {
                 guard checksum == nil else {
-                    throw HError(
-                        kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<alias>`")
+                    throw HError.basicParse("checksum not supported with `<shard>.<realm>.<alias>`")
                 }
 
                 // might have `evmAddress`

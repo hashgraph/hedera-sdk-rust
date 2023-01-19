@@ -41,30 +41,24 @@ public struct ContractId: EntityId {
             } else {
                 // might have `evmAddress`
                 guard let evmAddress = Data(hexEncoded: last.stripPrefix("0x") ?? last) else {
-                    throw HError(
-                        kind: .basicParse,
-                        description:
-                            "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
+                    throw HError.basicParse(
+                        "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
                 }
 
-                if evmAddress.count != 20 {
-                    throw HError(
-                        kind: .basicParse,
-                        description: "expected `20` byte evm address, got `\(evmAddress.count)` bytes")
+                guard evmAddress.count == 20 else {
+                    throw HError.basicParse("expected `20` byte evm address, got `\(evmAddress.count)` bytes")
                 }
 
                 guard checksum == nil else {
-                    throw HError(
-                        kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<evmAddress>`")
+                    throw HError.basicParse("checksum not supported with `<shard>.<realm>.<evmAddress>`")
                 }
 
                 self.init(shard: shard, realm: realm, evmAddress: evmAddress)
             }
 
         case .other(let description):
-            throw HError(
-                kind: .basicParse,
-                description: "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
+            throw HError.basicParse(
+                "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
         }
     }
 
