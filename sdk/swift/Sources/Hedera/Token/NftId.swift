@@ -22,7 +22,7 @@ import CHedera
 import Foundation
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
-public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
+public struct NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
     /// The (non-fungible) token of which this NFT is an instance.
     public let tokenId: TokenId
 
@@ -35,7 +35,7 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         self.serial = serial
     }
 
-    private convenience init(parsing description: String) throws {
+    private init(parsing description: String) throws {
         var shard: UInt64 = 0
         var realm: UInt64 = 0
         var num: UInt64 = 0
@@ -50,16 +50,16 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         try self.init(parsing: description)
     }
 
-    public required convenience init?(_ description: String) {
+    public init?(_ description: String) {
         try? self.init(parsing: description)
     }
 
-    public required convenience init(stringLiteral value: StringLiteralType) {
+    public init(stringLiteral value: StringLiteralType) {
         // swiftlint:disable:next force_try
         try! self.init(parsing: value)
     }
 
-    public required convenience init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
@@ -88,10 +88,6 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         let size = hedera_nft_id_to_bytes(tokenId.shard, tokenId.realm, tokenId.num, serial, &buf)
 
         return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-    }
-
-    public static func == (lhs: NftId, rhs: NftId) -> Bool {
-        lhs.serial == rhs.serial && lhs.tokenId == rhs.tokenId
     }
 
     public var description: String {
