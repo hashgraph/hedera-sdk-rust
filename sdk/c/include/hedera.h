@@ -324,18 +324,6 @@ bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
  */
 void hedera_client_free(struct HederaClient *client);
 
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_contract_log_info_from_bytes(const uint8_t *bytes,
-                                                     size_t bytes_size,
-                                                     char **s);
-
-enum HederaError hedera_contract_log_info_to_bytes(const char *s, uint8_t **buf, size_t *buf_size);
-
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,
                                            uint8_t **result_out);

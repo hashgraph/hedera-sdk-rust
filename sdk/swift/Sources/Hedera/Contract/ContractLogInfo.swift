@@ -1,5 +1,5 @@
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The log information for an event returned by a smart contract function call.
 /// One function call may return several such events.
@@ -17,13 +17,11 @@ public struct ContractLogInfo: Equatable {
     public let data: Data
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(fromProtobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
@@ -38,7 +36,7 @@ extension ContractLogInfo: Codable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        contractId = try container.decode(ContractId.self, forKey: .contractId)
+        contractId = try container.decode(.contractId)
         bloom = try Data(base64Encoded: container.decode(String.self, forKey: .bloom))!
         topics = try container.decode([String].self, forKey: .topics).map { Data(base64Encoded: $0)! }
         data = try Data(base64Encoded: container.decode(String.self, forKey: .data))!
@@ -54,7 +52,24 @@ extension ContractLogInfo: Codable {
     }
 }
 
-extension ContractLogInfo: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_contract_log_info_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_contract_log_info_to_bytes }
+extension ContractLogInfo: TryProtobufCodable {
+    typealias Protobuf = Proto_ContractLoginfo
+
+    init(fromProtobuf proto: Protobuf) throws {
+        self.init(
+            contractId: try .fromProtobuf(proto.contractID),
+            bloom: proto.bloom,
+            topics: proto.topic,
+            data: proto.data
+        )
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.contractID = contractId.toProtobuf()
+            proto.bloom = bloom
+            proto.topic = topics
+            proto.data = data
+        }
+    }
 }
