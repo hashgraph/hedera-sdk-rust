@@ -27,7 +27,6 @@ import Foundation
 ///
 /// When the schedule has collected enough signing keys to satisfy the schedule's signing
 /// requirements, the schedule can be executed.
-///
 public final class ScheduleCreateTransaction: Transaction {
     /// Create a new `ScheduleCreateTransaction`.
     public init(

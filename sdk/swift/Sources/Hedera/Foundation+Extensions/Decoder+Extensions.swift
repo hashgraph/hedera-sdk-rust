@@ -1,5 +1,3 @@
-import Foundation
-
 extension KeyedDecodingContainer {
     internal func decodeIfPresent<T: Decodable>(_ key: Key) throws -> T? {
         try decodeIfPresent(T.self, forKey: key)
