@@ -1373,15 +1373,6 @@ enum HederaError hedera_network_version_info_from_bytes(const uint8_t *bytes,
 size_t hedera_network_version_info_to_bytes(struct HederaNetworkVersionInfo info, uint8_t **buf);
 
 /**
- * Parse a Hedera `NftId` from the passed string.
- */
-enum HederaError hedera_nft_id_from_string(const char *s,
-                                           uint64_t *token_id_shard,
-                                           uint64_t *token_id_realm,
-                                           uint64_t *token_id_num,
-                                           uint64_t *serial);
-
-/**
  * Parse a Hedera `NftId` from the passed bytes.
  */
 enum HederaError hedera_nft_id_from_bytes(const uint8_t *bytes,

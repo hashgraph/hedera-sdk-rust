@@ -35,15 +35,15 @@ public struct NftId: Codable, LosslessStringConvertible, ExpressibleByStringLite
         self.serial = serial
     }
 
-    private init(parsing description: String) throws {
-        var shard: UInt64 = 0
-        var realm: UInt64 = 0
-        var num: UInt64 = 0
-        var serial: UInt64 = 0
+    private init<S: StringProtocol>(parsing description: S) throws {
+        guard let (tokenId, serial) = description.splitOnce(on: "/") ?? description.splitOnce(on: "@") else {
+            throw HError(
+                kind: .basicParse,
+                description: "unexpected NftId format - expected [tokenId]/[serialSumber] or [tokenId]@[serialNumber]")
+        }
 
-        try HError.throwing(error: hedera_nft_id_from_string(description, &shard, &realm, &num, &serial))
-
-        self.init(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
+        self.tokenId = try .fromString(tokenId)
+        self.serial = try UInt64(parsing: serial)
     }
 
     public static func fromString(_ description: String) throws -> Self {

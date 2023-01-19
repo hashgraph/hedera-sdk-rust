@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::os::raw::c_char;
-use std::str::FromStr;
 use std::{
     ptr,
     slice,
@@ -28,38 +26,10 @@ use std::{
 use libc::size_t;
 
 use crate::ffi::error::Error;
-use crate::ffi::util::cstr_from_ptr;
 use crate::{
     NftId,
     TokenId,
 };
-
-/// Parse a Hedera `NftId` from the passed string.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_nft_id_from_string(
-    s: *const c_char,
-    token_id_shard: *mut u64,
-    token_id_realm: *mut u64,
-    token_id_num: *mut u64,
-    serial: *mut u64,
-) -> Error {
-    assert!(!token_id_shard.is_null());
-    assert!(!token_id_realm.is_null());
-    assert!(!token_id_num.is_null());
-    assert!(!serial.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(NftId::from_str(&s));
-
-    unsafe {
-        ptr::write(token_id_shard, parsed.token_id.shard);
-        ptr::write(token_id_realm, parsed.token_id.realm);
-        ptr::write(token_id_num, parsed.token_id.num);
-        ptr::write(serial, parsed.serial);
-    }
-
-    Error::Ok
-}
 
 /// Parse a Hedera `NftId` from the passed bytes.
 #[no_mangle]
