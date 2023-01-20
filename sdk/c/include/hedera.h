@@ -1520,14 +1520,6 @@ enum HederaError hedera_transaction_execute(const struct HederaClient *client,
  */
 void hedera_transaction_sources_free(struct HederaTransactionSources *sources);
 
-/**
- * # Safety
- * - `s` must be a valid string
- * - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
- */
-enum HederaError hedera_transaction_id_from_string(const char *s,
-                                                   struct HederaTransactionId *transation_id);
-
 enum HederaError hedera_transaction_id_from_bytes(const uint8_t *bytes,
                                                   size_t bytes_size,
                                                   struct HederaTransactionId *transation_id);

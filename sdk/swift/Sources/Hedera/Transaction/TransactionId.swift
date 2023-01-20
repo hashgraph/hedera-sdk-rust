@@ -39,11 +39,36 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     private init(parsing description: String) throws {
-        var id = HederaTransactionId()
+        // this is extra painful in swift...
+        let expected = "expecting <accountId>@<validStart>[?scheduled][/<nonce>]"
+        // parse route:
+        // split_once('@') -> ("<accountId>", "<validStart>[?scheduled][/<nonce>]")
+        // rsplit_once('/') -> Either ("<validStart>[?scheduled]", "<nonce>") or ("<validStart>[?scheduled]")
+        // .strip_suffix("?scheduled") -> ("<validStart>") and the suffix was either removed or not.
+        // (except it's better ux to do a `split_once('?')`... Except it doesn't matter that much)
 
-        try HError.throwing(error: hedera_transaction_id_from_string(description, &id))
+        guard let tmp = description.splitOnce(on: "@") else {
+            throw HError.basicParse(expected)
+        }
 
-        self.init(unsafeFromCHedera: id)
+        let accountId = try AccountId(parsing: tmp.0)
+
+        let (description, nonceStr) = tmp.1.rsplitOnce(on: "/") ?? (tmp.0, nil)
+
+        let nonce = try nonceStr.map(Int32.init(parsing:))
+
+        let (validStartStr, scheduled) =
+            description.stripSuffix("?scheduled").map { ($0, true) } ?? (description, false)
+
+        guard let (validStartSeconds, validStartNanos) = validStartStr.splitOnce(on: ".") else {
+            throw HError.basicParse(expected)
+        }
+
+        let validStart = try Timestamp(
+            seconds: UInt64(parsing: validStartSeconds), subSecondNanos: UInt32(parsing: validStartNanos)
+        )
+
+        self.init(accountId: accountId, validStart: validStart, scheduled: scheduled, nonce: nonce)
     }
 
     public static func fromString(_ description: String) throws -> Self {

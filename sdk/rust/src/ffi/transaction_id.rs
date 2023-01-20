@@ -1,11 +1,8 @@
-use std::ffi::c_char;
 use std::ptr;
-use std::str::FromStr;
 
 use libc::size_t;
 
 use super::error::Error;
-use crate::ffi::util::cstr_from_ptr;
 use crate::protobuf::ToProtobuf;
 
 #[repr(C)]
@@ -66,27 +63,6 @@ impl<'a> ToProtobuf for RefTransactionId<'a> {
             nonce: self.nonce,
         }
     }
-}
-// this function mostly exists because Rust parsing is nicer, has better errors, etc.
-// plus the module is needed anyway for to/from bytes. So, might as well.
-/// # Safety
-/// - `s` must be a valid string
-/// - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
-#[no_mangle]
-pub unsafe extern "C" fn hedera_transaction_id_from_string(
-    s: *const c_char,
-    transation_id: *mut TransactionId,
-) -> Error {
-    assert!(!transation_id.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(crate::TransactionId::from_str(&s)).into();
-
-    unsafe {
-        ptr::write(transation_id, parsed);
-    }
-
-    Error::Ok
 }
 
 #[no_mangle]

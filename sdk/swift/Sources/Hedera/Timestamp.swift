@@ -17,6 +17,15 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
         self.subSecondNanos = UInt32(nanos % nanosPerSecond)
     }
 
+    internal init(seconds: UInt64, subSecondNanos: UInt32) throws {
+        if subSecondNanos >= nanosPerSecond {
+            throw HError.basicParse("Timestamp overflow (\(subSecondNanos) >= \(nanosPerSecond))")
+        }
+
+        self.seconds = seconds + UInt64(subSecondNanos) / nanosPerSecond
+        self.subSecondNanos = subSecondNanos % UInt32(nanosPerSecond)
+    }
+
     /// Convert from a ``Date`` to a `Timestamp`
     ///
     /// `Date` is stored as ``Double`` seconds, so, it may not have full precision.
