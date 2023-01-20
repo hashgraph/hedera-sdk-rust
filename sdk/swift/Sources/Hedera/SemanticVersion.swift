@@ -54,26 +54,16 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
 
     // internal API, do NOT expose.
     private static func fromString(_ description: String) throws -> Self {
-        var csemver = HederaSemanticVersion()
-
-        try HError.throwing(error: hedera_semantic_version_from_string(description, &csemver))
-
-        return Self(unsafeFromCHedera: csemver)
+        try Self(parsing: description)
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:allow:next force_try
+        try! self.init(parsing: value)
     }
 
-    // semver parsing is shockingly hard. So the FFI really does carry its weight.
     public init?(_ description: String) {
-        let res = try? Self.fromString(description)
-
-        if res == nil {
-            return nil
-        }
-
-        self = res!
+        try? self.init(parsing: description)
     }
 
     internal init(unsafeFromCHedera hedera: HederaSemanticVersion) {
@@ -124,5 +114,106 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
 
     public func toString() -> String {
         description
+    }
+}
+
+private func isValidIdentChar(_ ch: Character) -> Bool {
+    (ch.isASCII && (ch.isLetter || ch.isNumber)) || ch == "-"
+}
+
+private func isNumericWithLeadingZero<S: StringProtocol>(_ string: S) -> Bool {
+    guard let string = string.stripPrefix("0") else {
+        return false
+    }
+
+    if string.isEmpty {
+        return false
+    }
+
+    return string.allSatisfy { char in char.isASCII && char.isNumber }
+}
+
+private func parseVersion<S: StringProtocol>(_ string: S, section: StaticString) throws -> UInt32 {
+    if isNumericWithLeadingZero(string) {
+        throw HError.basicParse("semver section `\(section)` starts with leading 0: `\(string)`")
+    }
+
+    return try UInt32(parsing: string)
+}
+
+private func parsePrerelease<S: StringProtocol>(_ string: S) throws -> S {
+    if string.isEmpty {
+        throw HError.basicParse("semver with empty prerelease")
+    }
+
+    for identifier: S.SubSequence in string.split(separator: ".") {
+        if identifier.isEmpty {
+            throw HError.basicParse("semver with empty -pre identifier")
+        }
+
+        if !identifier.allSatisfy(isValidIdentChar) {
+            throw HError.basicParse("semver with invalid identifier for the -pre section: `\(identifier)`")
+        }
+
+        if isNumericWithLeadingZero(string) {
+            throw HError.basicParse("numeric pre-release identifier has leading zero: `\(identifier)`")
+        }
+    }
+
+    return string
+}
+
+private func parseBuild<S: StringProtocol>(_ string: S) throws -> S {
+    if string.isEmpty {
+        throw HError.basicParse("semver with empty build")
+    }
+
+    for identifier: S.SubSequence in string.split(separator: ".") {
+        if identifier.isEmpty {
+            throw HError.basicParse("semver with empty build-section identifier")
+        }
+
+        if !identifier.allSatisfy(isValidIdentChar) {
+            throw HError.basicParse("semver with invalid identifier for the build section: `\(identifier)`")
+        }
+    }
+
+    return string
+}
+
+extension SemanticVersion {
+    // its probably useless doing strict parsing when Hedera probably accepts loose parsing anyway, but lets at least *try* not to make it worse.
+    fileprivate init<S: StringProtocol>(parsing description: S) throws {
+        let parts = description.split(separator: ".", maxSplits: 3)
+
+        guard parts.count == 3 else {
+            throw HError.basicParse("expected `major.minor.patch` for semver")
+        }
+
+        let majorStr = parts[0]
+        let minorStr = parts[1]
+        var rest = parts[2]
+        let buildStr: S.SubSequence?
+
+        // while it seems like this is a weird order,
+        // it actually makes more sense than `pre` first,
+        // because `pre` is in the middle of the string.
+        (rest, buildStr) = rest.splitOnce(on: "+") ?? (rest, nil)
+
+        let (patchStr, preStr) = rest.splitOnce(on: "-") ?? (rest, nil)
+
+        let major = try parseVersion(majorStr, section: "major")
+        let minor = try parseVersion(minorStr, section: "minor")
+        let patch = try parseVersion(patchStr, section: "patch")
+        let pre = try preStr.map(parsePrerelease) ?? ""
+        let build = try buildStr.map(parseBuild) ?? ""
+
+        self.init(
+            major: major,
+            minor: minor,
+            patch: patch,
+            prerelease: String(pre),
+            build: String(build)
+        )
     }
 }

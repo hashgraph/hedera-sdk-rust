@@ -38,6 +38,7 @@ public final class SemanticVersionDescriptionTests: XCTestCase {
     public func testWithPrereleaseAndBuild() {
         XCTAssertEqual(
             SemanticVersion(major: 0, minor: 1, patch: 4, prerelease: "0.9a2", build: "sha.25531c").description,
-            "0.1.4-0.9a2+sha.25531c")
+            "0.1.4-0.9a2+sha.25531c"
+        )
     }
 }

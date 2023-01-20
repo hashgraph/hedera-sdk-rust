@@ -94,9 +94,9 @@ fn parse_version(s: &str, name: &str) -> crate::Result<u32> {
     s.parse().map_err(Error::basic_parse)
 }
 
-fn parse_prerelease(s: &str) -> crate::Result<String> {
+fn parse_prerelease(s: &str) -> crate::Result<&str> {
     if s.is_empty() {
-        return Err(Error::basic_parse("semver with empty rerelease"));
+        return Err(Error::basic_parse("semver with empty prerelease"));
     }
 
     for identifier in s.split('.') {
@@ -117,10 +117,10 @@ fn parse_prerelease(s: &str) -> crate::Result<String> {
         }
     }
 
-    Ok(s.to_owned())
+    Ok(s)
 }
 
-fn parse_build(s: &str) -> crate::Result<String> {
+fn parse_build(s: &str) -> crate::Result<&str> {
     if s.is_empty() {
         return Err(Error::basic_parse("semver with empty build"));
     }
@@ -132,12 +132,12 @@ fn parse_build(s: &str) -> crate::Result<String> {
 
         if !identifier.chars().all(is_valid_ident_char) {
             return Err(Error::basic_parse(
-                "semver with invalid identifier for the build section: `{identifier}",
+                "semver with invalid identifier for the build section: `{identifier}`",
             ));
         }
     }
 
-    Ok(s.to_owned())
+    Ok(s)
 }
 
 impl FromStr for SemanticVersion {
@@ -170,17 +170,19 @@ impl FromStr for SemanticVersion {
                 let minor = parse_version(minor, "minor")?;
                 let patch = parse_version(patch, "patch")?;
 
-                let prerelease = match pre {
-                    Some(it) => parse_prerelease(it)?,
-                    None => String::new(),
-                };
+                let prerelease = pre.map(parse_prerelease).transpose()?.unwrap_or_default();
+                let build = build.map(parse_build).transpose()?.unwrap_or_default();
 
-                let build = match build {
-                    Some(it) => parse_build(it)?,
-                    None => String::new(),
-                };
-
-                Ok(Self { major, minor, patch, prerelease, build })
+                // call to_owned *after* both are definitely not going to error
+                // saves 1 allocation when `pre` exists and `build` is invalid.
+                // A very *minor* optimization, but like, it's free.
+                Ok(Self {
+                    major,
+                    minor,
+                    patch,
+                    prerelease: prerelease.to_owned(),
+                    build: build.to_owned(),
+                })
             }
             _ => Err(Error::basic_parse("expected major.minor.patch for semver")),
         }
