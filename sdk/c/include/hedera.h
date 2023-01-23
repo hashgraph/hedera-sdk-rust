@@ -1120,15 +1120,6 @@ enum HederaError hedera_semantic_version_from_string(const char *s,
                                                      struct HederaSemanticVersion *semver);
 
 /**
- * Subscribe with this request against the provided client of the Hedera network.
- * On successful completion, calls `callback` with `ERROR_OK` and a `NULL` `message`.
- */
-enum HederaError hedera_subscribe(const struct HederaClient *client,
-                                  const char *request,
-                                  const void *context,
-                                  void (*callback)(const void *context, enum HederaError err, const char *message));
-
-/**
  * Convert the provided transaction to protobuf-encoded bytes.
  *
  * # Safety

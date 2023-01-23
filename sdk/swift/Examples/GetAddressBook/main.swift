@@ -31,7 +31,7 @@ public enum Program {
         print("Getting address book for \(env.networkName)")
 
         let results = try await NodeAddressBookQuery()
-            .setFileId(FileId.addressBook)
+            .fileId(.addressBook)
             .execute(client)
 
         print(results)

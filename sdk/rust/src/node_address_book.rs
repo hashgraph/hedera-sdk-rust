@@ -7,8 +7,6 @@ use crate::protobuf::{
 use crate::NodeAddress;
 
 /// A list of nodes and their metadata.
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct NodeAddressBook {
     /// all the nodes this address book contains.
     pub node_addresses: Vec<NodeAddress>,

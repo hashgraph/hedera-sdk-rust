@@ -33,7 +33,6 @@ mod nft_id;
 mod runtime;
 mod semantic_version;
 mod signer;
-mod subscribe;
 mod timestamp;
 mod transaction;
 mod transaction_id;

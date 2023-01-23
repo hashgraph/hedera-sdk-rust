@@ -65,6 +65,8 @@ public struct HError: Error, CustomStringConvertible {
     public let description: String
     public let kind: ErrorKind
 
+    internal static let timedOut = Self(kind: .timedOut, description: "Operation timed out")
+
     internal init(kind: ErrorKind, description: String) {
         self.kind = kind
         self.description = description

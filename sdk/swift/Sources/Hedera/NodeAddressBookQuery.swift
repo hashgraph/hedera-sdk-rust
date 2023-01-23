@@ -18,37 +18,72 @@
  * ‍
  */
 
+import AnyAsyncSequence
 import Foundation
+import GRPC
+import HederaProtobufs
 
-public class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
-    private var fileId: FileId
-    private var limit: UInt32
+public final class NodeAddressBookQuery: MirrorQuery {
+    public typealias Item = NodeAddress
+    public typealias Response = NodeAddressBook
 
-    public init(_ fileId: FileId = FileId.addressBook, _ limit: UInt32 = 0) {
+    public required init(_ fileId: FileId = .addressBook, _ limit: UInt32 = 0) {
         self.fileId = fileId
         self.limit = limit
     }
 
-    public func getFileId() -> FileId {
-        fileId
-    }
+    public var fileId: FileId
 
-    public func setFileId(_ fileId: FileId) -> Self {
+    @discardableResult
+    public func fileId(_ fileId: FileId) -> Self {
         self.fileId = fileId
         return self
     }
 
-    public func getLimit() -> UInt32 {
-        limit
-    }
+    public var limit: UInt32
 
-    public func setLimit(_ limit: UInt32) -> Self {
+    @discardableResult
+    public func limit(_ limit: UInt32) -> Self {
         self.limit = limit
         return self
     }
 
-    internal override func validateChecksums(on ledgerId: LedgerId) throws {
-        try fileId.validateChecksums(on: ledgerId)
-        try super.validateChecksums(on: ledgerId)
+    public func subscribe(_ client: Client, _ timeout: TimeInterval? = nil) -> AnyAsyncSequence<NodeAddress> {
+        subscribeInner(client, timeout)
+    }
+
+    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> NodeAddressBook {
+        try await executeInner(client, timeout)
+    }
+}
+
+extension NodeAddressBookQuery: ToProtobuf {
+    internal typealias Protobuf = Com_Hedera_Mirror_Api_Proto_AddressBookQuery
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.fileID = fileId.toProtobuf()
+            proto.limit = Int32(limit)
+        }
+    }
+}
+
+extension NodeAddressBookQuery: MirrorRequest {
+    internal typealias GrpcItem = NodeAddress.Protobuf
+
+    internal func connect(channel: GRPCChannel) -> GRPCAsyncResponseStream<GrpcItem> {
+        let request = self.toProtobuf()
+
+        return HederaProtobufs.Com_Hedera_Mirror_Api_Proto_NetworkServiceAsyncClient(channel: channel).getNodes(request)
+    }
+
+    internal static func collect<S>(_ stream: S) async throws -> Response
+    where S: AsyncSequence, Item.Protobuf == S.Element {
+        var items: [Item] = []
+        for try await proto in stream {
+            items.append(try Item.fromProtobuf(proto))
+        }
+
+        return Response(nodeAddresses: items)
     }
 }

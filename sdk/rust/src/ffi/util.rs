@@ -21,14 +21,9 @@
 use std::borrow::Cow;
 use std::ffi::CStr;
 use std::os::raw::c_char;
-use std::{
-    ptr,
-    slice,
-};
+use std::ptr;
 
 use libc::size_t;
-
-use crate::ffi::error::Error;
 
 pub(crate) unsafe fn cstr_from_ptr<'a>(ptr: *const c_char) -> Cow<'a, str> {
     assert!(!ptr.is_null());
