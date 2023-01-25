@@ -78,7 +78,7 @@ impl NodeAddressBookQueryData {
 
 impl Default for NodeAddressBookQueryData {
     fn default() -> Self {
-        Self { file_id: FileId::from(102), limit: 0 }
+        Self { file_id: FileId::ADDRESS_BOOK, limit: 0 }
     }
 }
 

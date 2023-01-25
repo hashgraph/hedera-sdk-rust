@@ -21,18 +21,12 @@
 use std::time::Duration;
 
 use clap::Parser;
-use hedera::{AccountId, Client, FileContentsQuery, FileId, PrivateKey};
+use hedera::{Client, NodeAddressBookQuery};
 
 #[derive(Parser, Debug)]
 struct Args {
-    #[clap(long, env)]
-    operator_account_id: AccountId,
-
-    #[clap(long, env)]
-    operator_key: PrivateKey,
-
-    #[clap(long, env, default_value = "0.0.34945328")]
-    file: FileId,
+    #[clap(long, env, default_value = "testnet")]
+    hedera_network: String,
 }
 
 #[tokio::main]
@@ -40,20 +34,16 @@ async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
     let args = Args::parse();
 
-    let client = Client::for_testnet();
+    let client = Client::for_name(&args.hedera_network)?;
 
-    client.set_operator(args.operator_account_id, args.operator_key);
-
-    let cr = FileContentsQuery::new()
-        .file_id(args.file)
-        .execute(&client)
+    let nodes = NodeAddressBookQuery::default()
+        .execute_with_timeout(&client, Duration::from_secs(2))
         .await?;
 
-    let contents = String::from_utf8(cr.contents)?;
-
-    println!("contents: {contents}");
-
-    tokio::time::sleep(Duration::from_secs(5)).await;
+    let _ = dbg!(&(&nodes.node_addresses[0].node_account_id));
+    let _ = dbg!(std::str::from_utf8(
+        &nodes.node_addresses[0].tls_certificate_hash
+    ));
 
     Ok(())
 }

@@ -20,23 +20,38 @@
 
 use std::borrow::Cow;
 use std::collections::HashMap;
+use std::net::Ipv4Addr;
 use std::sync::atomic::{
     AtomicI64,
     Ordering,
 };
+use std::sync::Arc;
 use std::time::Duration;
 
+use hedera_proto::services;
+use hedera_proto::services::file_service_client::FileServiceClient;
+use hyper::client::HttpConnector;
+use hyper::{
+    http,
+    Uri,
+};
 use parking_lot::RwLock;
+use pkcs8::der::Decode;
 use time::OffsetDateTime;
 use tonic::transport::{
     Channel,
     Endpoint,
 };
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     Error,
+    FileId,
+    NodeAddressBook,
 };
+
+mod tls;
 
 pub(crate) const MAINNET: &[(u64, &[&str])] = &[
     (
@@ -136,6 +151,30 @@ pub(crate) const PREVIEWNET: &[(u64, &[&str])] = &[
     (8, &["5.previewnet.hedera.com", "34.106.247.65", "35.83.89.171", "13.78.232.192"]),
     (9, &["6.previewnet.hedera.com", "34.125.23.49", "50.18.17.93", "20.150.136.89"]),
 ];
+
+enum NodeEndpointAddress {
+    Ip(Ipv4Addr),
+    StaticDns(&'static str),
+    DynamicDns(Box<str>),
+}
+
+struct NodeAddress {
+    account_id: AccountId,
+    /// Hash of the node's TLS certificate.
+    ///
+    /// Precisely, the SHA-384 hash of the UTF-8 NFKD encoding of the node's TLS cert in PEM format.
+    /// Note that the hashed PEM file has a newline at the end
+    cert_hash: [u8; 48],
+
+    // public_key: k
+
+    // node address:port pairs.
+    valid_endpoints: Box<[(NodeEndpointAddress, u16)]>,
+}
+
+struct AddressBook {
+    nodes: Box<[NodeAddress]>,
+}
 
 pub(crate) struct Network {
     map: HashMap<AccountId, usize>,
@@ -238,6 +277,8 @@ impl Network {
 
         let addresses = &self.addresses[index];
 
+        // Endpoint::connect_with_connector_lazy(&self, connector)
+
         let endpoints = addresses.iter().map(|address| {
             let uri = format!("tcp://{address}:50211");
             Endpoint::from_shared(uri)
@@ -248,6 +289,57 @@ impl Network {
                 .connect_timeout(Duration::from_secs(10))
         });
 
+        let tls = tokio_rustls::rustls::ClientConfig::builder()
+            .with_safe_defaults()
+            // warning: danger here:
+            .with_custom_certificate_verifier(Arc::new(tls::HederaTlsCertVerfier {
+                node_address_book: arc_swap::ArcSwap::new(Arc::new(AddressBook {
+                    nodes: Box::new([]),
+                })),
+                account_id: AccountId::from(3),
+                node_id: 3,
+                address: (NodeEndpointAddress::Ip(Ipv4Addr::new(34, 94, 106, 61)), 50212),
+            }))
+            .with_no_client_auth();
+
+        let mut http = HttpConnector::new();
+        http.enforce_http(false);
+
+        let connector = tower::ServiceBuilder::new()
+            .layer_fn(move |s| {
+                let tls = tls.clone();
+
+                hyper_rustls::HttpsConnectorBuilder::new()
+                    .with_tls_config(tls)
+                    .https_or_http()
+                    .enable_http2()
+                    .wrap_connector(s)
+            })
+            // .map_request(|_| Uri::from_static("https://35.237.200.180:50212"))
+            .service(http);
+
+        let client = hyper::Client::builder().http2_only(true).build(connector);
+
+        let client = tower::ServiceBuilder::new().service(client);
+
+        let mut client =
+            FileServiceClient::with_origin(client, Uri::from_static("https://34.94.106.61:50212"));
+
+        tokio::spawn(async move {
+            let res = client
+                .get_file_content(services::Query {
+                    query: Some(services::query::Query::FileGetContents(
+                        services::FileGetContentsQuery {
+                            header: Some(services::QueryHeader { payment: None, response_type: 0 }),
+                            file_id: Some(FileId::ADDRESS_BOOK.to_protobuf()),
+                        },
+                    )),
+                })
+                .await;
+            dbg!(res)
+        });
+
+        // Channel::balance_channel(10).1.send(value)
         let channel = Channel::balance_list(endpoints);
 
         *slot = Some(channel.clone());

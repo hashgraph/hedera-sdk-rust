@@ -245,10 +245,10 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
                 }
             };
 
-            match status.code() {
+            match dbg!(status.code()) {
                 tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
                     // encountered a temporarily down or overloaded service
-                    sleep(backoff_inf.next_backoff().unwrap()).await;
+                    sleep(dbg!(backoff_inf.next_backoff().unwrap())).await;
                 }
 
                 tonic::Code::Unknown if status.message() == "error reading a body from connection: connection reset" => {

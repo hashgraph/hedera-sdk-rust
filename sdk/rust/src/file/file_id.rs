@@ -59,6 +59,8 @@ pub struct FileId {
 }
 
 impl FileId {
+    pub(crate) const ADDRESS_BOOK: Self = Self { shard: 0, realm: 0, num: 102, checksum: None };
+
     /// Create a new `FileId` from protobuf-encoded `bytes`.
     ///
     /// # Errors
