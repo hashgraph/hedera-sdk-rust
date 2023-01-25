@@ -49,6 +49,7 @@ use crate::{
 };
 
 mod any;
+mod chunked;
 mod execute;
 mod protobuf;
 #[cfg(test)]
@@ -475,7 +476,16 @@ where
             .iter()
             .copied()
             .map(|node_account_id| {
-                self.make_request_inner(transaction_id, node_account_id).map(|it| it.0)
+                protobuf::make_request(
+                    self,
+                    execute::ToTransactionBodyProtobufRequest {
+                        node_account_id,
+                        transaction_id: &transaction_id,
+                    },
+                    &self.signers,
+                    self.body.operator.as_ref(),
+                )
+                .map(|it| it.0)
             })
             .collect();
 

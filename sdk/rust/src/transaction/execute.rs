@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::borrow::Cow;
-
 use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
@@ -33,6 +31,7 @@ use tonic::{
     Status,
 };
 
+use super::protobuf::ToTransactionBodyProtobuf;
 use super::TransactionSources;
 use crate::entity_id::AutoValidateChecksum;
 use crate::execute::Execute;
@@ -57,8 +56,8 @@ use crate::{
 
 #[derive(Debug)]
 pub(super) struct SignaturePair {
-    signature: Vec<u8>,
-    public: PublicKey,
+    pub(super) signature: Vec<u8>,
+    pub(super) public: PublicKey,
 }
 
 impl SignaturePair {
@@ -82,55 +81,6 @@ impl SignaturePair {
 impl From<(PublicKey, Vec<u8>)> for SignaturePair {
     fn from((public, signature): (PublicKey, Vec<u8>)) -> Self {
         Self { signature, public }
-    }
-}
-
-impl<D> Transaction<D>
-where
-    D: TransactionExecute,
-{
-    pub(crate) fn make_request_inner(
-        &self,
-        transaction_id: TransactionId,
-        node_account_id: AccountId,
-    ) -> crate::Result<(services::Transaction, TransactionHash)> {
-        assert!(self.is_frozen());
-
-        let transaction_body = self.to_transaction_body_protobuf(node_account_id, &transaction_id);
-
-        let body_bytes = transaction_body.encode_to_vec();
-
-        let mut signatures = Vec::with_capacity(1 + self.signers.len());
-
-        if let Some(operator) = &self.body.operator {
-            let operator_signature = operator.sign(&body_bytes);
-
-            // todo: avoid the `.map(xyz).collect()`
-            signatures.push(SignaturePair::from(operator_signature));
-        }
-
-        for signer in &self.signers {
-            if signatures.iter().all(|it| it.public != signer.public_key()) {
-                let signature = signer.sign(&body_bytes);
-                signatures.push(SignaturePair::from(signature));
-            }
-        }
-
-        let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
-
-        let signed_transaction = services::SignedTransaction {
-            body_bytes,
-            sig_map: Some(services::SignatureMap { sig_pair: signatures }),
-        };
-
-        let signed_transaction_bytes = signed_transaction.encode_to_vec();
-
-        let transaction_hash = TransactionHash::new(&signed_transaction_bytes);
-
-        let transaction =
-            services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
-
-        Ok((transaction, transaction_hash))
     }
 }
 
@@ -181,9 +131,14 @@ where
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.is_frozen());
 
-        self.make_request_inner(
-            transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
-            node_account_id,
+        super::protobuf::make_request(
+            self,
+            ToTransactionBodyProtobufRequest {
+                node_account_id,
+                transaction_id: &transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
+            },
+            &self.signers,
+            self.body.operator.as_ref(),
         )
     }
 
@@ -237,18 +192,25 @@ where
     }
 }
 
-impl<D> Transaction<D>
-where
-    D: TransactionExecute,
-{
+// todo: find better name
+pub(crate) struct ToTransactionBodyProtobufRequest<'a> {
+    pub(super) node_account_id: AccountId,
+    pub(super) transaction_id: &'a TransactionId,
+}
+
+impl<D: TransactionExecute> ToTransactionBodyProtobuf for Transaction<D> {
+    type Request<'a> = ToTransactionBodyProtobufRequest<'a>;
+
     #[allow(deprecated)]
     fn to_transaction_body_protobuf(
         &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
+        request: Self::Request<'_>,
     ) -> services::TransactionBody {
         assert!(self.is_frozen());
-        let data = self.body.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+        let data = self
+            .body
+            .data
+            .to_transaction_data_protobuf(request.node_account_id, request.transaction_id);
 
         let max_transaction_fee = self
             .body
@@ -257,7 +219,7 @@ where
 
         services::TransactionBody {
             data: Some(data),
-            transaction_id: Some(transaction_id.to_protobuf()),
+            transaction_id: Some(request.transaction_id.to_protobuf()),
             transaction_valid_duration: Some(
                 self.body
                     .transaction_valid_duration
@@ -265,7 +227,7 @@ where
                     .into(),
             ),
             memo: self.body.transaction_memo.clone(),
-            node_account_id: Some(node_account_id.to_protobuf()),
+            node_account_id: Some(request.node_account_id.to_protobuf()),
             generate_record: false,
             transaction_fee: max_transaction_fee.to_tinybars() as u64,
         }

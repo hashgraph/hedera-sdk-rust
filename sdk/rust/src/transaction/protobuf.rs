@@ -32,3 +32,55 @@ pub trait ToTransactionDataProtobuf: Send + Sync {
         transaction_id: &TransactionId,
     ) -> services::transaction_body::Data;
 }
+
+pub(crate) trait ToTransactionBodyProtobuf {
+    type Request<'a>;
+    fn to_transaction_body_protobuf(&self, request: Self::Request<'_>)
+        -> services::TransactionBody;
+}
+
+pub(super) fn make_request<T: ToTransactionBodyProtobuf>(
+    tx: &T,
+    request: T::Request<'_>,
+    signers: &[crate::transaction::AnySigner],
+    operator: Option<&crate::client::Operator>,
+) -> crate::Result<(services::Transaction, crate::TransactionHash)> {
+    use prost::Message;
+
+    let transaction_body = tx.to_transaction_body_protobuf(request);
+
+    let body_bytes = transaction_body.encode_to_vec();
+
+    let mut signatures = Vec::with_capacity(1 + signers.len());
+
+    if let Some(operator) = operator {
+        let operator_signature = operator.sign(&body_bytes);
+
+        // todo: avoid the `.map(xyz).collect()`
+        signatures.push(super::execute::SignaturePair::from(operator_signature));
+    }
+
+    for signer in signers {
+        if signatures.iter().all(|it| it.public != signer.public_key()) {
+            let signature = signer.sign(&body_bytes);
+            signatures.push(super::execute::SignaturePair::from(signature));
+        }
+    }
+
+    let signatures =
+        signatures.into_iter().map(super::execute::SignaturePair::into_protobuf).collect();
+
+    let signed_transaction = services::SignedTransaction {
+        body_bytes,
+        sig_map: Some(services::SignatureMap { sig_pair: signatures }),
+    };
+
+    let signed_transaction_bytes = signed_transaction.encode_to_vec();
+
+    let transaction_hash = crate::TransactionHash::new(&signed_transaction_bytes);
+
+    let transaction =
+        services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
+
+    Ok((transaction, transaction_hash))
+}
