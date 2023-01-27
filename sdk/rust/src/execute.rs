@@ -73,7 +73,6 @@ pub(crate) trait Execute {
     /// A created request is cached per node until any request returns
     /// `TransactionExpired`; in which case, the request cache is cleared.
     ///
-
     fn make_request(
         &self,
         transaction_id: &Option<TransactionId>,

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the accounts that are proxy staking to this account.
 /// For each of them, give the amount currently staked.
 public final class AccountStakersQuery: Query<[ProxyStaker]> {
@@ -37,6 +40,19 @@ public final class AccountStakersQuery: Query<[ProxyStaker]> {
         self.accountId = accountId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptoGetProxyStakers = .with { proto in
+                proto.header = header
+                accountId?.toProtobufInto(&proto.accountID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getStakersByAccountID(request)
     }
 
     private enum CodingKeys: String, CodingKey {

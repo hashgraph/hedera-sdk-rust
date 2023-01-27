@@ -19,14 +19,124 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+
+extension Proto_Response {
+    internal func header() throws -> Proto_ResponseHeader {
+        guard let header = self.response?.responseHeader() else {
+            throw HError.fromProtobuf("unexpected missing `header` in `Response`")
+        }
+
+        return header
+    }
+}
+
+extension Proto_Response.OneOf_Response {
+    internal func responseHeader() -> Proto_ResponseHeader {
+        switch self {
+
+        case .getByKey(let response):
+            return response.header
+
+        case .getBySolidityID(let response):
+            return response.header
+
+        case .contractCallLocal(let response):
+            return response.header
+
+        case .contractGetBytecodeResponse(let response):
+            return response.header
+
+        case .contractGetInfo(let response):
+            return response.header
+
+        case .contractGetRecordsResponse(let response):
+            return response.header
+
+        case .cryptogetAccountBalance(let response):
+            return response.header
+
+        case .cryptoGetAccountRecords(let response):
+            return response.header
+
+        case .cryptoGetInfo(let response):
+            return response.header
+
+        case .cryptoGetLiveHash(let response):
+            return response.header
+
+        case .cryptoGetProxyStakers(let response):
+            return response.header
+
+        case .fileGetContents(let response):
+            return response.header
+
+        case .fileGetInfo(let response):
+            return response.header
+
+        case .transactionGetReceipt(let response):
+            return response.header
+
+        case .transactionGetRecord(let response):
+            return response.header
+
+        case .transactionGetFastRecord(let response):
+            return response.header
+
+        case .consensusGetTopicInfo(let response):
+            return response.header
+
+        case .networkGetVersionInfo(let response):
+            return response.header
+
+        case .tokenGetInfo(let response):
+            return response.header
+
+        case .scheduleGetInfo(let response):
+            return response.header
+
+        case .tokenGetAccountNftInfos(let response):
+            return response.header
+
+        case .tokenGetNftInfo(let response):
+            return response.header
+
+        case .tokenGetNftInfos(let response):
+            return response.header
+
+        case .networkGetExecutionTime(let response):
+            return response.header
+
+        case .accountDetails(let response):
+            return response.header
+        }
+    }
+}
+
+internal protocol ToQueryProtobuf {
+    func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query
+}
 
 /// A query that can be executed on the Hedera network.
-public class Query<Response: Decodable>: Request {
+public class Query<Response: Decodable>: Request, ToQueryProtobuf {
+    internal func toQueryProtobufWith(_ header: HederaProtobufs.Proto_QueryHeader) -> HederaProtobufs.Proto_Query {
+        fatalError("Method `Query.toQueryProtobufWith` must be overridden by subclasses")
+    }
+
+    internal func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        fatalError("Method `Query.queryExecute` must be overridden by subclasses")
+    }
+
     public typealias Response = Response
 
     internal init() {}
 
     private var payment: PaymentTransaction = PaymentTransaction()
+
+    // todo: replace with `execute` impl (breaking change)
+    internal var nodeAccountIds: [AccountId]? { payment.nodeAccountIds }
+    internal var explicitTransactionId: TransactionId? { payment.transactionId }
 
     /// Set the account IDs of the nodes that this query may be submitted to.
     ///

@@ -18,8 +18,10 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the record of a transaction, given its transaction ID.
-///
 public final class TransactionRecordQuery: Query<TransactionRecord> {
     /// The ID of the transaction for which the record is being requested.
     public var transactionId: TransactionId?
@@ -65,6 +67,21 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
         self.validateStatus = validateStatus
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.transactionGetRecord = .with { proto in
+                proto.header = header
+                proto.includeDuplicates = includeDuplicates
+                proto.includeChildRecords = includeChildren
+                transactionId?.toProtobufInto(&proto.transactionID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getTxRecordByTxID(request)
     }
 
     private enum CodingKeys: String, CodingKey {

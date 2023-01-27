@@ -118,9 +118,9 @@ where
         transaction_id: Option<TransactionId>,
     ) -> crate::Error {
         if let Some(transaction_id) = self.0.data.transaction_id() {
-            crate::Error::QueryPreCheckStatus { status, transaction_id }
-        } else if let Some(transaction_id) = transaction_id {
             crate::Error::QueryPaymentPreCheckStatus { status, transaction_id }
+        } else if let Some(transaction_id) = transaction_id {
+            crate::Error::QueryPreCheckStatus { status, transaction_id }
         } else {
             crate::Error::QueryNoPaymentPreCheckStatus { status }
         }

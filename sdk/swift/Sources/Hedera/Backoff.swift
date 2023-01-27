@@ -25,12 +25,13 @@ import Foundation
 // adapted from the Rust [`backoff`](https://github.com/ihrwein/backoff) crate, which is licensed under the MIT/Apache 2.0 licenses.
 
 internal struct LegacyExponentialBackoff {
+    internal static let defaultMaxElapsedTime: TimeInterval = 900
     internal init(
         initialInterval: TimeInterval = 0.5,
         randomizationFactor: Double = 0.5,
         multiplier: Double = 1.5,
         maxInterval: TimeInterval = 60,
-        maxElapsedTime: Limit<TimeInterval> = .limited(900),
+        maxElapsedTime: Limit<TimeInterval> = .limited(defaultMaxElapsedTime),
         startTime: Date = Date()
     ) {
         self.currentInterval = initialInterval
@@ -105,11 +106,11 @@ internal struct LegacyExponentialBackoff {
         }
     }
 
-    internal mutating func next() throws -> TimeInterval {
+    internal mutating func next() -> TimeInterval? {
         let elapsedTime = self.elapsedTime
 
         if maxElapsedTime.expired(elapsedTime) {
-            throw HError.timedOut
+            return nil
         }
 
         let randomValue = Double.random(in: 0..<1)
@@ -124,16 +125,10 @@ internal struct LegacyExponentialBackoff {
 
         // if we'll expire before the `output` time elapses then obviously we expire.
         if maxElapsedTime.expired(elapsedTime + outputInterval) {
-            throw HError.timedOut
+            return nil
         }
 
         return outputInterval
-    }
-
-    internal mutating func waitNext() async throws {
-        let timeout = try next()
-
-        try await Task.sleep(nanoseconds: UInt64(timeout * 1e9))
     }
 }
 

@@ -18,13 +18,13 @@ public struct Duration: Codable {
 }
 
 extension Duration: ProtobufCodable {
-    typealias Protobuf = Proto_Duration
+    internal typealias Protobuf = Proto_Duration
 
-    init(fromProtobuf proto: Protobuf) {
+    internal init(fromProtobuf proto: Protobuf) {
         seconds = UInt64(proto.seconds)
     }
 
-    func toProtobuf() -> Protobuf {
+    internal func toProtobuf() -> Protobuf {
         .with { proto in proto.seconds = Int64(seconds) }
     }
 }

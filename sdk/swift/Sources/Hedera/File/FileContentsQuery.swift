@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Get the contents of a file.
 public final class FileContentsQuery: Query<FileContentsResponse> {
@@ -34,6 +36,19 @@ public final class FileContentsQuery: Query<FileContentsResponse> {
         self.fileId = fileId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.fileGetContents = .with { proto in
+                proto.header = header
+                fileId?.toProtobufInto(&proto.fileID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_FileServiceAsyncClient(channel: channel).getFileContent(request)
     }
 
     private enum CodingKeys: String, CodingKey {

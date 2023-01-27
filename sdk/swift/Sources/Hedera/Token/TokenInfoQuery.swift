@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Gets information about the Token instance.
 public final class TokenInfoQuery: Query<TokenInfo> {
     /// Create a new `TokenInfoQuery`.
@@ -36,6 +39,19 @@ public final class TokenInfoQuery: Query<TokenInfo> {
         self.tokenId = tokenId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.tokenGetInfo = .with { proto in
+                proto.header = header
+                tokenId?.toProtobufInto(&proto.token)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_TokenServiceAsyncClient(channel: channel).getTokenInfo(request)
     }
 
     private enum CodingKeys: String, CodingKey {

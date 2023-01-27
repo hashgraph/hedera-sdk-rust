@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the balance of a cryptocurrency account.
 ///
 /// This returns only the balance, so it is a smaller reply
@@ -31,6 +34,28 @@ public final class AccountBalanceQuery: Query<AccountBalance> {
     ) {
         self.accountId = accountId
         self.contractId = contractId
+    }
+
+    override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptogetAccountBalance = .with { proto in
+                proto.header = header
+                switch (accountId, contractId) {
+                case (.some(_), .some(_)):
+                    fatalError("AccountBalanceQuery has both `accountId` and `contractId` set")
+                case (.some(let accountId), nil):
+                    proto.accountID = accountId.toProtobuf()
+                case (nil, .some(let contractId)):
+                    proto.contractID = contractId.toProtobuf()
+                case (nil, nil):
+                    break
+                }
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
     }
 
     /// The account ID for which information is requested.

@@ -23,6 +23,10 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
         self.subSecondNanos = UInt32(nanos % nanosPerSecond)
     }
 
+    internal var now: Self {
+        Self(from: Date())
+    }
+
     /// Convert from a ``Date`` to a `Timestamp`
     ///
     /// `Date` is stored as ``Double`` seconds, so, it may not have full precision.

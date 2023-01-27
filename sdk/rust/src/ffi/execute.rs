@@ -42,12 +42,6 @@ use crate::{
 enum AnyRequest {
     Transaction(Box<AnyTransaction>),
     Query(Box<AnyQuery>),
-    QueryCost(QueryCostRequest),
-}
-
-#[derive(serde::Deserialize)]
-struct QueryCostRequest {
-    query: Box<AnyQuery>,
 }
 
 /// Execute this request against the provided client of the Hedera network.
@@ -104,12 +98,6 @@ pub unsafe extern "C" fn hedera_execute(
                     .await
                     .map(|response| serde_json::to_string(&response).unwrap())
             }
-
-            AnyRequest::QueryCost(req) => req
-                .query
-                .get_cost_with_optional_timeout(client, timeout)
-                .await
-                .map(|response| serde_json::to_string(&response).unwrap()),
         };
 
         let response =

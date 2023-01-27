@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Call a function of the given smart contract instance.
 /// It will consume the entire given amount of gas.
@@ -110,6 +112,25 @@ public final class ContractCallQuery: Query<ContractFunctionResult> {
         self.senderAccountId = senderAccountId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.contractCallLocal = .with { proto in
+                proto.header = header
+                proto.gas = Int64(gas)
+                senderAccountId?.toProtobufInto(&proto.senderID)
+                if let parameters = functionParameters {
+                    proto.functionParameters = parameters
+                }
+
+                contractId?.toProtobufInto(&proto.contractID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).contractCallLocalMethod(request)
     }
 
     private enum CodingKeys: String, CodingKey {

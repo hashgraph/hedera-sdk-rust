@@ -30,10 +30,10 @@ private func lastErrorMessage() -> String? {
 }
 
 /// Represents any possible error from a fallible function in the Hedera SDK.
-public struct HError: Error, CustomStringConvertible {
+public struct HError: Error, Equatable, CustomStringConvertible {
     // https://developer.apple.com/documentation/swift/error#2845903
     public enum ErrorKind: Equatable {
-        case timedOut
+        indirect case timedOut(source: HError?)
         case grpcStatus(status: Int32)
         case fromProtobuf
         // TODO: add TransactionId
@@ -65,7 +65,10 @@ public struct HError: Error, CustomStringConvertible {
     public let description: String
     public let kind: ErrorKind
 
-    internal static let timedOut = Self(kind: .timedOut, description: "Operation timed out")
+    internal static let timedOut = Self.timedOut(source: nil)
+    internal static func timedOut(source: Self?) -> Self {
+        Self(kind: .timedOut(source: source), description: "Operation timed out")
+    }
 
     internal init(kind: ErrorKind, description: String) {
         self.kind = kind
@@ -76,7 +79,7 @@ public struct HError: Error, CustomStringConvertible {
     internal init?(_ error: HederaError) {
         switch error {
         case HEDERA_ERROR_TIMED_OUT:
-            kind = .timedOut
+            kind = .timedOut(source: nil)
 
         case HEDERA_ERROR_GRPC_STATUS:
             kind = .grpcStatus(status: hedera_error_grpc_status())

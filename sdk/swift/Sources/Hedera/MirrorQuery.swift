@@ -153,11 +153,16 @@ private struct MirrorQuerySubscribeIterator<R: MirrorRequest>: AsyncIteratorProt
                     switch error.code {
                     case .unavailable, .resourceExhausted, .aborted:
                         state = .start
-                        try await backoffInfinity.waitNext()
+                        let timeout = backoffInfinity.next()!
+                        try await Task.sleep(nanoseconds: UInt64(timeout * 1e9))
 
                     case let code where request.shouldRetry(forStatus: code):
                         state = .start
-                        try await backoff.waitNext()
+                        guard let timeout = backoff.next() else {
+                            throw HError.timedOut
+                        }
+
+                        try await Task.sleep(nanoseconds: UInt64(timeout * 1e9))
 
                     case let code:
                         state = .finished

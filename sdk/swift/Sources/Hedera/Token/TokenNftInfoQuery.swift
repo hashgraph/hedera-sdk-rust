@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Gets info on an NFT for a given TokenID and serial number.
 public final class TokenNftInfoQuery: Query<TokenNftInfo> {
     /// Create a new `TokenNftInfoQuery`.
@@ -36,6 +39,19 @@ public final class TokenNftInfoQuery: Query<TokenNftInfo> {
         self.nftId = nftId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.tokenGetNftInfo = .with { proto in
+                proto.header = header
+                nftId?.toProtobufInto(&proto.nftID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_TokenServiceAsyncClient(channel: channel).getTokenNftInfo(request)
     }
 
     private enum CodingKeys: String, CodingKey {

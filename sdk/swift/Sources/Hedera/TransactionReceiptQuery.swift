@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the receipt of a transaction, given its transaction ID.
 ///
 /// Once a transaction reaches consensus, then information about whether it succeeded or failed
@@ -68,6 +71,21 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
         self.validateStatus = validateStatus
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.transactionGetReceipt = .with { proto in
+                proto.header = header
+                proto.includeDuplicates = includeDuplicates
+                proto.includeChildReceipts = includeChildren
+                transactionId?.toProtobufInto(&proto.transactionID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getTransactionReceipts(request)
     }
 
     private enum CodingKeys: String, CodingKey {

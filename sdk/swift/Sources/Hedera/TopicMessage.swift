@@ -51,7 +51,6 @@ public struct TopicMessage {
     public let chunkTotal: UInt32
 }
 
-
 extension TopicMessage: TryFromProtobuf {
     internal typealias Protobuf = Com_Hedera_Mirror_Api_Proto_ConsensusTopicResponse
 

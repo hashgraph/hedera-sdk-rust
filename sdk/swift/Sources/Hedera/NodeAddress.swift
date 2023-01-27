@@ -95,22 +95,6 @@ extension SocketAddressV4: TryProtobufCodable {
 }
 
 public struct NodeAddress: Codable {
-    internal init(
-        nodeId: UInt64,
-        rsaPublicKey: Data,
-        nodeAccountId: AccountId,
-        tlsCertificateHash: Data,
-        serviceEndpoints: [SocketAddressV4],
-        description: String
-    ) {
-        self.nodeId = nodeId
-        self.rsaPublicKey = rsaPublicKey
-        self.nodeAccountId = nodeAccountId
-        self.tlsCertificateHash = tlsCertificateHash
-        self.serviceEndpoints = serviceEndpoints
-        self.description = description
-    }
-
     /// A non-sequential, unique, static identifier for the node
     public var nodeId: UInt64
 

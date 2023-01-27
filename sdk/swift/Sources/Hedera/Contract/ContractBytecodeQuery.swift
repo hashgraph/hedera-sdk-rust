@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Get the runtime bytecode for a smart contract instance.
 public final class ContractBytecodeQuery: Query<Data> {
@@ -38,6 +40,19 @@ public final class ContractBytecodeQuery: Query<Data> {
         self.contractId = contractId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.contractGetBytecode = .with { proto in
+                proto.header = header
+                contractId?.toProtobufInto(&proto.contractID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).contractGetBytecode(request)
     }
 
     private enum CodingKeys: String, CodingKey {

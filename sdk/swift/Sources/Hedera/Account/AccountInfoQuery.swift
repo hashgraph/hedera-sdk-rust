@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the information about an account, including the balance.
 ///
 /// This does not get the list of account records.
@@ -39,6 +42,19 @@ public final class AccountInfoQuery: Query<AccountInfo> {
         self.accountId = accountId
 
         return self
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptoGetInfo = .with { proto in
+                proto.header = header
+                accountId?.toProtobufInto(&proto.accountID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getAccountInfo(request)
     }
 
     private enum CodingKeys: String, CodingKey {

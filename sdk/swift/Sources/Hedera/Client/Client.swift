@@ -22,60 +22,19 @@ import CHedera
 import Foundation
 import GRPC
 import NIOCore
-
-internal final class Network {
-    // func channel()
-}
-
-internal final class MirrorNetwork {
-    private enum State {
-        case idle(target: GRPC.ConnectionTarget)
-        case connected(GRPCChannel)
-    }
-
-    private var state: State
-
-    private init(_ state: State) {
-        self.state = state
-    }
-
-    private static func idle(target: GRPC.ConnectionTarget) -> Self {
-        Self(.idle(target: target))
-    }
-
-    internal static func mainnet() -> Self {
-        .idle(target: .hostAndPort("mainnet-public.mirrornode.hedera.com", 443))
-    }
-
-    internal static func testnet() -> Self {
-        .idle(target: .hostAndPort("hcs.testnet.mirrornode.hedera.com", 5600))
-    }
-
-    internal static func previewnet() -> Self {
-        .idle(target: .hostAndPort("hcs.previewnet.mirrornode.hedera.com", 5600))
-    }
-
-    internal func channel(_ eventLoop: NIOCore.EventLoopGroup) -> GRPCChannel {
-        switch state {
-        case .idle(let target):
-            let channel = GRPC.ClientConnection(configuration: .default(target: target, eventLoopGroup: eventLoop))
-            self.state = .connected(channel)
-            return channel
-        case .connected(let channel):
-            return channel
-        }
-    }
-}
+import SwiftProtobuf
 
 /// Managed client for use on the Hedera network.
 public final class Client {
     internal let ptr: OpaquePointer
 
     internal let eventLoop: NIOCore.EventLoopGroup = PlatformSupport.makeEventLoopGroup(loopCount: 1)
+    internal let network: Network
     internal let mirrorNetwork: MirrorNetwork
 
-    private init(unsafeFromPtr ptr: OpaquePointer, _ mirrorNetwork: MirrorNetwork) {
+    private init(unsafeFromPtr ptr: OpaquePointer, _ network: Network, _ mirrorNetwork: MirrorNetwork) {
         self.ptr = ptr
+        self.network = network
         self.mirrorNetwork = mirrorNetwork
     }
 
@@ -130,17 +89,17 @@ public final class Client {
 
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_mainnet(), .mainnet())
+        Self(unsafeFromPtr: hedera_client_for_mainnet(), .mainnet(), .mainnet())
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_testnet(), .testnet())
+        Self(unsafeFromPtr: hedera_client_for_testnet(), .testnet(), .testnet())
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     public static func forPreviewnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_previewnet(), .previewnet())
+        Self(unsafeFromPtr: hedera_client_for_previewnet(), .previewnet(), .previewnet())
     }
 
     // wish I could write `init(for name: String)`
@@ -240,6 +199,10 @@ public final class Client {
 
     public func isAutoValidateChecksumsEnabled() -> Bool {
         hedera_client_get_auto_validate_checksums(ptr)
+    }
+
+    internal func generateTransactionId() -> TransactionId? {
+        nil
     }
 
     deinit {

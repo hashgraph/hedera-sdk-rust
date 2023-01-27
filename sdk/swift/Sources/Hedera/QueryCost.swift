@@ -19,10 +19,10 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
-final internal class QueryCost<T: Decodable, U: Query<T>>: Request, ValidateChecksums {
-    internal typealias Response = Hbar
-
+final internal class QueryCost<T: Decodable, U: Query<T>>: ValidateChecksums {
     private let query: U
 
     internal init(query: U) {
@@ -30,10 +30,68 @@ final internal class QueryCost<T: Decodable, U: Query<T>>: Request, ValidateChec
     }
 
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
-        try await executeInternal(client, timeout)
+        try await executeAny(client, self, timeout)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try query.validateChecksums(on: ledgerId)
+    }
+}
+
+extension QueryCost: Execute {
+    typealias GrpcRequest = Proto_Query
+
+    typealias GrpcResponse = Proto_Response
+
+    typealias Context = Void
+
+    var nodeAccountIds: [AccountId]? {
+        query.nodeAccountIds
+    }
+
+    var explicitTransactionId: TransactionId? { nil }
+
+    var requiresTransactionId: Bool { false }
+
+    func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
+        GrpcRequest, Void
+    ) {
+        let request = query.toQueryProtobufWith(
+            .with { proto in
+                proto.responseType = .costAnswer
+            })
+
+        return (request, ())
+    }
+
+    func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws
+        -> GrpcResponse
+    {
+        try await query.queryExecute(channel, request)
+    }
+
+    func makeResponse(
+        _ response: GrpcResponse, _ context: Void, _ nodeAccountId: AccountId, _ transactionId: TransactionId?
+    ) throws -> Hbar {
+        let header = try response.header()
+
+        // todo: mapCost
+        return .fromTinybars(Int64(header.cost))
+    }
+
+    func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        if let _ = query.explicitTransactionId {
+            return HError(kind: .queryPaymentPreCheckStatus(status: status), description: "todo")
+        } else if let _ = transactionId {
+            return HError(kind: .queryPreCheckStatus(status: status), description: "todo")
+        } else {
+            return HError(kind: .queryNoPaymentPreCheckStatus(status: status), description: "todo")
+        }
+    }
+
+    static func responsePrecheckStatus(_ response: HederaProtobufs.Proto_Response) throws -> Int32 {
+        let header = try response.header()
+
+        return Int32(header.nodeTransactionPrecheckCode.rawValue)
     }
 }

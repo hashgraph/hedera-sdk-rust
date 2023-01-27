@@ -181,7 +181,7 @@ extension TransactionReceipt: TryProtobufCodable {
         try self.init(protobuf: proto)
     }
 
-    func toProtobuf() -> Protobuf {
+    internal func toProtobuf() -> Protobuf {
         .with { proto in
             proto.status = Proto_ResponseCodeEnum(rawValue: Int(status.rawValue))!
             accountId?.toProtobufInto(&proto.accountID)
