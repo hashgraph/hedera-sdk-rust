@@ -324,6 +324,10 @@ bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
  */
 void hedera_client_free(struct HederaClient *client);
 
+size_t hedera_crypto_sha2_sha384_digest(const uint8_t *bytes,
+                                        size_t bytes_size,
+                                        uint8_t **result_out);
+
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,
                                            uint8_t **result_out);

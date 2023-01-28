@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Create a new Hedera™ account.
 public final class AccountCreateTransaction: Transaction {
@@ -64,6 +65,38 @@ public final class AccountCreateTransaction: Transaction {
         declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
 
         try super.init(from: decoder)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_CryptoCreateTransactionBody) throws -> Self {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: UInt64?
+
+        switch proto.stakedID {
+        case .some(.stakedAccountID(let id)):
+            stakedAccountId = try .fromProtobuf(id)
+            stakedNodeId = nil
+        case .some(.stakedNodeID(let id)):
+            stakedNodeId = UInt64(id)
+            stakedAccountId = nil
+        case .none:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        }
+
+        return Self(
+            key: try .fromProtobuf(proto.key),
+            initialBalance: .fromTinybars(Int64(proto.initialBalance)),
+            receiverSignatureRequired: proto.receiverSigRequired,
+            autoRenewPeriod: .fromProtobuf(proto.autoRenewPeriod),
+            autoRenewAccountId: try .fromProtobuf(proto.autoRenewAccount),
+            accountMemo: proto.memo,
+            maxAutomaticTokenAssociations: UInt32(proto.maxAutomaticTokenAssociations),
+            alias: try PublicKey.fromAliasBytes(proto.alias),
+            evmAddress: try EvmAddress(proto.evmAddress),
+            stakedAccountId: stakedAccountId,
+            stakedNodeId: stakedNodeId,
+            declineStakingReward: proto.declineReward
+        )
     }
 
     /// The key that must sign each transfer out of the account.

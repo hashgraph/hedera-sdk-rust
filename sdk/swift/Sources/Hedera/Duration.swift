@@ -2,6 +2,10 @@ import Foundation
 import HederaProtobufs
 
 public struct Duration: Codable {
+    internal init(seconds: UInt64) {
+        self.seconds = seconds
+    }
+
     public let seconds: UInt64
 
     public init(from decoder: Decoder) throws {

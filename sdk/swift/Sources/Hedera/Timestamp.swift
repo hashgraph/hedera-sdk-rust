@@ -23,7 +23,11 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
         self.subSecondNanos = UInt32(nanos % nanosPerSecond)
     }
 
-    internal var now: Self {
+    func subtracting(nanos: UInt64) -> Self {
+        Self(fromUnixTimestampNanos: unixTimestampNanos - nanos)
+    }
+
+    internal static var now: Self {
         Self(from: Date())
     }
 

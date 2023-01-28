@@ -29,6 +29,15 @@ import Foundation
 /// To learn the consensus result, the client should later obtain a
 /// receipt (free), or can buy a more detailed record (not free).
 public struct TransactionResponse: Decodable {
+    internal init(
+        nodeAccountId: AccountId, transactionId: TransactionId, transactionHash: String, validateStatus: Bool = true
+    ) {
+        self.nodeAccountId = nodeAccountId
+        self.transactionId = transactionId
+        self.transactionHash = transactionHash
+        self.validateStatus = validateStatus
+    }
+
     /// The account ID of the node that the transaction was submitted to.
     public let nodeAccountId: AccountId
 

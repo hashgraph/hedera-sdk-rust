@@ -290,6 +290,30 @@ private struct KeccakHasher {
 }
 
 internal enum Crypto {
+    internal enum Sha2 {
+        case sha384
+
+        internal static func digest(_ kind: Self, _ message: Data) -> Data {
+            kind.digest(message)
+        }
+
+        /// Hash a message using the sha2-384 hashing algorithm.
+        internal func digest(_ message: Data) -> Data {
+            switch self {
+            case .sha384:
+                return message.withUnsafeTypedBytes { buffer in
+                    var output: UnsafeMutablePointer<UInt8>?
+                    let count = hedera_crypto_sha2_sha384_digest(buffer.baseAddress, buffer.count, &output)
+                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
+                }
+            }
+        }
+
+        internal static func sha384(_ message: Data) -> Data {
+            sha384.digest(message)
+        }
+    }
+
     internal enum Sha3 {
         case keccak256
 

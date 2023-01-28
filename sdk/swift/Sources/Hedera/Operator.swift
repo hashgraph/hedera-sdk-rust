@@ -18,6 +18,8 @@
  * ‍
  */
 
+import Foundation
+
 internal struct Operator: Codable {
     internal init(accountId: AccountId, signer: PrivateKey) {
         self.accountId = accountId
@@ -45,5 +47,13 @@ internal struct Operator: Codable {
 
         try container.encode(accountId, forKey: .accountId)
         try container.encode(signer.toStringDer(), forKey: .signer)
+    }
+
+    internal func sign(_ message: Data) -> (PublicKey, Data) {
+        (signer.getPublicKey(), signer.sign(message))
+    }
+
+    internal func generateTransactionId() -> TransactionId {
+        .generateFrom(accountId)
     }
 }

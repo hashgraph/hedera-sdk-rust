@@ -16,6 +16,15 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     public let scheduled: Bool
     public let nonce: Int32?
 
+    /// Generates a new transaction ID for the given account ID.
+    internal static func generateFrom(_ accountId: AccountId) -> Self {
+        let random = UInt64.random(in: 5_000_000_000..<8_000_000_000)
+
+        let validStart = Timestamp.now.subtracting(nanos: random)
+
+        return Self(accountId: accountId, validStart: validStart, scheduled: false)
+    }
+
     internal init(accountId: AccountId, validStart: Timestamp, scheduled: Bool, nonce: Int32? = nil) {
         self.accountId = accountId
         self.validStart = validStart

@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 // big type
 // swiftlint:disable file_length
 // big type.
@@ -63,6 +65,146 @@ internal enum AnyTransaction {
     case scheduleSign(ScheduleSignTransaction)
     case scheduleDelete(ScheduleDeleteTransaction)
     case ethereum(EthereumTransaction)
+
+    internal static func fromProtobuf(_ proto: Proto_TransactionBody.OneOf_Data) throws -> Transaction {
+        switch proto {
+        case .cryptoCreateAccount(let data):
+            return Self.accountCreate(try AccountCreateTransaction.fromProtobufData(data)).transaction
+
+        case .contractCall(let data):
+            return Self.contractCall(_Transaction.fromProtobufData(data)).transaction
+
+        case .contractCreateInstance(let data):
+            return Self.contractCreateInstance(_Transaction.fromProtobufData(data)).transaction
+
+        case .contractUpdateInstance(let data):
+            return Self.contractUpdateInstance(_Transaction.fromProtobufData(data)).transaction
+
+        case .contractDeleteInstance(let data):
+            return Self.contractDeleteInstance(_Transaction.fromProtobufData(data)).transaction
+
+        case .ethereumTransaction(let data):
+            return Self.ethereumTransaction(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoAddLiveHash(let data):
+            return Self.cryptoAddLiveHash(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoApproveAllowance(let data):
+            return Self.cryptoApproveAllowance(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoDeleteAllowance(let data):
+            return Self.cryptoDeleteAllowance(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoDelete(let data):
+            return Self.cryptoDelete(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoDeleteLiveHash(let data):
+            return Self.cryptoDeleteLiveHash(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoTransfer(let data):
+            return Self.cryptoTransfer(_Transaction.fromProtobufData(data)).transaction
+
+        case .cryptoUpdateAccount(let data):
+            return Self.cryptoUpdateAccount(_Transaction.fromProtobufData(data)).transaction
+
+        case .fileAppend(let data):
+            return Self.fileAppend(_Transaction.fromProtobufData(data)).transaction
+
+        case .fileCreate(let data):
+            return Self.fileCreate(_Transaction.fromProtobufData(data)).transaction
+
+        case .fileDelete(let data):
+            return Self.fileDelete(_Transaction.fromProtobufData(data)).transaction
+
+        case .fileUpdate(let data):
+            return Self.fileUpdate(_Transaction.fromProtobufData(data)).transaction
+
+        case .systemDelete(let data):
+            return Self.systemDelete(_Transaction.fromProtobufData(data)).transaction
+
+        case .systemUndelete(let data):
+            return Self.systemUndelete(_Transaction.fromProtobufData(data)).transaction
+
+        case .freeze(let data):
+            return Self.freeze(_Transaction.fromProtobufData(data)).transaction
+
+        case .consensusCreateTopic(let data):
+            return Self.consensusCreateTopic(_Transaction.fromProtobufData(data)).transaction
+
+        case .consensusUpdateTopic(let data):
+            return Self.consensusUpdateTopic(_Transaction.fromProtobufData(data)).transaction
+
+        case .consensusDeleteTopic(let data):
+            return Self.consensusDeleteTopic(_Transaction.fromProtobufData(data)).transaction
+
+        case .consensusSubmitMessage(let data):
+            return Self.consensusSubmitMessage(_Transaction.fromProtobufData(data)).transaction
+
+        case .uncheckedSubmit(let data):
+            return Self.uncheckedSubmit(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenCreation(let data):
+            return Self.tokenCreation(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenFreeze(let data):
+            return Self.tokenFreeze(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenUnfreeze(let data):
+            return Self.tokenUnfreeze(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenGrantKyc(let data):
+            return Self.tokenGrantKyc(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenRevokeKyc(let data):
+            return Self.tokenRevokeKyc(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenDeletion(let data):
+            return Self.tokenDeletion(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenUpdate(let data):
+            return Self.tokenUpdate(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenMint(let data):
+            return Self.tokenMint(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenBurn(let data):
+            return Self.tokenBurn(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenWipe(let data):
+            return Self.tokenWipe(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenAssociate(let data):
+            return Self.tokenAssociate(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenDissociate(let data):
+            return Self.tokenDissociate(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenFeeScheduleUpdate(let data):
+            return Self.tokenFeeScheduleUpdate(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenPause(let data):
+            return Self.tokenPause(_Transaction.fromProtobufData(data)).transaction
+
+        case .tokenUnpause(let data):
+            return Self.tokenUnpause(_Transaction.fromProtobufData(data)).transaction
+
+        case .scheduleCreate(let data):
+            return Self.scheduleCreate(_Transaction.fromProtobufData(data)).transaction
+
+        case .scheduleDelete(let data):
+            return Self.scheduleDelete(_Transaction.fromProtobufData(data)).transaction
+
+        case .scheduleSign(let data):
+            return Self.scheduleSign(_Transaction.fromProtobufData(data)).transaction
+
+        case .nodeStakeUpdate(let data):
+            return Self.nodeStakeUpdate(_Transaction.fromProtobufData(data)).transaction
+
+        case .utilPrng(let data):
+            return Self.utilPrng(_Transaction.fromProtobufData(data)).transaction
+
+        }
+    }
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     internal init(upcasting transaction: Transaction) {

@@ -23,8 +23,7 @@ use std::ptr;
 use libc::size_t;
 use sha3::Digest;
 
-#[no_mangle]
-pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
+unsafe fn digest<D: Digest>(
     bytes: *const u8,
     bytes_size: size_t,
     result_out: *mut *mut u8,
@@ -34,7 +33,7 @@ pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
 
-    let result = sha3::Keccak256::digest(bytes).to_vec().into_boxed_slice();
+    let result = D::digest(bytes).to_vec().into_boxed_slice();
 
     let bytes = Box::leak(result);
     let len = bytes.len();
@@ -46,4 +45,22 @@ pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
     }
 
     len
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_sha2_sha384_digest(
+    bytes: *const u8,
+    bytes_size: size_t,
+    result_out: *mut *mut u8,
+) -> size_t {
+    unsafe { digest::<sha2::Sha384>(bytes, bytes_size, result_out) }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
+    bytes: *const u8,
+    bytes_size: size_t,
+    result_out: *mut *mut u8,
+) -> size_t {
+    unsafe { digest::<sha3::Keccak256>(bytes, bytes_size, result_out) }
 }
