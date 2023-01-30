@@ -24,7 +24,15 @@ import Foundation
 public struct Checksum: LosslessStringConvertible, Hashable {
     internal let data: String
 
-    public init?(_ description: String) {
+    fileprivate init<S: StringProtocol>(parsing description: S) throws {
+        guard let temp = Self(description) else {
+            throw HError.basicParse("Invalid checksum string \(description)")
+        }
+
+        self = temp
+    }
+
+    public init?<S: StringProtocol>(_ description: S) {
         guard (description.allSatisfy { $0.isASCII && $0.isLowercase && $0.isLetter }) else {
             return nil
         }
@@ -33,7 +41,7 @@ public struct Checksum: LosslessStringConvertible, Hashable {
             return nil
         }
 
-        self.data = description
+        self.data = String(description)
     }
 
     internal init?(data: Data) {
@@ -203,7 +211,7 @@ extension EntityId {
     }
 
     public init<S: StringProtocol>(parsing description: S) throws {
-        self = try PartialEntityId<S.SubSequence>(parsing: description).intoNum()
+        self = try PartialEntityId(parsing: description).intoNum()
     }
 
     public init?(_ description: String) {
@@ -276,12 +284,15 @@ internal struct EntityIdHelper<E: EntityId> {
     }
 
     internal func validateChecksum(on ledgerId: LedgerId) throws {
-        if let checksum = id.checksum {
-            let expected = id.generateChecksum(for: ledgerId)
-            if checksum != expected {
-                throw HError(
-                    kind: .badEntityId, description: "expected entity id `\(id)` to have checksum `\(expected)`")
-            }
+        guard let checksum = id.checksum else {
+            return
+        }
+
+        let expected = id.generateChecksum(for: ledgerId)
+
+        if checksum != expected {
+            throw HError(
+                kind: .badEntityId, description: "expected entity id `\(id)` to have checksum `\(expected)`")
         }
     }
 
@@ -306,30 +317,16 @@ internal enum PartialEntityId<S> {
                 throw HError.basicParse("expected `<shard>.<realm>.<num>` or `<num>`, got, \(description)")
             }
 
-            let last: S
-            let checksum: Checksum?
-            switch rest.splitOnce(on: "-") {
-            case .some((let value, let cs)):
-                last = value
-                if let cs = Checksum(String(cs)) {
-                    checksum = cs
-                } else {
-                    throw HError.basicParse("Invalid checksum string \(cs)")
-                }
-
-            case .none:
-                last = rest
-                checksum = nil
-            }
+            let (last, cs) = rest.splitOnce(on: "-") ?? (rest, nil)
 
             self = .long(
                 shard: try UInt64(parsing: shard),
                 realm: try UInt64(parsing: realm),
                 last: last,
-                checksum: checksum
+                checksum: try cs.map(Checksum.init(parsing:))
             )
 
-        case .none:
+        case nil:
             if let num = UInt64(description) {
                 self = .short(num: num)
             } else {

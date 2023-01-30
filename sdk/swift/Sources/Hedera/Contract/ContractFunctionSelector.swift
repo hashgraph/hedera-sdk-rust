@@ -38,24 +38,22 @@ public final class ContractFunctionSelector {
         hasher.update(functionName.data(using: .utf8)!)
         hasher.update("(".data(using: .utf8)!)
 
-        self.state = .building(hasher: hasher, needsComma: false)
-
+        state = .building(hasher: hasher, needsComma: false)
     }
 
     @discardableResult
     internal func addParamType(_ solidityTypeName: String) -> Self {
-        switch state {
-        case .building(var hasher, var needsComma):
-            if needsComma {
-                hasher.update(",".data(using: .utf8)!)
-            }
-
-            hasher.update(solidityTypeName.data(using: .utf8)!)
-            needsComma = true
-            self.state = .building(hasher: hasher, needsComma: needsComma)
-        case .finished:
+        guard case .building(var hasher, var needsComma) = state else {
             fatalError("Cannot add `\(solidityTypeName)` to finished `ContractFunctionSelector`")
         }
+
+        if needsComma {
+            hasher.update(",".data(using: .utf8)!)
+        }
+
+        hasher.update(solidityTypeName.data(using: .utf8)!)
+        needsComma = true
+        state = .building(hasher: hasher, needsComma: needsComma)
 
         return self
     }
@@ -78,12 +76,11 @@ public final class ContractFunctionSelector {
 
     /// If ``finish`` has been called, this will return the selector created, otherwise, this will return `nil`.
     public var output: Data? {
-        switch state {
-        case .building:
-            return nil
-        case .finished(let data):
+        if case .finished(let data) = state {
             return data
         }
+
+        return nil
     }
 
     /// Add a solidity `function` to the function selector.

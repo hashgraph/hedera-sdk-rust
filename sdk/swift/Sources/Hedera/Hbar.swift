@@ -135,7 +135,7 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
         if parts.count == 1 {
             unit = HbarUnit.hbar
         } else {
-            if let tmp = HbarUnit.init(String(parts[1])) {
+            if let tmp = HbarUnit(String(parts[1])) {
                 unit = tmp
             } else {
                 throw HError.basicParse("unit must be a valid hbar unit")
@@ -154,7 +154,7 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
             return nil
         }
 
-        tinybars = hbar.tinybars
+        self = hbar
     }
 
     public static func from(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws -> Self {

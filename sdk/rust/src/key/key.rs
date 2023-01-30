@@ -32,7 +32,7 @@ use crate::{
 /// Any method that can be used to authorize an operation on Hedera.
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type", content = "$content"))]
 pub enum Key {
     // todo(sr): not happy with any of these (fix before merge)
     /// A single public key.

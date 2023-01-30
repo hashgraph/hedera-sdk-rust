@@ -29,7 +29,25 @@ public enum Key: Equatable {
 }
 
 extension Key: Codable {
-    private enum CodingKeys: CodingKey {
+    private enum CodingKeys: String, CodingKey {
+        case type = "$type"
+        case value = "$content"
+    }
+
+    private var kind: Kind {
+        switch self {
+        case .single:
+            return .single
+        case .contractId:
+            return .contractId
+        case .delegatableContractId:
+            return .delegatableContractId
+        case .keyList:
+            return .keyList
+        }
+    }
+
+    private enum Kind: Codable {
         case single
         case contractId
         case delegatableContractId
@@ -39,34 +57,41 @@ extension Key: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
+        try container.encode(kind, forKey: .type)
+
         switch self {
         case .single(let publicKey):
-            try container.encode(publicKey, forKey: .single)
+            try container.encode(publicKey, forKey: .value)
 
         case .contractId(let contractId):
-            try container.encode(contractId, forKey: .contractId)
+            try container.encode(contractId, forKey: .value)
 
         case .delegatableContractId(let contractId):
-            try container.encode(contractId, forKey: .delegatableContractId)
+            try container.encode(contractId, forKey: .value)
 
         case .keyList(let keyList):
-            try container.encode(keyList, forKey: .keyList)
+            try container.encode(keyList, forKey: .value)
         }
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        if let single = try container.decodeIfPresent(PublicKey.self, forKey: .single) {
-            self = .single(single)
-        } else if let contractId = try container.decodeIfPresent(ContractId.self, forKey: .contractId) {
-            self = .contractId(contractId)
-        } else if let contractId = try container.decodeIfPresent(ContractId.self, forKey: .delegatableContractId) {
-            self = .delegatableContractId(contractId)
-        } else if let keyList = try container.decodeIfPresent(KeyList.self, forKey: .keyList) {
-            self = .keyList(keyList)
-        } else {
-            fatalError("(BUG) unexpected variant for Key")
+        let kind = try container.decode(Kind.self, forKey: .type)
+
+        switch kind {
+
+        case .single:
+            self = try .single(container.decode(.value))
+
+        case .contractId:
+            self = try .contractId(container.decode(.value))
+
+        case .delegatableContractId:
+            self = try .delegatableContractId(container.decode(.value))
+
+        case .keyList:
+            self = try .keyList(container.decode(.value))
         }
     }
 

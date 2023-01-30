@@ -66,207 +66,130 @@ internal enum AnyTransaction {
 
     // swiftlint:disable:next function_body_length cyclomatic_complexity
     internal init(upcasting transaction: Transaction) {
-        if let transaction = transaction as? AccountCreateTransaction {
+        switch transaction {
+        case let transaction as AccountCreateTransaction:
             self = .accountCreate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? AccountUpdateTransaction {
+        case let transaction as AccountUpdateTransaction:
             self = .accountUpdate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? AccountDeleteTransaction {
+        case let transaction as AccountDeleteTransaction:
             self = .accountDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? AccountAllowanceApproveTransaction {
+        case let transaction as AccountAllowanceApproveTransaction:
             self = .accountAllowanceApprove(transaction)
-            return
-        }
 
-        if let transaction = transaction as? AccountAllowanceDeleteTransaction {
+        case let transaction as AccountAllowanceDeleteTransaction:
             self = .accountAllowanceDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ContractCreateTransaction {
+        case let transaction as ContractCreateTransaction:
             self = .contractCreate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ContractUpdateTransaction {
+        case let transaction as ContractUpdateTransaction:
             self = .contractUpdate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ContractDeleteTransaction {
+        case let transaction as ContractDeleteTransaction:
             self = .contractDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ContractExecuteTransaction {
+        case let transaction as ContractExecuteTransaction:
             self = .contractExecute(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TransferTransaction {
+        case let transaction as TransferTransaction:
             self = .transfer(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TopicCreateTransaction {
+        case let transaction as TopicCreateTransaction:
             self = .topicCreate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TopicUpdateTransaction {
+        case let transaction as TopicUpdateTransaction:
             self = .topicUpdate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TopicDeleteTransaction {
+        case let transaction as TopicDeleteTransaction:
             self = .topicDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TopicMessageSubmitTransaction {
+        case let transaction as TopicMessageSubmitTransaction:
             self = .topicMessageSubmit(transaction)
-            return
-        }
 
-        if let transaction = transaction as? FileAppendTransaction {
+        case let transaction as FileAppendTransaction:
             self = .fileAppend(transaction)
-            return
-        }
 
-        if let transaction = transaction as? FileCreateTransaction {
+        case let transaction as FileCreateTransaction:
             self = .fileCreate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? FileUpdateTransaction {
+        case let transaction as FileUpdateTransaction:
             self = .fileUpdate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? FileDeleteTransaction {
+        case let transaction as FileDeleteTransaction:
             self = .fileDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenAssociateTransaction {
+        case let transaction as TokenAssociateTransaction:
             self = .tokenAssociate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenBurnTransaction {
+        case let transaction as TokenBurnTransaction:
             self = .tokenBurn(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenCreateTransaction {
+        case let transaction as TokenCreateTransaction:
             self = .tokenCreate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenDeleteTransaction {
+        case let transaction as TokenDeleteTransaction:
             self = .tokenDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenDissociateTransaction {
+        case let transaction as TokenDissociateTransaction:
             self = .tokenDissociate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenFeeScheduleUpdateTransaction {
+        case let transaction as TokenFeeScheduleUpdateTransaction:
             self = .tokenFeeScheduleUpdate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenFreezeTransaction {
+        case let transaction as TokenFreezeTransaction:
             self = .tokenFreeze(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenGrantKycTransaction {
+        case let transaction as TokenGrantKycTransaction:
             self = .tokenGrantKyc(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenMintTransaction {
+        case let transaction as TokenMintTransaction:
             self = .tokenMint(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenPauseTransaction {
+        case let transaction as TokenPauseTransaction:
             self = .tokenPause(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenRevokeKycTransaction {
+        case let transaction as TokenRevokeKycTransaction:
             self = .tokenRevokeKyc(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenUnfreezeTransaction {
+        case let transaction as TokenUnfreezeTransaction:
             self = .tokenUnfreeze(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenUnpauseTransaction {
+        case let transaction as TokenUnpauseTransaction:
             self = .tokenUnpause(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenUpdateTransaction {
+        case let transaction as TokenUpdateTransaction:
             self = .tokenUpdate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? TokenWipeTransaction {
+        case let transaction as TokenWipeTransaction:
             self = .tokenWipe(transaction)
-            return
-        }
 
-        if let transaction = transaction as? SystemDeleteTransaction {
+        case let transaction as SystemDeleteTransaction:
             self = .systemDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? SystemUndeleteTransaction {
+        case let transaction as SystemUndeleteTransaction:
             self = .systemUndelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? FreezeTransaction {
+        case let transaction as FreezeTransaction:
             self = .freeze(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ScheduleCreateTransaction {
+        case let transaction as ScheduleCreateTransaction:
             self = .scheduleCreate(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ScheduleSignTransaction {
+        case let transaction as ScheduleSignTransaction:
             self = .scheduleSign(transaction)
-            return
-        }
 
-        if let transaction = transaction as? ScheduleDeleteTransaction {
+        case let transaction as ScheduleDeleteTransaction:
             self = .scheduleDelete(transaction)
-            return
-        }
 
-        if let transaction = transaction as? EthereumTransaction {
+        case let transaction as EthereumTransaction:
             self = .ethereum(transaction)
-            return
-        }
 
-        fatalError("Unrecognized transaction type")
+        default:
+            fatalError("Unrecognized transaction type")
+        }
     }
 
     internal enum Kind: String, Codable {
