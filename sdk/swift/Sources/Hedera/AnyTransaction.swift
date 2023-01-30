@@ -66,142 +66,142 @@ internal enum AnyTransaction {
     case scheduleDelete(ScheduleDeleteTransaction)
     case ethereum(EthereumTransaction)
 
-    internal static func fromProtobuf(_ proto: Proto_TransactionBody.OneOf_Data) throws -> Transaction {
+    internal static func fromProtobuf(_ proto: Proto_TransactionBody.OneOf_Data) throws -> Self {
         switch proto {
         case .cryptoCreateAccount(let data):
-            return Self.accountCreate(try AccountCreateTransaction.fromProtobufData(data)).transaction
+            return accountCreate(try .fromProtobufData(data))
 
         case .contractCall(let data):
-            return Self.contractCall(_Transaction.fromProtobufData(data)).transaction
+            return contractExecute(try .fromProtobufData(data))
 
         case .contractCreateInstance(let data):
-            return Self.contractCreateInstance(_Transaction.fromProtobufData(data)).transaction
+            return contractCreate(try .fromProtobufData(data))
 
         case .contractUpdateInstance(let data):
-            return Self.contractUpdateInstance(_Transaction.fromProtobufData(data)).transaction
+            return contractUpdate(try .fromProtobufData(data))
 
         case .contractDeleteInstance(let data):
-            return Self.contractDeleteInstance(_Transaction.fromProtobufData(data)).transaction
+            return contractDelete(try .fromProtobufData(data))
 
         case .ethereumTransaction(let data):
-            return Self.ethereumTransaction(_Transaction.fromProtobufData(data)).transaction
+            return ethereum(try .fromProtobufData(data))
 
-        case .cryptoAddLiveHash(let data):
-            return Self.cryptoAddLiveHash(_Transaction.fromProtobufData(data)).transaction
+        case .cryptoAddLiveHash:
+            throw HError.fromProtobuf("live hash transactions are unsupported")
 
         case .cryptoApproveAllowance(let data):
-            return Self.cryptoApproveAllowance(_Transaction.fromProtobufData(data)).transaction
+            return accountAllowanceApprove(try .fromProtobufData(data))
 
         case .cryptoDeleteAllowance(let data):
-            return Self.cryptoDeleteAllowance(_Transaction.fromProtobufData(data)).transaction
+            return accountAllowanceDelete(try .fromProtobufData(data))
 
         case .cryptoDelete(let data):
-            return Self.cryptoDelete(_Transaction.fromProtobufData(data)).transaction
+            return accountDelete(try .fromProtobufData(data))
 
-        case .cryptoDeleteLiveHash(let data):
-            return Self.cryptoDeleteLiveHash(_Transaction.fromProtobufData(data)).transaction
+        case .cryptoDeleteLiveHash:
+            throw HError.fromProtobuf("live hash transactions are unsupported")
 
         case .cryptoTransfer(let data):
-            return Self.cryptoTransfer(_Transaction.fromProtobufData(data)).transaction
+            return transfer(try .fromProtobufData(data))
 
         case .cryptoUpdateAccount(let data):
-            return Self.cryptoUpdateAccount(_Transaction.fromProtobufData(data)).transaction
+            return accountUpdate(try .fromProtobufData(data))
 
         case .fileAppend(let data):
-            return Self.fileAppend(_Transaction.fromProtobufData(data)).transaction
+            return fileAppend(.fromProtobufData(data))
 
         case .fileCreate(let data):
-            return Self.fileCreate(_Transaction.fromProtobufData(data)).transaction
+            return fileCreate(try .fromProtobufData(data))
 
         case .fileDelete(let data):
-            return Self.fileDelete(_Transaction.fromProtobufData(data)).transaction
+            return fileDelete(.fromProtobufData(data))
 
         case .fileUpdate(let data):
-            return Self.fileUpdate(_Transaction.fromProtobufData(data)).transaction
+            return fileUpdate(try .fromProtobufData(data))
 
         case .systemDelete(let data):
-            return Self.systemDelete(_Transaction.fromProtobufData(data)).transaction
+            return systemDelete(try .fromProtobufData(data))
 
         case .systemUndelete(let data):
-            return Self.systemUndelete(_Transaction.fromProtobufData(data)).transaction
+            return systemUndelete(try .fromProtobufData(data))
 
         case .freeze(let data):
-            return Self.freeze(_Transaction.fromProtobufData(data)).transaction
+            return freeze(try .fromProtobufData(data))
 
         case .consensusCreateTopic(let data):
-            return Self.consensusCreateTopic(_Transaction.fromProtobufData(data)).transaction
+            return topicCreate(try .fromProtobufData(data))
 
         case .consensusUpdateTopic(let data):
-            return Self.consensusUpdateTopic(_Transaction.fromProtobufData(data)).transaction
+            return topicUpdate(try .fromProtobufData(data))
 
         case .consensusDeleteTopic(let data):
-            return Self.consensusDeleteTopic(_Transaction.fromProtobufData(data)).transaction
+            return topicDelete(.fromProtobufData(data))
 
         case .consensusSubmitMessage(let data):
-            return Self.consensusSubmitMessage(_Transaction.fromProtobufData(data)).transaction
+            return topicMessageSubmit(try .fromProtobufData(data))
 
-        case .uncheckedSubmit(let data):
-            return Self.uncheckedSubmit(_Transaction.fromProtobufData(data)).transaction
+        case .uncheckedSubmit:
+            throw HError.fromProtobuf("unchecked submit transaction is unsupported")
 
         case .tokenCreation(let data):
-            return Self.tokenCreation(_Transaction.fromProtobufData(data)).transaction
+            return tokenCreate(try .fromProtobufData(data))
 
         case .tokenFreeze(let data):
-            return Self.tokenFreeze(_Transaction.fromProtobufData(data)).transaction
+            return tokenFreeze(try .fromProtobufData(data))
 
         case .tokenUnfreeze(let data):
-            return Self.tokenUnfreeze(_Transaction.fromProtobufData(data)).transaction
+            return tokenUnfreeze(try .fromProtobufData(data))
 
         case .tokenGrantKyc(let data):
-            return Self.tokenGrantKyc(_Transaction.fromProtobufData(data)).transaction
+            return tokenGrantKyc(try .fromProtobufData(data))
 
         case .tokenRevokeKyc(let data):
-            return Self.tokenRevokeKyc(_Transaction.fromProtobufData(data)).transaction
+            return tokenRevokeKyc(try .fromProtobufData(data))
 
         case .tokenDeletion(let data):
-            return Self.tokenDeletion(_Transaction.fromProtobufData(data)).transaction
+            return tokenDelete(.fromProtobufData(data))
 
         case .tokenUpdate(let data):
-            return Self.tokenUpdate(_Transaction.fromProtobufData(data)).transaction
+            return tokenUpdate(try .fromProtobufData(data))
 
         case .tokenMint(let data):
-            return Self.tokenMint(_Transaction.fromProtobufData(data)).transaction
+            return tokenMint(.fromProtobufData(data))
 
         case .tokenBurn(let data):
-            return Self.tokenBurn(_Transaction.fromProtobufData(data)).transaction
+            return tokenBurn(try .fromProtobufData(data))
 
         case .tokenWipe(let data):
-            return Self.tokenWipe(_Transaction.fromProtobufData(data)).transaction
+            return tokenWipe(try .fromProtobufData(data))
 
         case .tokenAssociate(let data):
-            return Self.tokenAssociate(_Transaction.fromProtobufData(data)).transaction
+            return tokenAssociate(try .fromProtobufData(data))
 
         case .tokenDissociate(let data):
-            return Self.tokenDissociate(_Transaction.fromProtobufData(data)).transaction
+            return tokenDissociate(try .fromProtobufData(data))
 
         case .tokenFeeScheduleUpdate(let data):
-            return Self.tokenFeeScheduleUpdate(_Transaction.fromProtobufData(data)).transaction
+            return tokenFeeScheduleUpdate(try .fromProtobufData(data))
 
         case .tokenPause(let data):
-            return Self.tokenPause(_Transaction.fromProtobufData(data)).transaction
+            return tokenPause(.fromProtobufData(data))
 
         case .tokenUnpause(let data):
-            return Self.tokenUnpause(_Transaction.fromProtobufData(data)).transaction
+            return tokenUnpause(.fromProtobufData(data))
 
         case .scheduleCreate(let data):
-            return Self.scheduleCreate(_Transaction.fromProtobufData(data)).transaction
+            return scheduleCreate(try .fromProtobufData(data))
 
         case .scheduleDelete(let data):
-            return Self.scheduleDelete(_Transaction.fromProtobufData(data)).transaction
+            return scheduleDelete(.fromProtobufData(data))
 
         case .scheduleSign(let data):
-            return Self.scheduleSign(_Transaction.fromProtobufData(data)).transaction
+            return scheduleSign(.fromProtobufData(data))
 
-        case .nodeStakeUpdate(let data):
-            return Self.nodeStakeUpdate(_Transaction.fromProtobufData(data)).transaction
+        case .nodeStakeUpdate:
+            throw HError.fromProtobuf("node stake update transaction is unsupported")
 
-        case .utilPrng(let data):
-            return Self.utilPrng(_Transaction.fromProtobufData(data)).transaction
+        case .utilPrng:
+            throw HError.fromProtobuf("prng transaction is currently unsupported")
 
         }
     }

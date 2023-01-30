@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Unfreezes transfers of the specified token for the account.
 public final class TokenUnfreezeTransaction: Transaction {
     /// Create a new `TokenUnfreezeTransaction`.
@@ -86,5 +88,12 @@ public final class TokenUnfreezeTransaction: Transaction {
         try accountId?.validateChecksums(on: ledgerId)
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenUnfreezeAccountTransactionBody) throws -> Self {
+        Self(
+            accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil
+        )
     }
 }

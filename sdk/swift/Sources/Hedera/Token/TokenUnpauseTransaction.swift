@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Unpauses a previously paused token.
 public final class TokenUnpauseTransaction: Transaction {
     /// Create a new `TokenUnpauseTransaction`.
@@ -67,5 +69,9 @@ public final class TokenUnpauseTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenUnpauseTransactionBody) -> Self {
+        Self(tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil)
     }
 }

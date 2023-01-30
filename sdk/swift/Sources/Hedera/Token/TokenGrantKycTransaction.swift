@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Grants KYC to the account for the given token.
 public final class TokenGrantKycTransaction: Transaction {
     /// Create a new `TokenGrantKycTransaction`.
@@ -88,5 +90,12 @@ public final class TokenGrantKycTransaction: Transaction {
         try accountId?.validateChecksums(on: ledgerId)
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenGrantKycTransactionBody) throws -> Self {
+        Self(
+            accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil
+        )
     }
 }

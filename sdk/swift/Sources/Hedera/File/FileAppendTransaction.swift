@@ -19,9 +19,16 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Append the given contents to the end of the specified file.
 public final class FileAppendTransaction: Transaction {
+    internal init(fileId: FileId? = nil, contents: Data = Data()) {
+        self.fileId = fileId
+        self.contents = contents
+        super.init()
+    }
+
     /// Create a new `FileAppendTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -83,5 +90,12 @@ public final class FileAppendTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_FileAppendTransactionBody) -> Self {
+        Self(
+            fileId: proto.hasFileID ? .fromProtobuf(proto.fileID) : nil,
+            contents: proto.contents
+        )
     }
 }

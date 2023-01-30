@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Updates the fields of a smart contract to the given values.
 public final class ContractUpdateTransaction: Transaction {
@@ -316,5 +317,45 @@ public final class ContractUpdateTransaction: Transaction {
         try proxyAccountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ContractUpdateTransactionBody) throws -> Self {
+        let stakedId = try proto.stakedID.map(StakedId.fromProtobuf)
+        let memo: String?
+
+        switch proto.memoField {
+        case .memo(let value):
+            memo = value
+        case .memoWrapper(let value):
+            memo = value.value
+        case nil:
+            memo = nil
+        }
+
+        return Self(
+            contractId: proto.hasContractID ? try .fromProtobuf(proto.contractID) : nil,
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil,
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            contractMemo: memo,
+            maxAutomaticTokenAssociations: proto.hasMaxAutomaticTokenAssociations
+                ? UInt32(proto.maxAutomaticTokenAssociations.value) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccountID ? try .fromProtobuf(proto.autoRenewAccountID) : nil,
+            proxyAccountId: proto.hasProxyAccountID ? try .fromProtobuf(proto.proxyAccountID) : nil,
+            stakedAccountId: stakedId?.accountId,
+            stakedNodeId: stakedId?.nodeId.map(Int64.init(truncatingIfNeeded:)),
+            declineStakingReward: proto.hasDeclineReward ? proto.declineReward.value : nil
+        )
+    }
+}
+
+extension StakedId {
+    fileprivate static func fromProtobuf(_ proto: Proto_ContractUpdateTransactionBody.OneOf_StakedID) throws -> Self {
+        switch proto {
+        case .stakedAccountID(let id):
+            return .accountId(try .fromProtobuf(id))
+        case .stakedNodeID(let id):
+            return .nodeId(UInt64(id))
+        }
     }
 }

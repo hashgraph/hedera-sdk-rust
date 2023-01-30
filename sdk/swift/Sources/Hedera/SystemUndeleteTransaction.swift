@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Undelete a file or smart contract that was deleted by SystemDelete.
 public final class SystemUndeleteTransaction: Transaction {
@@ -82,5 +83,21 @@ public final class SystemUndeleteTransaction: Transaction {
         try fileId?.validateChecksums(on: ledgerId)
         try contractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_SystemUndeleteTransactionBody) throws -> Self {
+        let fileId: FileId?
+        let contractId: ContractId?
+
+        switch proto.id {
+        case .fileID(let id):
+            (fileId, contractId) = (.fromProtobuf(id), nil)
+        case .contractID(let id):
+            (fileId, contractId) = (nil, try .fromProtobuf(id))
+        case nil:
+            (fileId, contractId) = (nil, nil)
+        }
+
+        return Self(fileId: fileId, contractId: contractId)
     }
 }

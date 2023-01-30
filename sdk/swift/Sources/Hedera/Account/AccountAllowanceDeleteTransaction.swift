@@ -18,12 +18,20 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
 /// will remove the allowances granted to one or more specific non-fungible token serial numbers. Each owner account
 /// listed as wiping an allowance must sign the transaction. Hbar and fungible token allowances
 /// can be removed by setting the amount to zero in `AccountAllowanceApproveTransaction`.
 ///
 public final class AccountAllowanceDeleteTransaction: Transaction {
+    internal init(nftAllowances: [NftRemoveAllowance]) {
+        self.nftAllowances = nftAllowances
+
+        super.init()
+    }
+
     public private(set) var nftAllowances: [NftRemoveAllowance] = [] {
         willSet {
             ensureNotFrozen()
@@ -78,5 +86,11 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
     public override func validateChecksums(on ledgerId: LedgerId) throws {
         try nftAllowances.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_CryptoDeleteAllowanceTransactionBody) throws -> Self {
+        Self(
+            nftAllowances: try .fromProtobuf(proto.nftAllowances)
+        )
     }
 }

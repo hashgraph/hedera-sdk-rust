@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Call a function of the given smart contract instance, giving it
 /// parameters as its inputs.
@@ -167,4 +168,12 @@ public final class ContractExecuteTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal static func fromProtobufData(_ proto: Proto_ContractCallTransactionBody) throws -> Self {
+        Self(
+            contractId: proto.hasContractID ? try .fromProtobuf(proto.contractID) : nil,
+            gas: UInt64(proto.gas),
+            payableAmount: .fromTinybars(proto.amount),
+            functionParameters: !proto.functionParameters.isEmpty ? proto.functionParameters : nil
+        )
+    }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Create a new token.
 public final class TokenCreateTransaction: Transaction {
@@ -471,5 +472,31 @@ public final class TokenCreateTransaction: Transaction {
         try customFees.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenCreateTransactionBody) throws -> Self {
+        Self(
+            name: proto.name,
+            symbol: proto.symbol,
+            decimals: proto.decimals,
+            initialSupply: proto.initialSupply,
+            treasuryAccountId: proto.hasTreasury ? try .fromProtobuf(proto.treasury) : nil,
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            kycKey: proto.hasKycKey ? try .fromProtobuf(proto.kycKey) : nil,
+            freezeKey: proto.hasFreezeKey ? try .fromProtobuf(proto.freezeKey) : nil,
+            wipeKey: proto.hasWipeKey ? try .fromProtobuf(proto.wipeKey) : nil,
+            supplyKey: proto.hasSupplyKey ? try .fromProtobuf(proto.supplyKey) : nil,
+            freezeDefault: proto.freezeDefault,
+            expirationTime: proto.hasExpiry ? .fromProtobuf(proto.expiry) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            tokenMemo: proto.memo,
+            tokenType: try .fromProtobuf(proto.tokenType),
+            tokenSupplyType: try .fromProtobuf(proto.supplyType),
+            maxSupply: UInt64(proto.maxSupply),
+            feeScheduleKey: proto.hasFeeScheduleKey ? try .fromProtobuf(proto.feeScheduleKey) : nil,
+            customFees: try .fromProtobuf(proto.customFees),
+            pauseKey: proto.hasPauseKey ? try .fromProtobuf(proto.pauseKey) : nil
+        )
     }
 }

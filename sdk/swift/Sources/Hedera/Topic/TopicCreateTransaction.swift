@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Create a topic to be used for consensus.
 ///
@@ -162,5 +163,15 @@ public final class TopicCreateTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ConsensusCreateTopicTransactionBody) throws -> Self {
+        Self(
+            topicMemo: proto.memo,
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            submitKey: proto.hasSubmitKey ? try .fromProtobuf(proto.submitKey) : nil,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil
+        )
     }
 }

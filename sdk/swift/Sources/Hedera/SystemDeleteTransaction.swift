@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Delete a file or smart contract - can only be done with a Hedera admin.
 public final class SystemDeleteTransaction: Transaction {
@@ -100,5 +101,26 @@ public final class SystemDeleteTransaction: Transaction {
         try fileId?.validateChecksums(on: ledgerId)
         try contractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_SystemDeleteTransactionBody) throws -> Self {
+        let fileId: FileId?
+        let contractId: ContractId?
+
+        switch proto.id {
+        case .fileID(let id):
+            (fileId, contractId) = (.fromProtobuf(id), nil)
+        case .contractID(let id):
+            (fileId, contractId) = (nil, try .fromProtobuf(id))
+        case nil:
+            (fileId, contractId) = (nil, nil)
+        }
+
+        return Self(
+            fileId: fileId,
+            contractId: contractId,
+            expirationTime: proto.hasExpirationTime
+                ? Timestamp(seconds: UInt64(proto.expirationTime.seconds), subSecondNanos: 0) : nil
+        )
     }
 }

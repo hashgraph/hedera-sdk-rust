@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Pauses the token from being involved in any kind of transaction until it is unpaused.
 public final class TokenPauseTransaction: Transaction {
     /// Create a new `TokenPauseTransaction`.
@@ -67,5 +69,9 @@ public final class TokenPauseTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenPauseTransactionBody) -> Self {
+        Self(tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil)
     }
 }

@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Adds zero or more signing keys to a schedule.
 public final class ScheduleSignTransaction: Transaction {
     /// Create a new `ScheduleSignTransaction`.
@@ -69,5 +71,9 @@ public final class ScheduleSignTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try scheduleId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ScheduleSignTransactionBody) -> Self {
+        Self(scheduleId: proto.hasScheduleID ? .fromProtobuf(proto.scheduleID) : nil)
     }
 }

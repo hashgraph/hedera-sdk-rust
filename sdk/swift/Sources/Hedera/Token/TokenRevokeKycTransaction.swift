@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Revokes KYC from the account for the given token.
 public final class TokenRevokeKycTransaction: Transaction {
     /// Create a new `TokenRevokeKycTransaction`.
@@ -88,5 +90,12 @@ public final class TokenRevokeKycTransaction: Transaction {
         try accountId?.validateChecksums(on: ledgerId)
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenRevokeKycTransactionBody) throws -> Self {
+        Self(
+            accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil
+        )
     }
 }

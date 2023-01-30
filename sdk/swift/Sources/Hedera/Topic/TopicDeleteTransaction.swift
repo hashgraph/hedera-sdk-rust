@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Delete a topic.
 ///
@@ -28,8 +29,9 @@ import Foundation
 /// If there is no `admin_key`, this transaction will fail `UNAUTHORIZED`.
 ///
 public final class TopicDeleteTransaction: Transaction {
-    /// Create a new `TopicDeleteTransaction` ready for configuration.
-    public override init() {
+    /// Create a new `TopicDeleteTransaction`.
+    public init(topicId: TopicId? = nil) {
+        self.topicId = topicId
         super.init()
     }
 
@@ -71,5 +73,9 @@ public final class TopicDeleteTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try topicId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ConsensusDeleteTopicTransactionBody) -> Self {
+        Self(topicId: proto.hasTopicID ? .fromProtobuf(proto.topicID) : nil)
     }
 }

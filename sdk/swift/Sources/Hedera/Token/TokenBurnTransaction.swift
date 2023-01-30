@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Burns tokens from the token's treasury account.
 public final class TokenBurnTransaction: Transaction {
     /// Create a new `TokenBurnTransaction`.
@@ -116,5 +118,13 @@ public final class TokenBurnTransaction: Transaction {
         try tokenId?.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenBurnTransactionBody) throws -> Self {
+        Self(
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil,
+            amount: proto.amount,
+            serials: proto.serialNumbers.map(UInt64.init)
+        )
     }
 }

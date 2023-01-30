@@ -18,11 +18,15 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
 /// a designated receiver.
 public final class ContractDeleteTransaction: Transaction {
     /// Create a new `ContractDeleteTransaction`.
-    public init(contractId: ContractId? = nil) {
+    public init(
+        contractId: ContractId? = nil, transferAccountId: AccountId? = nil, transferContractId: ContractId? = nil
+    ) {
         self.contractId = contractId
 
         super.init()
@@ -105,4 +109,28 @@ public final class ContractDeleteTransaction: Transaction {
         try transferContractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
+
+    internal static func fromProtobufData(_ proto: Proto_ContractDeleteTransactionBody) throws -> Self {
+        let transferAccountId: AccountId?
+        let transferContractId: ContractId?
+
+        switch proto.obtainers {
+        case .transferAccountID(let id):
+            transferAccountId = try .fromProtobuf(id)
+            transferContractId = nil
+        case .transferContractID(let id):
+            transferAccountId = nil
+            transferContractId = try .fromProtobuf(id)
+        case nil:
+            transferAccountId = nil
+            transferContractId = nil
+        }
+
+        return Self(
+            contractId: proto.hasContractID ? try .fromProtobuf(proto.contractID) : nil,
+            transferAccountId: transferAccountId,
+            transferContractId: transferContractId
+        )
+    }
+
 }

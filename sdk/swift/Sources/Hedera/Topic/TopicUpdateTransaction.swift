@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Change properties for the given topic.
 ///
@@ -200,5 +201,17 @@ public final class TopicUpdateTransaction: Transaction {
         try topicId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ConsensusUpdateTopicTransactionBody) throws -> Self {
+        Self(
+            topicId: proto.hasTopicID ? .fromProtobuf(proto.topicID) : nil,
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil,
+            topicMemo: proto.hasMemo ? proto.memo.value : "",
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            submitKey: proto.hasSubmitKey ? try .fromProtobuf(proto.submitKey) : nil,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil
+        )
     }
 }

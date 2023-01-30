@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Delete the given file.
 ///
 /// After deletion, it will be marked as deleted and will have no contents.
@@ -73,5 +75,9 @@ public final class FileDeleteTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_FileDeleteTransactionBody) -> Self {
+        Self(fileId: .fromProtobuf(proto.hasFileID ? proto.fileID : nil))
     }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Submit a message for consensus.
 ///
@@ -167,5 +168,16 @@ public final class TopicMessageSubmitTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try topicId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ConsensusSubmitMessageTransactionBody) throws -> Self {
+        let chunkInfo = proto.hasChunkInfo ? proto.chunkInfo : nil
+        return Self(
+            topicId: proto.hasTopicID ? .fromProtobuf(proto.topicID) : nil,
+            message: proto.message,
+            initialTransactionId: try .fromProtobuf(chunkInfo?.initialTransactionID),
+            chunkTotal: Int(chunkInfo?.total ?? 1),
+            chunkNumber: Int(chunkInfo?.number ?? 1)
+        )
     }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Set the freezing period in which the platform will stop creating
 /// events and accepting transactions.
@@ -130,5 +131,14 @@ public final class FreezeTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_FreezeTransactionBody) throws -> Self {
+        Self(
+            startTime: proto.hasStartTime ? .fromProtobuf(proto.startTime) : nil,
+            fileId: proto.hasUpdateFile ? .fromProtobuf(proto.updateFile) : nil,
+            fileHash: !proto.fileHash.isEmpty ? proto.fileHash : nil,
+            freezeType: try .fromProtobuf(proto.freezeType)
+        )
     }
 }

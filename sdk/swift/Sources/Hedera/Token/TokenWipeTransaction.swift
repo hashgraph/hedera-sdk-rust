@@ -18,11 +18,14 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Wipes the provided amount of tokens from the specified account.
 public final class TokenWipeTransaction: Transaction {
     /// Create a new `TokenWipeTransaction`.
     public init(
         tokenId: TokenId? = nil,
+        accountId: AccountId? = nil,
         amount: UInt64 = 0,
         serials: [UInt64] = []
     ) {
@@ -130,5 +133,14 @@ public final class TokenWipeTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenWipeAccountTransactionBody) throws -> Self {
+        Self(
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil,
+            accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
+            amount: proto.amount,
+            serials: proto.serialNumbers.map(UInt64.init)
+        )
     }
 }

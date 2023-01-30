@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
 ///
@@ -157,5 +158,16 @@ public final class ScheduleCreateTransaction: Transaction {
         try payerAccountId?.validateChecksums(on: ledgerId)
         try scheduledTransaction?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ScheduleCreateTransactionBody) throws -> Self {
+        Self(
+            expirationTime: .fromProtobuf(proto.expirationTime),
+            isWaitForExpiry: proto.waitForExpiry,
+            payerAccountId: proto.hasPayerAccountID ? try .fromProtobuf(proto.payerAccountID) : nil,
+            scheduledTransaction: Transaction(),
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            scheduleMemo: proto.memo
+        )
     }
 }

@@ -76,6 +76,23 @@ private struct TransactionSources {
         return Self(protos: transactions)
     }
 
+    func makeNodeIdsAndHashes() -> ([AccountId], [TransactionHash]) {
+        var nodeAccountIds: [AccountId] = []
+        var hashes: [TransactionHash] = []
+
+        for transaction in inner {
+            let tx = try! Proto_SignedTransaction(serializedData: transaction.signedTransactionBytes)
+
+            hashes.append(.generate(tx.bodyBytes))
+
+            let nodeAccountId = try! AccountId.fromProtobuf(
+                Proto_TransactionBody(serializedData: tx.bodyBytes).nodeAccountID)
+            nodeAccountIds.append(nodeAccountId)
+        }
+
+        return (nodeAccountIds, hashes)
+    }
+
     var inner: [Proto_Transaction]
 
 }
@@ -203,7 +220,12 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
-        try await executeInternal(client, timeout)
+        try freezeWith(client)
+        if let sources = sources {
+            return try await execute2(client, self, sources, timeout)
+        } else {
+            return try await executeAny(client, self, timeout)
+        }
     }
 
     public func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse {
@@ -228,34 +250,36 @@ public class Transaction: Request, ValidateChecksums, Decodable {
             try self.validateChecksums(on: client)
         }
 
-        // start an unmanaged continuation to bridge a C callback with Swift async
-        let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
-            let signers = makeHederaSignersFromArray(signers: signers)
-            // invoke `hedera_execute`, callback will be invoked on request completion
-            let err = hedera_transaction_execute(
-                client.ptr, request, continuation, signers, timeout != nil,
-                timeout ?? 0.0, sources?.ptr
-            ) { continuation, err, responsePtr in
-                if let err = HError(err) {
-                    // an error has occurred, consume from the TLS storage for the error
-                    // and throw it up back to the async task
-                    resumeUnmanagedContinuation(continuation, throwing: err)
-                } else {
-                    // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
-                    let responseText = String(validatingUTF8: responsePtr!)!
-                    let responseBytes = responseText.data(using: .utf8)!
+        fatalError()
 
-                    // resumes the continuation which bridges us back into Swift async
-                    resumeUnmanagedContinuation(continuation, returning: responseBytes)
-                }
-            }
+        // // start an unmanaged continuation to bridge a C callback with Swift async
+        // let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
+        //     let signers = makeHederaSignersFromArray(signers: signers)
+        //     // invoke `hedera_execute`, callback will be invoked on request completion
+        //     let err = hedera_transaction_execute(
+        //         client.ptr, request, continuation, signers, timeout != nil,
+        //         timeout ?? 0.0, sources?.ptr
+        //     ) { continuation, err, responsePtr in
+        //         if let err = HError(err) {
+        //             // an error has occurred, consume from the TLS storage for the error
+        //             // and throw it up back to the async task
+        //             resumeUnmanagedContinuation(continuation, throwing: err)
+        //         } else {
+        //             // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
+        //             let responseText = String(validatingUTF8: responsePtr!)!
+        //             let responseBytes = responseText.data(using: .utf8)!
 
-            if let err = HError(err) {
-                resumeUnmanagedContinuation(continuation, throwing: err)
-            }
-        }
+        //             // resumes the continuation which bridges us back into Swift async
+        //             resumeUnmanagedContinuation(continuation, returning: responseBytes)
+        //         }
+        //     }
 
-        return try Self.decodeResponse(responseBytes)
+        //     if let err = HError(err) {
+        //         resumeUnmanagedContinuation(continuation, throwing: err)
+        //     }
+        // }
+
+        // return try Self.decodeResponse(responseBytes)
     }
 
     public required init(from decoder: Decoder) throws {
@@ -283,7 +307,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Transaction {
-        var transactionList = try Proto_TransactionList(serializedData: bytes)
+        let transactionList = try Proto_TransactionList(serializedData: bytes)
 
         let list: [Proto_Transaction]
         if transactionList.transactionList.isEmpty {
@@ -362,7 +386,7 @@ extension Transaction {
             throw HError.fromProtobuf("Unexpected missing `TransactionBody.data`x")
         }
 
-        let tmp = try AnyTransaction.fromProtobuf(data)
+        let tmp = try AnyTransaction.fromProtobuf(data).transaction
         tmp.nodeAccountIds = nodeAccountIds
         tmp.sources = sources
         tmp.isFrozen = true
@@ -551,6 +575,7 @@ private func execute2(
 ) async throws -> TransactionResponse {
     let sources = sources.signWith(transaction.signers)
 
+    let (nodeAccountIds, hashes) = sources.makeNodeIdsAndHashes()
 
     let timeout = timeout ?? LegacyExponentialBackoff.defaultMaxElapsedTime
 
@@ -563,7 +588,82 @@ private func execute2(
 
     var includeUnhealthy = false
 
-    // while true {
+    while true {
+        let network = client.network
+        let nodeIndexes = try network.nodeIndexesForIds(nodeAccountIds)
 
-    // }
+        inner: for (requestIndex, nodeIndex) in nodeIndexes.enumerated() {
+            guard includeUnhealthy || network.isNodeHealthy(nodeIndex, Int64(Timestamp.now.unixTimestampNanos)) else {
+                continue
+            }
+
+            let (nodeAccountId, channel) = network.channel(for: nodeIndex, on: client.eventLoop)
+
+            let response: Transaction.GrpcResponse
+
+            do {
+                response = try await transaction.execute(channel, sources.inner[requestIndex])
+            } catch let error as GRPCStatus {
+                switch error.code {
+                case .unavailable, .resourceExhausted:
+                    // NOTE: this is an "unhealthy" node
+                    // todo: mark unhealthy
+
+                    // try the next node in our allowed list, immediately
+                    lastError = HError(
+                        kind: .grpcStatus(status: Int32(error.code.rawValue)),
+                        description: error.description
+                    )
+                    continue inner
+
+                case let code:
+                    throw HError(
+                        kind: .grpcStatus(status: Int32(code.rawValue)),
+                        description: error.description
+                    )
+                }
+            }
+
+            let rawPrecheckStatus = try Transaction.responsePrecheckStatus(response)
+            let precheckStatus = Status(rawValue: rawPrecheckStatus)
+
+            switch precheckStatus {
+            case .ok where transaction.shouldRetry(forResponse: response):
+                lastError = transaction.makeErrorPrecheck(precheckStatus, transaction.transactionId)
+                break inner
+
+            case .ok:
+                return try transaction.makeResponse(
+                    response, hashes[requestIndex], nodeAccountId, transaction.transactionId)
+
+            case .busy, .platformNotActive:
+                // NOTE: this is a "busy" node
+                // try the next node in our allowed list, immediately
+                lastError = transaction.makeErrorPrecheck(precheckStatus, transaction.transactionId)
+
+            case .UNRECOGNIZED(let value):
+                throw HError(
+                    kind: .responseStatusUnrecognized,
+                    description: "response status \(value) unrecognized"
+                )
+
+            case let status where transaction.shouldRetryPrecheck(forStatus: precheckStatus):
+                // conditional retry on pre-check should back-off and try again
+                lastError = transaction.makeErrorPrecheck(status, transaction.transactionId)
+                break inner
+
+            default:
+                throw transaction.makeErrorPrecheck(precheckStatus, transaction.transactionId)
+            }
+
+            guard let timeout = backoff.next() else {
+                throw HError.timedOut(source: lastError)
+            }
+
+            try await Task.sleep(nanoseconds: UInt64(timeout * 1e9))
+        }
+
+        // we've gone through healthy nodes at least once, now we have to try other nodes.
+        includeUnhealthy = true
+    }
 }

@@ -11,4 +11,5 @@ public struct Transfer: Codable {
     ///
     /// Negative if the account sends/withdraws hbar, positive if it receives hbar.
     public let amount: Hbar
+
 }

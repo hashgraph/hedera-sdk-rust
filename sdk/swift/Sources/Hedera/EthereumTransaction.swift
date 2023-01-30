@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Submit an Ethereum transaction.
 public final class EthereumTransaction: Transaction {
@@ -123,5 +124,13 @@ public final class EthereumTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try callDataFileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_EthereumTransactionBody) throws -> Self {
+        Self(
+            ethereumData: !proto.ethereumData.isEmpty ? proto.ethereumData : nil,
+            callDataFileId: proto.hasCallData ? .fromProtobuf(proto.callData) : nil,
+            maxGasAllowanceHbar: UInt64(proto.maxGasAllowance)
+        )
     }
 }

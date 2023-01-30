@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Modify the metadata and/or the contents of a file.
 ///
@@ -205,5 +206,17 @@ public final class FileUpdateTransaction: Transaction {
         try fileId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_FileUpdateTransactionBody) throws -> Self {
+        Self(
+            fileId: proto.hasFileID ? .fromProtobuf(proto.fileID) : nil,
+            fileMemo: proto.hasMemo ? proto.memo.value : nil ?? "",
+            keys: proto.hasKeys ? try .fromProtobuf(proto.keys) : nil,
+            contents: proto.contents,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil,
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil
+        )
     }
 }

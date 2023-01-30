@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Creates one or more hbar/token approved allowances **relative to the owner account specified in the allowances of
 /// this transaction**.
 ///
@@ -28,6 +30,18 @@
 /// Setting the amount to zero will remove the respective allowance for the spender.
 ///
 public final class AccountAllowanceApproveTransaction: Transaction {
+    internal init(
+        hbarAllowances: [HbarAllowance] = [],
+        tokenAllowances: [TokenAllowance] = [],
+        nftAllowances: [TokenNftAllowance] = []
+    ) {
+        self.hbarAllowances = hbarAllowances
+        self.tokenAllowances = tokenAllowances
+        self.nftAllowances = nftAllowances
+
+        super.init()
+    }
+
     private var hbarAllowances: [HbarAllowance] = [] {
         willSet {
             ensureNotFrozen(fieldName: "hbarAllowances")
@@ -179,5 +193,12 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         try nftAllowances.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_CryptoApproveAllowanceTransactionBody) throws -> Self {
+        Self(
+            hbarAllowances: try .fromProtobuf(proto.cryptoAllowances),
+            tokenAllowances: try .fromProtobuf(proto.tokenAllowances),
+            nftAllowances: try .fromProtobuf(proto.nftAllowances))
     }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Mark an account as deleted, moving all its current hbars to another account.
 ///
@@ -26,6 +27,13 @@ import Foundation
 /// Transfers into it a deleted account will fail.
 ///
 public final class AccountDeleteTransaction: Transaction {
+    internal init(transferAccountId: AccountId? = nil, accountId: AccountId? = nil) {
+        self.transferAccountId = transferAccountId
+        self.accountId = accountId
+
+        super.init()
+    }
+
     /// Create a new `AccountDeleteTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -87,5 +95,12 @@ public final class AccountDeleteTransaction: Transaction {
         try transferAccountId?.validateChecksums(on: ledgerId)
         try accountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_CryptoDeleteTransactionBody) throws -> Self {
+        Self(
+            transferAccountId: try .fromProtobuf(proto.hasDeleteAccountID ? proto.deleteAccountID : nil),
+            accountId: try .fromProtobuf(proto.hasTransferAccountID ? proto.transferAccountID : nil)
+        )
     }
 }

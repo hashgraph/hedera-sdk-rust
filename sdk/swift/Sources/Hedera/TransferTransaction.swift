@@ -18,6 +18,9 @@
  * ‍
  */
 
+import HederaProtobufs
+import SwiftProtobuf
+
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
 ///
@@ -26,8 +29,16 @@
 /// account (a receiver). The amounts list must sum to zero.
 ///
 public final class TransferTransaction: Transaction {
+    private init(
+        transfers: [TransferTransaction.Transfer] = [], tokenTransfers: [TransferTransaction.TokenTransfer] = []
+    ) {
+        self.transfers = transfers
+        self.tokenTransfers = tokenTransfers
+        super.init()
+    }
+
     // avoid scope collisions by nesting :/
-    private struct Transfer: Codable, ValidateChecksums {
+    fileprivate struct Transfer: Codable, ValidateChecksums {
         let accountId: AccountId
         let amount: Int64
         let isApproval: Bool
@@ -37,10 +48,10 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private struct TokenTransfer: Codable, ValidateChecksums {
+    fileprivate struct TokenTransfer: Codable, ValidateChecksums {
         let tokenId: TokenId
-        var transfers: [TransferTransaction.Transfer]
-        var nftTransfers: [TransferTransaction.NftTransfer]
+        var transfers: [Transfer]
+        var nftTransfers: [NftTransfer]
         var expectedDecimals: UInt32?
 
         internal func validateChecksums(on ledgerId: LedgerId) throws {
@@ -50,7 +61,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private struct NftTransfer: Codable, ValidateChecksums {
+    fileprivate struct NftTransfer: Codable, ValidateChecksums {
         let senderAccountId: AccountId
         let receiverAccountId: AccountId
         let serial: UInt64
@@ -79,7 +90,7 @@ public final class TransferTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         transfers = try container.decodeIfPresent(.transfers) ?? []
@@ -225,5 +236,79 @@ public final class TransferTransaction: Transaction {
         try transfers.validateChecksums(on: ledgerId)
         try tokenTransfers.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_CryptoTransferTransactionBody) throws -> Self {
+        Self(
+            transfers: try .fromProtobuf(proto.transfers.accountAmounts),
+            tokenTransfers: try .fromProtobuf(proto.tokenTransfers)
+        )
+    }
+}
+
+extension TransferTransaction.Transfer: TryProtobufCodable {
+    typealias Protobuf = Proto_AccountAmount
+
+    init(fromProtobuf proto: Protobuf) throws {
+        self.init(
+            accountId: try .fromProtobuf(proto.accountID),
+            amount: proto.amount,
+            isApproval: proto.isApproval
+        )
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.amount = amount
+        }
+    }
+}
+
+extension TransferTransaction.TokenTransfer: TryProtobufCodable {
+    typealias Protobuf = Proto_TokenTransferList
+
+    init(fromProtobuf proto: Protobuf) throws {
+        self.init(
+            tokenId: .fromProtobuf(proto.token),
+            transfers: try .fromProtobuf(proto.transfers),
+            nftTransfers: try .fromProtobuf(proto.nftTransfers),
+            expectedDecimals: proto.hasExpectedDecimals ? proto.expectedDecimals.value : nil
+        )
+        transfers = try .fromProtobuf(proto.transfers)
+
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.token = tokenId.toProtobuf()
+            proto.transfers = transfers.toProtobuf()
+            proto.nftTransfers = nftTransfers.toProtobuf()
+            if let expectedDecimals = expectedDecimals {
+                proto.expectedDecimals = Google_Protobuf_UInt32Value(expectedDecimals)
+            }
+        }
+    }
+}
+
+extension TransferTransaction.NftTransfer: TryProtobufCodable {
+    typealias Protobuf = Proto_NftTransfer
+
+    init(fromProtobuf proto: Protobuf) throws {
+        self.init(
+            senderAccountId: try .fromProtobuf(proto.senderAccountID),
+            receiverAccountId: try .fromProtobuf(proto.receiverAccountID),
+            serial: UInt64(proto.serialNumber),
+            isApproval: proto.isApproval
+        )
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.senderAccountID = senderAccountId.toProtobuf()
+            proto.receiverAccountID = receiverAccountId.toProtobuf()
+            proto.serialNumber = Int64(proto.serialNumber)
+            proto.isApproval = isApproval
+        }
     }
 }

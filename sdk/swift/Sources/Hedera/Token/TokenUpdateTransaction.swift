@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// At consensus, updates an already created token to the given values.
 public final class TokenUpdateTransaction: Transaction {
@@ -360,5 +361,25 @@ public final class TokenUpdateTransaction: Transaction {
         try treasuryAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenUpdateTransactionBody) throws -> Self {
+        Self(
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil,
+            tokenName: proto.name,
+            tokenSymbol: proto.symbol,
+            treasuryAccountId: proto.hasTreasury ? try .fromProtobuf(proto.treasury) : nil,
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            kycKey: proto.hasKycKey ? try .fromProtobuf(proto.kycKey) : nil,
+            freezeKey: proto.hasFreezeKey ? try .fromProtobuf(proto.freezeKey) : nil,
+            wipeKey: proto.hasWipeKey ? try .fromProtobuf(proto.wipeKey) : nil,
+            supplyKey: proto.hasSupplyKey ? try .fromProtobuf(proto.supplyKey) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            expirationTime: proto.hasExpiry ? .fromProtobuf(proto.expiry) : nil,
+            tokenMemo: proto.hasMemo ? proto.memo.value : nil ?? "",
+            feeScheduleKey: proto.hasFeeScheduleKey ? try .fromProtobuf(proto.feeScheduleKey) : nil,
+            pauseKey: proto.hasPauseKey ? try .fromProtobuf(proto.pauseKey) : nil
+        )
     }
 }

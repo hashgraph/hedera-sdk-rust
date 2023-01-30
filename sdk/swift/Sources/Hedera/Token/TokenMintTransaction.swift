@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Mint tokens to the token's treasury account.
 public final class TokenMintTransaction: Transaction {
@@ -109,5 +110,13 @@ public final class TokenMintTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenMintTransactionBody) -> Self {
+        Self(
+            tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil,
+            amount: proto.amount,
+            metadata: proto.metadata
+        )
     }
 }

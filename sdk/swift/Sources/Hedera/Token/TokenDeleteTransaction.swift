@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Marks a token as deleted, though it will remain in the ledger.
 public final class TokenDeleteTransaction: Transaction {
     /// Create a new `TokenDeleteTransaction`.
@@ -67,5 +69,9 @@ public final class TokenDeleteTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_TokenDeleteTransactionBody) -> Self {
+        Self(tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil)
     }
 }

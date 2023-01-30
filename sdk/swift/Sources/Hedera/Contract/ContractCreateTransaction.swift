@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Start a new smart contract instance.
 public final class ContractCreateTransaction: Transaction {
@@ -48,8 +49,37 @@ public final class ContractCreateTransaction: Transaction {
         self.contractMemo = contractMemo
         self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
         self.autoRenewAccountId = autoRenewAccountId
-        self.stakedAccountId = stakedAccountId
-        self.stakedNodeId = stakedNodeId
+        self.stakedId = stakedAccountId.map(StakedId.accountId) ?? stakedNodeId.map(StakedId.nodeId)
+        self.declineStakingReward = declineStakingReward
+
+        super.init()
+    }
+
+    internal init(
+        bytecode: Data? = nil,
+        bytecodeFileId: FileId? = nil,
+        adminKey: Key? = nil,
+        gas: UInt64 = 0,
+        initialBalance: Hbar = 0,
+        autoRenewPeriod: Duration? = nil,
+        constructorParameters: Data? = nil,
+        contractMemo: String = "",
+        maxAutomaticTokenAssociations: UInt32 = 0,
+        autoRenewAccountId: AccountId? = nil,
+        stakedId: StakedId? = nil,
+        declineStakingReward: Bool = false
+    ) {
+        self.bytecode = bytecode
+        self.bytecodeFileId = bytecodeFileId
+        self.adminKey = adminKey
+        self.gas = gas
+        self.initialBalance = initialBalance
+        self.autoRenewPeriod = autoRenewPeriod
+        self.constructorParameters = constructorParameters
+        self.contractMemo = contractMemo
+        self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+        self.autoRenewAccountId = autoRenewAccountId
+        self.stakedId = stakedId
         self.declineStakingReward = declineStakingReward
 
         super.init()
@@ -68,8 +98,8 @@ public final class ContractCreateTransaction: Transaction {
         contractMemo = try container.decodeIfPresent(.contractMemo) ?? ""
         maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
         autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
+
+        stakedId = try StakedId.flatDecode(from: decoder)
         declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
 
         try super.init(from: decoder)
@@ -239,32 +269,37 @@ public final class ContractCreateTransaction: Transaction {
         return self
     }
 
-    /// The ID of the account to which this contract is staking.
-    public var stakedAccountId: AccountId? {
+    /// The ID that to which this contract is / will be staking.
+    private var stakedId: StakedId? {
         willSet {
             ensureNotFrozen()
         }
     }
 
+    /// The ID of the account to which this contract is staking.
+    public var stakedAccountId: AccountId? {
+        get { stakedId?.accountId }
+        set(value) { stakedId = value.map(StakedId.accountId) }
+    }
+
     /// Sets the ID of the account to which this contract is staking.
     @discardableResult
     public func stakedAccountId(_ stakedAccountId: AccountId) -> Self {
-        self.stakedAccountId = stakedAccountId
+        stakedId = .accountId(stakedAccountId)
 
         return self
     }
 
     /// The ID of the node to which this contract is staking.
     public var stakedNodeId: UInt64? {
-        willSet {
-            ensureNotFrozen()
-        }
+        get { stakedId?.nodeId }
+        set(value) { stakedId = value.map(StakedId.nodeId) }
     }
 
     /// Sets the ID of the node to which this contract is staking.
     @discardableResult
     public func stakedNodeId(_ stakedNodeId: UInt64) -> Self {
-        self.stakedNodeId = stakedNodeId
+        stakedId = .nodeId(stakedNodeId)
 
         return self
     }
@@ -295,8 +330,6 @@ public final class ContractCreateTransaction: Transaction {
         case contractMemo
         case maxAutomaticTokenAssociations
         case autoRenewAccountId
-        case stakedAccountId
-        case stakedNodeId
         case declineStakingReward
     }
 
@@ -313,9 +346,9 @@ public final class ContractCreateTransaction: Transaction {
         try container.encode(contractMemo, forKey: .contractMemo)
         try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
         try container.encode(declineStakingReward, forKey: .declineStakingReward)
+
+        try stakedId?.encode(to: encoder)
 
         try super.encode(to: encoder)
     }
@@ -325,5 +358,48 @@ public final class ContractCreateTransaction: Transaction {
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ContractCreateTransactionBody) throws -> Self {
+        let bytecode: Data?
+        let bytecodeFileId: FileId?
+
+        switch proto.initcodeSource {
+        case .initcode(let initcode):
+            bytecode = initcode
+            bytecodeFileId = nil
+        case .fileID(let fileId):
+            bytecode = nil
+            bytecodeFileId = .fromProtobuf(fileId)
+        case nil:
+            bytecode = nil
+            bytecodeFileId = nil
+        }
+
+        return Self(
+            bytecode: bytecode,
+            bytecodeFileId: bytecodeFileId,
+            adminKey: try .fromProtobuf(proto.adminKey),
+            gas: UInt64(proto.gas),
+            initialBalance: .fromTinybars(proto.initialBalance),
+            autoRenewPeriod: .fromProtobuf(proto.autoRenewPeriod),
+            constructorParameters: !proto.constructorParameters.isEmpty ? proto.constructorParameters : nil,
+            contractMemo: proto.memo,
+            maxAutomaticTokenAssociations: UInt32(proto.maxAutomaticTokenAssociations),
+            autoRenewAccountId: proto.hasAutoRenewAccountID ? try .fromProtobuf(proto.autoRenewAccountID) : nil,
+            stakedId: try proto.stakedID.map(StakedId.fromProtobuf),
+            declineStakingReward: proto.declineReward
+        )
+    }
+}
+
+extension StakedId {
+    fileprivate static func fromProtobuf(_ proto: Proto_ContractCreateTransactionBody.OneOf_StakedID) throws -> Self {
+        switch proto {
+        case .stakedAccountID(let id):
+            return .accountId(try .fromProtobuf(id))
+        case .stakedNodeID(let id):
+            return .nodeId(UInt64(id))
+        }
     }
 }

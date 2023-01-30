@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Marks a schedule in the network's action queue as deleted.
 public final class ScheduleDeleteTransaction: Transaction {
     /// Create a new `ScheduleDeleteTransaction`.
@@ -62,5 +64,9 @@ public final class ScheduleDeleteTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try scheduleId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_ScheduleDeleteTransactionBody) -> Self {
+        Self(scheduleId: .fromProtobuf(proto.hasScheduleID ? proto.scheduleID : nil))
     }
 }

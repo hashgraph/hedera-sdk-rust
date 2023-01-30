@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Change properties for the given account.
 ///
@@ -320,5 +321,46 @@ public final class AccountUpdateTransaction: Transaction {
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try proxyAccountIdInner?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_CryptoUpdateTransactionBody) throws -> Self {
+        let stakedId = try proto.stakedID.map(StakedId.fromProtobuf)
+
+        let receiverSignatureRequired: Bool?
+        switch proto.receiverSigRequiredField {
+        case .receiverSigRequired(let value):
+            receiverSignatureRequired = value
+        case .receiverSigRequiredWrapper(let value):
+            receiverSignatureRequired = value.value
+        case nil:
+            receiverSignatureRequired = nil
+        }
+
+        return Self(
+            accountId: proto.hasAccountIdtoUpdate ? try .fromProtobuf(proto.accountIdtoUpdate) : nil,
+            key: proto.hasKey ? try .fromProtobuf(proto.key) : nil,
+            receiverSignatureRequired: receiverSignatureRequired,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil,
+            proxyAccountId: proto.hasProxyAccountID ? try .fromProtobuf(proto.proxyAccountID) : nil,
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil,
+            accountMemo: proto.hasMemo ? proto.memo.value : nil,
+            maxAutomaticTokenAssociations: proto.hasMaxAutomaticTokenAssociations
+                ? UInt32(proto.maxAutomaticTokenAssociations.value) : nil,
+            stakedAccountId: stakedId?.accountId,
+            stakedNodeId: stakedId?.nodeId,
+            declineStakingReward: proto.hasDeclineReward ? proto.declineReward.value : nil
+        )
+    }
+}
+
+extension StakedId {
+    fileprivate static func fromProtobuf(_ proto: Proto_CryptoUpdateTransactionBody.OneOf_StakedID) throws -> Self {
+        switch proto {
+        case .stakedAccountID(let id):
+            return .accountId(try .fromProtobuf(id))
+        case .stakedNodeID(let id):
+            return .nodeId(UInt64(id))
+        }
     }
 }

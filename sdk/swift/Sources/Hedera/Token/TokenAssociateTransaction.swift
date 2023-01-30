@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Associates the provided account with the provided tokens.
 ///
 /// Must be signed by the provided account's key.
@@ -93,4 +95,10 @@ public final class TokenAssociateTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal static func fromProtobufData(_ proto: Proto_TokenAssociateTransactionBody) throws -> Self {
+        Self(
+            accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
+            tokenIds: .fromProtobuf(proto.tokens)
+        )
+    }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Create a new file, containing the given contents.
 public final class FileCreateTransaction: Transaction {
@@ -156,6 +157,17 @@ public final class FileCreateTransaction: Transaction {
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
-        try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
+        try autoRenewAccountId?.validateChecksums(on: ledgerId)
+    }
+
+    internal static func fromProtobufData(_ proto: Proto_FileCreateTransactionBody) throws -> Self {
+        Self(
+            fileMemo: proto.memo,
+            keys: try .fromProtobuf(proto.keys),
+            contents: proto.contents,
+            autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
+            autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil,
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil
+        )
     }
 }

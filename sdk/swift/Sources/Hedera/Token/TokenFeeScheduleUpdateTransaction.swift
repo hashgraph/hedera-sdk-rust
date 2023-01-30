@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
 public final class TokenFeeScheduleUpdateTransaction: Transaction {
     /// Create a new `TokenFeeScheduleUpdateTransaction`.
@@ -90,4 +92,10 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal static func fromProtobufData(_ proto: Proto_TokenFeeScheduleUpdateTransactionBody) throws -> Self {
+        Self(
+            tokenId: proto.hasTokenID ? .fromProtobuf(proto.tokenID) : nil,
+            customFees: try .fromProtobuf(proto.customFees)
+        )
+    }
 }

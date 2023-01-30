@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 public enum FreezeType: Codable {
     /// An (invalid) default value for this enum, to ensure the client explicitly sets
     /// the intended type of freeze transaction.
@@ -44,4 +46,59 @@ public enum FreezeType: Codable {
     /// Performs an immediate upgrade on auxilary services and containers providing
     /// telemetry/metrics. Does not impact network operations.
     case telemetryUpgrade
+}
+
+extension FreezeType: TryProtobufCodable {
+    init(fromProtobuf proto: Protobuf) throws {
+        switch proto {
+        case .unknownFreezeType:
+            self = .unknown
+
+        case .freezeOnly:
+            self = .freezeOnly
+
+        case .prepareUpgrade:
+            self = .prepareUpgrade
+
+        case .freezeUpgrade:
+            self = .freezeUpgrade
+
+        case .freezeAbort:
+            self = .freezeAbort
+
+        case .telemetryUpgrade:
+            self = .telemetryUpgrade
+
+        case .UNRECOGNIZED(let code):
+            throw HError.fromProtobuf("Unrecognized freeze type \(code)")
+
+        }
+    }
+
+    func toProtobuf() -> Protobuf {
+        switch self {
+
+        case .unknown:
+            return .unknownFreezeType
+
+        case .freezeOnly:
+            return .freezeOnly
+
+        case .prepareUpgrade:
+            return .prepareUpgrade
+
+        case .freezeUpgrade:
+            return .freezeUpgrade
+
+        case .freezeAbort:
+            return .freezeAbort
+
+        case .telemetryUpgrade:
+            return .telemetryUpgrade
+
+        }
+    }
+
+    typealias Protobuf = Proto_FreezeType
+
 }
