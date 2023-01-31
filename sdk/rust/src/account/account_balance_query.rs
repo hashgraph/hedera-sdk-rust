@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
@@ -33,6 +32,7 @@ use crate::query::{
 use crate::{
     AccountBalance,
     AccountId,
+    BoxGrpcFuture,
     ContractId,
     Error,
     LedgerId,
@@ -129,7 +129,6 @@ impl ToQueryProtobuf for AccountBalanceQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for AccountBalanceQueryData {
     type Response = AccountBalance;
 
@@ -137,12 +136,12 @@ impl QueryExecute for AccountBalanceQueryData {
         false
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).crypto_get_balance(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { CryptoServiceClient::new(channel).crypto_get_balance(request).await })
     }
 }
 

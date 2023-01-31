@@ -32,6 +32,7 @@ use crate::query::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     FromProtobuf,
     Hbar,
@@ -42,7 +43,6 @@ use crate::{
 };
 
 /// Describes a specific query that can be executed on the Hedera network.
-#[async_trait]
 pub trait QueryExecute:
     Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQueryProtobuf + ValidateChecksums
 {
@@ -83,11 +83,11 @@ pub trait QueryExecute:
     }
 
     /// Execute the prepared query request against the provided GRPC channel.
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status>;
+    ) -> BoxGrpcFuture<'_, services::Response>;
 }
 
 #[async_trait]

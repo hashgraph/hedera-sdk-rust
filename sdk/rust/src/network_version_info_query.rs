@@ -20,7 +20,6 @@
 
 use std::marker::PhantomData;
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::network_service_client::NetworkServiceClient;
 use tonic::transport::Channel;
@@ -32,6 +31,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     NetworkVersionInfo,
@@ -66,7 +66,6 @@ impl ToQueryProtobuf for NetworkVersionInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for NetworkVersionInfoQueryData {
     type Response = NetworkVersionInfo;
 
@@ -74,12 +73,12 @@ impl QueryExecute for NetworkVersionInfoQueryData {
         false
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        NetworkServiceClient::new(channel).get_version_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { NetworkServiceClient::new(channel).get_version_info(request).await })
     }
 }
 

@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
@@ -51,6 +50,7 @@ use crate::{
     AccountBalance,
     AccountInfo,
     AllProxyStakers,
+    BoxGrpcFuture,
     ContractFunctionResult,
     ContractInfo,
     Error,
@@ -174,7 +174,6 @@ impl ToQueryProtobuf for AnyQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for AnyQueryData {
     type Response = AnyQueryResponse;
 
@@ -220,28 +219,28 @@ impl QueryExecute for AnyQueryData {
         }
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
+    ) -> BoxGrpcFuture<'_, services::Response> {
         match self {
-            Self::AccountInfo(query) => query.execute(channel, request).await,
-            Self::AccountBalance(query) => query.execute(channel, request).await,
-            Self::AccountStakers(query) => query.execute(channel, request).await,
-            Self::AccountRecords(query) => query.execute(channel, request).await,
-            Self::TransactionReceipt(query) => query.execute(channel, request).await,
-            Self::TransactionRecord(query) => query.execute(channel, request).await,
-            Self::FileContents(query) => query.execute(channel, request).await,
-            Self::FileInfo(query) => query.execute(channel, request).await,
-            Self::ContractBytecode(query) => query.execute(channel, request).await,
-            Self::ContractCall(query) => query.execute(channel, request).await,
-            Self::ContractInfo(query) => query.execute(channel, request).await,
-            Self::TokenNftInfo(query) => query.execute(channel, request).await,
-            Self::TokenInfo(query) => query.execute(channel, request).await,
-            Self::TopicInfo(query) => query.execute(channel, request).await,
-            Self::ScheduleInfo(query) => query.execute(channel, request).await,
-            Self::NetworkVersionInfo(query) => query.execute(channel, request).await,
+            Self::AccountInfo(query) => query.execute(channel, request),
+            Self::AccountBalance(query) => query.execute(channel, request),
+            Self::AccountStakers(query) => query.execute(channel, request),
+            Self::AccountRecords(query) => query.execute(channel, request),
+            Self::TransactionReceipt(query) => query.execute(channel, request),
+            Self::TransactionRecord(query) => query.execute(channel, request),
+            Self::FileContents(query) => query.execute(channel, request),
+            Self::FileInfo(query) => query.execute(channel, request),
+            Self::ContractBytecode(query) => query.execute(channel, request),
+            Self::ContractCall(query) => query.execute(channel, request),
+            Self::ContractInfo(query) => query.execute(channel, request),
+            Self::TokenNftInfo(query) => query.execute(channel, request),
+            Self::TokenInfo(query) => query.execute(channel, request),
+            Self::TopicInfo(query) => query.execute(channel, request),
+            Self::ScheduleInfo(query) => query.execute(channel, request),
+            Self::NetworkVersionInfo(query) => query.execute(channel, request),
         }
     }
 

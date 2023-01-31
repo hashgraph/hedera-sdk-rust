@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
@@ -29,6 +28,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     ContractId,
     Error,
     FromProtobuf,
@@ -83,16 +83,17 @@ impl ToQueryProtobuf for ContractBytecodeQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for ContractBytecodeQueryData {
     type Response = Vec<u8>;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        SmartContractServiceClient::new(channel).contract_get_bytecode(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async {
+            SmartContractServiceClient::new(channel).contract_get_bytecode(request).await
+        })
     }
 }
 
