@@ -121,6 +121,7 @@ pub use contract::{
     ContractUpdateTransaction,
 };
 pub use entity_id::EntityId;
+pub(crate) use entity_id::ValidateChecksums;
 pub use error::{
     Error,
     MnemonicEntropyError,

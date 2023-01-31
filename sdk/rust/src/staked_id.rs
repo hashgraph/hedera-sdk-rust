@@ -1,5 +1,7 @@
-use crate::entity_id::AutoValidateChecksum;
-use crate::AccountId;
+use crate::{
+    AccountId,
+    ValidateChecksums,
+};
 
 // no rename all, because each field is renamed
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
@@ -27,12 +29,12 @@ impl StakedId {
     }
 }
 
-impl AutoValidateChecksum for StakedId {
-    fn validate_checksum_for_ledger_id(
+impl ValidateChecksums for StakedId {
+    fn validate_checksums_for_ledger_id(
         &self,
         ledger_id: &crate::LedgerId,
     ) -> Result<(), crate::Error> {
-        self.to_account_id().validate_checksum_for_ledger_id(ledger_id)
+        self.to_account_id().validate_checksums_for_ledger_id(ledger_id)
     }
 }
 

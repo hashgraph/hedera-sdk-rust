@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -36,6 +35,7 @@ use crate::{
     LedgerId,
     Query,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Get information about a smart contract instance.
@@ -89,7 +89,7 @@ impl QueryExecute for ContractInfoQueryData {
     type Response = ContractInfo;
 
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)
+        self.contract_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

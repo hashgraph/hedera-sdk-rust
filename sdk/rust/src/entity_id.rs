@@ -66,17 +66,14 @@ impl Debug for Checksum {
     }
 }
 
-pub trait AutoValidateChecksum {
-    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
+pub trait ValidateChecksums {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 }
 
-impl<ID> AutoValidateChecksum for Option<ID>
-where
-    ID: AutoValidateChecksum,
-{
-    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+impl<T: ValidateChecksums> ValidateChecksums for Option<T> {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if let Some(id) = &self {
-            id.validate_checksum_for_ledger_id(ledger_id)?;
+            id.validate_checksums_for_ledger_id(ledger_id)?;
         }
         Ok(())
     }

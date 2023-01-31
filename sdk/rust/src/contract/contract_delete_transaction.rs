@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -39,6 +38,7 @@ use crate::{
     Error,
     LedgerId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
@@ -99,9 +99,9 @@ impl ContractDeleteTransaction {
 #[async_trait]
 impl TransactionExecute for ContractDeleteTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.transfer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.transfer_contract_id.validate_checksum_for_ledger_id(ledger_id)
+        self.contract_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.transfer_account_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.transfer_contract_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

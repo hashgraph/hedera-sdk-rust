@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -38,6 +37,7 @@ use crate::{
     TokenId,
     Transaction,
     TransactionId,
+    ValidateChecksums,
 };
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
@@ -96,9 +96,9 @@ impl TokenAssociateTransaction {
 #[async_trait]
 impl TransactionExecute for TokenAssociateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.account_id.validate_checksums_for_ledger_id(ledger_id)?;
         for token_id in &self.token_ids {
-            token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            token_id.validate_checksums_for_ledger_id(ledger_id)?;
         }
         Ok(())
     }

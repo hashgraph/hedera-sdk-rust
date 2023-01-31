@@ -29,8 +29,8 @@ use std::str::FromStr;
 use hedera_proto::services;
 
 use crate::entity_id::{
-    AutoValidateChecksum,
     Checksum,
+    ValidateChecksums,
 };
 use crate::{
     Client,
@@ -103,8 +103,8 @@ impl FileId {
     }
 }
 
-impl AutoValidateChecksum for FileId {
-    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+impl ValidateChecksums for FileId {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         EntityId::validate_checksum_for_ledger_id(
             self.shard,
             self.realm,

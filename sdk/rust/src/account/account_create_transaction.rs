@@ -24,7 +24,6 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use time::Duration;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -43,6 +42,7 @@ use crate::{
     LedgerId,
     PublicKey,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Create a new Hedera™ account.
@@ -287,7 +287,7 @@ impl AccountCreateTransaction {
 #[async_trait]
 impl TransactionExecute for AccountCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
+        self.staked_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

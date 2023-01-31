@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -36,6 +35,7 @@ use crate::{
     ToProtobuf,
     TopicId,
     TopicInfo,
+    ValidateChecksums,
 };
 
 /// Retrieve the latest state of a topic.
@@ -86,7 +86,7 @@ impl QueryExecute for TopicInfoQueryData {
     type Response = TopicInfo;
 
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.topic_id.validate_checksum_for_ledger_id(ledger_id)
+        self.topic_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

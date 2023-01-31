@@ -29,9 +29,9 @@ use std::str::FromStr;
 use hedera_proto::services;
 
 use crate::entity_id::{
-    AutoValidateChecksum,
     Checksum,
     PartialEntityId,
+    ValidateChecksums,
 };
 use crate::evm_address::IdEvmAddress;
 use crate::{
@@ -151,8 +151,8 @@ impl ContractId {
     }
 }
 
-impl AutoValidateChecksum for ContractId {
-    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+impl ValidateChecksums for ContractId {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if self.evm_address.is_some() {
             Ok(())
         } else {

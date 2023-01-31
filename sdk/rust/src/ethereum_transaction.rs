@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -36,6 +35,7 @@ use crate::{
     LedgerId,
     ToProtobuf,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Submit an Ethereum transaction.
@@ -112,7 +112,7 @@ impl EthereumTransaction {
 #[async_trait]
 impl TransactionExecute for EthereumTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.call_data_file_id.validate_checksum_for_ledger_id(ledger_id)
+        self.call_data_file_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     // noinspection DuplicatedCode

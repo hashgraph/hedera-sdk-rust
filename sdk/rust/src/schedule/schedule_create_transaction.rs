@@ -29,7 +29,6 @@ use hedera_proto::services::{
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -47,6 +46,7 @@ use crate::{
     LedgerId,
     Transaction,
     TransactionId,
+    ValidateChecksums,
 };
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
@@ -184,7 +184,7 @@ impl ScheduleCreateTransaction {
 #[async_trait]
 impl TransactionExecute for ScheduleCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.payer_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.payer_account_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

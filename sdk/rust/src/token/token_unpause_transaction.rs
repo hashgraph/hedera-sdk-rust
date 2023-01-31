@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -40,6 +39,7 @@ use crate::{
     TokenId,
     Transaction,
     TransactionId,
+    ValidateChecksums,
 };
 
 /// Unpauses the Token. Must be signed with the Token's pause key.
@@ -79,7 +79,7 @@ impl TokenUnpauseTransaction {
 #[async_trait]
 impl TransactionExecute for TokenUnpauseTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.token_id.validate_checksum_for_ledger_id(ledger_id)
+        self.token_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

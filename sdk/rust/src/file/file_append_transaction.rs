@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -40,6 +39,7 @@ use crate::{
     LedgerId,
     Transaction,
     TransactionId,
+    ValidateChecksums,
 };
 
 /// Append the given contents to the end of the specified file.
@@ -93,7 +93,7 @@ impl FileAppendTransaction {
 #[async_trait]
 impl TransactionExecute for FileAppendTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+        self.file_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(
