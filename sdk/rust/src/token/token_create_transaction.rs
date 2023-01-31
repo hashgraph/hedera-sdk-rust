@@ -452,18 +452,20 @@ impl TokenCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        // TODO: validate custom fee collector account IDs once that's merged
-        self.treasury_account_id.validate_checksums_for_ledger_id(ledger_id)?;
-        self.auto_renew_account_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         TokenServiceClient::new(channel).create_token(request).await
+    }
+}
+
+impl ValidateChecksums for TokenCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        // TODO: validate custom fees.
+        self.treasury_account_id.validate_checksums(ledger_id)?;
+        self.auto_renew_account_id.validate_checksums(ledger_id)
     }
 }
 

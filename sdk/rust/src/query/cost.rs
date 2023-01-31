@@ -22,6 +22,7 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
+use crate::entity_id::ValidateChecksums;
 use crate::execute::{
     execute,
     Execute,
@@ -129,8 +130,10 @@ where
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+impl<'a, D: QueryExecute> ValidateChecksums for QueryCost<'a, D> {
+    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
         Ok(())
     }
 }

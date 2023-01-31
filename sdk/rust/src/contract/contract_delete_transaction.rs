@@ -98,18 +98,20 @@ impl ContractDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for ContractDeleteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksums_for_ledger_id(ledger_id)?;
-        self.transfer_account_id.validate_checksums_for_ledger_id(ledger_id)?;
-        self.transfer_contract_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         SmartContractServiceClient::new(channel).delete_contract(request).await
+    }
+}
+
+impl ValidateChecksums for ContractDeleteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)?;
+        self.transfer_account_id.validate_checksums(ledger_id)?;
+        self.transfer_contract_id.validate_checksums(ledger_id)
     }
 }
 

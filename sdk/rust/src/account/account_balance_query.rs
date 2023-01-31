@@ -137,23 +137,23 @@ impl QueryExecute for AccountBalanceQueryData {
         false
     }
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        match self.source {
-            AccountBalanceSource::AccountId(account_id) => {
-                account_id.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AccountBalanceSource::ContractId(contract_id) => {
-                contract_id.validate_checksums_for_ledger_id(ledger_id)
-            }
-        }
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         CryptoServiceClient::new(channel).crypto_get_balance(request).await
+    }
+}
+
+impl ValidateChecksums for AccountBalanceQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        match self.source {
+            AccountBalanceSource::AccountId(account_id) => account_id.validate_checksums(ledger_id),
+            AccountBalanceSource::ContractId(contract_id) => {
+                contract_id.validate_checksums(ledger_id)
+            }
+        }
     }
 }
 

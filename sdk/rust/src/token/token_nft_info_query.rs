@@ -87,16 +87,17 @@ impl ToQueryProtobuf for TokenNftInfoQueryData {
 impl QueryExecute for TokenNftInfoQueryData {
     type Response = TokenNftInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.nft_id
-            .map_or(Ok(()), |nft_id| nft_id.token_id.validate_checksums_for_ledger_id(ledger_id))
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         TokenServiceClient::new(channel).get_token_nft_info(request).await
+    }
+}
+
+impl ValidateChecksums for TokenNftInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.nft_id.validate_checksums(ledger_id)
     }
 }

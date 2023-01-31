@@ -30,11 +30,8 @@ impl StakedId {
 }
 
 impl ValidateChecksums for StakedId {
-    fn validate_checksums_for_ledger_id(
-        &self,
-        ledger_id: &crate::LedgerId,
-    ) -> Result<(), crate::Error> {
-        self.to_account_id().validate_checksums_for_ledger_id(ledger_id)
+    fn validate_checksums(&self, ledger_id: &crate::LedgerId) -> Result<(), crate::Error> {
+        self.to_account_id().validate_checksums(ledger_id)
     }
 }
 

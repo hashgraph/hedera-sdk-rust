@@ -34,6 +34,7 @@ use crate::contract::{
     ContractCallQueryData,
     ContractInfoQueryData,
 };
+use crate::entity_id::ValidateChecksums;
 use crate::file::{
     FileContentsQueryData,
     FileInfoQueryData,
@@ -285,39 +286,27 @@ impl QueryExecute for AnyQueryData {
             Self::NetworkVersionInfo(query) => query.should_retry(response),
         }
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+impl ValidateChecksums for AnyQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         match self {
-            AnyQueryData::AccountBalance(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AnyQueryData::AccountInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::AccountStakers(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AnyQueryData::AccountRecords(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AnyQueryData::TransactionReceipt(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AnyQueryData::TransactionRecord(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AnyQueryData::FileContents(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::FileInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::ContractBytecode(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
-            AnyQueryData::ContractCall(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::TokenInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::ContractInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::TokenNftInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::TopicInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::ScheduleInfo(query) => query.validate_checksums_for_ledger_id(ledger_id),
-            AnyQueryData::NetworkVersionInfo(query) => {
-                query.validate_checksums_for_ledger_id(ledger_id)
-            }
+            Self::AccountBalance(query) => query.validate_checksums(ledger_id),
+            Self::AccountInfo(query) => query.validate_checksums(ledger_id),
+            Self::AccountStakers(query) => query.validate_checksums(ledger_id),
+            Self::AccountRecords(query) => query.validate_checksums(ledger_id),
+            Self::TransactionReceipt(query) => query.validate_checksums(ledger_id),
+            Self::TransactionRecord(query) => query.validate_checksums(ledger_id),
+            Self::FileContents(query) => query.validate_checksums(ledger_id),
+            Self::FileInfo(query) => query.validate_checksums(ledger_id),
+            Self::ContractBytecode(query) => query.validate_checksums(ledger_id),
+            Self::ContractCall(query) => query.validate_checksums(ledger_id),
+            Self::TokenInfo(query) => query.validate_checksums(ledger_id),
+            Self::ContractInfo(query) => query.validate_checksums(ledger_id),
+            Self::TokenNftInfo(query) => query.validate_checksums(ledger_id),
+            Self::TopicInfo(query) => query.validate_checksums(ledger_id),
+            Self::ScheduleInfo(query) => query.validate_checksums(ledger_id),
+            Self::NetworkVersionInfo(query) => query.validate_checksums(ledger_id),
         }
     }
 }

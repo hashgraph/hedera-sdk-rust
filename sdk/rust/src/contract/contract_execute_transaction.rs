@@ -122,17 +122,19 @@ impl ContractExecuteTransaction {
 
 #[async_trait]
 impl TransactionExecute for ContractExecuteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksums_for_ledger_id(ledger_id)?;
-        Ok(())
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         SmartContractServiceClient::new(channel).contract_call_method(request).await
+    }
+}
+
+impl ValidateChecksums for ContractExecuteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)?;
+        Ok(())
     }
 }
 

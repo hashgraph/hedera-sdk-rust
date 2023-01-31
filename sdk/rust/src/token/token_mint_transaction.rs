@@ -123,16 +123,18 @@ impl TokenMintTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenMintTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.token_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         TokenServiceClient::new(channel).mint_token(request).await
+    }
+}
+
+impl ValidateChecksums for TokenMintTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksums(ledger_id)
     }
 }
 

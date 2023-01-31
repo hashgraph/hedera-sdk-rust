@@ -88,15 +88,17 @@ impl ToQueryProtobuf for ContractInfoQueryData {
 impl QueryExecute for ContractInfoQueryData {
     type Response = ContractInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         SmartContractServiceClient::new(channel).get_contract_info(request).await
+    }
+}
+
+impl ValidateChecksums for ContractInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)
     }
 }

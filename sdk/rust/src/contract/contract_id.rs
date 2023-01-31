@@ -152,7 +152,7 @@ impl ContractId {
 }
 
 impl ValidateChecksums for ContractId {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if self.evm_address.is_some() {
             Ok(())
         } else {

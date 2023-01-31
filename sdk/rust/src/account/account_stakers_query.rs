@@ -86,15 +86,17 @@ impl ToQueryProtobuf for AccountStakersQueryData {
 impl QueryExecute for AccountStakersQueryData {
     type Response = AllProxyStakers;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         CryptoServiceClient::new(channel).get_stakers_by_account_id(request).await
+    }
+}
+
+impl ValidateChecksums for AccountStakersQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)
     }
 }

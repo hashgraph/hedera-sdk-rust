@@ -67,13 +67,13 @@ impl Debug for Checksum {
 }
 
 pub trait ValidateChecksums {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 }
 
 impl<T: ValidateChecksums> ValidateChecksums for Option<T> {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if let Some(id) = &self {
-            id.validate_checksums_for_ledger_id(ledger_id)?;
+            id.validate_checksums(ledger_id)?;
         }
         Ok(())
     }

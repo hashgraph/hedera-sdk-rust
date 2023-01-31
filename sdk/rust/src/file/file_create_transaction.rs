@@ -27,6 +27,7 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::entity_id::ValidateChecksums;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -38,7 +39,6 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
-    Error,
     Key,
     KeyList,
     LedgerId,
@@ -178,16 +178,20 @@ impl FileCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for FileCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
-        Ok(())
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         FileServiceClient::new(channel).create_file(request).await
+    }
+}
+
+impl ValidateChecksums for FileCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> crate::Result<()> {
+        self.auto_renew_account_id.validate_checksums(ledger_id)?;
+
+        Ok(())
     }
 }
 

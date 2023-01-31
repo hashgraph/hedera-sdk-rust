@@ -114,16 +114,18 @@ impl FreezeTransaction {
 
 #[async_trait]
 impl TransactionExecute for FreezeTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         FreezeServiceClient::new(channel).freeze(request).await
+    }
+}
+
+impl ValidateChecksums for FreezeTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksums(ledger_id)
     }
 }
 

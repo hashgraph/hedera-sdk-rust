@@ -183,16 +183,18 @@ impl ScheduleCreateTransaction {
 
 #[async_trait]
 impl TransactionExecute for ScheduleCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.payer_account_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         ScheduleServiceClient::new(channel).create_schedule(request).await
+    }
+}
+
+impl ValidateChecksums for ScheduleCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.payer_account_id.validate_checksums(ledger_id)
     }
 }
 

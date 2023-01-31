@@ -24,6 +24,7 @@ use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
+use crate::entity_id::ValidateChecksums;
 use crate::execute::Execute;
 use crate::query::{
     AnyQueryData,
@@ -42,7 +43,9 @@ use crate::{
 
 /// Describes a specific query that can be executed on the Hedera network.
 #[async_trait]
-pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQueryProtobuf {
+pub trait QueryExecute:
+    Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQueryProtobuf + ValidateChecksums
+{
     type Response: FromProtobuf<services::response::Response>;
 
     /// Returns `true` if this query requires a payment to be submitted.
@@ -71,8 +74,6 @@ pub trait QueryExecute: Sync + Send + Into<AnyQueryData> + Clone + Debug + ToQue
     fn transaction_id(&self) -> Option<TransactionId> {
         None
     }
-
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 
     fn make_response(
         &self,
@@ -173,10 +174,12 @@ where
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.data.validate_checksums_for_ledger_id(ledger_id)?;
-        self.payment.validate_checksums_for_ledger_id(ledger_id)
+impl<D: QueryExecute + ValidateChecksums> ValidateChecksums for Query<D> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.data.validate_checksums(ledger_id)?;
+        self.payment.validate_checksums(ledger_id)
     }
 }
 
