@@ -20,7 +20,6 @@
 
 use std::fmt::Debug;
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
@@ -90,7 +89,6 @@ pub trait QueryExecute:
     ) -> BoxGrpcFuture<'_, services::Response>;
 }
 
-#[async_trait]
 impl<D> Execute for Query<D>
 where
     D: QueryExecute,
@@ -139,12 +137,12 @@ where
         Ok((self.data.to_query_protobuf(header), ()))
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status> {
-        self.data.execute(channel, request).await
+    ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
+        self.data.execute(channel, request)
     }
 
     fn make_response(

@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use hedera_proto::services;
@@ -26,10 +25,6 @@ use prost::Message;
 use time::OffsetDateTime;
 use tokio::time::sleep;
 use tonic::transport::Channel;
-use tonic::{
-    Response,
-    Status,
-};
 
 use super::TransactionSources;
 use crate::execute::Execute;
@@ -147,7 +142,6 @@ pub trait TransactionExecute:
     ) -> BoxGrpcFuture<'_, services::TransactionResponse>;
 }
 
-#[async_trait]
 impl<D> Execute for Transaction<D>
 where
     D: TransactionExecute,
@@ -185,12 +179,12 @@ where
         )
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<Response<Self::GrpcResponse>, Status> {
-        self.body.data.execute(channel, request).await
+    ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
+        self.body.data.execute(channel, request)
     }
 
     fn make_response(

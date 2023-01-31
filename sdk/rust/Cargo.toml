@@ -31,7 +31,6 @@ ffi = [
 
 [dependencies]
 async-stream = "0.3.3"
-async-trait = "0.1.53"
 backoff = "0.4.0"
 ed25519-dalek = { version = "1.0.1", features = ["rand"] }
 fraction = "0.11.0"

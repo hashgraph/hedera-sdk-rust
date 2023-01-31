@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
@@ -31,6 +30,7 @@ use crate::query::execute::response_header;
 use crate::query::QueryExecute;
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Client,
     Error,
     Hbar,
@@ -54,7 +54,6 @@ where
     }
 }
 
-#[async_trait]
 impl<D> Execute for QueryCost<'_, D>
 where
     Query<D>: Execute,
@@ -93,12 +92,12 @@ where
         Ok((self.0.data.to_query_protobuf(header), ()))
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status> {
-        <D as QueryExecute>::execute(&self.0.data, channel, request).await
+    ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
+        <D as QueryExecute>::execute(&self.0.data, channel, request)
     }
 
     fn make_response(
