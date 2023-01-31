@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::borrow::Cow;
-
 use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
@@ -135,12 +133,12 @@ where
 }
 
 #[async_trait]
-pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> {
+pub trait TransactionExecute:
+    Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> + ValidateChecksums
+{
     fn default_max_transaction_fee(&self) -> Hbar {
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
-
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 
     async fn execute(
         &self,
@@ -225,15 +223,17 @@ where
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response.node_transaction_precheck_code)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+impl<D: TransactionExecute> ValidateChecksums for Transaction<D> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if let Some(node_account_ids) = &self.body.node_account_ids {
             for node_account_id in node_account_ids {
-                node_account_id.validate_checksums_for_ledger_id(ledger_id)?;
+                node_account_id.validate_checksums(ledger_id)?;
             }
         }
-        self.body.transaction_id.validate_checksums_for_ledger_id(ledger_id)?;
-        self.body.data.validate_checksums_for_ledger_id(ledger_id)
+        self.body.transaction_id.validate_checksums(ledger_id)?;
+        self.body.data.validate_checksums(ledger_id)
     }
 }
 

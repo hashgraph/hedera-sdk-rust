@@ -33,12 +33,12 @@ use crate::execute::{
     execute,
     Execute,
 };
-use crate::protobuf::FromProtobuf;
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Client,
     Error,
+    FromProtobuf,
     Hbar,
     Operator,
     PrivateKey,
@@ -46,6 +46,7 @@ use crate::{
     Signer,
     TransactionId,
     TransactionResponse,
+    ValidateChecksums,
 };
 
 mod any;
@@ -427,7 +428,7 @@ where
         if let Some(client) = client {
             if client.auto_validate_checksums() {
                 if let Some(ledger_id) = &*client.ledger_id_internal() {
-                    self.validate_checksums_for_ledger_id(ledger_id)?;
+                    self.validate_checksums(ledger_id)?;
                 } else {
                     return Err(crate::Error::CannotPerformTaskWithoutLedgerId {
                         task: "validate checksums",

@@ -87,11 +87,6 @@ impl SystemUndeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for SystemUndeleteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksums_for_ledger_id(ledger_id)?;
-        self.file_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
@@ -102,6 +97,13 @@ impl TransactionExecute for SystemUndeleteTransactionData {
         } else {
             SmartContractServiceClient::new(channel).system_undelete(request).await
         }
+    }
+}
+
+impl ValidateChecksums for SystemUndeleteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)?;
+        self.file_id.validate_checksums(ledger_id)
     }
 }
 

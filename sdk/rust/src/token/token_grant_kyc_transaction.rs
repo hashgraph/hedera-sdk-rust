@@ -95,17 +95,19 @@ impl TokenGrantKycTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenGrantKycTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksums_for_ledger_id(ledger_id)?;
-        self.token_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         TokenServiceClient::new(channel).grant_kyc_to_token_account(request).await
+    }
+}
+
+impl ValidateChecksums for TokenGrantKycTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)?;
+        self.token_id.validate_checksums(ledger_id)
     }
 }
 

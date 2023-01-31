@@ -87,16 +87,18 @@ impl ToQueryProtobuf for TokenInfoQueryData {
 impl QueryExecute for TokenInfoQueryData {
     type Response = TokenInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.token_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         TokenServiceClient::new(channel).get_token_info(request).await
+    }
+}
+
+impl ValidateChecksums for TokenInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksums(ledger_id)
     }
 }
 

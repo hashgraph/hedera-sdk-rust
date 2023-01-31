@@ -85,15 +85,17 @@ impl ToQueryProtobuf for TopicInfoQueryData {
 impl QueryExecute for TopicInfoQueryData {
     type Response = TopicInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.topic_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         ConsensusServiceClient::new(channel).get_topic_info(request).await
+    }
+}
+
+impl ValidateChecksums for TopicInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.topic_id.validate_checksums(ledger_id)
     }
 }

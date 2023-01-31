@@ -118,7 +118,7 @@ impl TokenId {
 }
 
 impl ValidateChecksums for TokenId {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         EntityId::validate_checksum_for_ledger_id(
             self.shard,
             self.realm,

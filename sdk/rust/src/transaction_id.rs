@@ -98,8 +98,8 @@ impl TransactionId {
 }
 
 impl ValidateChecksums for TransactionId {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksums_for_ledger_id(ledger_id)
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)
     }
 }
 

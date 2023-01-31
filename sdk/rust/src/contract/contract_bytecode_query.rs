@@ -87,16 +87,18 @@ impl ToQueryProtobuf for ContractBytecodeQueryData {
 impl QueryExecute for ContractBytecodeQueryData {
     type Response = Vec<u8>;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> Result<tonic::Response<services::Response>, tonic::Status> {
         SmartContractServiceClient::new(channel).contract_get_bytecode(request).await
+    }
+}
+
+impl ValidateChecksums for ContractBytecodeQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)
     }
 }
 

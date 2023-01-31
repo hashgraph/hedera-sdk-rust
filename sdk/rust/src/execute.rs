@@ -30,13 +30,13 @@ use crate::{
     AccountId,
     Client,
     Error,
-    LedgerId,
     Status,
     TransactionId,
+    ValidateChecksums,
 };
 
 #[async_trait]
-pub(crate) trait Execute {
+pub(crate) trait Execute: ValidateChecksums {
     type GrpcRequest: Clone + Message;
 
     type GrpcResponse: Message;
@@ -106,8 +106,6 @@ pub(crate) trait Execute {
 
     /// Extract the pre-check status from the GRPC response.
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
-
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 }
 
 pub(crate) async fn execute<E>(
@@ -131,7 +129,7 @@ where
 
     if client.auto_validate_checksums() {
         if let Some(ledger_id) = &*client.ledger_id_internal() {
-            executable.validate_checksums_for_ledger_id(ledger_id)?;
+            executable.validate_checksums(ledger_id)?;
         } else {
             return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksums" });
         }

@@ -188,8 +188,10 @@ impl QueryExecute for TransactionReceiptQueryData {
 
         Ok(receipt)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.transaction_id.validate_checksums_for_ledger_id(ledger_id)
+impl ValidateChecksums for TransactionReceiptQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transaction_id.validate_checksums(ledger_id)
     }
 }

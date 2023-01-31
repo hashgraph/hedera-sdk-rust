@@ -36,6 +36,7 @@ use crate::{
     ToProtobuf,
     Transaction,
     TransactionId,
+    ValidateChecksums,
 };
 
 pub type PaymentTransaction = Transaction<PaymentTransactionData>;
@@ -71,10 +72,6 @@ impl PaymentTransaction {
 
 #[async_trait]
 impl TransactionExecute for PaymentTransactionData {
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
-        Ok(())
-    }
-
     // noinspection DuplicatedCode
     async fn execute(
         &self,
@@ -82,6 +79,12 @@ impl TransactionExecute for PaymentTransactionData {
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         CryptoServiceClient::new(channel).crypto_transfer(request).await
+    }
+}
+
+impl ValidateChecksums for PaymentTransactionData {
+    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
     }
 }
 

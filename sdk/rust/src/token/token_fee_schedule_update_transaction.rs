@@ -97,17 +97,19 @@ impl TokenFeeScheduleUpdateTransaction {
 
 #[async_trait]
 impl TransactionExecute for TokenFeeScheduleUpdateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        // TODO: validate fee collector account IDs in custom fees once that's merged
-        self.token_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         TokenServiceClient::new(channel).update_token_fee_schedule(request).await
+    }
+}
+
+impl ValidateChecksums for TokenFeeScheduleUpdateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        // TODO: validate custom fees (they need an impl)
+        self.token_id.validate_checksums(ledger_id)
     }
 }
 

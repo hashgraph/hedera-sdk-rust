@@ -104,20 +104,22 @@ impl AccountAllowanceDeleteTransaction {
 
 #[async_trait]
 impl TransactionExecute for AccountAllowanceDeleteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        for allowance in &self.nft_allowances {
-            allowance.token_id.validate_checksums_for_ledger_id(ledger_id)?;
-            allowance.owner_account_id.validate_checksums_for_ledger_id(ledger_id)?;
-        }
-        Ok(())
-    }
-
     async fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         CryptoServiceClient::new(channel).delete_allowances(request).await
+    }
+}
+
+impl ValidateChecksums for AccountAllowanceDeleteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for allowance in &self.nft_allowances {
+            allowance.token_id.validate_checksums(ledger_id)?;
+            allowance.owner_account_id.validate_checksums(ledger_id)?;
+        }
+        Ok(())
     }
 }
 

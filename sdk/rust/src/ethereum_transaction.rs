@@ -111,10 +111,6 @@ impl EthereumTransaction {
 
 #[async_trait]
 impl TransactionExecute for EthereumTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.call_data_file_id.validate_checksums_for_ledger_id(ledger_id)
-    }
-
     // noinspection DuplicatedCode
     async fn execute(
         &self,
@@ -122,6 +118,12 @@ impl TransactionExecute for EthereumTransactionData {
         request: services::Transaction,
     ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
         SmartContractServiceClient::new(channel).call_ethereum(request).await
+    }
+}
+
+impl ValidateChecksums for EthereumTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.call_data_file_id.validate_checksums(ledger_id)
     }
 }
 

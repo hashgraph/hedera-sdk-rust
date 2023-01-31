@@ -152,7 +152,7 @@ impl AccountId {
 }
 
 impl ValidateChecksums for AccountId {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if self.alias.is_some() || self.evm_address.is_some() {
             Ok(())
         } else {
