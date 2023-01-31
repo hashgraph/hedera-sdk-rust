@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
@@ -34,6 +33,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     TokenId,
@@ -121,14 +121,13 @@ impl TokenMintTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for TokenMintTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        TokenServiceClient::new(channel).mint_token(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { TokenServiceClient::new(channel).mint_token(request).await })
     }
 }
 

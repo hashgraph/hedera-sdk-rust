@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use time::{
@@ -39,6 +38,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Key,
     KeyList,
     LedgerId,
@@ -176,14 +176,13 @@ impl FileCreateTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for FileCreateTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        FileServiceClient::new(channel).create_file(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { FileServiceClient::new(channel).create_file(request).await })
     }
 }
 

@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use time::{
@@ -41,6 +40,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Key,
     LedgerId,
@@ -450,14 +450,13 @@ impl TokenCreateTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for TokenCreateTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        TokenServiceClient::new(channel).create_token(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { TokenServiceClient::new(channel).create_token(request).await })
     }
 }
 

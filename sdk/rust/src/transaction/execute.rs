@@ -39,6 +39,7 @@ use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Client,
     Error,
     Hbar,
@@ -132,7 +133,6 @@ where
     }
 }
 
-#[async_trait]
 pub trait TransactionExecute:
     Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> + ValidateChecksums
 {
@@ -140,11 +140,11 @@ pub trait TransactionExecute:
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status>;
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse>;
 }
 
 #[async_trait]

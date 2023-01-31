@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::freeze_service_client::FreezeServiceClient;
 use time::OffsetDateTime;
@@ -32,6 +31,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     FileId,
     FreezeType,
@@ -112,14 +112,13 @@ impl FreezeTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for FreezeTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        FreezeServiceClient::new(channel).freeze(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { FreezeServiceClient::new(channel).freeze(request).await })
     }
 }
 

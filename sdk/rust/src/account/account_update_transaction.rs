@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use time::{
@@ -39,6 +38,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Key,
     LedgerId,
@@ -283,14 +283,13 @@ impl AccountUpdateTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for AccountUpdateTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).update_account(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).update_account(request).await })
     }
 }
 

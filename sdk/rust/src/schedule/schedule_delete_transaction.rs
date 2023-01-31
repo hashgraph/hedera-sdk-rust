@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
@@ -34,6 +33,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     ScheduleId,
@@ -68,14 +68,13 @@ impl ScheduleDeleteTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for ScheduleDeleteTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        ScheduleServiceClient::new(channel).delete_schedule(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { ScheduleServiceClient::new(channel).delete_schedule(request).await })
     }
 }
 

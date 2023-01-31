@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use time::{
@@ -38,6 +37,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Key,
     LedgerId,
@@ -180,14 +180,13 @@ impl TopicUpdateTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for TopicUpdateTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        ConsensusServiceClient::new(channel).update_topic(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { ConsensusServiceClient::new(channel).update_topic(request).await })
     }
 }
 
