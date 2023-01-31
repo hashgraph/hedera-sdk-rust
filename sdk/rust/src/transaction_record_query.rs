@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use hedera_proto::services::response::Response;
@@ -30,6 +29,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     FromProtobuf,
     LedgerId,
@@ -131,7 +131,6 @@ impl ToQueryProtobuf for TransactionRecordQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TransactionRecordQueryData {
     type Response = TransactionRecord;
 
@@ -143,12 +142,12 @@ impl QueryExecute for TransactionRecordQueryData {
         self.transaction_id
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).get_tx_record_by_tx_id(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { CryptoServiceClient::new(channel).get_tx_record_by_tx_id(request).await })
     }
 
     fn should_retry_pre_check(&self, status: Status) -> bool {

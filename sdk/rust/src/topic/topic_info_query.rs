@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
@@ -29,6 +28,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
@@ -81,16 +81,15 @@ impl ToQueryProtobuf for TopicInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TopicInfoQueryData {
     type Response = TopicInfo;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        ConsensusServiceClient::new(channel).get_topic_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { ConsensusServiceClient::new(channel).get_topic_info(request).await })
     }
 }
 

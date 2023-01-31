@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
@@ -30,6 +29,7 @@ use crate::query::{
 };
 use crate::token::token_info::TokenInfo;
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
@@ -83,16 +83,15 @@ impl ToQueryProtobuf for TokenInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TokenInfoQueryData {
     type Response = TokenInfo;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        TokenServiceClient::new(channel).get_token_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { TokenServiceClient::new(channel).get_token_info(request).await })
     }
 }
 

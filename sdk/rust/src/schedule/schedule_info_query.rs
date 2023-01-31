@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
@@ -29,6 +28,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
@@ -82,16 +82,15 @@ impl ToQueryProtobuf for ScheduleInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for ScheduleInfoQueryData {
     type Response = ScheduleInfo;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        ScheduleServiceClient::new(channel).get_schedule_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { ScheduleServiceClient::new(channel).get_schedule_info(request).await })
     }
 }
 

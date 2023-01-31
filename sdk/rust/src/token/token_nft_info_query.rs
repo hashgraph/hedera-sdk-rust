@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
@@ -30,6 +29,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     NftId,
@@ -83,16 +83,15 @@ impl ToQueryProtobuf for TokenNftInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TokenNftInfoQueryData {
     type Response = TokenNftInfo;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        TokenServiceClient::new(channel).get_token_nft_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { TokenServiceClient::new(channel).get_token_nft_info(request).await })
     }
 }
 

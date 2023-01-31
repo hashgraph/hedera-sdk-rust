@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
@@ -30,6 +29,7 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     FileContentsResponse,
     FileId,
@@ -81,16 +81,15 @@ impl ToQueryProtobuf for FileContentsQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for FileContentsQueryData {
     type Response = FileContentsResponse;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        FileServiceClient::new(channel).get_file_content(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { FileServiceClient::new(channel).get_file_content(request).await })
     }
 }
 

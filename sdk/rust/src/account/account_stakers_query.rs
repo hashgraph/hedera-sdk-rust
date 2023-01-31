@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
@@ -31,6 +30,7 @@ use crate::query::{
 use crate::{
     AccountId,
     AllProxyStakers,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
@@ -82,16 +82,17 @@ impl ToQueryProtobuf for AccountStakersQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for AccountStakersQueryData {
     type Response = AllProxyStakers;
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).get_stakers_by_account_id(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async {
+            CryptoServiceClient::new(channel).get_stakers_by_account_id(request).await
+        })
     }
 }
 
