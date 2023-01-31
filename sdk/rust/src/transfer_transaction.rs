@@ -20,7 +20,6 @@
 
 use std::ops::Not;
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
@@ -33,6 +32,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     LedgerId,
@@ -244,15 +244,14 @@ impl TransferTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for TransferTransactionData {
     // noinspection DuplicatedCode
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).crypto_transfer(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).crypto_transfer(request).await })
     }
 }
 

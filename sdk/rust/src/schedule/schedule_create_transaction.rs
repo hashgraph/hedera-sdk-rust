@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use hedera_proto::services::transaction_body::Data;
 use hedera_proto::services::{
@@ -40,6 +39,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     Key,
@@ -181,14 +181,13 @@ impl ScheduleCreateTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for ScheduleCreateTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        ScheduleServiceClient::new(channel).create_schedule(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { ScheduleServiceClient::new(channel).create_schedule(request).await })
     }
 }
 

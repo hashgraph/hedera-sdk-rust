@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
@@ -35,6 +34,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     ContractId,
     Error,
     FileId,
@@ -85,18 +85,19 @@ impl SystemUndeleteTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for SystemUndeleteTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        if self.file_id.is_some() {
-            FileServiceClient::new(channel).system_undelete(request).await
-        } else {
-            SmartContractServiceClient::new(channel).system_undelete(request).await
-        }
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async move {
+            if self.file_id.is_some() {
+                FileServiceClient::new(channel).system_undelete(request).await
+            } else {
+                SmartContractServiceClient::new(channel).system_undelete(request).await
+            }
+        })
     }
 }
 

@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
@@ -31,6 +30,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     LedgerId,
@@ -207,14 +207,13 @@ struct NftAllowance {
     delegating_spender_account_id: Option<AccountId>,
 }
 
-#[async_trait]
 impl TransactionExecute for AccountAllowanceApproveTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).approve_allowances(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).approve_allowances(request).await })
     }
 }
 

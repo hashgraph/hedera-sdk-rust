@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use time::{
@@ -36,6 +35,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     ContractId,
     Error,
     Key,
@@ -224,14 +224,13 @@ impl ContractUpdateTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for ContractUpdateTransactionData {
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        SmartContractServiceClient::new(channel).update_contract(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { SmartContractServiceClient::new(channel).update_contract(request).await })
     }
 }
 

@@ -18,14 +18,9 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use time::Duration;
 use tonic::transport::Channel;
-use tonic::{
-    Response,
-    Status,
-};
 
 use crate::client::Operator;
 use crate::entity_id::ValidateChecksums;
@@ -37,6 +32,7 @@ use crate::transaction::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     LedgerId,
@@ -322,7 +318,6 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for AnyTransactionData {
     fn default_max_transaction_fee(&self) -> Hbar {
         match self {
@@ -369,58 +364,52 @@ impl TransactionExecute for AnyTransactionData {
         }
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<Response<services::TransactionResponse>, Status> {
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
         match self {
-            Self::Transfer(transaction) => transaction.execute(channel, request).await,
-            Self::AccountCreate(transaction) => transaction.execute(channel, request).await,
-            Self::AccountUpdate(transaction) => transaction.execute(channel, request).await,
-            Self::AccountDelete(transaction) => transaction.execute(channel, request).await,
-            Self::AccountAllowanceApprove(transaction) => {
-                transaction.execute(channel, request).await
-            }
-            Self::AccountAllowanceDelete(transaction) => {
-                transaction.execute(channel, request).await
-            }
-            Self::ContractCreate(transaction) => transaction.execute(channel, request).await,
-            Self::ContractUpdate(transaction) => transaction.execute(channel, request).await,
-            Self::ContractDelete(transaction) => transaction.execute(channel, request).await,
-            Self::ContractExecute(transaction) => transaction.execute(channel, request).await,
-            Self::FileAppend(transaction) => transaction.execute(channel, request).await,
-            Self::FileCreate(transaction) => transaction.execute(channel, request).await,
-            Self::FileUpdate(transaction) => transaction.execute(channel, request).await,
-            Self::FileDelete(transaction) => transaction.execute(channel, request).await,
-            Self::TokenAssociate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenBurn(transaction) => transaction.execute(channel, request).await,
-            Self::TokenCreate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenDelete(transaction) => transaction.execute(channel, request).await,
-            Self::TokenDissociate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenFeeScheduleUpdate(transaction) => {
-                transaction.execute(channel, request).await
-            }
-            Self::TokenFreeze(transaction) => transaction.execute(channel, request).await,
-            Self::TokenGrantKyc(transaction) => transaction.execute(channel, request).await,
-            Self::TokenMint(transaction) => transaction.execute(channel, request).await,
-            Self::TokenPause(transaction) => transaction.execute(channel, request).await,
-            Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request).await,
-            Self::TokenUnfreeze(transaction) => transaction.execute(channel, request).await,
-            Self::TokenUnpause(transaction) => transaction.execute(channel, request).await,
-            Self::TokenUpdate(transaction) => transaction.execute(channel, request).await,
-            Self::TokenWipe(transaction) => transaction.execute(channel, request).await,
-            Self::TopicCreate(transaction) => transaction.execute(channel, request).await,
-            Self::TopicUpdate(transaction) => transaction.execute(channel, request).await,
-            Self::TopicDelete(transaction) => transaction.execute(channel, request).await,
-            Self::TopicMessageSubmit(transaction) => transaction.execute(channel, request).await,
-            Self::SystemDelete(transaction) => transaction.execute(channel, request).await,
-            Self::SystemUndelete(transaction) => transaction.execute(channel, request).await,
-            Self::Freeze(transaction) => transaction.execute(channel, request).await,
-            Self::ScheduleCreate(transaction) => transaction.execute(channel, request).await,
-            Self::ScheduleSign(transaction) => transaction.execute(channel, request).await,
-            Self::ScheduleDelete(transaction) => transaction.execute(channel, request).await,
-            Self::Ethereum(transaction) => transaction.execute(channel, request).await,
+            Self::Transfer(transaction) => transaction.execute(channel, request),
+            Self::AccountCreate(transaction) => transaction.execute(channel, request),
+            Self::AccountUpdate(transaction) => transaction.execute(channel, request),
+            Self::AccountDelete(transaction) => transaction.execute(channel, request),
+            Self::AccountAllowanceApprove(transaction) => transaction.execute(channel, request),
+            Self::AccountAllowanceDelete(transaction) => transaction.execute(channel, request),
+            Self::ContractCreate(transaction) => transaction.execute(channel, request),
+            Self::ContractUpdate(transaction) => transaction.execute(channel, request),
+            Self::ContractDelete(transaction) => transaction.execute(channel, request),
+            Self::ContractExecute(transaction) => transaction.execute(channel, request),
+            Self::FileAppend(transaction) => transaction.execute(channel, request),
+            Self::FileCreate(transaction) => transaction.execute(channel, request),
+            Self::FileUpdate(transaction) => transaction.execute(channel, request),
+            Self::FileDelete(transaction) => transaction.execute(channel, request),
+            Self::TokenAssociate(transaction) => transaction.execute(channel, request),
+            Self::TokenBurn(transaction) => transaction.execute(channel, request),
+            Self::TokenCreate(transaction) => transaction.execute(channel, request),
+            Self::TokenDelete(transaction) => transaction.execute(channel, request),
+            Self::TokenDissociate(transaction) => transaction.execute(channel, request),
+            Self::TokenFeeScheduleUpdate(transaction) => transaction.execute(channel, request),
+            Self::TokenFreeze(transaction) => transaction.execute(channel, request),
+            Self::TokenGrantKyc(transaction) => transaction.execute(channel, request),
+            Self::TokenMint(transaction) => transaction.execute(channel, request),
+            Self::TokenPause(transaction) => transaction.execute(channel, request),
+            Self::TokenRevokeKyc(transaction) => transaction.execute(channel, request),
+            Self::TokenUnfreeze(transaction) => transaction.execute(channel, request),
+            Self::TokenUnpause(transaction) => transaction.execute(channel, request),
+            Self::TokenUpdate(transaction) => transaction.execute(channel, request),
+            Self::TokenWipe(transaction) => transaction.execute(channel, request),
+            Self::TopicCreate(transaction) => transaction.execute(channel, request),
+            Self::TopicUpdate(transaction) => transaction.execute(channel, request),
+            Self::TopicDelete(transaction) => transaction.execute(channel, request),
+            Self::TopicMessageSubmit(transaction) => transaction.execute(channel, request),
+            Self::SystemDelete(transaction) => transaction.execute(channel, request),
+            Self::SystemUndelete(transaction) => transaction.execute(channel, request),
+            Self::Freeze(transaction) => transaction.execute(channel, request),
+            Self::ScheduleCreate(transaction) => transaction.execute(channel, request),
+            Self::ScheduleSign(transaction) => transaction.execute(channel, request),
+            Self::ScheduleDelete(transaction) => transaction.execute(channel, request),
+            Self::Ethereum(transaction) => transaction.execute(channel, request),
         }
     }
 }

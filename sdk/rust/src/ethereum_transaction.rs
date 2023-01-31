@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
@@ -30,6 +29,7 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     FileId,
     LedgerId,
@@ -109,15 +109,13 @@ impl EthereumTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for EthereumTransactionData {
-    // noinspection DuplicatedCode
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        SmartContractServiceClient::new(channel).call_ethereum(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { SmartContractServiceClient::new(channel).call_ethereum(request).await })
     }
 }
 
