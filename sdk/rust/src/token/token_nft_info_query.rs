@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     Query,
@@ -36,6 +35,7 @@ use crate::{
     NftId,
     ToProtobuf,
     TokenNftInfo,
+    ValidateChecksums,
 };
 
 /// Gets info on an NFT for a given `TokenID` and serial number.
@@ -89,7 +89,7 @@ impl QueryExecute for TokenNftInfoQueryData {
 
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.nft_id
-            .map_or(Ok(()), |nft_id| nft_id.token_id.validate_checksum_for_ledger_id(ledger_id))
+            .map_or(Ok(()), |nft_id| nft_id.token_id.validate_checksums_for_ledger_id(ledger_id))
     }
 
     async fn execute(

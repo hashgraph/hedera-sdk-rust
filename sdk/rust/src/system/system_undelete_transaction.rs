@@ -24,7 +24,6 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -41,6 +40,7 @@ use crate::{
     FileId,
     LedgerId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Undelete a file or smart contract that was deleted by a [`SystemDeleteTransaction`](crate::SystemDeleteTransaction).
@@ -88,8 +88,8 @@ impl SystemUndeleteTransaction {
 #[async_trait]
 impl TransactionExecute for SystemUndeleteTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+        self.contract_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.file_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

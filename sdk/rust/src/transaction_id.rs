@@ -36,13 +36,13 @@ use time::{
     OffsetDateTime,
 };
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::{
     AccountId,
     Error,
     FromProtobuf,
     LedgerId,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// The client-generated ID for a transaction.
@@ -97,9 +97,9 @@ impl TransactionId {
     }
 }
 
-impl AutoValidateChecksum for TransactionId {
-    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+impl ValidateChecksums for TransactionId {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums_for_ledger_id(ledger_id)
     }
 }
 

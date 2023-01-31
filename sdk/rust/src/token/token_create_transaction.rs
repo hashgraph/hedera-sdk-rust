@@ -27,7 +27,6 @@ use time::{
 };
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -47,6 +46,7 @@ use crate::{
     LedgerId,
     Transaction,
     TransactionId,
+    ValidateChecksums,
 };
 
 /// Create a new token.
@@ -454,8 +454,8 @@ impl TokenCreateTransaction {
 impl TransactionExecute for TokenCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         // TODO: validate custom fee collector account IDs once that's merged
-        self.treasury_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.treasury_account_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.auto_renew_account_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

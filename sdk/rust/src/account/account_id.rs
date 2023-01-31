@@ -30,9 +30,9 @@ use hedera_proto::services;
 use hedera_proto::services::account_id::Account;
 
 use crate::entity_id::{
-    AutoValidateChecksum,
     Checksum,
     PartialEntityId,
+    ValidateChecksums,
 };
 use crate::evm_address::{
     EvmAddress,
@@ -151,8 +151,8 @@ impl AccountId {
     }
 }
 
-impl AutoValidateChecksum for AccountId {
-    fn validate_checksum_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+impl ValidateChecksums for AccountId {
+    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if self.alias.is_some() || self.evm_address.is_some() {
             Ok(())
         } else {

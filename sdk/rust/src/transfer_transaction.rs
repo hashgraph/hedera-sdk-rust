@@ -25,7 +25,6 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -41,6 +40,7 @@ use crate::{
     ToProtobuf,
     TokenId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
@@ -248,16 +248,16 @@ impl TransferTransaction {
 impl TransactionExecute for TransferTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         for transfer in &self.transfers {
-            transfer.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            transfer.account_id.validate_checksums_for_ledger_id(ledger_id)?;
         }
         for token_transfer in &self.token_transfers {
-            token_transfer.token_id.validate_checksum_for_ledger_id(ledger_id)?;
+            token_transfer.token_id.validate_checksums_for_ledger_id(ledger_id)?;
             for transfer in &token_transfer.transfers {
-                transfer.account_id.validate_checksum_for_ledger_id(ledger_id)?;
+                transfer.account_id.validate_checksums_for_ledger_id(ledger_id)?;
             }
             for nft_transfer in &token_transfer.nft_transfers {
-                nft_transfer.sender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-                nft_transfer.receiver_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+                nft_transfer.sender_account_id.validate_checksums_for_ledger_id(ledger_id)?;
+                nft_transfer.receiver_account_id.validate_checksums_for_ledger_id(ledger_id)?;
             }
         }
         Ok(())

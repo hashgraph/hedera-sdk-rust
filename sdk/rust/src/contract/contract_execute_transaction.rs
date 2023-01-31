@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -38,6 +37,7 @@ use crate::{
     LedgerId,
     ToProtobuf,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Call a function of the given smart contract instance, giving it
@@ -123,7 +123,7 @@ impl ContractExecuteTransaction {
 #[async_trait]
 impl TransactionExecute for ContractExecuteTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
+        self.contract_id.validate_checksums_for_ledger_id(ledger_id)?;
         Ok(())
     }
 

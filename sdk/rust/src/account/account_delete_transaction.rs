@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -38,6 +37,7 @@ use crate::{
     Error,
     LedgerId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Mark an account as deleted, moving all its current hbars to another account.
@@ -88,8 +88,8 @@ impl AccountDeleteTransaction {
 #[async_trait]
 impl TransactionExecute for AccountDeleteTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.transfer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.transfer_account_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.account_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

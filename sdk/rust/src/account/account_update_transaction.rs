@@ -27,7 +27,6 @@ use time::{
 };
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -44,6 +43,7 @@ use crate::{
     Key,
     LedgerId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Change properties for the given account.
@@ -286,8 +286,8 @@ impl AccountUpdateTransaction {
 #[async_trait]
 impl TransactionExecute for AccountUpdateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
+        self.account_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.staked_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

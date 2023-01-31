@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -40,6 +39,7 @@ use crate::{
     NftId,
     TokenId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
@@ -106,8 +106,8 @@ impl AccountAllowanceDeleteTransaction {
 impl TransactionExecute for AccountAllowanceDeleteTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         for allowance in &self.nft_allowances {
-            allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
-            allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+            allowance.token_id.validate_checksums_for_ledger_id(ledger_id)?;
+            allowance.owner_account_id.validate_checksums_for_ledger_id(ledger_id)?;
         }
         Ok(())
     }

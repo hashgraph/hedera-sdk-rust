@@ -23,7 +23,6 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -37,6 +36,7 @@ use crate::{
     Query,
     ToProtobuf,
     TransactionRecord,
+    ValidateChecksums,
 };
 
 /// Get all the records for an account for any transfers into it and out of it,
@@ -88,7 +88,7 @@ impl QueryExecute for AccountRecordsQueryData {
     type Response = Vec<TransactionRecord>;
 
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)
+        self.account_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(

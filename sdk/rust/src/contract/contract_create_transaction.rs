@@ -24,7 +24,6 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use time::Duration;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
@@ -41,6 +40,7 @@ use crate::{
     LedgerId,
     ToProtobuf,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Start a new smart contract instance.
@@ -273,9 +273,9 @@ impl ContractCreateTransaction {
 #[async_trait]
 impl TransactionExecute for ContractCreateTransactionData {
     fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.bytecode_file_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
+        self.bytecode_file_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.auto_renew_account_id.validate_checksums_for_ledger_id(ledger_id)?;
+        self.staked_id.validate_checksums_for_ledger_id(ledger_id)
     }
 
     async fn execute(
