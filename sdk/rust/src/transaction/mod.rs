@@ -18,7 +18,6 @@
  * ‍
  */
 
-use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
     Debug,
@@ -51,6 +50,7 @@ use crate::{
 mod any;
 mod execute;
 mod protobuf;
+mod source;
 #[cfg(test)]
 mod tests;
 
@@ -63,68 +63,9 @@ pub(crate) use execute::execute2;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
+use self::source::TransactionSources;
+
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
-
-#[derive(Clone)]
-pub struct TransactionSources(pub(crate) Box<[services::Transaction]>);
-
-impl TransactionSources {
-    pub(crate) fn sign_all(txs: &mut [services::SignedTransaction], signers: &[AnySigner]) {
-        // todo: don't be `O(nmk)`, we can do `O(m(n+k))` if we know all transactions already have the same signers.
-        for tx in txs {
-            let sig_map = tx.sig_map.get_or_insert_with(services::SignatureMap::default);
-
-            for signer in signers {
-                let pk = signer.public_key().to_bytes_raw();
-
-                if sig_map.sig_pair.iter().any(|it| pk.starts_with(&it.pub_key_prefix)) {
-                    continue;
-                }
-
-                // todo: reuse `pk_bytes` instead of re-serializing them.
-                let sig_pair = execute::SignaturePair::from(signer.sign(&tx.body_bytes));
-
-                sig_map.sig_pair.push(sig_pair.into_protobuf());
-            }
-        }
-    }
-
-    pub(crate) fn sign_with(&self, signers: &[AnySigner]) -> Cow<'_, Self> {
-        if signers.is_empty() {
-            return Cow::Borrowed(self);
-        }
-
-        // todo: avoid the double-collect.
-        let mut signed_transactions: Vec<_> = self
-            .0
-            .iter()
-            .map(|it| {
-                if it.signed_transaction_bytes.is_empty() {
-                    // sources can only be non-none if we were created from `from_bytes`.
-                    // from_bytes ensures that all `sources` have `signed_transaction_bytes`.
-                    unreachable!()
-                } else {
-                    // unreachable: sources can only be non-none if we were created from `from_bytes`.
-                    // from_bytes checks all transaction bodies for equality, which involves desrializing all `signed_transaction_bytes`.
-                    services::SignedTransaction::decode(it.signed_transaction_bytes.as_slice())
-                        .unwrap_or_else(|_| unreachable!())
-                }
-            })
-            .collect();
-
-        Self::sign_all(&mut signed_transactions, signers);
-
-        let transaction_list = signed_transactions
-            .into_iter()
-            .map(|it| services::Transaction {
-                signed_transaction_bytes: it.encode_to_vec(),
-                ..Default::default()
-            })
-            .collect();
-
-        Cow::Owned(Self(transaction_list))
-    }
-}
 
 /// A transaction that can be executed on the Hedera network.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
@@ -452,7 +393,7 @@ where
         }
 
         if let Some(sources) = &self.sources {
-            let transaction_list = sources.sign_with(&self.signers).0.to_vec();
+            let transaction_list = sources.sign_with(&self.signers).transactions().to_vec();
 
             return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
         }
@@ -553,19 +494,16 @@ impl AnyTransaction {
             list.transaction_list
         };
 
-        let tmp: Result<Vec<_>, _> = list.iter().map(transaction_body_from_transaction).collect();
+        let sources = TransactionSources::new(list)?;
+
+        if sources.transaction_ids().len() > 1 {
+            return Err(Error::from_protobuf("chunked transactions not currently supported"))
+        }
+
+        // fixme: use `signed_transactions`
+        let tmp: Result<Vec<_>, _> =
+            sources.transactions().iter().map(transaction_body_from_transaction).collect();
         let tmp = tmp?;
-
-        let node_ids: Result<std::collections::HashSet<_>, _> = tmp
-            .iter()
-            .map(|it| {
-                let node_account_id = it.node_account_id.clone().ok_or_else(|| {
-                    crate::Error::from_protobuf(concat!("unexpected missing `node_account_id`"))
-                })?;
-
-                AccountId::from_protobuf(node_account_id)
-            })
-            .collect();
 
         let (first, tmp) =
             tmp.split_first().ok_or_else(|| Error::from_protobuf("no transactions found"))?;
@@ -580,14 +518,12 @@ impl AnyTransaction {
             }
         }
 
-        let node_ids: Vec<_> = node_ids?.into_iter().collect();
-
         // note: this creates the transaction in a frozen state.
         let mut res = Self::from_protobuf(first.clone())?;
 
         // note: this doesn't check freeze for obvious reasons.
-        res.body.node_account_ids = Some(node_ids);
-        res.sources = Some(TransactionSources(list.into_boxed_slice()));
+        res.body.node_account_ids = Some(sources.node_ids().to_vec());
+        res.sources = Some(sources);
 
         Ok(res)
     }

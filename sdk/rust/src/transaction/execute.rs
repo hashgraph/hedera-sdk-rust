@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::borrow::Cow;
-
 use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
@@ -36,7 +34,6 @@ use tonic::{
 use super::TransactionSources;
 use crate::entity_id::AutoValidateChecksum;
 use crate::execute::Execute;
-use crate::protobuf::FromProtobuf;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
@@ -285,29 +282,11 @@ pub(crate) async fn execute2<D: TransactionExecute>(
     // fixme: be way more lazy.
     let sources = sources.sign_with(&transaction.signers);
 
+    let chunk = sources.chunks().next().expect("Sources must never be empty");
+
     // note: the transaction's node indexes have to match the ones in sources, but we don't know what order they're in, so, we have to do it like this
     // fixme: should `from_bytes` error if a node index is duplicated?
-    let (node_account_ids, hashes) = {
-        let mut node_account_ids = Vec::with_capacity(sources.0.len());
-        let mut hashes = Vec::with_capacity(sources.0.len());
-
-        for source in &*sources.0 {
-            let tx =
-                services::SignedTransaction::decode(source.signed_transaction_bytes.as_slice())
-                    .unwrap();
-
-            hashes.push(TransactionHash::new(&tx.body_bytes));
-
-            let node_account_id = services::TransactionBody::decode(tx.body_bytes.as_slice())
-                .unwrap()
-                .node_account_id
-                .unwrap();
-
-            node_account_ids.push(AccountId::from_protobuf(node_account_id).unwrap());
-        }
-
-        (node_account_ids, hashes)
-    };
+    let (node_account_ids, hashes) = (sources.node_ids(), chunk.transaction_hashes());
 
     let timeout: Option<std::time::Duration> = timeout.into();
 
@@ -343,27 +322,29 @@ pub(crate) async fn execute2<D: TransactionExecute>(
 
             let (node_account_id, channel) = network.channel(node_index);
 
-            let response =
-                match transaction.execute(channel, sources.0[request_index].clone()).await {
-                    Ok(response) => response.into_inner(),
-                    Err(status) => {
-                        match status.code() {
-                            tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                                // NOTE: this is an "unhealthy" node
-                                network.mark_node_unhealthy(node_index);
+            let response = match transaction
+                .execute(channel, chunk.transactions()[request_index].clone())
+                .await
+            {
+                Ok(response) => response.into_inner(),
+                Err(status) => {
+                    match status.code() {
+                        tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
+                            // NOTE: this is an "unhealthy" node
+                            network.mark_node_unhealthy(node_index);
 
-                                // try the next node in our allowed list, immediately
-                                last_error = Some(status.into());
-                                continue;
-                            }
+                            // try the next node in our allowed list, immediately
+                            last_error = Some(status.into());
+                            continue;
+                        }
 
-                            _ => {
-                                // fail immediately
-                                return Err(status.into());
-                            }
+                        _ => {
+                            // fail immediately
+                            return Err(status.into());
                         }
                     }
-                };
+                }
+            };
 
             let pre_check_status = Transaction::<D>::response_pre_check_status(&response)?;
 
@@ -371,7 +352,7 @@ pub(crate) async fn execute2<D: TransactionExecute>(
                 Some(status) => match status {
                     Status::Ok if transaction.should_retry(&response) => {
                         last_error = Some(
-                            transaction.make_error_pre_check(status, transaction.transaction_id()),
+                            transaction.make_error_pre_check(status, Some(chunk.transaction_id())),
                         );
                         break;
                     }
@@ -381,7 +362,7 @@ pub(crate) async fn execute2<D: TransactionExecute>(
                             response,
                             hashes[request_index],
                             node_account_id,
-                            transaction.transaction_id(),
+                            Some(chunk.transaction_id()),
                         );
                     }
 
@@ -389,7 +370,7 @@ pub(crate) async fn execute2<D: TransactionExecute>(
                         // NOTE: this is a "busy" node
                         // try the next node in our allowed list, immediately
                         last_error = Some(
-                            transaction.make_error_pre_check(status, transaction.transaction_id()),
+                            transaction.make_error_pre_check(status, Some(chunk.transaction_id())),
                         );
                         continue;
                     }
@@ -397,7 +378,7 @@ pub(crate) async fn execute2<D: TransactionExecute>(
                     _ if transaction.should_retry_pre_check(status) => {
                         // conditional retry on pre-check should back-off and try again
                         last_error = Some(
-                            transaction.make_error_pre_check(status, transaction.transaction_id()),
+                            transaction.make_error_pre_check(status, Some(chunk.transaction_id())),
                         );
                         break;
                     }
@@ -405,7 +386,7 @@ pub(crate) async fn execute2<D: TransactionExecute>(
                     _ => {
                         // any other pre-check is an error that the user needs to fix, fail immediately
                         return Err(
-                            transaction.make_error_pre_check(status, transaction.transaction_id())
+                            transaction.make_error_pre_check(status, Some(chunk.transaction_id()))
                         );
                     }
                 },
