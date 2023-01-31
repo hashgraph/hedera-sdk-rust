@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use prost::Message;
@@ -28,6 +27,7 @@ use tonic::transport::Channel;
 
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Client,
     Error,
     Status,
@@ -35,7 +35,6 @@ use crate::{
     ValidateChecksums,
 };
 
-#[async_trait]
 pub(crate) trait Execute: ValidateChecksums {
     type GrpcRequest: Clone + Message;
 
@@ -81,11 +80,11 @@ pub(crate) trait Execute: ValidateChecksums {
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)>;
 
     /// Execute the created GRPC request against the provided GRPC channel.
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status>;
+    ) -> BoxGrpcFuture<Self::GrpcResponse>;
 
     /// Create a response from the GRPC response and the saved transaction
     /// and node account ID from the successful request.
