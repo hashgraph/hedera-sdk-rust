@@ -60,7 +60,7 @@ pub use any::AnyTransaction;
 pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
 #[cfg(feature = "ffi")]
-pub(crate) use execute::execute2;
+pub(crate) use execute::ExecuteTransaction;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
@@ -505,7 +505,9 @@ where
         self.freeze_with(Some(client))?;
 
         if let Some(sources) = &self.sources {
-            return self::execute::execute2(client, self, sources, timeout).await;
+            return self::execute::ExecuteTransaction::new(&self, &sources)
+                .execute(client, timeout)
+                .await;
         }
 
         execute(client, self, timeout).await
