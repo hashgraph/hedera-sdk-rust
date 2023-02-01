@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -92,6 +93,8 @@ impl TokenGrantKycTransaction {
         self
     }
 }
+
+impl TransactionData for TokenGrantKycTransactionData {}
 
 impl TransactionExecute for TokenGrantKycTransactionData {
     fn execute(

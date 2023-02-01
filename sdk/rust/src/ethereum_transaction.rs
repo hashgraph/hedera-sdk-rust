@@ -26,6 +26,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -108,6 +109,8 @@ impl EthereumTransaction {
         self
     }
 }
+
+impl TransactionData for EthereumTransactionData {}
 
 impl TransactionExecute for EthereumTransactionData {
     fn execute(

@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -76,6 +77,8 @@ impl TokenPauseTransaction {
         self
     }
 }
+
+impl TransactionData for TokenPauseTransactionData {}
 
 impl TransactionExecute for TokenPauseTransactionData {
     fn execute(

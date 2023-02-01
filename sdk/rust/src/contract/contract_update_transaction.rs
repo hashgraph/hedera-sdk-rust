@@ -31,6 +31,7 @@ use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -223,6 +224,8 @@ impl ContractUpdateTransaction {
         self
     }
 }
+
+impl TransactionData for ContractUpdateTransactionData {}
 
 impl TransactionExecute for ContractUpdateTransactionData {
     fn execute(

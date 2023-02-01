@@ -36,6 +36,7 @@ use crate::token::token_type::TokenType;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -449,6 +450,8 @@ impl TokenCreateTransaction {
         self
     }
 }
+
+impl TransactionData for TokenCreateTransactionData {}
 
 impl TransactionExecute for TokenCreateTransactionData {
     fn execute(

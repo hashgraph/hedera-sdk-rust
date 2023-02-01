@@ -31,6 +31,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -114,6 +115,8 @@ impl SystemDeleteTransaction {
         self
     }
 }
+
+impl TransactionData for SystemDeleteTransactionData {}
 
 impl TransactionExecute for SystemDeleteTransactionData {
     fn execute(

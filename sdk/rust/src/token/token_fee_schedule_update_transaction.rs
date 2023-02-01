@@ -30,6 +30,7 @@ use crate::token::custom_fees::AnyCustomFee;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -94,6 +95,8 @@ impl TokenFeeScheduleUpdateTransaction {
         self
     }
 }
+
+impl TransactionData for TokenFeeScheduleUpdateTransactionData {}
 
 impl TransactionExecute for TokenFeeScheduleUpdateTransactionData {
     fn execute(

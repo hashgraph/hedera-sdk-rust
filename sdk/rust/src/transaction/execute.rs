@@ -80,7 +80,7 @@ impl From<(PublicKey, Vec<u8>)> for SignaturePair {
 
 impl<D> Transaction<D>
 where
-    D: TransactionExecute,
+    D: TransactionData + ToTransactionDataProtobuf,
 {
     pub(crate) fn make_request_inner(
         &self,
@@ -127,13 +127,21 @@ where
     }
 }
 
-pub trait TransactionExecute:
-    Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> + ValidateChecksums
-{
+/// Pre-execute associated fields for transaction data.
+pub trait TransactionData: Clone + Into<AnyTransactionData> {
+    /// Returns the maximum allowed transaction fee if none is specified.
+    ///
+    /// Specifically, this default will be used in the following case:
+    /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
+    /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
     fn default_max_transaction_fee(&self) -> Hbar {
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
+}
 
+pub trait TransactionExecute:
+    ToTransactionDataProtobuf + TransactionData + ValidateChecksums
+{
     fn execute(
         &self,
         channel: Channel,
@@ -232,7 +240,7 @@ impl<D: ValidateChecksums> ValidateChecksums for Transaction<D> {
 
 impl<D> Transaction<D>
 where
-    D: TransactionExecute,
+    D: TransactionData + ToTransactionDataProtobuf,
 {
     #[allow(deprecated)]
     fn to_transaction_body_protobuf(

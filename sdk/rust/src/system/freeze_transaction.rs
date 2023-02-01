@@ -27,6 +27,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -111,6 +112,8 @@ impl FreezeTransaction {
         self
     }
 }
+
+impl TransactionData for FreezeTransactionData {}
 
 impl TransactionExecute for FreezeTransactionData {
     fn execute(
