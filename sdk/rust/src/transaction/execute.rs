@@ -218,7 +218,7 @@ where
     }
 }
 
-impl<D: TransactionExecute> ValidateChecksums for Transaction<D> {
+impl<D: ValidateChecksums> ValidateChecksums for Transaction<D> {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if let Some(node_account_ids) = &self.body.node_account_ids {
             for node_account_id in node_account_ids {
@@ -266,7 +266,7 @@ where
 }
 
 // fixme: find a better name.
-pub(crate) struct ExecuteTransaction<'a, D: TransactionExecute> {
+pub(crate) struct ExecuteTransaction<'a, D> {
     inner: &'a Transaction<D>,
     sources: Cow<'a, TransactionSources>,
     hashes: Box<[TransactionHash]>,
@@ -274,7 +274,7 @@ pub(crate) struct ExecuteTransaction<'a, D: TransactionExecute> {
     indecies_by_node_id: HashMap<AccountId, usize>,
 }
 
-impl<'a, D: TransactionExecute> ExecuteTransaction<'a, D> {
+impl<'a, D> ExecuteTransaction<'a, D> {
     pub(crate) fn new(transaction: &'a Transaction<D>, sources: &'a TransactionSources) -> Self {
         // fixme: be way more lazy.
         let sources = sources.sign_with(&transaction.signers);
@@ -323,12 +323,15 @@ impl<'a, D: TransactionExecute> ExecuteTransaction<'a, D> {
         &self,
         client: &Client,
         timeout: Option<std::time::Duration>,
-    ) -> crate::Result<TransactionResponse> {
+    ) -> crate::Result<TransactionResponse>
+    where
+        D: TransactionExecute,
+    {
         crate::execute::execute(client, self, timeout).await
     }
 }
 
-impl<'a, D: TransactionExecute> ValidateChecksums for ExecuteTransaction<'a, D> {
+impl<'a, D: ValidateChecksums> ValidateChecksums for ExecuteTransaction<'a, D> {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.inner.validate_checksums(ledger_id)
     }

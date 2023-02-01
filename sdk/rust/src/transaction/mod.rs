@@ -130,11 +130,9 @@ impl TransactionSources {
 /// A transaction that can be executed on the Hedera network.
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub struct Transaction<D>
-where
-    D: TransactionExecute,
-{
+pub struct Transaction<D> {
     #[cfg_attr(feature = "ffi", serde(flatten))]
+    #[cfg_attr(feature = "ffi", serde(bound = "D: Into<AnyTransactionData> + Clone"))]
     body: TransactionBody<D>,
 
     #[cfg_attr(feature = "ffi", serde(skip))]
@@ -150,15 +148,13 @@ where
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 // fires because of `serde_as`
 #[allow(clippy::type_repetition_in_bounds)]
-pub(crate) struct TransactionBody<D>
-where
-    D: TransactionExecute,
-{
+pub(crate) struct TransactionBody<D> {
     #[cfg_attr(feature = "ffi", serde(flatten))]
     #[cfg_attr(
         feature = "ffi",
         serde(with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>")
     )]
+    #[cfg_attr(feature = "ffi", serde(bound = "D: Into<AnyTransactionData> + Clone"))]
     pub(crate) data: D,
 
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
@@ -184,7 +180,7 @@ where
 
 impl<D> Default for Transaction<D>
 where
-    D: Default + TransactionExecute,
+    D: Default,
 {
     fn default() -> Self {
         Self {
@@ -206,7 +202,7 @@ where
 
 impl<D> Debug for Transaction<D>
 where
-    D: Debug + TransactionExecute,
+    D: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_struct("Transaction").field("body", &self.body).finish()
@@ -215,10 +211,10 @@ where
 
 impl<D> Transaction<D>
 where
-    D: Default + TransactionExecute,
+    D: Default,
 {
     /// Create a new default transaction.
-    ///.
+    ///
     /// Does the same thing as [`default`](Self::default)
     #[inline]
     #[must_use]
@@ -227,10 +223,7 @@ where
     }
 }
 
-impl<D> Transaction<D>
-where
-    D: TransactionExecute,
-{
+impl<D> Transaction<D> {
     #[cfg(feature = "ffi")]
     pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
         Self { body, signers, sources: None }
@@ -378,7 +371,9 @@ where
         self.signers.push(signer);
         self
     }
+}
 
+impl<D: TransactionExecute> Transaction<D> {
     /// Freeze the transaction so that no further modifications can be made.
     pub fn freeze(&mut self) -> crate::Result<&mut Self> {
         self.freeze_with(None)
