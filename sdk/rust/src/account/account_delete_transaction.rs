@@ -28,6 +28,7 @@ use crate::protobuf::{
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -108,9 +109,10 @@ impl ValidateChecksums for AccountDeleteTransactionData {
 impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let account_id = self.account_id.to_protobuf();
         let transfer_account_id = self.transfer_account_id.to_protobuf();
 

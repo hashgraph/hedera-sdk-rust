@@ -25,6 +25,7 @@ use hedera_proto::services;
 use prost::Message;
 use tonic::transport::Channel;
 
+use super::chunked::ChunkInfo;
 use super::TransactionSources;
 use crate::execute::Execute;
 use crate::protobuf::FromProtobuf;
@@ -84,12 +85,11 @@ where
 {
     pub(crate) fn make_request_inner(
         &self,
-        transaction_id: TransactionId,
-        node_account_id: AccountId,
+        chunk_info: &ChunkInfo,
     ) -> crate::Result<(services::Transaction, TransactionHash)> {
         assert!(self.is_frozen());
 
-        let transaction_body = self.to_transaction_body_protobuf(node_account_id, &transaction_id);
+        let transaction_body = self.to_transaction_body_protobuf(chunk_info);
 
         let body_bytes = transaction_body.encode_to_vec();
 
@@ -180,10 +180,10 @@ where
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.is_frozen());
 
-        self.make_request_inner(
+        self.make_request_inner(&ChunkInfo::single(
             transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
             node_account_id,
-        )
+        ))
     }
 
     fn execute(
@@ -243,13 +243,9 @@ where
     D: TransactionData + ToTransactionDataProtobuf,
 {
     #[allow(deprecated)]
-    fn to_transaction_body_protobuf(
-        &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
-    ) -> services::TransactionBody {
+    fn to_transaction_body_protobuf(&self, chunk_info: &ChunkInfo) -> services::TransactionBody {
         assert!(self.is_frozen());
-        let data = self.body.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+        let data = self.body.data.to_transaction_data_protobuf(chunk_info);
 
         let max_transaction_fee = self
             .body
@@ -258,7 +254,7 @@ where
 
         services::TransactionBody {
             data: Some(data),
-            transaction_id: Some(transaction_id.to_protobuf()),
+            transaction_id: Some(chunk_info.current_transaction_id.to_protobuf()),
             transaction_valid_duration: Some(
                 self.body
                     .transaction_valid_duration
@@ -266,7 +262,7 @@ where
                     .into(),
             ),
             memo: self.body.transaction_memo.clone(),
-            node_account_id: Some(node_account_id.to_protobuf()),
+            node_account_id: Some(chunk_info.node_account_id.to_protobuf()),
             generate_record: false,
             transaction_fee: max_transaction_fee.to_tinybars() as u64,
         }

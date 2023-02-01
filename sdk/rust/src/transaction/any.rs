@@ -22,6 +22,7 @@ use hedera_proto::services;
 use time::Duration;
 use tonic::transport::Channel;
 
+use super::chunked::ChunkInfo;
 use super::TransactionData;
 use crate::client::Operator;
 use crate::entity_id::ValidateChecksums;
@@ -152,169 +153,126 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
     #[allow(clippy::too_many_lines)]
     fn to_transaction_data_protobuf(
         &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
         match self {
-            Self::Transfer(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::Transfer(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::AccountCreate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::AccountUpdate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::AccountDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::AccountAllowanceApprove(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::AccountAllowanceDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::ContractCreate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::ContractUpdate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::ContractDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::ContractExecute(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::FileAppend(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::FileAppend(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::FileCreate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::FileCreate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::FileUpdate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::FileUpdate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::FileDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::FileDelete(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::TokenAssociate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::TokenBurn(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenBurn(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TokenCreate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenCreate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TokenDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenDelete(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::TokenDissociate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::TokenFeeScheduleUpdate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::TokenFreeze(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenFreeze(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::TokenGrantKyc(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::TokenMint(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenMint(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TokenPause(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenPause(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::TokenRevokeKyc(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
             Self::TokenUnfreeze(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::TokenUnpause(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenUnpause(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TokenUpdate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenUpdate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TokenWipe(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TokenWipe(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TopicCreate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TopicCreate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TopicUpdate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TopicUpdate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
-            Self::TopicDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::TopicDelete(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::TopicMessageSubmit(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::SystemDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::SystemDelete(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::SystemUndelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::Freeze(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::Freeze(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::ScheduleCreate(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::ScheduleSign(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::ScheduleSign(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::ScheduleDelete(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
+                transaction.to_transaction_data_protobuf(chunk_info)
             }
 
-            Self::Ethereum(transaction) => {
-                transaction.to_transaction_data_protobuf(node_account_id, transaction_id)
-            }
+            Self::Ethereum(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
         }
     }
 }

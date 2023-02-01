@@ -35,6 +35,7 @@ use crate::token::token_supply_type::TokenSupplyType;
 use crate::token::token_type::TokenType;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -46,7 +47,6 @@ use crate::{
     Key,
     LedgerId,
     Transaction,
-    TransactionId,
     ValidateChecksums,
 };
 
@@ -474,9 +474,10 @@ impl ValidateChecksums for TokenCreateTransactionData {
 impl ToTransactionDataProtobuf for TokenCreateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         services::transaction_body::Data::TokenCreation(services::TokenCreateTransactionBody {
             name: self.name.clone(),
             symbol: self.symbol.clone(),

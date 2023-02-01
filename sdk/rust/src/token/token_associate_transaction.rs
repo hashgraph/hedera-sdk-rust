@@ -25,6 +25,7 @@ use tonic::transport::Channel;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -37,7 +38,6 @@ use crate::{
     ToProtobuf,
     TokenId,
     Transaction,
-    TransactionId,
     ValidateChecksums,
 };
 
@@ -119,9 +119,10 @@ impl ValidateChecksums for TokenAssociateTransactionData {
 impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let account = self.account_id.to_protobuf();
         let tokens = self.token_ids.to_protobuf();
 

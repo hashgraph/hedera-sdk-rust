@@ -20,15 +20,11 @@
 
 use hedera_proto::services;
 
-use crate::{
-    AccountId,
-    TransactionId,
-};
+use super::chunked::ChunkInfo;
 
 pub trait ToTransactionDataProtobuf: Send + Sync {
     fn to_transaction_data_protobuf(
         &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data;
 }
