@@ -26,6 +26,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -206,6 +207,8 @@ struct NftAllowance {
     /// approval on an NFT serial to another spender.
     delegating_spender_account_id: Option<AccountId>,
 }
+
+impl TransactionData for AccountAllowanceApproveTransactionData {}
 
 impl TransactionExecute for AccountAllowanceApproveTransactionData {
     fn execute(

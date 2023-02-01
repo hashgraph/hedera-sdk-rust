@@ -28,6 +28,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -254,6 +255,8 @@ impl TransactionExecute for TransferTransactionData {
         Box::pin(async { CryptoServiceClient::new(channel).crypto_transfer(request).await })
     }
 }
+
+impl TransactionData for TransferTransactionData {}
 
 impl ValidateChecksums for TransferTransactionData {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {

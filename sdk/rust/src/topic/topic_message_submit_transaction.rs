@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -157,6 +158,8 @@ impl TopicMessageSubmitTransaction {
         self
     }
 }
+
+impl TransactionData for TopicMessageSubmitTransactionData {}
 
 impl TransactionExecute for TopicMessageSubmitTransactionData {
     fn execute(

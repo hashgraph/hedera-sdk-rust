@@ -29,10 +29,7 @@ use hedera_proto::services;
 use prost::Message;
 use time::Duration;
 
-use crate::execute::{
-    execute,
-    Execute,
-};
+use crate::execute::execute;
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
@@ -61,7 +58,10 @@ pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
 #[cfg(feature = "ffi")]
 pub(crate) use execute::ExecuteTransaction;
-pub(crate) use execute::TransactionExecute;
+pub(crate) use execute::{
+    TransactionData,
+    TransactionExecute,
+};
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
@@ -373,7 +373,7 @@ impl<D> Transaction<D> {
     }
 }
 
-impl<D: TransactionExecute> Transaction<D> {
+impl<D: ValidateChecksums> Transaction<D> {
     /// Freeze the transaction so that no further modifications can be made.
     pub fn freeze(&mut self) -> crate::Result<&mut Self> {
         self.freeze_with(None)
@@ -434,7 +434,9 @@ impl<D: TransactionExecute> Transaction<D> {
 
         Ok(self)
     }
+}
 
+impl<D: TransactionExecute> Transaction<D> {
     /// Convert `self` to protobuf encoded bytes.
     ///
     /// # Errors
@@ -453,7 +455,7 @@ impl<D: TransactionExecute> Transaction<D> {
             return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
         }
 
-        let transaction_id = match self.transaction_id() {
+        let transaction_id = match self.get_transaction_id() {
             Some(id) => id,
             None => self
                 .body

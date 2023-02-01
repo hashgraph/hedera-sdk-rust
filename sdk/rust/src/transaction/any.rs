@@ -22,6 +22,7 @@ use hedera_proto::services;
 use time::Duration;
 use tonic::transport::Channel;
 
+use super::TransactionData;
 use crate::client::Operator;
 use crate::entity_id::ValidateChecksums;
 use crate::protobuf::FromProtobuf;
@@ -318,7 +319,7 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
     }
 }
 
-impl TransactionExecute for AnyTransactionData {
+impl TransactionData for AnyTransactionData {
     fn default_max_transaction_fee(&self) -> Hbar {
         match self {
             Self::Transfer(transaction) => transaction.default_max_transaction_fee(),
@@ -363,7 +364,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::Ethereum(transaction) => transaction.default_max_transaction_fee(),
         }
     }
+}
 
+impl TransactionExecute for AnyTransactionData {
     fn execute(
         &self,
         channel: Channel,
@@ -567,19 +570,13 @@ pub(crate) struct AnyTransactionBody<D> {
     operator: Option<Operator>,
 }
 
-impl<D> From<AnyTransactionBody<D>> for Transaction<D>
-where
-    D: TransactionExecute,
-{
+impl<D> From<AnyTransactionBody<D>> for Transaction<D> {
     fn from(body: AnyTransactionBody<D>) -> Self {
         Self { body: body.into(), signers: Vec::new(), sources: None }
     }
 }
 
-impl<D> From<TransactionBody<D>> for AnyTransactionBody<D>
-where
-    D: TransactionExecute,
-{
+impl<D> From<TransactionBody<D>> for AnyTransactionBody<D> {
     fn from(body: TransactionBody<D>) -> Self {
         Self {
             data: body.data,
@@ -594,10 +591,7 @@ where
     }
 }
 
-impl<D> From<AnyTransactionBody<D>> for TransactionBody<D>
-where
-    D: TransactionExecute,
-{
+impl<D> From<AnyTransactionBody<D>> for TransactionBody<D> {
     fn from(body: AnyTransactionBody<D>) -> Self {
         Self {
             data: body.data,

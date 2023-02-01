@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -93,6 +94,8 @@ impl TokenRevokeKycTransaction {
         self
     }
 }
+
+impl TransactionData for TokenRevokeKycTransactionData {}
 
 impl TransactionExecute for TokenRevokeKycTransactionData {
     fn execute(

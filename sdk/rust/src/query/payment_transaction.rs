@@ -25,6 +25,7 @@ use tonic::transport::Channel;
 use crate::transaction::{
     AnyTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
@@ -69,6 +70,8 @@ impl PaymentTransaction {
         self
     }
 }
+
+impl TransactionData for PaymentTransactionData {}
 
 impl TransactionExecute for PaymentTransactionData {
     // noinspection DuplicatedCode
