@@ -22,6 +22,7 @@ use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use prost::Message;
 use rand::thread_rng;
+use time::OffsetDateTime;
 use tokio::time::sleep;
 use tonic::transport::Channel;
 
@@ -155,6 +156,8 @@ where
         .map(|ids| client.network().node_indexes_for_ids(ids))
         .transpose()?;
 
+    let mut include_unhealthy = false;
+
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
@@ -180,6 +183,16 @@ where
             rand::seq::index::sample(&mut thread_rng(), node_indexes.len(), node_sample_amount);
 
         for index in node_index_indexes.iter() {
+            // logic:
+            // if there are no explicit node indexes, all nodes we pick are healthy.
+            // if we're including unhealthy nodes, then it doesn't matter if it's healthy.
+            if explicit_node_indexes.is_some()
+                && !include_unhealthy
+                && !client.network().is_node_healthy(index, OffsetDateTime::now_utc())
+            {
+                continue;
+            }
+
             let node_index = node_indexes[index];
             let (node_account_id, channel) = client.network().channel(node_index);
 
@@ -266,5 +279,8 @@ where
             // NOTE: it should be impossible to reach here without capturing at least one error
             return Err(Error::TimedOut(last_error.unwrap().into()));
         }
+
+        // only ever include unhealthy nodes if we have explicit nodes.
+        include_unhealthy = explicit_node_indexes.is_some();
     }
 }
