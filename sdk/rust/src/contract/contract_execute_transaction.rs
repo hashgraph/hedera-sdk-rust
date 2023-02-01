@@ -25,12 +25,12 @@ use tonic::transport::Channel;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
     BoxGrpcFuture,
     ContractId,
     Error,
@@ -145,9 +145,10 @@ impl ValidateChecksums for ContractExecuteTransactionData {
 impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let contract_id = self.contract_id.to_protobuf();
 
         services::transaction_body::Data::ContractCall(

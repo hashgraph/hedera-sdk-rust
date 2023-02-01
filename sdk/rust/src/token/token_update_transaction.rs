@@ -32,6 +32,7 @@ use crate::protobuf::{
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -44,7 +45,6 @@ use crate::{
     LedgerId,
     TokenId,
     Transaction,
-    TransactionId,
     ValidateChecksums,
 };
 
@@ -370,9 +370,10 @@ impl ValidateChecksums for TokenUpdateTransactionData {
 impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         services::transaction_body::Data::TokenUpdate(services::TokenUpdateTransactionBody {
             token: self.token_id.to_protobuf(),
             name: self.token_name.clone(),

@@ -30,6 +30,7 @@ use crate::protobuf::{
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -306,9 +307,10 @@ impl ValidateChecksums for AccountCreateTransactionData {
 impl ToTransactionDataProtobuf for AccountCreateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
         let auto_renew_account = self.auto_renew_account_id.to_protobuf();

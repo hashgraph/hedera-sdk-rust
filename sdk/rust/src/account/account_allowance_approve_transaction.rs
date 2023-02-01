@@ -25,6 +25,7 @@ use tonic::transport::Channel;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -249,9 +250,10 @@ impl ValidateChecksums for AccountAllowanceApproveTransactionData {
 impl ToTransactionDataProtobuf for AccountAllowanceApproveTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let crypto_allowances = self.hbar_allowances.to_protobuf();
 
         let token_allowances = self.token_allowances.to_protobuf();

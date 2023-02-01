@@ -29,18 +29,17 @@ use crate::protobuf::{
 use crate::token::custom_fees::AnyCustomFee;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
     BoxGrpcFuture,
     Error,
     LedgerId,
     TokenId,
     Transaction,
-    TransactionId,
     ValidateChecksums,
 };
 
@@ -120,9 +119,10 @@ impl ValidateChecksums for TokenFeeScheduleUpdateTransactionData {
 impl ToTransactionDataProtobuf for TokenFeeScheduleUpdateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let token_id = self.token_id.to_protobuf();
         let custom_fees = self.custom_fees.to_protobuf();
 

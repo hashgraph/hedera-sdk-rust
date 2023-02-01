@@ -26,12 +26,12 @@ use tonic::transport::Channel;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
     BoxGrpcFuture,
     Error,
     FileId,
@@ -134,9 +134,10 @@ impl ValidateChecksums for FreezeTransactionData {
 impl ToTransactionDataProtobuf for FreezeTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let start_time = self.start_time.map(Into::into);
         let file_id = self.file_id.to_protobuf();
 

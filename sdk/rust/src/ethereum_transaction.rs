@@ -25,6 +25,7 @@ use tonic::transport::Channel;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -131,9 +132,10 @@ impl ValidateChecksums for EthereumTransactionData {
 impl ToTransactionDataProtobuf for EthereumTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: crate::AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let call_data = self.call_data_file_id.to_protobuf();
 
         services::transaction_body::Data::EthereumTransaction(services::EthereumTransactionBody {

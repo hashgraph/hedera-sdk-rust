@@ -34,6 +34,7 @@ use crate::protobuf::{
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -46,7 +47,6 @@ use crate::{
     Key,
     LedgerId,
     Transaction,
-    TransactionId,
     ValidateChecksums,
 };
 
@@ -203,13 +203,10 @@ impl ValidateChecksums for ScheduleCreateTransactionData {
 impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
     // not really anything I can do about this
     #[allow(clippy::too_many_lines)]
-    fn to_transaction_data_protobuf(
-        &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
-    ) -> transaction_body::Data {
+    fn to_transaction_data_protobuf(&self, chunk_info: &ChunkInfo) -> transaction_body::Data {
         let body = self.scheduled_transaction.as_ref().map(|scheduled| {
-            let data = scheduled.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+            assert!(chunk_info.total == 1);
+            let data = scheduled.data.to_transaction_data_protobuf(chunk_info);
 
             #[allow(clippy::match_same_arms)]
             let data = match data {

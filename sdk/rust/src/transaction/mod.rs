@@ -47,6 +47,7 @@ use crate::{
 };
 
 mod any;
+mod chunked;
 mod execute;
 mod protobuf;
 #[cfg(test)]
@@ -56,6 +57,10 @@ pub use any::AnyTransaction;
 #[cfg(feature = "ffi")]
 pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
+pub(crate) use chunked::{
+    ChunkData,
+    ChunkInfo,
+};
 #[cfg(feature = "ffi")]
 pub(crate) use execute::ExecuteTransaction;
 pub(crate) use execute::{
@@ -473,7 +478,8 @@ impl<D: TransactionExecute> Transaction<D> {
             .iter()
             .copied()
             .map(|node_account_id| {
-                self.make_request_inner(transaction_id, node_account_id).map(|it| it.0)
+                self.make_request_inner(&ChunkInfo::single(transaction_id, node_account_id))
+                    .map(|it| it.0)
             })
             .collect();
 
