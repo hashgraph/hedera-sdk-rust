@@ -24,6 +24,7 @@ use std::fmt::{
     Debug,
     Formatter,
 };
+use std::num::NonZeroUsize;
 
 use hedera_proto::services;
 use prost::Message;
@@ -60,6 +61,7 @@ pub(crate) use any::AnyTransactionData;
 pub(crate) use chunked::{
     ChunkData,
     ChunkInfo,
+    ChunkedTransactionData,
 };
 #[cfg(feature = "ffi")]
 pub(crate) use execute::ExecuteTransaction;
@@ -379,6 +381,55 @@ impl<D> Transaction<D> {
     }
 }
 
+impl<D: ChunkedTransactionData> Transaction<D> {
+    // fixme: should this just return `&[u8]` instead of `Option`? it's never `None`.
+    /// Returns the message to be submitted.
+    #[must_use]
+    pub fn get_message(&self) -> Option<&[u8]> {
+        Some(&self.data().chunk_data().message)
+    }
+
+    /// Sets the message to be submitted.
+    pub fn message(&mut self, bytes: impl Into<Vec<u8>>) -> &mut Self {
+        self.data_mut().chunk_data_mut().message = bytes.into();
+        self
+    }
+
+    /// Returns the maximum number of chunks this transaction will be split into.
+    #[must_use]
+    pub fn get_max_chunks(&self) -> usize {
+        self.data().chunk_data().max_chunks
+    }
+
+    /// Sets the maximum number of chunks this transaction will be split into.
+    pub fn max_chunks(&mut self, max_chunks: usize) -> &mut Self {
+        self.data_mut().chunk_data_mut().max_chunks = max_chunks;
+
+        self
+    }
+
+    // todo: just return a `NonZeroUsize` instead? Take something along the lines of a `u32`?
+    /// Returns the maximum size of any chunk.
+    pub fn get_chunk_size(&self) -> usize {
+        self.data().chunk_data().chunk_size.get()
+    }
+
+    // todo: just take a `NonZeroUsize` instead? Take something along the lines of a `u32`?
+    /// Sets the maximum size of any chunk.
+    ///
+    /// # Panics
+    /// If `size` == 0
+    pub fn chunk_size(&mut self, size: usize) -> &mut Self {
+        let Some(size) = NonZeroUsize::new(size) else {
+            panic!("Cannot set chunk-size to zero")
+        };
+
+        self.data_mut().chunk_data_mut().chunk_size = size;
+
+        self
+    }
+}
+
 impl<D: ValidateChecksums> Transaction<D> {
     /// Freeze the transaction so that no further modifications can be made.
     pub fn freeze(&mut self) -> crate::Result<&mut Self> {
@@ -515,7 +566,7 @@ where
                 .await;
         }
 
-        if let Some(chunk_data) = self.data().chunk_data() {
+        if let Some(chunk_data) = self.data().maybe_chunk_data() {
             // todo: log a warning: user actually wanted `execute_all`.
             // instead of `panic`king we just pretend we were `execute_all` and
             // return the first result (*after* executing all the transactions).
@@ -632,7 +683,7 @@ where
 
         // sorry for the mess: this can technically infinite loop
         // (it won't, the loop condition would be dependent on chunk_data somehow being `Some` and `None` at the same time).
-        let Some(chunk_data) = self.data().chunk_data() else {
+        let Some(chunk_data) = self.data().maybe_chunk_data() else {
             return Ok(Vec::from([self.execute_with_optional_timeout(client, timeout_per_chunk).await?]))
         };
 

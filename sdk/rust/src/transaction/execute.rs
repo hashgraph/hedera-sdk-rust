@@ -142,7 +142,7 @@ pub trait TransactionData: Clone + Into<AnyTransactionData> {
     }
 
     /// Returns the chunk data for this transaction if this is a chunked transaction.
-    fn chunk_data(&self) -> Option<&ChunkData> {
+    fn maybe_chunk_data(&self) -> Option<&ChunkData> {
         None
     }
 
@@ -151,6 +151,7 @@ pub trait TransactionData: Clone + Into<AnyTransactionData> {
         false
     }
 }
+
 pub trait TransactionExecute:
     ToTransactionDataProtobuf + TransactionData + ValidateChecksums
 {

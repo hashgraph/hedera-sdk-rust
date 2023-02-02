@@ -3,7 +3,10 @@ use std::num::NonZeroUsize;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
-use super::TransactionExecute;
+use super::{
+    TransactionData,
+    TransactionExecute,
+};
 use crate::entity_id::ValidateChecksums;
 use crate::execute::Execute;
 use crate::{
@@ -16,14 +19,53 @@ use crate::{
     TransactionResponse,
 };
 
+// the lengths we're willing to go to in order to not waste wire space.
+#[cfg(feature = "ffi")]
+const fn max_chunks_is_default(value: &usize) -> bool {
+    *value == ChunkData::DEFAULT_MAX_CHUNKS
+}
+
+#[cfg(feature = "ffi")]
+const fn chunk_size_is_default(value: &NonZeroUsize) -> bool {
+    value.get() == ChunkData::DEFAULT_CHUNK_SIZE.get()
+}
+
 /// Per transaction chunk data (you'd add this to any chunked transaction)
+#[derive(Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct ChunkData {
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "max_chunks_is_default"))]
     pub(crate) max_chunks: usize,
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "chunk_size_is_default"))]
     pub(crate) chunk_size: NonZeroUsize,
+
+    #[cfg_attr(
+        feature = "ffi",
+        serde(
+            with = "serde_with::As::<serde_with::base64::Base64>",
+            skip_serializing_if = "Vec::is_empty"
+        )
+    )]
     pub(crate) message: Vec<u8>,
 }
 
+impl Default for ChunkData {
+    fn default() -> Self {
+        Self {
+            max_chunks: Self::DEFAULT_MAX_CHUNKS,
+            chunk_size: Self::DEFAULT_CHUNK_SIZE,
+            message: Vec::new(),
+        }
+    }
+}
+
 impl ChunkData {
+    const DEFAULT_MAX_CHUNKS: usize = 20;
+    // safety: 1024 is not zero.
+    // note: Use `NonZeroUsize::new().unwrap()` once that's const stable.
+    const DEFAULT_CHUNK_SIZE: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(1024) };
+
     pub(crate) fn used_chunks(&self) -> usize {
         if self.message.len() == 0 {
             return 1;
@@ -275,4 +317,10 @@ impl<'a, D: ValidateChecksums> ValidateChecksums for ChunkView<'a, D> {
 
         Ok(())
     }
+}
+
+// Note: this is completely optional to implement, just makes more methods available on `Transaction`.
+pub trait ChunkedTransactionData: TransactionData {
+    fn chunk_data(&self) -> &ChunkData;
+    fn chunk_data_mut(&mut self) -> &mut ChunkData;
 }

@@ -323,7 +323,7 @@ impl TransactionData for AnyTransactionData {
         }
     }
 
-    fn chunk_data(&self) -> Option<&super::ChunkData> {
+    fn maybe_chunk_data(&self) -> Option<&super::ChunkData> {
         match self {
             AnyTransactionData::AccountCreate(_) => todo!(),
             AnyTransactionData::AccountUpdate(_) => todo!(),

@@ -28,10 +28,13 @@ use crate::protobuf::{
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkData,
     ChunkInfo,
+    ChunkedTransactionData,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
+    TransactionExecuteChunked,
 };
 use crate::{
     BoxGrpcFuture,
@@ -39,7 +42,6 @@ use crate::{
     LedgerId,
     TopicId,
     Transaction,
-    TransactionId,
     ValidateChecksums,
 };
 
@@ -56,45 +58,15 @@ use crate::{
 pub type TopicMessageSubmitTransaction = Transaction<TopicMessageSubmitTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TopicMessageSubmitTransactionData {
     /// The topic ID to submit this message to.
     topic_id: Option<TopicId>,
 
-    /// Message to be submitted.
-    /// Max size of the Transaction (including signatures) is 6KiB.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
-    message: Option<Vec<u8>>,
-
-    /// The `TransactionId` of the first chunk.
-    ///
-    /// Should get copied to every subsequent chunk in a fragmented message.
-    initial_transaction_id: Option<TransactionId>,
-
-    /// The total number of chunks in the message.
-    /// Defaults to 1.
-    chunk_total: i32,
-
-    /// The sequence number (from 1 to total) of the current chunk in the message.
-    /// Defaults to 1.
-    chunk_number: i32,
-}
-
-impl Default for TopicMessageSubmitTransactionData {
-    fn default() -> Self {
-        Self {
-            message: None,
-            chunk_number: 1,
-            chunk_total: 1,
-            initial_transaction_id: None,
-            topic_id: None,
-        }
-    }
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    chunk_data: ChunkData,
 }
 
 impl TopicMessageSubmitTransaction {
@@ -109,57 +81,27 @@ impl TopicMessageSubmitTransaction {
         self.data_mut().topic_id = Some(id.into());
         self
     }
+}
 
-    /// Returns the message to be submitted.
-    #[must_use]
-    pub fn get_message(&self) -> Option<&[u8]> {
-        self.data().message.as_deref()
+impl TransactionData for TopicMessageSubmitTransactionData {
+    fn maybe_chunk_data(&self) -> Option<&ChunkData> {
+        Some(self.chunk_data())
     }
 
-    /// Sets the message to be submitted.
-    pub fn message(&mut self, bytes: impl Into<Vec<u8>>) -> &mut Self {
-        self.data_mut().message = Some(bytes.into());
-        self
-    }
-
-    /// Returns the `TransactionId` of the first chunk.
-    #[must_use]
-    pub fn get_initial_transaction_id(&self) -> Option<TransactionId> {
-        self.data().initial_transaction_id
-    }
-
-    /// Sets the `TransactionId` of the first chunk.
-    pub fn initial_transaction_id(&mut self, id: impl Into<TransactionId>) -> &mut Self {
-        self.data_mut().initial_transaction_id = Some(id.into());
-        self
-    }
-
-    /// Returns the total number of chunks in the message.
-    #[must_use]
-    pub fn get_chunk_total(&self) -> u32 {
-        self.data().chunk_total as u32
-    }
-
-    /// Sets the total number of chunks in the message.
-    pub fn chunk_total(&mut self, total: u32) -> &mut Self {
-        self.data_mut().chunk_total = total as i32;
-        self
-    }
-
-    /// Returns the sequence number (from 1 to total) of the current chunk in the message.
-    #[must_use]
-    pub fn get_chunk_number(&self) -> u32 {
-        self.data().chunk_number as u32
-    }
-
-    /// Sets the sequence number (from 1 to total) of the current chunk in the message.
-    pub fn chunk_number(&mut self, number: u32) -> &mut Self {
-        self.data_mut().chunk_number = number as i32;
-        self
+    fn wait_for_receipt(&self) -> bool {
+        false
     }
 }
 
-impl TransactionData for TopicMessageSubmitTransactionData {}
+impl ChunkedTransactionData for TopicMessageSubmitTransactionData {
+    fn chunk_data(&self) -> &ChunkData {
+        &self.chunk_data
+    }
+
+    fn chunk_data_mut(&mut self) -> &mut ChunkData {
+        &mut self.chunk_data
+    }
+}
 
 impl TransactionExecute for TopicMessageSubmitTransactionData {
     fn execute(
@@ -170,6 +112,8 @@ impl TransactionExecute for TopicMessageSubmitTransactionData {
         Box::pin(async { ConsensusServiceClient::new(channel).submit_message(request).await })
     }
 }
+
+impl TransactionExecuteChunked for TopicMessageSubmitTransactionData {}
 
 impl ValidateChecksums for TopicMessageSubmitTransactionData {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
@@ -182,28 +126,17 @@ impl ToTransactionDataProtobuf for TopicMessageSubmitTransactionData {
         &self,
         chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
-        // todo: chunk info from here.
-        let _ = chunk_info.assert_single_transaction();
-
         let topic_id = self.topic_id.to_protobuf();
-
-        let chunk_info = if let Some(initial_id) = &self.initial_transaction_id {
-            let initial_id = initial_id.to_protobuf();
-
-            Some(services::ConsensusMessageChunkInfo {
-                initial_transaction_id: Some(initial_id),
-                number: self.chunk_number,
-                total: self.chunk_total,
-            })
-        } else {
-            None
-        };
 
         services::transaction_body::Data::ConsensusSubmitMessage(
             services::ConsensusSubmitMessageTransactionBody {
                 topic_id,
-                message: self.message.clone().unwrap_or_default(),
-                chunk_info,
+                message: self.chunk_data.message_chunk(chunk_info).to_vec(),
+                chunk_info: (chunk_info.total > 1).then(|| services::ConsensusMessageChunkInfo {
+                    initial_transaction_id: Some(chunk_info.initial_transaction_id.to_protobuf()),
+                    number: chunk_info.current as i32,
+                    total: chunk_info.total as i32,
+                }),
             },
         )
     }
@@ -218,23 +151,24 @@ impl From<TopicMessageSubmitTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::ConsensusSubmitMessageTransactionBody>
     for TopicMessageSubmitTransactionData
 {
-    fn from_protobuf(pb: services::ConsensusSubmitMessageTransactionBody) -> crate::Result<Self> {
-        let (initial_transaction_id, chunk_total, chunk_number) = match pb.chunk_info {
-            Some(pb) => (
-                Some(TransactionId::from_protobuf(pb_getf!(pb, initial_transaction_id)?)?),
-                pb.total,
-                pb.number,
-            ),
-            None => (None, 1, 1),
-        };
+    fn from_protobuf(_pb: services::ConsensusSubmitMessageTransactionBody) -> crate::Result<Self> {
+        todo!("fix to/from bytes for chunked transactions");
+        // let (initial_transaction_id, chunk_total, chunk_number) = match pb.chunk_info {
+        //     Some(pb) => (
+        //         Some(TransactionId::from_protobuf(pb_getf!(pb, initial_transaction_id)?)?),
+        //         pb.total,
+        //         pb.number,
+        //     ),
+        //     None => (None, 1, 1),
+        // };
 
-        Ok(Self {
-            topic_id: Option::from_protobuf(pb.topic_id)?,
-            message: (!pb.message.is_empty()).then(|| pb.message),
-            initial_transaction_id,
-            chunk_total,
-            chunk_number,
-        })
+        // Ok(Self {
+        //     topic_id: Option::from_protobuf(pb.topic_id)?,
+        //     message: (!pb.message.is_empty()).then(|| pb.message),
+        //     initial_transaction_id,
+        //     chunk_total,
+        //     chunk_number,
+        // })
     }
 }
 
@@ -242,8 +176,6 @@ impl FromProtobuf<services::ConsensusSubmitMessageTransactionBody>
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use std::str::FromStr;
-
         use assert_matches::assert_matches;
 
         use crate::transaction::{
@@ -253,7 +185,6 @@ mod tests {
         use crate::{
             TopicId,
             TopicMessageSubmitTransaction,
-            TransactionId,
         };
 
         // language=JSON
@@ -265,22 +196,15 @@ mod tests {
         const TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON: &str = r#"{
   "$type": "topicMessageSubmit",
   "topicId": "0.0.1001",
-  "message": "TWVzc2FnZQ==",
-  "initialTransactionId": "0.0.1001@1656352251.277559886",
-  "chunkTotal": 1,
-  "chunkNumber": 1
+  "maxChunks": 1,
+  "message": "TWVzc2FnZQ=="
 }"#;
 
         #[test]
         fn it_should_serialize() -> anyhow::Result<()> {
             let mut transaction = TopicMessageSubmitTransaction::new();
 
-            transaction
-                .topic_id(TopicId::from(1001))
-                .message("Message")
-                .initial_transaction_id(TransactionId::from_str("1001@1656352251.277559886")?)
-                .chunk_total(1)
-                .chunk_number(1);
+            transaction.topic_id(TopicId::from(1001)).message("Message").max_chunks(1);
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -297,15 +221,9 @@ mod tests {
             let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
 
             assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-            assert_eq!(
-                data.initial_transaction_id.unwrap(),
-                TransactionId::from_str("1001@1656352251.277559886")?
-            );
-            assert_eq!(data.chunk_total, 1);
-            assert_eq!(data.chunk_number, 1);
 
-            let bytes: Vec<u8> = "Message".into();
-            assert_eq!(data.message.unwrap(), bytes);
+            assert_eq!(data.chunk_data.message, b"Message".to_vec());
+            assert_eq!(data.chunk_data.max_chunks, 1);
 
             Ok(())
         }
@@ -316,8 +234,9 @@ mod tests {
 
             let data = assert_matches!(transaction.data(), AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
 
-            assert_eq!(data.chunk_number, 1);
-            assert_eq!(data.chunk_total, 1);
+            assert_eq!(data.chunk_data.chunk_size.get(), 1024);
+            assert_eq!(data.chunk_data.max_chunks, 20);
+            assert_eq!(data.chunk_data.message, Vec::<u8>::new());
 
             Ok(())
         }
