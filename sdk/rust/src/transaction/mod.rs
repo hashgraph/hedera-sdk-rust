@@ -66,6 +66,7 @@ pub(crate) use execute::ExecuteTransaction;
 pub(crate) use execute::{
     TransactionData,
     TransactionExecute,
+    TransactionExecuteChunked,
 };
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
@@ -460,6 +461,7 @@ impl<D: TransactionExecute> Transaction<D> {
             return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
         }
 
+        // todo: fix this with chunked transactions.
         let transaction_id = match self.get_transaction_id() {
             Some(id) => id,
             None => self
@@ -513,7 +515,79 @@ where
                 .await;
         }
 
+        if let Some(chunk_data) = self.data().chunk_data() {
+            // todo: log a warning: user actually wanted `execute_all`.
+            // instead of `panic`king we just pretend we were `execute_all` and
+            // return the first result (*after* executing all the transactions).
+            return self
+                .execute_all_inner(chunk_data, client, timeout)
+                .await
+                .map(|mut it| it.swap_remove(0));
+        }
+
         execute(client, self, timeout).await
+    }
+
+    // this is in *this* impl block rather than the `: TransactionExecuteChunked` impl block
+    //because there's the off chance that someone calls `execute` on a Transaction that wants `execute_all`...
+    async fn execute_all_inner(
+        &self,
+        chunk_data: &ChunkData,
+        client: &Client,
+        timeout_per_chunk: Option<std::time::Duration>,
+    ) -> crate::Result<Vec<TransactionResponse>> {
+        assert!(self.is_frozen());
+        let wait_for_receipts = self.data().wait_for_receipt();
+
+        if chunk_data.message.len() > chunk_data.max_message_len() {
+            todo!("error: message too big")
+        }
+
+        let used_chunks = chunk_data.used_chunks();
+
+        let mut responses = Vec::with_capacity(chunk_data.used_chunks());
+
+        let initial_transaction_id = {
+            let resp = execute(
+                client,
+                &chunked::FirstChunkView { transaction: self, total_chunks: used_chunks },
+                timeout_per_chunk,
+            )
+            .await?;
+
+            if wait_for_receipts {
+                // todo `get_receipt_with_optional_timeout`.
+                resp.get_receipt(client).await?;
+            }
+
+            let initial_transaction_id = resp.transaction_id;
+            responses.push(resp);
+
+            initial_transaction_id
+        };
+
+        for chunk in 1..used_chunks {
+            let resp = execute(
+                client,
+                &chunked::ChunkView {
+                    transaction: self,
+                    initial_transaction_id,
+                    current_chunk: chunk,
+                    total_chunks: used_chunks,
+                },
+                timeout_per_chunk,
+            )
+            .await?;
+
+            if wait_for_receipts {
+                // todo `get_receipt_with_optional_timeout`.
+                resp.get_receipt(client).await?;
+            }
+
+            responses.push(resp);
+        }
+
+        Ok(responses)
     }
 
     /// Execute this transaction against the provided client of the Hedera network.
@@ -526,6 +600,43 @@ where
         timeout: std::time::Duration,
     ) -> crate::Result<TransactionResponse> {
         self.execute_with_optional_timeout(client, Some(timeout)).await
+    }
+}
+
+impl<D> Transaction<D>
+where
+    D: TransactionExecuteChunked,
+{
+    /// Execute all transactions against the provided client of the Hedera network.
+    pub async fn execute_all(
+        &mut self,
+        client: &Client,
+    ) -> crate::Result<Vec<TransactionResponse>> {
+        self.execute_all_with_optional_timeout(client, None).await
+    }
+
+    pub(crate) async fn execute_all_with_optional_timeout(
+        &mut self,
+        client: &Client,
+        timeout_per_chunk: Option<std::time::Duration>,
+    ) -> crate::Result<Vec<TransactionResponse>> {
+        // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
+        self.freeze_with(Some(client))?;
+
+        // fixme: dedup this with `execute_with_optional_timeout`
+        if let Some(sources) = &self.sources {
+            return self::execute::ExecuteTransaction::new(&self, &sources)
+                .execute_all(client, timeout_per_chunk)
+                .await;
+        }
+
+        // sorry for the mess: this can technically infinite loop
+        // (it won't, the loop condition would be dependent on chunk_data somehow being `Some` and `None` at the same time).
+        let Some(chunk_data) = self.data().chunk_data() else {
+            return Ok(Vec::from([self.execute_with_optional_timeout(client, timeout_per_chunk).await?]))
+        };
+
+        self.execute_all_inner(chunk_data, client, timeout_per_chunk).await
     }
 }
 
