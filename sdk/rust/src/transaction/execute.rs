@@ -26,7 +26,10 @@ use prost::Message;
 use tonic::transport::Channel;
 
 use super::chunked::ChunkInfo;
-use super::TransactionSources;
+use super::{
+    ChunkData,
+    TransactionSources,
+};
 use crate::execute::Execute;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::any::AnyTransactionData;
@@ -137,8 +140,17 @@ pub trait TransactionData: Clone + Into<AnyTransactionData> {
     fn default_max_transaction_fee(&self) -> Hbar {
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
-}
 
+    /// Returns the chunk data for this transaction if this is a chunked transaction.
+    fn chunk_data(&self) -> Option<&ChunkData> {
+        None
+    }
+
+    /// Returns `true` if `self` is a chunked transaction *and* it should wait for receipts between each chunk.
+    fn wait_for_receipt(&self) -> bool {
+        false
+    }
+}
 pub trait TransactionExecute:
     ToTransactionDataProtobuf + TransactionData + ValidateChecksums
 {
@@ -225,6 +237,9 @@ where
         Ok(response.node_transaction_precheck_code)
     }
 }
+
+/// Marker trait for transactions that support Chunking.
+pub trait TransactionExecuteChunked: TransactionExecute {}
 
 impl<D: ValidateChecksums> ValidateChecksums for Transaction<D> {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
@@ -332,6 +347,14 @@ impl<'a, D> ExecuteTransaction<'a, D> {
         D: TransactionExecute,
     {
         crate::execute::execute(client, self, timeout).await
+    }
+
+    pub(crate) async fn execute_all(
+        &self,
+        _client: &Client,
+        _timeout_per_chunk: Option<std::time::Duration>,
+    ) -> crate::Result<Vec<TransactionResponse>> {
+        todo!()
     }
 }
 
