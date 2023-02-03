@@ -155,7 +155,7 @@ pub unsafe extern "C" fn hedera_transaction_execute(
 
             let res = match sources {
                 Some(sources) => {
-                    crate::transaction::ExecuteTransaction::new(&transaction, sources)
+                    crate::transaction::SourceTransaction::new(&transaction, sources)
                         .execute(client, timeout)
                         .await
                 }
