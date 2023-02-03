@@ -47,7 +47,7 @@ pub struct ChunkData {
             skip_serializing_if = "Vec::is_empty"
         )
     )]
-    pub(crate) message: Vec<u8>,
+    pub(crate) data: Vec<u8>,
 }
 
 impl Default for ChunkData {
@@ -55,7 +55,7 @@ impl Default for ChunkData {
         Self {
             max_chunks: Self::DEFAULT_MAX_CHUNKS,
             chunk_size: Self::DEFAULT_CHUNK_SIZE,
-            message: Vec::new(),
+            data: Vec::new(),
         }
     }
 }
@@ -67,12 +67,12 @@ impl ChunkData {
     const DEFAULT_CHUNK_SIZE: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(1024) };
 
     pub(crate) fn used_chunks(&self) -> usize {
-        if self.message.len() == 0 {
+        if self.data.len() == 0 {
             return 1;
         }
 
         // div ceil algorithm, fun fact: the intrinsic `div_ceil` can't get rid of the panic (it's unstable anyway)
-        (self.message.len() + self.chunk_size.get()) / self.chunk_size
+        (self.data.len() + self.chunk_size.get()) / self.chunk_size
     }
 
     pub(crate) fn message_chunk(&self, chunk_info: &ChunkInfo) -> &[u8] {
@@ -80,7 +80,7 @@ impl ChunkData {
         let offset = self.chunk_size.get() * chunk_info.current;
         let len = self.chunk_size.get();
 
-        &self.message[offset..][..len]
+        &self.data[offset..][..len]
     }
 
     pub(crate) fn max_message_len(&self) -> usize {
