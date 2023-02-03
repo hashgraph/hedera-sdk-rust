@@ -81,6 +81,17 @@ impl TopicMessageSubmitTransaction {
         self.data_mut().topic_id = Some(id.into());
         self
     }
+
+    /// Returns the message to be submitted.
+    pub fn get_message(&self) -> Option<&[u8]> {
+        Some(self.data().chunk_data.data.as_slice())
+    }
+
+    /// Sets the message to be submitted.
+    pub fn message(&mut self, bytes: impl Into<Vec<u8>>) -> &mut Self {
+        self.data_mut().chunk_data_mut().data = bytes.into();
+        self
+    }
 }
 
 impl TransactionData for TopicMessageSubmitTransactionData {
@@ -197,7 +208,7 @@ mod tests {
   "$type": "topicMessageSubmit",
   "topicId": "0.0.1001",
   "maxChunks": 1,
-  "message": "TWVzc2FnZQ=="
+  "data": "TWVzc2FnZQ=="
 }"#;
 
         #[test]
@@ -222,7 +233,7 @@ mod tests {
 
             assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
 
-            assert_eq!(data.chunk_data.message, b"Message".to_vec());
+            assert_eq!(data.chunk_data.data, b"Message".to_vec());
             assert_eq!(data.chunk_data.max_chunks, 1);
 
             Ok(())
@@ -236,7 +247,7 @@ mod tests {
 
             assert_eq!(data.chunk_data.chunk_size.get(), 1024);
             assert_eq!(data.chunk_data.max_chunks, 20);
-            assert_eq!(data.chunk_data.message, Vec::<u8>::new());
+            assert_eq!(data.chunk_data.data, Vec::<u8>::new());
 
             Ok(())
         }

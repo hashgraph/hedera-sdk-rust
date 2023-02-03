@@ -382,19 +382,6 @@ impl<D> Transaction<D> {
 }
 
 impl<D: ChunkedTransactionData> Transaction<D> {
-    // fixme: should this just return `&[u8]` instead of `Option`? it's never `None`.
-    /// Returns the message to be submitted.
-    #[must_use]
-    pub fn get_message(&self) -> Option<&[u8]> {
-        Some(&self.data().chunk_data().message)
-    }
-
-    /// Sets the message to be submitted.
-    pub fn message(&mut self, bytes: impl Into<Vec<u8>>) -> &mut Self {
-        self.data_mut().chunk_data_mut().message = bytes.into();
-        self
-    }
-
     /// Returns the maximum number of chunks this transaction will be split into.
     #[must_use]
     pub fn get_max_chunks(&self) -> usize {
@@ -590,7 +577,7 @@ where
         assert!(self.is_frozen());
         let wait_for_receipts = self.data().wait_for_receipt();
 
-        if chunk_data.message.len() > chunk_data.max_message_len() {
+        if chunk_data.data.len() > chunk_data.max_message_len() {
             todo!("error: message too big")
         }
 

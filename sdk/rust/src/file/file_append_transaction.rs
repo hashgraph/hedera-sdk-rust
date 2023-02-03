@@ -70,8 +70,18 @@ impl FileAppendTransaction {
 
     /// Sets the file to which the bytes will be appended.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
-        self.require_not_frozen();
         self.data_mut().file_id = Some(id.into());
+        self
+    }
+
+    /// Retuns the bytes that will be appended to the end of the specified file.
+    pub fn get_contents(&self) -> Option<&[u8]> {
+        Some(self.data().chunk_data.data.as_slice())
+    }
+
+    /// Sets the bytes that will be appended to the end of the specified file.
+    pub fn contents(&mut self, contents: Vec<u8>) -> &mut Self {
+        self.data_mut().chunk_data.data = contents;
         self
     }
 }
@@ -160,7 +170,7 @@ mod tests {
         const FILE_APPEND_TRANSACTION_JSON: &str = r#"{
   "$type": "fileAppend",
   "fileId": "0.0.1001",
-  "message": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
+  "data": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
 }"#;
 
         #[test]
@@ -169,7 +179,7 @@ mod tests {
 
             transaction
                 .file_id(FileId::from(1001))
-                .message(b"Appending these bytes to file 1001".to_vec());
+                .contents(b"Appending these bytes to file 1001".to_vec());
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -187,7 +197,7 @@ mod tests {
             assert_eq!(data.file_id.unwrap(), FileId::from(1001));
 
             let bytes: Vec<u8> = "Appending these bytes to file 1001".into();
-            assert_eq!(data.chunk_data.message, bytes);
+            assert_eq!(data.chunk_data.data, bytes);
 
             Ok(())
         }
