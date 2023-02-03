@@ -26,12 +26,12 @@ use prost::Message;
 use tonic::transport::Channel;
 
 use super::chunked::ChunkInfo;
+use super::source::SourceChunk;
 use super::{
     ChunkData,
     TransactionSources,
 };
 use crate::execute::Execute;
-use crate::protobuf::FromProtobuf;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
@@ -286,57 +286,17 @@ where
 }
 
 // fixme: find a better name.
-pub(crate) struct ExecuteTransaction<'a, D> {
+pub(crate) struct SourceTransaction<'a, D> {
     inner: &'a Transaction<D>,
     sources: Cow<'a, TransactionSources>,
-    hashes: Box<[TransactionHash]>,
-    node_account_ids: Box<[AccountId]>,
-    indecies_by_node_id: HashMap<AccountId, usize>,
 }
 
-impl<'a, D> ExecuteTransaction<'a, D> {
+impl<'a, D> SourceTransaction<'a, D> {
     pub(crate) fn new(transaction: &'a Transaction<D>, sources: &'a TransactionSources) -> Self {
         // fixme: be way more lazy.
         let sources = sources.sign_with(&transaction.signers);
 
-        // note: the transaction's node indexes have to match the ones in sources, but we don't know what order they're in, so, we have to do it like this
-        // fixme: should `from_bytes` error if a node index is duplicated?
-        let (node_account_ids, hashes) = {
-            let mut node_account_ids = Vec::with_capacity(sources.0.len());
-            let mut hashes = Vec::with_capacity(sources.0.len());
-
-            for source in &*sources.0 {
-                let tx =
-                    services::SignedTransaction::decode(source.signed_transaction_bytes.as_slice())
-                        .unwrap();
-
-                hashes.push(TransactionHash::new(&tx.body_bytes));
-
-                let node_account_id = services::TransactionBody::decode(tx.body_bytes.as_slice())
-                    .unwrap()
-                    .node_account_id
-                    .unwrap();
-
-                node_account_ids.push(AccountId::from_protobuf(node_account_id).unwrap());
-            }
-
-            (node_account_ids, hashes)
-        };
-
-        let node_account_id_indexes = node_account_ids
-            .iter()
-            .copied()
-            .enumerate()
-            .map(|(index, value)| (value, index))
-            .collect();
-
-        Self {
-            inner: transaction,
-            sources,
-            hashes: hashes.into_boxed_slice(),
-            node_account_ids: node_account_ids.into_boxed_slice(),
-            indecies_by_node_id: node_account_id_indexes,
-        }
+        Self { inner: transaction, sources }
     }
 
     pub(crate) async fn execute(
@@ -347,25 +307,59 @@ impl<'a, D> ExecuteTransaction<'a, D> {
     where
         D: TransactionExecute,
     {
-        crate::execute::execute(client, self, timeout).await
+        Ok(self.execute_all(client, timeout).await?.swap_remove(0))
     }
 
     pub(crate) async fn execute_all(
         &self,
-        _client: &Client,
-        _timeout_per_chunk: Option<std::time::Duration>,
-    ) -> crate::Result<Vec<TransactionResponse>> {
-        todo!()
+        client: &Client,
+        timeout_per_chunk: Option<std::time::Duration>,
+    ) -> crate::Result<Vec<TransactionResponse>>
+    where
+        D: TransactionExecute,
+    {
+        let mut responses = Vec::with_capacity(self.sources.chunks_len());
+        for chunk in self.sources.chunks() {
+            let response = crate::execute::execute(
+                client,
+                &SourceTransactionExecuteView::new(self.inner, chunk),
+                timeout_per_chunk,
+            )
+            .await?;
+
+            if self.inner.data().wait_for_receipt() {
+                response.get_receipt(client).await?;
+            }
+
+            responses.push(response);
+        }
+
+        Ok(responses)
     }
 }
 
-impl<'a, D: ValidateChecksums> ValidateChecksums for ExecuteTransaction<'a, D> {
+// fixme: better name.
+struct SourceTransactionExecuteView<'a, D> {
+    transaction: &'a Transaction<D>,
+    chunk: SourceChunk<'a>,
+    indecies_by_node_id: HashMap<AccountId, usize>,
+}
+
+impl<'a, D> SourceTransactionExecuteView<'a, D> {
+    fn new(transaction: &'a Transaction<D>, chunk: SourceChunk<'a>) -> Self {
+        let indecies_by_node_id =
+            chunk.node_ids().iter().copied().enumerate().map(|it| (it.1, it.0)).collect();
+        Self { transaction, chunk, indecies_by_node_id }
+    }
+}
+
+impl<'a, D: ValidateChecksums> ValidateChecksums for SourceTransactionExecuteView<'a, D> {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.inner.validate_checksums(ledger_id)
+        self.transaction.validate_checksums(ledger_id)
     }
 }
 
-impl<'a, D: TransactionExecute> Execute for ExecuteTransaction<'a, D> {
+impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> {
     type GrpcRequest = <Transaction<D> as Execute>::GrpcRequest;
 
     type GrpcResponse = <Transaction<D> as Execute>::GrpcResponse;
@@ -375,11 +369,11 @@ impl<'a, D: TransactionExecute> Execute for ExecuteTransaction<'a, D> {
     type Response = <Transaction<D> as Execute>::Response;
 
     fn node_account_ids(&self) -> Option<&[AccountId]> {
-        Some(&self.node_account_ids)
+        Some(self.chunk.node_ids())
     }
 
     fn transaction_id(&self) -> Option<TransactionId> {
-        Some(self.inner.transaction_id().unwrap())
+        Some(self.chunk.transaction_id())
     }
 
     fn requires_transaction_id(&self) -> bool {
@@ -394,7 +388,7 @@ impl<'a, D: TransactionExecute> Execute for ExecuteTransaction<'a, D> {
         debug_assert_eq!(transaction_id, &self.transaction_id());
 
         let index = *self.indecies_by_node_id.get(&node_account_id).unwrap();
-        Ok((self.sources.0[index].clone(), self.hashes[index]))
+        Ok((self.chunk.transactions()[index].clone(), self.chunk.transaction_hashes()[index]))
     }
 
     fn execute(
@@ -402,7 +396,7 @@ impl<'a, D: TransactionExecute> Execute for ExecuteTransaction<'a, D> {
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> BoxGrpcFuture<Self::GrpcResponse> {
-        self.inner.execute(channel, request)
+        self.transaction.execute(channel, request)
     }
 
     fn make_response(
@@ -412,7 +406,7 @@ impl<'a, D: TransactionExecute> Execute for ExecuteTransaction<'a, D> {
         node_account_id: AccountId,
         transaction_id: Option<TransactionId>,
     ) -> crate::Result<Self::Response> {
-        self.inner.make_response(response, context, node_account_id, transaction_id)
+        self.transaction.make_response(response, context, node_account_id, transaction_id)
     }
 
     fn make_error_pre_check(
@@ -420,7 +414,7 @@ impl<'a, D: TransactionExecute> Execute for ExecuteTransaction<'a, D> {
         status: crate::Status,
         transaction_id: Option<TransactionId>,
     ) -> crate::Error {
-        self.inner.make_error_pre_check(status, transaction_id)
+        self.transaction.make_error_pre_check(status, transaction_id)
     }
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
