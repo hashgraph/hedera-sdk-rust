@@ -183,6 +183,82 @@ pub unsafe extern "C" fn hedera_transaction_execute(
     Error::Ok
 }
 
+// fixme: just... Fix this?
+/// Execute this request against the provided client of the Hedera network.
+///
+/// # Safety
+/// - todo(sr): Missing basically everything
+/// - `callback` must not store `response` after it returns.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_transaction_execute_all(
+    client: *const Client,
+    request: *const c_char,
+    context: *const c_void,
+    signers: Signers,
+    has_timeout: bool,
+    timeout: f64,
+    sources: *const crate::transaction::TransactionSources,
+    callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
+) -> Error {
+    assert!(!client.is_null());
+
+    let client = unsafe { &*client };
+    let sources = unsafe { sources.as_ref() };
+    let request = unsafe { cstr_from_ptr(request) };
+
+    let mut transaction: AnyTransaction =
+        ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
+
+    let signers_2: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+
+    let timeout = has_timeout
+        .then(|| std::time::Duration::try_from_secs_f64(timeout))
+        .transpose()
+        .map_err(crate::Error::request_parse);
+
+    let timeout = ffi_try!(timeout);
+
+    drop(signers);
+    let signers = signers_2;
+
+    let callback = Callback::new(context, callback);
+
+    super::runtime::RUNTIME.spawn(async move {
+        let response = {
+            for signer in signers {
+                transaction.sign_signer(crate::signer::AnySigner::C(signer));
+            }
+
+            let res = match sources {
+                Some(sources) => {
+                    crate::transaction::SourceTransaction::new(&transaction, sources)
+                        .execute_all(client, timeout)
+                        .await
+                }
+                None => transaction.execute_all_with_optional_timeout(client, timeout).await,
+            };
+
+            res.map(|response| serde_json::to_string(&response).unwrap())
+        };
+
+        let response =
+            response.map(|response| CString::new(response).unwrap().into_raw().cast_const());
+
+        let (err, response) = match response {
+            Ok(response) => (Error::Ok, response),
+            Err(error) => (Error::new(error), ptr::null()),
+        };
+
+        callback.call(err, response);
+
+        if !response.is_null() {
+            drop(unsafe { CString::from_raw(response.cast_mut()) });
+        }
+    });
+
+    Error::Ok
+}
+
 /// # Safety
 /// - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
 #[no_mangle]
