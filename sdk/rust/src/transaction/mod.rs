@@ -35,7 +35,6 @@ use crate::{
     AccountId,
     Client,
     Error,
-    FromProtobuf,
     Hbar,
     Operator,
     PrivateKey,
@@ -424,7 +423,7 @@ impl<D: TransactionExecute> Transaction<D> {
     /// Convert `self` to protobuf encoded bytes.
     ///
     /// # Errors
-    /// - If `freeze_with` wasn't called with an operator.
+    /// - If `freeze_with` wasn't called with an operator and there was no transaction ID provided.
     ///
     /// # Panics
     /// - If `!self.is_frozen()`.
@@ -671,26 +670,44 @@ impl AnyTransaction {
 
         let sources = TransactionSources::new(list)?;
 
-        // fixme: use `signed_transactions`
-        let tmp: Result<Vec<_>, _> =
-            sources.transactions().iter().map(transaction_body_from_transaction).collect();
-        let tmp = tmp?;
+        let transaction_bodies: Result<Vec<_>, _> = sources
+            .signed_transactions()
+            .iter()
+            .map(|it| {
+                services::TransactionBody::decode(&*it.body_bytes).map_err(Error::from_protobuf)
+            })
+            .collect();
 
-        let (first, tmp) =
-            tmp.split_first().ok_or_else(|| Error::from_protobuf("no transactions found"))?;
+        let transaction_bodies = transaction_bodies?;
+        {
+            let (first, transaction_bodies) = transaction_bodies
+                .split_first()
+                .ok_or_else(|| Error::from_protobuf("no transactions found"))?;
 
-        for it in tmp.iter() {
-            if &first.transaction_id != &it.transaction_id {
-                return Err(Error::from_protobuf("chunked transactions not currently supported"));
-            }
-
-            if !pb_transaction_body_eq(first, it) {
-                return Err(Error::from_protobuf("transaction parts unexpectedly unequal"));
+            for it in transaction_bodies.iter() {
+                if !pb_transaction_body_eq(first, it) {
+                    return Err(Error::from_protobuf("transaction parts unexpectedly unequal"));
+                }
             }
         }
 
+        // todo: reuse work
+        let transaction_data = {
+            let data: Result<_, _> = sources
+                .chunks()
+                .filter_map(|it| it.signed_transactions().first())
+                .map(|it| {
+                    services::TransactionBody::decode(&*it.body_bytes)
+                        .map_err(Error::from_protobuf)
+                        .and_then(|pb| pb_getf!(pb, data))
+                })
+                .collect();
+
+            data?
+        };
+
         // note: this creates the transaction in a frozen state.
-        let mut res = Self::from_protobuf(first.clone())?;
+        let mut res = Self::from_protobuf(transaction_bodies[0].clone(), transaction_data)?;
 
         // note: this doesn't check freeze for obvious reasons.
         res.body.node_account_ids = Some(sources.node_ids().to_vec());
@@ -733,54 +750,58 @@ fn pb_transaction_body_eq(
         return false;
     }
 
-    if &lhs.data != data {
-        return false;
+    match (&lhs.data, data) {
+        (None, None) => {}
+        (Some(lhs), Some(rhs)) => match (lhs, rhs) {
+            (
+                services::transaction_body::Data::ConsensusSubmitMessage(lhs),
+                services::transaction_body::Data::ConsensusSubmitMessage(rhs),
+            ) => {
+                let services::ConsensusSubmitMessageTransactionBody {
+                    topic_id,
+                    message: _,
+                    chunk_info,
+                } = rhs;
+
+                if &lhs.topic_id != topic_id {
+                    return false;
+                }
+
+                match (lhs.chunk_info.as_ref(), chunk_info.as_ref()) {
+                    (None, None) => {}
+                    (Some(lhs), Some(rhs)) => {
+                        let services::ConsensusMessageChunkInfo {
+                            initial_transaction_id,
+                            total,
+                            number: _,
+                        } = rhs;
+
+                        if &lhs.initial_transaction_id != initial_transaction_id {
+                            return false;
+                        }
+
+                        if &lhs.total != total {
+                            return false;
+                        }
+                    }
+                    (Some(_), None) | (None, Some(_)) => return false,
+                }
+            }
+            (
+                services::transaction_body::Data::FileAppend(lhs),
+                services::transaction_body::Data::FileAppend(rhs),
+            ) => {
+                let services::FileAppendTransactionBody { file_id, contents: _ } = rhs;
+
+                if &lhs.file_id != file_id {
+                    return false;
+                }
+            }
+            (_, _) if lhs != rhs => return false,
+            _ => {}
+        },
+        (Some(_), None) | (None, Some(_)) => return false,
     }
 
     true
-}
-
-impl FromProtobuf<services::Transaction> for AnyTransaction {
-    fn from_protobuf(pb: services::Transaction) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        transaction_body_from_transaction(&pb).and_then(Self::from_protobuf)
-    }
-}
-
-#[allow(deprecated)]
-fn transaction_body_from_transaction(
-    tx: &services::Transaction,
-) -> crate::Result<services::TransactionBody> {
-    if !tx.signed_transaction_bytes.is_empty() {
-        let tx = services::SignedTransaction::decode(&*tx.signed_transaction_bytes)
-            .map_err(Error::from_protobuf)?;
-
-        return services::TransactionBody::decode(&*tx.body_bytes).map_err(Error::from_protobuf);
-    }
-
-    Err(Error::from_protobuf("Transaction had no signed transaction bytes"))
-}
-
-impl FromProtobuf<services::TransactionBody> for AnyTransaction {
-    fn from_protobuf(pb: services::TransactionBody) -> crate::Result<Self>
-    where
-        Self: Sized,
-    {
-        Ok(Transaction {
-            body: TransactionBody {
-                data: AnyTransactionData::from_protobuf(pb_getf!(pb, data)?)?,
-                node_account_ids: None,
-                transaction_valid_duration: pb.transaction_valid_duration.map(Into::into),
-                max_transaction_fee: Some(Hbar::from_tinybars(pb.transaction_fee as i64)),
-                transaction_memo: pb.memo,
-                transaction_id: Some(TransactionId::from_protobuf(pb_getf!(pb, transaction_id)?)?),
-                operator: None,
-                is_frozen: true,
-            },
-            signers: Vec::new(),
-            sources: None,
-        })
-    }
 }

@@ -751,3 +751,358 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
         Ok(data)
     }
 }
+
+impl AnyTransactionData {
+    fn from_protobuf(data_chunks: ServicesTransactionDataList) -> crate::Result<Self> {
+        fn try_into_only_element<T>(v: Vec<T>) -> crate::Result<T> {
+            match <[T; 1]>::try_from(v) {
+                Ok([element]) => Ok(element),
+                _ => Err(Error::from_protobuf("chunks in non chunkable transaction")),
+            }
+        }
+
+        dbg!(&data_chunks);
+
+        let data = match data_chunks {
+            ServicesTransactionDataList::AccountCreate(v) => {
+                data::AccountCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::AccountUpdate(v) => {
+                data::AccountUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::AccountDelete(v) => {
+                data::AccountDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::AccountAllowanceApprove(v) => {
+                data::AccountAllowanceApprove::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::AccountAllowanceDelete(v) => {
+                data::AccountAllowanceDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ContractCreate(v) => {
+                data::ContractCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ContractUpdate(v) => {
+                data::ContractUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ContractDelete(v) => {
+                data::ContractDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ContractExecute(v) => {
+                data::ContractExecute::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::Transfer(v) => {
+                data::Transfer::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TopicCreate(v) => {
+                data::TopicCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TopicUpdate(v) => {
+                data::TopicUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TopicDelete(v) => {
+                data::TopicDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TopicMessageSubmit(v) => {
+                data::TopicMessageSubmit::from_protobuf(v)?.into()
+            }
+            ServicesTransactionDataList::FileAppend(v) => {
+                data::FileAppend::from_protobuf(v)?.into()
+            }
+            ServicesTransactionDataList::FileCreate(v) => {
+                data::FileCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::FileUpdate(v) => {
+                data::FileUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::FileDelete(v) => {
+                data::FileDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenAssociate(v) => {
+                data::TokenAssociate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenBurn(v) => {
+                data::TokenBurn::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenCreate(v) => {
+                data::TokenCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenDelete(v) => {
+                data::TokenDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenDissociate(v) => {
+                data::TokenDissociate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenFeeScheduleUpdate(v) => {
+                data::TokenFeeScheduleUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenFreeze(v) => {
+                data::TokenFreeze::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenGrantKyc(v) => {
+                data::TokenGrantKyc::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenMint(v) => {
+                data::TokenMint::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenPause(v) => {
+                data::TokenPause::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenRevokeKyc(v) => {
+                data::TokenRevokeKyc::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenUnfreeze(v) => {
+                data::TokenUnfreeze::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenUnpause(v) => {
+                data::TokenUnpause::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenUpdate(v) => {
+                data::TokenUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenWipe(v) => {
+                data::TokenWipe::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::SystemDelete(v) => {
+                data::SystemDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::SystemUndelete(v) => {
+                data::SystemUndelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::Freeze(v) => {
+                data::Freeze::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ScheduleCreate(v) => {
+                data::ScheduleCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ScheduleSign(v) => {
+                data::ScheduleSign::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::ScheduleDelete(v) => {
+                data::ScheduleDelete::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::Ethereum(v) => {
+                data::Ethereum::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+        };
+
+        Ok(data)
+    }
+}
+
+impl AnyTransaction {
+    pub(super) fn from_protobuf(
+        first_body: services::TransactionBody,
+        data_chunks: Vec<services::transaction_body::Data>,
+    ) -> crate::Result<Self> {
+        Ok(Transaction {
+            body: TransactionBody {
+                data: AnyTransactionData::from_protobuf(
+                    ServicesTransactionDataList::from_protobuf(data_chunks)?,
+                )?,
+                node_account_ids: None,
+                transaction_valid_duration: first_body.transaction_valid_duration.map(Into::into),
+                max_transaction_fee: Some(Hbar::from_tinybars(first_body.transaction_fee as i64)),
+                transaction_memo: first_body.memo,
+                transaction_id: Some(TransactionId::from_protobuf(pb_getf!(
+                    first_body,
+                    transaction_id
+                )?)?),
+                operator: None,
+                is_frozen: true,
+            },
+            signers: Vec::new(),
+            sources: None,
+        })
+    }
+}
+
+// sigh.
+#[derive(Debug)]
+enum ServicesTransactionDataList {
+    AccountCreate(Vec<services::CryptoCreateTransactionBody>),
+    AccountUpdate(Vec<services::CryptoUpdateTransactionBody>),
+    AccountDelete(Vec<services::CryptoDeleteTransactionBody>),
+    AccountAllowanceApprove(Vec<services::CryptoApproveAllowanceTransactionBody>),
+    AccountAllowanceDelete(Vec<services::CryptoDeleteAllowanceTransactionBody>),
+    ContractCreate(Vec<services::ContractCreateTransactionBody>),
+    ContractUpdate(Vec<services::ContractUpdateTransactionBody>),
+    ContractDelete(Vec<services::ContractDeleteTransactionBody>),
+    ContractExecute(Vec<services::ContractCallTransactionBody>),
+    Transfer(Vec<services::CryptoTransferTransactionBody>),
+    TopicCreate(Vec<services::ConsensusCreateTopicTransactionBody>),
+    TopicUpdate(Vec<services::ConsensusUpdateTopicTransactionBody>),
+    TopicDelete(Vec<services::ConsensusDeleteTopicTransactionBody>),
+    TopicMessageSubmit(Vec<services::ConsensusSubmitMessageTransactionBody>),
+    FileAppend(Vec<services::FileAppendTransactionBody>),
+    FileCreate(Vec<services::FileCreateTransactionBody>),
+    FileUpdate(Vec<services::FileUpdateTransactionBody>),
+    FileDelete(Vec<services::FileDeleteTransactionBody>),
+    TokenAssociate(Vec<services::TokenAssociateTransactionBody>),
+    TokenBurn(Vec<services::TokenBurnTransactionBody>),
+    TokenCreate(Vec<services::TokenCreateTransactionBody>),
+    TokenDelete(Vec<services::TokenDeleteTransactionBody>),
+    TokenDissociate(Vec<services::TokenDissociateTransactionBody>),
+    TokenFeeScheduleUpdate(Vec<services::TokenFeeScheduleUpdateTransactionBody>),
+    TokenFreeze(Vec<services::TokenFreezeAccountTransactionBody>),
+    TokenGrantKyc(Vec<services::TokenGrantKycTransactionBody>),
+    TokenMint(Vec<services::TokenMintTransactionBody>),
+    TokenPause(Vec<services::TokenPauseTransactionBody>),
+    TokenRevokeKyc(Vec<services::TokenRevokeKycTransactionBody>),
+    TokenUnfreeze(Vec<services::TokenUnfreezeAccountTransactionBody>),
+    TokenUnpause(Vec<services::TokenUnpauseTransactionBody>),
+    TokenUpdate(Vec<services::TokenUpdateTransactionBody>),
+    TokenWipe(Vec<services::TokenWipeAccountTransactionBody>),
+    SystemDelete(Vec<services::SystemDeleteTransactionBody>),
+    SystemUndelete(Vec<services::SystemUndeleteTransactionBody>),
+    Freeze(Vec<services::FreezeTransactionBody>),
+    ScheduleCreate(Vec<services::ScheduleCreateTransactionBody>),
+    ScheduleSign(Vec<services::ScheduleSignTransactionBody>),
+    ScheduleDelete(Vec<services::ScheduleDeleteTransactionBody>),
+    Ethereum(Vec<services::EthereumTransactionBody>),
+}
+
+impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransactionDataList {
+    fn from_protobuf(pb: Vec<services::transaction_body::Data>) -> crate::Result<Self> {
+        use services::transaction_body::Data;
+
+        fn make_vec<T>(first: T, cap: usize) -> Vec<T> {
+            let mut v = Vec::with_capacity(cap);
+            v.push(first);
+            v
+        }
+
+        let len = pb.len();
+
+        let mut iter = pb.into_iter();
+
+        let first = iter
+            .next()
+            .expect("empty transaction data list (should be handled earlier up the pipeline)");
+
+        // note: this impl is what I (srr) believe to be the "best" impl
+        let mut value = match first {
+            Data::ContractCall(it) => Self::ContractExecute(make_vec(it, len)),
+            Data::ContractCreateInstance(it) => Self::ContractCreate(make_vec(it, len)),
+            Data::ContractUpdateInstance(it) => Self::ContractUpdate(make_vec(it, len)),
+            Data::ContractDeleteInstance(it) => Self::ContractDelete(make_vec(it, len)),
+            Data::EthereumTransaction(it) => Self::Ethereum(make_vec(it, len)),
+            Data::CryptoApproveAllowance(it) => Self::AccountAllowanceApprove(make_vec(it, len)),
+            Data::CryptoDeleteAllowance(it) => Self::AccountAllowanceDelete(make_vec(it, len)),
+            Data::CryptoCreateAccount(it) => Self::AccountCreate(make_vec(it, len)),
+            Data::CryptoDelete(it) => Self::AccountDelete(make_vec(it, len)),
+            Data::CryptoTransfer(it) => Self::Transfer(make_vec(it, len)),
+            Data::CryptoUpdateAccount(it) => Self::AccountUpdate(make_vec(it, len)),
+            Data::FileAppend(it) => Self::FileAppend(make_vec(it, len)),
+            Data::FileCreate(it) => Self::FileCreate(make_vec(it, len)),
+            Data::FileDelete(it) => Self::FileDelete(make_vec(it, len)),
+            Data::FileUpdate(it) => Self::FileUpdate(make_vec(it, len)),
+            Data::SystemDelete(it) => Self::SystemDelete(make_vec(it, len)),
+            Data::SystemUndelete(it) => Self::SystemUndelete(make_vec(it, len)),
+            Data::Freeze(it) => Self::Freeze(make_vec(it, len)),
+            Data::ConsensusCreateTopic(it) => Self::TopicCreate(make_vec(it, len)),
+            Data::ConsensusUpdateTopic(it) => Self::TopicUpdate(make_vec(it, len)),
+            Data::ConsensusDeleteTopic(it) => Self::TopicDelete(make_vec(it, len)),
+            Data::ConsensusSubmitMessage(it) => Self::TopicMessageSubmit(make_vec(it, len)),
+            Data::TokenCreation(it) => Self::TokenCreate(make_vec(it, len)),
+            Data::TokenFreeze(it) => Self::TokenFreeze(make_vec(it, len)),
+            Data::TokenUnfreeze(it) => Self::TokenUnfreeze(make_vec(it, len)),
+            Data::TokenGrantKyc(it) => Self::TokenGrantKyc(make_vec(it, len)),
+            Data::TokenRevokeKyc(it) => Self::TokenRevokeKyc(make_vec(it, len)),
+            Data::TokenDeletion(it) => Self::TokenDelete(make_vec(it, len)),
+            Data::TokenUpdate(it) => Self::TokenUpdate(make_vec(it, len)),
+            Data::TokenMint(it) => Self::TokenMint(make_vec(it, len)),
+            Data::TokenBurn(it) => Self::TokenBurn(make_vec(it, len)),
+            Data::TokenWipe(it) => Self::TokenWipe(make_vec(it, len)),
+            Data::TokenAssociate(it) => Self::TokenAssociate(make_vec(it, len)),
+            Data::TokenDissociate(it) => Self::TokenDissociate(make_vec(it, len)),
+            Data::TokenFeeScheduleUpdate(it) => Self::TokenFeeScheduleUpdate(make_vec(it, len)),
+            Data::TokenPause(it) => Self::TokenPause(make_vec(it, len)),
+            Data::TokenUnpause(it) => Self::TokenUnpause(make_vec(it, len)),
+            Data::ScheduleCreate(it) => Self::ScheduleCreate(make_vec(it, len)),
+            Data::ScheduleDelete(it) => Self::ScheduleDelete(make_vec(it, len)),
+            Data::ScheduleSign(it) => Self::ScheduleSign(make_vec(it, len)),
+
+            Data::CryptoAddLiveHash(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `AddLiveHashTransaction`",
+                ))
+            }
+            Data::CryptoDeleteLiveHash(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `DeleteLiveHashTransaction`",
+                ))
+            }
+
+            Data::UncheckedSubmit(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `UncheckedSubmitTransaction`",
+                ))
+            }
+            Data::NodeStakeUpdate(_) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `NodeStakeUpdateTransaction`",
+                ))
+            }
+            Data::UtilPrng(_) => {
+                return Err(Error::from_protobuf("unimplemented transaction `PrngTransaction`"))
+            }
+        };
+
+        for transaction in iter {
+            match (&mut value, transaction) {
+                (Self::AccountCreate(v), Data::CryptoCreateAccount(element)) => v.push(element),
+                (Self::AccountUpdate(v), Data::CryptoUpdateAccount(element)) => v.push(element),
+                (Self::AccountDelete(v), Data::CryptoDelete(element)) => v.push(element),
+                (Self::AccountAllowanceApprove(v), Data::CryptoApproveAllowance(element)) => {
+                    v.push(element)
+                }
+                (Self::AccountAllowanceDelete(v), Data::CryptoDeleteAllowance(element)) => {
+                    v.push(element)
+                }
+                (Self::ContractCreate(v), Data::ContractCreateInstance(element)) => v.push(element),
+                (Self::ContractUpdate(v), Data::ContractUpdateInstance(element)) => v.push(element),
+                (Self::ContractDelete(v), Data::ContractDeleteInstance(element)) => v.push(element),
+                (Self::ContractExecute(v), Data::ContractCall(element)) => v.push(element),
+                (Self::Transfer(v), Data::CryptoTransfer(element)) => v.push(element),
+                (Self::TopicCreate(v), Data::ConsensusCreateTopic(element)) => v.push(element),
+                (Self::TopicUpdate(v), Data::ConsensusUpdateTopic(element)) => v.push(element),
+                (Self::TopicDelete(v), Data::ConsensusDeleteTopic(element)) => v.push(element),
+                (Self::TopicMessageSubmit(v), Data::ConsensusSubmitMessage(element)) => {
+                    v.push(element)
+                }
+                (Self::FileAppend(v), Data::FileAppend(element)) => v.push(element),
+                (Self::FileCreate(v), Data::FileCreate(element)) => v.push(element),
+                (Self::FileUpdate(v), Data::FileUpdate(element)) => v.push(element),
+                (Self::FileDelete(v), Data::FileDelete(element)) => v.push(element),
+                (Self::TokenAssociate(v), Data::TokenAssociate(element)) => v.push(element),
+                (Self::TokenBurn(v), Data::TokenBurn(element)) => v.push(element),
+                (Self::TokenCreate(v), Data::TokenCreation(element)) => v.push(element),
+                (Self::TokenDelete(v), Data::TokenDeletion(element)) => v.push(element),
+                (Self::TokenDissociate(v), Data::TokenDissociate(element)) => v.push(element),
+                (Self::TokenFeeScheduleUpdate(v), Data::TokenFeeScheduleUpdate(element)) => {
+                    v.push(element)
+                }
+                (Self::TokenFreeze(v), Data::TokenFreeze(element)) => v.push(element),
+                (Self::TokenGrantKyc(v), Data::TokenGrantKyc(element)) => v.push(element),
+                (Self::TokenMint(v), Data::TokenMint(element)) => v.push(element),
+                (Self::TokenPause(v), Data::TokenPause(element)) => v.push(element),
+                (Self::TokenRevokeKyc(v), Data::TokenRevokeKyc(element)) => v.push(element),
+                (Self::TokenUnfreeze(v), Data::TokenUnfreeze(element)) => v.push(element),
+                (Self::TokenUnpause(v), Data::TokenUnpause(element)) => v.push(element),
+                (Self::TokenUpdate(v), Data::TokenUpdate(element)) => v.push(element),
+                (Self::TokenWipe(v), Data::TokenWipe(element)) => v.push(element),
+                (Self::SystemDelete(v), Data::SystemDelete(element)) => v.push(element),
+                (Self::SystemUndelete(v), Data::SystemUndelete(element)) => v.push(element),
+                (Self::Freeze(v), Data::Freeze(element)) => v.push(element),
+                (Self::ScheduleCreate(v), Data::ScheduleCreate(element)) => v.push(element),
+                (Self::ScheduleSign(v), Data::ScheduleSign(element)) => v.push(element),
+                (Self::ScheduleDelete(v), Data::ScheduleDelete(element)) => v.push(element),
+                (Self::Ethereum(v), Data::EthereumTransaction(element)) => v.push(element),
+                _ => return Err(Error::from_protobuf("mismatched transaction types")),
+            }
+        }
+
+        Ok(value)
+    }
+}

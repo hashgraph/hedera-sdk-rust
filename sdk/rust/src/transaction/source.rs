@@ -48,22 +48,22 @@ impl<'a> SourceChunk<'a> {
         self.map.transaction_ids[self.index]
     }
 
-    pub(crate) fn transactions(&self) -> &[services::Transaction] {
+    pub(crate) fn transactions(&self) -> &'a [services::Transaction] {
         &self.map.transactions()[self.range()]
     }
 
-    pub(crate) fn _signed_transactions(&self) -> &[services::SignedTransaction] {
+    pub(crate) fn signed_transactions(&self) -> &'a [services::SignedTransaction] {
         &self.map.signed_transactions[self.range()]
     }
 
     /// Returns The node account IDs for this chunk.
     ///
     /// Note: Every chunk has the same node account IDs.
-    pub(crate) fn node_ids(&self) -> &[AccountId] {
+    pub(crate) fn node_ids(&self) -> &'a [AccountId] {
         &self.map.node_ids
     }
 
-    pub(crate) fn transaction_hashes(&self) -> &[TransactionHash] {
+    pub(crate) fn transaction_hashes(&self) -> &'a [TransactionHash] {
         &self.map.transaction_hashes()[self.range()]
     }
 }
@@ -202,7 +202,7 @@ impl TransactionSources {
                 if node_ids.is_empty() {
                     node_ids = transaction_info[chunk.clone()].iter().map(|it| it.1).collect();
                 } else {
-                    if !node_ids.iter().ne(transaction_info[chunk.clone()].iter().map(|it| &it.1)) {
+                    if node_ids.iter().ne(transaction_info[chunk.clone()].iter().map(|it| &it.1)) {
                         return Err(Error::from_protobuf(
                             "TransactionList has inconsistent node account IDs",
                         ));
@@ -276,6 +276,10 @@ impl TransactionSources {
                 })
                 .collect()
         })
+    }
+
+    pub(super) fn signed_transactions(&self) -> &[services::SignedTransaction] {
+        &self.signed_transactions
     }
 
     pub(super) fn chunks_len(&self) -> usize {

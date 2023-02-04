@@ -18,6 +18,9 @@
  * ‍
  */
 
+use std::cmp;
+use std::num::NonZeroUsize;
+
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
@@ -148,6 +151,37 @@ impl FromProtobuf<services::FileAppendTransactionBody> for FileAppendTransaction
     fn from_protobuf(_pb: services::FileAppendTransactionBody) -> crate::Result<Self> {
         todo!("fix to/from bytes for chunked transactions")
         // Ok(Self { file_id: Option::from_protobuf(pb.file_id)?, contents: Some(pb.contents) })
+    }
+}
+
+impl FromProtobuf<Vec<services::FileAppendTransactionBody>> for FileAppendTransactionData {
+    fn from_protobuf(pb: Vec<services::FileAppendTransactionBody>) -> crate::Result<Self> {
+        let total_chunks = pb.len();
+
+        let mut iter = pb.into_iter();
+        let pb_first = iter.next().expect("Empty transaction (should've been handled earlier)");
+
+        let file_id = Option::from_protobuf(pb_first.file_id)?;
+
+        let mut largest_chunk_size = pb_first.contents.len();
+        let mut contents = pb_first.contents;
+
+        // note: no other SDK checks for correctness here... so let's not do it here either?
+
+        for item in iter {
+            largest_chunk_size = cmp::max(largest_chunk_size, item.contents.len());
+            contents.extend_from_slice(&item.contents);
+        }
+
+        Ok(Self {
+            file_id,
+            chunk_data: ChunkData {
+                max_chunks: total_chunks,
+                chunk_size: NonZeroUsize::new(largest_chunk_size)
+                    .unwrap_or_else(|| NonZeroUsize::new(1).unwrap()),
+                data: contents,
+            },
+        })
     }
 }
 
