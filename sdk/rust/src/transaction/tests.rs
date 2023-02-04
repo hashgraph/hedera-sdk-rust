@@ -7,8 +7,10 @@ use time::OffsetDateTime;
 use crate::transaction::AnyTransactionData;
 use crate::{
     AnyTransaction,
+    Client,
     Hbar,
     PrivateKey,
+    TopicMessageSubmitTransaction,
     TransactionId,
     TransferTransaction,
 };
@@ -87,6 +89,33 @@ fn from_bytes_sign_to_bytes() -> crate::Result<()> {
     let _bytes2 = tx2.to_bytes()?;
 
     // todo: check properties (but what properties?)
+
+    Ok(())
+}
+
+#[test]
+fn chunked_to_from_bytes() -> crate::Result<()> {
+    let client = Client::for_testnet();
+    client.set_operator(0.into(), PrivateKey::generate_ed25519());
+
+    let bytes = TopicMessageSubmitTransaction::new()
+        .topic_id(314)
+        .message(b"Hello, world!".to_vec())
+        .chunk_size(8)
+        .max_chunks(2)
+        .transaction_id(TransactionId {
+            account_id: 101.into(),
+            valid_start: OffsetDateTime::now_utc(),
+            nonce: None,
+            scheduled: false,
+        })
+        .node_account_ids([6.into(), 7.into()])
+        .freeze_with(&client)?
+        .to_bytes()?;
+
+    let _tx2 = AnyTransaction::from_bytes(&bytes)?;
+
+    // todo: check properties
 
     Ok(())
 }

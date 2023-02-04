@@ -1,3 +1,4 @@
+use std::cmp;
 use std::num::NonZeroUsize;
 
 use hedera_proto::services;
@@ -76,11 +77,12 @@ impl ChunkData {
     }
 
     pub(crate) fn message_chunk(&self, chunk_info: &ChunkInfo) -> &[u8] {
-        debug_assert!(chunk_info.current < self.max_chunks);
-        let offset = self.chunk_size.get() * chunk_info.current;
-        let len = self.chunk_size.get();
+        debug_assert!(chunk_info.current < self.used_chunks());
 
-        &self.data[offset..][..len]
+        let start = self.chunk_size.get() * chunk_info.current;
+        let end = cmp::min(self.chunk_size.get() * (chunk_info.current + 1), self.data.len());
+
+        &self.data[start..end]
     }
 
     pub(crate) fn max_message_len(&self) -> usize {

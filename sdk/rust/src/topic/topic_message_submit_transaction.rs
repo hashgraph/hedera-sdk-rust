@@ -18,6 +18,9 @@
  * ‍
  */
 
+use std::cmp;
+use std::num::NonZeroUsize;
+
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
@@ -145,7 +148,7 @@ impl ToTransactionDataProtobuf for TopicMessageSubmitTransactionData {
                 message: self.chunk_data.message_chunk(chunk_info).to_vec(),
                 chunk_info: (chunk_info.total > 1).then(|| services::ConsensusMessageChunkInfo {
                     initial_transaction_id: Some(chunk_info.initial_transaction_id.to_protobuf()),
-                    number: chunk_info.current as i32,
+                    number: (chunk_info.current + 1) as i32,
                     total: chunk_info.total as i32,
                 }),
             },
@@ -162,24 +165,43 @@ impl From<TopicMessageSubmitTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::ConsensusSubmitMessageTransactionBody>
     for TopicMessageSubmitTransactionData
 {
-    fn from_protobuf(_pb: services::ConsensusSubmitMessageTransactionBody) -> crate::Result<Self> {
-        todo!("fix to/from bytes for chunked transactions");
-        // let (initial_transaction_id, chunk_total, chunk_number) = match pb.chunk_info {
-        //     Some(pb) => (
-        //         Some(TransactionId::from_protobuf(pb_getf!(pb, initial_transaction_id)?)?),
-        //         pb.total,
-        //         pb.number,
-        //     ),
-        //     None => (None, 1, 1),
-        // };
+    fn from_protobuf(pb: services::ConsensusSubmitMessageTransactionBody) -> crate::Result<Self> {
+        Self::from_protobuf(Vec::from([pb]))
+    }
+}
 
-        // Ok(Self {
-        //     topic_id: Option::from_protobuf(pb.topic_id)?,
-        //     message: (!pb.message.is_empty()).then(|| pb.message),
-        //     initial_transaction_id,
-        //     chunk_total,
-        //     chunk_number,
-        // })
+impl FromProtobuf<Vec<services::ConsensusSubmitMessageTransactionBody>>
+    for TopicMessageSubmitTransactionData
+{
+    fn from_protobuf(
+        pb: Vec<services::ConsensusSubmitMessageTransactionBody>,
+    ) -> crate::Result<Self> {
+        let total_chunks = pb.len();
+
+        let mut iter = pb.into_iter();
+        let pb_first = iter.next().expect("Empty transaction (should've been handled earlier)");
+
+        let topic_id = Option::from_protobuf(pb_first.topic_id)?;
+
+        let mut largest_chunk_size = pb_first.message.len();
+        let mut message = pb_first.message;
+
+        // note: no other SDK checks for correctness here... so let's not do it here either?
+
+        for item in iter {
+            largest_chunk_size = cmp::max(largest_chunk_size, item.message.len());
+            message.extend_from_slice(&item.message);
+        }
+
+        Ok(Self {
+            topic_id,
+            chunk_data: ChunkData {
+                max_chunks: total_chunks,
+                chunk_size: NonZeroUsize::new(largest_chunk_size)
+                    .unwrap_or_else(|| NonZeroUsize::new(1).unwrap()),
+                data: message,
+            },
+        })
     }
 }
 
