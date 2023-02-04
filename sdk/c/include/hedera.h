@@ -1527,6 +1527,22 @@ enum HederaError hedera_transaction_execute(const struct HederaClient *client,
                                             void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
+ * Execute this request against the provided client of the Hedera network.
+ *
+ * # Safety
+ * - todo(sr): Missing basically everything
+ * - `callback` must not store `response` after it returns.
+ */
+enum HederaError hedera_transaction_execute_all(const struct HederaClient *client,
+                                                const char *request,
+                                                const void *context,
+                                                struct HederaSigners signers,
+                                                bool has_timeout,
+                                                double timeout,
+                                                const struct HederaTransactionSources *sources,
+                                                void (*callback)(const void *context, enum HederaError err, const char *response));
+
+/**
  * # Safety
  * - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
  */
