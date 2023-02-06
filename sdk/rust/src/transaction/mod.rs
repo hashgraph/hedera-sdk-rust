@@ -538,7 +538,8 @@ where
         let wait_for_receipts = self.data().wait_for_receipt();
 
         if chunk_data.data.len() > chunk_data.max_message_len() {
-            todo!("error: message too big")
+            // fixme: error with an actual error.
+            panic!("error: message too big")
         }
 
         let used_chunks = chunk_data.used_chunks();

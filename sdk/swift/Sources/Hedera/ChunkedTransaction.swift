@@ -96,10 +96,10 @@ public class ChunkedTransaction: Transaction {
     {
         try freezeWith(client)
 
-        fatalError()
+        return try await executeAllInternal(client, timeoutPerChunk)
     }
 
-    private func executeAllInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws
+    private func executeAllInternal(_ client: Client, _ timeoutPerChunk: TimeInterval? = nil) async throws
         -> [TransactionResponse]
     {
         try freezeWith(client)
@@ -109,6 +109,6 @@ public class ChunkedTransaction: Transaction {
 
         let request = String(data: requestBytes, encoding: .utf8)!
 
-        return try await executeAllEncoded(client, request: request, timeout: timeout)
+        return try await executeAllEncoded(client, request: request, timeoutPerChunk: timeoutPerChunk)
     }
 }

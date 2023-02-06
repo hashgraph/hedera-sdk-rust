@@ -761,8 +761,6 @@ impl AnyTransactionData {
             }
         }
 
-        dbg!(&data_chunks);
-
         let data = match data_chunks {
             ServicesTransactionDataList::AccountCreate(v) => {
                 data::AccountCreate::from_protobuf(try_into_only_element(v)?)?.into()

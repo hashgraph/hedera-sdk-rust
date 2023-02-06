@@ -148,9 +148,8 @@ impl From<FileAppendTransactionData> for AnyTransactionData {
 }
 
 impl FromProtobuf<services::FileAppendTransactionBody> for FileAppendTransactionData {
-    fn from_protobuf(_pb: services::FileAppendTransactionBody) -> crate::Result<Self> {
-        todo!("fix to/from bytes for chunked transactions")
-        // Ok(Self { file_id: Option::from_protobuf(pb.file_id)?, contents: Some(pb.contents) })
+    fn from_protobuf(pb: services::FileAppendTransactionBody) -> crate::Result<Self> {
+        Self::from_protobuf(Vec::from([pb]))
     }
 }
 
