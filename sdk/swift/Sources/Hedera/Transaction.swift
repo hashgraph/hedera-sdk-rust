@@ -189,7 +189,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     // hack: this should totally be on ChunkedTransaction
-    internal func executeAllEncoded(_ client: Client, request: String, timeout: TimeInterval?)
+    internal func executeAllEncoded(_ client: Client, request: String, timeoutPerChunk: TimeInterval?)
         async throws -> [Response]
     {
         if client.isAutoValidateChecksumsEnabled() {
@@ -201,8 +201,8 @@ public class Transaction: Request, ValidateChecksums, Decodable {
             let signers = makeHederaSignersFromArray(signers: signers)
             // invoke `hedera_execute`, callback will be invoked on request completion
             let err = hedera_transaction_execute_all(
-                client.ptr, request, continuation, signers, timeout != nil,
-                timeout ?? 0.0, sources?.ptr
+                client.ptr, request, continuation, signers, timeoutPerChunk != nil,
+                timeoutPerChunk ?? 0.0, sources?.ptr
             ) { continuation, err, responsePtr in
                 if let err = HError(err) {
                     // an error has occurred, consume from the TLS storage for the error
