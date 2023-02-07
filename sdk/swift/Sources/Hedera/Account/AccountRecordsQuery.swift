@@ -55,6 +55,10 @@ public final class AccountRecordsQuery: Query<[TransactionRecord]> {
         try await Proto_CryptoServiceAsyncClient(channel: channel).getAccountRecords(request)
     }
 
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+    }
+
     private enum CodingKeys: String, CodingKey {
         case accountId
     }

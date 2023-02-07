@@ -32,16 +32,12 @@ use crate::ffi::runtime::RUNTIME;
 use crate::ffi::signer::Signer;
 use crate::ffi::util::cstr_from_ptr;
 use crate::transaction::AnyTransaction;
-use crate::{
-    AnyQuery,
-    Client,
-};
+use crate::Client;
 
 #[derive(serde::Deserialize)]
 #[cfg_attr(feature = "ffi", serde(untagged))]
 enum AnyRequest {
     Transaction(Box<AnyTransaction>),
-    Query(Box<AnyQuery>),
 }
 
 /// Execute this request against the provided client of the Hedera network.
@@ -83,11 +79,6 @@ pub unsafe extern "C" fn hedera_execute(
 
     RUNTIME.spawn(async move {
         let response = match request {
-            AnyRequest::Query(mut query) => query
-                .execute_with_optional_timeout(client, timeout)
-                .await
-                .map(|response| serde_json::to_string(&response).unwrap()),
-
             AnyRequest::Transaction(mut transaction) => {
                 for signer in signers {
                     transaction.sign_signer(crate::signer::AnySigner::C(signer));

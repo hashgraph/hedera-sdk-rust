@@ -38,4 +38,10 @@ public final class NetworkVersionInfoQuery: Query<NetworkVersionInfo> {
     internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
         try await Proto_NetworkServiceAsyncClient(channel: channel).getVersionInfo(request)
     }
+
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+    }
+
+    internal override var paymentRequired: Bool { false }
 }

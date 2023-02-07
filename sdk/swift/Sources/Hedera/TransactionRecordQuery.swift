@@ -84,6 +84,12 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
         try await Proto_CryptoServiceAsyncClient(channel: channel).getTxRecordByTxID(request)
     }
 
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+    }
+
+    internal override var paymentRequired: Bool { false }
+
     private enum CodingKeys: String, CodingKey {
         case transactionId
         case includeChildren

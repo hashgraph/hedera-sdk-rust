@@ -58,6 +58,10 @@ public final class AccountBalanceQuery: Query<AccountBalance> {
         try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
     }
 
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+    }
+
     /// The account ID for which information is requested.
     public var accountId: AccountId?
 

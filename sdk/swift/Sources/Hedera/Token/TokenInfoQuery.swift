@@ -54,6 +54,10 @@ public final class TokenInfoQuery: Query<TokenInfo> {
         try await Proto_TokenServiceAsyncClient(channel: channel).getTokenInfo(request)
     }
 
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+    }
+
     private enum CodingKeys: String, CodingKey {
         case tokenId
     }

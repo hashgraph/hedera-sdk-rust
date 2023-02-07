@@ -341,15 +341,15 @@ public final class AccountCreateTransaction: Transaction {
                 autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
                 proto.memo = accountMemo
                 proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
-                
+
                 if let alias = alias?.toProtobufBytes() {
-                proto.alias = alias
+                    proto.alias = alias
                 }
 
                 if let evmAddress = evmAddress {
                     proto.evmAddress = evmAddress.data
                 }
-                
+
                 if let stakedNodeId = stakedNodeId {
                     proto.stakedNodeID = Int64(stakedNodeId)
                 }

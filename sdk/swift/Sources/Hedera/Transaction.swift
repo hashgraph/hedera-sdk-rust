@@ -104,7 +104,18 @@ public class Transaction: ValidateChecksums, Codable {
     fileprivate var signers: [Signer] = []
     fileprivate var sources: TransactionSources?
     public private(set) var isFrozen: Bool = false
-    fileprivate var transactionValidDuration: Duration? = nil
+
+    internal var transactionValidDuration: Duration? = nil {
+        willSet {
+            ensureNotFrozen(fieldName: "transactionValidDuration")
+        }
+    }
+
+    internal var transactionMemo: String = "" {
+        willSet {
+            ensureNotFrozen(fieldName: "transactionMemo")
+        }
+    }
 
     static let defaultTransactionValidDuration: Duration = Duration(seconds: 120)
 
@@ -457,7 +468,7 @@ extension Transaction {
             proto.transactionValidDuration = (self.transactionValidDuration ?? Self.defaultTransactionValidDuration)
                 .toProtobuf()
             // todo: memo
-            proto.memo = ""
+            proto.memo = transactionMemo
             proto.nodeAccountID = nodeAccountId.toProtobuf()
             proto.generateRecord = false
             proto.transactionFee = UInt64(maxTransactionFee.toTinybars())

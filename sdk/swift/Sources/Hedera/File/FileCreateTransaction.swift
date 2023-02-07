@@ -186,7 +186,7 @@ public final class FileCreateTransaction: Transaction {
                 proto.memo = fileMemo
                 proto.keys = keys.toProtobuf()
                 proto.contents = contents
-                
+
                 autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
                 autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
                 expirationTime?.toProtobufInto(&proto.expirationTime)

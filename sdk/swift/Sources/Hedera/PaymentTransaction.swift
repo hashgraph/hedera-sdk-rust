@@ -19,53 +19,65 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
-// import GRPC
-// import HederaProtobufs
+internal final class PaymentTransaction: Transaction {
+    internal var amount: Hbar? {
+        willSet {
+            ensureNotFrozen(fieldName: "amount")
+        }
+    }
+    internal var maxAmount: Hbar? {
+        willSet {
+            ensureNotFrozen(fieldName: "maxAmount")
+        }
+    }
 
-internal final class PaymentTransaction: Codable, ValidateChecksums {
-    internal var nodeAccountIds: [AccountId]?
-    internal var amount: Hbar?
-    internal var maxAmount: Hbar?
-    internal var maxTransactionFee: Hbar?
-    internal var transactionMemo: String?
-    internal var payerAccountId: AccountId?
-    internal var transactionId: TransactionId?
-    internal var transactionValidDuration: Duration?
-    // TODO: private var paymentSigners: [OpaquePointer] = [];
+    private enum CodingKeys: CodingKey {
+        case amount
+        case maxAmount
 
-    public func encode(to encoder: Encoder) throws {
+    }
+
+    public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
-        try container.encodeIfPresent(nodeAccountIds, forKey: .nodeAccountIds)
         try container.encodeIfPresent(amount, forKey: .amount)
         try container.encodeIfPresent(maxAmount, forKey: .maxAmount)
-        try container.encodeIfPresent(maxTransactionFee, forKey: .maxTransactionFee)
-        try container.encodeIfPresent(transactionMemo, forKey: .transactionMemo)
-        try container.encodeIfPresent(payerAccountId, forKey: .payerAccountId)
-        try container.encodeIfPresent(transactionId, forKey: .transactionId)
-        try container.encodeIfPresent(transactionValidDuration, forKey: .transactionValidDuration)
+
+        try super.encode(to: encoder)
     }
 
-    internal func validateChecksums(on ledgerId: LedgerId) throws {
-        try nodeAccountIds?.validateChecksums(on: ledgerId)
-        try payerAccountId?.validateChecksums(on: ledgerId)
-        try transactionId?.validateChecksums(on: ledgerId)
+    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+        try super.validateChecksums(on: ledgerId)
     }
 
-    // internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
-    //     -> Proto_TransactionResponse
-    // {
-    //     try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoTransfer(request)
-    // }
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoTransfer(request)
+    }
 
-    // internal func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
-    //     -> Proto_TransactionBody.OneOf_Data
-    // {
-    //     .cryptoTransfer(
-    //         .with { proto in
-
-    //         }
-    //     )
-    // }
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        let amount = amount ?? Hbar.zero
+        return .cryptoTransfer(
+            .with { proto in
+                proto.transfers = .with { transfers in
+                    transfers.accountAmounts = [
+                        .with { transfer in
+                            transfer.accountID = transactionId.accountId.toProtobuf()
+                            transfer.amount = amount.toTinybars()
+                        },
+                        .with { transfer in
+                            transfer.accountID = nodeAccountId.toProtobuf()
+                            transfer.amount = -amount.toTinybars()
+                        },
+                    ]
+                }
+            }
+        )
+    }
 }
