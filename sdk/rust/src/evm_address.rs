@@ -10,7 +10,6 @@ use crate::{
 
 /// An address as implemented in the Ethereum Virtual Machine.
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 #[repr(transparent)]
 pub struct EvmAddress(pub(crate) [u8; 20]);
 

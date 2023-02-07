@@ -60,8 +60,6 @@ use crate::{
 pub type ScheduleCreateTransaction = Transaction<ScheduleCreateTransactionData>;
 
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct ScheduleCreateTransactionData {
     scheduled_transaction: Option<SchedulableTransactionBody>,
 
@@ -71,26 +69,17 @@ pub struct ScheduleCreateTransactionData {
 
     payer_account_id: Option<AccountId>,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     expiration_time: Option<OffsetDateTime>,
 
     wait_for_expiry: bool,
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct SchedulableTransactionBody {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     data: Box<AnyTransactionData>,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     max_transaction_fee: Option<Hbar>,
 
-    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "String::is_empty"))]
     transaction_memo: String,
 }
 

@@ -39,10 +39,7 @@ use crate::{
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 /// Response from [`TransactionReceiptQuery`][crate::TransactionReceiptQuery].
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionReceipt {
     // fixme(sr): better doc comment.
     /// The ID of the transaction that this is a receipt for.
@@ -73,10 +70,6 @@ pub struct TransactionReceipt {
     // TODO: use a hash type (for display/debug/serialize purposes)
     /// In the receipt for a `TopicMessageSubmitTransaction`, the new running hash of the
     /// topic that received the message.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
     pub topic_running_hash: Option<Vec<u8>>,
 
     /// In the receipt of a `TopicMessageSubmitTransaction`, the version of the SHA-384

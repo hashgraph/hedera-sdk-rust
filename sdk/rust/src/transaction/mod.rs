@@ -55,11 +55,7 @@ mod protobuf;
 mod tests;
 
 pub use any::AnyTransaction;
-#[cfg(feature = "ffi")]
-pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
-#[cfg(feature = "ffi")]
-pub(crate) use execute::execute2;
 pub(crate) use execute::TransactionExecute;
 pub(crate) use protobuf::ToTransactionDataProtobuf;
 
@@ -127,57 +123,38 @@ impl TransactionSources {
 }
 
 /// A transaction that can be executed on the Hedera network.
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct Transaction<D>
 where
     D: TransactionExecute,
 {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     body: TransactionBody<D>,
 
-    #[cfg_attr(feature = "ffi", serde(skip))]
     signers: Vec<AnySigner>,
 
-    #[cfg_attr(feature = "ffi", serde(skip))]
     sources: Option<TransactionSources>,
 }
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 // fires because of `serde_as`
 #[allow(clippy::type_repetition_in_bounds)]
 pub(crate) struct TransactionBody<D>
 where
     D: TransactionExecute,
 {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>")
-    )]
     pub(crate) data: D,
 
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
     pub(crate) max_transaction_fee: Option<Hbar>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub(crate) transaction_memo: String,
 
     pub(crate) transaction_id: Option<TransactionId>,
 
     pub(crate) operator: Option<Operator>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
     pub(crate) is_frozen: bool,
 }
 
@@ -230,18 +207,8 @@ impl<D> Transaction<D>
 where
     D: TransactionExecute,
 {
-    #[cfg(feature = "ffi")]
-    pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
-        Self { body, signers, sources: None }
-    }
-
     pub(crate) fn is_frozen(&self) -> bool {
         self.body.is_frozen
-    }
-
-    #[cfg(feature = "ffi")]
-    pub(crate) fn sources(&self) -> Option<&TransactionSources> {
-        self.sources.as_ref()
     }
 
     /// # Panics
@@ -252,11 +219,6 @@ where
             !self.is_frozen(),
             "transaction is immutable; it has at least one signature or has been explicitly frozen"
         );
-    }
-
-    #[cfg(feature = "ffi")]
-    pub(crate) fn body(&self) -> &TransactionBody<D> {
-        &self.body
     }
 
     /// # Panics

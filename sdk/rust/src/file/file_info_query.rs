@@ -42,8 +42,6 @@ use crate::{
 pub type FileInfoQuery = Query<FileInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileInfoQueryData {
     file_id: Option<FileId>,
 }

@@ -54,10 +54,7 @@ use crate::{
 /// - If no Pause Key is defined, the transaction will resolve to `TOKEN_HAS_NO_PAUSE_KEY`.
 pub type TokenPauseTransaction = Transaction<TokenPauseTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenPauseTransactionData {
     /// The token to be paused.
     token_id: Option<TokenId>,
@@ -113,52 +110,5 @@ impl From<TokenPauseTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::TokenPauseTransactionBody> for TokenPauseTransactionData {
     fn from_protobuf(pb: services::TokenPauseTransactionBody) -> crate::Result<Self> {
         Ok(Self { token_id: Option::from_protobuf(pb.token)? })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            TokenId,
-            TokenPauseTransaction,
-        };
-
-        // language=JSON
-        const TOKEN_PAUSE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenPause",
-  "tokenId": "0.0.1001"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenPauseTransaction::new();
-
-            transaction.token_id(TokenId::from(1001));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_PAUSE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOKEN_PAUSE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenPause(transaction) => transaction);
-
-            assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
-
-            Ok(())
-        }
     }
 }

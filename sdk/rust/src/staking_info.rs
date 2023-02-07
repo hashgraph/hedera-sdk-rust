@@ -11,8 +11,6 @@ use crate::{
 // todo(sr): is this right?
 /// Info related to account/contract staking settings.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct StakingInfo {
     /// If `true`, the contract declines receiving a staking reward. The default value is `false`.
     pub decline_staking_reward: bool,
@@ -20,10 +18,6 @@ pub struct StakingInfo {
     /// The staking period during which either the staking settings for this account or contract changed (such as starting
     /// staking or changing staked_node_id) or the most recent reward was earned, whichever is later. If this account or contract
     /// is not currently staked to a node, then this field is not set.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     pub stake_period_start: Option<OffsetDateTime>,
 
     /// The amount in `Hbar` that will be received in the next reward situation.

@@ -43,8 +43,6 @@ use crate::{
 
 /// The unique identifier for a scheduled transaction on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
-#[repr(C)]
 pub struct ScheduleId {
     /// A non-negative number identifying the shard containing this scheduled transaction.
     pub shard: u64,

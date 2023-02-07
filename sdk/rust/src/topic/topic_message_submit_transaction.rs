@@ -54,20 +54,13 @@ use crate::{
 ///
 pub type TopicMessageSubmitTransaction = Transaction<TopicMessageSubmitTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TopicMessageSubmitTransactionData {
     /// The topic ID to submit this message to.
     topic_id: Option<TopicId>,
 
     /// Message to be submitted.
     /// Max size of the Transaction (including signatures) is 6KiB.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
     message: Option<Vec<u8>>,
 
     /// The `TransactionId` of the first chunk.
@@ -229,91 +222,5 @@ impl FromProtobuf<services::ConsensusSubmitMessageTransactionBody>
             chunk_total,
             chunk_number,
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::str::FromStr;
-
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            TopicId,
-            TopicMessageSubmitTransaction,
-            TransactionId,
-        };
-
-        // language=JSON
-        const TOPIC_MESSAGE_SUBMIT_EMPTY: &str = r#"{
-  "$type": "topicMessageSubmit"
-}"#;
-
-        // language=JSON
-        const TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON: &str = r#"{
-  "$type": "topicMessageSubmit",
-  "topicId": "0.0.1001",
-  "message": "TWVzc2FnZQ==",
-  "initialTransactionId": "0.0.1001@1656352251.277559886",
-  "chunkTotal": 1,
-  "chunkNumber": 1
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TopicMessageSubmitTransaction::new();
-
-            transaction
-                .topic_id(TopicId::from(1001))
-                .message("Message")
-                .initial_transaction_id(TransactionId::from_str("1001@1656352251.277559886")?)
-                .chunk_total(1)
-                .chunk_number(1);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
-
-            assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-            assert_eq!(
-                data.initial_transaction_id.unwrap(),
-                TransactionId::from_str("1001@1656352251.277559886")?
-            );
-            assert_eq!(data.chunk_total, 1);
-            assert_eq!(data.chunk_number, 1);
-
-            let bytes: Vec<u8> = "Message".into();
-            assert_eq!(data.message.unwrap(), bytes);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize_empty() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOPIC_MESSAGE_SUBMIT_EMPTY)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
-
-            assert_eq!(data.chunk_number, 1);
-            assert_eq!(data.chunk_total, 1);
-
-            Ok(())
-        }
     }
 }

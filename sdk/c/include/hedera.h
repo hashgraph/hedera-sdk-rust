@@ -31,7 +31,6 @@ typedef enum HederaError {
   HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED,
   HEDERA_ERROR_RECEIPT_STATUS,
   HEDERA_ERROR_SIGNATURE,
-  HEDERA_ERROR_REQUEST_PARSE,
   HEDERA_ERROR_MNEMONIC_PARSE,
   HEDERA_ERROR_MNEMONIC_ENTROPY,
   HEDERA_ERROR_SIGNATURE_VERIFY,
@@ -62,8 +61,6 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
-typedef struct HederaTransactionSources HederaTransactionSources;
-
 typedef struct HederaAccountId {
   uint64_t shard;
   uint64_t realm;
@@ -85,51 +82,6 @@ typedef struct HederaAccountId {
    */
   uint8_t *evm_address;
 } HederaAccountId;
-
-typedef struct HederaSigner {
-  /**
-   * Safety:
-   * - Must not be null
-   * - must be properly aligned
-   * - must be dereferencable in the rust sense.
-   */
-  const struct HederaPublicKey *public_key;
-  /**
-   * Safety: It must be safe to send `context` to other threads.
-   * Safety: It must be safe to share `context` between threads.
-   */
-  void *context;
-  /**
-   * Safety:
-   * Must not be null
-   * must be callable with the appropriate arguments
-   */
-  size_t (*sign_func)(void *context, const uint8_t *message, size_t message_size, const uint8_t **signature);
-  /**
-   * Safety:
-   * Must not be null
-   * must be callable with the appropriate arguments
-   */
-  void (*free_signature_func)(void *context, uint8_t *signature, size_t signature_size);
-  /**
-   * Safety:
-   * May be null
-   * must be callable with the appropriate arguments
-   */
-  void (*free_context_func)(void *context);
-} HederaSigner;
-
-typedef struct HederaSigners {
-  /**
-   * may only be null if signers_size is 0.
-   */
-  const struct HederaSigner *signers;
-  size_t signers_size;
-  /**
-   * Free this array of signers (must *not* free the contexts for the original signers)
-   */
-  void (*free)(const struct HederaSigner *signers, size_t signers_size);
-} HederaSigners;
 
 typedef struct HederaSemanticVersion {
   /**
@@ -331,21 +283,6 @@ size_t hedera_crypto_sha2_sha384_digest(const uint8_t *bytes,
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,
                                            uint8_t **result_out);
-
-/**
- * Execute this request against the provided client of the Hedera network.
- *
- * # Safety
- * - todo(sr): Missing basically everything
- * - `callback` must not store `response` after it returns.
- */
-enum HederaError hedera_execute(const struct HederaClient *client,
-                                const char *request,
-                                const void *context,
-                                struct HederaSigners signers,
-                                bool has_timeout,
-                                double timeout,
-                                void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
  * Generates a new Ed25519 private key.
@@ -1122,44 +1059,6 @@ enum HederaError hedera_nft_id_from_string(const char *s,
 
 enum HederaError hedera_semantic_version_from_string(const char *s,
                                                      struct HederaSemanticVersion *semver);
-
-/**
- * Convert the provided transaction to protobuf-encoded bytes.
- *
- * # Safety
- * - todo(sr): Missing basically everything
- */
-enum HederaError hedera_transaction_to_bytes(const char *transaction,
-                                             struct HederaSigners signers,
-                                             uint8_t **buf,
-                                             size_t *buf_size);
-
-enum HederaError hedera_transaction_from_bytes(const uint8_t *bytes,
-                                               size_t bytes_size,
-                                               struct HederaTransactionSources **sources_out,
-                                               char **transaction_out);
-
-/**
- * Execute this request against the provided client of the Hedera network.
- *
- * # Safety
- * - todo(sr): Missing basically everything
- * - `callback` must not store `response` after it returns.
- */
-enum HederaError hedera_transaction_execute(const struct HederaClient *client,
-                                            const char *request,
-                                            const void *context,
-                                            struct HederaSigners signers,
-                                            bool has_timeout,
-                                            double timeout,
-                                            const struct HederaTransactionSources *sources,
-                                            void (*callback)(const void *context, enum HederaError err, const char *response));
-
-/**
- * # Safety
- * - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
- */
-void hedera_transaction_sources_free(struct HederaTransactionSources *sources);
 
 /**
  * # Safety

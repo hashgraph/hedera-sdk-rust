@@ -53,10 +53,7 @@ use crate::{
 /// - If no Pause Key is defined, the transaction will resolve to `TOKEN_HAS_NO_PAUSE_KEY`.
 pub type TokenUnpauseTransaction = Transaction<TokenUnpauseTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenUnpauseTransactionData {
     /// The token to be unpaused.
     token_id: Option<TokenId>,
@@ -117,49 +114,3 @@ impl FromProtobuf<services::TokenUnpauseTransactionBody> for TokenUnpauseTransac
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            TokenId,
-            TokenUnpauseTransaction,
-        };
-
-        // language=JSON
-        const TOKEN_UNPAUSE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenUnpause",
-  "tokenId": "0.0.1001"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenUnpauseTransaction::new();
-
-            transaction.token_id(TokenId::from(1001));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_UNPAUSE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOKEN_UNPAUSE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenUnpause(transaction) => transaction);
-
-            assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
-
-            Ok(())
-        }
-    }
-}

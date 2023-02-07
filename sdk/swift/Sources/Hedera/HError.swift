@@ -51,7 +51,6 @@ public struct HError: Error, Equatable, CustomStringConvertible {
         case responseStatusUnrecognized
         case signature
         case receiptStatus(status: Status)
-        case requestParse
         case mnemonicParse
         case mnemonicEntropy
         case signatureVerify
@@ -128,9 +127,6 @@ public struct HError: Error, Equatable, CustomStringConvertible {
 
         case HEDERA_ERROR_RECEIPT_STATUS:
             kind = .receiptStatus(status: Status(rawValue: hedera_error_receipt_status_status()))
-
-        case HEDERA_ERROR_REQUEST_PARSE:
-            kind = .requestParse
 
         case HEDERA_ERROR_MNEMONIC_PARSE:
             kind = .mnemonicParse

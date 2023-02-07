@@ -7,7 +7,10 @@ use std::{
 use libc::size_t;
 
 use super::error::Error;
-use crate::ffi::util::cstr_from_ptr;
+use crate::ffi::util::{
+    cstr_from_ptr,
+    make_bytes,
+};
 
 mod private;
 mod public;
@@ -95,16 +98,8 @@ where
 
     // safety: invariants promise that `key` must be valid for reads.
     let key = unsafe { key.as_ref().unwrap() };
+
     let bytes = f(key).into_boxed_slice();
-
-    let bytes = Box::leak(bytes);
-    let len = bytes.len();
-    let bytes = bytes.as_mut_ptr();
-
-    // safety: invariants promise that `buf` must be valid for writes.
-    unsafe {
-        ptr::write(buf, bytes);
-    }
-
-    len
+    
+    unsafe { make_bytes(bytes, buf) }
 }

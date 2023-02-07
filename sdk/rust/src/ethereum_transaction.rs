@@ -42,11 +42,8 @@ use crate::{
 pub type EthereumTransaction = Transaction<EthereumTransactionData>;
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct EthereumTransactionData {
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     ethereum_data: Vec<u8>,
 
     /// For large transactions (for example contract create) this should be used to

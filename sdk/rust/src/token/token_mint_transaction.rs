@@ -62,10 +62,7 @@ use crate::{
 /// `BatchSizeLimitExceeded` response code will be returned.
 pub type TokenMintTransaction = Transaction<TokenMintTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenMintTransactionData {
     /// The token for which to mint tokens.
     token_id: Option<TokenId>,
@@ -74,7 +71,6 @@ pub struct TokenMintTransactionData {
     amount: u64,
 
     /// The list of metadata for a non-fungible token to mint to the treasury account.
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<Vec<serde_with::base64::Base64>>"))]
     metadata: Vec<Vec<u8>>,
 }
 
@@ -170,60 +166,3 @@ impl FromProtobuf<services::TokenMintTransactionBody> for TokenMintTransactionDa
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            TokenId,
-            TokenMintTransaction,
-        };
-
-        // language=JSON
-        const TOKEN_MINT_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenMint",
-  "tokenId": "0.0.1981",
-  "amount": 8675309,
-  "metadata": [
-    "SmVubnkgSSd2ZSBnb3QgeW91ciBudW1iZXI="
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenMintTransaction::new();
-
-            transaction
-                .token_id(TokenId::from(1981))
-                .amount(8675309)
-                .metadata(["Jenny I've got your number"]);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_MINT_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOKEN_MINT_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenMint(transaction) => transaction);
-
-            assert_eq!(data.token_id.unwrap(), TokenId::from(1981));
-            assert_eq!(data.amount, 8675309);
-
-            let bytes: Vec<u8> = "Jenny I've got your number".into();
-            assert_eq!(data.metadata, [bytes]);
-
-            Ok(())
-        }
-    }
-}

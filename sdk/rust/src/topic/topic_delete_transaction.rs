@@ -51,10 +51,7 @@ use crate::{
 ///
 pub type TopicDeleteTransaction = Transaction<TopicDeleteTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TopicDeleteTransactionData {
     /// The topic ID which is being deleted in this transaction.
     topic_id: Option<TopicId>,
@@ -112,52 +109,5 @@ impl From<TopicDeleteTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::ConsensusDeleteTopicTransactionBody> for TopicDeleteTransactionData {
     fn from_protobuf(pb: services::ConsensusDeleteTopicTransactionBody) -> crate::Result<Self> {
         Ok(Self { topic_id: Option::from_protobuf(pb.topic_id)? })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            TopicDeleteTransaction,
-            TopicId,
-        };
-
-        // language=JSON
-        const TOPIC_DELETE_TRANSACTION_JSON: &str = r#"{
-  "$type": "topicDelete",
-  "topicId": "0.0.1001"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TopicDeleteTransaction::new();
-
-            transaction.topic_id(TopicId::from(1001));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOPIC_DELETE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOPIC_DELETE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TopicDelete(transaction) => transaction);
-
-            assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-
-            Ok(())
-        }
     }
 }
