@@ -18,10 +18,10 @@
  * ‍
  */
 
-use std::ptr;
-
 use libc::size_t;
 use sha3::Digest;
+
+use crate::ffi::util;
 
 unsafe fn digest<D: Digest>(
     bytes: *const u8,
@@ -33,18 +33,8 @@ unsafe fn digest<D: Digest>(
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
 
-    let result = D::digest(bytes).to_vec().into_boxed_slice();
-
-    let bytes = Box::leak(result);
-    let len = bytes.len();
-    let bytes = bytes.as_mut_ptr();
-
-    // safety: invariants promise that `buf` must be valid for writes.
-    unsafe {
-        ptr::write(result_out, bytes);
-    }
-
-    len
+    let bytes = D::digest(bytes).to_vec();
+    unsafe { util::make_bytes(bytes, result_out) }
 }
 
 #[no_mangle]

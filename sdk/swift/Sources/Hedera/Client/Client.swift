@@ -26,80 +26,43 @@ import SwiftProtobuf
 
 /// Managed client for use on the Hedera network.
 public final class Client {
-    internal let ptr: OpaquePointer
-
     internal let eventLoop: NIOCore.EventLoopGroup = PlatformSupport.makeEventLoopGroup(loopCount: 1)
     internal let network: Network
     internal let mirrorNetwork: MirrorNetwork
 
-    private init(unsafeFromPtr ptr: OpaquePointer, _ network: Network, _ mirrorNetwork: MirrorNetwork) {
-        self.ptr = ptr
+    private init(network: Network, mirrorNetwork: MirrorNetwork, ledgerId: LedgerId) {
         self.network = network
         self.mirrorNetwork = mirrorNetwork
+        self.ledgerId = ledgerId
     }
 
-    /// Note: this operation is O(n)
-    private var nodes: [AccountId] {
-        var ids: UnsafeMutablePointer<HederaAccountId>?
-
-        let len = hedera_client_get_nodes(ptr, &ids)
-
-        let nodes = UnsafeMutableBufferPointer(start: ids, count: len).map { AccountId(unsafeFromCHedera: $0) }
-
-        hedera_account_id_array_free(ids, len)
-
-        return nodes
-    }
+    public var ledgerId: LedgerId?
+    internal var `operator`: Operator?
+    internal var autoValidateChecksums: Bool = false
+    internal var maxTransactionFee: Hbar? = nil
 
     internal func randomNodeIds() -> [AccountId] {
-        var ids: UnsafeMutablePointer<HederaAccountId>?
+        let nodeIds = network.healthyNodeIds()
 
-        let len = hedera_client_get_random_node_ids(ptr, &ids)
+        let nodeSampleAmount = (nodeIds.count + 2) / 3
+        let nodeIdIndecies = randomIndexes(upTo: nodeIds.count, amount: nodeSampleAmount)
 
-        let nodes = UnsafeMutableBufferPointer(start: ids, count: len).map { AccountId(unsafeFromCHedera: $0) }
-
-        hedera_account_id_array_free(ids, len)
-
-        return nodes
-    }
-
-    internal var `operator`: Operator? {
-        var skPtr: OpaquePointer?
-        var accountId = HederaAccountId()
-
-        if hedera_client_get_operator(ptr, &accountId, &skPtr) {
-            return Operator(
-                accountId: AccountId(unsafeFromCHedera: accountId),
-                signer: .unsafeFromPtr(skPtr!)
-            )
-        } else {
-            return nil
-        }
-    }
-
-    internal var maxTransactionFee: Hbar? {
-        let val = hedera_client_get_max_transaction_fee(ptr)
-
-        if val == 0 {
-            return nil
-        }
-
-        return .fromTinybars(Int64(bitPattern: val))
+        return nodeIdIndecies.map { nodeIds[$0] }
     }
 
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_mainnet(), .mainnet(), .mainnet())
+        Self(network: .mainnet(), mirrorNetwork: .mainnet(), ledgerId: .mainnet)
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_testnet(), .testnet(), .testnet())
+        Self(network: .testnet(), mirrorNetwork: .testnet(), ledgerId: .mainnet)
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     public static func forPreviewnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_previewnet(), .previewnet(), .previewnet())
+        Self(network: .previewnet(), mirrorNetwork: .previewnet(), ledgerId: .mainnet)
     }
 
     // wish I could write `init(for name: String)`
@@ -123,9 +86,7 @@ public final class Client {
     /// this client.
     @discardableResult
     public func setOperator(_ accountId: AccountId, _ privateKey: PrivateKey) -> Self {
-        accountId.unsafeWithCHedera { hAccountId in
-            hedera_client_set_operator(ptr, hAccountId, privateKey.ptr)
-        }
+        `operator` = Operator(accountId: accountId, signer: privateKey)
 
         return self
     }
@@ -141,7 +102,7 @@ public final class Client {
 
     public func pingAll() async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
-            for node in self.nodes {
+            for node in self.network.nodes {
                 group.addTask {
                     try await self.ping(node)
                 }
@@ -153,7 +114,7 @@ public final class Client {
 
     public func pingAll(_ timeout: TimeInterval) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
-            for node in self.nodes {
+            for node in self.network.nodes {
                 group.addTask {
                     try await self.ping(node, timeout)
                 }
@@ -170,42 +131,18 @@ public final class Client {
         return self
     }
 
-    // note: matches JS
-    public var ledgerId: LedgerId? {
-        get {
-            var bytes: UnsafeMutablePointer<UInt8>?
-            let count = hedera_client_get_ledger_id(ptr, &bytes)
-
-            return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: .unsafeCHederaBytesFree)) }
-        }
-
-        set(value) {
-            if let ledgerId = value {
-                ledgerId.bytes.withUnsafeTypedBytes { ledgerIdPtr in
-                    hedera_client_set_ledger_id(ptr, ledgerIdPtr.baseAddress, ledgerIdPtr.count)
-                }
-            } else {
-                hedera_client_set_ledger_id(ptr, nil, 0)
-            }
-        }
-    }
-
     @discardableResult
     public func setAutoValidateChecksums(_ autoValidateChecksums: Bool) -> Self {
-        hedera_client_set_auto_validate_checksums(ptr, autoValidateChecksums)
-
+        self.autoValidateChecksums = autoValidateChecksums
+        
         return self
     }
 
     public func isAutoValidateChecksumsEnabled() -> Bool {
-        hedera_client_get_auto_validate_checksums(ptr)
+        autoValidateChecksums
     }
 
     internal func generateTransactionId() -> TransactionId? {
         self.operator?.generateTransactionId()
-    }
-
-    deinit {
-        hedera_client_free(ptr)
     }
 }

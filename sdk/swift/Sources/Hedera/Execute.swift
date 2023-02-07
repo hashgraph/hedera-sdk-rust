@@ -176,7 +176,7 @@ internal func executeAny<E: Execute & ValidateChecksums>(_ client: Client, _ exe
     }
 }
 
-func randomIndexes(upTo count: Int, amount: Int) -> [Int] {
+internal func randomIndexes(upTo count: Int, amount: Int) -> [Int] {
     var elements = Array(0..<count)
 
     var output: [Int] = []

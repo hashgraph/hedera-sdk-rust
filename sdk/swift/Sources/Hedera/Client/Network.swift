@@ -131,6 +131,10 @@ internal final class Network: ExpressibleByDictionaryLiteral {
         return (0..<healthy.count).filter { isNodeHealthy($0, now) }
     }
 
+    internal func healthyNodeIds() -> [AccountId] {
+        healthyNodeIndexes().map { nodes[$0] }
+    }
+
     internal func isNodeHealthy(_ index: Int, _ now: Int64) -> Bool {
         healthy[index] < now
     }

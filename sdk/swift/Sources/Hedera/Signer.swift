@@ -13,4 +13,3 @@ internal class Signer {
         (publicKey, signFunc(message))
     }
 }
-
