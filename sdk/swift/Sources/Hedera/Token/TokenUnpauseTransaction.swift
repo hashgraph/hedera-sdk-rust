@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Unpauses a previously paused token.
@@ -73,5 +74,21 @@ public final class TokenUnpauseTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_TokenUnpauseTransactionBody) -> Self {
         Self(tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil)
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).unpauseToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenUnpause(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+            }
+        )
     }
 }

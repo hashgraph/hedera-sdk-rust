@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Pauses the token from being involved in any kind of transaction until it is unpaused.
@@ -73,5 +74,21 @@ public final class TokenPauseTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_TokenPauseTransactionBody) -> Self {
         Self(tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil)
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).pauseToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenPause(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+            }
+        )
     }
 }

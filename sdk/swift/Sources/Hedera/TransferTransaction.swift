@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 import SwiftProtobuf
 
@@ -242,6 +243,23 @@ public final class TransferTransaction: Transaction {
         Self(
             transfers: try .fromProtobuf(proto.transfers.accountAmounts),
             tokenTransfers: try .fromProtobuf(proto.tokenTransfers)
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoTransfer(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .cryptoTransfer(
+            .with { proto in
+                proto.transfers = .with { $0.accountAmounts = transfers.toProtobuf() }
+                proto.tokenTransfers = tokenTransfers.toProtobuf()
+            }
         )
     }
 }

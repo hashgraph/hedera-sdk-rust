@@ -202,7 +202,7 @@ public final class Client {
     }
 
     internal func generateTransactionId() -> TransactionId? {
-        nil
+        self.operator?.generateTransactionId()
     }
 
     deinit {

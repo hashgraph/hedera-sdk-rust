@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Associates the provided account with the provided tokens.
@@ -99,6 +100,23 @@ public final class TokenAssociateTransaction: Transaction {
         Self(
             accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
             tokenIds: .fromProtobuf(proto.tokens)
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).associateTokens(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenAssociate(
+            .with { proto in
+                proto.tokens = tokenIds.toProtobuf()
+                accountId?.toProtobufInto(&proto.account)
+            }
         )
     }
 }

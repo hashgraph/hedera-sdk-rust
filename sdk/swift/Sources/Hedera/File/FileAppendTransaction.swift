@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Append the given contents to the end of the specified file.
@@ -96,6 +97,23 @@ public final class FileAppendTransaction: Transaction {
         Self(
             fileId: proto.hasFileID ? .fromProtobuf(proto.fileID) : nil,
             contents: proto.contents
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).appendContent(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .fileAppend(
+            .with { proto in
+                fileId?.toProtobufInto(&proto.fileID)
+                proto.contents = contents
+            }
         )
     }
 }

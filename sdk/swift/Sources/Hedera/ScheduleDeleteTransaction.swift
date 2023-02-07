@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Marks a schedule in the network's action queue as deleted.
@@ -68,5 +69,21 @@ public final class ScheduleDeleteTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_ScheduleDeleteTransactionBody) -> Self {
         Self(scheduleId: .fromProtobuf(proto.hasScheduleID ? proto.scheduleID : nil))
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).deleteSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .scheduleDelete(
+            .with { proto in
+                scheduleId?.toProtobufInto(&proto.scheduleID)
+            }
+        )
     }
 }

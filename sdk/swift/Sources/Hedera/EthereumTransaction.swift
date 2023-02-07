@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Submit an Ethereum transaction.
@@ -126,11 +127,29 @@ public final class EthereumTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
-    internal static func fromProtobufData(_ proto: Proto_EthereumTransactionBody) throws -> Self {
+    internal static func fromProtobufData(_ proto: Proto_EthereumTransactionBody) -> Self {
         Self(
             ethereumData: !proto.ethereumData.isEmpty ? proto.ethereumData : nil,
             callDataFileId: proto.hasCallData ? .fromProtobuf(proto.callData) : nil,
             maxGasAllowanceHbar: UInt64(proto.maxGasAllowance)
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).callEthereum(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .ethereumTransaction(
+            .with { proto in
+                proto.ethereumData = ethereumData ?? Data()
+                callDataFileId?.toProtobufInto(&proto.callData)
+                proto.maxGasAllowance = Int64(maxGasAllowanceHbar)
+            }
         )
     }
 }

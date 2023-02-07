@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Create a topic to be used for consensus.
@@ -172,6 +173,26 @@ public final class TopicCreateTransaction: Transaction {
             submitKey: proto.hasSubmitKey ? try .fromProtobuf(proto.submitKey) : nil,
             autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
             autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).createTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .consensusCreateTopic(
+            .with { proto in
+                proto.memo = topicMemo
+                adminKey?.toProtobufInto(&proto.adminKey)
+                submitKey?.toProtobufInto(&proto.submitKey)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            }
         )
     }
 }

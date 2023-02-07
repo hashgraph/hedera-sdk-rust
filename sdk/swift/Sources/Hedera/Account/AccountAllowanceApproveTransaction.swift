@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Creates one or more hbar/token approved allowances **relative to the owner account specified in the allowances of
@@ -200,5 +201,23 @@ public final class AccountAllowanceApproveTransaction: Transaction {
             hbarAllowances: try .fromProtobuf(proto.cryptoAllowances),
             tokenAllowances: try .fromProtobuf(proto.tokenAllowances),
             nftAllowances: try .fromProtobuf(proto.nftAllowances))
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).approveAllowances(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .cryptoApproveAllowance(
+            .with { proto in
+                proto.cryptoAllowances = hbarAllowances.toProtobuf()
+                proto.tokenAllowances = tokenAllowances.toProtobuf()
+                proto.nftAllowances = nftAllowances.toProtobuf()
+            }
+        )
     }
 }

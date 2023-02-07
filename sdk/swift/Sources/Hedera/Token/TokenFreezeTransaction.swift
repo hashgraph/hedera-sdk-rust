@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Freezes transfers of the specified token for the account.
@@ -96,6 +97,23 @@ public final class TokenFreezeTransaction: Transaction {
         Self(
             accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
             tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).freezeTokenAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenFreeze(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                accountId?.toProtobufInto(&proto.account)
+            }
         )
     }
 }

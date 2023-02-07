@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Create a new file, containing the given contents.
@@ -168,6 +169,28 @@ public final class FileCreateTransaction: Transaction {
             autoRenewPeriod: proto.hasAutoRenewPeriod ? .fromProtobuf(proto.autoRenewPeriod) : nil,
             autoRenewAccountId: proto.hasAutoRenewAccount ? try .fromProtobuf(proto.autoRenewAccount) : nil,
             expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).createFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .fileCreate(
+            .with { proto in
+                proto.memo = fileMemo
+                proto.keys = keys.toProtobuf()
+                proto.contents = contents
+                
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+            }
         )
     }
 }

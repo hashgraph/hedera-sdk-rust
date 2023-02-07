@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Marks a token as deleted, though it will remain in the ledger.
@@ -73,5 +74,21 @@ public final class TokenDeleteTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_TokenDeleteTransactionBody) -> Self {
         Self(tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil)
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).deleteToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenDeletion(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+            }
+        )
     }
 }

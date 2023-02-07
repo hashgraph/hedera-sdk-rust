@@ -19,7 +19,9 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
+import SwiftProtobuf
 
 /// At consensus, updates an already created token to the given values.
 public final class TokenUpdateTransaction: Transaction {
@@ -60,7 +62,7 @@ public final class TokenUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         tokenId = try container.decodeIfPresent(.tokenId)
@@ -380,6 +382,36 @@ public final class TokenUpdateTransaction: Transaction {
             tokenMemo: proto.hasMemo ? proto.memo.value : nil ?? "",
             feeScheduleKey: proto.hasFeeScheduleKey ? try .fromProtobuf(proto.feeScheduleKey) : nil,
             pauseKey: proto.hasPauseKey ? try .fromProtobuf(proto.pauseKey) : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).updateToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenUpdate(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                proto.name = tokenName
+                proto.symbol = tokenSymbol
+                treasuryAccountId?.toProtobufInto(&proto.treasury)
+                adminKey?.toProtobufInto(&proto.adminKey)
+                kycKey?.toProtobufInto(&proto.kycKey)
+                freezeKey?.toProtobufInto(&proto.freezeKey)
+                wipeKey?.toProtobufInto(&proto.wipeKey)
+                supplyKey?.toProtobufInto(&proto.supplyKey)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                expirationTime?.toProtobufInto(&proto.expiry)
+                proto.memo = Google_Protobuf_StringValue(tokenMemo)
+                feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+                pauseKey?.toProtobufInto(&proto.pauseKey)
+            }
         )
     }
 }

@@ -38,10 +38,11 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::for_testnet();
 
-    client.set_operator(args.operator_account_id, args.operator_key);
+    client.set_operator(args.operator_account_id, args.operator_key.clone());
 
     let receipt = FileCreateTransaction::new()
         .contents(&b"Hedera Hashgraph is great!"[..])
+        .keys([hedera::Key::Single(args.operator_key.public_key())])
         .execute(&client)
         .await?
         .get_receipt(&client)

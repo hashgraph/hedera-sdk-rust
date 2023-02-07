@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Adds zero or more signing keys to a schedule.
@@ -75,5 +76,21 @@ public final class ScheduleSignTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_ScheduleSignTransactionBody) -> Self {
         Self(scheduleId: proto.hasScheduleID ? .fromProtobuf(proto.scheduleID) : nil)
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).signSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .scheduleSign(
+            .with { proto in
+                scheduleId?.toProtobufInto(&proto.scheduleID)
+            }
+        )
     }
 }

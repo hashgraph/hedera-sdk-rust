@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Call a function of the given smart contract instance, giving it
@@ -174,6 +175,25 @@ public final class ContractExecuteTransaction: Transaction {
             gas: UInt64(proto.gas),
             payableAmount: .fromTinybars(proto.amount),
             functionParameters: !proto.functionParameters.isEmpty ? proto.functionParameters : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).contractCallMethod(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .contractCall(
+            .with { proto in
+                contractId?.toProtobufInto(&proto.contractID)
+                proto.gas = Int64(gas)
+                proto.amount = payableAmount.toTinybars()
+                proto.functionParameters = functionParameters ?? Data()
+            }
         )
     }
 }

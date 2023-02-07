@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Wipes the provided amount of tokens from the specified account.
@@ -140,7 +141,27 @@ public final class TokenWipeTransaction: Transaction {
             tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil,
             accountId: proto.hasAccount ? try .fromProtobuf(proto.account) : nil,
             amount: proto.amount,
-            serials: proto.serialNumbers.map(UInt64.init)
+            serials: proto.serialNumbers.map(UInt64.init(bitPattern:))
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).wipeTokenAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenWipe(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                accountId?.toProtobufInto(&proto.account)
+                proto.amount = amount
+                proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+
+            }
         )
     }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Create a new token.
@@ -497,6 +498,42 @@ public final class TokenCreateTransaction: Transaction {
             feeScheduleKey: proto.hasFeeScheduleKey ? try .fromProtobuf(proto.feeScheduleKey) : nil,
             customFees: try .fromProtobuf(proto.customFees),
             pauseKey: proto.hasPauseKey ? try .fromProtobuf(proto.pauseKey) : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).createToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenCreation(
+            .with { proto in
+                proto.name = name
+                proto.symbol = symbol
+                proto.decimals = decimals
+                proto.initialSupply = initialSupply
+                treasuryAccountId?.toProtobufInto(&proto.treasury)
+                adminKey?.toProtobufInto(&proto.adminKey)
+                kycKey?.toProtobufInto(&proto.kycKey)
+                freezeKey?.toProtobufInto(&proto.freezeKey)
+                wipeKey?.toProtobufInto(&proto.wipeKey)
+                supplyKey?.toProtobufInto(&proto.supplyKey)
+                proto.freezeDefault = freezeDefault
+                expirationTime?.toProtobufInto(&proto.expiry)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                proto.memo = tokenMemo
+                proto.tokenType = tokenType.toProtobuf()
+                proto.supplyType = tokenSupplyType.toProtobuf()
+                proto.maxSupply = Int64(bitPattern: maxSupply)
+                feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+                proto.customFees = customFees.toProtobuf()
+                pauseKey?.toProtobufInto(&proto.pauseKey)
+            }
         )
     }
 }

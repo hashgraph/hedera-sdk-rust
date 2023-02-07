@@ -20,6 +20,9 @@
 
 import Foundation
 
+// import GRPC
+// import HederaProtobufs
+
 internal final class PaymentTransaction: Codable, ValidateChecksums {
     internal var nodeAccountIds: [AccountId]?
     internal var amount: Hbar?
@@ -49,4 +52,20 @@ internal final class PaymentTransaction: Codable, ValidateChecksums {
         try payerAccountId?.validateChecksums(on: ledgerId)
         try transactionId?.validateChecksums(on: ledgerId)
     }
+
+    // internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+    //     -> Proto_TransactionResponse
+    // {
+    //     try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoTransfer(request)
+    // }
+
+    // internal func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+    //     -> Proto_TransactionBody.OneOf_Data
+    // {
+    //     .cryptoTransfer(
+    //         .with { proto in
+
+    //         }
+    //     )
+    // }
 }

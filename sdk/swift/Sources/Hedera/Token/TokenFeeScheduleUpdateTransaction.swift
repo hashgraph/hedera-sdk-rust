@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
@@ -96,6 +97,23 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         Self(
             tokenId: proto.hasTokenID ? .fromProtobuf(proto.tokenID) : nil,
             customFees: try .fromProtobuf(proto.customFees)
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).updateTokenFeeSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenFeeScheduleUpdate(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.tokenID)
+                proto.customFees = customFees.toProtobuf()
+            }
         )
     }
 }

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Delete a file or smart contract - can only be done with a Hedera admin.
@@ -121,6 +122,40 @@ public final class SystemDeleteTransaction: Transaction {
             contractId: contractId,
             expirationTime: proto.hasExpirationTime
                 ? Timestamp(seconds: UInt64(proto.expirationTime.seconds), subSecondNanos: 0) : nil
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        if let _ = fileId {
+            return try await Proto_FileServiceAsyncClient(channel: channel).systemDelete(request)
+        }
+
+        if let _ = contractId {
+            return try await Proto_SmartContractServiceAsyncClient(channel: channel).systemDelete(request)
+        }
+
+        fatalError("\(type(of: self)) has no `fileId`/`contractId`")
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .systemDelete(
+            .with { proto in
+                if let fileId = fileId {
+                    proto.fileID = fileId.toProtobuf()
+                }
+
+                if let contractId = contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+
+                if let expirationTime = expirationTime {
+                    proto.expirationTime = .with { $0.seconds = Int64(expirationTime.seconds) }
+                }
+            }
         )
     }
 }

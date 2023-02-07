@@ -84,7 +84,7 @@ internal enum AnyTransaction {
             return contractDelete(try .fromProtobufData(data))
 
         case .ethereumTransaction(let data):
-            return ethereum(try .fromProtobufData(data))
+            return ethereum(.fromProtobufData(data))
 
         case .cryptoAddLiveHash:
             throw HError.fromProtobuf("live hash transactions are unsupported")

@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
@@ -162,12 +163,34 @@ public final class ScheduleCreateTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_ScheduleCreateTransactionBody) throws -> Self {
         Self(
-            expirationTime: .fromProtobuf(proto.expirationTime),
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil,
             isWaitForExpiry: proto.waitForExpiry,
             payerAccountId: proto.hasPayerAccountID ? try .fromProtobuf(proto.payerAccountID) : nil,
+            // todo: scheduledTransaction
             scheduledTransaction: Transaction(),
             adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
             scheduleMemo: proto.memo
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).createSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .scheduleCreate(
+            .with { proto in
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+                proto.waitForExpiry = isWaitForExpiry
+                payerAccountId?.toProtobufInto(&proto.payerAccountID)
+                // todo: scheduledTransaction
+                adminKey?.toProtobufInto(&proto.adminKey)
+                proto.memo = scheduleMemo
+            }
         )
     }
 }

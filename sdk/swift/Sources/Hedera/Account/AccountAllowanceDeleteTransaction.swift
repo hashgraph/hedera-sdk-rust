@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
@@ -91,6 +92,22 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
     internal static func fromProtobufData(_ proto: Proto_CryptoDeleteAllowanceTransactionBody) throws -> Self {
         Self(
             nftAllowances: try .fromProtobuf(proto.nftAllowances)
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).approveAllowances(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .cryptoDeleteAllowance(
+            .with { proto in
+                proto.nftAllowances = nftAllowances.toProtobuf()
+            }
         )
     }
 }

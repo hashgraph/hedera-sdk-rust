@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Mint tokens to the token's treasury account.
@@ -117,6 +118,24 @@ public final class TokenMintTransaction: Transaction {
             tokenId: proto.hasToken ? .fromProtobuf(proto.token) : nil,
             amount: proto.amount,
             metadata: proto.metadata
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).mintToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .tokenMint(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                proto.amount = amount
+                proto.metadata = metadata
+            }
         )
     }
 }

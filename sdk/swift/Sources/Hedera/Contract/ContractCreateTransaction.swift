@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Start a new smart contract instance.
@@ -391,15 +392,63 @@ public final class ContractCreateTransaction: Transaction {
             declineStakingReward: proto.declineReward
         )
     }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).createContract(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .contractCreateInstance(
+            .with { proto in
+                switch (bytecode, bytecodeFileId) {
+                // todo: just do whatever rust does
+                case (.some, .some): fatalError("Cannot set both bytecode and bytecodeFileId")
+                case (.some(let code), nil): proto.initcode = code
+                case (nil, .some(let fileId)): proto.fileID = fileId.toProtobuf()
+                default:
+                    break
+                }
+
+                adminKey?.toProtobufInto(&proto.adminKey)
+                proto.gas = Int64(gas)
+                proto.initialBalance = initialBalance.toTinybars()
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+                proto.constructorParameters = constructorParameters ?? Data()
+                proto.memo = contractMemo
+                proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+
+                proto.stakedID = stakedId?.toProtobuf()
+
+                proto.declineReward = declineStakingReward
+            }
+        )
+    }
 }
 
 extension StakedId {
-    fileprivate static func fromProtobuf(_ proto: Proto_ContractCreateTransactionBody.OneOf_StakedID) throws -> Self {
+    fileprivate typealias Protobuf = Proto_ContractCreateTransactionBody.OneOf_StakedID
+    fileprivate static func fromProtobuf(_ proto: Protobuf) throws -> Self {
         switch proto {
         case .stakedAccountID(let id):
             return .accountId(try .fromProtobuf(id))
         case .stakedNodeID(let id):
             return .nodeId(UInt64(id))
+        }
+    }
+
+    fileprivate func toProtobuf() -> Protobuf {
+        switch self {
+        case .accountId(let id):
+            return .stakedAccountID(id.toProtobuf())
+        case .nodeId(let id):
+            return .stakedNodeID(Int64(id))
+
         }
     }
 }

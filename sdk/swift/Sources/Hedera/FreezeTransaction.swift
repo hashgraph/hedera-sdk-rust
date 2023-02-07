@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Set the freezing period in which the platform will stop creating
@@ -140,5 +141,18 @@ public final class FreezeTransaction: Transaction {
             fileHash: !proto.fileHash.isEmpty ? proto.fileHash : nil,
             freezeType: try .fromProtobuf(proto.freezeType)
         )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FreezeServiceAsyncClient(channel: channel).freeze(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        fatalError(
+            "`Transaction.toTransactionDataProtobuf(_:AccountId,_:TransactionId) must be implemented by subclasses`")
     }
 }

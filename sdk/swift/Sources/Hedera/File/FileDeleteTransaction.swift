@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Delete the given file.
@@ -79,5 +80,21 @@ public final class FileDeleteTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_FileDeleteTransactionBody) -> Self {
         Self(fileId: .fromProtobuf(proto.hasFileID ? proto.fileID : nil))
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).deleteFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .fileDelete(
+            .with { proto in
+                fileId?.toProtobufInto(&proto.fileID)
+            }
+        )
     }
 }

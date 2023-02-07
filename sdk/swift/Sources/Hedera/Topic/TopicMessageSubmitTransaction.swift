@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Submit a message for consensus.
@@ -178,6 +179,30 @@ public final class TopicMessageSubmitTransaction: Transaction {
             initialTransactionId: try .fromProtobuf(chunkInfo?.initialTransactionID),
             chunkTotal: Int(chunkInfo?.total ?? 1),
             chunkNumber: Int(chunkInfo?.number ?? 1)
+        )
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).submitMessage(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .consensusSubmitMessage(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+                proto.message = message
+                if let initialTransactionId = initialTransactionId {
+                    proto.chunkInfo = .with { info in
+                        info.initialTransactionID = initialTransactionId.toProtobuf()
+                        info.total = Int32(chunkTotal)
+                        info.number = Int32(chunkNumber)
+                    }
+                }
+            }
         )
     }
 }

@@ -18,6 +18,7 @@
  * ‍
  */
 
+import GRPC
 import HederaProtobufs
 
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
@@ -133,4 +134,31 @@ public final class ContractDeleteTransaction: Transaction {
         )
     }
 
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).deleteContract(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .contractDeleteInstance(
+            .with { proto in
+                switch (transferAccountId, transferContractId) {
+                case (.some, .some):
+                    // fixme: do what rust does
+                    fatalError()
+                case (.some(let id), nil):
+                    proto.transferAccountID = id.toProtobuf()
+                case (nil, .some(let id)):
+                    proto.transferContractID = id.toProtobuf()
+                case (nil, nil):
+                    break
+                }
+
+                contractId?.toProtobufInto(&proto.contractID)
+            }
+        )
+    }
 }

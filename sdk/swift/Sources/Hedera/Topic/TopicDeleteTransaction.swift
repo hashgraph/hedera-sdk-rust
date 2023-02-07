@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
 
 /// Delete a topic.
@@ -77,5 +78,21 @@ public final class TopicDeleteTransaction: Transaction {
 
     internal static func fromProtobufData(_ proto: Proto_ConsensusDeleteTopicTransactionBody) -> Self {
         Self(topicId: proto.hasTopicID ? .fromProtobuf(proto.topicID) : nil)
+    }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).deleteTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .consensusDeleteTopic(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+            }
+        )
     }
 }

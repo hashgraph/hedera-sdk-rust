@@ -19,7 +19,9 @@
  */
 
 import Foundation
+import GRPC
 import HederaProtobufs
+import SwiftProtobuf
 
 /// Updates the fields of a smart contract to the given values.
 public final class ContractUpdateTransaction: Transaction {
@@ -52,7 +54,7 @@ public final class ContractUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         contractId = try container.decodeIfPresent(.contractId)
@@ -347,10 +349,50 @@ public final class ContractUpdateTransaction: Transaction {
             declineStakingReward: proto.hasDeclineReward ? proto.declineReward.value : nil
         )
     }
+
+    internal override func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).updateContract(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
+        -> Proto_TransactionBody.OneOf_Data
+    {
+        .contractUpdateInstance(
+            .with { proto in
+                contractId?.toProtobufInto(&proto.contractID)
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+                adminKey?.toProtobufInto(&proto.adminKey)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+
+                if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                    proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                        Int32(maxAutomaticTokenAssociations))
+                }
+
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+                proxyAccountId?.toProtobufInto(&proto.proxyAccountID)
+
+                if let stakedNodeId = stakedNodeId {
+                    proto.stakedNodeID = Int64(stakedNodeId)
+                }
+
+                if let stakedAccountId = stakedAccountId {
+                    proto.stakedAccountID = stakedAccountId.toProtobuf()
+                }
+
+                if let declineStakingReward = declineStakingReward {
+                    proto.declineReward = Google_Protobuf_BoolValue(declineStakingReward)
+                }
+            }
+        )
+    }
 }
 
 extension StakedId {
-    fileprivate static func fromProtobuf(_ proto: Proto_ContractUpdateTransactionBody.OneOf_StakedID) throws -> Self {
+    fileprivate typealias Protobuf = Proto_ContractUpdateTransactionBody.OneOf_StakedID
+    fileprivate static func fromProtobuf(_ proto: Protobuf) throws -> Self {
         switch proto {
         case .stakedAccountID(let id):
             return .accountId(try .fromProtobuf(id))
@@ -358,4 +400,5 @@ extension StakedId {
             return .nodeId(UInt64(id))
         }
     }
+
 }

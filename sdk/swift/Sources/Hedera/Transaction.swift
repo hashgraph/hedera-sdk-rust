@@ -98,7 +98,7 @@ private struct TransactionSources {
 }
 
 /// A transaction that can be executed on the Hedera network.
-public class Transaction: Request, ValidateChecksums, Decodable {
+public class Transaction: ValidateChecksums, Codable {
     public init() {}
 
     fileprivate var signers: [Signer] = []
@@ -111,14 +111,17 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     internal func execute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
         -> Proto_TransactionResponse
     {
-        fatalError("`Transaction.execute(_:GRPCChannel,_:Proto_Transaction) must be implemented by subclasses`")
+        fatalError(
+            "`Transaction.execute(_:GRPCChannel,_:Proto_Transaction)` must be implemented by `\(type(of: self))`"
+        )
     }
 
     internal func toTransactionDataProtobuf(_ nodeAccountId: AccountId, _ transactionId: TransactionId)
         -> Proto_TransactionBody.OneOf_Data
     {
         fatalError(
-            "`Transaction.toTransactionDataProtobuf(_:AccountId,_:TransactionId) must be implemented by subclasses`")
+            "`Transaction.toTransactionDataProtobuf(_:AccountId,_:TransactionId)` must be implemented by `\(type(of: self))`"
+        )
     }
 
     internal func defaultMaxTransactionFee() -> Hbar {
@@ -226,60 +229,6 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         } else {
             return try await executeAny(client, self, timeout)
         }
-    }
-
-    public func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse {
-        try freezeWith(client)
-
-        if sources == nil {
-            return try await executeAny(client, self, timeout)
-        }
-
-        // encode self as a JSON request to pass to Rust
-        let requestBytes = try JSONEncoder().encode(self)
-
-        let request = String(data: requestBytes, encoding: .utf8)!
-
-        return try await executeEncoded(client, request: request, timeout: timeout)
-    }
-
-    private func executeEncoded(_ client: Client, request: String, timeout: TimeInterval?)
-        async throws -> Response
-    {
-        if client.isAutoValidateChecksumsEnabled() {
-            try self.validateChecksums(on: client)
-        }
-
-        fatalError()
-
-        // // start an unmanaged continuation to bridge a C callback with Swift async
-        // let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
-        //     let signers = makeHederaSignersFromArray(signers: signers)
-        //     // invoke `hedera_execute`, callback will be invoked on request completion
-        //     let err = hedera_transaction_execute(
-        //         client.ptr, request, continuation, signers, timeout != nil,
-        //         timeout ?? 0.0, sources?.ptr
-        //     ) { continuation, err, responsePtr in
-        //         if let err = HError(err) {
-        //             // an error has occurred, consume from the TLS storage for the error
-        //             // and throw it up back to the async task
-        //             resumeUnmanagedContinuation(continuation, throwing: err)
-        //         } else {
-        //             // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
-        //             let responseText = String(validatingUTF8: responsePtr!)!
-        //             let responseBytes = responseText.data(using: .utf8)!
-
-        //             // resumes the continuation which bridges us back into Swift async
-        //             resumeUnmanagedContinuation(continuation, returning: responseBytes)
-        //         }
-        //     }
-
-        //     if let err = HError(err) {
-        //         resumeUnmanagedContinuation(continuation, throwing: err)
-        //     }
-        // }
-
-        // return try Self.decodeResponse(responseBytes)
     }
 
     public required init(from decoder: Decoder) throws {
@@ -465,6 +414,7 @@ extension Transaction {
         precondition(self.isFrozen)
 
         let transactionBody = self.toTransactionBodyProtobuf(nodeAccountId, transactionId)
+
         // swiftlint:disable:next force_try
         let bodyBytes = try! transactionBody.serializedData()
 
@@ -480,7 +430,7 @@ extension Transaction {
 
         let signedTransaction = Proto_SignedTransaction.with { proto in
             proto.bodyBytes = bodyBytes
-            proto.sigMap = Proto_SignatureMap.with { map in
+            proto.sigMap = .with { map in
                 map.sigPair = signatures.toProtobuf()
             }
         }
