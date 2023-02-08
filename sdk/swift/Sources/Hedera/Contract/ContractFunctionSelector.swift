@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 
 // note: this is a class in order to enable the builder pattern.

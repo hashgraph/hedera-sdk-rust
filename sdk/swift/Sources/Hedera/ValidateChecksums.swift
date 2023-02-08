@@ -18,9 +18,6 @@
  * ‍
  */
 
-import CHedera
-import Foundation
-
 internal protocol ValidateChecksums {
     func validateChecksums(on ledgerId: LedgerId) throws
 
