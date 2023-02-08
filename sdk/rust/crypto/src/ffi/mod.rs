@@ -22,7 +22,6 @@
 mod error;
 
 mod c_util;
-mod crypto;
 mod key;
 mod mnemonic;
 mod util;

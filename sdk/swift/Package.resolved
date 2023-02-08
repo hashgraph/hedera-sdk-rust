@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "CryptoSwift",
+        "repositoryURL": "https://github.com/krzyzanowskim/CryptoSwift.git",
+        "state": {
+          "branch": null,
+          "revision": "19b3c3ceed117c5cc883517c4e658548315ba70b",
+          "version": "1.6.0"
+        }
+      },
+      {
         "package": "grpc-swift",
         "repositoryURL": "https://github.com/grpc/grpc-swift.git",
         "state": {

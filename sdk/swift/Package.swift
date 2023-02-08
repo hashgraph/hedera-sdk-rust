@@ -58,7 +58,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
         .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.9.0"),
         .package(url: "https://github.com/vsanthanam/AnyAsyncSequence.git", from: "1.0.0"),
-
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", .upToNextMajor(from: "1.6.0")),
     ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
@@ -77,6 +77,7 @@ let package = Package(
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "NumberKit", package: "swift-numberkit"),
                 .product(name: "GRPC", package: "grpc-swift"),
+                "CryptoSwift",
             ]),
         .testTarget(name: "HederaTests", dependencies: ["Hedera"]),
     ] + exampleTargets

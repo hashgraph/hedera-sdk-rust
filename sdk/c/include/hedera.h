@@ -76,14 +76,6 @@ void hedera_string_free(char *s);
  */
 void hedera_bytes_free(uint8_t *buf, size_t size);
 
-size_t hedera_crypto_sha2_sha384_digest(const uint8_t *bytes,
-                                        size_t bytes_size,
-                                        uint8_t **result_out);
-
-size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
-                                           size_t bytes_size,
-                                           uint8_t **result_out);
-
 /**
  * Generates a new Ed25519 private key.
  */

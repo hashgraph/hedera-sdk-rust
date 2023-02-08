@@ -18,7 +18,7 @@
  * ‍
  */
 
-import CHedera
+import CryptoSwift
 import Foundation
 
 // note: this is a class in order to enable the builder pattern.
@@ -34,9 +34,10 @@ public final class ContractFunctionSelector {
 
     /// Create a selector for with the given function name.
     public init(_ functionName: String) {
-        var hasher = KeccakHasher()
-        hasher.update(functionName.data(using: .utf8)!)
-        hasher.update("(".data(using: .utf8)!)
+        var hasher = CryptoSwift.SHA3(variant: .keccak256)
+        // this never fails lol
+        _ = try! hasher.update(withBytes: functionName.data(using: .utf8)!.bytes)
+        _ = try! hasher.update(withBytes: "(".bytes)
 
         self.state = .building(hasher: hasher, needsComma: false)
 
@@ -47,10 +48,10 @@ public final class ContractFunctionSelector {
         switch state {
         case .building(var hasher, var needsComma):
             if needsComma {
-                hasher.update(",".data(using: .utf8)!)
+               _ =  try! hasher.update(withBytes: ",".bytes)
             }
 
-            hasher.update(solidityTypeName.data(using: .utf8)!)
+            _ = try! hasher.update(withBytes: solidityTypeName.bytes)
             needsComma = true
             self.state = .building(hasher: hasher, needsComma: needsComma)
         case .finished:
@@ -67,8 +68,8 @@ public final class ContractFunctionSelector {
     public func finish() -> Data {
         switch state {
         case .building(var hasher, _):
-            hasher.update(")".data(using: .utf8)!)
-            let output = hasher.finalize().subdata(in: 0..<4)
+            _ = try! hasher.update(withBytes: ")".bytes)
+            let output = try! Data(hasher.finish()[0..<4])
             state = .finished(output)
             return output
         case .finished(let data):
@@ -268,77 +269,6 @@ public final class ContractFunctionSelector {
 }
 
 private enum ContractFunctionSelectorState {
-    case building(hasher: KeccakHasher, needsComma: Bool)
+    case building(hasher: CryptoSwift.SHA3, needsComma: Bool)
     case finished(Data)
-}
-
-private struct KeccakHasher {
-    // it's easier to just have *one* ffi call.
-    // when `nil` the hasher enters a poisoned state.
-    private var buffer: Data? = Data()
-
-    mutating func update(_ data: Data) {
-        buffer! += data
-    }
-
-    mutating func finalize() -> Data {
-        let output = Crypto.Sha3.keccak256(buffer!)
-        buffer = nil
-
-        return output
-    }
-}
-
-internal enum Crypto {
-    internal enum Sha2 {
-        case sha384
-
-        internal static func digest(_ kind: Self, _ message: Data) -> Data {
-            kind.digest(message)
-        }
-
-        /// Hash a message using the sha2-384 hashing algorithm.
-        internal func digest(_ message: Data) -> Data {
-            switch self {
-            case .sha384:
-                return message.withUnsafeTypedBytes { buffer in
-                    var output: UnsafeMutablePointer<UInt8>?
-                    let count = hedera_crypto_sha2_sha384_digest(buffer.baseAddress, buffer.count, &output)
-                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
-                }
-            }
-        }
-
-        internal static func sha384(_ message: Data) -> Data {
-            sha384.digest(message)
-        }
-    }
-
-    internal enum Sha3 {
-        case keccak256
-
-        internal static func digest(_ kind: Sha3, _ data: Data) -> Data {
-            kind.digest(data)
-        }
-
-        internal func digest(_ data: Data) -> Data {
-            switch self {
-            case .keccak256:
-                return data.withUnsafeTypedBytes { buffer in
-                    var output: UnsafeMutablePointer<UInt8>?
-                    let count = hedera_crypto_sha3_keccak256_digest(buffer.baseAddress, buffer.count, &output)
-                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
-                }
-            }
-        }
-
-        /// Hash data using the `keccak256` algorithm.
-        ///
-        /// - Parameter data: the data to be hashed.
-        ///
-        /// - Returns: the hash of `data`.
-        internal static func keccak256(_ data: Data) -> Data {
-            digest(.keccak256, data)
-        }
-    }
 }
