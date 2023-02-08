@@ -18,12 +18,11 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 import HederaProtobufs
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
-public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
+public struct NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
     /// The (non-fungible) token of which this NFT is an instance.
     public let tokenId: TokenId
 
@@ -36,31 +35,32 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
         self.serial = serial
     }
 
-    private convenience init(parsing description: String) throws {
-        var shard: UInt64 = 0
-        var realm: UInt64 = 0
-        var num: UInt64 = 0
-        var serial: UInt64 = 0
+    private init<S: StringProtocol>(parsing description: S) throws {
+        guard let (tokenId, serial) = description.rsplitOnce(on: "/") ?? description.rsplitOnce(on: "@") else {
+            throw HError(
+                kind: .basicParse,
+                description: "unexpected NftId format - expected [tokenId]/[serial] or [tokenId]@[serial]"
+            )
+        }
 
-        try HError.throwing(error: hedera_nft_id_from_string(description, &shard, &realm, &num, &serial))
-
-        self.init(tokenId: TokenId(shard: shard, realm: realm, num: num), serial: serial)
+        self.tokenId = try .fromString(tokenId)
+        self.serial = try UInt64(parsing: serial)
     }
 
     public static func fromString(_ description: String) throws -> Self {
         try self.init(parsing: description)
     }
 
-    public required convenience init?(_ description: String) {
+    public init?(_ description: String) {
         try? self.init(parsing: description)
     }
 
-    public required convenience init(stringLiteral value: StringLiteralType) {
+    public init(stringLiteral value: StringLiteralType) {
         // swiftlint:disable:next force_try
         try! self.init(parsing: value)
     }
 
-    public required convenience init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
@@ -94,7 +94,7 @@ public final class NftId: Codable, LosslessStringConvertible, ExpressibleByStrin
 extension NftId: ProtobufCodable {
     internal typealias Protobuf = Proto_NftID
 
-    internal convenience init(fromProtobuf proto: Protobuf) {
+    internal init(fromProtobuf proto: Protobuf) {
         self.init(
             tokenId: .fromProtobuf(proto.tokenID),
             serial: UInt64(proto.serialNumber)

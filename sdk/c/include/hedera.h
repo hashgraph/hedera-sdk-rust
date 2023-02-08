@@ -978,15 +978,6 @@ char *hedera_mnemonic_to_string(struct HederaMnemonic *mnemonic);
  */
 void hedera_mnemonic_free(struct HederaMnemonic *mnemonic);
 
-/**
- * Parse a Hedera `NftId` from the passed string.
- */
-enum HederaError hedera_nft_id_from_string(const char *s,
-                                           uint64_t *token_id_shard,
-                                           uint64_t *token_id_realm,
-                                           uint64_t *token_id_num,
-                                           uint64_t *serial);
-
 enum HederaError hedera_semantic_version_from_string(const char *s,
                                                      struct HederaSemanticVersion *semver);
 

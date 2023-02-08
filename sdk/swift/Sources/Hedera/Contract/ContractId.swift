@@ -1,4 +1,4 @@
- import Foundation
+import Foundation
 import HederaProtobufs
 
 /// The unique identifier for a smart contract on Hedera.

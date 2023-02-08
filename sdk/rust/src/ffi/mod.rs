@@ -26,7 +26,6 @@ mod c_util;
 mod crypto;
 mod key;
 mod mnemonic;
-mod nft_id;
 mod semantic_version;
 mod timestamp;
 mod transaction_id;
