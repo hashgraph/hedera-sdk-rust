@@ -25,5 +25,4 @@ mod c_util;
 mod crypto;
 mod key;
 mod mnemonic;
-mod semantic_version;
 mod util;

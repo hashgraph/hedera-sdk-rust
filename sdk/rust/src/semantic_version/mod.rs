@@ -92,7 +92,7 @@ fn parse_version(s: &str, name: &str) -> crate::Result<u32> {
 
 fn parse_prerelease(s: &str) -> crate::Result<String> {
     if s.is_empty() {
-        return Err(Error::basic_parse("semver with empty rerelease"));
+        return Err(Error::basic_parse("semver with empty prerelease"));
     }
 
     for identifier in s.split('.') {
@@ -143,43 +143,42 @@ impl FromStr for SemanticVersion {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = s.splitn(3, '.').collect();
 
-        match &*parts {
-            [major, minor, rest] => {
-                let (patch, pre, build) = {
-                    // while it seems like this is a weird order,
-                    // it actually makes more sense than `pre` first,
-                    // because `pre` is in the middle of the string.
-                    let (rest, build) = match rest.split_once('+') {
-                        Some((rest, build)) => (rest, Some(build)),
-                        None => (*rest, None),
-                    };
+        let [major, minor, rest] = &*parts else {
+            return Err(Error::basic_parse("expected major.minor.patch for semver"))
+        };
 
-                    let (patch, pre) = match rest.split_once('-') {
-                        Some((patch, pre)) => (patch, Some(pre)),
-                        None => (rest, None),
-                    };
+        let (patch, pre, build) = {
+            // while it seems like this is a weird order,
+            // it actually makes more sense than `pre` first,
+            // because `pre` is in the middle of the string.
+            let (rest, build) = match rest.split_once('+') {
+                Some((rest, build)) => (rest, Some(build)),
+                None => (*rest, None),
+            };
 
-                    (patch, pre, build)
-                };
+            let (patch, pre) = match rest.split_once('-') {
+                Some((patch, pre)) => (patch, Some(pre)),
+                None => (rest, None),
+            };
 
-                let major = parse_version(major, "major")?;
-                let minor = parse_version(minor, "minor")?;
-                let patch = parse_version(patch, "patch")?;
+            (patch, pre, build)
+        };
 
-                let prerelease = match pre {
-                    Some(it) => parse_prerelease(it)?,
-                    None => String::new(),
-                };
+        let major = parse_version(major, "major")?;
+        let minor = parse_version(minor, "minor")?;
+        let patch = parse_version(patch, "patch")?;
 
-                let build = match build {
-                    Some(it) => parse_build(it)?,
-                    None => String::new(),
-                };
+        let prerelease = match pre {
+            Some(it) => parse_prerelease(it)?,
+            None => String::new(),
+        };
 
-                Ok(Self { major, minor, patch, prerelease, build })
-            }
-            _ => Err(Error::basic_parse("expected major.minor.patch for semver")),
-        }
+        let build = match build {
+            Some(it) => parse_build(it)?,
+            None => String::new(),
+        };
+
+        Ok(Self { major, minor, patch, prerelease, build })
     }
 }
 

@@ -169,6 +169,10 @@ public struct HError: Error, Equatable, CustomStringConvertible {
         Self(kind: .fromProtobuf, description: description)
     }
 
+    internal static func basicParse(_ description: String) -> Self {
+        Self(kind: .basicParse, description: description)
+    }
+
     internal static func throwing(error: HederaError) throws {
         if let err = Self(error) {
             throw err
