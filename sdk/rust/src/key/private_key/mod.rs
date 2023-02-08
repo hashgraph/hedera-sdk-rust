@@ -61,7 +61,6 @@ pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1
 
 /// A private key on the Hedera network.
 #[derive(Clone)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct PrivateKey(Arc<PrivateKeyDataWrapper>);
 
 // find a better name
