@@ -77,56 +77,11 @@ public struct HError: Error, Equatable, CustomStringConvertible {
     // swiftlint:disable cyclomatic_complexity function_body_length
     internal init?(_ error: HederaError) {
         switch error {
-        case HEDERA_ERROR_TIMED_OUT:
-            kind = .timedOut(source: nil)
-
-        case HEDERA_ERROR_GRPC_STATUS:
-            kind = .grpcStatus(status: hedera_error_grpc_status())
-
-        case HEDERA_ERROR_FROM_PROTOBUF:
-            kind = .fromProtobuf
-
-        case HEDERA_ERROR_TRANSACTION_PRE_CHECK_STATUS:
-            kind = .transactionPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
-
-        case HEDERA_ERROR_TRANSACTION_NO_ID_PRE_CHECK_STATUS:
-            kind = .transactionNoIdPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
-
-        case HEDERA_ERROR_QUERY_PRE_CHECK_STATUS:
-            kind = .queryPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
-
-        case HEDERA_ERROR_QUERY_PAYMENT_PRE_CHECK_STATUS:
-            kind = .queryPaymentPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
-
-        case HEDERA_ERROR_QUERY_NO_PAYMENT_PRE_CHECK_STATUS:
-            kind = .queryNoPaymentPreCheckStatus(status: Status(rawValue: hedera_error_pre_check_status()))
-
-        case HEDERA_ERROR_BASIC_PARSE:
-            kind = .basicParse
-
         case HEDERA_ERROR_KEY_PARSE:
             kind = .keyParse
 
         case HEDERA_ERROR_KEY_DERIVE:
             kind = .keyDerive
-
-        case HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID:
-            kind = .noPayerAccountOrTransactionId
-
-        case HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED:
-            kind = .maxQueryPaymentExceeded
-
-        case HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN:
-            kind = .nodeAccountUnknown
-
-        case HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED:
-            kind = .responseStatusUnrecognized
-
-        case HEDERA_ERROR_SIGNATURE:
-            kind = .signature
-
-        case HEDERA_ERROR_RECEIPT_STATUS:
-            kind = .receiptStatus(status: Status(rawValue: hedera_error_receipt_status_status()))
 
         case HEDERA_ERROR_MNEMONIC_PARSE:
             kind = .mnemonicParse
@@ -137,20 +92,8 @@ public struct HError: Error, Equatable, CustomStringConvertible {
         case HEDERA_ERROR_SIGNATURE_VERIFY:
             kind = .signatureVerify
 
-        case HEDERA_ERROR_BAD_ENTITY_ID:
-            kind = .badEntityId
-
-        case HEDERA_ERROR_CANNOT_TO_STRING_WITH_CHECKSUM:
-            kind = .cannotToStringWithChecksum
-
-        case HEDERA_ERROR_CANNOT_PERFORM_TASK_WITHOUT_LEDGER_ID:
-            kind = .cannotPerformTaskWithoutLedgerId
-
         case HEDERA_ERROR_WRONG_KEY_TYPE:
             kind = .wrongKeyType
-
-        case HEDERA_ERROR_FREEZE_UNSET_NODE_ACCOUNT_IDS:
-            kind = .freezeUnsetNodeAccountIds
 
         case HEDERA_ERROR_OK:
             return nil

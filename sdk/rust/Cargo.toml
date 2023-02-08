@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "protobufs"]
+members = [".", "protobufs", "crypto"]
 
 [package]
 description = "The SDK for interacting with Hedera Hashgraph."
@@ -9,13 +9,6 @@ name = "hedera"
 readme = "../../README.md"
 repository = "https://github.com/hashgraph/hedera-sdk-rust"
 version = "0.8.0"
-
-[lib]
-bench = false
-crate-type = ["lib", "staticlib"]
-
-[features]
-ffi = ["anyhow", "cbindgen", "libc"]
 
 [dependencies]
 async-stream = "0.3.3"
@@ -32,7 +25,6 @@ hedera-proto = { path = "./protobufs", version = "0.5.0", features = [
 hex = "0.4.3"
 hmac = "0.12.1"
 k256 = "0.11.0"
-libc = { version = "0.2.135", optional = true }
 log = "0.4.17"
 num-bigint = "0.4.3"
 once_cell = "1.10.0"
@@ -72,10 +64,6 @@ dotenvy = "0.15.5"
 expect-test = "1.4.0"
 hex-literal = "0.3.4"
 tokio = { version = "1.23.1", features = ["full"] }
-
-[build-dependencies]
-anyhow = { version = "1.0.57", optional = true }
-cbindgen = { version = "0.24.3", default-features = false, optional = true }
 
 [profile.release]
 codegen-units = 1

@@ -18,11 +18,7 @@
  * ‍
  */
 
-#[cfg(not(feature = "ffi"))]
-fn main() {}
-
-#[cfg(feature = "ffi")]
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     use std::env;
 
     use cbindgen::{
@@ -47,7 +43,7 @@ fn main() -> anyhow::Result<()> {
         .with_language(Language::C)
         .with_item_prefix("Hedera")
         .generate()?
-        .write_to_file("../c/include/hedera.h");
+        .write_to_file("../../c/include/hedera.h");
 
     Ok(())
 }

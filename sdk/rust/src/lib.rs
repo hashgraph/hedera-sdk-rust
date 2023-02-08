@@ -84,8 +84,6 @@ mod transaction_record_query;
 mod transaction_response;
 mod transfer_transaction;
 
-#[cfg(feature = "ffi")]
-mod ffi;
 mod hbar;
 mod transfer;
 
