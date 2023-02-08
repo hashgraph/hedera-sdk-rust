@@ -1,6 +1,14 @@
 import Foundation
 
 extension FixedWidthInteger {
+    internal init<S: StringProtocol>(parsing description: S) throws {
+        guard let value = Self(description) else {
+            throw HError(kind: .basicParse, description: "Invalid numeric string `\(description)`")
+        }
+
+        self = value
+    }
+
     internal init?(littleEndianBytes bytes: Data) {
         let size = MemoryLayout<Self>.size
 

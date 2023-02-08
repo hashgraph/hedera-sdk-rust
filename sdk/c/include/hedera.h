@@ -56,28 +56,6 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
-typedef struct HederaAccountId {
-  uint64_t shard;
-  uint64_t realm;
-  uint64_t num;
-  /**
-   * Safety:
-   * - If `alias` is not null, it must:
-   *   - be properly aligned
-   *   - be dereferenceable
-   *   - point to a valid instance of `PublicKey` (any `PublicKey` that `hedera` provides which hasn't been freed yet)
-   */
-  struct HederaPublicKey *alias;
-  /**
-   * Safety:
-   * - if `evm_address` is not null, it must:
-   * - be properly aligned
-   * - be dereferencable
-   * - point to an array of 20 bytes
-   */
-  uint8_t *evm_address;
-} HederaAccountId;
-
 typedef struct HederaSemanticVersion {
   /**
    * Increases with incompatible API changes
@@ -130,18 +108,6 @@ typedef struct HederaSemanticVersion {
   char *build;
 } HederaSemanticVersion;
 
-typedef struct HederaTimestamp {
-  uint64_t secs;
-  uint32_t nanos;
-} HederaTimestamp;
-
-typedef struct HederaTransactionId {
-  struct HederaAccountId account_id;
-  struct HederaTimestamp valid_start;
-  int32_t nonce;
-  bool scheduled;
-} HederaTransactionId;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -171,16 +137,6 @@ int32_t hedera_error_grpc_status(void);
 int32_t hedera_error_pre_check_status(void);
 
 int32_t hedera_error_receipt_status_status(void);
-
-/**
- * Free an array of account IDs.
- *
- * # Safety
- * - `ids` must point to an allocation made by `hedera`.
- * - `ids` must not already have been freed.
- * - `ids` must be valid for `size` elements.
- */
-void hedera_account_id_array_free(struct HederaAccountId *ids, size_t size);
 
 /**
  * Free a string returned from a hedera API.
@@ -980,14 +936,6 @@ void hedera_mnemonic_free(struct HederaMnemonic *mnemonic);
 
 enum HederaError hedera_semantic_version_from_string(const char *s,
                                                      struct HederaSemanticVersion *semver);
-
-/**
- * # Safety
- * - `s` must be a valid string
- * - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
- */
-enum HederaError hedera_transaction_id_from_string(const char *s,
-                                                   struct HederaTransactionId *transation_id);
 
 #ifdef __cplusplus
 } // extern "C"
