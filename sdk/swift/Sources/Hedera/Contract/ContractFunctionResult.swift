@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 import NumberKit
 
 private let slotSize: UInt = 32
@@ -244,5 +245,38 @@ extension ContractFunctionResult: Codable {
             contractFunctionParametersBytes.base64EncodedString(), forKey: .contractFunctionParametersBytes)
         try container.encode(bytes.base64EncodedString(), forKey: .bytes)
         try container.encodeIfPresent(senderAccountId, forKey: .senderAccountId)
+    }
+}
+
+extension ContractFunctionResult: TryFromProtobuf {
+    typealias Protobuf = Proto_ContractFunctionResult
+
+    init(fromProtobuf proto: Protobuf) throws {
+        let bytes: Data
+
+        let errorMessage = !proto.errorMessage.isEmpty ? proto.errorMessage : nil
+
+        if errorMessage != nil && proto.contractCallResult.starts(with: [0x08, 0xc3, 0x79, 0xa0]) {
+            bytes = proto.contractCallResult.subdata(in: 4..<proto.contractCallResult.count)
+        } else {
+            bytes = proto.contractCallResult
+        }
+
+        let contractId = try ContractId.fromProtobuf(proto.contractID)
+
+        self.init(
+            contractId: contractId,
+            evmAddress: proto.hasEvmAddress
+                ? try ContractId.fromEvmAddressBytes(contractId.shard, contractId.realm, proto.evmAddress.value) : nil,
+            errorMessage: errorMessage,
+            bloom: proto.bloom,
+            gasUsed: proto.gasUsed,
+            gas: UInt64(proto.gas),
+            hbarAmount: .fromTinybars(proto.amount),
+            contractFunctionParametersBytes: proto.functionParameters,
+            bytes: bytes,
+            senderAccountId: proto.hasSenderID ? try .fromProtobuf(proto.senderID) : nil,
+            logs: try .fromProtobuf(proto.logInfo)
+        )
     }
 }

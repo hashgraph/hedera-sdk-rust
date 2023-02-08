@@ -89,7 +89,22 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .transactionGetReceipt(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `transactionGetReceipt`")
+        }
+
+        let receipt = try Response.fromProtobuf(pb.receipt)
+
+        let status = receipt.status
+
+        if validateStatus && status != .success {
+            throw HError(
+                kind: .receiptStatus(status: status),
+                description:
+                    "receipt for transaction `\(String(describing: transactionId))` failed with status `\(status)")
+        }
+
+        return receipt
     }
 
     internal override var paymentRequired: Bool { false }

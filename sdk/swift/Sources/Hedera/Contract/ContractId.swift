@@ -73,6 +73,10 @@ public struct ContractId: EntityId {
         Self(shard: shard, realm: realm, evmAddress: try SolidityAddress(parsing: address).data)
     }
 
+    internal static func fromEvmAddressBytes(_ shard: UInt64, _ realm: UInt64, _ bytes: Data) throws -> Self {
+        Self(shard: shard, realm: realm, evmAddress: try SolidityAddress(bytes).data)
+    }
+
     public func toSolidityAddress() throws -> String {
         if let evmAddress = evmAddress {
             return evmAddress.hexStringEncoded()

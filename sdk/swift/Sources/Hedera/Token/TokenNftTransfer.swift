@@ -1,5 +1,6 @@
-/// Represents a transfer of an NFT from one account to another.
+import HederaProtobufs
 
+/// Represents a transfer of an NFT from one account to another.
 public struct TokenNftTransfer: Equatable, Codable {
     /// The ID of the NFT's token.
     public let tokenId: TokenId
@@ -16,4 +17,14 @@ public struct TokenNftTransfer: Equatable, Codable {
     /// If true then the transfer is expected to be an approved allowance and the
     /// `sender` is expected to be the owner. The default is false.
     public let isApproved: Bool
+
+    internal static func fromProtobuf(_ proto: Proto_NftTransfer, tokenId: TokenId) throws -> Self {
+        Self(
+            tokenId: tokenId,
+            sender: try .fromProtobuf(proto.senderAccountID),
+            receiver: try .fromProtobuf(proto.receiverAccountID),
+            serial: UInt64(proto.serialNumber),
+            isApproved: proto.isApproval
+        )
+    }
 }

@@ -56,7 +56,11 @@ public final class AccountStakersQuery: Query<[ProxyStaker]> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .cryptoGetProxyStakers(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `cryptoGetProxyStakers`")
+        }
+
+        return try .fromProtobuf(pb.stakers.proxyStaker)
     }
 
     private enum CodingKeys: String, CodingKey {

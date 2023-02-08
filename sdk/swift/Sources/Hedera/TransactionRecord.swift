@@ -19,11 +19,54 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 // TODO: assessed_custom_fees
 /// The complete record for a transaction on Hedera that has reached consensus.
 /// Response from `TransactionRecordQuery`.
 public struct TransactionRecord: Codable {
+    internal init(
+        receipt: TransactionReceipt,
+        transactionHash: Data,
+        consensusTimestamp: Timestamp,
+        contractFunctionResult: ContractFunctionResult?,
+        transfers: [Transfer],
+        tokenTransfers: [TokenId: [AccountId: Int64]],
+        tokenNftTransfers: [TokenId: [TokenNftTransfer]],
+        transactionId: TransactionId,
+        transactionMemo: String,
+        transactionFee: Hbar,
+        scheduleRef: ScheduleId?,
+        assessedCustomFees: [AssessedCustomFee],
+        automaticTokenAssociations: [TokenAssociation],
+        parentConsensusTimestamp: Timestamp?,
+        aliasKey: PublicKey?,
+        children: [TransactionRecord],
+        duplicates: [TransactionRecord],
+        ethereumHash: Data?,
+        evmAddress: EvmAddress?
+    ) {
+        self.receipt = receipt
+        self.transactionHash = transactionHash
+        self.consensusTimestamp = consensusTimestamp
+        self.contractFunctionResult = contractFunctionResult
+        self.transfers = transfers
+        self.tokenTransfers = tokenTransfers
+        self.tokenNftTransfers = tokenNftTransfers
+        self.transactionId = transactionId
+        self.transactionMemo = transactionMemo
+        self.transactionFee = transactionFee
+        self.scheduleRef = scheduleRef
+        self.assessedCustomFees = assessedCustomFees
+        self.automaticTokenAssociations = automaticTokenAssociations
+        self.parentConsensusTimestamp = parentConsensusTimestamp
+        self.aliasKey = aliasKey
+        self.children = children
+        self.duplicates = duplicates
+        self.ethereumHash = ethereumHash
+        self.evmAddress = evmAddress
+    }
+
     /// The status (reach consensus, or failed, or is unknown) and the ID of
     /// any new account/file/instance created.
     public let receipt: TransactionReceipt
@@ -115,5 +158,80 @@ public struct TransactionRecord: Codable {
         children = try container.decodeIfPresent(.children) ?? []
         duplicates = try container.decodeIfPresent(.duplicates) ?? []
         ethereumHash = try container.decodeIfPresent(.ethereumHash).map(Data.base64Encoded) ?? Data()
+    }
+}
+
+extension TransactionRecord {
+    internal static func fromProtobuf(_ proto: Proto_TransactionGetRecordResponse) throws -> Self {
+        return try Self(
+            fromProtobuf: proto.transactionRecord,
+            duplicates: .fromProtobuf(proto.duplicateTransactionRecords),
+            children: .fromProtobuf(proto.childTransactionRecords)
+        )
+    }
+
+    fileprivate init(fromProtobuf proto: Protobuf, duplicates: [Self], children: [Self]) throws {
+        let contractFunctionResult = try proto.body.map { body in
+            switch body {
+            case .contractCallResult(let result), .contractCreateResult(let result):
+                return try ContractFunctionResult.fromProtobuf(result)
+            }
+        }
+
+        var tokenTransfers: [TokenId: [AccountId: Int64]] = [:]
+        var tokenNftTransfers: [TokenId: [TokenNftTransfer]] = [:]
+
+        for transfer in proto.tokenTransferLists {
+            let tokenId = TokenId.fromProtobuf(transfer.token)
+
+            var innerTokenTransfers = tokenTransfers[tokenId] ?? [:]
+
+            for accountAmount in transfer.transfers {
+                let accountId = try AccountId.fromProtobuf(accountAmount.accountID)
+                innerTokenTransfers[accountId] = accountAmount.amount
+            }
+
+            var nftTransfers = tokenNftTransfers[tokenId] ?? []
+
+            nftTransfers.append(
+                contentsOf: try transfer.nftTransfers.map { try TokenNftTransfer.fromProtobuf($0, tokenId: tokenId) }
+            )
+
+            tokenNftTransfers[tokenId] = nftTransfers
+
+            tokenTransfers[tokenId] = innerTokenTransfers
+        }
+
+        let evmAddress = !proto.evmAddress.isEmpty ? try EvmAddress(proto.evmAddress) : nil
+
+        self.init(
+            receipt: try .fromProtobuf(proto.receipt),
+            transactionHash: proto.transactionHash,
+            consensusTimestamp: .fromProtobuf(proto.consensusTimestamp),
+            contractFunctionResult: contractFunctionResult,
+            transfers: try .fromProtobuf(proto.transferList.accountAmounts),
+            tokenTransfers: tokenTransfers,
+            tokenNftTransfers: tokenNftTransfers,
+            transactionId: try .fromProtobuf(proto.transactionID),
+            transactionMemo: proto.memo,
+            transactionFee: .fromTinybars(Int64(proto.transactionFee)),
+            scheduleRef: proto.hasScheduleRef ? .fromProtobuf(proto.scheduleRef) : nil,
+            assessedCustomFees: try .fromProtobuf(proto.assessedCustomFees),
+            automaticTokenAssociations: try .fromProtobuf(proto.automaticTokenAssociations),
+            parentConsensusTimestamp: .fromProtobuf(proto.parentConsensusTimestamp),
+            aliasKey: try .fromAliasBytes(proto.alias),
+            children: children,
+            duplicates: duplicates,
+            ethereumHash: proto.ethereumHash,
+            evmAddress: evmAddress
+        )
+    }
+}
+
+extension TransactionRecord: TryFromProtobuf {
+    internal typealias Protobuf = Proto_TransactionRecord
+
+    internal init(fromProtobuf proto: Protobuf) throws {
+        try self.init(fromProtobuf: proto, duplicates: [], children: [])
     }
 }

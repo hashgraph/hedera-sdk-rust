@@ -55,7 +55,11 @@ public final class TokenInfoQuery: Query<TokenInfo> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .tokenGetInfo(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `tokenGetInfo`")
+        }
+
+        return try .fromProtobuf(pb.tokenInfo)
     }
 
     private enum CodingKeys: String, CodingKey {

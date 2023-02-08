@@ -134,7 +134,7 @@ public final class Client {
     @discardableResult
     public func setAutoValidateChecksums(_ autoValidateChecksums: Bool) -> Self {
         self.autoValidateChecksums = autoValidateChecksums
-        
+
         return self
     }
 

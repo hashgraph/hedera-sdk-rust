@@ -279,6 +279,7 @@ extension TransferTransaction.Transfer: TryProtobufCodable {
         .with { proto in
             proto.accountID = accountId.toProtobuf()
             proto.amount = amount
+            proto.isApproval = isApproval
         }
     }
 }

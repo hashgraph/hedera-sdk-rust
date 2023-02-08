@@ -55,7 +55,11 @@ public final class ContractInfoQuery: Query<ContractInfo> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .contractGetInfo(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `contractGetInfo`")
+        }
+
+        return try .fromProtobuf(pb.contractInfo)
     }
 
     private enum CodingKeys: String, CodingKey {

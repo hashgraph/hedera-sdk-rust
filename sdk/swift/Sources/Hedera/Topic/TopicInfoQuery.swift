@@ -55,7 +55,11 @@ public final class TopicInfoQuery: Query<TopicInfo> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .consensusGetTopicInfo(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `consensusGetTopicInfo`")
+        }
+
+        return try .fromProtobuf(pb)
     }
 
     private enum CodingKeys: String, CodingKey {

@@ -58,7 +58,11 @@ public final class AccountInfoQuery: Query<AccountInfo> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .cryptoGetInfo(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `cryptoGetInfo`")
+        }
+
+        return try .fromProtobuf(pb.accountInfo)
     }
 
     private enum CodingKeys: String, CodingKey {

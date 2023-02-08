@@ -55,7 +55,11 @@ public final class ScheduleInfoQuery: Query<ScheduleInfo> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .scheduleGetInfo(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `scheduleGetInfo`")
+        }
+
+        return try .fromProtobuf(pb.scheduleInfo)
     }
 
     private enum CodingKeys: String, CodingKey {

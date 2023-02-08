@@ -56,7 +56,12 @@ public final class ContractBytecodeQuery: Query<Data> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .contractGetBytecodeResponse(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `contractGetBytecodeResponse`")
+        }
+
+        return pb.bytecode
+
     }
 
     private enum CodingKeys: String, CodingKey {

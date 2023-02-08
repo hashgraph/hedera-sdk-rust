@@ -134,7 +134,11 @@ public final class ContractCallQuery: Query<ContractFunctionResult> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .contractCallLocal(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `contractCallLocal`")
+        }
+
+        return try .fromProtobuf(pb.functionResult)
     }
 
     private enum CodingKeys: String, CodingKey {

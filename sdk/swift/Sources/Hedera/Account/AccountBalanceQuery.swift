@@ -59,7 +59,11 @@ public final class AccountBalanceQuery: Query<AccountBalance> {
     }
 
     internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
-        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+        guard case .cryptogetAccountBalance(let pb) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `cryptogetAccountBalance`")
+        }
+
+        return try .fromProtobuf(pb)
     }
 
     /// The account ID for which information is requested.

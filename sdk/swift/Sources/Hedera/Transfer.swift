@@ -1,4 +1,5 @@
 import Foundation
+import HederaProtobufs
 
 /// A transfer of ``Hbar`` that occured within a ``Transaction``
 ///
@@ -11,5 +12,22 @@ public struct Transfer: Codable {
     ///
     /// Negative if the account sends/withdraws hbar, positive if it receives hbar.
     public let amount: Hbar
+}
 
+extension Transfer: TryProtobufCodable {
+    typealias Protobuf = Proto_AccountAmount
+
+    init(fromProtobuf proto: Protobuf) throws {
+        self.init(
+            accountId: try .fromProtobuf(proto.accountID),
+            amount: .fromTinybars(proto.amount)
+        )
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.amount = amount.toTinybars()
+        }
+    }
 }

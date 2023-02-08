@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 /// Information about a single account that is proxy staking.
 public struct ProxyStaker: Codable {
     /// The Account ID that is proxy staking.
@@ -25,4 +27,19 @@ public struct ProxyStaker: Codable {
 
     /// The number of hbars that are currently proxy staked.
     public let amount: UInt64
+}
+
+extension ProxyStaker: TryProtobufCodable {
+    typealias Protobuf = Proto_ProxyStaker
+
+    init(fromProtobuf proto: Protobuf) throws {
+        self.init(accountId: try .fromProtobuf(proto.accountID), amount: UInt64(proto.amount))
+    }
+
+    func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.amount = Int64(amount)
+        }
+    }
 }

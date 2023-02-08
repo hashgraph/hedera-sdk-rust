@@ -19,14 +19,22 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 /// Response from `FileContentsQuery`.
-public struct FileContentsResponse: Codable {
+public struct FileContentsResponse {
     /// The file ID of the file whose contents are being returned.
     public let fileId: FileId
 
     /// The bytes contained in the file.
     public let contents: Data
+}
+
+extension FileContentsResponse: Decodable {
+    private enum CodingKeys: CodingKey {
+        case fileId
+        case contents
+    }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -35,5 +43,13 @@ public struct FileContentsResponse: Codable {
 
         let contentsB64 = try container.decode(String.self, forKey: .contents)
         contents = Data(base64Encoded: contentsB64)!
+    }
+}
+
+extension FileContentsResponse: FromProtobuf {
+    internal typealias Protobuf = Proto_FileGetContentsResponse.FileContents
+
+    internal init(fromProtobuf proto: Protobuf) {
+        self.init(fileId: .fromProtobuf(proto.fileID), contents: proto.contents)
     }
 }
