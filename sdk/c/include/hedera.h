@@ -15,16 +15,9 @@ typedef enum HederaError {
   HEDERA_ERROR_OK,
   HEDERA_ERROR_KEY_PARSE,
   HEDERA_ERROR_KEY_DERIVE,
-  HEDERA_ERROR_MNEMONIC_PARSE,
-  HEDERA_ERROR_MNEMONIC_ENTROPY,
   HEDERA_ERROR_SIGNATURE_VERIFY,
   HEDERA_ERROR_WRONG_KEY_TYPE,
 } HederaError;
-
-/**
- *  `BIP-39` 24-word mnemonic phrase compatible with the Android and iOS mobile wallets.
- */
-typedef struct HederaMnemonic HederaMnemonic;
 
 /**
  * A private key on the Hedera network.
@@ -435,11 +428,10 @@ enum HederaError hedera_private_key_legacy_derive(struct HederaPrivateKey *key,
  *
  * # Safety
  * - `mnemonic` must be valid for reads according to the [*Rust* pointer rules].
- * - `passphrase` must be valid for reads up until and including the first NUL (`'\0'`) byte.
  * - the retured `PrivateKey` must only be freed via [`hedera_private_key_free`], notably, this means that it *must not* be freed with `free`.
  */
-struct HederaPrivateKey *hedera_private_key_from_mnemonic(struct HederaMnemonic *mnemonic,
-                                                          const char *passphrase);
+struct HederaPrivateKey *hedera_private_key_from_mnemonic_seed(const uint8_t *seed,
+                                                               size_t seed_len);
 
 /**
  * Releases memory associated with the private key.
@@ -723,122 +715,6 @@ enum HederaError hedera_public_key_to_evm_address(struct HederaPublicKey *key,
  * Releases memory associated with the public key.
  */
 void hedera_public_key_free(struct HederaPublicKey *key);
-
-/**
- * Parse a `Mnemonic` from a string.
- *
- * # Safety
- * - `s` must be valid for reads up until and including the first NUL (`'\0'`) byte.
- * - `mnemonic` must be valid for writes according to the [*Rust* pointer rules]
- * - if this method returns anything other than [`Error::Ok`],
- *   then the contents of `mnemonic` are undefined and must not be used or inspected.
- * - `mnemonic` must only be freed via [`hedera_mnemonic_free`].
- *   Notably this means that it *must not* be freed with `free`.
- *
- * # Errors
- * - [`Error::MnemonicParse`] if the mnemonic has an invalid length.
- * - [`Error::MnemonicParse`] if the mnemonic uses invalid words.
- * - [`Error::MnemonicParse`] if the mnemonic has an invalid checksum.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_mnemonic_from_string(const char *s, struct HederaMnemonic **mnemonic);
-
-/**
- * Generate a new 24 word mnemonic.
- *
- * # Safety
- * This function is safe. However, there are invariants that must be upheld on the result.
- *
- * - The returned mnemonic must only be freed via [`hedera_mnemonic_free`].
- *   Notably this means that it *must not* be freed with `free`.
- */
-struct HederaMnemonic *hedera_mnemonic_generate_24(void);
-
-/**
- * Generate a new 12 word mnemonic.
- *
- * # Safety
- * This function is safe. However, there are invariants that must be upheld on the result.
- *
- * - The returned mnemonic must only be freed via [`hedera_mnemonic_free`].
- *   Notably this means that it *must not* be freed with `free`.
- */
-struct HederaMnemonic *hedera_mnemonic_generate_12(void);
-
-/**
- * Returns `true` if `mnemonic` is a legacy mnemonic.
- *
- * # Safety
- * - `mnemonic` must be valid for reads according to the [*Rust* pointer rules].
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-bool hedera_mnemonic_is_legacy(struct HederaMnemonic *mnemonic);
-
-/**
- * Recover a [`PrivateKey`] from `mnemonic`.
- *
- * # Safety
- * - `mnemonic` must be valid for reads according to the [*Rust* pointer rules].
- * - `passphrase` must be valid for reads up until and including the first NUL (`'\0'`) byte.
- * - `private_key` must be valid for writes according to the [*Rust* pointer rules].
- * - if this method returns anything other than [`Error::Ok`],
- *   then the contents of `private_key` are undefined and must not be used or inspected.
- * - `private_key` must only be freed via `hedera_private_key_free`.
- *   Notably, this means that it *must not* be freed with `free`.
- *
- * # Errors
- * - [`Error::MnemonicEntropy`] if this is a legacy private key, and the passphrase isn't empty.
- * - [`Error::MnemonicEntropy`] if this is a legacy private key,
- *   and the `Mnemonic`'s checksum doesn't match up with the computed one.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_mnemonic_to_private_key(struct HederaMnemonic *mnemonic,
-                                                const char *passphrase,
-                                                struct HederaPrivateKey **private_key);
-
-/**
- * Recover a [`PrivateKey`] from `mnemonic`.
- *
- * # Safety
- * - `mnemonic` must be valid for reads according to the [*Rust* pointer rules].
- * - `private_key` must be valid for writes according to the [*Rust* pointer rules].
- * - if this method returns anything other than [`Error::Ok`],
- *   then the contents of `private_key` are undefined and must not be used or inspected.
- * - `private_key` must only be freed via `hedera_private_key_free`.
- *   Notably, this means that it *must not* be freed with `free`.
- *
- * # Errors
- * - [`Error::MnemonicEntropy`] if the computed checksum doesn't match the actual checksum.
- * - [`Error::MnemonicEntropy`] if this is a v2 legacy mnemonic and doesn't have `24` words.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_mnemonic_to_legacy_private_key(struct HederaMnemonic *mnemonic,
-                                                       struct HederaPrivateKey **private_key);
-
-/**
- * Format `mnemonic` as a string.
- *
- * # Safety
- * - `mnemonic` must be valid for reads according to the [*Rust* pointer rules].
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_mnemonic_to_string(struct HederaMnemonic *mnemonic);
-
-/**
- * Free `mnemonic` and release all resources associated with it.
- *
- * # Safety
- * - `mnemonic` must be valid for reads and writes according to the [*Rust* pointer rules].
- * - `mnemonic` must not be used at all after this function is called.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-void hedera_mnemonic_free(struct HederaMnemonic *mnemonic);
 
 #ifdef __cplusplus
 } // extern "C"

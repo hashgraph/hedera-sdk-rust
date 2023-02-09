@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import CryptoSwift
 
 private typealias UnsafeFromBytesFunc = @convention(c) (
     UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
@@ -214,7 +215,9 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public static func fromMnemonic(_ mnemonic: Mnemonic, _ passphrase: String) -> Self {
-        Self(hedera_private_key_from_mnemonic(mnemonic.ptr, passphrase))
+        mnemonic.toSeed(passphrase: passphrase).withUnsafeTypedBytes { pointer -> Self in
+            Self(hedera_private_key_from_mnemonic_seed(pointer.baseAddress, pointer.count))
+        }
     }
 
     public static func fromMnemonic(_ mnemonic: Mnemonic) -> Self {

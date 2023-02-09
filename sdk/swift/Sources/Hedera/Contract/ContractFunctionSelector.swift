@@ -48,7 +48,7 @@ public final class ContractFunctionSelector {
         switch state {
         case .building(var hasher, var needsComma):
             if needsComma {
-               _ =  try! hasher.update(withBytes: ",".bytes)
+                _ = try! hasher.update(withBytes: ",".bytes)
             }
 
             _ = try! hasher.update(withBytes: solidityTypeName.bytes)

@@ -568,9 +568,7 @@ impl PrivateKey {
     // Any panic would indicate a bug in this crate or a dependency of it, not in user code.
     #[allow(clippy::missing_panics_doc)]
     #[must_use]
-    pub fn from_mnemonic(mnemonic: &crate::Mnemonic, passphrase: &str) -> PrivateKey {
-        let seed = mnemonic.to_seed(passphrase);
-
+    pub fn from_mnemonic_seed(seed: &[u8]) -> PrivateKey {
         let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(b"ed25519 seed")
             .expect("hmac can take a seed of any size")
             .chain_update(seed)

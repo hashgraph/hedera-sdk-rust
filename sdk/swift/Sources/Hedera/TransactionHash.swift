@@ -1,5 +1,5 @@
-import Foundation
 import CryptoSwift
+import Foundation
 
 public struct TransactionHash {
     internal let data: Data

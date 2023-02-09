@@ -29,6 +29,43 @@ private func lastErrorMessage() -> String? {
     return String(hString: descriptionBytes)
 }
 
+public enum MnemonicParseError: Equatable, CustomStringConvertible {
+    /// The mnemonic has an unexpected length.
+    case badLength(Int)
+    /// The mnemonic contains words that are not in the wordlist.
+    case unknownWords([Int])
+    /// The checksum for the mnemonic isn't as expected
+    case checksumMismatch(expected: UInt8, actual: UInt8)
+
+    public var description: String {
+        switch self {
+        case .badLength(let length):
+            return "bad length: expected `12` or `24` words, found `\(length)`"
+        case .unknownWords(let words):
+            return "unknown words at indecies: `\(words)`"
+        case .checksumMismatch(let expected, let actual):
+            return "checksum mismatch: expected `0x\([expected].toHexString())`, found `0x\([actual].toHexString())`"
+        }
+    }
+}
+
+public enum MnemonicEntropyError: Equatable, CustomStringConvertible {
+    case badLength(expected: Int, actual: Int)
+    case checksumMismatch(expected: UInt8, actual: UInt8)
+    case legacyWithPassphrase
+
+    public var description: String {
+        switch self {
+        case .badLength(let expected, let actual):
+            return "bad length: expected `\(expected)` words, found \(actual) words"
+        case .checksumMismatch(let expected, let actual):
+            return "checksum mismatch: expected `0x\([expected].toHexString())`, found `0x\([actual].toHexString())`"
+        case .legacyWithPassphrase:
+            return "used a passphrase with a legacy mnemonic"
+        }
+    }
+}
+
 /// Represents any possible error from a fallible function in the Hedera SDK.
 public struct HError: Error, Equatable, CustomStringConvertible {
     // https://developer.apple.com/documentation/swift/error#2845903
@@ -51,8 +88,8 @@ public struct HError: Error, Equatable, CustomStringConvertible {
         case responseStatusUnrecognized
         case signature
         case receiptStatus(status: Status)
-        case mnemonicParse
-        case mnemonicEntropy
+        case mnemonicParse(reason: MnemonicParseError, mnemonic: Mnemonic)
+        case mnemonicEntropy(MnemonicEntropyError)
         case signatureVerify
         case badEntityId
         case cannotToStringWithChecksum
@@ -74,6 +111,20 @@ public struct HError: Error, Equatable, CustomStringConvertible {
         self.description = description
     }
 
+    internal static func mnemonicParse(_ reason: MnemonicParseError, _ mnemonic: Mnemonic) -> Self {
+        Self(
+            kind: .mnemonicParse(reason: reason, mnemonic: mnemonic),
+            description: "failed to parse a mnemonic: \(reason)"
+        )
+    }
+
+    internal static func mnemonicEntropy(_ reason: MnemonicEntropyError) -> Self {
+        Self(
+            kind: .mnemonicEntropy(reason),
+            description: "failed to convert a mnemonic to entropy: \(reason)"
+        )
+    }
+
     // swiftlint:disable cyclomatic_complexity function_body_length
     internal init?(_ error: HederaError) {
         switch error {
@@ -82,12 +133,6 @@ public struct HError: Error, Equatable, CustomStringConvertible {
 
         case HEDERA_ERROR_KEY_DERIVE:
             kind = .keyDerive
-
-        case HEDERA_ERROR_MNEMONIC_PARSE:
-            kind = .mnemonicParse
-
-        case HEDERA_ERROR_MNEMONIC_ENTROPY:
-            kind = .mnemonicEntropy
 
         case HEDERA_ERROR_SIGNATURE_VERIFY:
             kind = .signatureVerify

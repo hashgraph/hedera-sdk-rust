@@ -18,85 +18,319 @@
  * ‍
  */
 
-import CHedera
+import CryptoSwift
 import Foundation
+import NumberKit
 
-public final class Mnemonic: LosslessStringConvertible, ExpressibleByStringLiteral {
-    internal let ptr: OpaquePointer
-
-    public var words: [String] {
-        description.components(separatedBy: " ")
+public struct Mnemonic: Equatable {
+    private init(kind: Mnemonic.Kind) {
+        self.kind = kind
     }
+
+    private enum Kind: Equatable {
+        case v1(MnemonicV1Data)
+        case v2v3(MnemonicV2V3Data)
+    }
+
+    private let kind: Kind
 
     public var isLegacy: Bool {
-        hedera_mnemonic_is_legacy(ptr)
+        if case .v1 = kind {
+            return true
+        }
+
+        return false
     }
 
-    private init(_ ptr: OpaquePointer) {
-        self.ptr = ptr
-    }
-
-    public static func fromWords(_ words: [String]) throws -> Self {
-        // this is kinda backwards, but, it's easier than dealing with a `***char`
-        try Self.fromString(words.joined(separator: " "))
+    var words: [String] {
+        switch kind {
+        case .v1(let data):
+            return data.words
+        case .v2v3(let data):
+            return data.words
+        }
     }
 
     public static func fromString(_ description: String) throws -> Self {
-        var ptr: OpaquePointer?
-
-        try HError.throwing(error: hedera_mnemonic_from_string(description, &ptr))
-
-        return Self(ptr!)
+        try Self(parsing: description)
     }
 
-    public init?(_ description: String) {
-        var ptr: OpaquePointer?
-
-        try? HError.throwing(error: hedera_mnemonic_from_string(description, &ptr))
-
-        self.ptr = ptr!
+    fileprivate init(parsing description: String) throws {
+        self = try .fromWords(words: description.split(separator: " ").map(String.init))
     }
 
-    public required convenience init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
-    }
+    public static func fromWords(words: [String]) throws -> Self {
+        if words.count == 22 {
+            return Self(kind: .v1(MnemonicV1Data(words: words)))
+        }
 
-    public static func generate24() -> Self {
-        let ptr = hedera_mnemonic_generate_24()
-        return Self(ptr!)
+        let mnemonic = Self(kind: .v2v3(MnemonicV2V3Data(words: words)))
+
+        guard words.count == 12 || words.count == 24 else {
+            throw HError.mnemonicParse(.badLength(words.count), mnemonic)
+        }
+
+        var wordIndecies: [UInt16] = []
+        var unknownWords: [Int] = []
+
+        for (offset, word) in words.enumerated() {
+            switch bip39WordList.indexOf(word: word) {
+            case .some(let index):
+                wordIndecies.append(UInt16(index))
+            case nil:
+                unknownWords.append(offset)
+            }
+        }
+
+        guard unknownWords.isEmpty else {
+            throw HError.mnemonicParse(.unknownWords(unknownWords), mnemonic)
+        }
+
+        let (entropy, actualChecksum) = inceciesToEntropyAndChecksum(wordIndecies)
+
+        var expectedChecksum = checksum(entropy)
+        expectedChecksum = words.count == 12 ? (expectedChecksum & 0xf0) : expectedChecksum
+
+        guard expectedChecksum == actualChecksum else {
+            throw HError.mnemonicParse(.checksumMismatch(expected: expectedChecksum, actual: actualChecksum), mnemonic)
+        }
+
+        return mnemonic
     }
 
     public static func generate12() -> Self {
-        let ptr = hedera_mnemonic_generate_12()
-        return Self(ptr!)
+        Self(kind: .v2v3(.generate12()))
     }
 
-    public func toPrivateKey(passphrase: String = "") throws -> PrivateKey {
-        var ptr: OpaquePointer?
-
-        try HError.throwing(error: hedera_mnemonic_to_private_key(self.ptr, passphrase, &ptr))
-
-        return PrivateKey.unsafeFromPtr(ptr!)
+    public static func generate24() -> Self {
+        Self(kind: .v2v3(.generate24()))
     }
 
     public func toLegacyPrivateKey() throws -> PrivateKey {
-        var ptr: OpaquePointer?
+        let entropy: Foundation.Data
+        switch kind {
+        case .v1(let mnemonic):
+            entropy = try mnemonic.toEntropy()
+        case .v2v3(let mnemonic):
+            entropy = try mnemonic.toLegacyEntropy()
+        }
 
-        try HError.throwing(error: hedera_mnemonic_to_legacy_private_key(self.ptr, &ptr))
+        return try .fromBytes(entropy)
+    }
 
-        return PrivateKey.unsafeFromPtr(ptr!)
+    public func toPrivateKey(passphrase: String = "") throws -> PrivateKey {
+        switch kind {
+        case .v1 where !passphrase.isEmpty:
+            throw HError.mnemonicEntropy(.legacyWithPassphrase)
+        case .v1(let mnemonic):
+            let entropy = try mnemonic.toEntropy()
+            return try! PrivateKey.fromBytes(entropy)
+
+        // known unfixable bug: `PrivateKey.fromMnemonic` can be called with a legacy private key.
+        case .v2v3:
+            return PrivateKey.fromMnemonic(self, "")
+        }
     }
 
     public func toString() -> String {
-        description
+        String(describing: self)
+    }
+
+    internal func toSeed<S: StringProtocol>(passphrase: S) -> Data {
+        var salt = "mnemonic"
+        salt += passphrase
+
+        return Data(
+            try! CryptoSwift.PKCS5.PBKDF2(
+                password: String(describing: self).bytes,
+                salt: salt.bytes,
+                iterations: 2048,
+                variant: .sha2(.sha512)
+            ).calculate()
+        )
+    }
+}
+
+extension Mnemonic: LosslessStringConvertible {
+    public init?(_ description: String) {
+        try? self.init(parsing: description)
     }
 
     public var description: String {
-        let descriptionBytes = hedera_mnemonic_to_string(ptr)
-        return String(hString: descriptionBytes!)
+        self.words.joined(separator: " ")
+    }
+}
+
+extension Mnemonic: ExpressibleByStringLiteral {
+    public typealias StringLiteralType = String
+
+    public init(stringLiteral value: String) {
+        try! self.init(parsing: value)
+    }
+}
+
+private struct MnemonicV1Data: Equatable {
+    let words: [String]
+
+    private static func convertRadix(_ nums: [Int32], from fromRadix: Int32, to toRadix: Int32, outputLength: Int)
+        -> [Int32]
+    {
+        var buf = BigInt(0)
+        let fromRadix = BigInt(fromRadix)
+
+        for num in nums {
+            buf *= fromRadix
+            buf += BigInt(num)
+        }
+
+        var out: [Int32] = Array(repeating: 0, count: outputLength)
+
+        let toRadix = BigInt(toRadix)
+
+        for i in (0..<out.count).reversed() {
+            let remainder: BigInt
+            (buf, remainder) = buf.quotientAndRemainder(dividingBy: toRadix)
+            out[i] = Int32(remainder.intValue!)
+        }
+
+        return out
     }
 
-    deinit {
-        hedera_mnemonic_free(ptr)
+    private static func crc8<C>(_ data: C) -> UInt8 where C: Collection, C.Element == UInt8 {
+        var crc: UInt8 = 0xff
+        for value in data.dropLast(1) {
+            crc ^= value
+            for _ in 0..<8 {
+                crc = (crc >> 1) ^ ((crc & 1) == 0 ? 0 : 0xb2)
+            }
+        }
+
+        return crc ^ 0xff
+    }
+
+    func toEntropy() throws -> Data {
+        let indecies: [Int32] = words.map { word in
+            legacyWordList.indexOf(word: word).map(Int32.init) ?? -1
+        }
+
+        var data = Self.convertRadix(indecies, from: 4096, to: 256, outputLength: 33).map {
+            UInt8(truncatingIfNeeded: $0)
+        }
+        precondition(data.count == 33)
+
+        let crc = data.popLast()!
+
+        for index in 0..<data.count {
+            data[index] ^= crc
+        }
+
+        let crc2 = Self.crc8(data)
+
+        guard crc == crc2 else {
+            throw HError.mnemonicEntropy(.checksumMismatch(expected: crc2, actual: crc))
+        }
+
+        return Data(data)
+    }
+}
+
+private struct MnemonicV2V3Data: Equatable {
+    let words: [String]
+
+    fileprivate static func fromEntropy(_ entropyIn: Data) -> Self {
+        assert(entropyIn.count == 16 || entropyIn.count == 32, "Invalid entropy length")
+
+        let checksum = checksum(entropyIn)
+
+        let entropy: Data =
+            entropyIn + [entropyIn.count == 16 ? (checksum & 0xf0) : checksum]
+
+        var buffer: UInt32 = 0
+        var offset: UInt8 = 0
+
+        var words: [String] = []
+
+        for byte in entropy {
+            buffer = (buffer << 8) | UInt32(byte)
+            offset += 8
+            if offset >= 11 {
+                let index = Int(buffer >> (offset - 11) & 0x7ff)
+                words.append(String(bip39WordList[index]!))
+                offset -= 11
+            }
+        }
+
+        return Self(words: words)
+    }
+
+    fileprivate static func generate12() -> Self {
+        fromEntropy(.randomData(withLength: 16))
+    }
+
+    fileprivate static func generate24() -> Self {
+        fromEntropy(.randomData(withLength: 32))
+    }
+
+    fileprivate func toLegacyEntropy() throws -> Data {
+        // error here where we'll have more context than `PrivateKey.fromBytes`.
+        guard words.count == 24 else {
+            throw HError.mnemonicEntropy(.badLength(expected: 24, actual: words.count))
+        }
+
+        // technically, this code all works for 12 words, but I'm going to pretend it doesn't.
+        let (entropy, actualChecksum) = wordsToEntropyAndChecksum(words)
+
+        var expectedChecksum = checksum(entropy)
+        expectedChecksum = words.count == 12 ? (expectedChecksum & 0xf0) : expectedChecksum
+
+        guard expectedChecksum == actualChecksum else {
+            throw HError.mnemonicEntropy(.checksumMismatch(expected: expectedChecksum, actual: actualChecksum))
+        }
+
+        return entropy
+    }
+}
+
+private func checksum(_ data: Data) -> UInt8 {
+    return SHA2(variant: .sha256).calculate(for: data.bytes)[0]
+}
+
+private func wordsToEntropyAndChecksum(_ words: [String]) -> (entropy: Data, checksum: UInt8) {
+    inceciesToEntropyAndChecksum(words.map { UInt16(bip39WordList.indexOf(word: $0)!) })
+}
+
+private func inceciesToEntropyAndChecksum(_ indecies: [UInt16]) -> (entropy: Data, checksum: UInt8) {
+    precondition(indecies.count == 12 || indecies.count == 24)
+
+    var output: Data = Data()
+    var buf: UInt32 = 0
+    var offset: UInt8 = 0
+
+    for index in indecies {
+        precondition(index <= 0x7ff)
+
+        buf = (buf << 11) | UInt32(index)
+        offset += 11
+        while offset >= 8 {
+            // we want to truncate.
+            let byte = UInt8(truncatingIfNeeded: buf >> (offset - 8))
+            output.append(byte)
+            offset -= 8
+        }
+    }
+
+    if offset != 0 {
+        output.append(UInt8(truncatingIfNeeded: buf << offset))
+    }
+
+    var checksum = output.popLast()!
+    checksum = indecies.count == 12 ? (checksum & 0xf0) : checksum
+
+    return (output, checksum)
+}
+
+extension Data {
+    fileprivate static func randomData(withLength length: Int) -> Self {
+        Self((0..<length).map { _ in UInt8.random(in: 0...0xff) })
     }
 }

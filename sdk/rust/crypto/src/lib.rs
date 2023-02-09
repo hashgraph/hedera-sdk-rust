@@ -1,6 +1,5 @@
 mod error;
 mod key;
-mod mnemonic;
 
 pub(crate) use error::{
     Error,
@@ -10,6 +9,5 @@ pub(crate) use key::{
     PrivateKey,
     PublicKey,
 };
-pub(crate) use mnemonic::Mnemonic;
 
 mod ffi;

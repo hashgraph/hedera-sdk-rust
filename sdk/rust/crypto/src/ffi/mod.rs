@@ -23,5 +23,4 @@ mod error;
 
 mod c_util;
 mod key;
-mod mnemonic;
 mod util;

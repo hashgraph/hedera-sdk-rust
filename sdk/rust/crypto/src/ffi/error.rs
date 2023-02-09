@@ -53,8 +53,6 @@ pub enum Error {
     Ok,
     KeyParse,
     KeyDerive,
-    MnemonicParse,
-    MnemonicEntropy,
     SignatureVerify,
     WrongKeyType,
 }
@@ -64,8 +62,6 @@ impl Error {
         let err = match &error {
             crate::Error::KeyParse(_) => Self::KeyParse,
             crate::Error::KeyDerive(_) => Self::KeyDerive,
-            crate::Error::MnemonicParse { .. } => Self::MnemonicParse,
-            crate::Error::MnemonicEntropy(_) => Self::MnemonicEntropy,
             crate::Error::SignatureVerify(_) => Self::SignatureVerify,
             crate::Error::WrongKeyType { .. } => Self::WrongKeyType,
         };

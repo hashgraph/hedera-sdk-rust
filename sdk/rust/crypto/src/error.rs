@@ -54,23 +54,6 @@ pub enum Error {
     #[error("Failed to derive a key: {0}")]
     KeyDerive(#[source] BoxStdError),
 
-    /// Failed to parse a [`Mnemonic`](crate::Mnemonic) due to the given `reason`.
-    ///
-    /// the `Mnemonic` is provided because invalid `Mnemonics`
-    /// can technically still provide valid [`PrivateKeys`](crate::PrivateKey).
-    #[error("failed to parse a mnemonic: {reason}")]
-    MnemonicParse {
-        /// This error's source.
-        #[source]
-        reason: MnemonicParseError,
-        /// The `Mnemonic` in question.
-        mnemonic: crate::Mnemonic,
-    },
-
-    /// An error occurred while attempting to convert a [`Mnemonic`](crate::Mnemonic) to a [`PrivateKey`](crate::PrivateKey)
-    #[error("failed to convert a mnemonic to entropy: {0}")]
-    MnemonicEntropy(#[from] MnemonicEntropyError),
-
     /// Failed to verify a signature.
     #[error("failed to verify a signature: {0}")]
     SignatureVerify(#[source] BoxStdError),
@@ -88,54 +71,4 @@ impl Error {
     pub(crate) fn signature_verify(error: impl Into<BoxStdError>) -> Self {
         Self::SignatureVerify(error.into())
     }
-}
-
-/// Failed to parse a mnemonic.
-#[derive(Debug, thiserror::Error)]
-#[non_exhaustive]
-pub enum MnemonicParseError {
-    /// The [`Mnemonic`](crate::Mnemonic) contains an unexpected length.
-    #[error("bad length: expected `12` or `24` words, found `{0}`")]
-    BadLength(usize),
-
-    /// The [`Mnemonic`](crate::Mnemonic) contains words that aren't in the wordlist.
-    #[error("unknown words at indecies: `{0:?}`")]
-    UnknownWords(Vec<usize>),
-
-    /// The [`Mnemonic`](crate::Mnemonic) has an invalid checksum.
-    #[error("checksum mismatch: expected `{expected:02x}`, found `{actual:02x}`")]
-    ChecksumMismatch {
-        /// The checksum that was expected.
-        expected: u8,
-        /// The checksum that was actually found.
-        actual: u8,
-    },
-}
-
-/// Failed to convert a [`Mnemonic`](crate::Mnemonic) to a [`PrivateKey`](crate::PrivateKey)
-// todo: find a better name before release.
-#[derive(Debug, thiserror::Error)]
-#[non_exhaustive]
-pub enum MnemonicEntropyError {
-    /// Encountered a [`Mnemonic`](crate::Mnemonic) of unexpected length.
-    #[error("bad length: expected `{expected}` words, found {actual} words")]
-    BadLength {
-        /// The number of words that were expected (12, 22, or 24)
-        expected: usize,
-        /// The number of words that were actually found.
-        actual: usize,
-    },
-
-    /// The [`Mnemonic`](crate::Mnemonic) has an invalid checksum.
-    #[error("checksum mismatch: expected `{expected:02x}`, found `{actual:02x}`")]
-    ChecksumMismatch {
-        /// The checksum that was expected.
-        expected: u8,
-        /// The checksum that was actually found.
-        actual: u8,
-    },
-
-    /// Used a passphrase with a legacy [`Mnemonic`](crate::Mnemonic).
-    #[error("used a passphrase with a legacy mnemonic")]
-    LegacyWithPassphrase,
 }

@@ -266,22 +266,23 @@ impl MnemonicV1 {
         let data = convert_radix(indecies, 4096, 256, 33);
         let mut data: Vec<_> = data.into_iter().map(|it| it as u8).collect();
 
-        let (crc, data) = data.split_last_mut().unwrap();
+        let crc = data.pop().unwrap();
 
         for item in &mut *data {
-            *item ^= *crc;
+            *item ^= crc;
         }
 
-        let crc2 = crc8(data);
+        let crc2 = crc8(&data);
+
         // checksum mismatch
-        if *crc != crc2 {
+        if crc != crc2 {
             return Err(Error::from(MnemonicEntropyError::ChecksumMismatch {
                 expected: crc2,
-                actual: *crc,
+                actual: crc,
             }));
         }
 
-        Ok(data.to_vec())
+        Ok(data)
     }
 }
 
