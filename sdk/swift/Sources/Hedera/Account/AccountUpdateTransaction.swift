@@ -78,6 +78,8 @@ public final class AccountUpdateTransaction: Transaction {
         stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
         stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
         declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
+        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired)
+        proxyAccountIdInner = try container.decodeIfPresent(.proxyAccountId)
 
         try super.init(from: decoder)
     }
@@ -301,6 +303,7 @@ public final class AccountUpdateTransaction: Transaction {
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
+        try container.encodeIfPresent(accountId, forKey: .accountId)
         try container.encodeIfPresent(key, forKey: .key)
         try container.encodeIfPresent(accountMemo, forKey: .accountMemo)
         try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
@@ -310,6 +313,8 @@ public final class AccountUpdateTransaction: Transaction {
         try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
         try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
         try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
+        try container.encodeIfPresent(receiverSignatureRequired, forKey: .receiverSignatureRequired)
+        try container.encodeIfPresent(proxyAccountIdInner, forKey: .proxyAccountId)
 
         try super.encode(to: encoder)
     }

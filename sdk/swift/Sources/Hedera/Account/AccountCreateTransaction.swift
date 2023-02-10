@@ -56,12 +56,15 @@ public final class AccountCreateTransaction: Transaction {
         key = try container.decodeIfPresent(.key)
         initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
         receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired) ?? false
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
         accountMemo = try container.decodeIfPresent(.accountMemo) ?? ""
+        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
         maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
         stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
         stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
         declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
+        alias = try container.decodeIfPresent(.alias)
+        evmAddress = try container.decodeIfPresent(.evmAddress)
+        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
 
         try super.init(from: decoder)
     }
@@ -279,6 +282,7 @@ public final class AccountCreateTransaction: Transaction {
         try container.encode(declineStakingReward, forKey: .declineStakingReward)
         try container.encodeIfPresent(alias, forKey: .alias)
         try container.encodeIfPresent(evmAddress, forKey: .evmAddress)
+        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
 
         try super.encode(to: encoder)
     }
