@@ -266,7 +266,7 @@ impl TransactionSources {
         }
     }
 
-    pub(super) fn transactions(&self) -> &[services::Transaction] {
+    pub(crate) fn transactions(&self) -> &[services::Transaction] {
         self.transactions.get_or_init(|| {
             self.signed_transactions
                 .iter()
@@ -278,7 +278,7 @@ impl TransactionSources {
         })
     }
 
-    pub(super) fn signed_transactions(&self) -> &[services::SignedTransaction] {
+    pub(crate) fn signed_transactions(&self) -> &[services::SignedTransaction] {
         &self.signed_transactions
     }
 
