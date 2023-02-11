@@ -34,6 +34,7 @@ use crate::transaction::{
     ChunkData,
     ChunkInfo,
     ChunkedTransactionData,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -140,11 +141,9 @@ impl ToTransactionDataProtobuf for TopicMessageSubmitTransactionData {
         &self,
         chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
-        let topic_id = self.topic_id.to_protobuf();
-
         services::transaction_body::Data::ConsensusSubmitMessage(
             services::ConsensusSubmitMessageTransactionBody {
-                topic_id,
+                topic_id: self.topic_id.to_protobuf(),
                 message: self.chunk_data.message_chunk(chunk_info).to_vec(),
                 chunk_info: (chunk_info.total > 1).then(|| services::ConsensusMessageChunkInfo {
                     initial_transaction_id: Some(chunk_info.initial_transaction_id.to_protobuf()),
@@ -153,6 +152,25 @@ impl ToTransactionDataProtobuf for TopicMessageSubmitTransactionData {
                 }),
             },
         )
+    }
+}
+
+impl ToSchedulableTransactionDataProtobuf for TopicMessageSubmitTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        assert!(
+            self.chunk_data.used_chunks() == 1,
+            "Cannot schedule a `TopicMessageSubmitTransaction` with multiple chunks"
+        );
+
+        let data = services::ConsensusSubmitMessageTransactionBody {
+            topic_id: self.topic_id.to_protobuf(),
+            message: self.chunk_data.data.clone(),
+            chunk_info: None,
+        };
+
+        services::schedulable_transaction_body::Data::ConsensusSubmitMessage(data)
     }
 }
 

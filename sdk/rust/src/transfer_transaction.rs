@@ -28,6 +28,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -358,18 +359,15 @@ impl ToTransactionDataProtobuf for TransferTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let transfers = self
-            .transfers
-            .is_empty()
-            .not()
-            .then(|| services::TransferList { account_amounts: self.transfers.to_protobuf() });
+        services::transaction_body::Data::CryptoTransfer(self.to_protobuf())
+    }
+}
 
-        let token_transfers = self.token_transfers.to_protobuf();
-
-        services::transaction_body::Data::CryptoTransfer(services::CryptoTransferTransactionBody {
-            transfers,
-            token_transfers,
-        })
+impl ToSchedulableTransactionDataProtobuf for TransferTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::CryptoTransfer(self.to_protobuf())
     }
 }
 
@@ -385,6 +383,22 @@ impl FromProtobuf<services::CryptoTransferTransactionBody> for TransferTransacti
         let transfers = Option::from_protobuf(transfers)?.unwrap_or_default();
 
         Ok(Self { transfers, token_transfers: Vec::from_protobuf(pb.token_transfers)? })
+    }
+}
+
+impl ToProtobuf for TransferTransactionData {
+    type Protobuf = services::CryptoTransferTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let transfers = self
+            .transfers
+            .is_empty()
+            .not()
+            .then(|| services::TransferList { account_amounts: self.transfers.to_protobuf() });
+
+        let token_transfers = self.token_transfers.to_protobuf();
+
+        services::CryptoTransferTransactionBody { transfers, token_transfers }
     }
 }
 

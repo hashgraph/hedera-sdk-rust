@@ -30,6 +30,7 @@ use crate::token::custom_fees::AnyCustomFee;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -123,12 +124,15 @@ impl ToTransactionDataProtobuf for TokenFeeScheduleUpdateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let token_id = self.token_id.to_protobuf();
-        let custom_fees = self.custom_fees.to_protobuf();
+        services::transaction_body::Data::TokenFeeScheduleUpdate(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenFeeScheduleUpdate(
-            services::TokenFeeScheduleUpdateTransactionBody { token_id, custom_fees },
-        )
+impl ToSchedulableTransactionDataProtobuf for TokenFeeScheduleUpdateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenFeeScheduleUpdate(self.to_protobuf())
     }
 }
 
@@ -146,6 +150,17 @@ impl FromProtobuf<services::TokenFeeScheduleUpdateTransactionBody>
             token_id: Option::from_protobuf(pb.token_id)?,
             custom_fees: Vec::from_protobuf(pb.custom_fees)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenFeeScheduleUpdateTransactionData {
+    type Protobuf = services::TokenFeeScheduleUpdateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenFeeScheduleUpdateTransactionBody {
+            token_id: self.token_id.to_protobuf(),
+            custom_fees: self.custom_fees.to_protobuf(),
+        }
     }
 }
 

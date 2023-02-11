@@ -34,7 +34,7 @@ public final class ScheduleInfo: Codable {
 
     /// The signatories that have provided signatures so far for the schedule
     /// transaction.
-    public let signatories: [Key]
+    public let signatories: KeyList
 
     /// The key which is able to delete the schedule transaction if set.
     public let adminKey: Key?
@@ -43,12 +43,14 @@ public final class ScheduleInfo: Codable {
     /// it executes).
     public let scheduledTransactionId: TransactionId
 
+    private let scheduledTransaction: AnySchedulableTransaction
+
     /// When set to true, the transaction will be evaluated for execution at `expiration_time`
     /// instead of when all required signatures are received.
     public let waitForExpiry: Bool
 
     /// Publicly visible information about the Schedule entity.
-    public let scheduleMemo: String
+    public let memo: String
 
     /// The date and time the schedule transaction will expire
     public let expirationTime: Timestamp?
@@ -60,6 +62,17 @@ public final class ScheduleInfo: Codable {
     public let deletedAt: Timestamp?
 
     public let ledgerId: LedgerId
+
+    /// Returns the transaction associated with this schedule
+    ///
+    /// This function may or may not be O(1)
+    ///
+    /// This function may or may not throw
+    ///
+    /// This function name is not final.
+    public func getScheduledTransaction() throws -> Transaction {
+        self.scheduledTransaction.transaction
+    }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try Self.fromJsonBytes(bytes)

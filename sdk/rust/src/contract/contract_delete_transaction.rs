@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -125,31 +126,15 @@ impl ToTransactionDataProtobuf for ContractDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let delete_contract_id = self.contract_id.to_protobuf();
+        services::transaction_body::Data::ContractDeleteInstance(self.to_protobuf())
+    }
+}
 
-        let obtainers = match (&self.transfer_account_id, &self.transfer_contract_id) {
-            (Some(account_id), None) => {
-                Some(services::contract_delete_transaction_body::Obtainers::TransferAccountId(
-                    account_id.to_protobuf(),
-                ))
-            }
-
-            (None, Some(contract_id)) => {
-                Some(services::contract_delete_transaction_body::Obtainers::TransferContractId(
-                    contract_id.to_protobuf(),
-                ))
-            }
-
-            _ => None,
-        };
-
-        services::transaction_body::Data::ContractDeleteInstance(
-            services::ContractDeleteTransactionBody {
-                contract_id: delete_contract_id,
-                permanent_removal: false,
-                obtainers,
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for ContractDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ContractDeleteInstance(self.to_protobuf())
     }
 }
 
@@ -174,6 +159,36 @@ impl FromProtobuf<services::ContractDeleteTransactionBody> for ContractDeleteTra
 impl From<ContractDeleteTransactionData> for AnyTransactionData {
     fn from(transaction: ContractDeleteTransactionData) -> Self {
         Self::ContractDelete(transaction)
+    }
+}
+
+impl ToProtobuf for ContractDeleteTransactionData {
+    type Protobuf = services::ContractDeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let delete_contract_id = self.contract_id.to_protobuf();
+
+        let obtainers = match (&self.transfer_account_id, &self.transfer_contract_id) {
+            (Some(account_id), None) => {
+                Some(services::contract_delete_transaction_body::Obtainers::TransferAccountId(
+                    account_id.to_protobuf(),
+                ))
+            }
+
+            (None, Some(contract_id)) => {
+                Some(services::contract_delete_transaction_body::Obtainers::TransferContractId(
+                    contract_id.to_protobuf(),
+                ))
+            }
+
+            _ => None,
+        };
+
+        services::ContractDeleteTransactionBody {
+            contract_id: delete_contract_id,
+            permanent_removal: false,
+            obtainers,
+        }
     }
 }
 

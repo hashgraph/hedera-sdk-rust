@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -121,13 +122,15 @@ impl ToTransactionDataProtobuf for TokenFreezeTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account = self.account_id.to_protobuf();
-        let token = self.token_id.to_protobuf();
+        services::transaction_body::Data::TokenFreeze(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenFreeze(services::TokenFreezeAccountTransactionBody {
-            token,
-            account,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenFreezeTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenFreeze(self.to_protobuf())
     }
 }
 
@@ -143,6 +146,17 @@ impl FromProtobuf<services::TokenFreezeAccountTransactionBody> for TokenFreezeTr
             account_id: Option::from_protobuf(pb.account)?,
             token_id: Option::from_protobuf(pb.token)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenFreezeTransactionData {
+    type Protobuf = services::TokenFreezeAccountTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let account = self.account_id.to_protobuf();
+        let token = self.token_id.to_protobuf();
+
+        services::TokenFreezeAccountTransactionBody { token, account }
     }
 }
 

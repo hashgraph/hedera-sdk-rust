@@ -27,6 +27,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -138,16 +139,15 @@ impl ToTransactionDataProtobuf for FreezeTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let start_time = self.start_time.map(Into::into);
-        let file_id = self.file_id.to_protobuf();
+        services::transaction_body::Data::Freeze(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::Freeze(services::FreezeTransactionBody {
-            update_file: file_id,
-            file_hash: self.file_hash.clone().unwrap_or_default(),
-            start_time,
-            freeze_type: self.freeze_type as _,
-            ..Default::default()
-        })
+impl ToSchedulableTransactionDataProtobuf for FreezeTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::Freeze(self.to_protobuf())
     }
 }
 
@@ -165,5 +165,19 @@ impl FromProtobuf<services::FreezeTransactionBody> for FreezeTransactionData {
             file_hash: Some(pb.file_hash),
             freeze_type: FreezeType::from(pb.freeze_type),
         })
+    }
+}
+
+impl ToProtobuf for FreezeTransactionData {
+    type Protobuf = services::FreezeTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::FreezeTransactionBody {
+            update_file: self.file_id.to_protobuf(),
+            file_hash: self.file_hash.clone().unwrap_or_default(),
+            start_time: self.start_time.map(Into::into),
+            freeze_type: self.freeze_type as _,
+            ..Default::default()
+        }
     }
 }

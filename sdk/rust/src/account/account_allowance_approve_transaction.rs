@@ -26,6 +26,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -254,19 +255,15 @@ impl ToTransactionDataProtobuf for AccountAllowanceApproveTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let crypto_allowances = self.hbar_allowances.to_protobuf();
+        services::transaction_body::Data::CryptoApproveAllowance(self.to_protobuf())
+    }
+}
 
-        let token_allowances = self.token_allowances.to_protobuf();
-
-        let nft_allowances = self.nft_allowances.to_protobuf();
-
-        services::transaction_body::Data::CryptoApproveAllowance(
-            services::CryptoApproveAllowanceTransactionBody {
-                crypto_allowances,
-                nft_allowances,
-                token_allowances,
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for AccountAllowanceApproveTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::CryptoApproveAllowance(self.to_protobuf())
     }
 }
 
@@ -285,6 +282,24 @@ impl FromProtobuf<services::CryptoApproveAllowanceTransactionBody>
             token_allowances: Vec::from_protobuf(pb.token_allowances)?,
             nft_allowances: Vec::from_protobuf(pb.nft_allowances)?,
         })
+    }
+}
+
+impl ToProtobuf for AccountAllowanceApproveTransactionData {
+    type Protobuf = services::CryptoApproveAllowanceTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let crypto_allowances = self.hbar_allowances.to_protobuf();
+
+        let token_allowances = self.token_allowances.to_protobuf();
+
+        let nft_allowances = self.nft_allowances.to_protobuf();
+
+        services::CryptoApproveAllowanceTransactionBody {
+            crypto_allowances,
+            nft_allowances,
+            token_allowances,
+        }
     }
 }
 

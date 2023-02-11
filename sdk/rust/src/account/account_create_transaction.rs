@@ -31,6 +31,7 @@ use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -311,42 +312,15 @@ impl ToTransactionDataProtobuf for AccountCreateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let key = self.key.to_protobuf();
-        let auto_renew_period = self.auto_renew_period.to_protobuf();
-        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
-        let staked_id = self.staked_id.map(|it| match it {
-            StakedId::NodeId(id) => {
-                services::crypto_create_transaction_body::StakedId::StakedNodeId(id as i64)
-            }
-            StakedId::AccountId(id) => {
-                services::crypto_create_transaction_body::StakedId::StakedAccountId(
-                    id.to_protobuf(),
-                )
-            }
-        });
+        services::transaction_body::Data::CryptoCreateAccount(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::CryptoCreateAccount(
-            #[allow(deprecated)]
-            services::CryptoCreateTransactionBody {
-                key,
-                initial_balance: self.initial_balance.to_tinybars() as u64,
-                proxy_account_id: None,
-                send_record_threshold: i64::MAX as u64,
-                receive_record_threshold: i64::MAX as u64,
-                receiver_sig_required: self.receiver_signature_required,
-                auto_renew_period,
-                auto_renew_account,
-                shard_id: None,
-                realm_id: None,
-                new_realm_admin_key: None,
-                memo: self.account_memo.clone(),
-                max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
-                alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
-                evm_address: self.evm_address.map_or(vec![], Vec::from),
-                decline_reward: self.decline_staking_reward,
-                staked_id,
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for AccountCreateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::CryptoCreateAccount(self.to_protobuf())
     }
 }
 
@@ -376,6 +350,47 @@ impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransa
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
         })
+    }
+}
+
+impl ToProtobuf for AccountCreateTransactionData {
+    type Protobuf = services::CryptoCreateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let key = self.key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
+        let staked_id = self.staked_id.map(|it| match it {
+            StakedId::NodeId(id) => {
+                services::crypto_create_transaction_body::StakedId::StakedNodeId(id as i64)
+            }
+            StakedId::AccountId(id) => {
+                services::crypto_create_transaction_body::StakedId::StakedAccountId(
+                    id.to_protobuf(),
+                )
+            }
+        });
+
+        #[allow(deprecated)]
+        services::CryptoCreateTransactionBody {
+            key,
+            initial_balance: self.initial_balance.to_tinybars() as u64,
+            proxy_account_id: None,
+            send_record_threshold: i64::MAX as u64,
+            receive_record_threshold: i64::MAX as u64,
+            receiver_sig_required: self.receiver_signature_required,
+            auto_renew_period,
+            auto_renew_account,
+            shard_id: None,
+            realm_id: None,
+            new_realm_admin_key: None,
+            memo: self.account_memo.clone(),
+            max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
+            alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
+            evm_address: self.evm_address.map_or(vec![], Vec::from),
+            decline_reward: self.decline_staking_reward,
+            staked_id,
+        }
     }
 }
 

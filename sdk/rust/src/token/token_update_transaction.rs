@@ -33,6 +33,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -374,23 +375,15 @@ impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        services::transaction_body::Data::TokenUpdate(services::TokenUpdateTransactionBody {
-            token: self.token_id.to_protobuf(),
-            name: self.token_name.clone(),
-            symbol: self.token_symbol.clone(),
-            treasury: self.treasury_account_id.to_protobuf(),
-            admin_key: self.admin_key.to_protobuf(),
-            kyc_key: self.kyc_key.to_protobuf(),
-            freeze_key: self.freeze_key.to_protobuf(),
-            wipe_key: self.wipe_key.to_protobuf(),
-            supply_key: self.supply_key.to_protobuf(),
-            expiry: self.expiration_time.map(Into::into),
-            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
-            auto_renew_period: self.auto_renew_period.map(Into::into),
-            memo: Some(self.token_memo.clone()),
-            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
-            pause_key: self.pause_key.to_protobuf(),
-        })
+        services::transaction_body::Data::TokenUpdate(self.to_protobuf())
+    }
+}
+
+impl ToSchedulableTransactionDataProtobuf for TokenUpdateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenUpdate(self.to_protobuf())
     }
 }
 
@@ -419,6 +412,30 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
             pause_key: Option::from_protobuf(pb.pause_key)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenUpdateTransactionData {
+    type Protobuf = services::TokenUpdateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenUpdateTransactionBody {
+            token: self.token_id.to_protobuf(),
+            name: self.token_name.clone(),
+            symbol: self.token_symbol.clone(),
+            treasury: self.treasury_account_id.to_protobuf(),
+            admin_key: self.admin_key.to_protobuf(),
+            kyc_key: self.kyc_key.to_protobuf(),
+            freeze_key: self.freeze_key.to_protobuf(),
+            wipe_key: self.wipe_key.to_protobuf(),
+            supply_key: self.supply_key.to_protobuf(),
+            expiry: self.expiration_time.map(Into::into),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.map(Into::into),
+            memo: Some(self.token_memo.clone()),
+            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
+            pause_key: self.pause_key.to_protobuf(),
+        }
     }
 }
 

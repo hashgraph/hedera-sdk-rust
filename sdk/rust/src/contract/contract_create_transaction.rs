@@ -28,6 +28,7 @@ use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -299,6 +300,54 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
+        services::transaction_body::Data::ContractCreateInstance(self.to_protobuf())
+    }
+}
+
+impl ToSchedulableTransactionDataProtobuf for ContractCreateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ContractCreateInstance(self.to_protobuf())
+    }
+}
+
+impl From<ContractCreateTransactionData> for AnyTransactionData {
+    fn from(transaction: ContractCreateTransactionData) -> Self {
+        Self::ContractCreate(transaction)
+    }
+}
+
+impl FromProtobuf<services::ContractCreateTransactionBody> for ContractCreateTransactionData {
+    fn from_protobuf(pb: services::ContractCreateTransactionBody) -> crate::Result<Self> {
+        use services::contract_create_transaction_body::InitcodeSource;
+        let (bytecode, bytecode_file_id) = match pb.initcode_source {
+            Some(InitcodeSource::FileId(it)) => (None, Some(FileId::from_protobuf(it)?)),
+            Some(InitcodeSource::Initcode(it)) => (Some(it), None),
+            None => (None, None),
+        };
+
+        Ok(Self {
+            bytecode,
+            bytecode_file_id,
+            admin_key: Option::from_protobuf(pb.admin_key)?,
+            gas: pb.gas as u64,
+            initial_balance: Hbar::from_tinybars(pb.initial_balance),
+            auto_renew_period: pb_getf!(pb, auto_renew_period)?.into(),
+            constructor_parameters: pb.constructor_parameters,
+            contract_memo: pb.memo,
+            max_automatic_token_associations: pb.max_automatic_token_associations as u32,
+            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account_id)?,
+            staked_id: Option::from_protobuf(pb.staked_id)?,
+            decline_staking_reward: pb.decline_reward,
+        })
+    }
+}
+
+impl ToProtobuf for ContractCreateTransactionData {
+    type Protobuf = services::ContractCreateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
         let admin_key = self.admin_key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.into();
         let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
@@ -333,58 +382,24 @@ impl ToTransactionDataProtobuf for ContractCreateTransactionData {
             _ => None,
         };
 
-        services::transaction_body::Data::ContractCreateInstance(
-            #[allow(deprecated)]
-            services::ContractCreateTransactionBody {
-                admin_key,
-                gas: self.gas as i64,
-                initial_balance: self.initial_balance.to_tinybars(),
-                proxy_account_id: None,
-                auto_renew_period: Some(auto_renew_period),
-                constructor_parameters: self.constructor_parameters.clone(),
-                shard_id: None,
-                realm_id: None,
-                new_realm_admin_key: None,
-                memo: self.contract_memo.clone(),
-                max_automatic_token_associations: self.max_automatic_token_associations as i32,
-                auto_renew_account_id,
-                decline_reward: self.decline_staking_reward,
-                initcode_source,
-                staked_id,
-            },
-        )
-    }
-}
-
-impl From<ContractCreateTransactionData> for AnyTransactionData {
-    fn from(transaction: ContractCreateTransactionData) -> Self {
-        Self::ContractCreate(transaction)
-    }
-}
-
-impl FromProtobuf<services::ContractCreateTransactionBody> for ContractCreateTransactionData {
-    fn from_protobuf(pb: services::ContractCreateTransactionBody) -> crate::Result<Self> {
-        use services::contract_create_transaction_body::InitcodeSource;
-        let (bytecode, bytecode_file_id) = match pb.initcode_source {
-            Some(InitcodeSource::FileId(it)) => (None, Some(FileId::from_protobuf(it)?)),
-            Some(InitcodeSource::Initcode(it)) => (Some(it), None),
-            None => (None, None),
-        };
-
-        Ok(Self {
-            bytecode,
-            bytecode_file_id,
-            admin_key: Option::from_protobuf(pb.admin_key)?,
-            gas: pb.gas as u64,
-            initial_balance: Hbar::from_tinybars(pb.initial_balance),
-            auto_renew_period: pb_getf!(pb, auto_renew_period)?.into(),
-            constructor_parameters: pb.constructor_parameters,
-            contract_memo: pb.memo,
-            max_automatic_token_associations: pb.max_automatic_token_associations as u32,
-            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account_id)?,
-            staked_id: Option::from_protobuf(pb.staked_id)?,
-            decline_staking_reward: pb.decline_reward,
-        })
+        #[allow(deprecated)]
+        services::ContractCreateTransactionBody {
+            admin_key,
+            gas: self.gas as i64,
+            initial_balance: self.initial_balance.to_tinybars(),
+            proxy_account_id: None,
+            auto_renew_period: Some(auto_renew_period),
+            constructor_parameters: self.constructor_parameters.clone(),
+            shard_id: None,
+            realm_id: None,
+            new_realm_admin_key: None,
+            memo: self.contract_memo.clone(),
+            max_automatic_token_associations: self.max_automatic_token_associations as i32,
+            auto_renew_account_id,
+            decline_reward: self.decline_staking_reward,
+            initcode_source,
+            staked_id,
+        }
     }
 }
 
