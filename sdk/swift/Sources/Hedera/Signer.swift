@@ -44,7 +44,7 @@ public class Signer {
         self.signFunc = signFunc
     }
 
-    fileprivate let publicKey: PublicKey
+    internal let publicKey: PublicKey
     fileprivate let signFunc: (Data) -> Data
 
     internal func unsafeIntoHederaSigner() -> HederaSigner {

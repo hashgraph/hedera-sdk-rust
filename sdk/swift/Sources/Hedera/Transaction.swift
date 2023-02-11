@@ -21,12 +21,12 @@
 import CHedera
 import Foundation
 
-private final class TransactionSources {
+internal final class TransactionSources {
     fileprivate init(unsafeFromPtr ptr: OpaquePointer) {
         self.ptr = ptr
     }
 
-    fileprivate let ptr: OpaquePointer
+    internal let ptr: OpaquePointer
 
     deinit {
         hedera_transaction_sources_free(ptr)
@@ -37,8 +37,8 @@ private final class TransactionSources {
 public class Transaction: Request, ValidateChecksums, Decodable {
     public init() {}
 
-    private var signers: [Signer] = []
-    private var sources: TransactionSources?
+    internal private(set) var signers: [Signer] = []
+    internal private(set) var sources: TransactionSources?
     public private(set) var isFrozen: Bool = false
 
     public typealias Response = TransactionResponse
