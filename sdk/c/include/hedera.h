@@ -1245,6 +1245,9 @@ bool hedera_public_key_is_ecdsa(struct HederaPublicKey *key);
 enum HederaError hedera_public_key_to_evm_address(struct HederaPublicKey *key,
                                                   char **evm_address);
 
+enum HederaError hedera_public_key_verify_sources(struct HederaPublicKey *key,
+                                                  struct HederaTransactionSources *sources);
+
 /**
  * Releases memory associated with the public key.
  */
