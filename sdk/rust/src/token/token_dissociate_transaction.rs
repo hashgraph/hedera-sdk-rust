@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -129,12 +130,15 @@ impl ToTransactionDataProtobuf for TokenDissociateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account = self.account_id.to_protobuf();
-        let tokens = self.token_ids.to_protobuf();
+        services::transaction_body::Data::TokenDissociate(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenDissociate(
-            services::TokenDissociateTransactionBody { account, tokens },
-        )
+impl ToSchedulableTransactionDataProtobuf for TokenDissociateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenDissociate(self.to_protobuf())
     }
 }
 
@@ -150,6 +154,17 @@ impl FromProtobuf<services::TokenDissociateTransactionBody> for TokenDissociateT
             account_id: Option::from_protobuf(pb.account)?,
             token_ids: Vec::from_protobuf(pb.tokens)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenDissociateTransactionData {
+    type Protobuf = services::TokenDissociateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let account = self.account_id.to_protobuf();
+        let tokens = self.token_ids.to_protobuf();
+
+        services::TokenDissociateTransactionBody { account, tokens }
     }
 }
 

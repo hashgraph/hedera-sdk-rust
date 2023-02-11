@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -113,13 +114,15 @@ impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account_id = self.account_id.to_protobuf();
-        let transfer_account_id = self.transfer_account_id.to_protobuf();
+        services::transaction_body::Data::CryptoDelete(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::CryptoDelete(services::CryptoDeleteTransactionBody {
-            transfer_account_id,
-            delete_account_id: account_id,
-        })
+impl ToSchedulableTransactionDataProtobuf for AccountDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::CryptoDelete(self.to_protobuf())
     }
 }
 
@@ -135,6 +138,17 @@ impl FromProtobuf<services::CryptoDeleteTransactionBody> for AccountDeleteTransa
             transfer_account_id: Option::from_protobuf(pb.transfer_account_id)?,
             account_id: Option::from_protobuf(pb.delete_account_id)?,
         })
+    }
+}
+
+impl ToProtobuf for AccountDeleteTransactionData {
+    type Protobuf = services::CryptoDeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let account_id = self.account_id.to_protobuf();
+        let transfer_account_id = self.transfer_account_id.to_protobuf();
+
+        services::CryptoDeleteTransactionBody { transfer_account_id, delete_account_id: account_id }
     }
 }
 

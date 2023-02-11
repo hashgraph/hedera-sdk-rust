@@ -31,6 +31,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -148,26 +149,15 @@ impl ToTransactionDataProtobuf for SystemDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let expiration_time = self.expiration_time.map(Into::into);
-        let contract_id = self.contract_id.to_protobuf();
-        let file_id = self.file_id.to_protobuf();
+        services::transaction_body::Data::SystemDelete(self.to_protobuf())
+    }
+}
 
-        let id = match (contract_id, file_id) {
-            (Some(contract_id), _) => {
-                Some(services::system_delete_transaction_body::Id::ContractId(contract_id))
-            }
-
-            (_, Some(file_id)) => {
-                Some(services::system_delete_transaction_body::Id::FileId(file_id))
-            }
-
-            _ => None,
-        };
-
-        services::transaction_body::Data::SystemDelete(services::SystemDeleteTransactionBody {
-            expiration_time,
-            id,
-        })
+impl ToSchedulableTransactionDataProtobuf for SystemDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::SystemDelete(self.to_protobuf())
     }
 }
 
@@ -187,5 +177,29 @@ impl FromProtobuf<services::SystemDeleteTransactionBody> for SystemDeleteTransac
         };
 
         Ok(Self { file_id, contract_id, expiration_time: pb.expiration_time.map(Into::into) })
+    }
+}
+
+impl ToProtobuf for SystemDeleteTransactionData {
+    type Protobuf = services::SystemDeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let expiration_time = self.expiration_time.map(Into::into);
+        let contract_id = self.contract_id.to_protobuf();
+        let file_id = self.file_id.to_protobuf();
+
+        let id = match (contract_id, file_id) {
+            (Some(contract_id), _) => {
+                Some(services::system_delete_transaction_body::Id::ContractId(contract_id))
+            }
+
+            (_, Some(file_id)) => {
+                Some(services::system_delete_transaction_body::Id::FileId(file_id))
+            }
+
+            _ => None,
+        };
+
+        services::SystemDeleteTransactionBody { expiration_time, id }
     }
 }

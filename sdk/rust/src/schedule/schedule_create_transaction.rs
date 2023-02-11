@@ -18,16 +18,12 @@
  * ‍
  */
 
+use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
-use hedera_proto::services::transaction_body::Data;
-use hedera_proto::services::{
-    self,
-    schedulable_transaction_body,
-    transaction_body,
-};
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
+use super::schedulable_transaction_body::SchedulableTransactionBody;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -35,6 +31,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -43,7 +40,6 @@ use crate::{
     AccountId,
     BoxGrpcFuture,
     Error,
-    Hbar,
     Key,
     LedgerId,
     Transaction,
@@ -81,20 +77,6 @@ pub struct ScheduleCreateTransactionData {
     wait_for_expiry: bool,
 }
 
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-struct SchedulableTransactionBody {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    data: Box<AnyTransactionData>,
-
-    #[cfg_attr(feature = "ffi", serde(default))]
-    max_transaction_fee: Option<Hbar>,
-
-    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "String::is_empty"))]
-    transaction_memo: String,
-}
-
 impl ScheduleCreateTransaction {
     // note(sr): not sure what the right way to go about this is?
     // pub fn get_scheduled_transaction(&self) -> Option<&SchedulableTransactionBody> {
@@ -108,10 +90,13 @@ impl ScheduleCreateTransaction {
     {
         let body = transaction.into_body();
 
+        // this gets infered right but `foo.into().try_into()` looks really really weird.
+        let data: AnyTransactionData = body.data.into();
+
         self.data_mut().scheduled_transaction = Some(SchedulableTransactionBody {
             max_transaction_fee: body.max_transaction_fee,
             transaction_memo: body.transaction_memo,
-            data: Box::new(body.data.into()),
+            data: Box::new(data.try_into().unwrap()),
         });
 
         self
@@ -203,159 +188,17 @@ impl ValidateChecksums for ScheduleCreateTransactionData {
 impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
     // not really anything I can do about this
     #[allow(clippy::too_many_lines)]
-    fn to_transaction_data_protobuf(&self, chunk_info: &ChunkInfo) -> transaction_body::Data {
-        let body = self.scheduled_transaction.as_ref().map(|scheduled| {
-            assert!(chunk_info.total == 1);
-            let data = scheduled.data.to_transaction_data_protobuf(chunk_info);
+    fn to_transaction_data_protobuf(
+        &self,
+        chunk_info: &ChunkInfo,
+    ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
 
-            #[allow(clippy::match_same_arms)]
-            let data = match data {
-                transaction_body::Data::ConsensusCreateTopic(data) => {
-                    Some(schedulable_transaction_body::Data::ConsensusCreateTopic(data))
-                }
-                transaction_body::Data::ContractCreateInstance(data) => {
-                    Some(schedulable_transaction_body::Data::ContractCreateInstance(data))
-                }
-                transaction_body::Data::ContractUpdateInstance(data) => {
-                    Some(schedulable_transaction_body::Data::ContractUpdateInstance(data))
-                }
-                transaction_body::Data::ContractDeleteInstance(data) => {
-                    Some(schedulable_transaction_body::Data::ContractDeleteInstance(data))
-                }
-                transaction_body::Data::EthereumTransaction(_) => {
-                    // NOTE: cannot schedule a EthereumTransaction transaction
-                    None
-                }
-                transaction_body::Data::CryptoAddLiveHash(_) => {
-                    // NOTE: cannot schedule a CryptoAddLiveHash transaction
-                    None
-                }
-                transaction_body::Data::CryptoApproveAllowance(data) => {
-                    Some(schedulable_transaction_body::Data::CryptoApproveAllowance(data))
-                }
-                transaction_body::Data::CryptoDeleteAllowance(data) => {
-                    Some(schedulable_transaction_body::Data::CryptoDeleteAllowance(data))
-                }
-                transaction_body::Data::CryptoCreateAccount(data) => {
-                    Some(schedulable_transaction_body::Data::CryptoCreateAccount(data))
-                }
-                transaction_body::Data::CryptoDelete(data) => {
-                    Some(schedulable_transaction_body::Data::CryptoDelete(data))
-                }
-                transaction_body::Data::CryptoDeleteLiveHash(_) => {
-                    // NOTE: cannot schedule a CryptoDeleteLiveHash transaction
-                    None
-                }
-                transaction_body::Data::CryptoTransfer(data) => {
-                    Some(schedulable_transaction_body::Data::CryptoTransfer(data))
-                }
-                transaction_body::Data::CryptoUpdateAccount(data) => {
-                    Some(schedulable_transaction_body::Data::CryptoUpdateAccount(data))
-                }
-                transaction_body::Data::FileAppend(data) => {
-                    Some(schedulable_transaction_body::Data::FileAppend(data))
-                }
-                transaction_body::Data::FileCreate(data) => {
-                    Some(schedulable_transaction_body::Data::FileCreate(data))
-                }
-                transaction_body::Data::FileDelete(data) => {
-                    Some(schedulable_transaction_body::Data::FileDelete(data))
-                }
-                transaction_body::Data::FileUpdate(data) => {
-                    Some(schedulable_transaction_body::Data::FileUpdate(data))
-                }
-                transaction_body::Data::SystemDelete(data) => {
-                    Some(schedulable_transaction_body::Data::SystemDelete(data))
-                }
-                transaction_body::Data::SystemUndelete(data) => {
-                    Some(schedulable_transaction_body::Data::SystemUndelete(data))
-                }
-                transaction_body::Data::Freeze(data) => {
-                    Some(schedulable_transaction_body::Data::Freeze(data))
-                }
-                transaction_body::Data::ConsensusUpdateTopic(data) => {
-                    Some(schedulable_transaction_body::Data::ConsensusUpdateTopic(data))
-                }
-                transaction_body::Data::ConsensusDeleteTopic(data) => {
-                    Some(schedulable_transaction_body::Data::ConsensusDeleteTopic(data))
-                }
-                transaction_body::Data::ConsensusSubmitMessage(data) => {
-                    Some(schedulable_transaction_body::Data::ConsensusSubmitMessage(data))
-                }
-                transaction_body::Data::UncheckedSubmit(_) => {
-                    // NOTE: cannot schedule a UncheckedSubmit transaction
-                    None
-                }
-                transaction_body::Data::TokenCreation(data) => {
-                    Some(schedulable_transaction_body::Data::TokenCreation(data))
-                }
-                transaction_body::Data::TokenFreeze(data) => {
-                    Some(schedulable_transaction_body::Data::TokenFreeze(data))
-                }
-                transaction_body::Data::TokenUnfreeze(data) => {
-                    Some(schedulable_transaction_body::Data::TokenUnfreeze(data))
-                }
-                transaction_body::Data::TokenGrantKyc(data) => {
-                    Some(schedulable_transaction_body::Data::TokenGrantKyc(data))
-                }
-                transaction_body::Data::TokenRevokeKyc(data) => {
-                    Some(schedulable_transaction_body::Data::TokenRevokeKyc(data))
-                }
-                transaction_body::Data::TokenDeletion(data) => {
-                    Some(schedulable_transaction_body::Data::TokenDeletion(data))
-                }
-                transaction_body::Data::TokenUpdate(data) => {
-                    Some(schedulable_transaction_body::Data::TokenUpdate(data))
-                }
-                transaction_body::Data::TokenMint(data) => {
-                    Some(schedulable_transaction_body::Data::TokenMint(data))
-                }
-                transaction_body::Data::TokenBurn(data) => {
-                    Some(schedulable_transaction_body::Data::TokenBurn(data))
-                }
-                transaction_body::Data::TokenWipe(data) => {
-                    Some(schedulable_transaction_body::Data::TokenWipe(data))
-                }
-                transaction_body::Data::TokenAssociate(data) => {
-                    Some(schedulable_transaction_body::Data::TokenAssociate(data))
-                }
-                transaction_body::Data::TokenDissociate(data) => {
-                    Some(schedulable_transaction_body::Data::TokenDissociate(data))
-                }
-                transaction_body::Data::TokenFeeScheduleUpdate(data) => {
-                    Some(schedulable_transaction_body::Data::TokenFeeScheduleUpdate(data))
-                }
-                transaction_body::Data::TokenPause(data) => {
-                    Some(schedulable_transaction_body::Data::TokenPause(data))
-                }
-                transaction_body::Data::TokenUnpause(data) => {
-                    Some(schedulable_transaction_body::Data::TokenUnpause(data))
-                }
-                transaction_body::Data::ScheduleCreate(_) => {
-                    // NOTE: cannot schedule a ScheduleCreate transaction
-                    None
-                }
-                transaction_body::Data::ScheduleDelete(data) => {
-                    Some(schedulable_transaction_body::Data::ScheduleDelete(data))
-                }
-                transaction_body::Data::ScheduleSign(_) => {
-                    // NOTE: cannot schedule a ScheduleSign transaction
-                    None
-                }
-                transaction_body::Data::ContractCall(data) => {
-                    Some(schedulable_transaction_body::Data::ContractCall(data))
-                }
-                // TODO: implement these
-                Data::NodeStakeUpdate(_) => {
-                    unimplemented!("NodeStakeUpdate has not been implemented")
-                }
-                Data::UtilPrng(_) => {
-                    unimplemented!("UtilPrng has not been implemented")
-                }
-            };
+        let body = self.scheduled_transaction.as_ref().map(|scheduled| {
+            let data = scheduled.data.to_schedulable_transaction_data_protobuf();
 
             services::SchedulableTransactionBody {
-                data,
+                data: Some(data),
                 memo: scheduled.transaction_memo.clone(),
                 // FIXME: does not use the client to default the max transaction fee
                 transaction_fee: scheduled
@@ -369,7 +212,7 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
         let admin_key = self.admin_key.to_protobuf();
         let expiration_time = self.expiration_time.map(Into::into);
 
-        transaction_body::Data::ScheduleCreate(services::ScheduleCreateTransactionBody {
+        services::transaction_body::Data::ScheduleCreate(services::ScheduleCreateTransactionBody {
             scheduled_transaction_body: body,
             memo: self.schedule_memo.clone().unwrap_or_default(),
             admin_key,
@@ -383,59 +226,6 @@ impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
 impl From<ScheduleCreateTransactionData> for AnyTransactionData {
     fn from(transaction: ScheduleCreateTransactionData) -> Self {
         Self::ScheduleCreate(transaction)
-    }
-}
-
-impl FromProtobuf<services::SchedulableTransactionBody> for SchedulableTransactionBody {
-    fn from_protobuf(pb: services::SchedulableTransactionBody) -> crate::Result<Self> {
-        use schedulable_transaction_body::Data;
-        let data = pb_getf!(pb, data)?;
-        let data = match data {
-            Data::ContractCall(it) => transaction_body::Data::ContractCall(it),
-            Data::ContractCreateInstance(it) => transaction_body::Data::ContractCreateInstance(it),
-            Data::ContractUpdateInstance(it) => transaction_body::Data::ContractUpdateInstance(it),
-            Data::ContractDeleteInstance(it) => transaction_body::Data::ContractDeleteInstance(it),
-            Data::CryptoApproveAllowance(it) => transaction_body::Data::CryptoApproveAllowance(it),
-            Data::CryptoDeleteAllowance(it) => transaction_body::Data::CryptoDeleteAllowance(it),
-            Data::CryptoCreateAccount(it) => transaction_body::Data::CryptoCreateAccount(it),
-            Data::CryptoDelete(it) => transaction_body::Data::CryptoDelete(it),
-            Data::CryptoTransfer(it) => transaction_body::Data::CryptoTransfer(it),
-            Data::CryptoUpdateAccount(it) => transaction_body::Data::CryptoUpdateAccount(it),
-            Data::FileAppend(it) => transaction_body::Data::FileAppend(it),
-            Data::FileCreate(it) => transaction_body::Data::FileCreate(it),
-            Data::FileDelete(it) => transaction_body::Data::FileDelete(it),
-            Data::FileUpdate(it) => transaction_body::Data::FileUpdate(it),
-            Data::SystemDelete(it) => transaction_body::Data::SystemDelete(it),
-            Data::SystemUndelete(it) => transaction_body::Data::SystemUndelete(it),
-            Data::Freeze(it) => transaction_body::Data::Freeze(it),
-            Data::ConsensusCreateTopic(it) => transaction_body::Data::ConsensusCreateTopic(it),
-            Data::ConsensusUpdateTopic(it) => transaction_body::Data::ConsensusUpdateTopic(it),
-            Data::ConsensusDeleteTopic(it) => transaction_body::Data::ConsensusDeleteTopic(it),
-            Data::ConsensusSubmitMessage(it) => transaction_body::Data::ConsensusSubmitMessage(it),
-            Data::TokenCreation(it) => transaction_body::Data::TokenCreation(it),
-            Data::TokenFreeze(it) => transaction_body::Data::TokenFreeze(it),
-            Data::TokenUnfreeze(it) => transaction_body::Data::TokenUnfreeze(it),
-            Data::TokenGrantKyc(it) => transaction_body::Data::TokenGrantKyc(it),
-            Data::TokenRevokeKyc(it) => transaction_body::Data::TokenRevokeKyc(it),
-            Data::TokenDeletion(it) => transaction_body::Data::TokenDeletion(it),
-            Data::TokenUpdate(it) => transaction_body::Data::TokenUpdate(it),
-            Data::TokenMint(it) => transaction_body::Data::TokenMint(it),
-            Data::TokenBurn(it) => transaction_body::Data::TokenBurn(it),
-            Data::TokenWipe(it) => transaction_body::Data::TokenWipe(it),
-            Data::TokenAssociate(it) => transaction_body::Data::TokenAssociate(it),
-            Data::TokenDissociate(it) => transaction_body::Data::TokenDissociate(it),
-            Data::TokenFeeScheduleUpdate(it) => transaction_body::Data::TokenFeeScheduleUpdate(it),
-            Data::TokenPause(it) => transaction_body::Data::TokenPause(it),
-            Data::TokenUnpause(it) => transaction_body::Data::TokenUnpause(it),
-            Data::ScheduleDelete(it) => transaction_body::Data::ScheduleDelete(it),
-            Data::UtilPrng(it) => transaction_body::Data::UtilPrng(it),
-        };
-
-        Ok(Self {
-            data: Box::new(AnyTransactionData::from_protobuf(data)?),
-            max_transaction_fee: Some(Hbar::from_tinybars(pb.transaction_fee as i64)),
-            transaction_memo: pb.memo,
-        })
     }
 }
 

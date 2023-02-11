@@ -1,4 +1,4 @@
-public struct KeyList: Codable, ExpressibleByArrayLiteral, Equatable {
+public struct KeyList: ExpressibleByArrayLiteral, Equatable {
     public typealias ArrayLiteralElement = Key
 
     public var keys: [Key]
@@ -36,4 +36,19 @@ extension KeyList: Collection, RandomAccessCollection {
 
     public var startIndex: Int { keys.startIndex }
     public var endIndex: Int { keys.endIndex }
+}
+
+extension KeyList: Codable {
+    private enum CodingKeys: CodingKey {
+        case keys
+        case threshold
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            keys: try container.decodeIfPresent(.keys) ?? [],
+            threshold: try container.decodeIfPresent(.threshold)
+        )
+    }
 }

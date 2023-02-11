@@ -34,6 +34,7 @@ use crate::transaction::{
     ChunkData,
     ChunkInfo,
     ChunkedTransactionData,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -132,12 +133,25 @@ impl ToTransactionDataProtobuf for FileAppendTransactionData {
         &self,
         chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
-        let file_id = self.file_id.to_protobuf();
-
         services::transaction_body::Data::FileAppend(services::FileAppendTransactionBody {
-            file_id,
+            file_id: self.file_id.to_protobuf(),
             contents: self.chunk_data.message_chunk(chunk_info).to_vec(),
         })
+    }
+}
+
+impl ToSchedulableTransactionDataProtobuf for FileAppendTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        assert!(self.chunk_data.used_chunks() == 1);
+
+        services::schedulable_transaction_body::Data::FileAppend(
+            services::FileAppendTransactionBody {
+                file_id: self.file_id.to_protobuf(),
+                contents: self.chunk_data.data.clone(),
+            },
+        )
     }
 }
 

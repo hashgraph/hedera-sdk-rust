@@ -31,6 +31,7 @@ use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -254,47 +255,15 @@ impl ToTransactionDataProtobuf for ContractUpdateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let contract_id = self.contract_id.to_protobuf();
-        let expiration_time = self.expiration_time.map(Into::into);
-        let admin_key = self.admin_key.to_protobuf();
-        let auto_renew_period = self.auto_renew_period.map(Into::into);
-        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
+        services::transaction_body::Data::ContractUpdateInstance(self.to_protobuf())
+    }
+}
 
-        let staked_id = self.staked_id.map(|id| match id {
-            StakedId::NodeId(id) => {
-                services::contract_update_transaction_body::StakedId::StakedNodeId(id as i64)
-            }
-
-            StakedId::AccountId(id) => {
-                services::contract_update_transaction_body::StakedId::StakedAccountId(
-                    id.to_protobuf(),
-                )
-            }
-        });
-
-        let memo_field = self
-            .contract_memo
-            .clone()
-            .map(services::contract_update_transaction_body::MemoField::MemoWrapper);
-
-        services::transaction_body::Data::ContractUpdateInstance(
-            #[allow(deprecated)]
-            services::ContractUpdateTransactionBody {
-                contract_id,
-                expiration_time,
-                admin_key,
-                proxy_account_id: self.proxy_account_id.to_protobuf(),
-                auto_renew_period,
-                max_automatic_token_associations: self
-                    .max_automatic_token_associations
-                    .map(|max| max as i32),
-                auto_renew_account_id,
-                decline_reward: self.decline_staking_reward,
-                staked_id,
-                file_id: None,
-                memo_field,
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for ContractUpdateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ContractUpdateInstance(self.to_protobuf())
     }
 }
 
@@ -320,6 +289,52 @@ impl FromProtobuf<services::ContractUpdateTransactionBody> for ContractUpdateTra
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
         })
+    }
+}
+
+impl ToProtobuf for ContractUpdateTransactionData {
+    type Protobuf = services::ContractUpdateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let contract_id = self.contract_id.to_protobuf();
+        let expiration_time = self.expiration_time.map(Into::into);
+        let admin_key = self.admin_key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.map(Into::into);
+        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
+
+        let staked_id = self.staked_id.map(|id| match id {
+            StakedId::NodeId(id) => {
+                services::contract_update_transaction_body::StakedId::StakedNodeId(id as i64)
+            }
+
+            StakedId::AccountId(id) => {
+                services::contract_update_transaction_body::StakedId::StakedAccountId(
+                    id.to_protobuf(),
+                )
+            }
+        });
+
+        let memo_field = self
+            .contract_memo
+            .clone()
+            .map(services::contract_update_transaction_body::MemoField::MemoWrapper);
+
+        #[allow(deprecated)]
+        services::ContractUpdateTransactionBody {
+            contract_id,
+            expiration_time,
+            admin_key,
+            proxy_account_id: self.proxy_account_id.to_protobuf(),
+            auto_renew_period,
+            max_automatic_token_associations: self
+                .max_automatic_token_associations
+                .map(|max| max as i32),
+            auto_renew_account_id,
+            decline_reward: self.decline_staking_reward,
+            staked_id,
+            file_id: None,
+            memo_field,
+        }
     }
 }
 

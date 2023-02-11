@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -92,11 +93,15 @@ impl ToTransactionDataProtobuf for ScheduleDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let schedule_id = self.schedule_id.to_protobuf();
+        services::transaction_body::Data::ScheduleDelete(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::ScheduleDelete(services::ScheduleDeleteTransactionBody {
-            schedule_id,
-        })
+impl ToSchedulableTransactionDataProtobuf for ScheduleDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ScheduleDelete(self.to_protobuf())
     }
 }
 
@@ -109,5 +114,13 @@ impl From<ScheduleDeleteTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::ScheduleDeleteTransactionBody> for ScheduleDeleteTransactionData {
     fn from_protobuf(pb: services::ScheduleDeleteTransactionBody) -> crate::Result<Self> {
         Ok(Self { schedule_id: Option::from_protobuf(pb.schedule_id)? })
+    }
+}
+
+impl ToProtobuf for ScheduleDeleteTransactionData {
+    type Protobuf = services::ScheduleDeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ScheduleDeleteTransactionBody { schedule_id: self.schedule_id.to_protobuf() }
     }
 }

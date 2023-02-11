@@ -34,6 +34,7 @@ use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -311,49 +312,15 @@ impl ToTransactionDataProtobuf for AccountUpdateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account_id = self.account_id.to_protobuf();
-        let key = self.key.to_protobuf();
-        let auto_renew_period = self.auto_renew_period.to_protobuf();
-        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
-        let expiration_time = self.expiration_time.to_protobuf();
+        services::transaction_body::Data::CryptoUpdateAccount(self.to_protobuf())
+    }
+}
 
-        let receiver_signature_required = self.receiver_signature_required.map(|required| {
-            services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
-        });
-
-        let staked_id = self.staked_id.map(|id| match id {
-            StakedId::NodeId(id) => {
-                services::crypto_update_transaction_body::StakedId::StakedNodeId(id as i64)
-            }
-            StakedId::AccountId(id) => {
-                services::crypto_update_transaction_body::StakedId::StakedAccountId(
-                    id.to_protobuf(),
-                )
-            }
-        });
-
-        services::transaction_body::Data::CryptoUpdateAccount(
-            #[allow(deprecated)]
-            services::CryptoUpdateTransactionBody {
-                account_id_to_update: account_id,
-                key,
-                proxy_account_id: self.proxy_account_id.to_protobuf(),
-                proxy_fraction: 0,
-                auto_renew_period,
-                auto_renew_account,
-                expiration_time,
-                memo: self.account_memo.clone(),
-                max_automatic_token_associations: self
-                    .max_automatic_token_associations
-                    .map(Into::into),
-                decline_reward: self.decline_staking_reward,
-                send_record_threshold_field: None,
-                receive_record_threshold_field: None,
-                receiver_sig_required_field: receiver_signature_required,
-                staked_id,
-                virtual_address_update: None, // TODO
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for AccountUpdateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::CryptoUpdateAccount(self.to_protobuf())
     }
 }
 
@@ -391,6 +358,51 @@ impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransa
     }
 }
 
+impl ToProtobuf for AccountUpdateTransactionData {
+    type Protobuf = services::CryptoUpdateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let account_id = self.account_id.to_protobuf();
+        let key = self.key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.to_protobuf();
+        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
+        let expiration_time = self.expiration_time.to_protobuf();
+
+        let receiver_signature_required = self.receiver_signature_required.map(|required| {
+            services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(required)
+        });
+
+        let staked_id = self.staked_id.map(|id| match id {
+            StakedId::NodeId(id) => {
+                services::crypto_update_transaction_body::StakedId::StakedNodeId(id as i64)
+            }
+            StakedId::AccountId(id) => {
+                services::crypto_update_transaction_body::StakedId::StakedAccountId(
+                    id.to_protobuf(),
+                )
+            }
+        });
+
+        #[allow(deprecated)]
+        services::CryptoUpdateTransactionBody {
+            account_id_to_update: account_id,
+            key,
+            proxy_account_id: self.proxy_account_id.to_protobuf(),
+            proxy_fraction: 0,
+            auto_renew_period,
+            auto_renew_account,
+            expiration_time,
+            memo: self.account_memo.clone(),
+            max_automatic_token_associations: self.max_automatic_token_associations.map(Into::into),
+            decline_reward: self.decline_staking_reward,
+            send_record_threshold_field: None,
+            receive_record_threshold_field: None,
+            receiver_sig_required_field: receiver_signature_required,
+            staked_id,
+            virtual_address_update: None, // TODO
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "ffi")]

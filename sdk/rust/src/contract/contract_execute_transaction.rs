@@ -26,6 +26,7 @@ use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -149,17 +150,15 @@ impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let contract_id = self.contract_id.to_protobuf();
+        services::transaction_body::Data::ContractCall(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::ContractCall(
-            #[allow(deprecated)]
-            services::ContractCallTransactionBody {
-                gas: self.gas as i64,
-                amount: self.payable_amount.to_tinybars(),
-                contract_id,
-                function_parameters: self.function_parameters.clone(),
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for ContractExecuteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ContractCall(self.to_protobuf())
     }
 }
 
@@ -183,6 +182,19 @@ impl FromProtobuf<services::ContractCallTransactionBody> for ContractExecuteTran
     }
 }
 
+impl ToProtobuf for ContractExecuteTransactionData {
+    type Protobuf = services::ContractCallTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        #[allow(deprecated)]
+        services::ContractCallTransactionBody {
+            gas: self.gas as i64,
+            amount: self.payable_amount.to_tinybars(),
+            contract_id: self.contract_id.to_protobuf(),
+            function_parameters: self.function_parameters.clone(),
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "ffi")]

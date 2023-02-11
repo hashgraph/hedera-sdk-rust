@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -101,11 +102,15 @@ impl ToTransactionDataProtobuf for TokenDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let token = self.token_id.to_protobuf();
+        services::transaction_body::Data::TokenDeletion(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenDeletion(services::TokenDeleteTransactionBody {
-            token,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenDeletion(self.to_protobuf())
     }
 }
 
@@ -120,6 +125,15 @@ impl FromProtobuf<services::TokenDeleteTransactionBody> for TokenDeleteTransacti
         Ok(Self { token_id: Option::from_protobuf(pb.token)? })
     }
 }
+
+impl ToProtobuf for TokenDeleteTransactionData {
+    type Protobuf = services::TokenDeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenDeleteTransactionBody { token: self.token_id.to_protobuf() }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     #[cfg(feature = "ffi")]

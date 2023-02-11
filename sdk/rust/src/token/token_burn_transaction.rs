@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -145,15 +146,15 @@ impl ToTransactionDataProtobuf for TokenBurnTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let token = self.token_id.to_protobuf();
-        let amount = self.amount;
-        let serial_numbers = self.serials.clone();
+        services::transaction_body::Data::TokenBurn(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenBurn(services::TokenBurnTransactionBody {
-            token,
-            amount,
-            serial_numbers,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenBurnTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenBurn(self.to_protobuf())
     }
 }
 
@@ -170,6 +171,18 @@ impl FromProtobuf<services::TokenBurnTransactionBody> for TokenBurnTransactionDa
             amount: pb.amount,
             serials: pb.serial_numbers,
         })
+    }
+}
+
+impl ToProtobuf for TokenBurnTransactionData {
+    type Protobuf = services::TokenBurnTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let token = self.token_id.to_protobuf();
+        let amount = self.amount;
+        let serial_numbers = self.serials.clone();
+
+        services::TokenBurnTransactionBody { token, amount, serial_numbers }
     }
 }
 

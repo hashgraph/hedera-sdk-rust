@@ -18,6 +18,7 @@
  * ‍
  */
 
+mod schedulable_transaction_body;
 mod schedule_create_transaction;
 mod schedule_delete_transaction;
 mod schedule_id;
