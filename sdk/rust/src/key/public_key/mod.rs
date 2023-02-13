@@ -43,10 +43,13 @@ use sha2::Digest;
 
 use crate::key::private_key::ED25519_OID;
 use crate::protobuf::ToProtobuf;
+use crate::signer::AnySigner;
+use crate::transaction::TransactionSources;
 use crate::{
     AccountId,
     Error,
     FromProtobuf,
+    Transaction,
 };
 
 #[cfg(test)]
@@ -344,6 +347,64 @@ impl PublicKey {
                     .map_err(Error::signature_verify)
             }
         }
+    }
+
+    pub(crate) fn verify_transaction_sources(
+        &self,
+        sources: &TransactionSources,
+    ) -> crate::Result<()> {
+        let pk_bytes = self.to_bytes_raw();
+
+        for (transaction, signed_transaction) in
+            sources.transactions().iter().zip(sources.signed_transactions())
+        {
+            let mut found = false;
+            for sig_pair in
+                signed_transaction.sig_map.as_ref().map_or_else(|| [].as_slice(), |it| &it.sig_pair)
+            {
+                if !pk_bytes.starts_with(&sig_pair.pub_key_prefix) {
+                    continue;
+                }
+
+                found = true;
+
+                let sig = match &sig_pair.signature {
+                    Some(services::signature_pair::Signature::EcdsaSecp256k1(it)) => it,
+                    Some(services::signature_pair::Signature::Ed25519(it)) => it,
+                    _ => {
+                        return Err(Error::signature_verify(
+                            "Unsupported transaction signature type",
+                        ))
+                    }
+                };
+
+                self.verify(&transaction.signed_transaction_bytes, sig)?;
+            }
+
+            if !found {
+                return Err(Error::signature_verify("signer not in transaction"));
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Returns `Ok(())` if this public key has signed the given transaction.
+    pub fn verify_transaction<D: crate::transaction::TransactionExecute>(
+        &self,
+        transaction: &mut Transaction<D>,
+    ) -> crate::Result<()> {
+        if transaction.signers().map(AnySigner::public_key).any(|it| self == &it) {
+            return Ok(());
+        }
+
+        transaction.freeze()?;
+
+        let Some(sources) = transaction.sources() else {
+            return Err(Error::signature_verify("signer not in transaction"))
+        };
+
+        self.verify_transaction_sources(sources)
     }
 
     #[must_use]

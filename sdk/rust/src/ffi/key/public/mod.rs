@@ -31,6 +31,7 @@ use super::{
     to_bytes,
 };
 use crate::ffi::error::Error;
+use crate::transaction::TransactionSources;
 use crate::PublicKey;
 
 #[cfg(test)]
@@ -416,6 +417,19 @@ pub unsafe extern "C" fn hedera_public_key_to_evm_address(
     let out = CString::new(out).unwrap();
 
     unsafe { evm_address.write(out.into_raw()) }
+
+    Error::Ok
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_public_key_verify_sources(
+    key: *mut PublicKey,
+    sources: *mut TransactionSources,
+) -> Error {
+    let key = unsafe { key.as_ref() }.unwrap();
+    let sources = unsafe { sources.as_ref() }.unwrap();
+
+    ffi_try!(key.verify_transaction_sources(sources));
 
     Error::Ok
 }

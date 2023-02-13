@@ -51,10 +51,12 @@ use pkcs8::{
 use sha2::Sha512;
 use sha3::Digest;
 
+use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Error,
     PublicKey,
+    Transaction,
 };
 
 pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
@@ -482,6 +484,19 @@ impl PrivateKey {
                 signature.to_vec()
             }
         }
+    }
+
+    // I question the reason for this function existing.
+    /// Signs the given transaction.
+    pub fn sign_transaction<D: crate::transaction::TransactionExecute>(
+        &self,
+        transaction: &mut Transaction<D>,
+    ) -> crate::Result<()> {
+        transaction.freeze()?;
+
+        transaction.add_signature_signer(AnySigner::PrivateKey(self.clone()));
+
+        Ok(())
     }
 
     /// Returns true if calling [`derive`](Self::derive) on `self` would succeed.

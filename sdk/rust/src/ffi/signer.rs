@@ -39,7 +39,7 @@ impl Drop for Signers {
 }
 
 #[repr(C)]
-pub(super) struct Signer {
+pub struct Signer {
     /// Safety:
     /// - Must not be null
     /// - must be properly aligned

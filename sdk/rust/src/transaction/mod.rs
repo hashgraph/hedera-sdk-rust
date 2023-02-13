@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
     Debug,
@@ -180,7 +181,10 @@ impl<D> Transaction<D> {
         self.body.is_frozen
     }
 
-    #[cfg(feature = "ffi")]
+    pub(crate) fn signers(&self) -> impl Iterator<Item = &AnySigner> {
+        self.signers.iter()
+    }
+
     pub(crate) fn sources(&self) -> Option<&TransactionSources> {
         self.sources.as_ref()
     }
@@ -420,23 +424,8 @@ impl<D: ValidateChecksums> Transaction<D> {
 }
 
 impl<D: TransactionExecute> Transaction<D> {
-    /// Convert `self` to protobuf encoded bytes.
-    ///
-    /// # Errors
-    /// - If `freeze_with` wasn't called with an operator and there was no transaction ID provided.
-    ///
-    /// # Panics
-    /// - If `!self.is_frozen()`.
-    pub fn to_bytes(&self) -> crate::Result<Vec<u8>> {
-        if !self.is_frozen() {
-            panic!("Transaction must be frozen to call `to_bytes`");
-        }
-
-        if let Some(sources) = &self.sources {
-            let transaction_list = sources.sign_with(&self.signers).transactions().to_vec();
-
-            return Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec());
-        }
+    fn make_transaction_list(&self) -> crate::Result<Vec<services::Transaction>> {
+        assert!(self.is_frozen());
 
         // todo: fix this with chunked transactions.
         let initial_transaction_id = match self.get_transaction_id() {
@@ -485,7 +474,79 @@ impl<D: TransactionExecute> Transaction<D> {
             transaction_list
         };
 
+        Ok(transaction_list)
+    }
+
+    pub(crate) fn make_sources(&self) -> crate::Result<Cow<'_, TransactionSources>> {
+        assert!(self.is_frozen());
+
+        if let Some(sources) = &self.sources {
+            return Ok(sources.sign_with(&self.signers));
+        }
+
+        return Ok(Cow::Owned(TransactionSources::new(self.make_transaction_list()?).unwrap()));
+    }
+
+    /// Convert `self` to protobuf encoded bytes.
+    ///
+    /// # Errors
+    /// - If `freeze_with` wasn't called with an operator.
+    ///
+    /// # Panics
+    /// - If `!self.is_frozen()`.
+    pub fn to_bytes(&self) -> crate::Result<Vec<u8>> {
+        assert!(self.is_frozen(), "Transaction must be frozen to call `to_bytes`");
+
+        let transaction_list = self
+            .sources
+            .as_ref()
+            .map(|it| Ok(it.transactions().to_vec()))
+            .unwrap_or_else(|| self.make_transaction_list())?;
+
         Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec())
+    }
+
+    pub(crate) fn add_signature_signer(&mut self, signer: AnySigner) {
+        assert!(self.is_frozen());
+
+        // note: the following pair of cheecks are for more detailed panic messages
+        // IE, they should *hopefully* be tripped first
+        if self.body.node_account_ids.as_deref().map_or(0, |it| it.len()) != 1 {
+            panic!("cannot manually add a signature to a transaction with multiple nodes")
+        }
+
+        if let Some(chunk_data) = self.data().maybe_chunk_data() {
+            assert!(
+                chunk_data.used_chunks() <= 1,
+                "cannot manually add a signature to a chunked transaction with multiple chunks (message length `{}` > chunk size `{}`)",
+                chunk_data.data.len(),
+                chunk_data.chunk_size
+            )
+        }
+
+        let sources = self.make_sources().unwrap();
+
+        // this is the only check that is for correctness rather than debugability.
+        assert!(sources.transactions().len() == 1);
+
+        let sources = sources.sign_with(std::slice::from_ref(&signer));
+
+        match sources {
+            Cow::Owned(it) => self.sources = Some(it),
+            // no signature was added.
+            Cow::Borrowed(_) => {}
+        }
+    }
+
+    // todo: make this public... :/
+    // todo: should this return `Result<&mut Self>`?
+    pub(crate) fn _add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
+        self.add_signature_signer(AnySigner::Arbitrary(
+            Box::new(pk),
+            Box::new(move |_| signature.clone()),
+        ));
+
+        self
     }
 }
 
