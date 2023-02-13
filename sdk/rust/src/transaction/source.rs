@@ -223,7 +223,7 @@ impl TransactionSources {
         })
     }
 
-    pub(super) fn sign_with(&self, signers: &[AnySigner]) -> Cow<'_, Self> {
+    pub(crate) fn sign_with(&self, signers: &[AnySigner]) -> Cow<'_, Self> {
         if signers.is_empty() {
             return Cow::Borrowed(self);
         }

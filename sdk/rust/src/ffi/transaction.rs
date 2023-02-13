@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::borrow::Cow;
 use std::ffi::{
     c_char,
     CString,
@@ -31,6 +32,7 @@ use libc::{
     c_void,
     size_t,
 };
+use triomphe::Arc;
 
 use super::error::Error;
 use super::signer::{
@@ -42,7 +44,11 @@ use super::util::{
     make_bytes2,
 };
 use crate::ffi::callback::Callback;
-use crate::transaction::AnyTransaction;
+use crate::signer::AnySigner;
+use crate::transaction::{
+    AnyTransaction,
+    TransactionSources,
+};
 use crate::Client;
 
 /// Convert the provided transaction to protobuf-encoded bytes.
@@ -61,10 +67,11 @@ pub unsafe extern "C" fn hedera_transaction_to_bytes(
     let mut transaction: AnyTransaction =
         ffi_try!(serde_json::from_str(&transaction).map_err(crate::Error::request_parse));
 
-    let signers_2: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
-
-    drop(signers);
-    let signers = signers_2;
+    let signers = {
+        let tmp: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+        drop(signers);
+        tmp
+    };
 
     for signer in signers {
         transaction.sign_signer(crate::signer::AnySigner::C(signer));
@@ -81,7 +88,7 @@ pub unsafe extern "C" fn hedera_transaction_to_bytes(
 pub unsafe extern "C" fn hedera_transaction_from_bytes(
     bytes: *const u8,
     bytes_size: size_t,
-    sources_out: *mut *mut crate::transaction::TransactionSources,
+    sources_out: *mut *const crate::transaction::TransactionSources,
     transaction_out: *mut *mut c_char,
 ) -> Error {
     assert!(!bytes.is_null());
@@ -92,9 +99,9 @@ pub unsafe extern "C" fn hedera_transaction_from_bytes(
 
     let tx = ffi_try!(AnyTransaction::from_bytes(bytes));
 
-    let sources = Box::new(tx.sources().unwrap().clone());
+    let sources = hedera_transaction_sources_new(tx.sources().unwrap().clone());
 
-    let sources = Box::into_raw(sources);
+    // let sources = Box::into_raw(sources);
 
     let out = serde_json::to_vec(&tx).unwrap();
 
@@ -133,7 +140,11 @@ pub unsafe extern "C" fn hedera_transaction_execute(
     let mut transaction: AnyTransaction =
         ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
 
-    let signers_2: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+    let signers = {
+        let tmp: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+        drop(signers);
+        tmp
+    };
 
     let timeout = has_timeout
         .then(|| std::time::Duration::try_from_secs_f64(timeout))
@@ -141,9 +152,6 @@ pub unsafe extern "C" fn hedera_transaction_execute(
         .map_err(crate::Error::request_parse);
 
     let timeout = ffi_try!(timeout);
-
-    drop(signers);
-    let signers = signers_2;
 
     let callback = Callback::new(context, callback);
 
@@ -209,7 +217,11 @@ pub unsafe extern "C" fn hedera_transaction_execute_all(
     let mut transaction: AnyTransaction =
         ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
 
-    let signers_2: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+    let signers = {
+        let tmp: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+        drop(signers);
+        tmp
+    };
 
     let timeout = has_timeout
         .then(|| std::time::Duration::try_from_secs_f64(timeout))
@@ -217,9 +229,6 @@ pub unsafe extern "C" fn hedera_transaction_execute_all(
         .map_err(crate::Error::request_parse);
 
     let timeout = ffi_try!(timeout);
-
-    drop(signers);
-    let signers = signers_2;
 
     let callback = Callback::new(context, callback);
 
@@ -259,13 +268,101 @@ pub unsafe extern "C" fn hedera_transaction_execute_all(
     Error::Ok
 }
 
+#[no_mangle]
+pub unsafe extern "C" fn hedera_transaction_make_sources(
+    transaction: *const c_char,
+    signers: Signers,
+    out: *mut *const TransactionSources,
+) -> Error {
+    assert!(!out.is_null());
+    let transaction = unsafe { cstr_from_ptr(transaction) };
+
+    let mut transaction: AnyTransaction =
+        ffi_try!(serde_json::from_str(&transaction).map_err(crate::Error::request_parse));
+
+    let signers = {
+        let tmp: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
+        drop(signers);
+        tmp
+    };
+
+    for signer in signers {
+        transaction.sign_signer(AnySigner::C(signer));
+    }
+
+    let sources = ffi_try!(transaction.make_sources());
+
+    unsafe {
+        out.write(hedera_transaction_sources_new(sources.into_owned()));
+    }
+
+    Error::Ok
+}
+
+/// Signs `sources` with the given `signers`
+///
+/// # Safety
+/// - `sources` must not be null.
+/// - `signers` must follow the associated safety requirements.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_transaction_sources_sign(
+    sources: *const TransactionSources,
+    signers: Signers,
+) -> *const TransactionSources {
+    let sources = unsafe { triomphe::ArcBorrow::from_ref(sources.as_ref().unwrap()) };
+
+    let signers = {
+        let tmp: Vec<_> =
+            signers.as_slice().iter().map(Signer::to_csigner).map(AnySigner::C).collect();
+        drop(signers);
+        tmp
+    };
+
+    let value = sources.sign_with(&signers);
+
+    match value {
+        Cow::Borrowed(_) => Arc::into_raw(sources.clone_arc()),
+        Cow::Owned(value) => hedera_transaction_sources_new(value),
+    }
+}
+
+/// Signs `sources` with the given `signer`
+///
+/// # Safety
+/// - `sources` must not be null.
+/// - `signer` must follow the associated safety requirements.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_transaction_sources_sign_single(
+    sources: *const TransactionSources,
+    signer: Signer,
+) -> *const TransactionSources {
+    let sources = unsafe { triomphe::ArcBorrow::from_ref(sources.as_ref().unwrap()) };
+
+    let signer = AnySigner::C({
+        let tmp = signer.to_csigner();
+        drop(signer);
+        tmp
+    });
+
+    let value = sources.sign_with(slice::from_ref(&signer));
+
+    match value {
+        Cow::Borrowed(_) => Arc::into_raw(sources.clone_arc()),
+        Cow::Owned(value) => hedera_transaction_sources_new(value),
+    }
+}
+
+fn hedera_transaction_sources_new(sources: TransactionSources) -> *const TransactionSources {
+    Arc::into_raw(Arc::from(sources))
+}
+
 /// # Safety
 /// - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
 #[no_mangle]
 pub unsafe extern "C" fn hedera_transaction_sources_free(
-    sources: *mut crate::transaction::TransactionSources,
+    sources: *const crate::transaction::TransactionSources,
 ) {
     assert!(!sources.is_null());
 
-    drop(unsafe { Box::from_raw(sources) })
+    drop(unsafe { triomphe::Arc::from_raw(sources) })
 }

@@ -28,6 +28,18 @@ internal final class TransactionSources {
 
     internal let ptr: OpaquePointer
 
+    internal func signedWithSingle(_ signer: Signer) -> Self {
+        let sourcesOut = hedera_transaction_sources_sign_single(ptr, signer.unsafeIntoHederaSigner())
+
+        return Self(unsafeFromPtr: sourcesOut!)
+    }
+
+    internal func signedWith(_ signers: [Signer]) -> Self {
+        let sourcesOut = hedera_transaction_sources_sign(ptr, makeHederaSignersFromArray(signers: signers))
+
+        return Self(unsafeFromPtr: sourcesOut!)
+    }
+
     deinit {
         hedera_transaction_sources_free(ptr)
     }
@@ -90,6 +102,16 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         return self
     }
 
+    internal func addSignatureSigner(_ signer: Signer) {
+        precondition(isFrozen)
+
+        precondition(nodeAccountIds?.count == 1, "cannot manually add a signature to a transaction with multiple nodes")
+
+        let sources = try! makeSources()
+
+        self.sources = sources.signedWithSingle(signer)
+    }
+
     @discardableResult
     public func sign(_ privateKey: PrivateKey) -> Self {
         self.signWith(privateKey.getPublicKey()) { privateKey.sign($0) }
@@ -133,6 +155,25 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         }
 
         return self
+    }
+
+    @discardableResult
+    internal func makeSources() throws -> TransactionSources {
+        precondition(isFrozen)
+        if let sources = sources {
+            return sources.signedWith(self.signers)
+        }
+
+        var out: OpaquePointer?
+
+        let requestBytes = try JSONEncoder().encode(self)
+
+        let request = String(data: requestBytes, encoding: .utf8)!
+
+        try HError.throwing(
+            error: hedera_transaction_make_sources(request, makeHederaSignersFromArray(signers: signers), &out))
+
+        return TransactionSources(unsafeFromPtr: out!)
     }
 
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {

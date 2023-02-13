@@ -15,19 +15,7 @@ bench = false
 crate-type = ["lib", "staticlib"]
 
 [features]
-ffi = [
-  "anyhow",
-  "cbindgen",
-  "libc",
-  "fraction/with-serde-support",
-  "ed25519-dalek/serde",
-  "hedera-proto/serde",
-  "serde",
-  "serde_with",
-  "serde_json",
-  "time/serde",
-  "serde/derive",
-]
+ffi = ["anyhow", "cbindgen", "libc", "fraction/with-serde-support", "ed25519-dalek/serde", "hedera-proto/serde", "serde", "serde_with", "serde_json", "time/serde", "serde/derive", "triomphe"]
 
 [dependencies]
 async-stream = "0.3.3"
@@ -65,6 +53,7 @@ tinystr = "0.7.0"
 # for ed25519-dalek
 rand_0_7 = { version = "0.7", package = "rand" }
 arc-swap = "1.6.0"
+triomphe = { version = "0.1.8", default-features = false, optional = true }
 
 [dependencies.pkcs8]
 version = "0.9.0"
