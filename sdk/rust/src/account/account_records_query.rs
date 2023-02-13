@@ -18,12 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -31,12 +29,14 @@ use crate::query::{
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     FromProtobuf,
     LedgerId,
     Query,
     ToProtobuf,
     TransactionRecord,
+    ValidateChecksums,
 };
 
 /// Get all the records for an account for any transfers into it and out of it,
@@ -83,20 +83,21 @@ impl ToQueryProtobuf for AccountRecordsQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for AccountRecordsQueryData {
     type Response = Vec<TransactionRecord>;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).get_account_records(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { CryptoServiceClient::new(channel).get_account_records(request).await })
+    }
+}
+
+impl ValidateChecksums for AccountRecordsQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)
     }
 }
 

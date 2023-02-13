@@ -18,24 +18,24 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
     ToProtobuf,
     TopicId,
     TopicInfo,
+    ValidateChecksums,
 };
 
 /// Retrieve the latest state of a topic.
@@ -81,19 +81,20 @@ impl ToQueryProtobuf for TopicInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TopicInfoQueryData {
     type Response = TopicInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.topic_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        ConsensusServiceClient::new(channel).get_topic_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { ConsensusServiceClient::new(channel).get_topic_info(request).await })
+    }
+}
+
+impl ValidateChecksums for TopicInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.topic_id.validate_checksums(ledger_id)
     }
 }

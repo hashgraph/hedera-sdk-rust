@@ -18,20 +18,21 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     LedgerId,
@@ -39,6 +40,7 @@ use crate::{
     ToProtobuf,
     TokenId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Creates one or more hbar/token approved allowances **relative to the owner account specified in the allowances of
@@ -207,44 +209,51 @@ struct NftAllowance {
     delegating_spender_account_id: Option<AccountId>,
 }
 
-#[async_trait]
-impl TransactionExecute for AccountAllowanceApproveTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        for hbar_allowance in &self.hbar_allowances {
-            hbar_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-            hbar_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        }
-        for token_allowance in &self.token_allowances {
-            token_allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
-            token_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-            token_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        }
-        for nft_allowance in &self.nft_allowances {
-            nft_allowance.token_id.validate_checksum_for_ledger_id(ledger_id)?;
-            nft_allowance.spender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-            nft_allowance.owner_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-            if let Some(delegating_spender) = nft_allowance.delegating_spender_account_id {
-                delegating_spender.validate_checksum_for_ledger_id(ledger_id)?;
-            }
-        }
-        Ok(())
-    }
+impl TransactionData for AccountAllowanceApproveTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for AccountAllowanceApproveTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).approve_allowances(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).approve_allowances(request).await })
+    }
+}
+
+impl ValidateChecksums for AccountAllowanceApproveTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for hbar_allowance in &self.hbar_allowances {
+            hbar_allowance.owner_account_id.validate_checksums(ledger_id)?;
+            hbar_allowance.spender_account_id.validate_checksums(ledger_id)?;
+        }
+
+        for token_allowance in &self.token_allowances {
+            token_allowance.token_id.validate_checksums(ledger_id)?;
+            token_allowance.owner_account_id.validate_checksums(ledger_id)?;
+            token_allowance.spender_account_id.validate_checksums(ledger_id)?;
+        }
+
+        for nft_allowance in &self.nft_allowances {
+            nft_allowance.token_id.validate_checksums(ledger_id)?;
+            nft_allowance.spender_account_id.validate_checksums(ledger_id)?;
+            nft_allowance.owner_account_id.validate_checksums(ledger_id)?;
+            if let Some(delegating_spender) = nft_allowance.delegating_spender_account_id {
+                delegating_spender.validate_checksums(ledger_id)?;
+            }
+        }
+
+        Ok(())
     }
 }
 
 impl ToTransactionDataProtobuf for AccountAllowanceApproveTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let crypto_allowances = self.hbar_allowances.to_protobuf();
 
         let token_allowances = self.token_allowances.to_protobuf();

@@ -18,28 +18,34 @@
  * ‍
  */
 
-use async_trait::async_trait;
+use std::cmp;
+use std::num::NonZeroUsize;
+
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkData,
+    ChunkInfo,
+    ChunkedTransactionData,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
+    TransactionExecuteChunked,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     Error,
     FileId,
     LedgerId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Append the given contents to the end of the specified file.
@@ -54,12 +60,8 @@ pub struct FileAppendTransactionData {
     /// The file to which the bytes will be appended.
     file_id: Option<FileId>,
 
-    /// The bytes that will be appended to the end of the specified file.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
-    contents: Option<Vec<u8>>,
+    #[cfg_attr(feature = "ffi", serde(flatten))]
+    chunk_data: ChunkData,
 }
 
 impl FileAppendTransaction {
@@ -71,51 +73,70 @@ impl FileAppendTransaction {
 
     /// Sets the file to which the bytes will be appended.
     pub fn file_id(&mut self, id: impl Into<FileId>) -> &mut Self {
-        self.require_not_frozen();
         self.data_mut().file_id = Some(id.into());
         self
     }
 
     /// Retuns the bytes that will be appended to the end of the specified file.
-    #[must_use]
     pub fn get_contents(&self) -> Option<&[u8]> {
-        self.data().contents.as_deref()
+        Some(self.data().chunk_data.data.as_slice())
     }
 
     /// Sets the bytes that will be appended to the end of the specified file.
     pub fn contents(&mut self, contents: Vec<u8>) -> &mut Self {
-        self.require_not_frozen();
-        self.data_mut().contents = Some(contents);
+        self.data_mut().chunk_data.data = contents;
         self
     }
 }
 
-#[async_trait]
-impl TransactionExecute for FileAppendTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)
+impl TransactionData for FileAppendTransactionData {
+    fn maybe_chunk_data(&self) -> Option<&ChunkData> {
+        Some(self.chunk_data())
     }
 
-    async fn execute(
+    fn wait_for_receipt(&self) -> bool {
+        true
+    }
+}
+
+impl ChunkedTransactionData for FileAppendTransactionData {
+    fn chunk_data(&self) -> &ChunkData {
+        &self.chunk_data
+    }
+
+    fn chunk_data_mut(&mut self) -> &mut ChunkData {
+        &mut self.chunk_data
+    }
+}
+
+impl TransactionExecute for FileAppendTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        FileServiceClient::new(channel).append_content(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { FileServiceClient::new(channel).append_content(request).await })
+    }
+}
+
+impl TransactionExecuteChunked for FileAppendTransactionData {}
+
+impl ValidateChecksums for FileAppendTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for FileAppendTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
         let file_id = self.file_id.to_protobuf();
 
         services::transaction_body::Data::FileAppend(services::FileAppendTransactionBody {
             file_id,
-            contents: self.contents.clone().unwrap_or_default(),
+            contents: self.chunk_data.message_chunk(chunk_info).to_vec(),
         })
     }
 }
@@ -128,7 +149,38 @@ impl From<FileAppendTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::FileAppendTransactionBody> for FileAppendTransactionData {
     fn from_protobuf(pb: services::FileAppendTransactionBody) -> crate::Result<Self> {
-        Ok(Self { file_id: Option::from_protobuf(pb.file_id)?, contents: Some(pb.contents) })
+        Self::from_protobuf(Vec::from([pb]))
+    }
+}
+
+impl FromProtobuf<Vec<services::FileAppendTransactionBody>> for FileAppendTransactionData {
+    fn from_protobuf(pb: Vec<services::FileAppendTransactionBody>) -> crate::Result<Self> {
+        let total_chunks = pb.len();
+
+        let mut iter = pb.into_iter();
+        let pb_first = iter.next().expect("Empty transaction (should've been handled earlier)");
+
+        let file_id = Option::from_protobuf(pb_first.file_id)?;
+
+        let mut largest_chunk_size = pb_first.contents.len();
+        let mut contents = pb_first.contents;
+
+        // note: no other SDK checks for correctness here... so let's not do it here either?
+
+        for item in iter {
+            largest_chunk_size = cmp::max(largest_chunk_size, item.contents.len());
+            contents.extend_from_slice(&item.contents);
+        }
+
+        Ok(Self {
+            file_id,
+            chunk_data: ChunkData {
+                max_chunks: total_chunks,
+                chunk_size: NonZeroUsize::new(largest_chunk_size)
+                    .unwrap_or_else(|| NonZeroUsize::new(1).unwrap()),
+                data: contents,
+            },
+        })
     }
 }
 
@@ -151,7 +203,7 @@ mod tests {
         const FILE_APPEND_TRANSACTION_JSON: &str = r#"{
   "$type": "fileAppend",
   "fileId": "0.0.1001",
-  "contents": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
+  "data": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
 }"#;
 
         #[test]
@@ -160,7 +212,7 @@ mod tests {
 
             transaction
                 .file_id(FileId::from(1001))
-                .contents("Appending these bytes to file 1001".into());
+                .contents(b"Appending these bytes to file 1001".to_vec());
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -178,7 +230,7 @@ mod tests {
             assert_eq!(data.file_id.unwrap(), FileId::from(1001));
 
             let bytes: Vec<u8> = "Appending these bytes to file 1001".into();
-            assert_eq!(data.contents.unwrap(), bytes);
+            assert_eq!(data.chunk_data.data, bytes);
 
             Ok(())
         }

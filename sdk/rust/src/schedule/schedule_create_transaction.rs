@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use hedera_proto::services::transaction_body::Data;
 use hedera_proto::services::{
@@ -29,24 +28,26 @@ use hedera_proto::services::{
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     Key,
     LedgerId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
@@ -181,31 +182,31 @@ impl ScheduleCreateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for ScheduleCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.payer_account_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for ScheduleCreateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for ScheduleCreateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        ScheduleServiceClient::new(channel).create_schedule(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { ScheduleServiceClient::new(channel).create_schedule(request).await })
+    }
+}
+
+impl ValidateChecksums for ScheduleCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.payer_account_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for ScheduleCreateTransactionData {
     // not really anything I can do about this
     #[allow(clippy::too_many_lines)]
-    fn to_transaction_data_protobuf(
-        &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
-    ) -> transaction_body::Data {
+    fn to_transaction_data_protobuf(&self, chunk_info: &ChunkInfo) -> transaction_body::Data {
         let body = self.scheduled_transaction.as_ref().map(|scheduled| {
-            let data = scheduled.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+            assert!(chunk_info.total == 1);
+            let data = scheduled.data.to_transaction_data_protobuf(chunk_info);
 
             #[allow(clippy::match_same_arms)]
             let data = match data {

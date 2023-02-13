@@ -18,24 +18,25 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     LedgerId,
     ToProtobuf,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 pub type PaymentTransaction = Transaction<PaymentTransactionData>;
@@ -69,19 +70,22 @@ impl PaymentTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for PaymentTransactionData {
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
-        Ok(())
-    }
+impl TransactionData for PaymentTransactionData {}
 
+impl TransactionExecute for PaymentTransactionData {
     // noinspection DuplicatedCode
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).crypto_transfer(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).crypto_transfer(request).await })
+    }
+}
+
+impl ValidateChecksums for PaymentTransactionData {
+    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+        Ok(())
     }
 }
 
@@ -89,9 +93,10 @@ impl ToTransactionDataProtobuf for PaymentTransactionData {
     #[allow(clippy::cast_possible_wrap)]
     fn to_transaction_data_protobuf(
         &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let (transaction_id, node_account_id) = chunk_info.assert_single_transaction();
+
         let amount = self.amount.unwrap_or_default();
 
         services::transaction_body::Data::CryptoTransfer(services::CryptoTransferTransactionBody {

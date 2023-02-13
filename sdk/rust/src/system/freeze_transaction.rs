@@ -18,27 +18,28 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::freeze_service_client::FreezeServiceClient;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     Error,
     FileId,
     FreezeType,
     LedgerId,
     ToProtobuf,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Sets the freezing period in which the platform will stop creating
@@ -112,27 +113,31 @@ impl FreezeTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for FreezeTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for FreezeTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for FreezeTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        FreezeServiceClient::new(channel).freeze(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { FreezeServiceClient::new(channel).freeze(request).await })
+    }
+}
+
+impl ValidateChecksums for FreezeTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for FreezeTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let start_time = self.start_time.map(Into::into);
         let file_id = self.file_id.to_protobuf();
 

@@ -18,24 +18,24 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
     ScheduleId,
     ScheduleInfo,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Get all the information about a schedule.
@@ -82,19 +82,20 @@ impl ToQueryProtobuf for ScheduleInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for ScheduleInfoQueryData {
     type Response = ScheduleInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.schedule_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        ScheduleServiceClient::new(channel).get_schedule_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { ScheduleServiceClient::new(channel).get_schedule_info(request).await })
+    }
+}
+
+impl ValidateChecksums for ScheduleInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.schedule_id.validate_checksums(ledger_id)
     }
 }

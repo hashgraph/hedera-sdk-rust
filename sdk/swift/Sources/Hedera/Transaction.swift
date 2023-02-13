@@ -139,7 +139,8 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         try await executeInternal(client, timeout)
     }
 
-    public func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse {
+    internal func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse
+    {
         try freezeWith(client)
 
         // encode self as a JSON request to pass to Rust
@@ -185,6 +186,44 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         }
 
         return try Self.decodeResponse(responseBytes)
+    }
+
+    // hack: this should totally be on ChunkedTransaction
+    internal func executeAllEncoded(_ client: Client, request: String, timeoutPerChunk: TimeInterval?)
+        async throws -> [Response]
+    {
+        if client.isAutoValidateChecksumsEnabled() {
+            try self.validateChecksums(on: client)
+        }
+
+        // start an unmanaged continuation to bridge a C callback with Swift async
+        let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
+            let signers = makeHederaSignersFromArray(signers: signers)
+            // invoke `hedera_execute`, callback will be invoked on request completion
+            let err = hedera_transaction_execute_all(
+                client.ptr, request, continuation, signers, timeoutPerChunk != nil,
+                timeoutPerChunk ?? 0.0, sources?.ptr
+            ) { continuation, err, responsePtr in
+                if let err = HError(err) {
+                    // an error has occurred, consume from the TLS storage for the error
+                    // and throw it up back to the async task
+                    resumeUnmanagedContinuation(continuation, throwing: err)
+                } else {
+                    // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
+                    let responseText = String(validatingUTF8: responsePtr!)!
+                    let responseBytes = responseText.data(using: .utf8)!
+
+                    // resumes the continuation which bridges us back into Swift async
+                    resumeUnmanagedContinuation(continuation, returning: responseBytes)
+                }
+            }
+
+            if let err = HError(err) {
+                resumeUnmanagedContinuation(continuation, throwing: err)
+            }
+        }
+
+        return try JSONDecoder().decode([Response].self, from: responseBytes)
     }
 
     public required init(from decoder: Decoder) throws {

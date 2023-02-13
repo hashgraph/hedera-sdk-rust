@@ -18,10 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
+use crate::entity_id::ValidateChecksums;
 use crate::execute::{
     execute,
     Execute,
@@ -30,6 +30,7 @@ use crate::query::execute::response_header;
 use crate::query::QueryExecute;
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Client,
     Error,
     Hbar,
@@ -53,7 +54,6 @@ where
     }
 }
 
-#[async_trait]
 impl<D> Execute for QueryCost<'_, D>
 where
     Query<D>: Execute,
@@ -92,12 +92,12 @@ where
         Ok((self.0.data.to_query_protobuf(header), ()))
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status> {
-        <D as QueryExecute>::execute(&self.0.data, channel, request).await
+    ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
+        <D as QueryExecute>::execute(&self.0.data, channel, request)
     }
 
     fn make_response(
@@ -129,8 +129,10 @@ where
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response_header(&response.response)?.node_transaction_precheck_code)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+impl<'a, D: QueryExecute> ValidateChecksums for QueryCost<'a, D> {
+    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
         Ok(())
     }
 }

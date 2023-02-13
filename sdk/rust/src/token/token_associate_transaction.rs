@@ -18,26 +18,27 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     ToProtobuf,
     TokenId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
@@ -93,31 +94,35 @@ impl TokenAssociateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for TokenAssociateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        for token_id in &self.token_ids {
-            token_id.validate_checksum_for_ledger_id(ledger_id)?;
-        }
-        Ok(())
-    }
+impl TransactionData for TokenAssociateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for TokenAssociateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        TokenServiceClient::new(channel).associate_tokens(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { TokenServiceClient::new(channel).associate_tokens(request).await })
+    }
+}
+
+impl ValidateChecksums for TokenAssociateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)?;
+        for token_id in &self.token_ids {
+            token_id.validate_checksums(ledger_id)?;
+        }
+        Ok(())
     }
 }
 
 impl ToTransactionDataProtobuf for TokenAssociateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let account = self.account_id.to_protobuf();
         let tokens = self.token_ids.to_protobuf();
 

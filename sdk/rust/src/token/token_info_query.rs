@@ -18,12 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -31,11 +29,13 @@ use crate::query::{
 };
 use crate::token::token_info::TokenInfo;
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
     ToProtobuf,
     TokenId,
+    ValidateChecksums,
 };
 
 /// Gets information about Token instance.
@@ -83,20 +83,21 @@ impl ToQueryProtobuf for TokenInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TokenInfoQueryData {
     type Response = TokenInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.token_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        TokenServiceClient::new(channel).get_token_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { TokenServiceClient::new(channel).get_token_info(request).await })
+    }
+}
+
+impl ValidateChecksums for TokenInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksums(ledger_id)
     }
 }
 

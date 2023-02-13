@@ -121,6 +121,7 @@ pub use contract::{
     ContractUpdateTransaction,
 };
 pub use entity_id::EntityId;
+pub(crate) use entity_id::ValidateChecksums;
 pub use error::{
     Error,
     MnemonicEntropyError,
@@ -245,3 +246,7 @@ pub(crate) use transaction_record_query::TransactionRecordQueryData;
 pub use transaction_response::TransactionResponse;
 pub use transfer::Transfer;
 pub use transfer_transaction::TransferTransaction;
+
+/// Boxed future for GRPC calls.
+pub(crate) type BoxGrpcFuture<'a, T> =
+    futures_core::future::BoxFuture<'a, tonic::Result<tonic::Response<T>>>;

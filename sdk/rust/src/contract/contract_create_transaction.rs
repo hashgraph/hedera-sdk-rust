@@ -18,22 +18,23 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use time::Duration;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     FileId,
     Hbar,
@@ -41,6 +42,7 @@ use crate::{
     LedgerId,
     ToProtobuf,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Start a new smart contract instance.
@@ -270,29 +272,33 @@ impl ContractCreateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for ContractCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.bytecode_file_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for ContractCreateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for ContractCreateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        SmartContractServiceClient::new(channel).create_contract(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { SmartContractServiceClient::new(channel).create_contract(request).await })
+    }
+}
+
+impl ValidateChecksums for ContractCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.bytecode_file_id.validate_checksums(ledger_id)?;
+        self.auto_renew_account_id.validate_checksums(ledger_id)?;
+        self.staked_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for ContractCreateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let admin_key = self.admin_key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.into();
         let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();

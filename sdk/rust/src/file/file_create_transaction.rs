@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use time::{
@@ -27,23 +26,25 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::entity_id::ValidateChecksums;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
-    Error,
+    BoxGrpcFuture,
     Key,
     KeyList,
     LedgerId,
     Transaction,
-    TransactionId,
 };
 
 /// Create a new file, containing the given contents.
@@ -176,27 +177,33 @@ impl FileCreateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for FileCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
-        Ok(())
-    }
+impl TransactionData for FileCreateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for FileCreateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        FileServiceClient::new(channel).create_file(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { FileServiceClient::new(channel).create_file(request).await })
+    }
+}
+
+impl ValidateChecksums for FileCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> crate::Result<()> {
+        self.auto_renew_account_id.validate_checksums(ledger_id)?;
+
+        Ok(())
     }
 }
 
 impl ToTransactionDataProtobuf for FileCreateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let expiration_time = self.expiration_time.to_protobuf();
 
         services::transaction_body::Data::FileCreate(services::FileCreateTransactionBody {

@@ -18,12 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     Query,
@@ -31,11 +29,13 @@ use crate::query::{
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     FileContentsResponse,
     FileId,
     LedgerId,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Get the contents of a file.
@@ -81,19 +81,20 @@ impl ToQueryProtobuf for FileContentsQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for FileContentsQueryData {
     type Response = FileContentsResponse;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        FileServiceClient::new(channel).get_file_content(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { FileServiceClient::new(channel).get_file_content(request).await })
+    }
+}
+
+impl ValidateChecksums for FileContentsQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksums(ledger_id)
     }
 }

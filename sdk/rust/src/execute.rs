@@ -18,25 +18,25 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use backoff::backoff::Backoff;
 use backoff::ExponentialBackoff;
 use prost::Message;
 use rand::thread_rng;
+use time::OffsetDateTime;
 use tokio::time::sleep;
 use tonic::transport::Channel;
 
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Client,
     Error,
-    LedgerId,
     Status,
     TransactionId,
+    ValidateChecksums,
 };
 
-#[async_trait]
-pub(crate) trait Execute {
+pub(crate) trait Execute: ValidateChecksums {
     type GrpcRequest: Clone + Message;
 
     type GrpcResponse: Message;
@@ -81,11 +81,11 @@ pub(crate) trait Execute {
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)>;
 
     /// Execute the created GRPC request against the provided GRPC channel.
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<tonic::Response<Self::GrpcResponse>, tonic::Status>;
+    ) -> BoxGrpcFuture<Self::GrpcResponse>;
 
     /// Create a response from the GRPC response and the saved transaction
     /// and node account ID from the successful request.
@@ -106,8 +106,6 @@ pub(crate) trait Execute {
 
     /// Extract the pre-check status from the GRPC response.
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
-
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
 }
 
 pub(crate) async fn execute<E>(
@@ -131,7 +129,7 @@ where
 
     if client.auto_validate_checksums() {
         if let Some(ledger_id) = &*client.ledger_id_internal() {
-            executable.validate_checksums_for_ledger_id(ledger_id)?;
+            executable.validate_checksums(ledger_id)?;
         } else {
             return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksums" });
         }
@@ -158,6 +156,8 @@ where
         .map(|ids| client.network().node_indexes_for_ids(ids))
         .transpose()?;
 
+    let mut include_unhealthy = false;
+
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
@@ -183,6 +183,16 @@ where
             rand::seq::index::sample(&mut thread_rng(), node_indexes.len(), node_sample_amount);
 
         for index in node_index_indexes.iter() {
+            // logic:
+            // if there are no explicit node indexes, all nodes we pick are healthy.
+            // if we're including unhealthy nodes, then it doesn't matter if it's healthy.
+            if explicit_node_indexes.is_some()
+                && !include_unhealthy
+                && !client.network().is_node_healthy(index, OffsetDateTime::now_utc())
+            {
+                continue;
+            }
+
             let node_index = node_indexes[index];
             let (node_account_id, channel) = client.network().channel(node_index);
 
@@ -269,5 +279,8 @@ where
             // NOTE: it should be impossible to reach here without capturing at least one error
             return Err(Error::TimedOut(last_error.unwrap().into()));
         }
+
+        // only ever include unhealthy nodes if we have explicit nodes.
+        include_unhealthy = explicit_node_indexes.is_some();
     }
 }

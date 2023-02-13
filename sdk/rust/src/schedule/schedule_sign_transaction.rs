@@ -18,28 +18,28 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     ScheduleId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Adds zero or more signing keys to a schedule.
@@ -66,27 +66,31 @@ impl ScheduleSignTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for ScheduleSignTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.schedule_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for ScheduleSignTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for ScheduleSignTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        ScheduleServiceClient::new(channel).delete_schedule(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { ScheduleServiceClient::new(channel).delete_schedule(request).await })
+    }
+}
+
+impl ValidateChecksums for ScheduleSignTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.schedule_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for ScheduleSignTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let schedule_id = self.schedule_id.to_protobuf();
 
         services::transaction_body::Data::ScheduleSign(services::ScheduleSignTransactionBody {
