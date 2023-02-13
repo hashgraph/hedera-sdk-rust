@@ -219,7 +219,7 @@ pub unsafe extern "C" fn hedera_private_key_from_string_ed25519(
     key: *mut *mut PrivateKey,
 ) -> Error {
     // safety: invariants are passed through from the caller.
-    unsafe { parse_str(s, key, PrivateKey::from_str_der) }
+    unsafe { parse_str(s, key, PrivateKey::from_str_ed25519) }
 }
 
 /// Parse a ECDSA(secp256k1) `PrivateKey` from a string containing the raw key material.
@@ -241,7 +241,7 @@ pub unsafe extern "C" fn hedera_private_key_from_string_ecdsa(
     key: *mut *mut PrivateKey,
 ) -> Error {
     // safety: invariants are passed through from the caller.
-    unsafe { parse_str(s, key, PrivateKey::from_str_der) }
+    unsafe { parse_str(s, key, PrivateKey::from_str_ecdsa) }
 }
 
 /// Parse a Hedera private key from the passed pem encoded string

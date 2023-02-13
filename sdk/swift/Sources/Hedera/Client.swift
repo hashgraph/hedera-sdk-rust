@@ -80,7 +80,7 @@ public final class Client {
 
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_testnet())
+        Self(unsafeFromPtr: hedera_client_for_mainnet())
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
