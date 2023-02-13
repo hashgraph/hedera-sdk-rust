@@ -83,8 +83,8 @@ impl FileAppendTransaction {
     }
 
     /// Sets the bytes that will be appended to the end of the specified file.
-    pub fn contents(&mut self, contents: Vec<u8>) -> &mut Self {
-        self.data_mut().chunk_data.data = contents;
+    pub fn contents(&mut self, contents: impl Into<Vec<u8>>) -> &mut Self {
+        self.data_mut().chunk_data.data = contents.into();
         self
     }
 }
