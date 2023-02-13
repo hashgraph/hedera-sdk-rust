@@ -18,28 +18,29 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     TokenId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Wipes the provided amount of tokens from the specified Account. Must be signed by the Token's
@@ -142,28 +143,32 @@ impl TokenWipeTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for TokenWipeTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.token_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for TokenWipeTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for TokenWipeTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        TokenServiceClient::new(channel).wipe_token_account(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { TokenServiceClient::new(channel).wipe_token_account(request).await })
+    }
+}
+
+impl ValidateChecksums for TokenWipeTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)?;
+        self.token_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for TokenWipeTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let account = self.account_id.to_protobuf();
         let token = self.token_id.to_protobuf();
         let amount = self.amount.unwrap_or_default();

@@ -18,24 +18,24 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     ContractId,
     ContractInfo,
     Error,
     LedgerId,
     Query,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Get information about a smart contract instance.
@@ -84,19 +84,22 @@ impl ToQueryProtobuf for ContractInfoQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for ContractInfoQueryData {
     type Response = ContractInfo;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        SmartContractServiceClient::new(channel).get_contract_info(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async {
+            SmartContractServiceClient::new(channel).get_contract_info(request).await
+        })
+    }
+}
+
+impl ValidateChecksums for ContractInfoQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)
     }
 }

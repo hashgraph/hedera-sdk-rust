@@ -18,13 +18,11 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     Query,
@@ -34,10 +32,12 @@ use crate::query::{
 use crate::{
     AccountBalance,
     AccountId,
+    BoxGrpcFuture,
     ContractId,
     Error,
     LedgerId,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Get the balance of a cryptocurrency account.
@@ -129,7 +129,6 @@ impl ToQueryProtobuf for AccountBalanceQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for AccountBalanceQueryData {
     type Response = AccountBalance;
 
@@ -137,23 +136,23 @@ impl QueryExecute for AccountBalanceQueryData {
         false
     }
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        match self.source {
-            AccountBalanceSource::AccountId(account_id) => {
-                account_id.validate_checksum_for_ledger_id(ledger_id)
-            }
-            AccountBalanceSource::ContractId(contract_id) => {
-                contract_id.validate_checksum_for_ledger_id(ledger_id)
-            }
-        }
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).crypto_get_balance(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async { CryptoServiceClient::new(channel).crypto_get_balance(request).await })
+    }
+}
+
+impl ValidateChecksums for AccountBalanceQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        match self.source {
+            AccountBalanceSource::AccountId(account_id) => account_id.validate_checksums(ledger_id),
+            AccountBalanceSource::ContractId(contract_id) => {
+                contract_id.validate_checksums(ledger_id)
+            }
+        }
     }
 }
 

@@ -18,26 +18,27 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     ContractId,
     Error,
     Hbar,
     LedgerId,
     ToProtobuf,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Call a function of the given smart contract instance, giving it
@@ -120,28 +121,34 @@ impl ContractExecuteTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for ContractExecuteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)?;
-        Ok(())
-    }
+impl TransactionData for ContractExecuteTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for ContractExecuteTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        SmartContractServiceClient::new(channel).contract_call_method(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async {
+            SmartContractServiceClient::new(channel).contract_call_method(request).await
+        })
+    }
+}
+
+impl ValidateChecksums for ContractExecuteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.contract_id.validate_checksums(ledger_id)?;
+        Ok(())
     }
 }
 
 impl ToTransactionDataProtobuf for ContractExecuteTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let contract_id = self.contract_id.to_protobuf();
 
         services::transaction_body::Data::ContractCall(

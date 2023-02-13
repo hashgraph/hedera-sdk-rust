@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use time::{
@@ -27,25 +26,27 @@ use time::{
 };
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     FileId,
     Key,
     KeyList,
     LedgerId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Modify the metadata and/or the contents of a file.
@@ -183,27 +184,31 @@ impl FileUpdateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for FileUpdateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for FileUpdateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for FileUpdateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        FileServiceClient::new(channel).update_file(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { FileServiceClient::new(channel).update_file(request).await })
+    }
+}
+
+impl ValidateChecksums for FileUpdateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for FileUpdateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let file_id = self.file_id.to_protobuf();
         let expiration_time = self.expiration_time.to_protobuf();
 

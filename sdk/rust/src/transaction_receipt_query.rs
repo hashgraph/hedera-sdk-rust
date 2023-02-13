@@ -18,19 +18,18 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use hedera_proto::services::response::Response;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
     ToQueryProtobuf,
 };
 use crate::{
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
@@ -38,6 +37,7 @@ use crate::{
     ToProtobuf,
     TransactionId,
     TransactionReceipt,
+    ValidateChecksums,
 };
 
 /// Get the receipt of a transaction, given its transaction ID.
@@ -133,7 +133,6 @@ impl ToQueryProtobuf for TransactionReceiptQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for TransactionReceiptQueryData {
     type Response = TransactionReceipt;
 
@@ -145,12 +144,14 @@ impl QueryExecute for TransactionReceiptQueryData {
         self.transaction_id
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).get_transaction_receipts(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async {
+            CryptoServiceClient::new(channel).get_transaction_receipts(request).await
+        })
     }
 
     fn should_retry_pre_check(&self, status: Status) -> bool {
@@ -188,8 +189,10 @@ impl QueryExecute for TransactionReceiptQueryData {
 
         Ok(receipt)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.transaction_id.validate_checksum_for_ledger_id(ledger_id)
+impl ValidateChecksums for TransactionReceiptQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transaction_id.validate_checksums(ledger_id)
     }
 }

@@ -18,12 +18,10 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -32,10 +30,12 @@ use crate::query::{
 use crate::{
     AccountId,
     AllProxyStakers,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Query,
     ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Get all the accounts that are proxy staking to this account.
@@ -82,19 +82,22 @@ impl ToQueryProtobuf for AccountStakersQueryData {
     }
 }
 
-#[async_trait]
 impl QueryExecute for AccountStakersQueryData {
     type Response = AllProxyStakers;
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)
-    }
-
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Query,
-    ) -> Result<tonic::Response<services::Response>, tonic::Status> {
-        CryptoServiceClient::new(channel).get_stakers_by_account_id(request).await
+    ) -> BoxGrpcFuture<'_, services::Response> {
+        Box::pin(async {
+            CryptoServiceClient::new(channel).get_stakers_by_account_id(request).await
+        })
+    }
+}
+
+impl ValidateChecksums for AccountStakersQueryData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.account_id.validate_checksums(ledger_id)
     }
 }

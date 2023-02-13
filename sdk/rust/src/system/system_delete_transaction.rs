@@ -18,30 +18,31 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use time::OffsetDateTime;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     ContractId,
     Error,
     FileId,
     LedgerId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Delete a file or smart contract - can only be done by a Hedera admin.
@@ -115,32 +116,38 @@ impl SystemDeleteTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for SystemDeleteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.file_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.contract_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for SystemDeleteTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for SystemDeleteTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        if self.file_id.is_some() {
-            FileServiceClient::new(channel).system_delete(request).await
-        } else {
-            SmartContractServiceClient::new(channel).system_delete(request).await
-        }
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async move {
+            if self.file_id.is_some() {
+                FileServiceClient::new(channel).system_delete(request).await
+            } else {
+                SmartContractServiceClient::new(channel).system_delete(request).await
+            }
+        })
+    }
+}
+
+impl ValidateChecksums for SystemDeleteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.file_id.validate_checksums(ledger_id)?;
+        self.contract_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for SystemDeleteTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let expiration_time = self.expiration_time.map(Into::into);
         let contract_id = self.contract_id.to_protobuf();
         let file_id = self.file_id.to_protobuf();

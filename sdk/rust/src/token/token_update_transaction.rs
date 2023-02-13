@@ -18,7 +18,6 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use time::{
@@ -27,24 +26,26 @@ use time::{
 };
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Key,
     LedgerId,
     TokenId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// At consensus, updates an already created token to the given values.
@@ -346,29 +347,33 @@ impl TokenUpdateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for TokenUpdateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.token_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.auto_renew_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.treasury_account_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for TokenUpdateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for TokenUpdateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        TokenServiceClient::new(channel).update_token(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { TokenServiceClient::new(channel).update_token(request).await })
+    }
+}
+
+impl ValidateChecksums for TokenUpdateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.token_id.validate_checksums(ledger_id)?;
+        self.auto_renew_account_id.validate_checksums(ledger_id)?;
+        self.treasury_account_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for TokenUpdateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         services::transaction_body::Data::TokenUpdate(services::TokenUpdateTransactionBody {
             token: self.token_id.to_protobuf(),
             name: self.token_name.clone(),

@@ -20,20 +20,21 @@
 
 use std::ops::Not;
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     LedgerId,
@@ -41,6 +42,7 @@ use crate::{
     ToProtobuf,
     TokenId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
@@ -244,32 +246,35 @@ impl TransferTransaction {
     }
 }
 
-#[async_trait]
 impl TransactionExecute for TransferTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        for transfer in &self.transfers {
-            transfer.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        }
-        for token_transfer in &self.token_transfers {
-            token_transfer.token_id.validate_checksum_for_ledger_id(ledger_id)?;
-            for transfer in &token_transfer.transfers {
-                transfer.account_id.validate_checksum_for_ledger_id(ledger_id)?;
-            }
-            for nft_transfer in &token_transfer.nft_transfers {
-                nft_transfer.sender_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-                nft_transfer.receiver_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-            }
-        }
-        Ok(())
-    }
-
     // noinspection DuplicatedCode
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).crypto_transfer(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).crypto_transfer(request).await })
+    }
+}
+
+impl TransactionData for TransferTransactionData {}
+
+impl ValidateChecksums for TransferTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        for transfer in &self.transfers {
+            transfer.account_id.validate_checksums(ledger_id)?;
+        }
+        for token_transfer in &self.token_transfers {
+            token_transfer.token_id.validate_checksums(ledger_id)?;
+            for transfer in &token_transfer.transfers {
+                transfer.account_id.validate_checksums(ledger_id)?;
+            }
+            for nft_transfer in &token_transfer.nft_transfers {
+                nft_transfer.sender_account_id.validate_checksums(ledger_id)?;
+                nft_transfer.receiver_account_id.validate_checksums(ledger_id)?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -349,9 +354,10 @@ impl ToProtobuf for NftTransfer {
 impl ToTransactionDataProtobuf for TransferTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: crate::AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let transfers = self
             .transfers
             .is_empty()

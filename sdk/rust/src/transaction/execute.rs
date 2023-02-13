@@ -19,29 +19,25 @@
  */
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 
-use async_trait::async_trait;
-use backoff::backoff::Backoff;
-use backoff::ExponentialBackoff;
 use hedera_proto::services;
 use prost::Message;
-use time::OffsetDateTime;
-use tokio::time::sleep;
 use tonic::transport::Channel;
-use tonic::{
-    Response,
-    Status,
-};
 
-use super::TransactionSources;
-use crate::entity_id::AutoValidateChecksum;
+use super::chunked::ChunkInfo;
+use super::source::SourceChunk;
+use super::{
+    ChunkData,
+    TransactionSources,
+};
 use crate::execute::Execute;
-use crate::protobuf::FromProtobuf;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Client,
     Error,
     Hbar,
@@ -53,6 +49,7 @@ use crate::{
     TransactionHash,
     TransactionId,
     TransactionResponse,
+    ValidateChecksums,
 };
 
 #[derive(Debug)]
@@ -87,16 +84,15 @@ impl From<(PublicKey, Vec<u8>)> for SignaturePair {
 
 impl<D> Transaction<D>
 where
-    D: TransactionExecute,
+    D: TransactionData + ToTransactionDataProtobuf,
 {
     pub(crate) fn make_request_inner(
         &self,
-        transaction_id: TransactionId,
-        node_account_id: AccountId,
+        chunk_info: &ChunkInfo,
     ) -> crate::Result<(services::Transaction, TransactionHash)> {
         assert!(self.is_frozen());
 
-        let transaction_body = self.to_transaction_body_protobuf(node_account_id, &transaction_id);
+        let transaction_body = self.to_transaction_body_protobuf(chunk_info);
 
         let body_bytes = transaction_body.encode_to_vec();
 
@@ -134,22 +130,38 @@ where
     }
 }
 
-#[async_trait]
-pub trait TransactionExecute: Clone + ToTransactionDataProtobuf + Into<AnyTransactionData> {
+/// Pre-execute associated fields for transaction data.
+pub trait TransactionData: Clone + Into<AnyTransactionData> {
+    /// Returns the maximum allowed transaction fee if none is specified.
+    ///
+    /// Specifically, this default will be used in the following case:
+    /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
+    /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
     fn default_max_transaction_fee(&self) -> Hbar {
         Hbar::from_unit(2, HbarUnit::Hbar)
     }
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error>;
+    /// Returns the chunk data for this transaction if this is a chunked transaction.
+    fn maybe_chunk_data(&self) -> Option<&ChunkData> {
+        None
+    }
 
-    async fn execute(
+    /// Returns `true` if `self` is a chunked transaction *and* it should wait for receipts between each chunk.
+    fn wait_for_receipt(&self) -> bool {
+        false
+    }
+}
+
+pub trait TransactionExecute:
+    ToTransactionDataProtobuf + TransactionData + ValidateChecksums
+{
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status>;
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse>;
 }
 
-#[async_trait]
 impl<D> Execute for Transaction<D>
 where
     D: TransactionExecute,
@@ -181,18 +193,18 @@ where
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.is_frozen());
 
-        self.make_request_inner(
+        self.make_request_inner(&ChunkInfo::single(
             transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
             node_account_id,
-        )
+        ))
     }
 
-    async fn execute(
+    fn execute(
         &self,
         channel: Channel,
         request: Self::GrpcRequest,
-    ) -> Result<Response<Self::GrpcResponse>, Status> {
-        self.body.data.execute(channel, request).await
+    ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
+        self.body.data.execute(channel, request)
     }
 
     fn make_response(
@@ -225,30 +237,31 @@ where
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
         Ok(response.node_transaction_precheck_code)
     }
+}
 
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+/// Marker trait for transactions that support Chunking.
+pub trait TransactionExecuteChunked: TransactionExecute {}
+
+impl<D: ValidateChecksums> ValidateChecksums for Transaction<D> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         if let Some(node_account_ids) = &self.body.node_account_ids {
             for node_account_id in node_account_ids {
-                node_account_id.validate_checksum_for_ledger_id(ledger_id)?;
+                node_account_id.validate_checksums(ledger_id)?;
             }
         }
-        self.body.transaction_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.body.data.validate_checksums_for_ledger_id(ledger_id)
+        self.body.transaction_id.validate_checksums(ledger_id)?;
+        self.body.data.validate_checksums(ledger_id)
     }
 }
 
 impl<D> Transaction<D>
 where
-    D: TransactionExecute,
+    D: TransactionData + ToTransactionDataProtobuf,
 {
     #[allow(deprecated)]
-    fn to_transaction_body_protobuf(
-        &self,
-        node_account_id: AccountId,
-        transaction_id: &TransactionId,
-    ) -> services::TransactionBody {
+    fn to_transaction_body_protobuf(&self, chunk_info: &ChunkInfo) -> services::TransactionBody {
         assert!(self.is_frozen());
-        let data = self.body.data.to_transaction_data_protobuf(node_account_id, transaction_id);
+        let data = self.body.data.to_transaction_data_protobuf(chunk_info);
 
         let max_transaction_fee = self
             .body
@@ -257,7 +270,7 @@ where
 
         services::TransactionBody {
             data: Some(data),
-            transaction_id: Some(transaction_id.to_protobuf()),
+            transaction_id: Some(chunk_info.current_transaction_id.to_protobuf()),
             transaction_valid_duration: Some(
                 self.body
                     .transaction_valid_duration
@@ -265,168 +278,146 @@ where
                     .into(),
             ),
             memo: self.body.transaction_memo.clone(),
-            node_account_id: Some(node_account_id.to_protobuf()),
+            node_account_id: Some(chunk_info.node_account_id.to_protobuf()),
             generate_record: false,
             transaction_fee: max_transaction_fee.to_tinybars() as u64,
         }
     }
 }
 
-// Called when a transaction has `sources`
-// but also from FFI.
-pub(crate) async fn execute2<D: TransactionExecute>(
-    client: &Client,
-    transaction: &Transaction<D>,
-    sources: &TransactionSources,
-    timeout: Option<std::time::Duration>,
-) -> crate::Result<TransactionResponse> {
-    use crate::Status;
+// fixme: find a better name.
+pub(crate) struct SourceTransaction<'a, D> {
+    inner: &'a Transaction<D>,
+    sources: Cow<'a, TransactionSources>,
+}
 
-    // fixme: be way more lazy.
-    let sources = sources.sign_with(&transaction.signers);
+impl<'a, D> SourceTransaction<'a, D> {
+    pub(crate) fn new(transaction: &'a Transaction<D>, sources: &'a TransactionSources) -> Self {
+        // fixme: be way more lazy.
+        let sources = sources.sign_with(&transaction.signers);
 
-    // note: the transaction's node indexes have to match the ones in sources, but we don't know what order they're in, so, we have to do it like this
-    // fixme: should `from_bytes` error if a node index is duplicated?
-    let (node_account_ids, hashes) = {
-        let mut node_account_ids = Vec::with_capacity(sources.0.len());
-        let mut hashes = Vec::with_capacity(sources.0.len());
+        Self { inner: transaction, sources }
+    }
 
-        for source in &*sources.0 {
-            let tx =
-                services::SignedTransaction::decode(source.signed_transaction_bytes.as_slice())
-                    .unwrap();
+    pub(crate) async fn execute(
+        &self,
+        client: &Client,
+        timeout: Option<std::time::Duration>,
+    ) -> crate::Result<TransactionResponse>
+    where
+        D: TransactionExecute,
+    {
+        Ok(self.execute_all(client, timeout).await?.swap_remove(0))
+    }
 
-            hashes.push(TransactionHash::new(&tx.body_bytes));
+    pub(crate) async fn execute_all(
+        &self,
+        client: &Client,
+        timeout_per_chunk: Option<std::time::Duration>,
+    ) -> crate::Result<Vec<TransactionResponse>>
+    where
+        D: TransactionExecute,
+    {
+        let mut responses = Vec::with_capacity(self.sources.chunks_len());
+        for chunk in self.sources.chunks() {
+            let response = crate::execute::execute(
+                client,
+                &SourceTransactionExecuteView::new(self.inner, chunk),
+                timeout_per_chunk,
+            )
+            .await?;
 
-            let node_account_id = services::TransactionBody::decode(tx.body_bytes.as_slice())
-                .unwrap()
-                .node_account_id
-                .unwrap();
-
-            node_account_ids.push(AccountId::from_protobuf(node_account_id).unwrap());
-        }
-
-        (node_account_ids, hashes)
-    };
-
-    let timeout: Option<std::time::Duration> = timeout.into();
-
-    let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
-        std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
-    });
-
-    // the overall timeout for the backoff starts measuring from here
-    let mut backoff =
-        ExponentialBackoff { max_elapsed_time: Some(timeout), ..ExponentialBackoff::default() };
-    let mut last_error: Option<Error> = None;
-
-    let mut include_unhealty = false;
-
-    // the outer loop continues until we timeout or reach the maximum number of "attempts"
-    // an attempt is counted when we have a successful response from a node that must either
-    // be retried immediately (on a new node) or retried after a backoff.
-    loop {
-        // if no explicit set of node account IDs, we randomly sample 1/3 of all
-        // healthy nodes on the client. this set of healthy nodes can change on
-        // each iteration
-
-        // fixme: if the nodes in the `network` change this invalidates(!), but that doesn't happen at all right now.
-        // this `network` handle ensures that it _doesn't_ change.
-        let network = client.network();
-        let node_indexes = network.node_indexes_for_ids(&node_account_ids)?;
-
-        for (request_index, node_index) in node_indexes.into_iter().enumerate() {
-            if !include_unhealty && !network.is_node_healthy(node_index, OffsetDateTime::now_utc())
-            {
-                continue;
+            if self.inner.data().wait_for_receipt() {
+                response.get_receipt(client).await?;
             }
 
-            let (node_account_id, channel) = network.channel(node_index);
-
-            let response =
-                match transaction.execute(channel, sources.0[request_index].clone()).await {
-                    Ok(response) => response.into_inner(),
-                    Err(status) => {
-                        match status.code() {
-                            tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                                // NOTE: this is an "unhealthy" node
-                                network.mark_node_unhealthy(node_index);
-
-                                // try the next node in our allowed list, immediately
-                                last_error = Some(status.into());
-                                continue;
-                            }
-
-                            _ => {
-                                // fail immediately
-                                return Err(status.into());
-                            }
-                        }
-                    }
-                };
-
-            let pre_check_status = Transaction::<D>::response_pre_check_status(&response)?;
-
-            match Status::from_i32(pre_check_status) {
-                Some(status) => match status {
-                    Status::Ok if transaction.should_retry(&response) => {
-                        last_error = Some(
-                            transaction.make_error_pre_check(status, transaction.transaction_id()),
-                        );
-                        break;
-                    }
-
-                    Status::Ok => {
-                        return transaction.make_response(
-                            response,
-                            hashes[request_index],
-                            node_account_id,
-                            transaction.transaction_id(),
-                        );
-                    }
-
-                    Status::Busy | Status::PlatformNotActive => {
-                        // NOTE: this is a "busy" node
-                        // try the next node in our allowed list, immediately
-                        last_error = Some(
-                            transaction.make_error_pre_check(status, transaction.transaction_id()),
-                        );
-                        continue;
-                    }
-
-                    _ if transaction.should_retry_pre_check(status) => {
-                        // conditional retry on pre-check should back-off and try again
-                        last_error = Some(
-                            transaction.make_error_pre_check(status, transaction.transaction_id()),
-                        );
-                        break;
-                    }
-
-                    _ => {
-                        // any other pre-check is an error that the user needs to fix, fail immediately
-                        return Err(
-                            transaction.make_error_pre_check(status, transaction.transaction_id())
-                        );
-                    }
-                },
-
-                None => {
-                    // not sure how to proceed, fail immediately
-                    return Err(Error::ResponseStatusUnrecognized(pre_check_status));
-                }
-            }
+            responses.push(response);
         }
 
-        // we tried each node, suspend execution until the next backoff interval
-        if let Some(duration) = backoff.next_backoff() {
-            sleep(duration).await;
-        } else {
-            // maximum time allowed has elapsed
-            // NOTE: it should be impossible to reach here without capturing at least one error
-            return Err(Error::TimedOut(last_error.unwrap().into()));
-        }
+        Ok(responses)
+    }
+}
 
-        // we've gone through healthy nodes at least once, now we have to try other nodes.
-        include_unhealty = true;
+// fixme: better name.
+struct SourceTransactionExecuteView<'a, D> {
+    transaction: &'a Transaction<D>,
+    chunk: SourceChunk<'a>,
+    indecies_by_node_id: HashMap<AccountId, usize>,
+}
+
+impl<'a, D> SourceTransactionExecuteView<'a, D> {
+    fn new(transaction: &'a Transaction<D>, chunk: SourceChunk<'a>) -> Self {
+        let indecies_by_node_id =
+            chunk.node_ids().iter().copied().enumerate().map(|it| (it.1, it.0)).collect();
+        Self { transaction, chunk, indecies_by_node_id }
+    }
+}
+
+impl<'a, D: ValidateChecksums> ValidateChecksums for SourceTransactionExecuteView<'a, D> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transaction.validate_checksums(ledger_id)
+    }
+}
+
+impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> {
+    type GrpcRequest = <Transaction<D> as Execute>::GrpcRequest;
+
+    type GrpcResponse = <Transaction<D> as Execute>::GrpcResponse;
+
+    type Context = <Transaction<D> as Execute>::Context;
+
+    type Response = <Transaction<D> as Execute>::Response;
+
+    fn node_account_ids(&self) -> Option<&[AccountId]> {
+        Some(self.chunk.node_ids())
+    }
+
+    fn transaction_id(&self) -> Option<TransactionId> {
+        Some(self.chunk.transaction_id())
+    }
+
+    fn requires_transaction_id(&self) -> bool {
+        true
+    }
+
+    fn make_request(
+        &self,
+        transaction_id: &Option<TransactionId>,
+        node_account_id: AccountId,
+    ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
+        debug_assert_eq!(transaction_id, &self.transaction_id());
+
+        let index = *self.indecies_by_node_id.get(&node_account_id).unwrap();
+        Ok((self.chunk.transactions()[index].clone(), self.chunk.transaction_hashes()[index]))
+    }
+
+    fn execute(
+        &self,
+        channel: Channel,
+        request: Self::GrpcRequest,
+    ) -> BoxGrpcFuture<Self::GrpcResponse> {
+        self.transaction.execute(channel, request)
+    }
+
+    fn make_response(
+        &self,
+        response: Self::GrpcResponse,
+        context: Self::Context,
+        node_account_id: AccountId,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Result<Self::Response> {
+        self.transaction.make_response(response, context, node_account_id, transaction_id)
+    }
+
+    fn make_error_pre_check(
+        &self,
+        status: crate::Status,
+        transaction_id: Option<TransactionId>,
+    ) -> crate::Error {
+        self.transaction.make_error_pre_check(status, transaction_id)
+    }
+
+    fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {
+        Transaction::<D>::response_pre_check_status(response)
     }
 }

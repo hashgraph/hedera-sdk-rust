@@ -18,28 +18,28 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
-    AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     TopicId,
     Transaction,
-    TransactionId,
+    ValidateChecksums,
 };
 
 /// Delete a topic.
@@ -74,27 +74,31 @@ impl TopicDeleteTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for TopicDeleteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.topic_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for TopicDeleteTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for TopicDeleteTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        ConsensusServiceClient::new(channel).delete_topic(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { ConsensusServiceClient::new(channel).delete_topic(request).await })
+    }
+}
+
+impl ValidateChecksums for TopicDeleteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.topic_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for TopicDeleteTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let topic_id = self.topic_id.to_protobuf();
 
         services::transaction_body::Data::ConsensusDeleteTopic(

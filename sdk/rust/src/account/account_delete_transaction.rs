@@ -18,26 +18,28 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     LedgerId,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Mark an account as deleted, moving all its current hbars to another account.
@@ -85,28 +87,32 @@ impl AccountDeleteTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for AccountDeleteTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.transfer_account_id.validate_checksum_for_ledger_id(ledger_id)?;
-        self.account_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for AccountDeleteTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for AccountDeleteTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).crypto_delete(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).crypto_delete(request).await })
+    }
+}
+
+impl ValidateChecksums for AccountDeleteTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.transfer_account_id.validate_checksums(ledger_id)?;
+        self.account_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for AccountDeleteTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let account_id = self.account_id.to_protobuf();
         let transfer_account_id = self.transfer_account_id.to_protobuf();
 

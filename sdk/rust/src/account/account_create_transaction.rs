@@ -18,13 +18,11 @@
  * ‍
  */
 
-use async_trait::async_trait;
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use time::Duration;
 use tonic::transport::Channel;
 
-use crate::entity_id::AutoValidateChecksum;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -32,17 +30,21 @@ use crate::protobuf::{
 use crate::staked_id::StakedId;
 use crate::transaction::{
     AnyTransactionData,
+    ChunkInfo,
     ToTransactionDataProtobuf,
+    TransactionData,
     TransactionExecute,
 };
 use crate::{
     AccountId,
+    BoxGrpcFuture,
     Error,
     Hbar,
     Key,
     LedgerId,
     PublicKey,
     Transaction,
+    ValidateChecksums,
 };
 
 /// Create a new Hedera™ account.
@@ -284,27 +286,31 @@ impl AccountCreateTransaction {
     }
 }
 
-#[async_trait]
-impl TransactionExecute for AccountCreateTransactionData {
-    fn validate_checksums_for_ledger_id(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        self.staked_id.validate_checksum_for_ledger_id(ledger_id)
-    }
+impl TransactionData for AccountCreateTransactionData {}
 
-    async fn execute(
+impl TransactionExecute for AccountCreateTransactionData {
+    fn execute(
         &self,
         channel: Channel,
         request: services::Transaction,
-    ) -> Result<tonic::Response<services::TransactionResponse>, tonic::Status> {
-        CryptoServiceClient::new(channel).create_account(request).await
+    ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
+        Box::pin(async { CryptoServiceClient::new(channel).create_account(request).await })
+    }
+}
+
+impl ValidateChecksums for AccountCreateTransactionData {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+        self.staked_id.validate_checksums(ledger_id)
     }
 }
 
 impl ToTransactionDataProtobuf for AccountCreateTransactionData {
     fn to_transaction_data_protobuf(
         &self,
-        _node_account_id: AccountId,
-        _transaction_id: &crate::TransactionId,
+        chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data {
+        let _ = chunk_info.assert_single_transaction();
+
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
         let auto_renew_account = self.auto_renew_account_id.to_protobuf();
