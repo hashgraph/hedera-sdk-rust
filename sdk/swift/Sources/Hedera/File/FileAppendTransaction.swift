@@ -67,6 +67,14 @@ public final class FileAppendTransaction: ChunkedTransaction {
         return self
     }
 
+    /// Sets `self.contents` to the UTF-8 encoded bytes of `contents`.
+    @discardableResult
+    public func contents(_ contents: String) -> Self {
+        self.contents = contents.data(using: .utf8)!
+
+        return self
+    }
+
     private enum CodingKeys: String, CodingKey {
         case fileId
     }
