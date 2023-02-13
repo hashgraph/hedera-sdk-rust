@@ -65,6 +65,7 @@ public final class ContractUpdateTransaction: Transaction {
         stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
         stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
         declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
+        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
 
         try super.init(from: decoder)
     }
@@ -306,6 +307,7 @@ public final class ContractUpdateTransaction: Transaction {
         try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
         try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
         try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
+        try container.encodeIfPresent(proxyAccountId, forKey: .proxyAccountId)
 
         try super.encode(to: encoder)
     }
