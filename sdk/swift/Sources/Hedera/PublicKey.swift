@@ -208,7 +208,6 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
             }
         }
 
-
         guard let sources = transaction.sources else {
             fatalError()
         }

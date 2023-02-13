@@ -477,7 +477,7 @@ impl<D: TransactionExecute> Transaction<D> {
         Ok(transaction_list)
     }
 
-    fn make_sources(&self) -> crate::Result<Cow<'_, TransactionSources>> {
+    pub(crate) fn make_sources(&self) -> crate::Result<Cow<'_, TransactionSources>> {
         assert!(self.is_frozen());
 
         if let Some(sources) = &self.sources {
