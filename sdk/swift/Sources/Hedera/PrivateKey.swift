@@ -221,6 +221,12 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         Self.fromMnemonic(mnemonic, "")
     }
 
+    public func signTransaction(_ transaction: Transaction) throws {
+        try transaction.freeze()
+
+        transaction.addSignatureSigner(.privateKey(self))
+    }
+
     deinit {
         hedera_private_key_free(ptr)
     }

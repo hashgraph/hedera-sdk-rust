@@ -201,6 +201,20 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         return String(hString: stringPtr!)
     }
 
+    public func verifyTransaction(_ transaction: Transaction) throws {
+        for signer in transaction.signers {
+            if self == signer.publicKey {
+                return
+            }
+        }
+
+        guard let sources = transaction.sources else {
+            fatalError()
+        }
+
+        try HError.throwing(error: hedera_public_key_verify_sources(ptr, sources.ptr))
+    }
+
     deinit {
         hedera_public_key_free(ptr)
     }

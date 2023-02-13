@@ -1245,6 +1245,9 @@ bool hedera_public_key_is_ecdsa(struct HederaPublicKey *key);
 enum HederaError hedera_public_key_to_evm_address(struct HederaPublicKey *key,
                                                   char **evm_address);
 
+enum HederaError hedera_public_key_verify_sources(struct HederaPublicKey *key,
+                                                  struct HederaTransactionSources *sources);
+
 /**
  * Releases memory associated with the public key.
  */
@@ -1507,7 +1510,7 @@ enum HederaError hedera_transaction_to_bytes(const char *transaction,
 
 enum HederaError hedera_transaction_from_bytes(const uint8_t *bytes,
                                                size_t bytes_size,
-                                               struct HederaTransactionSources **sources_out,
+                                               const struct HederaTransactionSources **sources_out,
                                                char **transaction_out);
 
 /**
@@ -1542,11 +1545,35 @@ enum HederaError hedera_transaction_execute_all(const struct HederaClient *clien
                                                 const struct HederaTransactionSources *sources,
                                                 void (*callback)(const void *context, enum HederaError err, const char *response));
 
+enum HederaError hedera_transaction_make_sources(const char *transaction,
+                                                 struct HederaSigners signers,
+                                                 const struct HederaTransactionSources **out);
+
+/**
+ * Signs `sources` with the given `signers`
+ *
+ * # Safety
+ * - `sources` must not be null.
+ * - `signers` must follow the associated safety requirements.
+ */
+const struct HederaTransactionSources *hedera_transaction_sources_sign(const struct HederaTransactionSources *sources,
+                                                                       struct HederaSigners signers);
+
+/**
+ * Signs `sources` with the given `signer`
+ *
+ * # Safety
+ * - `sources` must not be null.
+ * - `signer` must follow the associated safety requirements.
+ */
+const struct HederaTransactionSources *hedera_transaction_sources_sign_single(const struct HederaTransactionSources *sources,
+                                                                              struct HederaSigner signer);
+
 /**
  * # Safety
  * - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
  */
-void hedera_transaction_sources_free(struct HederaTransactionSources *sources);
+void hedera_transaction_sources_free(const struct HederaTransactionSources *sources);
 
 /**
  * # Safety

@@ -38,13 +38,13 @@ private func hackMutablePointerToImmutable<Pointee>(_ ptr: UnsafePointer<Pointee
     ptr
 }
 
-public class Signer {
+internal final class Signer {
     internal init(_ publicKey: PublicKey, _ signFunc: @escaping (Data) -> Data) {
         self.publicKey = publicKey
         self.signFunc = signFunc
     }
 
-    fileprivate let publicKey: PublicKey
+    internal let publicKey: PublicKey
     fileprivate let signFunc: (Data) -> Data
 
     internal func unsafeIntoHederaSigner() -> HederaSigner {
@@ -53,6 +53,10 @@ public class Signer {
         return HederaSigner(
             public_key: self.publicKey.ptr, context: ptr, sign_func: sign, free_signature_func: freeSignature,
             free_context_func: freeContext)
+    }
+
+    internal static func privateKey(_ key: PrivateKey) -> Self {
+        Self(key.getPublicKey(), key.sign(_:))
     }
 }
 
