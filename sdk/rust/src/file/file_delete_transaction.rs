@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -98,11 +99,15 @@ impl ToTransactionDataProtobuf for FileDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let file_id = self.file_id.to_protobuf();
+        services::transaction_body::Data::FileDelete(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::FileDelete(services::FileDeleteTransactionBody {
-            file_id,
-        })
+impl ToSchedulableTransactionDataProtobuf for FileDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::FileDelete(self.to_protobuf())
     }
 }
 
@@ -115,6 +120,14 @@ impl From<FileDeleteTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::FileDeleteTransactionBody> for FileDeleteTransactionData {
     fn from_protobuf(pb: services::FileDeleteTransactionBody) -> crate::Result<Self> {
         Ok(Self { file_id: Option::from_protobuf(pb.file_id)? })
+    }
+}
+
+impl ToProtobuf for FileDeleteTransactionData {
+    type Protobuf = services::FileDeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::FileDeleteTransactionBody { file_id: self.file_id.to_protobuf() }
     }
 }
 

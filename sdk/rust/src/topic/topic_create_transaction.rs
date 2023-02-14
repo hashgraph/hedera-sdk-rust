@@ -30,6 +30,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -187,20 +188,15 @@ impl ToTransactionDataProtobuf for TopicCreateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let admin_key = self.admin_key.to_protobuf();
-        let submit_key = self.submit_key.to_protobuf();
-        let auto_renew_period = self.auto_renew_period.to_protobuf();
-        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
+        services::transaction_body::Data::ConsensusCreateTopic(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::ConsensusCreateTopic(
-            services::ConsensusCreateTopicTransactionBody {
-                auto_renew_account: auto_renew_account_id,
-                memo: self.topic_memo.clone(),
-                admin_key,
-                submit_key,
-                auto_renew_period,
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for TopicCreateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ConsensusCreateTopic(self.to_protobuf())
     }
 }
 
@@ -219,6 +215,20 @@ impl FromProtobuf<services::ConsensusCreateTopicTransactionBody> for TopicCreate
             auto_renew_period: pb.auto_renew_period.map(Into::into),
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
         })
+    }
+}
+
+impl ToProtobuf for TopicCreateTransactionData {
+    type Protobuf = services::ConsensusCreateTopicTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ConsensusCreateTopicTransactionBody {
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            memo: self.topic_memo.clone(),
+            admin_key: self.admin_key.to_protobuf(),
+            submit_key: self.submit_key.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+        }
     }
 }
 

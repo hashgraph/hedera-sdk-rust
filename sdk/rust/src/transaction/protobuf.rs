@@ -28,3 +28,9 @@ pub trait ToTransactionDataProtobuf: Send + Sync {
         chunk_info: &ChunkInfo,
     ) -> services::transaction_body::Data;
 }
+
+pub trait ToSchedulableTransactionDataProtobuf: Send + Sync {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data;
+}

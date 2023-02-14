@@ -41,7 +41,7 @@ public final class ScheduleCreateTransaction: Transaction {
         self.expirationTime = expirationTime
         self.isWaitForExpiry = isWaitForExpiry
         self.payerAccountId = payerAccountId
-        self.scheduledTransaction = scheduledTransaction
+        self.scheduledTransactionInner = scheduledTransaction.map(AnySchedulableTransaction.init(upcasting:))
         self.adminKey = adminKey
         self.scheduleMemo = scheduleMemo
 
@@ -54,7 +54,7 @@ public final class ScheduleCreateTransaction: Transaction {
         expirationTime = try container.decodeIfPresent(.expirationTime)
         isWaitForExpiry = try container.decodeIfPresent(.isWaitForExpiry) ?? false
         payerAccountId = try container.decodeIfPresent(.payerAccountId)
-        scheduledTransaction = try container.decodeIfPresent(.scheduledTransaction)
+        scheduledTransactionInner = try container.decodeIfPresent(.scheduledTransaction)
         adminKey = try container.decodeIfPresent(.adminKey)
         scheduleMemo = try container.decodeIfPresent(.scheduleMemo) ?? ""
 
@@ -62,7 +62,11 @@ public final class ScheduleCreateTransaction: Transaction {
     }
 
     /// The timestamp for when the transaction should be evaluated for execution and then expire.
-    public var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? {
+        willSet {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the timestamp for when the transaction should be evaluated for execution and then expire.
     @discardableResult
@@ -74,7 +78,11 @@ public final class ScheduleCreateTransaction: Transaction {
 
     /// If true, the transaction will be evaluated for execution at expiration_time instead
     /// of when all required signatures are received.
-    public var isWaitForExpiry: Bool
+    public var isWaitForExpiry: Bool {
+        willSet {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set if the transaction will be evaluated for execution at expiration_time instead
     /// of when all required signatures are received.
@@ -87,7 +95,11 @@ public final class ScheduleCreateTransaction: Transaction {
 
     /// The id of the account to be charged the service fee for the scheduled transaction at
     /// the consensus time that it executes (if ever).
-    public var payerAccountId: AccountId?
+    public var payerAccountId: AccountId? {
+        willSet {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the id of the account to be charged the service fee for the scheduled transaction at
     /// the consensus time that it executes (if ever).
@@ -98,8 +110,19 @@ public final class ScheduleCreateTransaction: Transaction {
         return self
     }
 
+    private var scheduledTransactionInner: AnySchedulableTransaction? {
+        willSet {
+            ensureNotFrozen()
+        }
+    }
+
     /// The scheduled transaction.
-    public var scheduledTransaction: Transaction?
+    public var scheduledTransaction: Transaction? {
+        get { scheduledTransactionInner?.transaction }
+        set(value) {
+            scheduledTransactionInner = value.map(AnySchedulableTransaction.init(upcasting:))
+        }
+    }
 
     /// Set the scheduled transaction.
     @discardableResult
@@ -110,7 +133,11 @@ public final class ScheduleCreateTransaction: Transaction {
     }
 
     /// The Hedera key which can be used to sign a ScheduleDelete and remove the schedule.
-    public var adminKey: Key?
+    public var adminKey: Key? {
+        willSet {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the Hedera key which can be used to sign a ScheduleDelete and remove the schedule.
     @discardableResult
@@ -121,7 +148,11 @@ public final class ScheduleCreateTransaction: Transaction {
     }
 
     /// The memo for the schedule entity.
-    public var scheduleMemo: String
+    public var scheduleMemo: String {
+        willSet {
+            ensureNotFrozen()
+        }
+    }
 
     /// Set the memo for the schedule entity.
     @discardableResult

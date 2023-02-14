@@ -70,7 +70,10 @@ pub(crate) use execute::{
     TransactionExecute,
     TransactionExecuteChunked,
 };
-pub(crate) use protobuf::ToTransactionDataProtobuf;
+pub(crate) use protobuf::{
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+};
 pub(crate) use source::TransactionSources;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
@@ -172,7 +175,6 @@ where
 }
 
 impl<D> Transaction<D> {
-    #[cfg(feature = "ffi")]
     pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
         Self { body, signers, sources: None }
     }

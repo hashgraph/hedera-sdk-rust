@@ -33,6 +33,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -209,20 +210,15 @@ impl ToTransactionDataProtobuf for FileUpdateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let file_id = self.file_id.to_protobuf();
-        let expiration_time = self.expiration_time.to_protobuf();
+        services::transaction_body::Data::FileUpdate(self.to_protobuf())
+    }
+}
 
-        let keys = self.keys.to_protobuf().unwrap_or_default();
-
-        services::transaction_body::Data::FileUpdate(services::FileUpdateTransactionBody {
-            file_id,
-            expiration_time,
-            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
-            auto_renew_period: self.auto_renew_period.to_protobuf(),
-            keys: Some(keys),
-            contents: self.contents.clone().unwrap_or_default(),
-            memo: self.file_memo.clone(),
-        })
+impl ToSchedulableTransactionDataProtobuf for FileUpdateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::FileUpdate(self.to_protobuf())
     }
 }
 
@@ -243,6 +239,22 @@ impl FromProtobuf<services::FileUpdateTransactionBody> for FileUpdateTransaction
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
             auto_renew_period: pb.auto_renew_period.map(Into::into),
         })
+    }
+}
+
+impl ToProtobuf for FileUpdateTransactionData {
+    type Protobuf = services::FileUpdateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::FileUpdateTransactionBody {
+            file_id: self.file_id.to_protobuf(),
+            expiration_time: self.expiration_time.to_protobuf(),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+            keys: self.keys.to_protobuf(),
+            contents: self.contents.clone().unwrap_or_default(),
+            memo: self.file_memo.clone(),
+        }
     }
 }
 

@@ -34,6 +34,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -204,19 +205,15 @@ impl ToTransactionDataProtobuf for FileCreateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let expiration_time = self.expiration_time.to_protobuf();
+        services::transaction_body::Data::FileCreate(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::FileCreate(services::FileCreateTransactionBody {
-            auto_renew_period: self.auto_renew_period.to_protobuf(),
-            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
-            expiration_time,
-            keys: self.keys.to_protobuf(),
-            contents: self.contents.clone().unwrap_or_default(),
-            shard_id: None,
-            realm_id: None,
-            new_realm_admin_key: None,
-            memo: self.file_memo.clone(),
-        })
+impl ToSchedulableTransactionDataProtobuf for FileCreateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::FileCreate(self.to_protobuf())
     }
 }
 
@@ -236,6 +233,24 @@ impl FromProtobuf<services::FileCreateTransactionBody> for FileCreateTransaction
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
             expiration_time: pb.expiration_time.map(Into::into),
         })
+    }
+}
+
+impl ToProtobuf for FileCreateTransactionData {
+    type Protobuf = services::FileCreateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::FileCreateTransactionBody {
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            expiration_time: self.expiration_time.to_protobuf(),
+            keys: self.keys.to_protobuf(),
+            contents: self.contents.clone().unwrap_or_default(),
+            shard_id: None,
+            realm_id: None,
+            new_realm_admin_key: None,
+            memo: self.file_memo.clone(),
+        }
     }
 }
 

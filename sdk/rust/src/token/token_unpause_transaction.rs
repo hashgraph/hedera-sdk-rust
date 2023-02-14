@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -101,11 +102,15 @@ impl ToTransactionDataProtobuf for TokenUnpauseTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let token = self.token_id.to_protobuf();
+        services::transaction_body::Data::TokenUnpause(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenUnpause(services::TokenUnpauseTransactionBody {
-            token,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenUnpauseTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenUnpause(self.to_protobuf())
     }
 }
 
@@ -118,6 +123,14 @@ impl From<TokenUnpauseTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::TokenUnpauseTransactionBody> for TokenUnpauseTransactionData {
     fn from_protobuf(pb: services::TokenUnpauseTransactionBody) -> crate::Result<Self> {
         Ok(Self { token_id: Option::from_protobuf(pb.token)? })
+    }
+}
+
+impl ToProtobuf for TokenUnpauseTransactionData {
+    type Protobuf = services::TokenUnpauseTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenUnpauseTransactionBody { token: self.token_id.to_protobuf() }
     }
 }
 

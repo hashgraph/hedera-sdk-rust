@@ -36,6 +36,7 @@ use crate::token::token_type::TokenType;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -478,29 +479,15 @@ impl ToTransactionDataProtobuf for TokenCreateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        services::transaction_body::Data::TokenCreation(services::TokenCreateTransactionBody {
-            name: self.name.clone(),
-            symbol: self.symbol.clone(),
-            decimals: self.decimals,
-            initial_supply: self.initial_supply,
-            treasury: self.treasury_account_id.to_protobuf(),
-            admin_key: self.admin_key.to_protobuf(),
-            kyc_key: self.kyc_key.to_protobuf(),
-            freeze_key: self.freeze_key.to_protobuf(),
-            wipe_key: self.wipe_key.to_protobuf(),
-            supply_key: self.supply_key.to_protobuf(),
-            freeze_default: self.freeze_default,
-            expiry: self.expiration_time.map(Into::into),
-            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
-            auto_renew_period: self.auto_renew_period.map(Into::into),
-            memo: self.token_memo.clone(),
-            token_type: self.token_type.to_protobuf().into(),
-            supply_type: self.token_supply_type.to_protobuf().into(),
-            max_supply: self.max_supply as i64,
-            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
-            custom_fees: self.custom_fees.to_protobuf(),
-            pause_key: self.pause_key.to_protobuf(),
-        })
+        services::transaction_body::Data::TokenCreation(self.to_protobuf())
+    }
+}
+
+impl ToSchedulableTransactionDataProtobuf for TokenCreateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenCreation(self.to_protobuf())
     }
 }
 
@@ -563,6 +550,36 @@ impl FromProtobuf<services::TokenCreateTransactionBody> for TokenCreateTransacti
             custom_fees: Vec::from_protobuf(custom_fees)?,
             pause_key: Option::from_protobuf(pause_key)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenCreateTransactionData {
+    type Protobuf = services::TokenCreateTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenCreateTransactionBody {
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+            decimals: self.decimals,
+            initial_supply: self.initial_supply,
+            treasury: self.treasury_account_id.to_protobuf(),
+            admin_key: self.admin_key.to_protobuf(),
+            kyc_key: self.kyc_key.to_protobuf(),
+            freeze_key: self.freeze_key.to_protobuf(),
+            wipe_key: self.wipe_key.to_protobuf(),
+            supply_key: self.supply_key.to_protobuf(),
+            freeze_default: self.freeze_default,
+            expiry: self.expiration_time.map(Into::into),
+            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.map(Into::into),
+            memo: self.token_memo.clone(),
+            token_type: self.token_type.to_protobuf().into(),
+            supply_type: self.token_supply_type.to_protobuf().into(),
+            max_supply: self.max_supply as i64,
+            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
+            custom_fees: self.custom_fees.to_protobuf(),
+            pause_key: self.pause_key.to_protobuf(),
+        }
     }
 }
 

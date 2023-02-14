@@ -33,6 +33,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -207,24 +208,15 @@ impl ToTransactionDataProtobuf for TopicUpdateTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let topic_id = self.topic_id.to_protobuf();
-        let expiration_time = self.expiration_time.map(Into::into);
-        let admin_key = self.admin_key.to_protobuf();
-        let submit_key = self.submit_key.to_protobuf();
-        let auto_renew_period = self.auto_renew_period.map(Into::into);
-        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
+        services::transaction_body::Data::ConsensusUpdateTopic(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::ConsensusUpdateTopic(
-            services::ConsensusUpdateTopicTransactionBody {
-                auto_renew_account: auto_renew_account_id,
-                memo: self.topic_memo.clone(),
-                expiration_time,
-                topic_id,
-                admin_key,
-                submit_key,
-                auto_renew_period,
-            },
-        )
+impl ToSchedulableTransactionDataProtobuf for TopicUpdateTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ConsensusUpdateTopic(self.to_protobuf())
     }
 }
 
@@ -245,6 +237,29 @@ impl FromProtobuf<services::ConsensusUpdateTopicTransactionBody> for TopicUpdate
             auto_renew_period: pb.auto_renew_period.map(Into::into),
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
         })
+    }
+}
+
+impl ToProtobuf for TopicUpdateTransactionData {
+    type Protobuf = services::ConsensusUpdateTopicTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let topic_id = self.topic_id.to_protobuf();
+        let expiration_time = self.expiration_time.map(Into::into);
+        let admin_key = self.admin_key.to_protobuf();
+        let submit_key = self.submit_key.to_protobuf();
+        let auto_renew_period = self.auto_renew_period.map(Into::into);
+        let auto_renew_account_id = self.auto_renew_account_id.to_protobuf();
+
+        services::ConsensusUpdateTopicTransactionBody {
+            auto_renew_account: auto_renew_account_id,
+            memo: self.topic_memo.clone(),
+            expiration_time,
+            topic_id,
+            admin_key,
+            submit_key,
+            auto_renew_period,
+        }
     }
 }
 
