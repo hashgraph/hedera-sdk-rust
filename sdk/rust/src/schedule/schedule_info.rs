@@ -22,14 +22,18 @@ use hedera_proto::services;
 use prost::Message;
 use time::OffsetDateTime;
 
+use super::schedulable_transaction_body::SchedulableTransactionBody;
 use crate::protobuf::ToProtobuf;
+use crate::transaction::TransactionBody;
 use crate::{
     AccountId,
+    AnyTransaction,
     FromProtobuf,
     Key,
     KeyList,
     LedgerId,
     ScheduleId,
+    Transaction,
     TransactionId,
 };
 
@@ -37,6 +41,7 @@ use crate::{
 /// Response from [`ScheduleInfoQuery`][crate::ScheduleInfoQuery].
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleInfo {
     /// The ID of the schedule for which information is requested.
     pub schedule_id: ScheduleId,
@@ -58,12 +63,14 @@ pub struct ScheduleInfo {
     /// it executes).
     pub scheduled_transaction_id: TransactionId,
 
+    scheduled_transaction: SchedulableTransactionBody,
+
     /// When set to true, the transaction will be evaluated for execution at `expiration_time`
     /// instead of when all required signatures are received.
     pub wait_for_expiry: bool,
 
     /// Publicly visible information about the Schedule entity.
-    pub schedule_memo: String,
+    pub memo: String,
 
     /// The date and time the schedule transaction will expire
     #[cfg_attr(
@@ -100,13 +107,33 @@ impl ScheduleInfo {
         FromProtobuf::<services::ScheduleInfo>::from_bytes(bytes)
     }
 
+    /// Returns the scheduled transaction.
+    ///
+    /// This is *not* guaranteed to be a constant time operation.
+    pub fn scheduled_transaction(&self) -> crate::Result<AnyTransaction> {
+        // note: this can't error *right now* but the API *will* be faliable eventually, and as s
+        Ok(Transaction::from_parts(
+            TransactionBody {
+                data: (*self.scheduled_transaction.data).clone().into(),
+                node_account_ids: None,
+                transaction_valid_duration: None,
+                max_transaction_fee: None,
+                transaction_memo: self.scheduled_transaction.transaction_memo.clone(),
+                transaction_id: Some(self.scheduled_transaction_id),
+                operator: None,
+                is_frozen: true,
+            },
+            Vec::new(),
+        ))
+    }
+
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         services::ScheduleInfo {
             schedule_id: Some(self.schedule_id.to_protobuf()),
             expiration_time: self.expiration_time.to_protobuf(),
-            memo: self.schedule_memo.clone(),
+            memo: self.memo.clone(),
             admin_key: self.admin_key.to_protobuf(),
             signers: (!self.signatories.is_empty())
                 .then(|| services::KeyList { keys: self.signatories.keys.to_protobuf() }),
@@ -117,7 +144,9 @@ impl ScheduleInfo {
             wait_for_expiry: self.wait_for_expiry,
 
             // unimplemented fields
-            scheduled_transaction_body: None,
+            scheduled_transaction_body: Some(
+                self.scheduled_transaction.to_scheduled_body_protobuf(),
+            ),
             data: None,
         }
         .encode_to_vec()
@@ -150,6 +179,9 @@ impl FromProtobuf<services::ScheduleInfo> for ScheduleInfo {
         let scheduled_transaction_id =
             TransactionId::from_protobuf(pb_getf!(pb, scheduled_transaction_id)?)?;
 
+        let transaction_body =
+            SchedulableTransactionBody::from_protobuf(pb_getf!(pb, scheduled_transaction_body)?)?;
+
         let signatories = pb.signers.map(KeyList::from_protobuf).transpose()?.unwrap_or_default();
 
         let (executed_at, deleted_at) = match pb.data {
@@ -168,7 +200,7 @@ impl FromProtobuf<services::ScheduleInfo> for ScheduleInfo {
             schedule_id: ScheduleId::from_protobuf(schedule_id)?,
             executed_at,
             deleted_at,
-            schedule_memo: pb.memo,
+            memo: pb.memo,
             creator_account_id: AccountId::from_protobuf(creator_account_id)?,
             payer_account_id,
             expiration_time: pb.expiration_time.map(Into::into),
@@ -177,6 +209,7 @@ impl FromProtobuf<services::ScheduleInfo> for ScheduleInfo {
             signatories,
             wait_for_expiry: pb.wait_for_expiry,
             ledger_id,
+            scheduled_transaction: transaction_body,
         })
     }
 }

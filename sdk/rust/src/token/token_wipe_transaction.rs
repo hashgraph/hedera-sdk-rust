@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -169,17 +170,15 @@ impl ToTransactionDataProtobuf for TokenWipeTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account = self.account_id.to_protobuf();
-        let token = self.token_id.to_protobuf();
-        let amount = self.amount.unwrap_or_default();
-        let serial_numbers = self.serials.iter().map(|num| *num as i64).collect();
+        services::transaction_body::Data::TokenWipe(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenWipe(services::TokenWipeAccountTransactionBody {
-            token,
-            account,
-            amount,
-            serial_numbers,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenWipeTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenWipe(self.to_protobuf())
     }
 }
 
@@ -197,6 +196,18 @@ impl FromProtobuf<services::TokenWipeAccountTransactionBody> for TokenWipeTransa
             amount: Some(pb.amount),
             serials: pb.serial_numbers.into_iter().map(|it| it as u64).collect(),
         })
+    }
+}
+impl ToProtobuf for TokenWipeTransactionData {
+    type Protobuf = services::TokenWipeAccountTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenWipeAccountTransactionBody {
+            token: self.token_id.to_protobuf(),
+            account: self.account_id.to_protobuf(),
+            amount: self.amount.unwrap_or_default(),
+            serial_numbers: self.serials.iter().map(|num| *num as i64).collect(),
+        }
     }
 }
 

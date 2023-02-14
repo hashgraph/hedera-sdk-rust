@@ -30,6 +30,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -118,24 +119,15 @@ impl ToTransactionDataProtobuf for SystemUndeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let contract_id = self.contract_id.to_protobuf();
-        let file_id = self.file_id.to_protobuf();
+        services::transaction_body::Data::SystemUndelete(self.to_protobuf())
+    }
+}
 
-        let id = match (contract_id, file_id) {
-            (Some(contract_id), _) => {
-                Some(services::system_undelete_transaction_body::Id::ContractId(contract_id))
-            }
-
-            (_, Some(file_id)) => {
-                Some(services::system_undelete_transaction_body::Id::FileId(file_id))
-            }
-
-            _ => None,
-        };
-
-        services::transaction_body::Data::SystemUndelete(services::SystemUndeleteTransactionBody {
-            id,
-        })
+impl ToSchedulableTransactionDataProtobuf for SystemUndeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::SystemUndelete(self.to_protobuf())
     }
 }
 
@@ -155,5 +147,27 @@ impl FromProtobuf<services::SystemUndeleteTransactionBody> for SystemUndeleteTra
         };
 
         Ok(Self { file_id, contract_id })
+    }
+}
+
+impl ToProtobuf for SystemUndeleteTransactionData {
+    type Protobuf = services::SystemUndeleteTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let contract_id = self.contract_id.to_protobuf();
+        let file_id = self.file_id.to_protobuf();
+
+        let id = match (contract_id, file_id) {
+            (Some(contract_id), _) => {
+                Some(services::system_undelete_transaction_body::Id::ContractId(contract_id))
+            }
+
+            (_, Some(file_id)) => {
+                Some(services::system_undelete_transaction_body::Id::FileId(file_id))
+            }
+
+            _ => None,
+        };
+        services::SystemUndeleteTransactionBody { id }
     }
 }

@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -123,13 +124,15 @@ impl ToTransactionDataProtobuf for TokenRevokeKycTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account = self.account_id.to_protobuf();
-        let token = self.token_id.to_protobuf();
+        services::transaction_body::Data::TokenRevokeKyc(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenRevokeKyc(services::TokenRevokeKycTransactionBody {
-            token,
-            account,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenRevokeKycTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenRevokeKyc(self.to_protobuf())
     }
 }
 
@@ -145,6 +148,17 @@ impl FromProtobuf<services::TokenRevokeKycTransactionBody> for TokenRevokeKycTra
             account_id: Option::from_protobuf(pb.account)?,
             token_id: Option::from_protobuf(pb.token)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenRevokeKycTransactionData {
+    type Protobuf = services::TokenRevokeKycTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenRevokeKycTransactionBody {
+            token: self.token_id.to_protobuf(),
+            account: self.account_id.to_protobuf(),
+        }
     }
 }
 

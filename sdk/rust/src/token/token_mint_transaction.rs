@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -146,15 +147,15 @@ impl ToTransactionDataProtobuf for TokenMintTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let token = self.token_id.to_protobuf();
-        let amount = self.amount;
-        let metadata = self.metadata.clone();
+        services::transaction_body::Data::TokenMint(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenMint(services::TokenMintTransactionBody {
-            token,
-            amount,
-            metadata,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenMintTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenMint(self.to_protobuf())
     }
 }
 
@@ -171,6 +172,18 @@ impl FromProtobuf<services::TokenMintTransactionBody> for TokenMintTransactionDa
             amount: pb.amount,
             metadata: pb.metadata,
         })
+    }
+}
+
+impl ToProtobuf for TokenMintTransactionData {
+    type Protobuf = services::TokenMintTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenMintTransactionBody {
+            token: self.token_id.to_protobuf(),
+            amount: self.amount,
+            metadata: self.metadata.clone(),
+        }
     }
 }
 

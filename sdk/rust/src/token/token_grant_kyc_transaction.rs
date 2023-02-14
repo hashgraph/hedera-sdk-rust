@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -122,13 +123,15 @@ impl ToTransactionDataProtobuf for TokenGrantKycTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let account = self.account_id.to_protobuf();
-        let token = self.token_id.to_protobuf();
+        services::transaction_body::Data::TokenGrantKyc(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::TokenGrantKyc(services::TokenGrantKycTransactionBody {
-            token,
-            account,
-        })
+impl ToSchedulableTransactionDataProtobuf for TokenGrantKycTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::TokenGrantKyc(self.to_protobuf())
     }
 }
 
@@ -144,6 +147,17 @@ impl FromProtobuf<services::TokenGrantKycTransactionBody> for TokenGrantKycTrans
             account_id: Option::from_protobuf(pb.account)?,
             token_id: Option::from_protobuf(pb.token)?,
         })
+    }
+}
+
+impl ToProtobuf for TokenGrantKycTransactionData {
+    type Protobuf = services::TokenGrantKycTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::TokenGrantKycTransactionBody {
+            token: self.token_id.to_protobuf(),
+            account: self.account_id.to_protobuf(),
+        }
     }
 }
 

@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -133,11 +134,15 @@ impl ToTransactionDataProtobuf for AccountAllowanceDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let nft_allowances = self.nft_allowances.to_protobuf();
+        services::transaction_body::Data::CryptoDeleteAllowance(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::CryptoDeleteAllowance(
-            services::CryptoDeleteAllowanceTransactionBody { nft_allowances },
-        )
+impl ToSchedulableTransactionDataProtobuf for AccountAllowanceDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::CryptoDeleteAllowance(self.to_protobuf())
     }
 }
 
@@ -152,6 +157,16 @@ impl FromProtobuf<services::CryptoDeleteAllowanceTransactionBody>
 {
     fn from_protobuf(pb: services::CryptoDeleteAllowanceTransactionBody) -> crate::Result<Self> {
         Ok(Self { nft_allowances: Vec::from_protobuf(pb.nft_allowances)? })
+    }
+}
+
+impl ToProtobuf for AccountAllowanceDeleteTransactionData {
+    type Protobuf = services::CryptoDeleteAllowanceTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::CryptoDeleteAllowanceTransactionBody {
+            nft_allowances: self.nft_allowances.to_protobuf(),
+        }
     }
 }
 

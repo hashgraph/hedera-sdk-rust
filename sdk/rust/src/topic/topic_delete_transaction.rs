@@ -29,6 +29,7 @@ use crate::protobuf::{
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
     TransactionData,
     TransactionExecute,
@@ -99,11 +100,15 @@ impl ToTransactionDataProtobuf for TopicDeleteTransactionData {
     ) -> services::transaction_body::Data {
         let _ = chunk_info.assert_single_transaction();
 
-        let topic_id = self.topic_id.to_protobuf();
+        services::transaction_body::Data::ConsensusDeleteTopic(self.to_protobuf())
+    }
+}
 
-        services::transaction_body::Data::ConsensusDeleteTopic(
-            services::ConsensusDeleteTopicTransactionBody { topic_id },
-        )
+impl ToSchedulableTransactionDataProtobuf for TopicDeleteTransactionData {
+    fn to_schedulable_transaction_data_protobuf(
+        &self,
+    ) -> services::schedulable_transaction_body::Data {
+        services::schedulable_transaction_body::Data::ConsensusDeleteTopic(self.to_protobuf())
     }
 }
 
@@ -116,6 +121,14 @@ impl From<TopicDeleteTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::ConsensusDeleteTopicTransactionBody> for TopicDeleteTransactionData {
     fn from_protobuf(pb: services::ConsensusDeleteTopicTransactionBody) -> crate::Result<Self> {
         Ok(Self { topic_id: Option::from_protobuf(pb.topic_id)? })
+    }
+}
+
+impl ToProtobuf for TopicDeleteTransactionData {
+    type Protobuf = services::ConsensusDeleteTopicTransactionBody;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ConsensusDeleteTopicTransactionBody { topic_id: self.topic_id.to_protobuf() }
     }
 }
 
