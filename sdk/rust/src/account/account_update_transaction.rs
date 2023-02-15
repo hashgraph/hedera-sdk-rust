@@ -247,7 +247,7 @@ impl AccountUpdateTransaction {
     /// This is mutually exclusive with `staked_node_id`.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_id.and_then(|it| it.to_account_id())
+        self.data().staked_id.and_then(StakedId::to_account_id)
     }
 
     /// Sets the ID of the account to which this account is staking.
@@ -261,7 +261,7 @@ impl AccountUpdateTransaction {
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_id.and_then(|it| it.to_node_id())
+        self.data().staked_id.and_then(StakedId::to_node_id)
     }
 
     /// Sets the ID of the node to which this account is staking.
@@ -336,8 +336,8 @@ impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransa
         use services::crypto_update_transaction_body::ReceiverSigRequiredField;
 
         let receiver_signature_required = pb.receiver_sig_required_field.map(|it| match it {
-            ReceiverSigRequiredField::ReceiverSigRequired(it) => it,
-            ReceiverSigRequiredField::ReceiverSigRequiredWrapper(it) => it,
+            ReceiverSigRequiredField::ReceiverSigRequired(it)
+            | ReceiverSigRequiredField::ReceiverSigRequiredWrapper(it) => it,
         });
 
         Ok(Self {

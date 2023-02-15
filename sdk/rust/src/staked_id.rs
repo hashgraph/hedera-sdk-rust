@@ -3,7 +3,9 @@ use crate::{
     ValidateChecksums,
 };
 
-// no rename all, because each field is renamed
+// no rename all, because each field is renamed.
+// can't do boxing because `Copy`.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub(crate) enum StakedId {
@@ -14,16 +16,16 @@ pub(crate) enum StakedId {
 }
 
 impl StakedId {
-    pub(crate) fn to_account_id(&self) -> Option<AccountId> {
+    pub(crate) fn to_account_id(self) -> Option<AccountId> {
         match self {
-            StakedId::AccountId(it) => Some(*it),
+            StakedId::AccountId(it) => Some(it),
             StakedId::NodeId(_) => None,
         }
     }
 
-    pub(crate) fn to_node_id(&self) -> Option<u64> {
+    pub(crate) fn to_node_id(self) -> Option<u64> {
         match self {
-            StakedId::NodeId(it) => Some(*it),
+            StakedId::NodeId(it) => Some(it),
             StakedId::AccountId(_) => None,
         }
     }

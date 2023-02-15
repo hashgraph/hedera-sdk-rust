@@ -311,10 +311,13 @@ impl PublicKey {
     }
 
     /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
+    ///
+    /// # Errors
+    /// - [`Error::WrongKeyType`] if `!self.is_ecdsa()`
     pub fn to_evm_address(&self) -> crate::Result<String> {
         if let PublicKeyData::Ecdsa(ecdsa_key) = &self.0 {
             let hash = sha3::Keccak256::digest(ecdsa_key.to_encoded_point(true).to_bytes());
-            Ok(format!("0x{}", hex::encode(hash.get(12..32).unwrap())))
+            Ok(format!("0x{}", hex::encode(&hash[12..32])))
         } else {
             Err(Error::WrongKeyType {
                 task: "convert to evm address",
@@ -353,6 +356,7 @@ impl PublicKey {
         &self,
         sources: &TransactionSources,
     ) -> crate::Result<()> {
+        use services::signature_pair::Signature;
         let pk_bytes = self.to_bytes_raw();
 
         for (transaction, signed_transaction) in
@@ -369,8 +373,7 @@ impl PublicKey {
                 found = true;
 
                 let sig = match &sig_pair.signature {
-                    Some(services::signature_pair::Signature::EcdsaSecp256k1(it)) => it,
-                    Some(services::signature_pair::Signature::Ed25519(it)) => it,
+                    Some(Signature::EcdsaSecp256k1(it) | Signature::Ed25519(it)) => it,
                     _ => {
                         return Err(Error::signature_verify(
                             "Unsupported transaction signature type",
@@ -390,6 +393,10 @@ impl PublicKey {
     }
 
     /// Returns `Ok(())` if this public key has signed the given transaction.
+    ///
+    /// # Errors
+    /// - [`Error::SignatureVerify`] if the private key associated with this public key did _not_ sign this transaction,
+    ///   or the signature associated was invalid.
     pub fn verify_transaction<D: crate::transaction::TransactionExecute>(
         &self,
         transaction: &mut Transaction<D>,

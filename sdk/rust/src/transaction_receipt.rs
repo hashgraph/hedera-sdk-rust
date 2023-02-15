@@ -144,7 +144,7 @@ impl TransactionReceipt {
         receipt: services::TransactionReceipt,
         duplicates: Vec<Self>,
         children: Vec<Self>,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self> {
         let status = if let Some(status) = Status::from_i32(receipt.status) {
             status
@@ -181,13 +181,13 @@ impl TransactionReceipt {
             schedule_id,
             duplicates,
             children,
-            transaction_id,
+            transaction_id: transaction_id.copied(),
         })
     }
 
     pub(crate) fn from_response_protobuf(
         pb: services::response::Response,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self> {
         let pb = pb_getv!(pb, TransactionGetReceipt, services::response::Response);
 

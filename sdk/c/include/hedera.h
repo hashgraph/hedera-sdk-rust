@@ -541,7 +541,7 @@ enum HederaError hedera_token_id_from_bytes(const uint8_t *bytes,
                                             uint64_t *token_id_num);
 
 /**
- * Serialize the passed TokenId as bytes
+ * Serialize the passed `TokenId` as bytes
  *
  * # Safety
  * - `buf` must be valid for writes.
@@ -565,7 +565,7 @@ enum HederaError hedera_schedule_id_from_bytes(const uint8_t *bytes,
                                                uint64_t *schedule_id_num);
 
 /**
- * Serialize the passed ScheduleId as bytes
+ * Serialize the passed `ScheduleId` as bytes
  *
  * # Safety
  * - `buf` must be valid for writes.

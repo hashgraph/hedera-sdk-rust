@@ -11,7 +11,7 @@ use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::evm_address::IdEvmAddress;
 
 /// Builder for encoding parameters for a Solidity contract constructor/function call.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ContractFunctionParameters {
     args: Vec<Argument>,
 }
@@ -99,15 +99,22 @@ impl IntEncode for BigInt {
     }
 }
 
+// todo: remove this
+#[allow(clippy::needless_pass_by_value)]
 impl ContractFunctionParameters {
     /// Create a new, empty `ContractFunctionParameters`
+    #[must_use]
     pub fn new() -> Self {
-        ContractFunctionParameters { args: vec![] }
+        Self::default()
     }
 
     /// Returns the encoding of the currently added parameters as bytes.
     ///
     /// You can continue adding arguments after calling this function.
+    // passing an `&Optiuon<A>` or an `Option<&A>` would just be pointlessly more restrictive,
+    // since downstream code can just...
+    // Call this with `Option<&A>` anyway if they want to keep ownership of it.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn to_bytes<A>(&self, func_name: Option<A>) -> Vec<u8>
     where
         A: AsRef<str>,
@@ -131,11 +138,8 @@ impl ContractFunctionParameters {
                 }
                 if arg.is_dynamic {
                     arg_bytes.extend_from_slice(
-                        &mut left_pad_32_bytes(
-                            current_dynamic_offset.to_be_bytes().as_slice(),
-                            false,
-                        )
-                        .as_slice(),
+                        left_pad_32_bytes(current_dynamic_offset.to_be_bytes().as_slice(), false)
+                            .as_slice(),
                     );
                     dynamic_arg_bytes.extend_from_slice(arg.value_bytes.as_slice());
                     current_dynamic_offset += arg.value_bytes.len();
@@ -153,7 +157,7 @@ impl ContractFunctionParameters {
             }
         }
 
-        inner(&self.args, func_name.as_ref().map(|it| it.as_ref()))
+        inner(&self.args, func_name.as_ref().map(A::as_ref))
     }
 
     /// Add a `string` argument to the `ContractFunctionParameters`
@@ -171,7 +175,7 @@ impl ContractFunctionParameters {
         self.args.push(Argument {
             type_name: "string[]",
             value_bytes: encode_array_of_dynamic_byte_arrays(
-                val.into_iter().map(|s| s.as_ref().as_bytes()),
+                val.iter().map(|s| s.as_ref().as_bytes()),
                 val.len(),
             ),
             is_dynamic: true,
@@ -213,7 +217,7 @@ impl ContractFunctionParameters {
     pub fn add_bytes32_array(&mut self, val: &[[u8; 32]]) -> &mut Self {
         self.args.push(Argument {
             type_name: "bytes32",
-            value_bytes: encode_array_of_32_byte_elements(val.into_iter().copied(), val.len()),
+            value_bytes: encode_array_of_32_byte_elements(val.iter().copied(), val.len()),
             is_dynamic: true,
         });
         self
@@ -225,7 +229,7 @@ impl ContractFunctionParameters {
             type_name: "bool",
             value_bytes: left_pad_32_bytes(
                 // a bool in rust is guaranteed to be of value 0 or 1
-                (val as u32).to_be_bytes().as_slice(),
+                u32::from(val).to_be_bytes().as_slice(),
                 false,
             )
             .to_vec(),
@@ -258,7 +262,7 @@ impl ContractFunctionParameters {
         self.args.push(Argument {
             type_name,
             value_bytes: encode_array_of_32_byte_elements(
-                values.into_iter().map(|val| truncate_and_left_pad_32_bytes(val, byte_count)),
+                values.iter().map(|val| truncate_and_left_pad_32_bytes(val, byte_count)),
                 values.len(),
             ),
             is_dynamic: true,
@@ -950,7 +954,7 @@ fn left_pad_32_bytes(bytes: &[u8], is_negative: bool) -> [u8; 32] {
     let pad_byte = if is_negative { 0xFF } else { 0x00 };
 
     let mut result = [pad_byte; 32];
-    result[(32 - bytes.len())..].copy_from_slice(&bytes);
+    result[(32 - bytes.len())..].copy_from_slice(bytes);
     result
 }
 
@@ -966,7 +970,7 @@ where
 
 fn right_pad_32_bytes(bytes: &[u8]) -> [u8; 32] {
     let mut result = [0_u8; 32];
-    result[..bytes.len()].copy_from_slice(&bytes);
+    result[..bytes.len()].copy_from_slice(bytes);
     result
 }
 
@@ -998,7 +1002,7 @@ where
             left_pad_32_bytes(current_offset.to_be_bytes().as_slice(), false).as_slice(),
         );
         current_offset += element.len();
-        body_bytes.extend(element)
+        body_bytes.extend(element);
     }
     out_bytes.extend(body_bytes);
     out_bytes

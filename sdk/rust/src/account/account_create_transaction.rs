@@ -240,7 +240,7 @@ impl AccountCreateTransaction {
         self.data().evm_address
     }
 
-    /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    /// The last 20 bytes of the keccak-256 hash of a `ECDSA_SECP256K1` primitive key.
     pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
         self.data_mut().evm_address = Some(evm_address);
         self
@@ -250,7 +250,7 @@ impl AccountCreateTransaction {
     /// This is mutually exclusive with `staked_node_id`.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_id.and_then(|it| it.to_account_id())
+        self.data().staked_id.and_then(StakedId::to_account_id)
     }
 
     /// Sets the ID of the account to which this account is staking.
@@ -264,7 +264,7 @@ impl AccountCreateTransaction {
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_id.and_then(|it| it.to_node_id())
+        self.data().staked_id.and_then(StakedId::to_node_id)
     }
 
     /// Sets the ID of the node to which this account is staking.

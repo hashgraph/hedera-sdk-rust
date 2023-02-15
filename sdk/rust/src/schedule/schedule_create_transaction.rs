@@ -84,6 +84,11 @@ impl ScheduleCreateTransaction {
     // }
 
     /// Sets the scheduled transaction.
+    ///
+    /// # Panics
+    /// panics if the transaction is not schedulable, a transaction can be non-schedulable due to:
+    /// - being a transaction kind that's non-schedulable, IE, `EthereumTransaction`, or
+    /// - being a chunked transaction with multiple chunks.
     pub fn scheduled_transaction<D>(&mut self, transaction: Transaction<D>) -> &mut Self
     where
         D: TransactionExecute,

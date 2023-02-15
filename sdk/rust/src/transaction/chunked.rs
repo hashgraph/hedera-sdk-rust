@@ -22,11 +22,15 @@ use crate::{
 
 // the lengths we're willing to go to in order to not waste wire space.
 #[cfg(feature = "ffi")]
+// the function signature needs the ref.
+#[allow(clippy::trivially_copy_pass_by_ref)]
 const fn max_chunks_is_default(value: &usize) -> bool {
     *value == ChunkData::DEFAULT_MAX_CHUNKS
 }
 
 #[cfg(feature = "ffi")]
+// the function signature needs the ref.
+#[allow(clippy::trivially_copy_pass_by_ref)]
 const fn chunk_size_is_default(value: &NonZeroUsize) -> bool {
     value.get() == ChunkData::DEFAULT_CHUNK_SIZE.get()
 }
@@ -65,10 +69,13 @@ impl ChunkData {
     const DEFAULT_MAX_CHUNKS: usize = 20;
     // safety: 1024 is not zero.
     // note: Use `NonZeroUsize::new().unwrap()` once that's const stable.
-    const DEFAULT_CHUNK_SIZE: NonZeroUsize = unsafe { NonZeroUsize::new_unchecked(1024) };
+    const DEFAULT_CHUNK_SIZE: NonZeroUsize = match NonZeroUsize::new(1024) {
+        Some(it) => it,
+        None => unreachable!(),
+    };
 
     pub(crate) fn used_chunks(&self) -> usize {
-        if self.data.len() == 0 {
+        if self.data.is_empty() {
             return 1;
         }
 
@@ -116,11 +123,15 @@ impl ChunkInfo {
     }
 
     #[must_use]
+    // taking `transaction_id` by reference and then dereferencing it to copy it unconditionally... Feels weird.
+    #[allow(clippy::large_types_passed_by_value)]
     pub(crate) const fn single(transaction_id: TransactionId, node_account_id: AccountId) -> Self {
         Self::initial(1, transaction_id, node_account_id)
     }
 
     #[must_use]
+    // taking `transaction_id` by reference and then dereferencing it to copy it unconditionally... Feels weird.
+    #[allow(clippy::large_types_passed_by_value)]
     pub(crate) const fn initial(
         total: usize,
         transaction_id: TransactionId,
@@ -172,11 +183,11 @@ where
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.transaction.is_frozen());
 
-        self.transaction.make_request_inner(&ChunkInfo::initial(
+        Ok(self.transaction.make_request_inner(&ChunkInfo::initial(
             self.total_chunks,
             transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
             node_account_id,
-        ))
+        )))
     }
 
     fn execute(
@@ -263,13 +274,13 @@ where
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.transaction.is_frozen());
 
-        self.transaction.make_request_inner(&ChunkInfo {
+        Ok(self.transaction.make_request_inner(&ChunkInfo {
             total: self.total_chunks,
             current: self.current_chunk,
             initial_transaction_id: self.initial_transaction_id,
             node_account_id,
             current_transaction_id: transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
-        })
+        }))
     }
 
     fn execute(
