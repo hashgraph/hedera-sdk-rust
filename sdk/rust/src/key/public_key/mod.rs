@@ -30,10 +30,10 @@ use std::hash::{
 };
 use std::str::FromStr;
 
-use ed25519_dalek::ed25519::signature::DigestVerifier;
-use ed25519_dalek::Verifier;
+use ed25519_dalek::Verifier as _;
 use hedera_proto::services;
 use k256::ecdsa;
+use k256::ecdsa::signature::DigestVerifier as _;
 use pkcs8::der::{
     Decode,
     Encode,
@@ -62,7 +62,7 @@ pub struct PublicKey(PublicKeyData);
 
 #[derive(Clone, Copy)]
 enum PublicKeyData {
-    Ed25519(ed25519_dalek::PublicKey),
+    Ed25519(ed25519_dalek::VerifyingKey),
     Ecdsa(k256::ecdsa::VerifyingKey),
 }
 
@@ -71,7 +71,7 @@ impl Hash for PublicKeyData {
         core::mem::discriminant(self).hash(state);
         match &self {
             PublicKeyData::Ed25519(key) => key.to_bytes().hash(state),
-            PublicKeyData::Ecdsa(key) => key.to_bytes().hash(state),
+            PublicKeyData::Ecdsa(key) => key.to_encoded_point(true).as_bytes().hash(state),
         }
     }
 }
@@ -89,7 +89,7 @@ impl PartialEq for PublicKeyData {
 impl Eq for PublicKeyData {}
 
 impl PublicKey {
-    pub(super) fn ed25519(key: ed25519_dalek::PublicKey) -> Self {
+    pub(super) fn ed25519(key: ed25519_dalek::VerifyingKey) -> Self {
         Self(PublicKeyData::Ed25519(key))
     }
 
@@ -139,8 +139,8 @@ impl PublicKey {
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ed25519 `PublicKey`.
     pub fn from_bytes_ed25519(bytes: &[u8]) -> crate::Result<Self> {
-        let data = if bytes.len() == 32 {
-            ed25519_dalek::PublicKey::from_bytes(bytes).map_err(Error::key_parse)?
+        let data = if let Ok(bytes) = bytes.try_into() {
+            ed25519_dalek::VerifyingKey::from_bytes(bytes).map_err(Error::key_parse)?
         } else {
             return Self::from_bytes_der(bytes);
         };
@@ -249,10 +249,10 @@ impl PublicKey {
             }
 
             PublicKeyData::Ecdsa(key) => {
-                let key = key.to_bytes();
+                let key = key.to_encoded_point(true);
                 let info = pkcs8::SubjectPublicKeyInfo {
                     algorithm: self.algorithm(),
-                    subject_public_key: key.as_slice(),
+                    subject_public_key: key.as_bytes(),
                 };
 
                 info.encode_to_vec(&mut buf).unwrap();
@@ -277,7 +277,7 @@ impl PublicKey {
     pub fn to_bytes_raw(&self) -> Vec<u8> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => key.to_bytes().as_slice().to_vec(),
-            PublicKeyData::Ecdsa(key) => key.to_bytes().as_slice().to_vec(),
+            PublicKeyData::Ecdsa(key) => key.to_encoded_point(true).to_bytes().into_vec(),
         }
     }
 
@@ -313,7 +313,7 @@ impl PublicKey {
     /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
     pub fn to_evm_address(&self) -> crate::Result<String> {
         if let PublicKeyData::Ecdsa(ecdsa_key) = &self.0 {
-            let hash = sha3::Keccak256::digest(ecdsa_key.to_bytes());
+            let hash = sha3::Keccak256::digest(ecdsa_key.to_encoded_point(true).to_bytes());
             Ok(format!("0x{}", hex::encode(hash.get(12..32).unwrap())))
         } else {
             Err(Error::WrongKeyType {
@@ -332,7 +332,7 @@ impl PublicKey {
     pub fn verify(&self, msg: &[u8], signature: &[u8]) -> crate::Result<()> {
         match &self.0 {
             PublicKeyData::Ed25519(key) => {
-                let signature = ed25519_dalek::Signature::from_bytes(signature)
+                let signature = ed25519_dalek::Signature::try_from(signature)
                     .map_err(Error::signature_verify)?;
 
                 key.verify(msg, &signature).map_err(Error::signature_verify)

@@ -33,10 +33,7 @@ use std::{
     iter,
 };
 
-use ed25519_dalek::{
-    Keypair,
-    Signer,
-};
+use ed25519_dalek::Signer;
 use hmac::{
     Hmac,
     Mac,
@@ -58,6 +55,18 @@ use crate::{
     PublicKey,
     Transaction,
 };
+
+// replace with `array::split_array_ref` when that's stable.
+fn split_key_array(arr: &[u8; 64]) -> (&[u8; 32], &[u8; 32]) {
+    let (lhs, rhs) = arr.split_at(32);
+
+    // SAFETY: lhs points to [T; N]? Yes it's [T] of length 64/2 (guaranteed by split_at)
+    let lhs = unsafe { &*(lhs.as_ptr() as *const [u8; 32]) };
+    // SAFETY: rhs points to [T; N]? Yes it's [T] of length 64/2 (rhs.len() = 64 - lhs.len(), lhs.len() has been proven to be 32 above...)
+    let rhs = unsafe { &*(rhs.as_ptr() as *const [u8; 32]) };
+
+    (lhs, rhs)
+}
 
 pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
 
@@ -92,10 +101,7 @@ impl Debug for PrivateKeyDataWrapper {
         }
 
         let (algorithm, key) = match &self.data {
-            PrivateKeyData::Ed25519(key) => {
-                (Algorithm::Ed25519, hex::encode(key.secret.as_bytes()))
-            }
-
+            PrivateKeyData::Ed25519(key) => (Algorithm::Ed25519, hex::encode(key.to_bytes())),
             PrivateKeyData::Ecdsa(key) => (Algorithm::Ecdsa, hex::encode(key.to_bytes())),
         };
 
@@ -108,7 +114,7 @@ impl Debug for PrivateKeyDataWrapper {
 }
 
 enum PrivateKeyData {
-    Ed25519(ed25519_dalek::Keypair),
+    Ed25519(ed25519_dalek::SigningKey),
     Ecdsa(k256::ecdsa::SigningKey),
 }
 
@@ -121,11 +127,11 @@ impl PrivateKey {
     /// Generates a new Ed25519 `PrivateKey`.
     #[must_use]
     pub fn generate_ed25519() -> Self {
-        use rand_0_7::Rng as _;
+        use rand::Rng as _;
 
-        let mut csprng = rand_0_7::thread_rng();
+        let mut csprng = rand::thread_rng();
 
-        let data = ed25519_dalek::Keypair::generate(&mut csprng);
+        let data = ed25519_dalek::SigningKey::generate(&mut csprng);
         let data = PrivateKeyData::Ed25519(data);
 
         let mut chain_code = [0u8; 32];
@@ -147,8 +153,8 @@ impl PrivateKey {
     #[must_use]
     pub fn public_key(&self) -> PublicKey {
         match &self.0.data {
-            PrivateKeyData::Ed25519(key) => PublicKey::ed25519(key.public),
-            PrivateKeyData::Ecdsa(key) => PublicKey::ecdsa(key.verifying_key()),
+            PrivateKeyData::Ed25519(key) => PublicKey::ed25519(key.verifying_key()),
+            PrivateKeyData::Ecdsa(key) => PublicKey::ecdsa(*key.verifying_key()),
         }
     }
 
@@ -170,12 +176,10 @@ impl PrivateKey {
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ed25519 `PrivateKey`.
     pub fn from_bytes_ed25519(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 32 || bytes.len() == 64 {
-            ed25519_dalek::SecretKey::from_bytes(&bytes[..32]).map_err(Error::key_parse)?
+            ed25519_dalek::SigningKey::from_bytes(&bytes[..32].try_into().unwrap())
         } else {
             return Self::from_bytes_der(bytes);
         };
-
-        let data = Keypair { public: (&data).into(), secret: data };
 
         Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::Ed25519(data)))))
     }
@@ -388,7 +392,7 @@ impl PrivateKey {
     #[must_use]
     fn to_bytes_raw_internal(&self) -> [u8; 32] {
         match &self.0.data {
-            PrivateKeyData::Ed25519(key) => key.secret.to_bytes(),
+            PrivateKeyData::Ed25519(key) => key.to_bytes(),
             PrivateKeyData::Ecdsa(key) => key.to_bytes().into(),
         }
     }
@@ -530,23 +534,19 @@ impl PrivateKey {
                 let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(chain_code)
                     .expect("HMAC can take keys of any size")
                     .chain_update([0])
-                    .chain_update(key.secret.as_bytes())
+                    .chain_update(key.to_bytes())
                     .chain_update(index.to_be_bytes())
                     .finalize()
                     .into_bytes()
                     .into();
 
                 // todo: use `split_array_ref` when that's stable.
-                let (left, right) = output.split_at(32);
+                let (data, chain_code) = split_key_array(&output);
 
-                // this is exactly 32 bytes
-                let chain_code: [u8; 32] = right.try_into().unwrap();
-
-                let data = ed25519_dalek::SecretKey::from_bytes(left).unwrap();
-                let data = Keypair { public: (&data).into(), secret: data };
+                let data = ed25519_dalek::SigningKey::from_bytes(data);
                 let data = PrivateKeyData::Ed25519(data);
 
-                Ok(Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, chain_code))))
+                Ok(Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, *chain_code))))
             }
             PrivateKeyData::Ecdsa(_) => {
                 Err(Error::key_derive("Ecdsa private keys don't currently support derivation"))
@@ -564,10 +564,10 @@ impl PrivateKey {
     pub fn legacy_derive(&self, index: i64) -> crate::Result<Self> {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => {
-                let entropy = key.secret.as_bytes();
+                let entropy = key.to_bytes();
                 let mut seed = Vec::with_capacity(entropy.len() + 8);
 
-                seed.extend_from_slice(entropy);
+                seed.extend_from_slice(&entropy);
 
                 let i1: i32 = match index {
                     0x00ff_ffff_ffff => 0xff,
@@ -621,8 +621,7 @@ impl PrivateKey {
             (left, right)
         };
 
-        let data = ed25519_dalek::SecretKey::from_bytes(&left).unwrap();
-        let data = ed25519_dalek::Keypair { public: (&data).into(), secret: data };
+        let data = ed25519_dalek::SigningKey::from_bytes(&left);
         let data = PrivateKeyData::Ed25519(data);
 
         let mut key = Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, right)));
