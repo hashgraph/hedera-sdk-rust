@@ -15,13 +15,24 @@ bench = false
 crate-type = ["lib", "staticlib"]
 
 [features]
-ffi = ["anyhow", "cbindgen", "libc", "fraction/with-serde-support", "ed25519-dalek/serde", "hedera-proto/serde", "serde", "serde_with", "serde_json", "time/serde", "serde/derive", "triomphe"]
+ffi = [
+  "cbindgen",
+  "libc",
+  "hedera-proto/serde",
+  "serde",
+  "serde_with",
+  "serde_json",
+  "time/serde",
+  "serde/derive",
+  "triomphe",
+  "rust_decimal/serde"
+]
 
 [dependencies]
 async-stream = "0.3.3"
 backoff = "0.4.0"
-ed25519-dalek = { version = "1.0.1", features = ["rand"] }
-fraction = "0.11.0"
+ed25519-dalek = { version = "2.0.0-pre.0", features = ["rand_core"] }
+fraction = { version = "0.11.0", default-features = false }
 futures-core = "0.3.21"
 futures-util = "0.3.21"
 hedera-proto = { path = "./protobufs", version = "0.5.1", features = [
@@ -30,8 +41,6 @@ hedera-proto = { path = "./protobufs", version = "0.5.1", features = [
 ] }
 hex = "0.4.3"
 hmac = "0.12.1"
-itertools = "0.10.3"
-k256 = "0.11.0"
 libc = { version = "0.2.135", optional = true }
 log = "0.4.17"
 num-bigint = "0.4.3"
@@ -41,7 +50,6 @@ pbkdf2 = { version = "0.11.0", default-features = false }
 pem-rfc7468 = { version = "0.6.0", features = ["std"] }
 prost = "0.11.0"
 rand = "0.8.5"
-rust_decimal = "1.26.1"
 sha2 = "0.10.2"
 sha3 = "0.10.2"
 thiserror = "1.0.31"
@@ -49,11 +57,18 @@ time = "0.3.9"
 tokio = { version = "1.24.2", features = ["rt-multi-thread"] }
 tonic = "0.8.0"
 tinystr = "0.7.0"
-
-# for ed25519-dalek
-rand_0_7 = { version = "0.7", package = "rand" }
 arc-swap = "1.6.0"
 triomphe = { version = "0.1.8", default-features = false, optional = true }
+
+[dependencies.rust_decimal]
+version = "1.26.1"
+default-features = false
+features = ["std"]
+
+[dependencies.k256]
+version = "0.12.0"
+default-features = false
+features = ["arithmetic", "ecdsa", "pkcs8", "precomputed-tables", "std"]
 
 [dependencies.pkcs8]
 version = "0.9.0"
@@ -83,7 +98,6 @@ hex-literal = "0.3.4"
 tokio = { version = "1.24.2", features = ["full"] }
 
 [build-dependencies]
-anyhow = { version = "1.0.57", optional = true }
 cbindgen = { version = "0.24.3", default-features = false, optional = true }
 
 [profile.release]
