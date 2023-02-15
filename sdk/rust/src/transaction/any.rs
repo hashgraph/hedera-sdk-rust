@@ -328,91 +328,91 @@ impl TransactionData for AnyTransactionData {
 
     fn maybe_chunk_data(&self) -> Option<&super::ChunkData> {
         match self {
-            AnyTransactionData::AccountCreate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::AccountUpdate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::AccountDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::AccountAllowanceApprove(it) => it.maybe_chunk_data(),
-            AnyTransactionData::AccountAllowanceDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ContractCreate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ContractUpdate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ContractDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ContractExecute(it) => it.maybe_chunk_data(),
-            AnyTransactionData::Transfer(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TopicCreate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TopicUpdate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TopicDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TopicMessageSubmit(it) => it.maybe_chunk_data(),
-            AnyTransactionData::FileAppend(it) => it.maybe_chunk_data(),
-            AnyTransactionData::FileCreate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::FileUpdate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::FileDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenAssociate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenBurn(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenCreate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenDissociate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenFeeScheduleUpdate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenFreeze(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenGrantKyc(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenMint(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenPause(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenRevokeKyc(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenUnfreeze(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenUnpause(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenUpdate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::TokenWipe(it) => it.maybe_chunk_data(),
-            AnyTransactionData::SystemDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::SystemUndelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::Freeze(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ScheduleCreate(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ScheduleSign(it) => it.maybe_chunk_data(),
-            AnyTransactionData::ScheduleDelete(it) => it.maybe_chunk_data(),
-            AnyTransactionData::Ethereum(it) => it.maybe_chunk_data(),
+            Self::AccountCreate(it) => it.maybe_chunk_data(),
+            Self::AccountUpdate(it) => it.maybe_chunk_data(),
+            Self::AccountDelete(it) => it.maybe_chunk_data(),
+            Self::AccountAllowanceApprove(it) => it.maybe_chunk_data(),
+            Self::AccountAllowanceDelete(it) => it.maybe_chunk_data(),
+            Self::ContractCreate(it) => it.maybe_chunk_data(),
+            Self::ContractUpdate(it) => it.maybe_chunk_data(),
+            Self::ContractDelete(it) => it.maybe_chunk_data(),
+            Self::ContractExecute(it) => it.maybe_chunk_data(),
+            Self::Transfer(it) => it.maybe_chunk_data(),
+            Self::TopicCreate(it) => it.maybe_chunk_data(),
+            Self::TopicUpdate(it) => it.maybe_chunk_data(),
+            Self::TopicDelete(it) => it.maybe_chunk_data(),
+            Self::TopicMessageSubmit(it) => it.maybe_chunk_data(),
+            Self::FileAppend(it) => it.maybe_chunk_data(),
+            Self::FileCreate(it) => it.maybe_chunk_data(),
+            Self::FileUpdate(it) => it.maybe_chunk_data(),
+            Self::FileDelete(it) => it.maybe_chunk_data(),
+            Self::TokenAssociate(it) => it.maybe_chunk_data(),
+            Self::TokenBurn(it) => it.maybe_chunk_data(),
+            Self::TokenCreate(it) => it.maybe_chunk_data(),
+            Self::TokenDelete(it) => it.maybe_chunk_data(),
+            Self::TokenDissociate(it) => it.maybe_chunk_data(),
+            Self::TokenFeeScheduleUpdate(it) => it.maybe_chunk_data(),
+            Self::TokenFreeze(it) => it.maybe_chunk_data(),
+            Self::TokenGrantKyc(it) => it.maybe_chunk_data(),
+            Self::TokenMint(it) => it.maybe_chunk_data(),
+            Self::TokenPause(it) => it.maybe_chunk_data(),
+            Self::TokenRevokeKyc(it) => it.maybe_chunk_data(),
+            Self::TokenUnfreeze(it) => it.maybe_chunk_data(),
+            Self::TokenUnpause(it) => it.maybe_chunk_data(),
+            Self::TokenUpdate(it) => it.maybe_chunk_data(),
+            Self::TokenWipe(it) => it.maybe_chunk_data(),
+            Self::SystemDelete(it) => it.maybe_chunk_data(),
+            Self::SystemUndelete(it) => it.maybe_chunk_data(),
+            Self::Freeze(it) => it.maybe_chunk_data(),
+            Self::ScheduleCreate(it) => it.maybe_chunk_data(),
+            Self::ScheduleSign(it) => it.maybe_chunk_data(),
+            Self::ScheduleDelete(it) => it.maybe_chunk_data(),
+            Self::Ethereum(it) => it.maybe_chunk_data(),
         }
     }
 
     fn wait_for_receipt(&self) -> bool {
         match self {
-            AnyTransactionData::AccountCreate(it) => it.wait_for_receipt(),
-            AnyTransactionData::AccountUpdate(it) => it.wait_for_receipt(),
-            AnyTransactionData::AccountDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::AccountAllowanceApprove(it) => it.wait_for_receipt(),
-            AnyTransactionData::AccountAllowanceDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::ContractCreate(it) => it.wait_for_receipt(),
-            AnyTransactionData::ContractUpdate(it) => it.wait_for_receipt(),
-            AnyTransactionData::ContractDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::ContractExecute(it) => it.wait_for_receipt(),
-            AnyTransactionData::Transfer(it) => it.wait_for_receipt(),
-            AnyTransactionData::TopicCreate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TopicUpdate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TopicDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::TopicMessageSubmit(it) => it.wait_for_receipt(),
-            AnyTransactionData::FileAppend(it) => it.wait_for_receipt(),
-            AnyTransactionData::FileCreate(it) => it.wait_for_receipt(),
-            AnyTransactionData::FileUpdate(it) => it.wait_for_receipt(),
-            AnyTransactionData::FileDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenAssociate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenBurn(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenCreate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenDissociate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenFeeScheduleUpdate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenFreeze(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenGrantKyc(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenMint(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenPause(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenRevokeKyc(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenUnfreeze(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenUnpause(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenUpdate(it) => it.wait_for_receipt(),
-            AnyTransactionData::TokenWipe(it) => it.wait_for_receipt(),
-            AnyTransactionData::SystemDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::SystemUndelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::Freeze(it) => it.wait_for_receipt(),
-            AnyTransactionData::ScheduleCreate(it) => it.wait_for_receipt(),
-            AnyTransactionData::ScheduleSign(it) => it.wait_for_receipt(),
-            AnyTransactionData::ScheduleDelete(it) => it.wait_for_receipt(),
-            AnyTransactionData::Ethereum(it) => it.wait_for_receipt(),
+            Self::AccountCreate(it) => it.wait_for_receipt(),
+            Self::AccountUpdate(it) => it.wait_for_receipt(),
+            Self::AccountDelete(it) => it.wait_for_receipt(),
+            Self::AccountAllowanceApprove(it) => it.wait_for_receipt(),
+            Self::AccountAllowanceDelete(it) => it.wait_for_receipt(),
+            Self::ContractCreate(it) => it.wait_for_receipt(),
+            Self::ContractUpdate(it) => it.wait_for_receipt(),
+            Self::ContractDelete(it) => it.wait_for_receipt(),
+            Self::ContractExecute(it) => it.wait_for_receipt(),
+            Self::Transfer(it) => it.wait_for_receipt(),
+            Self::TopicCreate(it) => it.wait_for_receipt(),
+            Self::TopicUpdate(it) => it.wait_for_receipt(),
+            Self::TopicDelete(it) => it.wait_for_receipt(),
+            Self::TopicMessageSubmit(it) => it.wait_for_receipt(),
+            Self::FileAppend(it) => it.wait_for_receipt(),
+            Self::FileCreate(it) => it.wait_for_receipt(),
+            Self::FileUpdate(it) => it.wait_for_receipt(),
+            Self::FileDelete(it) => it.wait_for_receipt(),
+            Self::TokenAssociate(it) => it.wait_for_receipt(),
+            Self::TokenBurn(it) => it.wait_for_receipt(),
+            Self::TokenCreate(it) => it.wait_for_receipt(),
+            Self::TokenDelete(it) => it.wait_for_receipt(),
+            Self::TokenDissociate(it) => it.wait_for_receipt(),
+            Self::TokenFeeScheduleUpdate(it) => it.wait_for_receipt(),
+            Self::TokenFreeze(it) => it.wait_for_receipt(),
+            Self::TokenGrantKyc(it) => it.wait_for_receipt(),
+            Self::TokenMint(it) => it.wait_for_receipt(),
+            Self::TokenPause(it) => it.wait_for_receipt(),
+            Self::TokenRevokeKyc(it) => it.wait_for_receipt(),
+            Self::TokenUnfreeze(it) => it.wait_for_receipt(),
+            Self::TokenUnpause(it) => it.wait_for_receipt(),
+            Self::TokenUpdate(it) => it.wait_for_receipt(),
+            Self::TokenWipe(it) => it.wait_for_receipt(),
+            Self::SystemDelete(it) => it.wait_for_receipt(),
+            Self::SystemUndelete(it) => it.wait_for_receipt(),
+            Self::Freeze(it) => it.wait_for_receipt(),
+            Self::ScheduleCreate(it) => it.wait_for_receipt(),
+            Self::ScheduleSign(it) => it.wait_for_receipt(),
+            Self::ScheduleDelete(it) => it.wait_for_receipt(),
+            Self::Ethereum(it) => it.wait_for_receipt(),
         }
     }
 }
@@ -473,114 +473,46 @@ impl TransactionExecuteChunked for AnyTransactionData {}
 impl ValidateChecksums for AnyTransactionData {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         match self {
-            AnyTransactionData::AccountCreate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::AccountUpdate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::AccountDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::AccountAllowanceApprove(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::AccountAllowanceDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::ContractCreate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::ContractUpdate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::ContractDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::ContractExecute(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::Transfer(transaction) => transaction.validate_checksums(ledger_id),
-            AnyTransactionData::TopicCreate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TopicUpdate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TopicDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TopicMessageSubmit(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::FileAppend(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::FileCreate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::FileUpdate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::FileDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenAssociate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenBurn(transaction) => transaction.validate_checksums(ledger_id),
-            AnyTransactionData::TokenCreate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenDissociate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenFeeScheduleUpdate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenFreeze(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenGrantKyc(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenMint(transaction) => transaction.validate_checksums(ledger_id),
-            AnyTransactionData::TokenPause(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenRevokeKyc(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenUnfreeze(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenUnpause(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenUpdate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::TokenWipe(transaction) => transaction.validate_checksums(ledger_id),
-            AnyTransactionData::SystemDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::SystemUndelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::Freeze(transaction) => transaction.validate_checksums(ledger_id),
-            AnyTransactionData::ScheduleCreate(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::ScheduleSign(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::ScheduleDelete(transaction) => {
-                transaction.validate_checksums(ledger_id)
-            }
-            AnyTransactionData::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
+            Self::AccountCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::AccountUpdate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::AccountDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::AccountAllowanceApprove(transaction) => transaction.validate_checksums(ledger_id),
+            Self::AccountAllowanceDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ContractCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ContractUpdate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ContractDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ContractExecute(transaction) => transaction.validate_checksums(ledger_id),
+            Self::Transfer(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TopicCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TopicUpdate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TopicDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TopicMessageSubmit(transaction) => transaction.validate_checksums(ledger_id),
+            Self::FileAppend(transaction) => transaction.validate_checksums(ledger_id),
+            Self::FileCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::FileUpdate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::FileDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenAssociate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenBurn(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenDissociate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenFeeScheduleUpdate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenFreeze(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenGrantKyc(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenMint(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenPause(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenRevokeKyc(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenUnfreeze(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenUnpause(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenUpdate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenWipe(transaction) => transaction.validate_checksums(ledger_id),
+            Self::SystemDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::SystemUndelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::Freeze(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ScheduleCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ScheduleSign(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ScheduleDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
         }
     }
 }
@@ -753,6 +685,8 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
 }
 
 impl AnyTransactionData {
+    // can't do anything about the # of lines, since this function just delegates to `data::_::from_protobuf`.
+    #[allow(clippy::too_many_lines)]
     fn from_protobuf(data_chunks: ServicesTransactionDataList) -> crate::Result<Self> {
         fn try_into_only_element<T>(v: Vec<T>) -> crate::Result<T> {
             match <[T; 1]>::try_from(v) {
@@ -1053,10 +987,10 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                 (Self::AccountUpdate(v), Data::CryptoUpdateAccount(element)) => v.push(element),
                 (Self::AccountDelete(v), Data::CryptoDelete(element)) => v.push(element),
                 (Self::AccountAllowanceApprove(v), Data::CryptoApproveAllowance(element)) => {
-                    v.push(element)
+                    v.push(element);
                 }
                 (Self::AccountAllowanceDelete(v), Data::CryptoDeleteAllowance(element)) => {
-                    v.push(element)
+                    v.push(element);
                 }
                 (Self::ContractCreate(v), Data::ContractCreateInstance(element)) => v.push(element),
                 (Self::ContractUpdate(v), Data::ContractUpdateInstance(element)) => v.push(element),
@@ -1067,7 +1001,7 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                 (Self::TopicUpdate(v), Data::ConsensusUpdateTopic(element)) => v.push(element),
                 (Self::TopicDelete(v), Data::ConsensusDeleteTopic(element)) => v.push(element),
                 (Self::TopicMessageSubmit(v), Data::ConsensusSubmitMessage(element)) => {
-                    v.push(element)
+                    v.push(element);
                 }
                 (Self::FileAppend(v), Data::FileAppend(element)) => v.push(element),
                 (Self::FileCreate(v), Data::FileCreate(element)) => v.push(element),
@@ -1079,7 +1013,7 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                 (Self::TokenDelete(v), Data::TokenDeletion(element)) => v.push(element),
                 (Self::TokenDissociate(v), Data::TokenDissociate(element)) => v.push(element),
                 (Self::TokenFeeScheduleUpdate(v), Data::TokenFeeScheduleUpdate(element)) => {
-                    v.push(element)
+                    v.push(element);
                 }
                 (Self::TokenFreeze(v), Data::TokenFreeze(element)) => v.push(element),
                 (Self::TokenGrantKyc(v), Data::TokenGrantKyc(element)) => v.push(element),

@@ -189,7 +189,7 @@ impl ContractUpdateTransaction {
     /// Returns the ID of the account to which this contract is staking.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_id.and_then(|id| id.to_account_id())
+        self.data().staked_id.and_then(StakedId::to_account_id)
     }
 
     /// Sets the ID of the account to which this contract is staking.
@@ -202,7 +202,7 @@ impl ContractUpdateTransaction {
     /// Returns the ID of the node to which this contract is staking.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_id.and_then(|id| id.to_node_id())
+        self.data().staked_id.and_then(StakedId::to_node_id)
     }
 
     /// Sets the ID of the node to which this contract is staking.
@@ -278,8 +278,7 @@ impl FromProtobuf<services::ContractUpdateTransactionBody> for ContractUpdateTra
             admin_key: Option::from_protobuf(pb.admin_key)?,
             auto_renew_period: pb.auto_renew_period.map(Into::into),
             contract_memo: pb.memo_field.map(|it| match it {
-                MemoField::Memo(it) => it,
-                MemoField::MemoWrapper(it) => it,
+                MemoField::Memo(it) | MemoField::MemoWrapper(it) => it,
             }),
             max_automatic_token_associations: pb
                 .max_automatic_token_associations

@@ -50,7 +50,7 @@ pub struct AccountId {
 
 impl AccountId {
     // ties the lifetime of `PublicKey` to `self`, which is likely overly restrictive
-    pub(super) fn borrow_ref<'a>(&'a self) -> RefAccountId<'a> {
+    pub(super) fn borrow_ref(&self) -> RefAccountId<'_> {
         // safety: invariants of self require a non-null `PublicKey` to follow the required invariants of `NonNull::as_ref`.
         let alias = unsafe { self.alias.as_ref() };
         // safety: invariants of self require a non-null `evm_address` to follow the required invariants of `NonNull::as_ref`.
@@ -82,8 +82,8 @@ impl From<AccountId> for crate::AccountId {
             shard: value.shard,
             realm: value.realm,
             num: value.num,
-            alias: value.alias.cloned(),
-            evm_address: value.evm_address.cloned().map(crate::EvmAddress),
+            alias: value.alias.copied(),
+            evm_address: value.evm_address.copied().map(crate::EvmAddress),
             checksum: None,
         }
     }
@@ -137,7 +137,7 @@ pub unsafe extern "C" fn hedera_account_id_from_bytes(
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
 
-    let parsed = ffi_try!(crate::AccountId::from_bytes(&bytes)).into();
+    let parsed = ffi_try!(crate::AccountId::from_bytes(bytes)).into();
 
     unsafe {
         ptr::write(id, parsed);

@@ -7,6 +7,8 @@ use sha3::{
 #[derive(Debug, Clone)]
 pub struct ContractFunctionSelector(ContractFunctionSelectorState);
 
+// this isn't intended for storage on the heap, so, boxing the hasher is... futile.
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
 enum ContractFunctionSelectorState {
     Building { digest: sha3::Keccak256, needs_comma: bool },
@@ -34,7 +36,7 @@ impl ContractFunctionSelector {
     pub(crate) fn add_param_type(&mut self, param_type_name: &str) -> &mut Self {
         if let Building { digest, needs_comma } = &mut self.0 {
             if *needs_comma {
-                digest.update(b",")
+                digest.update(b",");
             }
             digest.update(param_type_name.as_bytes());
             *needs_comma = true;

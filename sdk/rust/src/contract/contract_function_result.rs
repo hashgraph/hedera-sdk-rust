@@ -79,21 +79,25 @@ pub struct ContractFunctionResult {
 impl ContractFunctionResult {
     const SLOT_SIZE: usize = 32;
 
+    #[must_use]
     fn get_fixed_bytes<const N: usize>(&self, slot: usize) -> Option<&[u8; N]> {
         self.get_fixed_bytes_at(slot * Self::SLOT_SIZE + (Self::SLOT_SIZE - N))
     }
 
     // fixme(sr): name is weird, but I can't think of a better one.
     // basically, there's `get_fixed_bytes` which works off of "slots" (multiples of 32 bytes), and this version, which can be from anywhere.
+    #[must_use]
     fn get_fixed_bytes_at<const N: usize>(&self, offset: usize) -> Option<&[u8; N]> {
         self.bytes.get(offset..).and_then(|it| it.get(..N)).map(|it| it.try_into().unwrap())
     }
 
     // fixme(sr): name is weird, but I can't think of a better one.
+    #[must_use]
     fn get_u32_at(&self, offset: usize) -> Option<u32> {
         self.get_fixed_bytes_at(28 + offset).map(|it| u32::from_be_bytes(*it))
     }
 
+    #[must_use]
     fn offset_len_pair(&self, offset: usize) -> Option<(usize, usize)> {
         let offset = self.get_u32(offset)? as usize;
         let len = self.get_u32_at(offset)? as usize;
@@ -101,6 +105,7 @@ impl ContractFunctionResult {
     }
 
     /// Get the whole raw function result.
+    #[must_use]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -109,12 +114,14 @@ impl ContractFunctionResult {
     /// Get the value at `index` as a solidity `string`.
     ///
     /// Theoretically, all strings here should be utf8, but this function does _lossy_ conversion.
+    #[must_use]
     pub fn get_str(&self, index: usize) -> Option<Cow<str>> {
         self.get_bytes(index).map(String::from_utf8_lossy)
     }
     /// Get the value at `index` as a solidity `string[]`.
     ///
     /// Theoretically, all strings here should be utf8, but this function does _lossy_ conversion.
+    #[must_use]
     pub fn get_str_array(&self, index: usize) -> Option<Vec<Cow<str>>> {
         let (offset, len) = self.offset_len_pair(index)?;
 
@@ -128,13 +135,14 @@ impl ContractFunctionResult {
             let bytes =
                 self.bytes.get((str_offset + Self::SLOT_SIZE)..).and_then(|it| it.get(..len))?;
 
-            v.push(String::from_utf8_lossy(bytes))
+            v.push(String::from_utf8_lossy(bytes));
         }
 
         Some(v)
     }
 
     /// Get the value at `index` as solidity `bytes`.
+    #[must_use]
     pub fn get_bytes(&self, index: usize) -> Option<&[u8]> {
         let (offset, len) = self.offset_len_pair(index)?;
         self.bytes.get((offset + Self::SLOT_SIZE)..).and_then(|it| it.get(..len))
@@ -143,53 +151,62 @@ impl ContractFunctionResult {
     /// Get the value at `index` as solidity `bytes32`.
     ///
     /// This is the native word size for the solidity ABI.
+    #[must_use]
     pub fn get_bytes32(&self, index: usize) -> Option<&[u8; 32]> {
         self.get_fixed_bytes(index)
     }
 
     /// Get the value at `index` as a solidity `address` and then hex-encode the result.
+    #[must_use]
     pub fn get_address(&self, index: usize) -> Option<String> {
         self.get_fixed_bytes::<20>(index).map(hex::encode)
     }
 
     /// Get the value at `index` as a solidity `bool`.
+    #[must_use]
     pub fn get_bool(&self, index: usize) -> Option<bool> {
         self.get_u8(index).map(|it| it != 0)
     }
 
     /// Get the value at `index` as a solidity `u8`.
+    #[must_use]
     pub fn get_u8(&self, index: usize) -> Option<u8> {
-        self.get_fixed_bytes(index).map(|it| u8::from_be_bytes(*it))
+        self.get_fixed_bytes(index).copied().map(u8::from_be_bytes)
     }
 
     /// Get the value at `index` as a solidity `i8`.
+    #[must_use]
     pub fn get_i8(&self, index: usize) -> Option<i8> {
-        self.get_fixed_bytes(index).map(|it| i8::from_be_bytes(*it))
+        self.get_fixed_bytes(index).copied().map(i8::from_be_bytes)
     }
 
     /// Get the value at `index` as a solidity `u32`.
     pub fn get_u32(&self, index: usize) -> Option<u32> {
-        self.get_fixed_bytes(index).map(|it| u32::from_be_bytes(*it))
+        self.get_fixed_bytes(index).copied().map(u32::from_be_bytes)
     }
 
     /// Get the value at `index` as a solidity `i32`.
+    #[must_use]
     pub fn get_i32(&self, index: usize) -> Option<i32> {
-        self.get_fixed_bytes(index).map(|it| i32::from_be_bytes(*it))
+        self.get_fixed_bytes(index).copied().map(i32::from_be_bytes)
     }
 
     /// Get the value at `index` as a solidity `u64`.
+    #[must_use]
     pub fn get_u64(&self, index: usize) -> Option<u64> {
-        self.get_fixed_bytes(index).map(|it| u64::from_be_bytes(*it))
+        self.get_fixed_bytes(index).copied().map(u64::from_be_bytes)
     }
 
     /// Get the value at `index` as a solidity `i64`.
+    #[must_use]
     pub fn get_i64(&self, index: usize) -> Option<i64> {
-        self.get_fixed_bytes(index).map(|it| i64::from_be_bytes(*it))
+        self.get_fixed_bytes(index).copied().map(i64::from_be_bytes)
     }
 
     /// Get the value at `index` as a solidity `u256` (`uint`).
     ///
     /// This is the native unsigned integer size for the solidity ABI.
+    #[must_use]
     pub fn get_u256(&self, index: usize) -> Option<BigUint> {
         self.get_bytes32(index).map(|it| BigUint::from_bytes_be(it))
     }
@@ -197,6 +214,7 @@ impl ContractFunctionResult {
     /// Get the value at `index` as a solidity `i256` (`int`).
     ///
     /// This is the native unsigned integer size for the solidity ABI.
+    #[must_use]
     pub fn get_i256(&self, index: usize) -> Option<BigInt> {
         self.get_bytes32(index).map(|it| BigInt::from_signed_bytes_be(it))
     }
@@ -222,10 +240,12 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
         // if an exception was thrown, the call result is encoded like the params
         // for a function `Error(string)`
         // https://solidity.readthedocs.io/en/v0.6.2/control-structures.html#revert
+        // `map_or` wouldn't actually work here, because `contract_call_result
+        #[allow(clippy::map_unwrap_or)]
         let bytes = if error_message.is_some() {
             pb.contract_call_result
                 .strip_prefix(&[0x08, 0xc3, 0x79, 0xa0])
-                .map(|it| it.to_vec())
+                .map(<[u8]>::to_vec)
                 .unwrap_or(pb.contract_call_result)
         } else {
             pb.contract_call_result

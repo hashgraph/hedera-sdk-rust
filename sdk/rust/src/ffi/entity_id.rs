@@ -44,9 +44,9 @@ trait FromToBytes {
     fn ffi_to_bytes(&self) -> Box<[u8]>;
 }
 
-trait FromIntoEntityId {
+trait FromToEntityId {
     fn from_entity_id(id: EntityId) -> Self;
-    fn into_entity_id(&self) -> EntityId;
+    fn to_entity_id(&self) -> EntityId;
 }
 
 macro_rules! impl_ffi_convert_traits_for {
@@ -62,13 +62,13 @@ macro_rules! impl_ffi_convert_traits_for {
                 }
             }
 
-            impl FromIntoEntityId for $type {
+            impl FromToEntityId for $type {
                 fn from_entity_id(id: EntityId) -> Self {
                     let EntityId { shard, realm, num, checksum } = id;
                     Self { shard, realm, num, checksum }
                 }
 
-                fn into_entity_id(&self) -> EntityId {
+                fn to_entity_id(&self) -> EntityId {
                     let Self { shard, realm, num, checksum } = *self;
                     EntityId { shard, realm, num, checksum }
                 }
@@ -82,7 +82,7 @@ impl_ffi_convert_traits_for!(FileId, TokenId, ScheduleId, TopicId);
 /// # Safety
 /// - `id_shard`, `id_realm`, and `id_num` must all be valid for writes.
 /// - `bytes` must be valid for reads of up to `bytes_size` bytes.
-unsafe fn id_from_bytes<I: FromToBytes + FromIntoEntityId>(
+unsafe fn id_from_bytes<I: FromToBytes + FromToEntityId>(
     bytes: *const u8,
     bytes_size: size_t,
     id_shard: *mut u64,
@@ -98,7 +98,7 @@ unsafe fn id_from_bytes<I: FromToBytes + FromIntoEntityId>(
     let bytes = unsafe { slice::from_raw_parts(bytes, bytes_size) };
 
     let id = ffi_try!(I::ffi_from_bytes(bytes));
-    let id = id.into_entity_id();
+    let id = id.to_entity_id();
 
     // safety: function contract states that all of these must be valid for writes.
     unsafe {
@@ -112,7 +112,7 @@ unsafe fn id_from_bytes<I: FromToBytes + FromIntoEntityId>(
 
 /// # Safety
 /// - `buf` must be valid for writes.
-unsafe fn id_to_bytes<I: FromToBytes + FromIntoEntityId>(
+unsafe fn id_to_bytes<I: FromToBytes + FromToEntityId>(
     id_shard: u64,
     id_realm: u64,
     id_num: u64,
@@ -222,7 +222,7 @@ pub unsafe extern "C" fn hedera_token_id_from_bytes(
     }
 }
 
-/// Serialize the passed TokenId as bytes
+/// Serialize the passed `TokenId` as bytes
 ///
 /// # Safety
 /// - `buf` must be valid for writes.
@@ -262,7 +262,7 @@ pub unsafe extern "C" fn hedera_schedule_id_from_bytes(
     }
 }
 
-/// Serialize the passed ScheduleId as bytes
+/// Serialize the passed `ScheduleId` as bytes
 ///
 /// # Safety
 /// - `buf` must be valid for writes.

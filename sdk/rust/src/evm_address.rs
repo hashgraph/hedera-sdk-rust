@@ -10,7 +10,13 @@ use crate::{
 
 /// An address as implemented in the Ethereum Virtual Machine.
 #[derive(Copy, Clone, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr),
+    // the only function using unsafe here is sound for all inputs, and,
+    // serialize/deserialize delegate to code that is manually written anyway.
+    allow(clippy::unsafe_derive_deserialize)
+)]
 #[repr(transparent)]
 pub struct EvmAddress(pub(crate) [u8; 20]);
 

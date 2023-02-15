@@ -69,6 +69,9 @@ impl FileId {
     }
 
     /// Create a `FileId` from a solidity address.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if `address` cannot be parsed as a solidity address.
     pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
         let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
 
@@ -82,24 +85,29 @@ impl FileId {
     }
 
     /// Convert `self` into a solidity `address`
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if `self.shard` is larger than `u32::MAX`.
     pub fn to_solidity_address(&self) -> crate::Result<String> {
         EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
             .to_solidity_address()
     }
 
     /// Convert `self` to a string with a valid checksum.
-    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
-        EntityId::to_string_with_checksum(self.to_string(), client).await
+    ///
+    /// # Errors
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
+    pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+        EntityId::to_string_with_checksum(self.to_string(), client)
     }
 
-    /// If this file ID was constructed from a user input string, it might include a checksum.
+    /// Validates `self.checksum` (if it exists) for `client`.
     ///
-    /// This function will validate that the checksum is correct, returning an `Err()` result containing an
-    /// [`Error::BadEntityId`](crate::Error::BadEntityId) if it's invalid, and a `Some(())` result if it is valid.
-    ///
-    /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
-    pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
-        EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client).await
+    /// # Errors
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no `ledger_id`.
+    /// - [`Error::BadEntityId`] if there is a checksum, and the checksum is not valid for the client's `ledger_id`.
+    pub fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
+        EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)
     }
 }
 
@@ -109,7 +117,7 @@ impl ValidateChecksums for FileId {
             self.shard,
             self.realm,
             self.num,
-            &self.checksum,
+            self.checksum,
             ledger_id,
         )
     }

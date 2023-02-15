@@ -199,6 +199,10 @@ impl TransactionSources {
                 }
 
                 transaction_ids.push(transaction_info[chunk.start].0);
+
+                // else ifs acting on different kinds of conditions are
+                // personally more confusing than having the extra layer of nesting.
+                #[allow(clippy::collapsible_else_if)]
                 if node_ids.is_empty() {
                     node_ids = transaction_info[chunk.clone()].iter().map(|it| it.1).collect();
                 } else {

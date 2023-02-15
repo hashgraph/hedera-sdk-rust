@@ -61,9 +61,9 @@ fn split_key_array(arr: &[u8; 64]) -> (&[u8; 32], &[u8; 32]) {
     let (lhs, rhs) = arr.split_at(32);
 
     // SAFETY: lhs points to [T; N]? Yes it's [T] of length 64/2 (guaranteed by split_at)
-    let lhs = unsafe { &*(lhs.as_ptr() as *const [u8; 32]) };
+    let lhs = unsafe { &*(lhs.as_ptr().cast::<[u8; 32]>()) };
     // SAFETY: rhs points to [T; N]? Yes it's [T] of length 64/2 (rhs.len() = 64 - lhs.len(), lhs.len() has been proven to be 32 above...)
-    let rhs = unsafe { &*(rhs.as_ptr() as *const [u8; 32]) };
+    let rhs = unsafe { &*(rhs.as_ptr().cast::<[u8; 32]>()) };
 
     (lhs, rhs)
 }
@@ -174,6 +174,8 @@ impl PrivateKey {
     ///
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ed25519 `PrivateKey`.
+    // panic is unreachable.
+    #[allow(clippy::missing_panics_doc)]
     pub fn from_bytes_ed25519(bytes: &[u8]) -> crate::Result<Self> {
         let data = if bytes.len() == 32 || bytes.len() == 64 {
             ed25519_dalek::SigningKey::from_bytes(&bytes[..32].try_into().unwrap())
@@ -478,6 +480,7 @@ impl PrivateKey {
     }
 
     /// Signs the given `message`.
+    #[must_use]
     pub fn sign(&self, message: &[u8]) -> Vec<u8> {
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => key.sign(message).to_bytes().as_slice().to_vec(),
@@ -492,13 +495,17 @@ impl PrivateKey {
 
     // I question the reason for this function existing.
     /// Signs the given transaction.
+    ///
+    /// # Errors
+    /// This function will freeze the transaction if it is not frozen.
+    /// As such, any error that can be occur during [`Transaction::freeze`] can also occur here.
     pub fn sign_transaction<D: crate::transaction::TransactionExecute>(
         &self,
         transaction: &mut Transaction<D>,
     ) -> crate::Result<()> {
         transaction.freeze()?;
 
-        transaction.add_signature_signer(AnySigner::PrivateKey(self.clone()));
+        transaction.add_signature_signer(&AnySigner::PrivateKey(self.clone()));
 
         Ok(())
     }

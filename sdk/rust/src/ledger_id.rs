@@ -138,7 +138,7 @@ impl Clone for LedgerId {
 
 impl AsRef<RefLedgerId> for LedgerId {
     fn as_ref(&self) -> &RefLedgerId {
-        &*self.0
+        &self.0
     }
 }
 

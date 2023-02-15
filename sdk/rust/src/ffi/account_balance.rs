@@ -29,7 +29,7 @@ pub struct AccountBalance {
 }
 
 impl AccountBalance {
-    fn borrow_ref<'a>(&'a self) -> RefAccountBalance<'a> {
+    fn borrow_ref(&self) -> RefAccountBalance<'_> {
         // note: `token_balances` is *technically* `&'static` if it came from us, but it could be `&'a` if it came from swift.
         // safety: immediate library UB to have invalid token_balances/token_balances_len.
         let token_balances =
@@ -118,7 +118,7 @@ pub unsafe extern "C" fn hedera_account_balance_from_bytes(
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
 
-    let parsed = ffi_try!(crate::AccountBalance::from_bytes(&bytes)).into();
+    let parsed = ffi_try!(crate::AccountBalance::from_bytes(bytes)).into();
 
     unsafe {
         ptr::write(id, parsed);
