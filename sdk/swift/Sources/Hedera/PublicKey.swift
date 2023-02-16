@@ -202,14 +202,13 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public func verifyTransaction(_ transaction: Transaction) throws {
-        for signer in transaction.signers {
-            if self == signer.publicKey {
-                return
-            }
+        // we're a signer.
+        if transaction.signers.contains(where: { self == $0.publicKey }) {
+            return
         }
 
         guard let sources = transaction.sources else {
-            fatalError()
+            throw HError(kind: .signatureVerify, description: "signer not in transaction")
         }
 
         try HError.throwing(error: hedera_public_key_verify_sources(ptr, sources.ptr))

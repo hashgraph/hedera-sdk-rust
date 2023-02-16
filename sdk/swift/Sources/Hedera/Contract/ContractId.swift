@@ -38,28 +38,29 @@ public struct ContractId: EntityId {
         case .long(let shard, let realm, let last, let checksum):
             if let num = UInt64(last) {
                 self.init(shard: shard, realm: realm, num: num, checksum: checksum)
-            } else {
-                // might have `evmAddress`
-                guard let evmAddress = Data(hexEncoded: last.stripPrefix("0x") ?? last) else {
-                    throw HError(
-                        kind: .basicParse,
-                        description:
-                            "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
-                }
-
-                if evmAddress.count != 20 {
-                    throw HError(
-                        kind: .basicParse,
-                        description: "expected `20` byte evm address, got `\(evmAddress.count)` bytes")
-                }
-
-                guard checksum == nil else {
-                    throw HError(
-                        kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<evmAddress>`")
-                }
-
-                self.init(shard: shard, realm: realm, evmAddress: evmAddress)
+                return
             }
+
+            // might have `evmAddress`
+            guard let evmAddress = Data(hexEncoded: last.stripPrefix("0x") ?? last) else {
+                throw HError(
+                    kind: .basicParse,
+                    description:
+                        "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
+            }
+
+            if evmAddress.count != 20 {
+                throw HError(
+                    kind: .basicParse,
+                    description: "expected `20` byte evm address, got `\(evmAddress.count)` bytes")
+            }
+
+            guard checksum == nil else {
+                throw HError(
+                    kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<evmAddress>`")
+            }
+
+            self.init(shard: shard, realm: realm, evmAddress: evmAddress)
 
         case .other(let description):
             throw HError(
@@ -96,9 +97,9 @@ public struct ContractId: EntityId {
                         evm_address: UnsafeMutablePointer(mutating: evmAddress.baseAddress)
                     ))
             }
-        } else {
-            return try body(HederaContractId(shard: self.shard, realm: self.realm, num: self.num, evm_address: nil))
         }
+
+        return try body(HederaContractId(shard: self.shard, realm: self.realm, num: self.num, evm_address: nil))
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {

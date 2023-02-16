@@ -17,11 +17,11 @@ extension ContractFunctionResult {
     }
 }
 
-func numToBytes32<T: FixedWidthInteger>(value: T) -> Data {
+private func numToBytes32<T: FixedWidthInteger>(value: T) -> Data {
     return Data(repeating: 0, count: 32 - MemoryLayout<T>.size) + value.bigEndianBytes
 }
 
-let callResult = Data(
+private let callResult = Data(
     hexEncoded:
         """
         00000000000000000000000000000000000000000000000000000000ffffffff\
@@ -37,7 +37,7 @@ let callResult = Data(
         """
 )!
 
-let stringArrayResult = Data(
+private let stringArrayResult = Data(
     hexEncoded:
         """
         0000000000000000000000000000000000000000000000000000000000000020\
@@ -51,7 +51,7 @@ let stringArrayResult = Data(
         """
 )!
 
-let stringArrayResult2 = Data(
+private let stringArrayResult2 = Data(
     hexEncoded:
         """
         0000000000000000000000000000000000000000000000000000000000000000\
