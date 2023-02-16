@@ -18,10 +18,6 @@
  * ‍
  */
 
-// big type
-// swiftlint:disable file_length
-// big type.
-// swiftlint:disable:next type_body_length
 internal enum AnyTransaction {
     case accountCreate(AccountCreateTransaction)
     case accountUpdate(AccountUpdateTransaction)
@@ -64,209 +60,51 @@ internal enum AnyTransaction {
     case scheduleDelete(ScheduleDeleteTransaction)
     case ethereum(EthereumTransaction)
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    // swiftlint:disable:next cyclomatic_complexity
     internal init(upcasting transaction: Transaction) {
-        if let transaction = transaction as? AccountCreateTransaction {
-            self = .accountCreate(transaction)
-            return
+        switch transaction {
+        case let transaction as AccountCreateTransaction: self = .accountCreate(transaction)
+        case let transaction as AccountUpdateTransaction: self = .accountUpdate(transaction)
+        case let transaction as AccountDeleteTransaction: self = .accountDelete(transaction)
+        case let transaction as AccountAllowanceApproveTransaction: self = .accountAllowanceApprove(transaction)
+        case let transaction as AccountAllowanceDeleteTransaction: self = .accountAllowanceDelete(transaction)
+        case let transaction as ContractCreateTransaction: self = .contractCreate(transaction)
+        case let transaction as ContractUpdateTransaction: self = .contractUpdate(transaction)
+        case let transaction as ContractDeleteTransaction: self = .contractDelete(transaction)
+        case let transaction as ContractExecuteTransaction: self = .contractExecute(transaction)
+        case let transaction as TransferTransaction: self = .transfer(transaction)
+        case let transaction as TopicCreateTransaction: self = .topicCreate(transaction)
+        case let transaction as TopicUpdateTransaction: self = .topicUpdate(transaction)
+        case let transaction as TopicDeleteTransaction: self = .topicDelete(transaction)
+        case let transaction as TopicMessageSubmitTransaction: self = .topicMessageSubmit(transaction)
+        case let transaction as FileAppendTransaction: self = .fileAppend(transaction)
+        case let transaction as FileCreateTransaction: self = .fileCreate(transaction)
+        case let transaction as FileUpdateTransaction: self = .fileUpdate(transaction)
+        case let transaction as FileDeleteTransaction: self = .fileDelete(transaction)
+        case let transaction as TokenAssociateTransaction: self = .tokenAssociate(transaction)
+        case let transaction as TokenBurnTransaction: self = .tokenBurn(transaction)
+        case let transaction as TokenCreateTransaction: self = .tokenCreate(transaction)
+        case let transaction as TokenDeleteTransaction: self = .tokenDelete(transaction)
+        case let transaction as TokenDissociateTransaction: self = .tokenDissociate(transaction)
+        case let transaction as TokenFeeScheduleUpdateTransaction: self = .tokenFeeScheduleUpdate(transaction)
+        case let transaction as TokenFreezeTransaction: self = .tokenFreeze(transaction)
+        case let transaction as TokenGrantKycTransaction: self = .tokenGrantKyc(transaction)
+        case let transaction as TokenMintTransaction: self = .tokenMint(transaction)
+        case let transaction as TokenPauseTransaction: self = .tokenPause(transaction)
+        case let transaction as TokenRevokeKycTransaction: self = .tokenRevokeKyc(transaction)
+        case let transaction as TokenUnfreezeTransaction: self = .tokenUnfreeze(transaction)
+        case let transaction as TokenUnpauseTransaction: self = .tokenUnpause(transaction)
+        case let transaction as TokenUpdateTransaction: self = .tokenUpdate(transaction)
+        case let transaction as TokenWipeTransaction: self = .tokenWipe(transaction)
+        case let transaction as SystemDeleteTransaction: self = .systemDelete(transaction)
+        case let transaction as SystemUndeleteTransaction: self = .systemUndelete(transaction)
+        case let transaction as FreezeTransaction: self = .freeze(transaction)
+        case let transaction as ScheduleCreateTransaction: self = .scheduleCreate(transaction)
+        case let transaction as ScheduleSignTransaction: self = .scheduleSign(transaction)
+        case let transaction as ScheduleDeleteTransaction: self = .scheduleDelete(transaction)
+        case let transaction as EthereumTransaction: self = .ethereum(transaction)
+        default: fatalError("Unrecognized transaction type")
         }
-
-        if let transaction = transaction as? AccountUpdateTransaction {
-            self = .accountUpdate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? AccountDeleteTransaction {
-            self = .accountDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? AccountAllowanceApproveTransaction {
-            self = .accountAllowanceApprove(transaction)
-            return
-        }
-
-        if let transaction = transaction as? AccountAllowanceDeleteTransaction {
-            self = .accountAllowanceDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ContractCreateTransaction {
-            self = .contractCreate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ContractUpdateTransaction {
-            self = .contractUpdate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ContractDeleteTransaction {
-            self = .contractDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ContractExecuteTransaction {
-            self = .contractExecute(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TransferTransaction {
-            self = .transfer(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TopicCreateTransaction {
-            self = .topicCreate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TopicUpdateTransaction {
-            self = .topicUpdate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TopicDeleteTransaction {
-            self = .topicDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TopicMessageSubmitTransaction {
-            self = .topicMessageSubmit(transaction)
-            return
-        }
-
-        if let transaction = transaction as? FileAppendTransaction {
-            self = .fileAppend(transaction)
-            return
-        }
-
-        if let transaction = transaction as? FileCreateTransaction {
-            self = .fileCreate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? FileUpdateTransaction {
-            self = .fileUpdate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? FileDeleteTransaction {
-            self = .fileDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenAssociateTransaction {
-            self = .tokenAssociate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenBurnTransaction {
-            self = .tokenBurn(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenCreateTransaction {
-            self = .tokenCreate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenDeleteTransaction {
-            self = .tokenDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenDissociateTransaction {
-            self = .tokenDissociate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenFeeScheduleUpdateTransaction {
-            self = .tokenFeeScheduleUpdate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenFreezeTransaction {
-            self = .tokenFreeze(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenGrantKycTransaction {
-            self = .tokenGrantKyc(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenMintTransaction {
-            self = .tokenMint(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenPauseTransaction {
-            self = .tokenPause(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenRevokeKycTransaction {
-            self = .tokenRevokeKyc(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenUnfreezeTransaction {
-            self = .tokenUnfreeze(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenUnpauseTransaction {
-            self = .tokenUnpause(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenUpdateTransaction {
-            self = .tokenUpdate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? TokenWipeTransaction {
-            self = .tokenWipe(transaction)
-            return
-        }
-
-        if let transaction = transaction as? SystemDeleteTransaction {
-            self = .systemDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? SystemUndeleteTransaction {
-            self = .systemUndelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? FreezeTransaction {
-            self = .freeze(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ScheduleCreateTransaction {
-            self = .scheduleCreate(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ScheduleSignTransaction {
-            self = .scheduleSign(transaction)
-            return
-        }
-
-        if let transaction = transaction as? ScheduleDeleteTransaction {
-            self = .scheduleDelete(transaction)
-            return
-        }
-
-        if let transaction = transaction as? EthereumTransaction {
-            self = .ethereum(transaction)
-            return
-        }
-
-        fatalError("Unrecognized transaction type")
     }
 
     internal enum Kind: String, Codable {
@@ -314,86 +152,46 @@ internal enum AnyTransaction {
 
     internal var transaction: Transaction {
         switch self {
-        case .accountCreate(let transaction):
-            return transaction
-        case .accountUpdate(let transaction):
-            return transaction
-        case .accountDelete(let transaction):
-            return transaction
-        case .accountAllowanceApprove(let transaction):
-            return transaction
-        case .accountAllowanceDelete(let transaction):
-            return transaction
-        case .contractCreate(let transaction):
-            return transaction
-        case .contractUpdate(let transaction):
-            return transaction
-        case .contractDelete(let transaction):
-            return transaction
-        case .contractExecute(let transaction):
-            return transaction
-        case .transfer(let transaction):
-            return transaction
-        case .topicCreate(let transaction):
-            return transaction
-        case .topicUpdate(let transaction):
-            return transaction
-        case .topicDelete(let transaction):
-            return transaction
-        case .topicMessageSubmit(let transaction):
-            return transaction
-        case .fileAppend(let transaction):
-            return transaction
-        case .fileCreate(let transaction):
-            return transaction
-        case .fileUpdate(let transaction):
-            return transaction
-        case .fileDelete(let transaction):
-            return transaction
-        case .tokenAssociate(let transaction):
-            return transaction
-        case .tokenBurn(let transaction):
-            return transaction
-        case .tokenCreate(let transaction):
-            return transaction
-        case .tokenDelete(let transaction):
-            return transaction
-        case .tokenDissociate(let transaction):
-            return transaction
-        case .tokenFeeScheduleUpdate(let transaction):
-            return transaction
-        case .tokenFreeze(let transaction):
-            return transaction
-        case .tokenGrantKyc(let transaction):
-            return transaction
-        case .tokenMint(let transaction):
-            return transaction
-        case .tokenPause(let transaction):
-            return transaction
-        case .tokenRevokeKyc(let transaction):
-            return transaction
-        case .tokenUnfreeze(let transaction):
-            return transaction
-        case .tokenUnpause(let transaction):
-            return transaction
-        case .tokenUpdate(let transaction):
-            return transaction
-        case .tokenWipe(let transaction):
-            return transaction
-        case .systemDelete(let transaction):
-            return transaction
-        case .systemUndelete(let transaction):
-            return transaction
-        case .freeze(let transaction):
-            return transaction
-        case .scheduleCreate(let transaction):
-            return transaction
-        case .scheduleSign(let transaction):
-            return transaction
-        case .scheduleDelete(let transaction):
-            return transaction
-        case .ethereum(let transaction):
-            return transaction
+        case .accountCreate(let transaction): return transaction
+        case .accountUpdate(let transaction): return transaction
+        case .accountDelete(let transaction): return transaction
+        case .accountAllowanceApprove(let transaction): return transaction
+        case .accountAllowanceDelete(let transaction): return transaction
+        case .contractCreate(let transaction): return transaction
+        case .contractUpdate(let transaction): return transaction
+        case .contractDelete(let transaction): return transaction
+        case .contractExecute(let transaction): return transaction
+        case .transfer(let transaction): return transaction
+        case .topicCreate(let transaction): return transaction
+        case .topicUpdate(let transaction): return transaction
+        case .topicDelete(let transaction): return transaction
+        case .topicMessageSubmit(let transaction): return transaction
+        case .fileAppend(let transaction): return transaction
+        case .fileCreate(let transaction): return transaction
+        case .fileUpdate(let transaction): return transaction
+        case .fileDelete(let transaction): return transaction
+        case .tokenAssociate(let transaction): return transaction
+        case .tokenBurn(let transaction): return transaction
+        case .tokenCreate(let transaction): return transaction
+        case .tokenDelete(let transaction): return transaction
+        case .tokenDissociate(let transaction): return transaction
+        case .tokenFeeScheduleUpdate(let transaction): return transaction
+        case .tokenFreeze(let transaction): return transaction
+        case .tokenGrantKyc(let transaction): return transaction
+        case .tokenMint(let transaction): return transaction
+        case .tokenPause(let transaction): return transaction
+        case .tokenRevokeKyc(let transaction): return transaction
+        case .tokenUnfreeze(let transaction): return transaction
+        case .tokenUnpause(let transaction): return transaction
+        case .tokenUpdate(let transaction): return transaction
+        case .tokenWipe(let transaction): return transaction
+        case .systemDelete(let transaction): return transaction
+        case .systemUndelete(let transaction): return transaction
+        case .freeze(let transaction): return transaction
+        case .scheduleCreate(let transaction): return transaction
+        case .scheduleSign(let transaction): return transaction
+        case .scheduleDelete(let transaction): return transaction
+        case .ethereum(let transaction): return transaction
         }
     }
 }

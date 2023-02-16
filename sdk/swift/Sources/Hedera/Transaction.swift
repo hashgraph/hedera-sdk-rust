@@ -107,6 +107,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
 
         precondition(nodeAccountIds?.count == 1, "cannot manually add a signature to a transaction with multiple nodes")
 
+        // swiftlint:disable:next force_try
         let sources = try! makeSources()
 
         self.sources = sources.signedWithSingle(signer)

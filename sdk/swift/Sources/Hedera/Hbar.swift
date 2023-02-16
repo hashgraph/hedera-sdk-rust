@@ -58,7 +58,7 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
         self.init(value)!
     }
 
-    public init?(_ description: String) {
+    fileprivate init<S: StringProtocol>(parsing description: S) throws {
         switch description {
         case "tℏ":
             self = .tinybar
@@ -75,8 +75,12 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
         case "Gℏ":
             self = .gigabar
         default:
-            return nil
+            throw HError(kind: .basicParse, description: "unit must be a valid hbar unit")
         }
+    }
+
+    public init?(_ description: String) {
+        try? self.init(parsing: description)
     }
 
     public func tinybar() -> UInt64 {
@@ -104,7 +108,7 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
 
         let tinybars = amount * Decimal(unit.rawValue)
 
-        if !(tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0)) {
+        guard tinybars.isZero || (tinybars.isNormal && tinybars.exponent >= 0) else {
             throw HError(
                 kind: .basicParse,
                 description:
@@ -116,7 +120,8 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        self.init(value)!
+        // swiftlint:disable force_try
+        try! self.init(parsing: value)
     }
 
     public init(integerLiteral value: IntegerLiteralType) {
@@ -130,33 +135,23 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
     }
 
     public static func fromString(_ description: String) throws -> Self {
-        let parts = description.split(separator: " ", maxSplits: 1)
+        return try Self(parsing: description)
+    }
 
-        // fixme: how to make this look nicer?
-        let unit: HbarUnit
-        if parts.count == 1 {
-            unit = HbarUnit.hbar
-        } else {
-            if let tmp = HbarUnit.init(String(parts[1])) {
-                unit = tmp
-            } else {
-                throw HError(kind: .basicParse, description: "unit must be a valid hbar unit")
-            }
-        }
+    private init<S: StringProtocol>(parsing description: S) throws {
+        let (rawAmount, rawUnit) = description.splitOnce(on: " ") ?? (description[...], nil)
 
-        guard let amount = Decimal(string: String(parts[0])) else {
+        let unit = try rawUnit.map { try HbarUnit(parsing: $0) } ?? .hbar
+
+        guard let amount = Decimal(string: String(rawAmount)) else {
             throw HError(kind: .basicParse, description: "amount not parsable as a decimal")
         }
 
-        return try Self(amount, unit)
+        try self.init(amount, unit)
     }
 
     public init?(_ description: String) {
-        guard let hbar = try? Self.fromString(description) else {
-            return nil
-        }
-
-        tinybars = hbar.tinybars
+        try? self.init(parsing: description)
     }
 
     public static func from(_ amount: Decimal, _ unit: HbarUnit = .hbar) throws -> Self {

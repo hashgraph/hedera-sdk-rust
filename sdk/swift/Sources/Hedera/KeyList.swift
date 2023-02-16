@@ -18,7 +18,7 @@ extension KeyList: Collection, RandomAccessCollection {
     public typealias Index = Int
     public typealias Element = Key
 
-    public subscript(position: Int) -> Key {
+    public subscript(_ position: Int) -> Key {
         get {
             self.keys[position]
         }

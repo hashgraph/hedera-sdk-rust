@@ -18,6 +18,9 @@
  * ‍
  */
 
+// every single bit of this file is all required and can't be moved into a different file :/
+// swiftlint:disable file_length type_body_length
+
 import Foundation
 
 /// Create a new token.
