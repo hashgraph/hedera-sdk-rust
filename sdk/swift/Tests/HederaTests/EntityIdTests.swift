@@ -89,6 +89,12 @@ public final class EntityIdTests: XCTestCase {
         }
     }
 
+    internal func testAccountIdChecksum() {
+        let checksumAddress = AccountId("0.0.1126123").toStringWithChecksum(.forMainnet())
+
+        XCTAssertEqual(checksumAddress, "0.0.1126123-ycfte")
+    }
+
     internal func testChecksumOnPreviewnet() {
         let expected: [String] = [
             "nwkes", "wghmj", "eqeua", "nacbr", "vjzji", "dtwqz", "mdtyq", "unrgh",
