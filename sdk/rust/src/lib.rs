@@ -83,6 +83,7 @@ mod transaction_record;
 mod transaction_record_query;
 mod transaction_response;
 mod transfer_transaction;
+mod ping_query;
 
 #[cfg(feature = "ffi")]
 mod ffi;
