@@ -124,7 +124,7 @@ extension AccountBalance: Codable {
     public enum CodingKeys: CodingKey {
         case accountId
         case hbars
-        case tokenBalances
+        case tokens
         case tokenDecimals
     }
 
@@ -133,8 +133,28 @@ extension AccountBalance: Codable {
 
         let accountId = try container.decode(AccountId.self, forKey: .accountId)
         let hbars = try container.decode(Hbar.self, forKey: .hbars)
-        let tokenBalances = try container.decodeIfPresent([TokenId: UInt64].self, forKey: .tokenBalances) ?? [:]
-        let tokenDecimals = try container.decodeIfPresent([TokenId: UInt32].self, forKey: .tokenDecimals) ?? [:]
+        // hack around SE0320
+        let tokenBalances: [TokenId: UInt64]
+        do {
+            let tokenBalancesStrings = try container.decodeIfPresent([String: UInt64].self, forKey: .tokens) ?? [:]
+            tokenBalances = Dictionary(
+                uniqueKeysWithValues: try tokenBalancesStrings.map { key, value in
+                    (try TokenId.fromString(key), value)
+                }
+            )
+        }
+
+        let tokenDecimals: [TokenId: UInt32]
+
+        do {
+            let tokenDecimalStrings =
+                try (container.decodeIfPresent([String: UInt32].self, forKey: .tokenDecimals) ?? [:])
+            tokenDecimals = Dictionary(
+                uniqueKeysWithValues: try tokenDecimalStrings.map { key, value in
+                    (try TokenId.fromString(key), value)
+                }
+            )
+        }
 
         self.init(
             accountId: accountId,
@@ -148,7 +168,7 @@ extension AccountBalance: Codable {
 
         try container.encode(accountId, forKey: .accountId)
         try container.encode(hbars, forKey: .hbars)
-        try container.encode(tokenBalancesInner, forKey: .tokenBalances)
+        try container.encode(tokenBalancesInner, forKey: .tokens)
         try container.encode(tokenDecimalsInner, forKey: .tokenDecimals)
     }
 }
