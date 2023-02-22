@@ -18,7 +18,6 @@
  * ‍
  */
 
-use std::iter;
 use std::sync::atomic::{
     AtomicBool,
     AtomicU64,
@@ -33,6 +32,7 @@ use rand::thread_rng;
 
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::Network;
+use crate::ping_query::PingQuery;
 use crate::{
     AccountId,
     LedgerId,
@@ -180,13 +180,7 @@ impl Client {
 
     /// Send a ping to the given node.
     pub async fn ping(&self, node_account_id: AccountId) -> crate::Result<()> {
-        crate::AccountBalanceQuery::new()
-            .account_id(node_account_id)
-            .node_account_ids(iter::once(node_account_id))
-            .execute(self)
-            .await?;
-
-        Ok(())
+        PingQuery::new(node_account_id).execute(self, None).await
     }
 
     /// Send a ping to the given node, canceling the ping after `timeout` has elapsed.
@@ -195,13 +189,7 @@ impl Client {
         node_account_id: AccountId,
         timeout: Duration,
     ) -> crate::Result<()> {
-        crate::AccountBalanceQuery::new()
-            .account_id(node_account_id)
-            .node_account_ids(iter::once(node_account_id))
-            .execute_with_timeout(self, timeout)
-            .await?;
-
-        Ok(())
+        PingQuery::new(node_account_id).execute(self, Some(timeout)).await
     }
 
     /// Send a ping to all nodes.

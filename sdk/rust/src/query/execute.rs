@@ -181,7 +181,7 @@ impl<D: QueryExecute + ValidateChecksums> ValidateChecksums for Query<D> {
     }
 }
 
-pub(super) fn response_header(
+pub(crate) fn response_header(
     response: &Option<services::response::Response>,
 ) -> crate::Result<&services::ResponseHeader> {
     use services::response::Response::*;
