@@ -18,7 +18,10 @@
  * ‍
  */
 
+use std::ops::ControlFlow;
+
 use backoff::ExponentialBackoff;
+use futures_util::StreamExt;
 use prost::Message;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -158,95 +161,18 @@ where
             .ok_or(retry::Error::EmptyTransient)?;
 
         for node_index in random_node_indexes {
-            let (node_account_id, channel) = client.network().channel(node_index);
-
-            let (request, context) = executable
-                .make_request(&transaction_id, node_account_id)
-                .map_err(crate::retry::Error::Permanent)?;
-
-            let response =
-                executable.execute(channel, request).await.map(|it| it.into_inner()).map_err(
-                    |status| match status.code() {
-                        tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                            // NOTE: this is an "unhealthy" node
-                            client.network().mark_node_unhealthy(node_index);
-
-                            // try the next node in our allowed list, immediately
-                            retry::Error::Transient(status.into())
-                        }
-
-                        _ => {
-                            // fail immediately
-                            retry::Error::Permanent(status.into())
-                        }
-                    },
-                );
-
-            let response = match response {
-                Ok(response) => response,
-                Err(retry::Error::Transient(err)) => {
-                    last_error = Some(err);
-                    continue;
-                }
-
-                Err(e) => return Err(e),
-            };
-
-            let status = E::response_pre_check_status(&response)
-                .map_err(retry::Error::Permanent)
-                .and_then(|status| {
-                // not sure how to proceed, fail immediately
-                Status::from_i32(status).ok_or_else(|| {
-                    retry::Error::Permanent(Error::ResponseStatusUnrecognized(status))
-                })
-            })?;
-
-            let (new_last_error, new_transaction_id) = match status {
-                Status::Ok if executable.should_retry(&response) => {
-                    return Err(retry::Error::Transient(
-                        executable.make_error_pre_check(status, transaction_id),
-                    ))
-                }
-
-                Status::Ok => {
-                    return executable
-                        .make_response(response, context, node_account_id, transaction_id)
-                        .map_err(retry::Error::Permanent);
-                }
-
-                Status::Busy | Status::PlatformNotActive => {
-                    // NOTE: this is a "busy" node
-                    // try the next node in our allowed list, immediately
-                    (executable.make_error_pre_check(status, transaction_id), None)
-                }
-
-                Status::TransactionExpired if explicit_transaction_id.is_none() => {
-                    // the transaction that was generated has since expired
-                    // re-generate the transaction ID and try again, immediately
-                    (
-                        executable.make_error_pre_check(status, transaction_id),
-                        Some(client.generate_transaction_id().unwrap()),
-                    )
-                }
-
-                _ if executable.should_retry_pre_check(status) => {
-                    // conditional retry on pre-check should back-off and try again
-                    return Err(retry::Error::Transient(
-                        executable.make_error_pre_check(status, transaction_id),
-                    ));
-                }
-
-                _ => {
-                    // any other pre-check is an error that the user needs to fix, fail immediately
-                    return Err(retry::Error::Permanent(
-                        executable.make_error_pre_check(status, transaction_id),
-                    ));
-                }
-            };
-
-            last_error = Some(new_last_error);
-            transaction_id = new_transaction_id.or(transaction_id);
-            continue;
+            match execute_single(
+                client,
+                executable,
+                node_index,
+                explicit_transaction_id.is_some(),
+                &mut transaction_id,
+            )
+            .await?
+            {
+                ControlFlow::Continue(err) => last_error = Some(err),
+                ControlFlow::Break(res) => return Ok(res),
+            }
         }
 
         // unreachable panic:
@@ -258,6 +184,102 @@ where
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
     crate::retry(backoff, layer).await
+}
+
+async fn execute_single<E: Execute>(
+    client: &Client,
+    executable: &E,
+    node_index: usize,
+    has_explicit_transaction_id: bool,
+    transaction_id: &mut Option<TransactionId>,
+) -> retry::Result<ControlFlow<E::Response, Error>> {
+    let (node_account_id, channel) = client.network().channel(node_index);
+
+    let (request, context) = executable
+        .make_request(&transaction_id, node_account_id)
+        .map_err(crate::retry::Error::Permanent)?;
+
+    let response =
+        executable.execute(channel, request).await.map(|it| it.into_inner()).map_err(|status| {
+            match status.code() {
+                tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
+                    // NOTE: this is an "unhealthy" node
+                    client.network().mark_node_unhealthy(node_index);
+
+                    // try the next node in our allowed list, immediately
+                    retry::Error::Transient(status.into())
+                }
+
+                _ => {
+                    // fail immediately
+                    retry::Error::Permanent(status.into())
+                }
+            }
+        });
+
+    let response = match response {
+        Ok(response) => response,
+        Err(retry::Error::Transient(err)) => {
+            return Ok(ControlFlow::Continue(err));
+        }
+
+        Err(e) => return Err(e),
+    };
+
+    let status = E::response_pre_check_status(&response)
+        .map_err(retry::Error::Permanent)
+        .and_then(|status| {
+            // not sure how to proceed, fail immediately
+            Status::from_i32(status)
+                .ok_or_else(|| retry::Error::Permanent(Error::ResponseStatusUnrecognized(status)))
+        })?;
+
+    match status {
+        Status::Ok if executable.should_retry(&response) => {
+            return Err(retry::Error::Transient(
+                executable.make_error_pre_check(status, *transaction_id),
+            ))
+        }
+
+        Status::Ok => {
+            return executable
+                .make_response(response, context, node_account_id, *transaction_id)
+                .map(ControlFlow::Break)
+                .map_err(retry::Error::Permanent);
+        }
+
+        Status::Busy | Status::PlatformNotActive => {
+            // NOTE: this is a "busy" node
+            // try the next node in our allowed list, immediately
+            return Ok(ControlFlow::Continue(
+                executable.make_error_pre_check(status, *transaction_id),
+            ));
+        }
+
+        Status::TransactionExpired if !has_explicit_transaction_id => {
+            // the transaction that was generated has since expired
+            // re-generate the transaction ID and try again, immediately
+            let _ = transaction_id.insert(client.generate_transaction_id().unwrap());
+
+            return Ok(ControlFlow::Continue(
+                executable.make_error_pre_check(status, *transaction_id),
+            ));
+        }
+
+        _ if executable.should_retry_pre_check(status) => {
+            // conditional retry on pre-check should back-off and try again
+            return Err(retry::Error::Transient(
+                executable.make_error_pre_check(status, *transaction_id),
+            ));
+        }
+
+        _ => {
+            // any other pre-check is an error that the user needs to fix, fail immediately
+            return Err(retry::Error::Permanent(
+                executable.make_error_pre_check(status, *transaction_id),
+            ));
+        }
+    };
 }
 
 // todo: return an iterator.
