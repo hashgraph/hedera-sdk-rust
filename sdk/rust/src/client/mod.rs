@@ -149,7 +149,7 @@ impl Client {
     }
 
     /// Generate a new transaction ID from the stored operator account ID, if present.
-    pub(crate) async fn generate_transaction_id(&self) -> Option<TransactionId> {
+    pub(crate) fn generate_transaction_id(&self) -> Option<TransactionId> {
         self.0.operator.load().as_deref().map(Operator::generate_transaction_id)
     }
 

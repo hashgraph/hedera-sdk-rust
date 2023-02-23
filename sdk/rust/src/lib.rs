@@ -65,7 +65,9 @@ mod network_version_info_query;
 mod node_address;
 mod node_address_book;
 mod node_address_book_query;
+mod ping_query;
 mod query;
+mod retry;
 mod schedule;
 mod semantic_version;
 mod signer;
@@ -83,7 +85,6 @@ mod transaction_record;
 mod transaction_record_query;
 mod transaction_response;
 mod transfer_transaction;
-mod ping_query;
 
 #[cfg(feature = "ffi")]
 mod ffi;
@@ -177,6 +178,7 @@ pub use query::{
     AnyQueryResponse,
     Query,
 };
+pub(crate) use retry::retry;
 pub use schedule::{
     ScheduleCreateTransaction,
     ScheduleDeleteTransaction,
