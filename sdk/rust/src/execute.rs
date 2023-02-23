@@ -109,7 +109,7 @@ pub(crate) trait Execute: ValidateChecksums {
 pub(crate) async fn execute<E>(
     client: &Client,
     executable: &E,
-    timeout: impl Into<Option<std::time::Duration>> + Send,
+    timeout: Option<std::time::Duration>,
 ) -> crate::Result<E::Response>
 where
     E: Execute + Sync,
@@ -151,15 +151,11 @@ where
 
     let explicit_node_indexes = explicit_node_indexes.as_deref();
 
-    // if all nodes are unhealthy then we must try at least one of them...
-    let mut include_unhealthy = false;
-
-    let layer = move |include_unhealthy: bool| async move {
+    let layer = move || async move {
         let mut last_error: Option<Error> = None;
 
-        let random_node_indexes =
-            random_node_indexes(client, include_unhealthy, explicit_node_indexes)
-                .ok_or(retry::Error::EmptyTransient)?;
+        let random_node_indexes = random_node_indexes(client, explicit_node_indexes)
+            .ok_or(retry::Error::EmptyTransient)?;
 
         for node_index in random_node_indexes {
             let (node_account_id, channel) = client.network().channel(node_index);
@@ -229,7 +225,7 @@ where
                     // re-generate the transaction ID and try again, immediately
                     (
                         executable.make_error_pre_check(status, transaction_id),
-                        client.generate_transaction_id(),
+                        Some(client.generate_transaction_id().unwrap()),
                     )
                 }
 
@@ -258,22 +254,6 @@ where
         return Err(retry::Error::Transient(last_error.unwrap()));
     };
 
-    // is this a layered fn? Yep. Is this required? Yes, unless we want more nesting.
-    let layer = move || async move {
-        let include_unhealthy = &mut include_unhealthy;
-        match layer(*include_unhealthy).await {
-            // on a transient error we want to enable `include_unhealthy` (if it isn't already enabled)
-            result @ Err(retry::Error::Transient(_)) => {
-                // only ever include unhealthy nodes if we have explicit nodes.
-                *include_unhealthy = explicit_node_indexes.is_some();
-
-                result
-            }
-
-            result => result,
-        }
-    };
-
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
@@ -283,7 +263,6 @@ where
 // todo: return an iterator.
 fn random_node_indexes(
     client: &Client,
-    include_unhealthy: bool,
     explicit_node_indexes: Option<&[usize]>,
 ) -> Option<Vec<usize>> {
     // cache the rng impl and "now" because `thread_rng` is TLS (a thread local),
@@ -292,22 +271,13 @@ fn random_node_indexes(
     let now = OffsetDateTime::now_utc();
 
     if let Some(indexes) = explicit_node_indexes {
-        let mut indexes = match include_unhealthy {
-            true => indexes.to_vec(),
-            false => {
-                let tmp: Vec<_> = indexes
-                    .iter()
-                    .copied()
-                    .filter(|index| client.network().is_node_healthy(*index, now))
-                    .collect();
+        let tmp: Vec<_> = indexes
+            .iter()
+            .copied()
+            .filter(|index| client.network().is_node_healthy(*index, now))
+            .collect();
 
-                if tmp.is_empty() {
-                    indexes.to_vec()
-                } else {
-                    tmp
-                }
-            }
-        };
+        let mut indexes = if tmp.is_empty() { indexes.to_vec() } else { tmp };
 
         if indexes.is_empty() {
             panic!("empty explicitly set nodes")
