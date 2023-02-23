@@ -205,14 +205,15 @@ impl Network {
         self.healthy[node_index].load(Ordering::Relaxed) < now
     }
 
-    pub(crate) fn healthy_node_indexes(&self) -> impl Iterator<Item = usize> + '_ {
-        let now = OffsetDateTime::now_utc();
-
-        (0..self.nodes.len()).filter(move |index| self.is_node_healthy(*index, now))
+    pub(crate) fn healthy_node_indexes(
+        &self,
+        time: OffsetDateTime,
+    ) -> impl Iterator<Item = usize> + '_ {
+        (0..self.nodes.len()).filter(move |index| self.is_node_healthy(*index, time))
     }
 
     pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {
-        self.healthy_node_indexes().map(|it| self.nodes[it])
+        self.healthy_node_indexes(OffsetDateTime::now_utc()).map(|it| self.nodes[it])
     }
 
     pub(crate) fn channel(&self, index: usize) -> (AccountId, Channel) {
