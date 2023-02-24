@@ -131,7 +131,8 @@ mod tests {
                   "hbars": 200000000,
                   "tokens": {},
                   "tokenDecimals": {}
-                }"#]].assert_eq(
+                }"#]]
+            .assert_eq(
                 &serde_json::to_string_pretty(&AccountBalance {
                     account_id: 3.into(),
                     hbars: Hbar::new(2),

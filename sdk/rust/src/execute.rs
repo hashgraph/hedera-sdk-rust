@@ -21,6 +21,7 @@
 use std::ops::ControlFlow;
 
 use backoff::ExponentialBackoff;
+use futures_core::future::BoxFuture;
 use futures_util::StreamExt;
 use prost::Message;
 use rand::seq::SliceRandom;
@@ -117,6 +118,10 @@ pub(crate) async fn execute<E>(
 where
     E: Execute + Sync,
 {
+    fn recurse_ping(client: &Client, node_index: usize) -> BoxFuture<'_, bool> {
+        Box::pin(async move { client.ping(client.network().node_ids()[node_index]).await.is_ok() })
+    }
+
     let timeout: Option<std::time::Duration> = timeout.into();
 
     let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
@@ -155,29 +160,52 @@ where
     let explicit_node_indexes = explicit_node_indexes.as_deref();
 
     let layer = move || async move {
-        let mut last_error: Option<Error> = None;
+        loop {
+            let mut last_error: Option<Error> = None;
 
-        let random_node_indexes = random_node_indexes(client, explicit_node_indexes)
-            .ok_or(retry::Error::EmptyTransient)?;
+            let random_node_indexes = random_node_indexes(client, explicit_node_indexes)
+                .ok_or(retry::Error::EmptyTransient)?;
 
-        for node_index in random_node_indexes {
-            match execute_single(
-                client,
-                executable,
-                node_index,
-                explicit_transaction_id.is_some(),
-                &mut transaction_id,
-            )
-            .await?
-            {
-                ControlFlow::Continue(err) => last_error = Some(err),
-                ControlFlow::Break(res) => return Ok(res),
+            let random_node_indexes = {
+                let random_node_indexes = &random_node_indexes;
+                let client = &*client;
+                let now = OffsetDateTime::now_utc();
+                futures_util::stream::iter(random_node_indexes.iter().copied()).filter(
+                    move |&node_index| async move {
+                        // NOTE: For pings we're relying on the fact that they have an explict node index.
+                        explicit_node_indexes.is_some()
+                            || client.network().node_recently_pinged(node_index, now)
+                            || recurse_ping(client, node_index).await
+                    },
+                )
+            };
+
+            futures_util::pin_mut!(random_node_indexes);
+
+            while let Some(node_index) = random_node_indexes.next().await {
+                let tmp = execute_single(
+                    client,
+                    executable,
+                    node_index,
+                    explicit_transaction_id.is_some(),
+                    &mut transaction_id,
+                )
+                .await;
+
+                client.network().mark_node_used(node_index, OffsetDateTime::now_utc());
+
+                match tmp? {
+                    ControlFlow::Continue(err) => last_error = Some(err),
+                    ControlFlow::Break(res) => return Ok(res),
+                }
+            }
+
+            match last_error {
+                Some(it) => return Err(retry::Error::Transient(it)),
+                // this can only happen if we skipped every node due to pinging it coming up `false` (unhealthy)... The node will be marked as unhealthy, soo
+                None => continue,
             }
         }
-
-        // unreachable panic:
-        // in order for `last_error` to be `None` that'd mean that
-        return Err(retry::Error::Transient(last_error.unwrap()));
     };
 
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
@@ -201,6 +229,13 @@ async fn execute_single<E: Execute>(
 
     let response =
         executable.execute(channel, request).await.map(|it| it.into_inner()).map_err(|status| {
+            const HACKY_MESSAGE: &str = concat!(
+                "protocol error: ",
+                "received message with invalid compression flag: ",
+                "60 (valid flags are 0 and 1) ",
+                "while receiving response with status: ",
+                "503 Service Unavailable"
+            );
             match status.code() {
                 tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
                     // NOTE: this is an "unhealthy" node
@@ -208,6 +243,14 @@ async fn execute_single<E: Execute>(
 
                     // try the next node in our allowed list, immediately
                     retry::Error::Transient(status.into())
+                }
+
+                // todo: find a way to make this less fragile
+                tonic::Code::Internal if status.message() == HACKY_MESSAGE => {
+                    // this node is completely borked, and we have no clue if the effect went through
+                    client.network().mark_node_unhealthy(node_index);
+
+                    retry::Error::Permanent(status.into())
                 }
 
                 _ => {
