@@ -7,7 +7,19 @@
 
 <sub>Maintained with ❤️ by <a href="https://launchbadge.com" target="_blank">LaunchBadge</a>, <a href="https://www.swirlds.com/" target="_blank">Swirlds Labs</a>, and the Hedera community</sub>
 
-## SDK IS NOT READY FOR PRODUCTION USE. IT IS CURRENTLY STILL UNDER DEVELOPEMENT. 
+## SDK IS NOT READY FOR PRODUCTION USE. IT IS CURRENTLY STILL UNDER DEVELOPEMENT.
+
+## Requirements
+
+- [Rust](https://rustup.rs)
+- [Swift](https://www.swift.org/getting-started/)
+- [Task](https://taskfile.dev)
+
+Execute command in root directory:
+```bash
+task build
+```
+
 
 ## Community and Support
 
