@@ -143,6 +143,7 @@ pub(crate) struct Network {
     addresses: Vec<Vec<Cow<'static, str>>>,
     channels: Vec<RwLock<Option<Channel>>>,
     healthy: Vec<AtomicI64>,
+    last_pinged: Vec<AtomicI64>,
 }
 
 impl Network {
@@ -164,6 +165,7 @@ impl Network {
         let mut addresses = Vec::with_capacity(network.len());
         let mut channels = Vec::with_capacity(network.len());
         let mut healthy = Vec::with_capacity(network.len());
+        let mut last_pinged = Vec::with_capacity(network.len());
 
         for (i, (num, address)) in network.iter().enumerate() {
             let node_account_id = AccountId::from(*num);
@@ -173,9 +175,10 @@ impl Network {
             addresses.push(address.iter().map(|address| Cow::Borrowed(*address)).collect());
             channels.push(RwLock::new(None));
             healthy.push(AtomicI64::new(0));
+            last_pinged.push(AtomicI64::new(0));
         }
 
-        Self { map, nodes, addresses, channels, healthy }
+        Self { map, nodes, addresses, channels, healthy, last_pinged }
     }
 
     pub(crate) fn node_ids(&self) -> &[AccountId] {
@@ -191,11 +194,14 @@ impl Network {
         Ok(indexes)
     }
 
+    pub(crate) fn mark_node_used(&self, node_index: usize, now: OffsetDateTime) {
+        self.last_pinged[node_index].store(now.unix_timestamp(), Ordering::Relaxed)
+    }
+
     pub(crate) fn mark_node_unhealthy(&self, node_index: usize) {
-        self.healthy[node_index].store(
-            (OffsetDateTime::now_utc() + time::Duration::minutes(30)).unix_timestamp(),
-            Ordering::Relaxed,
-        );
+        let now = OffsetDateTime::now_utc();
+        self.healthy[node_index]
+            .store((now + time::Duration::minutes(30)).unix_timestamp(), Ordering::Relaxed);
     }
 
     pub(crate) fn is_node_healthy(&self, node_index: usize, now: OffsetDateTime) -> bool {
@@ -205,14 +211,21 @@ impl Network {
         self.healthy[node_index].load(Ordering::Relaxed) < now
     }
 
-    pub(crate) fn healthy_node_indexes(&self) -> impl Iterator<Item = usize> + '_ {
-        let now = OffsetDateTime::now_utc();
+    pub(crate) fn node_recently_pinged(&self, node_index: usize, now: OffsetDateTime) -> bool {
+        !self.is_node_healthy(node_index, now)
+            || self.last_pinged[node_index].load(Ordering::Relaxed)
+                > (now - time::Duration::minutes(15)).unix_timestamp()
+    }
 
-        (0..self.nodes.len()).filter(move |index| self.is_node_healthy(*index, now))
+    pub(crate) fn healthy_node_indexes(
+        &self,
+        time: OffsetDateTime,
+    ) -> impl Iterator<Item = usize> + '_ {
+        (0..self.nodes.len()).filter(move |index| self.is_node_healthy(*index, time))
     }
 
     pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {
-        self.healthy_node_indexes().map(|it| self.nodes[it])
+        self.healthy_node_indexes(OffsetDateTime::now_utc()).map(|it| self.nodes[it])
     }
 
     pub(crate) fn channel(&self, index: usize) -> (AccountId, Channel) {

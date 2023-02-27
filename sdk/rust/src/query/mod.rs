@@ -42,7 +42,10 @@ pub use any::{
     AnyQuery,
     AnyQueryResponse,
 };
-pub(crate) use execute::QueryExecute;
+pub(crate) use execute::{
+    response_header,
+    QueryExecute,
+};
 pub(crate) use protobuf::ToQueryProtobuf;
 
 /// A query that can be executed on the Hedera network.
