@@ -22,6 +22,7 @@ use std::ptr;
 
 use libc::size_t;
 
+use super::util;
 use crate::{
     Client,
     LedgerId,
@@ -188,14 +189,7 @@ pub unsafe extern "C" fn hedera_client_get_ledger_id(
         }
     };
 
-    let mut ledger_id = ledger_id.to_bytes().into_boxed_slice();
-
-    let len = ledger_id.len();
-    let ptr = ledger_id.as_mut_ptr();
-
-    unsafe { ptr::write(ledger_id_bytes, ptr) };
-
-    len
+    unsafe { util::make_bytes(ledger_id.to_bytes(), ledger_id_bytes) }
 }
 
 #[no_mangle]
