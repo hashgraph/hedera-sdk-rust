@@ -36,6 +36,7 @@ let exampleTargets = [
     "GetFileContents",
     "TopicWithAdminKey",
     "TransferCrypto",
+    "TransferTokens",
     "ValidateChecksum",
 ].map { name in
     Target.executableTarget(

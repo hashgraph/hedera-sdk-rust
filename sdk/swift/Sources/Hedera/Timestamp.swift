@@ -12,9 +12,18 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
     public let seconds: UInt64
     public let subSecondNanos: UInt32
 
+    fileprivate init(seconds: UInt64, uncheckedSubSecondNanos: UInt32) {
+        self.seconds = seconds
+        self.subSecondNanos = uncheckedSubSecondNanos
+    }
+
     public init(fromUnixTimestampNanos nanos: UInt64) {
         self.seconds = nanos / nanosPerSecond
         self.subSecondNanos = UInt32(nanos % nanosPerSecond)
+    }
+
+    public static var now: Self {
+        Self(from: Date())
     }
 
     /// Convert from a ``Date`` to a `Timestamp`
@@ -65,5 +74,9 @@ public struct Timestamp: Codable, Equatable, CustomStringConvertible {
 
     public var description: String {
         String(describing: seconds) + String(format: "%09d", subSecondNanos)
+    }
+
+    public static func + (lhs: Timestamp, rhs: Duration) -> Self {
+        Self(seconds: lhs.seconds + rhs.seconds, uncheckedSubSecondNanos: lhs.subSecondNanos)
     }
 }
