@@ -35,7 +35,7 @@ let exampleTargets = [
     "GetAddressBook",
     "GetFileContents",
     "TransferCrypto",
-    // "ValidateChecksum",
+    "ValidateChecksum",
 ].map { name in
     Target.executableTarget(
         name: "\(name)Example",
