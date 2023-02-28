@@ -32,10 +32,9 @@ let exampleTargets = [
     "GenerateKeyWithMnemonic",
     "GetAccountBalance",
     "GetAccountInfo",
-    "TransferHbar",
     "GetAddressBook",
     "GetFileContents",
-    // "TransferCrypto",
+    "TransferCrypto",
     // "ValidateChecksum",
 ].map { name in
     Target.executableTarget(
