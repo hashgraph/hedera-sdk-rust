@@ -122,7 +122,7 @@ pub enum Error {
     BasicParse(#[source] BoxStdError),
 
     /// An entity ID had an invalid checksum
-    #[error("entity ID {shard}.{realm}.{num}-{present_checksum} was incorrect.")]
+    #[error("entity ID {shard}.{realm}.{num}-{present_checksum} was incorrect")]
     BadEntityId {
         /// The shard number
         shard: u64,
