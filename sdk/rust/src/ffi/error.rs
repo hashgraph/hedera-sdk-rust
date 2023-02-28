@@ -141,50 +141,97 @@ pub extern "C" fn hedera_error_message() -> *mut c_char {
     })
 }
 
-/// Returns the GRPC status code for the last error. Undefined if the last error was not
-/// `HEDERA_ERROR_GRPC_STATUS`.
 #[no_mangle]
-pub extern "C" fn hedera_error_grpc_status() -> i32 {
-    LAST_ERROR.with(|error| {
-        if let Some(crate::Error::GrpcStatus(status)) = &*error.borrow() {
-            return status.code() as i32;
-        }
-
-        // NOTE: -1 is an unlikely sentinel value for if this error wasn't a GrpcStatus
-        -1
+pub extern "C" fn hedera_last_error_details() -> ErrorDetails {
+    LAST_ERROR.with(|it| match it.take() {
+        Some(err) => ErrorDetails::from(err),
+        None => ErrorDetails::None,
     })
 }
 
-/// Returns the hedera services response code for the last error. Undefined if the last error
-/// was not `HEDERA_ERROR_PRE_CHECK_STATUS`.
-#[no_mangle]
-pub extern "C" fn hedera_error_pre_check_status() -> i32 {
-    LAST_ERROR.with(|error| {
-        if let Some(error) = &*error.borrow() {
-            if let crate::Error::TransactionPreCheckStatus { status, .. }
-            | crate::Error::TransactionNoIdPreCheckStatus { status }
-            | crate::Error::QueryPreCheckStatus { status, .. }
-            | crate::Error::QueryPaymentPreCheckStatus { status, .. }
-            | crate::Error::QueryNoPaymentPreCheckStatus { status } = error
-            {
-                return *status as i32;
+// todo:
+// #[repr(C)]
+// struct ErasedError(Box<dyn std::error::Error>);
+
+#[repr(C)]
+pub enum ErrorDetails {
+    None,
+    ErrorGrpcStatus(i32),
+    ErrorStatusTransactionId {
+        status: i32,
+        transaction_id: super::transaction_id::TransactionId,
+    },
+    ErrorStatusNoTransactionId {
+        status: i32,
+    },
+    ErrorMaxQueryPaymentExceeded {
+        max_query_payment: i64,
+        query_cost: i64,
+    },
+    ErrorBadEntityId {
+        shard: u64,
+        realm: u64,
+        num: u64,
+        present_checksum: [u8; 5],
+        expected_checksum: [u8; 5],
+    },
+}
+
+// todo: Return `ErasedError`
+impl From<crate::Error> for ErrorDetails {
+    fn from(value: crate::Error) -> Self {
+        use crate::Error;
+        match value {
+            Error::GrpcStatus(status) => return ErrorDetails::ErrorGrpcStatus(status.code() as i32),
+            Error::TransactionPreCheckStatus { status, transaction_id } => {
+                Self::ErrorStatusTransactionId {
+                    status: status as i32,
+                    transaction_id: transaction_id.into(),
+                }
             }
+            Error::TransactionNoIdPreCheckStatus { status } => {
+                Self::ErrorStatusNoTransactionId { status: status as i32 }
+            }
+            Error::QueryPreCheckStatus { status, transaction_id } => {
+                Self::ErrorStatusTransactionId {
+                    status: status as i32,
+                    transaction_id: transaction_id.into(),
+                }
+            }
+            Error::QueryPaymentPreCheckStatus { status, transaction_id } => {
+                Self::ErrorStatusTransactionId {
+                    status: status as i32,
+                    transaction_id: transaction_id.into(),
+                }
+            }
+            Error::QueryNoPaymentPreCheckStatus { status } => {
+                Self::ErrorStatusNoTransactionId { status: status as i32 }
+            }
+            Error::MaxQueryPaymentExceeded { max_query_payment, query_cost } => {
+                Self::ErrorMaxQueryPaymentExceeded {
+                    max_query_payment: max_query_payment.to_tinybars(),
+                    query_cost: query_cost.to_tinybars(),
+                }
+            }
+            Error::BadEntityId { shard, realm, num, present_checksum, expected_checksum } => {
+                Self::ErrorBadEntityId {
+                    shard,
+                    realm,
+                    num,
+                    present_checksum: present_checksum.to_bytes(),
+                    expected_checksum: expected_checksum.to_bytes(),
+                }
+            }
+            Error::ReceiptStatus { status, transaction_id: Some(transaction_id) } => {
+                Self::ErrorStatusTransactionId {
+                    status: status as i32,
+                    transaction_id: transaction_id.into(),
+                }
+            }
+            Error::ReceiptStatus { status, transaction_id: None } => {
+                Self::ErrorStatusNoTransactionId { status: status as i32 }
+            }
+            _ => ErrorDetails::None,
         }
-
-        // NOTE: -1 is an unlikely sentinel value for if this error wasn't a PreCheckStatus
-        -1
-    })
-}
-
-// the stutter is intentional, it's the `ReceiptStatus`' `Status`.
-#[no_mangle]
-pub extern "C" fn hedera_error_receipt_status_status() -> i32 {
-    LAST_ERROR.with(|error| {
-        if let Some(crate::Error::ReceiptStatus { status, .. }) = &*error.borrow() {
-            return *status as i32;
-        }
-
-        // NOTE: -1 is an unlikely sentinel value for if this error wasn't a ReceiptStatus
-        -1
-    })
+    }
 }

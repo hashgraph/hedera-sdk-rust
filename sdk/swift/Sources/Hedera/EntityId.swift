@@ -164,8 +164,9 @@ internal struct EntityIdHelper<E: EntityId> {
         if let checksum = id.checksum {
             let expected = id.generateChecksum(for: ledgerId)
             if checksum != expected {
-                throw HError(
-                    kind: .badEntityId, description: "expected entity id `\(id)` to have checksum `\(expected)`")
+                throw HError.badEntityId(
+                    shard: id.shard, realm: id.realm, num: id.num, presentChecksum: checksum, expectedChecksum: expected
+                )
             }
         }
     }
