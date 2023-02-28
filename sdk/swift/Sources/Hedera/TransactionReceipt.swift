@@ -24,10 +24,8 @@ import Foundation
 // TODO: exchangeRate
 /// The summary of a transaction's result so far, if the transaction has reached consensus.
 public struct TransactionReceipt: Codable {
-    // fixme(sr): better doc comment.
-    // todo: once `TransactionId`s exist in swift on main, use on of those.
     /// The ID of the transaction that this is a receipt for.
-    public let transactionId: String?
+    public let transactionId: TransactionId?
 
     /// The consensus status of the transaction; is UNKNOWN if consensus has not been reached, or if
     /// the associated transaction did not have a valid payer signature.
@@ -89,7 +87,11 @@ public struct TransactionReceipt: Codable {
     @discardableResult
     public func validateStatus(_ doValidate: Bool) throws -> Self {
         if doValidate && status != Status.ok {
-            throw HError(kind: .receiptStatus(status: status), description: "")
+            throw HError(
+                kind: .receiptStatus(status: status, transactionId: transactionId),
+                description:
+                    "receipt for transaction `\(String(describing: transactionId))` failed with status `\(status)`"
+            )
         }
 
         return self

@@ -22,7 +22,7 @@ import CHedera
 import Foundation
 
 /// Response from `TopicInfoQuery`.
-public final class TopicInfo: Codable {
+public struct TopicInfo: Codable {
     /// The ID of the topic for which information is requested.
     public let topicId: TopicId
 

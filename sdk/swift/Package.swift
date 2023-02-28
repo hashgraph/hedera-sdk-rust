@@ -27,13 +27,17 @@ let exampleTargets = [
     "CreateFile",
     "CreateTopic",
     "DeleteAccount",
+    "DeleteFile",
     "GenerateKey",
     "GenerateKeyWithMnemonic",
     "GetAccountBalance",
     "GetAccountInfo",
-    "TransferHbar",
     "GetAddressBook",
     "GetFileContents",
+    "TopicWithAdminKey",
+    "TransferCrypto",
+    "TransferTokens",
+    "ValidateChecksum",
 ].map { name in
     Target.executableTarget(
         name: "\(name)Example",

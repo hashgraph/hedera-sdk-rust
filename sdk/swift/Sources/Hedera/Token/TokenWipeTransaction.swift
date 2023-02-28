@@ -36,6 +36,7 @@ public final class TokenWipeTransaction: Transaction {
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
+        accountId = try container.decodeIfPresent(.accountId)
         tokenId = try container.decodeIfPresent(.tokenId)
         amount = try container.decodeIfPresent(.amount) ?? 0
         serials = try container.decodeIfPresent(.serials) ?? []
@@ -112,6 +113,7 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     private enum CodingKeys: String, CodingKey {
+        case accountId
         case tokenId
         case amount
         case serials
@@ -120,6 +122,7 @@ public final class TokenWipeTransaction: Transaction {
     public override func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
 
+        try container.encode(accountId, forKey: .accountId)
         try container.encode(tokenId, forKey: .tokenId)
         try container.encode(amount, forKey: .amount)
         try container.encode(serials, forKey: .serials)

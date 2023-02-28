@@ -285,6 +285,81 @@ impl QueryExecute for AnyQueryData {
             Self::NetworkVersionInfo(query) => query.should_retry(response),
         }
     }
+
+    fn transaction_id(&self) -> Option<crate::TransactionId> {
+        match self {
+            Self::AccountBalance(query) => query.transaction_id(),
+            Self::AccountInfo(query) => query.transaction_id(),
+            Self::AccountStakers(query) => query.transaction_id(),
+            Self::AccountRecords(query) => query.transaction_id(),
+            Self::TransactionReceipt(query) => query.transaction_id(),
+            Self::TransactionRecord(query) => query.transaction_id(),
+            Self::FileContents(query) => query.transaction_id(),
+            Self::FileInfo(query) => query.transaction_id(),
+            Self::ContractBytecode(query) => query.transaction_id(),
+            Self::ContractCall(query) => query.transaction_id(),
+            Self::TokenInfo(query) => query.transaction_id(),
+            Self::ContractInfo(query) => query.transaction_id(),
+            Self::TokenNftInfo(query) => query.transaction_id(),
+            Self::TopicInfo(query) => query.transaction_id(),
+            Self::ScheduleInfo(query) => query.transaction_id(),
+            Self::NetworkVersionInfo(query) => query.transaction_id(),
+        }
+    }
+
+    fn make_response(
+        &self,
+        response: services::response::Response,
+    ) -> crate::Result<Self::Response> {
+        match self {
+            Self::AccountBalance(query) => {
+                query.make_response(response).map(AnyQueryResponse::AccountBalance)
+            }
+            Self::AccountInfo(query) => {
+                query.make_response(response).map(AnyQueryResponse::AccountInfo)
+            }
+            Self::AccountStakers(query) => {
+                query.make_response(response).map(AnyQueryResponse::AccountStakers)
+            }
+            Self::AccountRecords(query) => {
+                query.make_response(response).map(AnyQueryResponse::AccountRecords)
+            }
+            Self::TransactionReceipt(query) => {
+                query.make_response(response).map(AnyQueryResponse::TransactionReceipt)
+            }
+            Self::TransactionRecord(query) => {
+                query.make_response(response).map(Box::new).map(AnyQueryResponse::TransactionRecord)
+            }
+            Self::FileContents(query) => {
+                query.make_response(response).map(AnyQueryResponse::FileContents)
+            }
+            Self::FileInfo(query) => query.make_response(response).map(AnyQueryResponse::FileInfo),
+            Self::ContractBytecode(query) => {
+                query.make_response(response).map(AnyQueryResponse::ContractBytecode)
+            }
+            Self::ContractCall(query) => {
+                query.make_response(response).map(AnyQueryResponse::ContractCall)
+            }
+            Self::TokenInfo(query) => {
+                query.make_response(response).map(Box::new).map(AnyQueryResponse::TokenInfo)
+            }
+            Self::ContractInfo(query) => {
+                query.make_response(response).map(AnyQueryResponse::ContractInfo)
+            }
+            Self::TokenNftInfo(query) => {
+                query.make_response(response).map(AnyQueryResponse::TokenNftInfo)
+            }
+            Self::TopicInfo(query) => {
+                query.make_response(response).map(AnyQueryResponse::TopicInfo)
+            }
+            Self::ScheduleInfo(query) => {
+                query.make_response(response).map(AnyQueryResponse::ScheduleInfo)
+            }
+            Self::NetworkVersionInfo(query) => {
+                query.make_response(response).map(AnyQueryResponse::NetworkVersionInfo)
+            }
+        }
+    }
 }
 
 impl ValidateChecksums for AnyQueryData {
