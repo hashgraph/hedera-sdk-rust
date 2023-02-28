@@ -236,7 +236,7 @@ impl ContractCreateTransaction {
     /// Returns the ID of the account to which this contract is staking.
     #[must_use]
     pub fn get_staked_account_id(&self) -> Option<AccountId> {
-        self.data().staked_id.and_then(|it| it.to_account_id())
+        self.data().staked_id.and_then(StakedId::to_account_id)
     }
 
     /// Sets the ID of the account to which this contract is staking.
@@ -250,7 +250,7 @@ impl ContractCreateTransaction {
     /// Returns the ID of the node to which this contract is staking.
     #[must_use]
     pub fn get_staked_node_id(&self) -> Option<u64> {
-        self.data().staked_id.and_then(|it| it.to_node_id())
+        self.data().staked_id.and_then(StakedId::to_node_id)
     }
 
     /// Sets the ID of the node to which this contract is staking.

@@ -174,8 +174,8 @@ public struct ContractFunctionResult {
 
         var array: [String] = []
 
-        for i in 0..<count {
-            guard let strOffset = getUIntAt(offset: offset + slotSize + (i * slotSize)) else { return nil }
+        for index in 0..<count {
+            guard let strOffset = getUIntAt(offset: offset + slotSize + (index * slotSize)) else { return nil }
             guard let len = getUIntAt(offset: offset + strOffset + slotSize) else { return nil }
             let range = Int(offset + strOffset + slotSize * 2)..<Int(offset + strOffset + slotSize * 2 + len)
 

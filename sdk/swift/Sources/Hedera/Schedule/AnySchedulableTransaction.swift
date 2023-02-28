@@ -37,10 +37,12 @@ internal enum AnySchedulableTransaction {
     case freeze(FreezeTransaction)
     case scheduleDelete(ScheduleDeleteTransaction)
 
-    init(upcasting transaction: Transaction) {
+    internal init(upcasting transaction: Transaction) {
         self.init(AnyTransaction(upcasting: transaction))
     }
 
+    // There's unfortunately very little that can be done about this.
+    // swiftlint:disable:next cyclomatic_complexity function_body_length
     fileprivate init(_ anyTransaction: AnyTransaction) {
         switch anyTransaction {
         case .accountCreate(let transaction):
@@ -249,11 +251,11 @@ extension AnySchedulableTransaction {
 }
 
 extension AnySchedulableTransaction: Codable {
-    init(from decoder: Decoder) throws {
+    internal init(from decoder: Decoder) throws {
         self.init(try AnyTransaction(from: decoder))
     }
 
-    func encode(to encoder: Encoder) throws {
+    internal func encode(to encoder: Encoder) throws {
         try transaction.encode(to: encoder)
     }
 }

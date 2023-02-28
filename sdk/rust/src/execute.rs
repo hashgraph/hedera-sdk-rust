@@ -122,8 +122,6 @@ where
         Box::pin(async move { client.ping(client.network().node_ids()[node_index]).await.is_ok() })
     }
 
-    let timeout: Option<std::time::Duration> = timeout.into();
-
     let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
         std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
     });
@@ -168,7 +166,7 @@ where
 
             let random_node_indexes = {
                 let random_node_indexes = &random_node_indexes;
-                let client = &*client;
+                let client = client;
                 let now = OffsetDateTime::now_utc();
                 futures_util::stream::iter(random_node_indexes.iter().copied()).filter(
                     move |&node_index| async move {
@@ -214,7 +212,7 @@ where
     crate::retry(backoff, layer).await
 }
 
-async fn execute_single<E: Execute>(
+async fn execute_single<E: Execute + Sync>(
     client: &Client,
     executable: &E,
     node_index: usize,
@@ -224,41 +222,43 @@ async fn execute_single<E: Execute>(
     let (node_account_id, channel) = client.network().channel(node_index);
 
     let (request, context) = executable
-        .make_request(&transaction_id, node_account_id)
+        .make_request(transaction_id, node_account_id)
         .map_err(crate::retry::Error::Permanent)?;
 
     let response =
-        executable.execute(channel, request).await.map(|it| it.into_inner()).map_err(|status| {
-            const HACKY_MESSAGE: &str = concat!(
-                "protocol error: ",
-                "received message with invalid compression flag: ",
-                "60 (valid flags are 0 and 1) ",
-                "while receiving response with status: ",
-                "503 Service Unavailable"
-            );
-            match status.code() {
-                tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                    // NOTE: this is an "unhealthy" node
-                    client.network().mark_node_unhealthy(node_index);
+        executable.execute(channel, request).await.map(tonic::Response::into_inner).map_err(
+            |status| {
+                const HACKY_MESSAGE: &str = concat!(
+                    "protocol error: ",
+                    "received message with invalid compression flag: ",
+                    "60 (valid flags are 0 and 1) ",
+                    "while receiving response with status: ",
+                    "503 Service Unavailable"
+                );
+                match status.code() {
+                    tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
+                        // NOTE: this is an "unhealthy" node
+                        client.network().mark_node_unhealthy(node_index);
 
-                    // try the next node in our allowed list, immediately
-                    retry::Error::Transient(status.into())
+                        // try the next node in our allowed list, immediately
+                        retry::Error::Transient(status.into())
+                    }
+
+                    // todo: find a way to make this less fragile
+                    tonic::Code::Internal if status.message() == HACKY_MESSAGE => {
+                        // this node is completely borked, and we have no clue if the effect went through
+                        client.network().mark_node_unhealthy(node_index);
+
+                        retry::Error::Permanent(status.into())
+                    }
+
+                    _ => {
+                        // fail immediately
+                        retry::Error::Permanent(status.into())
+                    }
                 }
-
-                // todo: find a way to make this less fragile
-                tonic::Code::Internal if status.message() == HACKY_MESSAGE => {
-                    // this node is completely borked, and we have no clue if the effect went through
-                    client.network().mark_node_unhealthy(node_index);
-
-                    retry::Error::Permanent(status.into())
-                }
-
-                _ => {
-                    // fail immediately
-                    retry::Error::Permanent(status.into())
-                }
-            }
-        });
+            },
+        );
 
     let response = match response {
         Ok(response) => response,
@@ -279,24 +279,18 @@ async fn execute_single<E: Execute>(
 
     match status {
         Status::Ok if executable.should_retry(&response) => {
-            return Err(retry::Error::Transient(
-                executable.make_error_pre_check(status, *transaction_id),
-            ))
+            Err(retry::Error::Transient(executable.make_error_pre_check(status, *transaction_id)))
         }
 
-        Status::Ok => {
-            return executable
-                .make_response(response, context, node_account_id, *transaction_id)
-                .map(ControlFlow::Break)
-                .map_err(retry::Error::Permanent);
-        }
+        Status::Ok => executable
+            .make_response(response, context, node_account_id, *transaction_id)
+            .map(ControlFlow::Break)
+            .map_err(retry::Error::Permanent),
 
         Status::Busy | Status::PlatformNotActive => {
             // NOTE: this is a "busy" node
             // try the next node in our allowed list, immediately
-            return Ok(ControlFlow::Continue(
-                executable.make_error_pre_check(status, *transaction_id),
-            ));
+            Ok(ControlFlow::Continue(executable.make_error_pre_check(status, *transaction_id)))
         }
 
         Status::TransactionExpired if !has_explicit_transaction_id => {
@@ -304,25 +298,19 @@ async fn execute_single<E: Execute>(
             // re-generate the transaction ID and try again, immediately
             let _ = transaction_id.insert(client.generate_transaction_id().unwrap());
 
-            return Ok(ControlFlow::Continue(
-                executable.make_error_pre_check(status, *transaction_id),
-            ));
+            Ok(ControlFlow::Continue(executable.make_error_pre_check(status, *transaction_id)))
         }
 
         _ if executable.should_retry_pre_check(status) => {
             // conditional retry on pre-check should back-off and try again
-            return Err(retry::Error::Transient(
-                executable.make_error_pre_check(status, *transaction_id),
-            ));
+            Err(retry::Error::Transient(executable.make_error_pre_check(status, *transaction_id)))
         }
 
         _ => {
             // any other pre-check is an error that the user needs to fix, fail immediately
-            return Err(retry::Error::Permanent(
-                executable.make_error_pre_check(status, *transaction_id),
-            ));
+            Err(retry::Error::Permanent(executable.make_error_pre_check(status, *transaction_id)))
         }
-    };
+    }
 }
 
 // todo: return an iterator.
@@ -344,9 +332,7 @@ fn random_node_indexes(
 
         let mut indexes = if tmp.is_empty() { indexes.to_vec() } else { tmp };
 
-        if indexes.is_empty() {
-            panic!("empty explicitly set nodes")
-        }
+        assert!(!indexes.is_empty(), "empty explicitly set nodes");
 
         indexes.shuffle(&mut rng);
 
@@ -365,6 +351,6 @@ fn random_node_indexes(
 
         let (shuffled, _) = indexes.partial_shuffle(&mut rng, amount);
 
-        return Some(shuffled.to_vec());
+        Some(shuffled.to_vec())
     }
 }

@@ -195,7 +195,7 @@ impl Network {
     }
 
     pub(crate) fn mark_node_used(&self, node_index: usize, now: OffsetDateTime) {
-        self.last_pinged[node_index].store(now.unix_timestamp(), Ordering::Relaxed)
+        self.last_pinged[node_index].store(now.unix_timestamp(), Ordering::Relaxed);
     }
 
     pub(crate) fn mark_node_unhealthy(&self, node_index: usize) {

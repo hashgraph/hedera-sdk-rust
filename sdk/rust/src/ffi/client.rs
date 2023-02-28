@@ -86,7 +86,7 @@ pub unsafe extern "C" fn hedera_client_get_operator(
         Some(it) => {
             unsafe {
                 key_out.write(Box::leak(Box::new(it.signer)) as *mut PrivateKey);
-                id_out.write(it.account_id.into())
+                id_out.write(it.account_id.into());
             }
 
             true
@@ -199,7 +199,7 @@ pub unsafe extern "C" fn hedera_client_set_auto_validate_checksums(
 ) {
     let client = unsafe { client.as_ref() }.unwrap();
 
-    client.set_auto_validate_checksums(auto_validate_checksums)
+    client.set_auto_validate_checksums(auto_validate_checksums);
 }
 
 #[no_mangle]

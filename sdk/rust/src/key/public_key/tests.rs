@@ -167,7 +167,8 @@ fn ed25519_verify_error_ecdsa() {
 
     let err = assert_matches!(pk.verify(b"hello, world", &signature), Err(e) => e);
 
-    expect!["failed to verify a signature: signature error"].assert_eq(&err.to_string());
+    expect!["failed to verify a signature: signature error: Cannot use scalar with high-bit set"]
+        .assert_eq(&err.to_string());
 }
 
 #[test]

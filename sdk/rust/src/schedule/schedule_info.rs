@@ -111,7 +111,7 @@ impl ScheduleInfo {
     ///
     /// This is *not* guaranteed to be a constant time operation.
     pub fn scheduled_transaction(&self) -> crate::Result<AnyTransaction> {
-        // note: this can't error *right now* but the API *will* be faliable eventually, and as s
+        // note: this can't error *right now* but the API *will* be faliable eventually, and as such, returns a result to make the change non-breaking.
         Ok(Transaction::from_parts(
             TransactionBody {
                 data: (*self.scheduled_transaction.data).clone().into(),

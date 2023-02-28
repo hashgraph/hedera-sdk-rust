@@ -178,7 +178,8 @@ impl QueryExecute for TransactionReceiptQueryData {
     }
 
     fn make_response(&self, response: Response) -> crate::Result<Self::Response> {
-        let receipt = TransactionReceipt::from_response_protobuf(response, self.transaction_id)?;
+        let receipt =
+            TransactionReceipt::from_response_protobuf(response, self.transaction_id.as_ref())?;
 
         if self.validate_status && receipt.status != Status::Success {
             return Err(Error::ReceiptStatus {

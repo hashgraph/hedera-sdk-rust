@@ -41,7 +41,8 @@
     clippy::enum_variant_names,
     clippy::inline_always,
     clippy::match_bool,
-    clippy::module_name_repetitions
+    clippy::module_name_repetitions,
+    clippy::too_many_lines
 )]
 
 #[macro_use]

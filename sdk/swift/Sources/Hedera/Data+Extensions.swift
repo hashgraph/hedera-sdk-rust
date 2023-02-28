@@ -74,11 +74,7 @@ extension Data {
         for idx in stride(from: 0, to: hexEncoded.count, by: 2) {
             // swiftlint complains about the length of these if they're less than 4 characters
             // that'd be fine and all, but `low` is still only 3 characters.
-            guard let highNibble = hexVal(UInt8(chars[idx])) else {
-                return nil
-            }
-
-            guard let lowNibble = hexVal(UInt8(chars[idx + 1])) else {
+            guard let highNibble = hexVal(UInt8(chars[idx])), let lowNibble = hexVal(UInt8(chars[idx + 1])) else {
                 return nil
             }
 
