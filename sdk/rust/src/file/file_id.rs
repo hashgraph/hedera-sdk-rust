@@ -59,6 +59,19 @@ pub struct FileId {
 }
 
 impl FileId {
+    /// Address of the public [node address book](crate::NodeAddressBook) for the current network.
+    pub const ADDRESS_BOOK: Self = Self::from_num(102);
+
+    /// Address of the current fee schedule for the network.
+    pub const FEE_SCHEDULE: Self = Self::from_num(111);
+
+    /// Address of the [current exchange rate](crate::ExchangeRates) of HBAR to USD.
+    pub const EXCHANGE_RATES: Self = Self::from_num(112);
+
+    const fn from_num(num: u64) -> Self {
+        Self { shard: 0, realm: 0, num, checksum: None }
+    }
+
     /// Create a new `FileId` from protobuf-encoded `bytes`.
     ///
     /// # Errors
