@@ -31,21 +31,26 @@ public enum Program {
         // by this account and be signed by this key
         client.setOperator(env.operatorAccountId, env.operatorKey)
 
-        let createResponse = try await TopicCreateTransaction().execute(client)
-        let createReceipt = try await createResponse.getReceipt(client)
+        // The file is required to be a byte array,
+        // you can easily use the bytes of a file instead.
+        let fileContents = "Hedera hashgraph is great!"
 
-        print("topic id = \(createReceipt.topicId!)")
+        let receipt = try await FileCreateTransaction()
+            .keys([.single(env.operatorKey.getPublicKey())])
+            .contents(fileContents.data(using: .utf8)!)
+            .maxTransactionFee(2)
+            .execute(client).getReceipt(client)
 
-        let sendResponse = try await TopicMessageSubmitTransaction()
-            .topicId(createReceipt.topicId!)
-            .message("hello world".data(using: .utf8)!)
-            .execute(client)
+        let newFileId = receipt.fileId!
 
-        let sendReceipt = try await sendResponse.getReceipt(client)
+        print("file: \(newFileId)")
 
-        print("sequence number = \(sendReceipt.topicSequenceNumber)")
+        _ = try await FileDeleteTransaction().fileId(newFileId).execute(client).getReceipt(client)
+
+        print("File deleted successfully")
     }
 }
+
 extension Environment {
     public var operatorAccountId: AccountId {
         AccountId(self["OPERATOR_ACCOUNT_ID"]!.stringValue)!

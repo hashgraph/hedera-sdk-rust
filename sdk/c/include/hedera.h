@@ -86,6 +86,62 @@ typedef struct HederaAccountId {
   uint8_t *evm_address;
 } HederaAccountId;
 
+typedef struct HederaTimestamp {
+  uint64_t secs;
+  uint32_t nanos;
+} HederaTimestamp;
+
+typedef struct HederaTransactionId {
+  struct HederaAccountId account_id;
+  struct HederaTimestamp valid_start;
+  int32_t nonce;
+  bool scheduled;
+} HederaTransactionId;
+
+typedef enum HederaErrorDetails_Tag {
+  HEDERA_ERROR_DETAILS_NONE,
+  HEDERA_ERROR_DETAILS_ERROR_GRPC_STATUS,
+  HEDERA_ERROR_DETAILS_ERROR_STATUS_TRANSACTION_ID,
+  HEDERA_ERROR_DETAILS_ERROR_STATUS_NO_TRANSACTION_ID,
+  HEDERA_ERROR_DETAILS_ERROR_MAX_QUERY_PAYMENT_EXCEEDED,
+  HEDERA_ERROR_DETAILS_ERROR_BAD_ENTITY_ID,
+} HederaErrorDetails_Tag;
+
+typedef struct HederaErrorStatusTransactionId_Body {
+  int32_t status;
+  struct HederaTransactionId transaction_id;
+} HederaErrorStatusTransactionId_Body;
+
+typedef struct HederaErrorStatusNoTransactionId_Body {
+  int32_t status;
+} HederaErrorStatusNoTransactionId_Body;
+
+typedef struct HederaErrorMaxQueryPaymentExceeded_Body {
+  int64_t max_query_payment;
+  int64_t query_cost;
+} HederaErrorMaxQueryPaymentExceeded_Body;
+
+typedef struct HederaErrorBadEntityId_Body {
+  uint64_t shard;
+  uint64_t realm;
+  uint64_t num;
+  uint8_t present_checksum[5];
+  uint8_t expected_checksum[5];
+} HederaErrorBadEntityId_Body;
+
+typedef struct HederaErrorDetails {
+  HederaErrorDetails_Tag tag;
+  union {
+    struct {
+      int32_t error_grpc_status;
+    };
+    HederaErrorStatusTransactionId_Body ERROR_STATUS_TRANSACTION_ID;
+    HederaErrorStatusNoTransactionId_Body ERROR_STATUS_NO_TRANSACTION_ID;
+    HederaErrorMaxQueryPaymentExceeded_Body ERROR_MAX_QUERY_PAYMENT_EXCEEDED;
+    HederaErrorBadEntityId_Body ERROR_BAD_ENTITY_ID;
+  };
+} HederaErrorDetails;
+
 typedef struct HederaTokenBalance {
   uint64_t id_shard;
   uint64_t id_realm;
@@ -222,18 +278,6 @@ typedef struct HederaNetworkVersionInfo {
   struct HederaSemanticVersion services_version;
 } HederaNetworkVersionInfo;
 
-typedef struct HederaTimestamp {
-  uint64_t secs;
-  uint32_t nanos;
-} HederaTimestamp;
-
-typedef struct HederaTransactionId {
-  struct HederaAccountId account_id;
-  struct HederaTimestamp valid_start;
-  int32_t nonce;
-  bool scheduled;
-} HederaTransactionId;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -250,19 +294,7 @@ extern "C" {
  */
 char *hedera_error_message(void);
 
-/**
- * Returns the GRPC status code for the last error. Undefined if the last error was not
- * `HEDERA_ERROR_GRPC_STATUS`.
- */
-int32_t hedera_error_grpc_status(void);
-
-/**
- * Returns the hedera services response code for the last error. Undefined if the last error
- * was not `HEDERA_ERROR_PRE_CHECK_STATUS`.
- */
-int32_t hedera_error_pre_check_status(void);
-
-int32_t hedera_error_receipt_status_status(void);
+struct HederaErrorDetails hedera_last_error_details(void);
 
 /**
  * Parse a Hedera `AccountBalance` from the passed bytes.
