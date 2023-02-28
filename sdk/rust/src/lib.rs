@@ -55,6 +55,7 @@ mod entity_id;
 mod error;
 mod ethereum_transaction;
 mod evm_address;
+mod exchange_rates;
 mod execute;
 mod fee_schedules;
 mod file;
@@ -134,6 +135,10 @@ pub use error::{
 };
 pub use ethereum_transaction::EthereumTransaction;
 pub use evm_address::EvmAddress;
+pub use exchange_rates::{
+    ExchangeRate,
+    ExchangeRates,
+};
 pub use fee_schedules::{
     FeeComponents,
     FeeData,
