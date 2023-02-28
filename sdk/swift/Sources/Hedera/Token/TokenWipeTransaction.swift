@@ -35,7 +35,7 @@ public final class TokenWipeTransaction: Transaction {
 
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        
+
         accountId = try container.decodeIfPresent(.accountId)
         tokenId = try container.decodeIfPresent(.tokenId)
         amount = try container.decodeIfPresent(.amount) ?? 0
