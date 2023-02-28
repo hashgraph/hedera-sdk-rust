@@ -53,10 +53,10 @@ fn ecdsa_sign() {
 
     // notice that this doesn't match other impls
     // this is to avoid signature malleability.
-    // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0032.mediawiki
+    // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0062.mediawiki
     let signature = private_key.sign(b"hello world");
     expect![[r#"
-        "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
+        "7ddeeb7664f84c7f65610262a0763e1028fc8851522ba6fa0b3f28be6fe99af37fe1a3120a756d54525d1f3bb0b46feb3613c398ba6eab718fc6f0e454d2a794"
     "#]]
     .assert_debug_eq(&hex::encode(signature));
 }

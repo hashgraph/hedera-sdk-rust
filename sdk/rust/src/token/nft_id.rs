@@ -66,8 +66,11 @@ impl NftId {
     }
 
     /// Convert `self` to a string with a valid checksum.
-    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
-        Ok(format!("{}/{}", self.token_id.to_string_with_checksum(client).await?, self.serial))
+    ///
+    /// # Errors
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
+    pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+        Ok(format!("{}/{}", self.token_id.to_string_with_checksum(client)?, self.serial))
     }
 }
 

@@ -35,6 +35,7 @@ use crate::client::network::Network;
 use crate::ping_query::PingQuery;
 use crate::{
     AccountId,
+    Error,
     LedgerId,
     PrivateKey,
     TransactionId,
@@ -96,24 +97,29 @@ impl Client {
     }
 
     /// Construct a hedera client pre-configured for access to the given network.
+    ///
+    /// Currently supported network names are `"mainnet"`, `"testnet"`, and `"previewnet"`.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if the network name is not a supported network name.
     pub fn for_name(name: &str) -> crate::Result<Self> {
         match name {
             "mainnet" => Ok(Self::for_mainnet()),
             "testnet" => Ok(Self::for_testnet()),
             "previewnet" => Ok(Self::for_previewnet()),
-            _ => Err(crate::Error::basic_parse(format!("Unknown network name {name}"))),
+            _ => Err(Error::basic_parse(format!("Unknown network name {name}"))),
         }
     }
 
     // optimized function to avoid allocations/pointer chasing.
-    // this shouldn't be exposed because it exposes repr.o
+    // this shouldn't be exposed because it exposes repr.
     pub(crate) fn ledger_id_internal(&self) -> arc_swap::Guard<Option<Arc<LedgerId>>> {
         self.0.ledger_id.load()
     }
 
     /// Sets the ledger ID for the Client's network.
     pub fn set_ledger_id(&self, ledger_id: Option<LedgerId>) {
-        self.0.ledger_id.store(ledger_id.map(Arc::new))
+        self.0.ledger_id.store(ledger_id.map(Arc::new));
     }
 
     pub(crate) fn random_node_ids(&self) -> Vec<AccountId> {

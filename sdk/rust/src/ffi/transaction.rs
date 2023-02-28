@@ -109,7 +109,7 @@ pub unsafe extern "C" fn hedera_transaction_from_bytes(
 
     unsafe {
         ptr::write(sources_out, sources);
-        ptr::write(transaction_out, out)
+        ptr::write(transaction_out, out);
     }
 
     Error::Ok
@@ -338,11 +338,7 @@ pub unsafe extern "C" fn hedera_transaction_sources_sign_single(
 ) -> *const TransactionSources {
     let sources = unsafe { triomphe::ArcBorrow::from_ref(sources.as_ref().unwrap()) };
 
-    let signer = AnySigner::C({
-        let tmp = signer.to_csigner();
-        drop(signer);
-        tmp
-    });
+    let signer = AnySigner::C(signer.to_csigner());
 
     let value = sources.sign_with(slice::from_ref(&signer));
 
@@ -364,5 +360,5 @@ pub unsafe extern "C" fn hedera_transaction_sources_free(
 ) {
     assert!(!sources.is_null());
 
-    drop(unsafe { triomphe::Arc::from_raw(sources) })
+    drop(unsafe { triomphe::Arc::from_raw(sources) });
 }

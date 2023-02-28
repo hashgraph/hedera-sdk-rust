@@ -67,11 +67,15 @@ impl Debug for Checksum {
 }
 
 pub trait ValidateChecksums {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error>;
+    /// Validates all entity-id checksums for `self` with the given ledger-id.
+    ///
+    /// # Errors
+    /// - [`Error::BadEntityId`] if any of the expected checksums don't match the actual checksums.
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> crate::Result<()>;
 }
 
 impl<T: ValidateChecksums> ValidateChecksums for Option<T> {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &LedgerId) -> crate::Result<()> {
         if let Some(id) = &self {
             id.validate_checksums(ledger_id)?;
         }
@@ -156,10 +160,18 @@ impl<'a> PartialEntityId<'a> {
 }
 
 impl EntityId {
+    /// Parse an entity ID from a solidity address
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if `address` cannot be parsed as a solidity address.
     pub(crate) fn from_solidity_address(address: &str) -> crate::Result<Self> {
         IdEvmAddress::from_str(address).map(Self::from)
     }
 
+    /// Convert `self` into a solidity `address`.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if `self.shard` is larger than `u32::MAX`.
     pub(crate) fn to_solidity_address(self) -> crate::Result<String> {
         IdEvmAddress::try_from(self).map(|it| it.to_string())
     }
@@ -211,19 +223,25 @@ impl EntityId {
         Checksum::from_bytes(answer)
     }
 
-    pub(crate) async fn validate_checksum(
+    /// Validates that the the checksum computed for the given `shard.realm.num` matches the given checksum.
+    ///
+    /// # Errors
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no `ledger_id`.
+    /// - [`Error::BadEntityId`] if there is a checksum, and the checksum is not valid for the client's `ledger_id`.
+    pub(crate) fn validate_checksum(
         shard: u64,
         realm: u64,
         num: u64,
-        checksum: &Option<Checksum>,
+        checksum: Option<Checksum>,
         client: &Client,
-    ) -> Result<(), Error> {
+    ) -> crate::Result<()> {
         if let Some(present_checksum) = checksum {
-            if let Some(ledger_id) = &*client.ledger_id_internal() {
-                Self::validate_checksum_internal(shard, realm, num, *present_checksum, &ledger_id)
-            } else {
-                Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" })
-            }
+            let ledger_id = client.ledger_id_internal();
+            let ledger_id = ledger_id
+                .as_deref()
+                .ok_or(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" })?;
+
+            Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
         } else {
             Ok(())
         }
@@ -233,11 +251,11 @@ impl EntityId {
         shard: u64,
         realm: u64,
         num: u64,
-        checksum: &Option<Checksum>,
+        checksum: Option<Checksum>,
         ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
-            Self::validate_checksum_internal(shard, realm, num, *present_checksum, ledger_id)
+            Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
         } else {
             Ok(())
         }
@@ -259,16 +277,16 @@ impl EntityId {
         }
     }
 
-    pub(crate) async fn to_string_with_checksum(
-        entity_id_string: String,
+    pub(crate) fn to_string_with_checksum(
+        mut entity_id_string: String,
         client: &Client,
-    ) -> Result<String, Error> {
+    ) -> crate::Result<String> {
         if let Some(ledger_id) = &*client.ledger_id_internal() {
-            Ok(format!(
-                "{}-{}",
-                entity_id_string,
-                Self::generate_checksum(&entity_id_string, &ledger_id)
-            ))
+            let checksum = Self::generate_checksum(&entity_id_string, ledger_id);
+            entity_id_string.push('-');
+            entity_id_string.push_str(&checksum.0);
+
+            Ok(entity_id_string)
         } else {
             Err(Error::CannotPerformTaskWithoutLedgerId { task: "derive checksum for entity ID" })
         }

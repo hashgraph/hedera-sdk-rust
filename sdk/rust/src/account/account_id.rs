@@ -82,6 +82,9 @@ impl AccountId {
     }
 
     /// Create an `AccountId` from a solidity address.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if `address` cannot be parsed as a solidity address.
     pub fn from_solidity_address(address: &str) -> crate::Result<Self> {
         let EntityId { shard, realm, num, checksum } = EntityId::from_solidity_address(address)?;
 
@@ -109,7 +112,10 @@ impl AccountId {
         ToProtobuf::to_bytes(self)
     }
 
-    /// Convert `self` into a solidity `address`
+    /// Convert `self` into a solidity `address`.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if `self.shard` is larger than `u32::MAX`.
     pub fn to_solidity_address(&self) -> crate::Result<String> {
         EntityId { shard: self.shard, realm: self.realm, num: self.num, checksum: None }
             .to_solidity_address()
@@ -127,26 +133,27 @@ impl AccountId {
     }
 
     /// Convert `self` to a string with a valid checksum.
-    pub async fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+    ///
+    /// # Errors
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
+    pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
         if self.alias.is_some() || self.evm_address.is_some() {
             Err(Error::CannotToStringWithChecksum)
         } else {
-            EntityId::to_string_with_checksum(self.to_string(), client).await
+            EntityId::to_string_with_checksum(self.to_string(), client)
         }
     }
 
-    /// If this account ID was constructed from a user input string, it might include a checksum.
+    /// Validates `self.checksum` (if it exists) for `client`.
     ///
-    /// This function will validate that the checksum is correct, returning an `Err()` result containing an
-    /// [`Error::BadEntityId`](crate::Error::BadEntityId) if it's invalid, and a `Some(())` result if it is valid.
-    ///
-    /// If no checksum is present, validation will silently pass (the function will return `Some(())`)
-    pub async fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
+    /// # Errors
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no `ledger_id`.
+    /// - [`Error::BadEntityId`] if there is a checksum, and the checksum is not valid for the client's `ledger_id`.
+    pub fn validate_checksum(&self, client: &Client) -> crate::Result<()> {
         if self.alias.is_some() || self.evm_address.is_some() {
             Ok(())
         } else {
-            EntityId::validate_checksum(self.shard, self.realm, self.num, &self.checksum, client)
-                .await
+            EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)
         }
     }
 }
@@ -160,7 +167,7 @@ impl ValidateChecksums for AccountId {
                 self.shard,
                 self.realm,
                 self.num,
-                &self.checksum,
+                self.checksum,
                 ledger_id,
             )
         }
@@ -352,40 +359,36 @@ mod tests {
         )
     }
 
-    #[tokio::test]
-    async fn good_checksum_on_mainnet() {
+    #[test]
+    fn good_checksum_on_mainnet() {
         AccountId::from_str("0.0.123-vfmkw")
             .unwrap()
             .validate_checksum(&Client::for_mainnet())
-            .await
             .unwrap();
     }
 
-    #[tokio::test]
-    async fn good_checksum_on_testnet() {
+    #[test]
+    fn good_checksum_on_testnet() {
         AccountId::from_str("0.0.123-esxsf")
             .unwrap()
             .validate_checksum(&Client::for_testnet())
-            .await
             .unwrap();
     }
 
-    #[tokio::test]
-    async fn good_checksum_on_previewnet() {
+    #[test]
+    fn good_checksum_on_previewnet() {
         AccountId::from_str("0.0.123-ogizo")
             .unwrap()
             .validate_checksum(&Client::for_previewnet())
-            .await
             .unwrap();
     }
 
-    #[tokio::test]
-    async fn to_string_with_checksum() {
+    #[test]
+    fn to_string_with_checksum() {
         assert_eq!(
             AccountId::from_str("0.0.123")
                 .unwrap()
                 .to_string_with_checksum(&Client::for_testnet())
-                .await
                 .unwrap(),
             "0.0.123-esxsf"
         );

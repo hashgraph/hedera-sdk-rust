@@ -1,6 +1,8 @@
 import Foundation
 import NumberKit
 
+// swiftlint:disable file_length
+
 /// A transfer fee to assess during a `TransferTransaction` that transfers units of
 /// the token to which the fee is attached.
 public protocol CustomFee {

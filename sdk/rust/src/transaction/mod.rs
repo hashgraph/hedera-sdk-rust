@@ -18,6 +18,9 @@
  * ‍
  */
 
+// serde appears to insert the bound twice.
+#![cfg_attr(feature = "ffi", allow(clippy::type_repetition_in_bounds))]
+
 use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
@@ -94,35 +97,41 @@ pub struct Transaction<D> {
 }
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-// fires because of `serde_as`
-#[allow(clippy::type_repetition_in_bounds)]
 pub(crate) struct TransactionBody<D> {
     #[cfg_attr(feature = "ffi", serde(flatten))]
     #[cfg_attr(
         feature = "ffi",
-        serde(with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>")
+        serde(
+            with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>",
+            bound = "D: Into<AnyTransactionData> + Clone"
+        )
     )]
-    #[cfg_attr(feature = "ffi", serde(bound = "D: Into<AnyTransactionData> + Clone"))]
     pub(crate) data: D,
 
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
     #[cfg_attr(
         feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
+        serde(
+            with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>",
+            skip_serializing_if = "Option::is_none"
+        )
     )]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) max_transaction_fee: Option<Hbar>,
 
     #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub(crate) transaction_memo: String,
 
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) transaction_id: Option<TransactionId>,
 
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) operator: Option<Operator>,
 
     #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
@@ -192,7 +201,7 @@ impl<D> Transaction<D> {
     }
 
     /// # Panics
-    /// If `self.is_frozen().
+    /// If `self.is_frozen()`.
     #[track_caller]
     pub(crate) fn require_not_frozen(&self) {
         assert!(
@@ -364,11 +373,19 @@ impl<D: ChunkedTransactionData> Transaction<D> {
 
 impl<D: ValidateChecksums> Transaction<D> {
     /// Freeze the transaction so that no further modifications can be made.
+    ///
+    /// # Errors
+    /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set.
     pub fn freeze(&mut self) -> crate::Result<&mut Self> {
         self.freeze_with(None)
     }
 
     /// Freeze the transaction so that no further modifications can be made.
+    ///
+    /// # Errors
+    /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set and `client.is_none()`.
+    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if [`auto_validate_checksums`](Client::auto_validate_checksums)
+    ///    is enabled on the client and the client has no ledger id.
     pub fn freeze_with<'a>(
         &mut self,
         client: impl Into<Option<&'a Client>>,
@@ -381,9 +398,7 @@ impl<D: ValidateChecksums> Transaction<D> {
         let node_account_ids = match &self.body.node_account_ids {
             // the clone here is the lesser of two evils.
             Some(it) => it.clone(),
-            None => {
-                client.ok_or_else(|| crate::Error::FreezeUnsetNodeAccountIds)?.random_node_ids()
-            }
+            None => client.ok_or(Error::FreezeUnsetNodeAccountIds)?.random_node_ids(),
         };
 
         // note to reviewer: this is intentionally still an option, fallback is used later, swift doesn't *have* default max transaction fee and fixing it is a massive PITA.
@@ -401,7 +416,7 @@ impl<D: ValidateChecksums> Transaction<D> {
             }
         });
 
-        let operator = client.and_then(|it| it.operator_internal().as_deref().map(|it| it.clone()));
+        let operator = client.and_then(|it| it.operator_internal().as_deref().cloned());
 
         // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
         self.body.node_account_ids = Some(node_account_ids);
@@ -441,7 +456,7 @@ impl<D: TransactionExecute> Transaction<D> {
         };
 
         let transaction_list = {
-            let used_chunks = self.data().maybe_chunk_data().map_or(1, |it| it.used_chunks());
+            let used_chunks = self.data().maybe_chunk_data().map_or(1, ChunkData::used_chunks);
             let node_account_ids = self.body.node_account_ids.as_deref().unwrap();
 
             let mut transaction_list = Vec::with_capacity(used_chunks * node_account_ids.len());
@@ -469,7 +484,7 @@ impl<D: TransactionExecute> Transaction<D> {
                         node_account_id,
                     };
 
-                    transaction_list.push(self.make_request_inner(&chunk_info)?.0);
+                    transaction_list.push(self.make_request_inner(&chunk_info).0);
                 }
             }
 
@@ -502,20 +517,21 @@ impl<D: TransactionExecute> Transaction<D> {
         let transaction_list = self
             .sources
             .as_ref()
-            .map(|it| Ok(it.transactions().to_vec()))
-            .unwrap_or_else(|| self.make_transaction_list())?;
+            .map_or_else(|| self.make_transaction_list(), |it| Ok(it.transactions().to_vec()))?;
 
         Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec())
     }
 
-    pub(crate) fn add_signature_signer(&mut self, signer: AnySigner) {
+    pub(crate) fn add_signature_signer(&mut self, signer: &AnySigner) {
         assert!(self.is_frozen());
 
         // note: the following pair of cheecks are for more detailed panic messages
         // IE, they should *hopefully* be tripped first
-        if self.body.node_account_ids.as_deref().map_or(0, |it| it.len()) != 1 {
-            panic!("cannot manually add a signature to a transaction with multiple nodes")
-        }
+        assert_eq!(
+            self.body.node_account_ids.as_deref().map_or(0, <[AccountId]>::len),
+            1,
+            "cannot manually add a signature to a transaction with multiple nodes"
+        );
 
         if let Some(chunk_data) = self.data().maybe_chunk_data() {
             assert!(
@@ -523,7 +539,7 @@ impl<D: TransactionExecute> Transaction<D> {
                 "cannot manually add a signature to a chunked transaction with multiple chunks (message length `{}` > chunk size `{}`)",
                 chunk_data.data.len(),
                 chunk_data.chunk_size
-            )
+            );
         }
 
         let sources = self.make_sources().unwrap();
@@ -531,19 +547,18 @@ impl<D: TransactionExecute> Transaction<D> {
         // this is the only check that is for correctness rather than debugability.
         assert!(sources.transactions().len() == 1);
 
-        let sources = sources.sign_with(std::slice::from_ref(&signer));
+        let sources = sources.sign_with(std::slice::from_ref(signer));
 
-        match sources {
-            Cow::Owned(it) => self.sources = Some(it),
-            // no signature was added.
-            Cow::Borrowed(_) => {}
+        // if we have a `Cow::Borrowed` that'd mean there was no modification
+        if let Cow::Owned(sources) = sources {
+            self.sources = Some(sources);
         }
     }
 
     // todo: make this public... :/
     // todo: should this return `Result<&mut Self>`?
     pub(crate) fn _add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
-        self.add_signature_signer(AnySigner::Arbitrary(
+        self.add_signature_signer(&AnySigner::Arbitrary(
             Box::new(pk),
             Box::new(move |_| signature.clone()),
         ));
@@ -571,7 +586,7 @@ where
         self.freeze_with(Some(client))?;
 
         if let Some(sources) = &self.sources {
-            return self::execute::SourceTransaction::new(&self, &sources)
+            return self::execute::SourceTransaction::new(self, sources)
                 .execute(client, timeout)
                 .await;
         }
@@ -600,9 +615,10 @@ where
         assert!(self.is_frozen());
         let wait_for_receipts = self.data().wait_for_receipt();
 
+        // fixme: error with an actual error.
+        #[allow(clippy::manual_assert)]
         if chunk_data.data.len() > chunk_data.max_message_len() {
-            // fixme: error with an actual error.
-            panic!("error: message too big")
+            todo!("error: message too big")
         }
 
         let used_chunks = chunk_data.used_chunks();
@@ -687,7 +703,7 @@ where
 
         // fixme: dedup this with `execute_with_optional_timeout`
         if let Some(sources) = &self.sources {
-            return self::execute::SourceTransaction::new(&self, &sources)
+            return self::execute::SourceTransaction::new(self, sources)
                 .execute_all(client, timeout_per_chunk)
                 .await;
         }
@@ -721,6 +737,8 @@ impl AnyTransaction {
     /// # Ok(())
     /// # }
     /// ```
+    /// # Errors
+    /// - [`Error::FromProtobuf`] if a valid transaction cannot be parsed from the bytes.
     #[allow(deprecated)]
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         let list =

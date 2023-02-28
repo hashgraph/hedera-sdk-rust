@@ -196,6 +196,8 @@ impl AnySchedulableTransactionData {
 }
 
 impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulableTransactionData {
+    // large function that just delegates...
+    #[allow(clippy::too_many_lines)]
     fn from_protobuf(pb: services::schedulable_transaction_body::Data) -> crate::Result<Self> {
         use services::schedulable_transaction_body::Data;
         match pb {
@@ -288,6 +290,7 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
 }
 
 impl ToSchedulableTransactionDataProtobuf for AnySchedulableTransactionData {
+    // large function that just delegates...
     fn to_schedulable_transaction_data_protobuf(
         &self,
     ) -> services::schedulable_transaction_body::Data {

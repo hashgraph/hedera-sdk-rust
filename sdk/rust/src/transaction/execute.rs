@@ -89,7 +89,7 @@ where
     pub(crate) fn make_request_inner(
         &self,
         chunk_info: &ChunkInfo,
-    ) -> crate::Result<(services::Transaction, TransactionHash)> {
+    ) -> (services::Transaction, TransactionHash) {
         assert!(self.is_frozen());
 
         let transaction_body = self.to_transaction_body_protobuf(chunk_info);
@@ -126,7 +126,7 @@ where
         let transaction =
             services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
 
-        Ok((transaction, transaction_hash))
+        (transaction, transaction_hash)
     }
 }
 
@@ -193,10 +193,10 @@ where
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.is_frozen());
 
-        self.make_request_inner(&ChunkInfo::single(
+        Ok(self.make_request_inner(&ChunkInfo::single(
             transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
             node_account_id,
-        ))
+        )))
     }
 
     fn execute(
