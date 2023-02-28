@@ -26,9 +26,12 @@ import SwiftDotenv
 public enum Program {
     public static func main() async throws {
         let env = try Dotenv.load()
-        let client = Client.forTestnet()
+        let client = try Client.forName(env.networkName)
 
-        client.setOperator(env.operatorAccountId, env.operatorKey)
+        let operatorKey = env.operatorKey
+        let operatorAccountId = env.operatorAccountId
+
+        client.setOperator(operatorAccountId, operatorKey)
 
         let (privateKey1, accountId1) = try await createAccount(client, accountNumber: 1)
         let (privateKey2, accountId2) = try await createAccount(client, accountNumber: 2)
@@ -38,12 +41,12 @@ public enum Program {
             .symbol("F")
             .decimals(3)
             .initialSupply(1_000_000)
-            .treasuryAccountId(env.operatorAccountId)
-            .adminKey(.single(env.operatorKey.getPublicKey()))
-            .freezeKey(.single(env.operatorKey.getPublicKey()))
-            .wipeKey(.single(env.operatorKey.getPublicKey()))
-            .kycKey(.single(env.operatorKey.getPublicKey()))
-            .supplyKey(.single(env.operatorKey.getPublicKey()))
+            .treasuryAccountId(operatorAccountId)
+            .adminKey(.single(operatorKey.getPublicKey()))
+            .freezeKey(.single(operatorKey.getPublicKey()))
+            .wipeKey(.single(operatorKey.getPublicKey()))
+            .kycKey(.single(operatorKey.getPublicKey()))
+            .supplyKey(.single(operatorKey.getPublicKey()))
             .expirationTime(Timestamp.now + .hours(2))
             .freezeDefault(false)
             .execute(client)
@@ -70,7 +73,7 @@ public enum Program {
             .execute(client)
             .getReceipt(client)
 
-        print("Associated account \(accountId1) with token \(tokenId)")
+        print("Associated account \(accountId2) with token \(tokenId)")
 
         _ = try await TokenGrantKycTransaction()
             .accountId(accountId1)
@@ -88,15 +91,15 @@ public enum Program {
             .execute(client)
             .getReceipt(client)
 
-        print("Granted KYC for account \(accountId1) on token \(tokenId)")
+        print("Granted KYC for account \(accountId2) on token \(tokenId)")
 
         _ = try await TransferTransaction()
-            .tokenTransfer(tokenId, env.operatorAccountId, -10)
+            .tokenTransfer(tokenId, operatorAccountId, -10)
             .tokenTransfer(tokenId, accountId1, 10)
             .execute(client)
             .getReceipt(client)
 
-        print("Sent 10 tokens from account \(env.operatorAccountId) to account \(accountId1) on token \(tokenId)")
+        print("Sent 10 tokens from account \(operatorAccountId) to account \(accountId1) on token \(tokenId)")
 
         _ = try await TransferTransaction()
             .tokenTransfer(tokenId, accountId1, -10)
@@ -121,6 +124,7 @@ public enum Program {
         _ = try await TokenWipeTransaction()
             .accountId(accountId1)
             .tokenId(tokenId)
+            .amount(10)
             .freezeWith(client)
             .sign(privateKey1)
             .execute(client)
@@ -131,10 +135,8 @@ public enum Program {
         _ = try await TokenDeleteTransaction().tokenId(tokenId).execute(client).getReceipt(client)
         print("Deleted token", tokenId)
 
-        try await deleteAccount(
-            client, operatorAccountId: env.operatorAccountId, accountNumber: 1, privateKey1, accountId1)
-        try await deleteAccount(
-            client, operatorAccountId: env.operatorAccountId, accountNumber: 2, privateKey2, accountId2)
+        try await deleteAccount(client, operatorAccountId: operatorAccountId, accountNumber: 1, privateKey1, accountId1)
+        try await deleteAccount(client, operatorAccountId: operatorAccountId, accountNumber: 2, privateKey2, accountId2)
     }
 
     private static func createAccount(_ client: Client, accountNumber: Int) async throws -> (PrivateKey, AccountId) {

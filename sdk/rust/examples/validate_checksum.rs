@@ -89,7 +89,7 @@ async fn manual_checksum_validation(client: &Client) -> anyhow::Result<Option<Ac
 
     println!("Balance for account {account_id}: {balance:?}");
 
-    return Ok(Some(account_id));
+    Ok(Some(account_id))
 }
 
 async fn automatic_checksum_validation(client: &Client) -> anyhow::Result<Option<AccountId>> {
@@ -108,7 +108,7 @@ async fn automatic_checksum_validation(client: &Client) -> anyhow::Result<Option
 
     println!("Balance for account {account_id}: {balance:?}");
 
-    return Ok(Some(account_id));
+    Ok(Some(account_id))
 }
 
 fn parse_account_id() -> anyhow::Result<Option<AccountId>> {
