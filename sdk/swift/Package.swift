@@ -27,7 +27,7 @@ let exampleTargets = [
     "CreateFile",
     "CreateTopic",
     "DeleteAccount",
-    // "DeleteFile",
+    "DeleteFile",
     "GenerateKey",
     "GenerateKeyWithMnemonic",
     "GetAccountBalance",
