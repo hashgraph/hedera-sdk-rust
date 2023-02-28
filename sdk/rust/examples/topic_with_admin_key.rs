@@ -42,7 +42,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = Client::for_name(&args.hedera_network)?;
 
-    client.set_operator(args.operator_account_id, args.operator_key.clone());
+    client.set_operator(args.operator_account_id, args.operator_key);
 
     let (initial_admin_keys, topic_id) = create_topic_with_admin_key(&client).await?;
     update_topic_admin_key_and_memo(&client, initial_admin_keys, topic_id).await?;
