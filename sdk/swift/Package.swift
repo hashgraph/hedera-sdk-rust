@@ -34,6 +34,7 @@ let exampleTargets = [
     "GetAccountInfo",
     "GetAddressBook",
     "GetFileContents",
+    "TopicWithAdminKey",
     "TransferCrypto",
     "ValidateChecksum",
 ].map { name in

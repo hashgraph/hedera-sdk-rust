@@ -8,7 +8,7 @@ public struct KeyList: ExpressibleByArrayLiteral, Equatable {
         self.init(keys: Array(elements))
     }
 
-    internal init(keys: [Key], threshold: Int? = nil) {
+    public init(keys: [Key], threshold: Int? = nil) {
         self.keys = keys
         self.threshold = threshold
     }

@@ -39,7 +39,7 @@ public enum Program {
         }
     }
 
-    static func manualChecksumValidation(_ client: Client) async throws -> AccountId? {
+    private static func manualChecksumValidation(_ client: Client) async throws -> AccountId? {
         print("Example for manual checksum validation")
 
         var accountId: AccountId?
@@ -89,7 +89,7 @@ public enum Program {
         return accountId
     }
 
-    static func parseAccountId() throws -> AccountId? {
+    private static func parseAccountId() throws -> AccountId? {
         while true {
             print("Enter an account ID with checksum: ", terminator: "")
             guard let line = readLine() else {
