@@ -452,7 +452,11 @@ impl TokenCreateTransaction {
     }
 }
 
-impl TransactionData for TokenCreateTransactionData {}
+impl TransactionData for TokenCreateTransactionData {
+    fn default_max_transaction_fee(&self) -> crate::Hbar {
+        crate::Hbar::from_unit(40, crate::HbarUnit::Hbar)
+    }
+}
 
 impl TransactionExecute for TokenCreateTransactionData {
     fn execute(

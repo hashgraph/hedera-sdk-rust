@@ -163,9 +163,9 @@ public final class TransferTransaction: Transaction {
     ) -> Self {
         let transfer = Transfer(accountId: accountId, amount: amount, isApproval: approved)
 
-        if var tokenTransfer = tokenTransfers.first(where: { (tokenTransfer) in tokenTransfer.tokenId == tokenId }) {
-            tokenTransfer.expectedDecimals = expectedDecimals
-            tokenTransfer.transfers.append(transfer)
+        if let firstIndex = tokenTransfers.firstIndex(where: { (tokenTransfer) in tokenTransfer.tokenId == tokenId }) {
+            tokenTransfers[firstIndex].expectedDecimals = expectedDecimals
+            tokenTransfers[firstIndex].transfers.append(transfer)
         } else {
             tokenTransfers.append(
                 TokenTransfer(
