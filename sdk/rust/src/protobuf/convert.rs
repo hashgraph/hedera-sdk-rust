@@ -47,6 +47,14 @@ impl<T: ToProtobuf> ToProtobuf for Option<T> {
     }
 }
 
+impl<T: ToProtobuf> ToProtobuf for Box<T> {
+    type Protobuf = T::Protobuf;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        T::to_protobuf(self)
+    }
+}
+
 impl<T: ToProtobuf> ToProtobuf for Vec<T> {
     type Protobuf = Vec<T::Protobuf>;
 
@@ -56,27 +64,22 @@ impl<T: ToProtobuf> ToProtobuf for Vec<T> {
 }
 
 /// Convert from a `hedera_protobufs` type.
-pub trait FromProtobuf<Protobuf> {
+pub trait FromProtobuf<Protobuf>
+where
+    Self: Sized,
+{
     /// Attempt to convert from `Protobuf` to `Self`.
-    ///
-    /// This method is *not* `dyn` safe, and explicitly has a `Self: Sized` bound.
     // todo: errors
     #[allow(clippy::missing_errors_doc)]
-    fn from_protobuf(pb: Protobuf) -> crate::Result<Self>
-    where
-        Self: Sized;
+    fn from_protobuf(pb: Protobuf) -> crate::Result<Self>;
 
-    // fixme(sr): I'm not happy with this doc comment.
     /// Create a new `Self` from protobuf-encoded `bytes`.
-    ///
-    /// This method is *not* `dyn` safe, and explicitly has a `Self: Sized` bound.
     ///
     /// # Errors
     /// - [`Error::FromProtobuf`] if `Protobuf` fails to decode from the bytes.
     /// - If [`from_protobuf`](Self::from_protobuf) would fail.
     fn from_bytes(bytes: &[u8]) -> crate::Result<Self>
     where
-        Self: Sized,
         Protobuf: prost::Message + Default,
     {
         Protobuf::decode(bytes).map_err(Error::from_protobuf).and_then(Self::from_protobuf)
