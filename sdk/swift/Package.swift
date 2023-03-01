@@ -33,6 +33,7 @@ let exampleTargets = [
     "GetAccountBalance",
     "GetAccountInfo",
     "GetAddressBook",
+    "GetExchangeRates",
     "GetFileContents",
     "TopicWithAdminKey",
     "TransferCrypto",

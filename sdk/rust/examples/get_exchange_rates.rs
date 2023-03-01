@@ -60,13 +60,13 @@ async fn main() -> anyhow::Result<()> {
     println!("Current expiration time: {}", current_rate.expiration_time);
     println!(
         "Current Exchange Rate: {}",
-        current_rate.exchange_rate_in_cents
+        current_rate.exchange_rate_in_cents()
     );
 
     println!("Next numerator: {}", next_rate.cents);
     println!("Next denominator: {}", next_rate.hbars);
     println!("Next expiration time: {}", next_rate.expiration_time);
-    println!("Next Exchange Rate: {}", next_rate.exchange_rate_in_cents);
+    println!("Next Exchange Rate: {}", next_rate.exchange_rate_in_cents());
 
     Ok(())
 }
