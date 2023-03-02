@@ -12,11 +12,18 @@ use crate::protobuf::{
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/currentandnextfeeschedule
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub struct FeeSchedules {
     /// The current fee schedule.
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub current: Option<FeeSchedule>,
 
     /// The next fee schedule.
+    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub next: Option<FeeSchedule>,
 }
 
@@ -63,11 +70,20 @@ impl ToProtobuf for FeeSchedules {
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/feeschedule
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub struct FeeSchedule {
     /// The fee schedules per specific piece of functionality.
     pub transaction_fee_schedules: Vec<TransactionFeeSchedule>,
 
     /// The time this fee schedule will expire at.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
+    )]
     pub expiration_time: OffsetDateTime,
 }
 
@@ -114,6 +130,11 @@ impl ToProtobuf for FeeSchedule {
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/transactionfeeschedule
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub struct TransactionFeeSchedule {
     /// The request type that this fee schedule applies to.
     pub request_type: RequestType,
@@ -171,6 +192,11 @@ impl ToProtobuf for TransactionFeeSchedule {
 
 /// The functionality provided by Hedera.
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub enum RequestType {
     /// UNSPECIFIED - Need to keep first value as unspecified because first element is ignored and not parsed (0 is ignored by parser)
     None,
@@ -205,6 +231,7 @@ pub enum RequestType {
     ///
     /// [`ContractCreateTransaction`](crate::ContractCreateTransaction)
     ContractCreate,
+
     /// Update a contract.
     ///
     /// [`ContractUpdateTransaction`](crate::ContractUpdateTransaction)
@@ -386,6 +413,7 @@ pub enum RequestType {
 
     /// Approve an account spending another account's currency.
     CryptoApproveAllowance,
+
     /// Unapprove an account spending another account's currency.
     CryptoDeleteAllowance,
 
@@ -571,6 +599,11 @@ impl ToProtobuf for RequestType {
 /// The total fees charged for a transaction, consisting of 3 parts:
 /// The node fee, the network fee, and the service fee.
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub struct FeeData {
     /// Fee charged by the node for this functionality.
     pub node: FeeComponents,
@@ -628,6 +661,11 @@ impl ToProtobuf for FeeData {
 
 /// The different components used for fee calculation.
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub struct FeeComponents {
     /// The minimum fee that needs to be paid.
     pub min: u64,
@@ -722,6 +760,11 @@ impl ToProtobuf for FeeComponents {
 
 /// Possible [`FeeData`] subtypes.
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "ffi",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(rename_all = "camelCase")
+)]
 pub enum FeeDataType {
     /// The resource prices have no special scope.
     Default,
