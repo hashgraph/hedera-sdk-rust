@@ -34,6 +34,7 @@ mod contract_log_info;
 mod crypto;
 mod entity_id;
 mod execute;
+mod fee_schedules;
 mod file_info;
 mod key;
 mod mnemonic;
