@@ -240,16 +240,16 @@ impl EntityId {
         checksum: Option<Checksum>,
         client: &Client,
     ) -> crate::Result<()> {
-        if let Some(present_checksum) = checksum {
-            let ledger_id = client.ledger_id_internal();
-            let ledger_id = ledger_id
-                .as_deref()
-                .ok_or(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksum" })?;
+        let Some(present_checksum) = checksum else {
+            return Ok(());
+        };
 
-            Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
-        } else {
-            Ok(())
-        }
+        let ledger_id = client.ledger_id_internal();
+        let ledger_id = ledger_id
+            .as_deref()
+            .expect("Client had no ledger ID (help: call `client.set_ledger_id()`");
+
+        Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
     }
 
     pub(crate) fn validate_checksum_for_ledger_id(
@@ -282,19 +282,17 @@ impl EntityId {
         }
     }
 
-    pub(crate) fn to_string_with_checksum(
-        mut entity_id_string: String,
-        client: &Client,
-    ) -> crate::Result<String> {
-        if let Some(ledger_id) = &*client.ledger_id_internal() {
-            let checksum = Self::generate_checksum(&entity_id_string, ledger_id);
-            entity_id_string.push('-');
-            entity_id_string.push_str(&checksum.0);
+    pub(crate) fn to_string_with_checksum(mut entity_id_string: String, client: &Client) -> String {
+        let ledger_id = client.ledger_id_internal();
+        let ledger_id = ledger_id
+            .as_ref()
+            .expect("Client had no ledger ID (help: call `client.set_ledger_id()`");
 
-            Ok(entity_id_string)
-        } else {
-            Err(Error::CannotPerformTaskWithoutLedgerId { task: "derive checksum for entity ID" })
-        }
+        let checksum = Self::generate_checksum(&entity_id_string, ledger_id);
+        entity_id_string.push('-');
+        entity_id_string.push_str(&checksum.0);
+
+        entity_id_string
     }
 }
 

@@ -30,16 +30,12 @@ typedef enum HederaError {
   HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN,
   HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED,
   HEDERA_ERROR_RECEIPT_STATUS,
-  HEDERA_ERROR_SIGNATURE,
   HEDERA_ERROR_REQUEST_PARSE,
   HEDERA_ERROR_MNEMONIC_PARSE,
   HEDERA_ERROR_MNEMONIC_ENTROPY,
   HEDERA_ERROR_SIGNATURE_VERIFY,
   HEDERA_ERROR_BAD_ENTITY_ID,
-  HEDERA_ERROR_CANNOT_TO_STRING_WITH_CHECKSUM,
-  HEDERA_ERROR_CANNOT_PERFORM_TASK_WITHOUT_LEDGER_ID,
-  HEDERA_ERROR_NO_EVM_ADDRESS_PRESENT,
-  HEDERA_ERROR_WRONG_KEY_TYPE,
+  HEDERA_ERROR_CANNOT_CREATE_CHECKSUM,
 } HederaError;
 
 /**
@@ -1332,16 +1328,14 @@ bool hedera_public_key_is_ecdsa(struct HederaPublicKey *key);
 /**
  * Convert this public key into an evm address. The evm address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
  *
+ * This function may return `null`, if this function does *not* return null, the returned pointer will be valid for exactly 20 bytes.
+ *
  * # Safety
  * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - `evm_address` must be valid for writes according to the [*Rust* pointer rules].
- * - the length of `evm_address` string must not be modified.
- * - `evm_address` must NOT be freed with `free`.
  *
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
-enum HederaError hedera_public_key_to_evm_address(struct HederaPublicKey *key,
-                                                  char **evm_address);
+uint8_t *hedera_public_key_to_evm_address(struct HederaPublicKey *key);
 
 enum HederaError hedera_public_key_verify_sources(struct HederaPublicKey *key,
                                                   struct HederaTransactionSources *sources);

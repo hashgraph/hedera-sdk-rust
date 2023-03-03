@@ -132,11 +132,12 @@ where
         ExponentialBackoff { max_elapsed_time: Some(timeout), ..ExponentialBackoff::default() };
 
     if client.auto_validate_checksums() {
-        if let Some(ledger_id) = &*client.ledger_id_internal() {
-            executable.validate_checksums(ledger_id)?;
-        } else {
-            return Err(Error::CannotPerformTaskWithoutLedgerId { task: "validate checksums" });
-        }
+        let ledger_id = client.ledger_id_internal();
+        let ledger_id = ledger_id
+            .as_ref()
+            .expect("Client had auto_validate_checksums enabled but no ledger ID");
+
+        executable.validate_checksums(ledger_id)?;
     }
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off

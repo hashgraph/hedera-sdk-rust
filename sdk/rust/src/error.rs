@@ -136,35 +136,10 @@ pub enum Error {
         expected_checksum: Checksum,
     },
 
-    /// An entity ID cannot be converted to a string with a checksum, because it takes an alternate form,
+    /// An entity ID cannot be converted to a string with a checksum, because it is in an alternate form,
     /// such as an `alias` or `evm_address`
-    #[error("to_string_with_checksum() can't be applied to entity ID with alias or evm_address")]
-    CannotToStringWithChecksum,
-
-    /// A task can't be performed because the Client doesn't have a ledger ID set.
-    #[error("can't {task} without knowing which ledger the entity ID is for; ensure client's ledger ID is set")]
-    CannotPerformTaskWithoutLedgerId {
-        /// The task that can't be performed
-        task: &'static str,
-    },
-
-    /// A task cannot be performed because no `evm_address` field is present.
-    #[error("can't {task} because evm_address is not present")]
-    NoEvmAddressPresent {
-        /// The task that can't be performed
-        task: &'static str,
-    },
-
-    /// A task cannot be performed because a key is of the wrong type.
-    #[error("can't {task} because key {key_enum} cannot be of type {key_variant}")]
-    WrongKeyType {
-        /// The task that can't be performed
-        task: &'static str,
-        /// The name of the key enum (EG `PublicKey` or `PrivateKey`)
-        key_enum: &'static str,
-        /// The type of the key enum
-        key_variant: &'static str,
-    },
+    #[error("an entity ID with an `alias` or `evm_address` cannot have a checksum")]
+    CannotCreateChecksum,
 
     /// Failed to parse a [`PublicKey`](crate::PublicKey) or [`PrivateKey`](crate::PrivateKey).
     #[error("failed to parse a key: {0}")]
@@ -233,10 +208,6 @@ pub enum Error {
         transaction_id: Option<Box<TransactionId>>,
     },
 
-    /// Failed to sign a message.
-    #[error("failed to sign message: {0}")]
-    Signature(#[source] BoxStdError),
-
     /// Failed to verify a signature.
     #[error("failed to verify a signature: {0}")]
     SignatureVerify(#[source] BoxStdError),
@@ -267,10 +238,6 @@ impl Error {
     #[cfg(feature = "ffi")]
     pub(crate) fn request_parse<E: Into<BoxStdError>>(error: E) -> Self {
         Self::RequestParse(error.into())
-    }
-
-    pub(crate) fn _signature<E: Into<BoxStdError>>(error: E) -> Self {
-        Self::Signature(error.into())
     }
 
     pub(crate) fn signature_verify(error: impl Into<BoxStdError>) -> Self {

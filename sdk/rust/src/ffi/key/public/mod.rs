@@ -20,8 +20,11 @@
 
 use std::ffi::CString;
 use std::os::raw::c_char;
-use std::slice;
 use std::str::FromStr;
+use std::{
+    ptr,
+    slice,
+};
 
 use libc::size_t;
 
@@ -397,28 +400,21 @@ pub unsafe extern "C" fn hedera_public_key_is_ecdsa(key: *mut PublicKey) -> bool
 
 /// Convert this public key into an evm address. The evm address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
 ///
+/// This function may return `null`, if this function does *not* return null, the returned pointer will be valid for exactly 20 bytes.
+///
 /// # Safety
 /// - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
-/// - `evm_address` must be valid for writes according to the [*Rust* pointer rules].
-/// - the length of `evm_address` string must not be modified.
-/// - `evm_address` must NOT be freed with `free`.
 ///
 /// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
 #[no_mangle]
-pub unsafe extern "C" fn hedera_public_key_to_evm_address(
-    key: *mut PublicKey,
-    evm_address: *mut *mut c_char,
-) -> Error {
+pub unsafe extern "C" fn hedera_public_key_to_evm_address(key: *mut PublicKey) -> *mut u8 {
     let key = unsafe { key.as_ref() }.unwrap();
 
-    assert!(!evm_address.is_null());
+    let Some(out) = key.to_evm_address() else {
+        return ptr::null_mut();
+    };
 
-    let out = ffi_try!(key.to_evm_address());
-    let out = CString::new(out).unwrap();
-
-    unsafe { evm_address.write(out.into_raw()) }
-
-    Error::Ok
+    Box::into_raw(Box::new(out.to_bytes())).cast::<u8>()
 }
 
 #[no_mangle]
