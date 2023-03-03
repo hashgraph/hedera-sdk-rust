@@ -36,7 +36,7 @@ public enum Program {
         let fileContents = "Hedera hashgraph is great!"
 
         let receipt = try await FileCreateTransaction()
-            .keys([.single(env.operatorKey.getPublicKey())])
+            .keys([.single(env.operatorKey.publicKey)])
             .contents(fileContents.data(using: .utf8)!)
             .maxTransactionFee(2)
             .execute(client).getReceipt(client)

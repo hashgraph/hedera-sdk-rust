@@ -115,7 +115,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
 
     @discardableResult
     public func sign(_ privateKey: PrivateKey) -> Self {
-        self.signWith(privateKey.getPublicKey()) { privateKey.sign($0) }
+        self.signWith(privateKey.publicKey) { privateKey.sign($0) }
     }
 
     @discardableResult

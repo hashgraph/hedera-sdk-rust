@@ -32,10 +32,10 @@ public enum Program {
         let newKey = PrivateKey.generateEd25519()
 
         print("private key = \(newKey)")
-        print("public key = \(newKey.getPublicKey())")
+        print("public key = \(newKey.publicKey)")
 
         let response = try await AccountCreateTransaction()
-            .key(.single(newKey.getPublicKey()))
+            .key(.single(newKey.publicKey))
             .initialBalance(5)
             .execute(client)
 
