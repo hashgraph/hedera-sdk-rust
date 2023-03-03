@@ -139,10 +139,6 @@ pub extern "C" fn hedera_last_error_details() -> ErrorDetails {
     })
 }
 
-// todo:
-// #[repr(C)]
-// struct ErasedError(Box<dyn std::error::Error>);
-
 #[repr(C)]
 pub enum ErrorDetails {
     None,
@@ -167,7 +163,6 @@ pub enum ErrorDetails {
     },
 }
 
-// todo: Return `ErasedError`
 impl From<crate::Error> for ErrorDetails {
     fn from(value: crate::Error) -> Self {
         use crate::Error;

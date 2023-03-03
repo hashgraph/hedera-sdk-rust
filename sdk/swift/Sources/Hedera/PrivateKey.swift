@@ -48,8 +48,8 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         self.init(hedera_private_key_generate_ecdsa())
     }
 
-    /// Gets the ``PublicKey`` which corresponds to this private key.
-    public func getPublicKey() -> PublicKey {
+    /// The ``PublicKey`` which corresponds to this private key.
+    public var publicKey: PublicKey {
         PublicKey.unsafeFromPtr(hedera_private_key_get_public_key(ptr))
     }
 
@@ -176,7 +176,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public func toAccountId(shard: UInt64, realm: UInt64) -> AccountId {
-        getPublicKey().toAccountId(shard: shard, realm: realm)
+        publicKey.toAccountId(shard: shard, realm: realm)
     }
 
     public func isEd25519() -> Bool {

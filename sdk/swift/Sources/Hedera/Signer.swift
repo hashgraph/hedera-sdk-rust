@@ -56,7 +56,7 @@ internal final class Signer {
     }
 
     internal static func privateKey(_ key: PrivateKey) -> Self {
-        Self(key.getPublicKey(), key.sign(_:))
+        Self(key.publicKey, key.sign(_:))
     }
 }
 

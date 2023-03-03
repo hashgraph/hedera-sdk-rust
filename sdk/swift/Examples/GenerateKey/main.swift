@@ -28,7 +28,7 @@ public enum Program {
         // This is the current recommended default for Hedera
 
         var keyPrivate = PrivateKey.generateEd25519()
-        var keyPublic = keyPrivate.getPublicKey()
+        var keyPublic = keyPrivate.publicKey
 
         print("ed25519 private = \(keyPrivate)")
         print("ed25519 public = \(keyPublic)")
@@ -36,7 +36,7 @@ public enum Program {
         // Generate a ECDSA(secp256k1) key
         // This is recommended for better compatibility with Ethereum
         keyPrivate = PrivateKey.generateEcdsa()
-        keyPublic = keyPrivate.getPublicKey()
+        keyPublic = keyPrivate.publicKey
 
         print("ecdsa(secp256k1) private = \(keyPrivate)")
         print("ecdsa(secp256k1) public = \(keyPublic)")
