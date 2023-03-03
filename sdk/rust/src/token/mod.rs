@@ -47,6 +47,7 @@ mod token_update_transaction;
 mod token_wipe_transaction;
 
 pub use assessed_custom_fee::AssessedCustomFee;
+pub use custom_fees::FeeAssessmentMethod;
 pub use nft_id::NftId;
 pub use token_associate_transaction::{
     TokenAssociateTransaction,
