@@ -24,7 +24,11 @@ use assert_matches::assert_matches;
 use expect_test::expect;
 use hex_literal::hex;
 
-use crate::PublicKey;
+use crate::{
+    EvmAddress,
+    PrivateKey,
+    PublicKey,
+};
 
 #[test]
 fn ed25519_from_str() {
@@ -73,14 +77,29 @@ fn ecdsa_from_str_variants() {
     pk_from_str_variants("302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
 }
 
+// copied from Java SDK to ensure conformance.
 #[test]
 fn to_evm_address() {
+    let key = dbg!(PrivateKey::from_str_ecdsa(
+        "debae3ca62ab3157110dba79c8de26540dc320ee9be73a77d70ba175643a3500",
+    )
+    .unwrap())
+    .public_key();
+
+    let evm_address = key.to_evm_address().unwrap();
+
+    assert_eq!(evm_address, EvmAddress(hex!("d8eb8db03c699faa3f47adcdcd2ae91773b10f8b")));
+}
+
+#[test]
+fn to_evm_address_2() {
     let key = PublicKey::from_str_ecdsa(
         "029469a657510f3bf199a0e29b21e11e7039d8883f3547d59c3568f9c89f704cbc",
     )
     .unwrap();
     let evm_address = key.to_evm_address().unwrap();
-    assert_eq!(evm_address, "0x83e31378423cf9c51ec36b074b89e16f31560cbb");
+
+    assert_eq!(evm_address, EvmAddress(hex!("bbaa6bdfe888ae1fc8e7c8cee82081fa79ba8834")));
 }
 
 #[test]

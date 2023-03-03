@@ -63,7 +63,7 @@ where
 
     func toString() -> String
 
-    func toStringWithChecksum(_ client: Client) -> String
+    func toStringWithChecksum(_ client: Client) throws -> String
 
     func validateChecksum(_ client: Client) throws
 

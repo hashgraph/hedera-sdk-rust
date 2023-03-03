@@ -194,11 +194,14 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
-    public func toEvmAddress() throws -> String {
-        var stringPtr: UnsafeMutablePointer<CChar>?
-        try HError.throwing(error: hedera_public_key_to_evm_address(ptr, &stringPtr))
+    public func toEvmAddress() -> EvmAddress? {
+        let dataPtr = hedera_public_key_to_evm_address(ptr)
 
-        return String(hString: stringPtr!)
+        return dataPtr.map { dataPtr in
+            // we literally write 20 as the count, which is the only requirement for `EvmAddress`.
+            // swiftlint:disable:next force_try
+            try! EvmAddress(Data(bytesNoCopy: dataPtr, count: 20, deallocator: .unsafeCHederaBytesFree))
+        }
     }
 
     public func verifyTransaction(_ transaction: Transaction) throws {

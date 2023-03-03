@@ -121,26 +121,15 @@ impl AccountId {
             .to_solidity_address()
     }
 
-    // todo: note: the specifics of this function are undecided (should it even exist?)
-    // followup discussion required as per https://github.com/hashgraph/hedera-sdk-reference/issues/70.
-    /// Returns "0x_____" string Ethereum public address.
-    pub(crate) fn _to_evm_address(&self) -> crate::Result<String> {
-        if let Some(evm_address) = &self.evm_address {
-            Ok(evm_address.to_string())
-        } else {
-            Err(Error::NoEvmAddressPresent { task: "convert account ID to evm address string" })
-        }
-    }
-
     /// Convert `self` to a string with a valid checksum.
     ///
     /// # Errors
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
+    /// - [`Error::CannotCreateChecksum`] if self has an `alias` or `evm_address`.
     pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
         if self.alias.is_some() || self.evm_address.is_some() {
-            Err(Error::CannotToStringWithChecksum)
+            Err(Error::CannotCreateChecksum)
         } else {
-            EntityId::to_string_with_checksum(self.to_string(), client)
+            Ok(EntityId::to_string_with_checksum(self.to_string(), client))
         }
     }
 

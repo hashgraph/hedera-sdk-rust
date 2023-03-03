@@ -141,9 +141,10 @@ public struct AccountId: EntityId, ValidateChecksums {
         }
     }
 
-    public func toStringWithChecksum(_ client: Client) -> String {
-        precondition(alias == nil, "cannot create a checksum for an `AccountId` with an alias")
-        precondition(evmAddress == nil, "cannot create a checksum for an `AccountId` with an evmAddress")
+    public func toStringWithChecksum(_ client: Client) throws -> String {
+        guard alias == nil, evmAddress == nil else {
+            throw HError.cannotCreateChecksum
+        }
 
         return helper.toStringWithChecksum(client)
     }
