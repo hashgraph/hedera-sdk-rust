@@ -199,6 +199,7 @@ pub use system::{
 };
 pub use token::{
     AssessedCustomFee,
+    FeeAssessmentMethod,
     NftId,
     TokenAssociateTransaction,
     TokenAssociation,
