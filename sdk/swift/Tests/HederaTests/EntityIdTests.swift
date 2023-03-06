@@ -89,8 +89,8 @@ public final class EntityIdTests: XCTestCase {
         }
     }
 
-    internal func testAccountIdChecksum() {
-        let checksumAddress = AccountId("0.0.1126123").toStringWithChecksum(.forMainnet())
+    internal func testAccountIdChecksum() throws {
+        let checksumAddress = try AccountId(num: 1_126_123).toStringWithChecksum(.forMainnet())
 
         XCTAssertEqual(checksumAddress, "0.0.1126123-ycfte")
     }
@@ -132,7 +132,7 @@ public final class EntityIdTests: XCTestCase {
         ]
 
         for (index, expected) in expected.enumerated() {
-            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: LedgerId.previewnet).data
+            let actual = Checksum.generate(for: TopicId(num: UInt64(index)), on: .previewnet).data
 
             XCTAssertEqual(expected, actual)
         }
