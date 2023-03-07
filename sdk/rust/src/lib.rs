@@ -56,6 +56,7 @@ mod error;
 mod ethereum_transaction;
 mod evm_address;
 mod execute;
+mod fee_schedules;
 mod file;
 mod key;
 mod ledger_id;
@@ -133,6 +134,15 @@ pub use error::{
 };
 pub use ethereum_transaction::EthereumTransaction;
 pub use evm_address::EvmAddress;
+pub use fee_schedules::{
+    FeeComponents,
+    FeeData,
+    FeeDataType,
+    FeeSchedule,
+    FeeSchedules,
+    RequestType,
+    TransactionFeeSchedule,
+};
 pub use file::{
     FileAppendTransaction,
     FileContentsQuery,
