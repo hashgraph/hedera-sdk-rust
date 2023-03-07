@@ -67,35 +67,33 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         // todo: fix these
         // swiftlint:disable identifier_name
         // 3 digits in base 26
-        let p3 = 26 * 26 * 26
+        // 26 = 13*2 (26^3 = 13^3 * 2^3)
+        let p3: Int64 = 26 * 26 * 26
         // 5 digits in base 26
-        let p5 = 26 * 26 * 26 * 26 * 26
+        let p5: Int64 = 26 * 26 * 26 * 26 * 26
 
         // min prime greater than a million. Used for the final permutation.
-        let m = 1_000_003
+        let m: Int64 = 1_000_003
 
         // Sum s of digit values weights them by powers of W. Should be coprime to P5.
-        let w = 31
+        let w: Int64 = 31
         // W to the 6th power
         let w6 = w * w * w * w * w * w
 
-        // don't need the six 0 bytes.
-        let h = ledgerId.bytes
-
-        let d = entity.description.map { char -> Int in
+        let d = entity.description.map { char -> Int64 in
             if char == "." {
                 return 10
             } else {
-                return char.wholeNumberValue!
+                return Int64(char.wholeNumberValue!)
             }
         }
 
         // Weighted sum of all positions (mod P3)
-        var s = 0
+        var s: Int64 = 0
         // Sum of even positions (mod 11)
-        var s0 = 0
+        var s0: Int64 = 0
         // Sum of odd positions (mod 11)
-        var s1 = 0
+        var s1: Int64 = 0
 
         for (index, digit) in d.enumerated() {
             s = (w * s + digit) % p3
@@ -110,7 +108,7 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         s1 = s1 % 11
 
         // instead of six 0 bytes, we compute this in two steps
-        var sh = h.reduce(0) { (result, value) in (w * result + Int(value)) % p5 }
+        var sh = ledgerId.bytes.reduce(Int64(0)) { (result, value) in (w * result + Int64(value)) % p5 }
         // `(w * result + Int(0)) % p5` applied 6 times...
         // `(w * result + Int(0)) % p5 = (w * result) % p5` because 0 is the additive identity
         // then expanding out the full expression:
@@ -123,18 +121,25 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         // var c = ((((((entityIdString.count % 5) * 11 + s0) * 11 + s1) * p3 + s + sh) % p5) * m) % p5
         // but `((x % y) * z) % y = ((x * z) % y) % y = (x * z) % y`
         // checksum as a single number
-        var c = (((((d.count % 5) * 11 + s0) * 11 + s1) * p3 + s + sh) * m) % p5
+        // in multiple expressions because swift struggles with typechecking.
+        var checksum: Int64 = Int64(d.count) % 5
+        checksum = checksum * 11 + s0
+        checksum = checksum * 11 + s1
+        checksum = checksum * p3 + s + sh
+        checksum = (checksum * m) % p5
 
         var output: [UInt8] = [0, 0, 0, 0, 0]
 
         for i in (0..<5).reversed() {
-            output[i] = UInt8(0x61 + c % 26)
-            c /= 26
+            let asciiLowercaseA: UInt8 = 0x61;
+            let (quotient, remainder) = checksum.quotientAndRemainder(dividingBy: 26) 
+            output[i] = asciiLowercaseA + UInt8(remainder)
+            checksum = quotient
         }
 
         // thanks swift, for not having fixed length arrays
         return Checksum(bytes: (output[0], output[1], output[2], output[3], output[4]))
 
-        // swiftlint:endable identifier_name
+        // swiftlint:enable identifier_name
     }
 }
