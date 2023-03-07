@@ -18,26 +18,33 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The current and next exchange rates between Hbar and USD-cents.
-public struct ExchangeRates: Decodable {
+public struct ExchangeRates {
     /// The current exchange rate between Hbar and USD-cents.
     public let currentRate: ExchangeRate
     /// The next exchange rate between Hbar and USD-cents.
     public let nextRate: ExchangeRate
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 }
 
-extension ExchangeRates: FromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_exchange_rates_from_bytes }
+extension ExchangeRates: FromProtobuf {
+    internal typealias Protobuf = Proto_ExchangeRateSet
+
+    internal init(protobuf proto: Protobuf) {
+        self.init(
+            currentRate: .fromProtobuf(proto.currentRate),
+            nextRate: .fromProtobuf(proto.nextRate)
+        )
+    }
 }
 
-public struct ExchangeRate: Decodable {
+public struct ExchangeRate {
     /// Denotes Hbar equivalent to cents (USD).
     public let hbars: UInt32
 
@@ -50,5 +57,17 @@ public struct ExchangeRate: Decodable {
     /// Calculated exchange rate.
     public var exchangeRateInCents: Double {
         Double(cents) / Double(hbars)
+    }
+}
+
+extension ExchangeRate: FromProtobuf {
+    internal typealias Protobuf = Proto_ExchangeRate
+
+    internal init(protobuf proto: Protobuf) {
+        self.init(
+            hbars: UInt32(proto.hbarEquiv),
+            cents: UInt32(proto.centEquiv),
+            expirationTime: .init(seconds: UInt64(proto.expirationTime.seconds), subSecondNanos: 0)
+        )
     }
 }

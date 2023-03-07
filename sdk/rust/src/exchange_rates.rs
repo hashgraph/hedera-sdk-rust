@@ -25,7 +25,6 @@ use crate::protobuf::FromProtobuf;
 
 /// The current and next exchange rates between [`Hbar`](crate::HbarUnit::Hbar) and USD-cents.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize), serde(rename_all = "camelCase"))]
 pub struct ExchangeRates {
     /// The current exchange rate between [`Hbar`](crate::HbarUnit::Hbar) and USD-cents.
     pub current_rate: ExchangeRate,
@@ -54,7 +53,6 @@ impl FromProtobuf<services::ExchangeRateSet> for ExchangeRates {
 }
 
 /// Denotes a conversion between Hbars and cents (USD).
-#[cfg_attr(feature = "ffi", derive(serde::Serialize), serde(rename_all = "camelCase"))]
 #[derive(Debug, Clone)]
 pub struct ExchangeRate {
     /// Denotes [`Hbar`](crate::HbarUnit::Hbar) equivalent to cents (USD).
@@ -64,10 +62,6 @@ pub struct ExchangeRate {
     pub cents: u32,
 
     /// Expiration time of this exchange rate.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
-    )]
     pub expiration_time: OffsetDateTime,
 }
 
