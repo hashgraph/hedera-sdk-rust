@@ -125,13 +125,14 @@ fn fractional_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let minimum_amount = 500;
     let maximum_amount = 1000;
     let net_of_transfers = true;
+    let assessment_method = super::FeeAssessmentMethod::Exclusive;
 
     let fractional_fee = FractionalFeeData {
         denominator: 1,
         numerator: 2,
         minimum_amount,
         maximum_amount,
-        net_of_transfers,
+        assessment_method,
     };
 
     let fractional_fee_proto = fractional_fee.to_protobuf();
@@ -148,6 +149,7 @@ fn fractional_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
     let minimum_amount = 500;
     let maximum_amount = 1000;
     let net_of_transfers = true;
+    let assessment_method = super::FeeAssessmentMethod::Exclusive;
 
     let fractional_fee_protobuf = services::FractionalFee {
         fractional_amount: Some(services::Fraction { numerator: 1, denominator: 2 }),
@@ -160,7 +162,7 @@ fn fractional_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 
     assert_eq!(fractional_fee.minimum_amount, minimum_amount);
     assert_eq!(fractional_fee.maximum_amount, maximum_amount);
-    assert_eq!(fractional_fee.net_of_transfers, net_of_transfers);
+    assert_eq!(fractional_fee.assessment_method, assessment_method);
 
     Ok(())
 }

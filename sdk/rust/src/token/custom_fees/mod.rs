@@ -271,10 +271,14 @@ pub struct FractionalFeeData {
     /// The maximum amount to assess (zero implies no maximum)
     pub maximum_amount: i64,
 
-    /// If true, assesses the fee to the sender, so the receiver gets the full amount from the token
-    /// transfer list, and the sender is charged an additional fee; if false, the receiver does NOT get
-    /// the full amount, but only what is left over after paying the fractional fee
-    pub net_of_transfers: bool,
+    /// If [`Exclusive`](FeeAssessmentMethod::Exclusive),
+    /// assesses the fee to the sender,
+    /// so the receiver gets the full amount from the token transfer list,
+    /// and the sender is charged an additional fee;
+    /// if [`Inclusive`](FeeAssessmentMethod::Inclusive), the receiver does NOT get
+    /// the full amount,
+    /// but only what is left over after paying the fractional fee.
+    pub assessment_method: FeeAssessmentMethod,
 }
 
 impl FromProtobuf<services::FractionalFee> for FractionalFeeData {
@@ -283,7 +287,10 @@ impl FromProtobuf<services::FractionalFee> for FractionalFeeData {
         Ok(Self {
             denominator: *amount.denom().unwrap(),
             numerator: *amount.numer().unwrap(),
-            net_of_transfers: pb.net_of_transfers,
+            assessment_method: match pb.net_of_transfers {
+                true => FeeAssessmentMethod::Exclusive,
+                false => FeeAssessmentMethod::Inclusive,
+            },
             maximum_amount: pb.maximum_amount,
             minimum_amount: pb.minimum_amount,
         })
@@ -298,7 +305,7 @@ impl ToProtobuf for FractionalFeeData {
             fractional_amount: Some(Fraction::new(self.numerator, self.denominator).into()),
             minimum_amount: self.minimum_amount,
             maximum_amount: self.maximum_amount,
-            net_of_transfers: self.net_of_transfers,
+            net_of_transfers: matches!(self.assessment_method, FeeAssessmentMethod::Exclusive),
         }
     }
 }
@@ -347,4 +354,24 @@ impl ToProtobuf for RoyaltyFeeData {
             }),
         }
     }
+}
+
+/// Enum for the fee assessment method.
+///
+/// The terminology here (exclusive vs inclusive) is borrowed from tax assessment.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
+pub enum FeeAssessmentMethod {
+    /// The recipient recieves the transfer amount, minus the fee.
+    ///
+    /// If Alice is paying Bob, and an `Inclusive` fractional fee is collected to be sent to Charlie,
+    /// the amount Alice declares she will pay in the transfer transaction *includes* the fee amount.
+    Inclusive,
+
+    /// The recipient recieves the whole transfer amount, and an extra fee is charged to the sender.
+    ///
+    /// If Alice is paying Bob, and an `Exclusive` fractional fee is collected to be sent to Charlie,
+    /// the amount Alice declares she will pay in the transfer transaction *does not include* the fee amount.
+    Exclusive,
 }

@@ -217,7 +217,7 @@ public struct FractionalFee: CustomFee, Codable, ValidateChecksums {
         amount: Rational<UInt64> = "1/1",
         minimumAmount: UInt64 = 0,
         maximumAmount: UInt64 = 0,
-        netOfTransfers: Bool = false,
+        assessmentMethod: FeeAssessmentMethod = .exclusive,
         feeCollectorAccountId: AccountId? = nil,
         allCollectorsAreExempt: Bool = false
     ) {
@@ -225,7 +225,7 @@ public struct FractionalFee: CustomFee, Codable, ValidateChecksums {
         self.numerator = amount.numerator
         self.minimumAmount = minimumAmount
         self.maximumAmount = maximumAmount
-        self.netOfTransfers = netOfTransfers
+        self.assessmentMethod = assessmentMethod
         self.feeCollectorAccountId = feeCollectorAccountId
         self.allCollectorsAreExempt = allCollectorsAreExempt
     }
@@ -305,23 +305,47 @@ public struct FractionalFee: CustomFee, Codable, ValidateChecksums {
 
     /// Whether the fee assessment should be in addition to the transfer amount or not.
     ///
-    /// If true, assesses the fee to the sender, so the receiver gets the full amount from the token
+    /// If `exclusive`, assesses the fee to the sender, so the receiver gets the full amount from the token
     /// transfer list, and the sender is charged an additional fee.
     ///
-    /// If false, the receiver does NOT get the full amount, but only what is left over after
+    /// If `inclusive`, the receiver does NOT get the full amount, but only what is left over after
     /// paying the fractional fee.
-    public var netOfTransfers: Bool
+    public var assessmentMethod: FeeAssessmentMethod
 
     /// Sets whether the fee assessment should be in addition to the transfer amount or not.
     @discardableResult
-    public mutating func netOfTransfers(_ netOfTransfers: Bool) -> Self {
-        self.netOfTransfers = netOfTransfers
+    public mutating func assessmentMethod(_ assessmentMethod: FeeAssessmentMethod) -> Self {
+        self.assessmentMethod = assessmentMethod
 
         return self
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try feeCollectorAccountId?.validateChecksums(on: ledgerId)
+    }
+}
+
+extension FractionalFee {
+    /// Enum for the fee assessment method.
+    ///
+    /// The terminology here (exclusive vs inclusive) is borrowed from tax assessment.
+    public enum FeeAssessmentMethod: Codable, Equatable, Hashable {
+        /// - Returns: `inclusive` if `false`, `exclusive` if `true`.
+        public init(netOfTransfers: Bool) {
+            self = netOfTransfers ? .exclusive : .inclusive
+        }
+
+        /// The recipient recieves the transfer amount, minus the fee.
+        ///
+        /// If Alice is paying Bob, and an `inclusive` fractional fee is collected to be sent to Charlie,
+        /// the amount Alice declares she will pay in the transfer transaction *includes* the fee amount.
+        case inclusive
+
+        /// The recipient recieves the whole transfer amount, and an extra fee is charged to the sender.
+        ///
+        /// If Alice is paying Bob, and an `exclusive` fractional fee is collected to be sent to Charlie,
+        /// the amount Alice declares she will pay in the transfer transaction *does not include* the fee amount.
+        case exclusive
     }
 }
 
