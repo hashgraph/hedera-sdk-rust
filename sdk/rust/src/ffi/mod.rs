@@ -26,7 +26,6 @@ mod c_util;
 mod callback;
 mod client;
 mod crypto;
-mod exchange_rates;
 mod execute;
 mod fee_schedules;
 mod key;
