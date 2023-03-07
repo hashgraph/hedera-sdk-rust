@@ -15,18 +15,7 @@ bench = false
 crate-type = ["lib", "staticlib"]
 
 [features]
-ffi = [
-  "cbindgen",
-  "libc",
-  "hedera-proto/serde",
-  "serde",
-  "serde_with",
-  "serde_json",
-  "time/serde",
-  "serde/derive",
-  "triomphe",
-  "rust_decimal/serde"
-]
+ffi = ["cbindgen", "libc", "hedera-proto/serde", "serde", "serde_with", "serde_json", "time/serde", "serde/derive", "triomphe", "rust_decimal/serde"]
 
 [dependencies]
 async-stream = "0.3.3"
@@ -59,6 +48,8 @@ tonic = "0.8.0"
 tinystr = "0.7.0"
 arc-swap = "1.6.0"
 triomphe = { version = "0.1.8", default-features = false, optional = true }
+itoa = "1.0.6"
+arrayvec = "0.7.2"
 
 [dependencies.rust_decimal]
 version = "1.26.1"

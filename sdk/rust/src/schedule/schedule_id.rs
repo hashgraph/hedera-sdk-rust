@@ -29,10 +29,11 @@ use std::str::FromStr;
 use hedera_proto::services;
 
 use crate::entity_id::{
-    Checksum,
+    format,
     ValidateChecksums,
 };
 use crate::{
+    Checksum,
     Client,
     EntityId,
     Error,
@@ -99,7 +100,7 @@ impl ScheduleId {
     /// # Errors
     /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
     pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
-        EntityId::to_string_with_checksum(self.to_string(), client)
+        EntityId::new(self.shard, self.realm, self.num).to_string_with_checksum(client)
     }
 
     /// Validates `self.checksum` (if it exists) for `client`.
@@ -132,7 +133,7 @@ impl Debug for ScheduleId {
 
 impl Display for ScheduleId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+        format::display(f, self.shard, self.realm, self.num)
     }
 }
 

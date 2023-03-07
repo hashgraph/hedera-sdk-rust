@@ -29,12 +29,13 @@ use std::str::FromStr;
 use hedera_proto::services;
 
 use crate::entity_id::{
-    Checksum,
+    format,
     PartialEntityId,
     ValidateChecksums,
 };
 use crate::evm_address::IdEvmAddress;
 use crate::{
+    Checksum,
     Client,
     EntityId,
     Error,
@@ -68,6 +69,12 @@ pub struct ContractId {
 }
 
 impl ContractId {
+    /// Returns `true` if self is a contract ID with just a shard.realm.num
+    #[must_use]
+    const fn is_simple(&self) -> bool {
+        self.evm_address.is_none()
+    }
+
     /// Create a `ContractId` from the given shard/realm/num
     #[must_use]
     pub fn new(shard: u64, realm: u64, num: u64) -> Self {
@@ -140,7 +147,7 @@ impl ContractId {
         if self.evm_address.is_some() {
             Err(Error::CannotToStringWithChecksum)
         } else {
-            EntityId::to_string_with_checksum(self.to_string(), client)
+            EntityId::new(self.shard, self.realm, self.num).to_string_with_checksum(client)
         }
     }
 
@@ -150,27 +157,27 @@ impl ContractId {
     /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no `ledger_id`.
     /// - [`Error::BadEntityId`] if there is a checksum, and the checksum is not valid for the client's `ledger_id`.
     pub fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
-        if self.evm_address.is_some() {
-            Ok(())
-        } else {
-            EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)
+        if !self.is_simple() {
+            return Ok(());
         }
+
+        EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)
     }
 }
 
 impl ValidateChecksums for ContractId {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
-        if self.evm_address.is_some() {
-            Ok(())
-        } else {
-            EntityId::validate_checksum_for_ledger_id(
-                self.shard,
-                self.realm,
-                self.num,
-                self.checksum,
-                ledger_id,
-            )
+        if !self.is_simple() {
+            return Ok(());
         }
+
+        EntityId::validate_checksum_for_ledger_id(
+            self.shard,
+            self.realm,
+            self.num,
+            self.checksum,
+            ledger_id,
+        )
     }
 }
 
@@ -183,10 +190,12 @@ impl Debug for ContractId {
 impl Display for ContractId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(address) = &self.evm_address {
-            write!(f, "{}.{}.{}", self.shard, self.realm, IdEvmAddress::from_ref(address))
+            write!(f, "{}.{}.{}", self.shard, self.realm, IdEvmAddress::from_ref(address))?;
         } else {
-            write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+            format::display(f, self.shard, self.realm, self.num)?;
         }
+
+        Ok(())
     }
 }
 

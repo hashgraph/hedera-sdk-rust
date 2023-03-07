@@ -21,9 +21,9 @@
 use std::error::Error as StdError;
 use std::result::Result as StdResult;
 
-use crate::entity_id::Checksum;
 use crate::{
     AccountId,
+    Checksum,
     Hbar,
     Status,
     TransactionId,

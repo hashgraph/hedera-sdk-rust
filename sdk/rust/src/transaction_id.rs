@@ -23,6 +23,7 @@ use std::fmt::{
     Debug,
     Display,
     Formatter,
+    Write,
 };
 use std::str::FromStr;
 
@@ -111,15 +112,19 @@ impl Debug for TransactionId {
 
 impl Display for TransactionId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}@{}.{}{}{}",
-            self.account_id,
-            self.valid_start.unix_timestamp(),
-            self.valid_start.nanosecond(),
-            if self.scheduled { "?scheduled" } else { "" },
-            self.nonce.map(|nonce| format!("/{nonce}")).as_deref().unwrap_or_default()
-        )
+        write!(f, "{}@", self.account_id)?;
+        f.write_str(itoa::Buffer::new().format(self.valid_start.unix_timestamp()))?;
+        f.write_str(itoa::Buffer::new().format(self.valid_start.nanosecond()))?;
+        if self.scheduled {
+            f.write_str("?scheduled")?;
+        }
+
+        if let Some(nonce) = self.nonce {
+            f.write_char('/')?;
+            f.write_str(itoa::Buffer::new().format(nonce))?;
+        }
+
+        Ok(())
     }
 }
 

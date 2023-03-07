@@ -30,7 +30,7 @@ use hedera_proto::services;
 use hedera_proto::services::account_id::Account;
 
 use crate::entity_id::{
-    Checksum,
+    format,
     PartialEntityId,
     ValidateChecksums,
 };
@@ -39,6 +39,7 @@ use crate::evm_address::{
     IdEvmAddress,
 };
 use crate::{
+    Checksum,
     Client,
     EntityId,
     Error,
@@ -140,7 +141,7 @@ impl AccountId {
         if self.alias.is_some() || self.evm_address.is_some() {
             Err(Error::CannotToStringWithChecksum)
         } else {
-            EntityId::to_string_with_checksum(self.to_string(), client)
+            EntityId::new(self.shard, self.realm, self.num).to_string_with_checksum(client)
         }
     }
 
@@ -188,9 +189,9 @@ impl Display for AccountId {
         if let Some(alias) = &self.alias {
             write!(f, "{}.{}.{}", self.shard, self.realm, alias)
         } else if let Some(evm_address) = &self.evm_address {
-            write!(f, "{evm_address}")
+            Display::fmt(evm_address, f)
         } else {
-            write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+            format::display(f, self.shard, self.realm, self.num)
         }
     }
 }

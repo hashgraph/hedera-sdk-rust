@@ -26,48 +26,105 @@ use std::fmt::{
 };
 use std::str::FromStr;
 
-use tinystr::TinyAsciiStr;
-
 use crate::evm_address::IdEvmAddress;
 use crate::{
+    Checksum,
     Client,
     Error,
     LedgerId,
 };
 
-#[derive(Hash, PartialEq, Eq, Clone, Copy)]
-pub struct Checksum(TinyAsciiStr<5>);
+/// Generic shard.realm.num formatting
+///
+/// This module serves two purposes
+/// 1. Code size (one implementation of formatting when `opt-level=z`)
+/// 2. Performance! This ducks the core::fmt machinary except when required (the display/debug functions).
+pub(crate) mod format {
+    use core::fmt;
 
-impl Checksum {
-    fn from_bytes(bytes: [u8; 5]) -> Checksum {
-        Checksum(TinyAsciiStr::from_bytes(&bytes).unwrap())
+    // 3 u64s (max length = 20), 2 separators (length = 1)
+    const MAX_CAPACITY: usize = 20 * 3 + 1 * 2;
+    pub(crate) struct Buffer(arrayvec::ArrayString<MAX_CAPACITY>);
+
+    impl Buffer {
+        #[inline(always)]
+        pub(crate) fn as_str(&self) -> &str {
+            self.0.as_str()
+        }
     }
 
-    #[cfg(feature = "ffi")]
-    pub(crate) const fn to_bytes(self) -> [u8; 5] {
-        *self.0.all_bytes()
+    impl std::ops::Deref for Buffer {
+        type Target = str;
+
+        fn deref(&self) -> &Self::Target {
+            self.as_str()
+        }
     }
-}
 
-impl FromStr for Checksum {
-    type Err = Error;
+    /// Formats a `shard`, `realm`, `num` in the format `{shard}.{realm}.{num}`
+    ///
+    /// Returns a stack-based string, it's not super cheap to pass around, so, prefer [`to_string`] if faster.
+    ///
+    /// # Performance
+    ///
+    /// This ends up cheaper than multiple `fmt::Write` calls for `display`/`debug` (which is good because reusing this is less agonizing)
+    #[inline]
+    pub(crate) fn format(shard: u64, realm: u64, num: u64) -> Buffer {
+        let mut buf = arrayvec::ArrayString::<MAX_CAPACITY>::new();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse()
-            .map(Checksum)
-            .map_err(|_| Error::basic_parse("Expected checksum to be exactly 5 characters"))
+        buf.push_str(itoa::Buffer::new().format(shard));
+        buf.push('.');
+        buf.push_str(itoa::Buffer::new().format(realm));
+        buf.push('.');
+        buf.push_str(itoa::Buffer::new().format(num));
+
+        Buffer(buf)
     }
-}
 
-impl Display for Checksum {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&self.0, f)
+    /// Formats an entity ID into a [`fmt::Formatter`] as [`fmt::Display`] would.
+    ///
+    /// Specifically the format is `{shard}.{realm}.{num}`
+    pub(crate) fn display(
+        f: &mut fmt::Formatter<'_>,
+        shard: u64,
+        realm: u64,
+        num: u64,
+    ) -> fmt::Result {
+        let buf = format(shard, realm, num);
+
+        f.write_str(buf.0.as_str())?;
+
+        Ok(())
     }
-}
 
-impl Debug for Checksum {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{self}\"")
+    /// formats a `shard`, `realm`, and `num` into the format `{shard}.{realm}.{num}` avoiding the format machinery.
+    ///
+    /// # Performance
+    ///
+    /// This has one exact-sized allocation,
+    /// and is probably at the limit for string formatting performance unless a better [`itoa`] algorithm is found.
+    ///
+    /// If you plan on using the string directly without passing it around, prefer [`format`].
+    pub(crate) fn to_string(shard: u64, realm: u64, num: u64) -> String {
+        // these need to be locals because we need to borrow them.
+        let [mut shard_buf, mut realm_buf, mut num_buf] =
+            [itoa::Buffer::new(), itoa::Buffer::new(), itoa::Buffer::new()];
+
+        // we store these as locals so that we can count the length to avoid both reallocs and wasting space.
+        let shard = shard_buf.format(shard);
+        let realm = realm_buf.format(realm);
+        let num = num_buf.format(num);
+
+        // 2 separators of 1 byte each.
+        let mut buf = String::with_capacity(shard.len() + realm.len() + num.len() + 1 * 2);
+
+        buf.push_str(shard);
+        buf.push('.');
+        buf.push_str(realm);
+        buf.push('.');
+        buf.push_str(num);
+
+        buf
     }
 }
 
@@ -101,7 +158,7 @@ pub struct EntityId {
     /// A non-negative number identifying the entity within the realm containing this entity.
     pub num: u64,
 
-    /// A checksum if the entity ID was read from a user inputted string which inclueded a checksum
+    /// A checksum if the entity ID was read from a user inputted string which included a checksum
     pub checksum: Option<Checksum>,
 }
 
@@ -165,6 +222,10 @@ impl<'a> PartialEntityId<'a> {
 }
 
 impl EntityId {
+    pub(crate) fn new(shard: u64, realm: u64, num: u64) -> Self {
+        Self { shard, realm, num, checksum: None }
+    }
+
     /// Parse an entity ID from a solidity address
     ///
     /// # Errors
@@ -181,51 +242,8 @@ impl EntityId {
         IdEvmAddress::try_from(self).map(|it| it.to_string())
     }
 
-    pub(crate) fn generate_checksum(entity_id_string: &str, ledger_id: &LedgerId) -> Checksum {
-        const P3: usize = 26 * 26 * 26; // 3 digits in base 26
-        const P5: usize = 26 * 26 * 26 * 26 * 26; // 5 digits in base 26
-        const M: usize = 1_000_003; // min prime greater than a million. Used for the final permutation.
-        const W: usize = 31; // Sum s of digit values weights them by powers of W. Should be coprime to P5.
-
-        let h = [ledger_id.to_bytes(), vec![0u8; 6]].concat();
-
-        // Digits with 10 for ".", so if addr == "0.0.123" then d == [0, 10, 0, 10, 1, 2, 3]
-        let d = entity_id_string.chars().map(|c| {
-            if c == '.' {
-                10_usize
-            } else {
-                c.to_digit(10).unwrap() as usize
-            }
-        });
-
-        let mut s = 0; // Weighted sum of all positions (mod P3)
-        let mut s0 = 0; // Sum of even positions (mod 11)
-        let mut s1 = 0; // Sum of odd positions (mod 11)
-        for (i, digit) in d.enumerate() {
-            s = (W * s + digit) % P3;
-            if i % 2 == 0 {
-                s0 = (s0 + digit) % 11;
-            } else {
-                s1 = (s1 + digit) % 11;
-            }
-        }
-
-        let mut sh = 0; // Hash of the ledger ID
-        for b in h {
-            sh = (W * sh + (b as usize)) % P5;
-        }
-
-        // The checksum, as a single number
-        let mut c = ((((entity_id_string.len() % 5) * 11 + s0) * 11 + s1) * P3 + s + sh) % P5;
-        c = (c * M) % P5;
-
-        let mut answer = [0_u8; 5];
-        for i in (0..5).rev() {
-            answer[i] = b'a' + ((c % 26) as u8);
-            c /= 26;
-        }
-
-        Checksum::from_bytes(answer)
+    pub(crate) fn generate_checksum(&self, ledger_id: &LedgerId) -> Checksum {
+        Checksum::generate(self, ledger_id.as_ref())
     }
 
     /// Validates that the the checksum computed for the given `shard.realm.num` matches the given checksum.
@@ -274,7 +292,8 @@ impl EntityId {
         ledger_id: &LedgerId,
     ) -> Result<(), Error> {
         let expected_checksum =
-            Self::generate_checksum(&format!("{shard}.{realm}.{num}"), ledger_id);
+            Self { shard, realm, num, checksum: None }.generate_checksum(ledger_id);
+
         if present_checksum == expected_checksum {
             Ok(())
         } else {
@@ -282,14 +301,18 @@ impl EntityId {
         }
     }
 
-    pub(crate) fn to_string_with_checksum(
-        mut entity_id_string: String,
-        client: &Client,
-    ) -> crate::Result<String> {
+    pub(crate) fn to_string_with_checksum(&self, client: &Client) -> crate::Result<String> {
         if let Some(ledger_id) = &*client.ledger_id_internal() {
-            let checksum = Self::generate_checksum(&entity_id_string, ledger_id);
+            let checksum = self.generate_checksum(ledger_id);
+
+            let mut entity_id_string = format::to_string(self.shard, self.realm, self.num);
+
+            // no need to overallocate, we have exactly `-abcde`.
+            // sadly this is guaranteed to realloc :/
+            entity_id_string.reserve_exact(6);
+
             entity_id_string.push('-');
-            entity_id_string.push_str(&checksum.0);
+            entity_id_string.push_str(checksum.as_str());
 
             Ok(entity_id_string)
         } else {
@@ -306,7 +329,7 @@ impl Debug for EntityId {
 
 impl Display for EntityId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
+        format::display(f, self.shard, self.realm, self.num)
     }
 }
 
@@ -329,7 +352,6 @@ mod tests {
     use crate::{
         EntityId,
         LedgerId,
-        TopicId,
     };
 
     #[test]
@@ -391,11 +413,8 @@ mod tests {
         ];
 
         for (index, expected) in EXPECTED.iter().enumerate() {
-            let actual = EntityId::generate_checksum(
-                &TopicId::from(index as u64).to_string(),
-                &LedgerId::mainnet(),
-            )
-            .to_string();
+            let actual =
+                EntityId::from(index as u64).generate_checksum(&LedgerId::mainnet()).to_string();
 
             assert_eq!(expected, &actual);
         }
@@ -436,11 +455,8 @@ mod tests {
         ];
 
         for (index, expected) in EXPECTED.iter().enumerate() {
-            let actual = EntityId::generate_checksum(
-                &TopicId::from(index as u64).to_string(),
-                &LedgerId::testnet(),
-            )
-            .to_string();
+            let actual =
+                EntityId::from(index as u64).generate_checksum(&LedgerId::testnet()).to_string();
 
             assert_eq!(expected, &actual);
         }

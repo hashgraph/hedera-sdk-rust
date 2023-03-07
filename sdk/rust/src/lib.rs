@@ -49,6 +49,7 @@
 mod protobuf;
 
 mod account;
+mod checksum;
 mod client;
 mod contract;
 mod entity_id;
@@ -58,7 +59,10 @@ mod evm_address;
 mod exchange_rates;
 mod execute;
 mod fee_schedules;
+#[cfg(feature = "ffi")]
+mod ffi;
 mod file;
+mod hbar;
 mod key;
 mod ledger_id;
 mod mirror_query;
@@ -87,12 +91,8 @@ mod transaction_receipt_query;
 mod transaction_record;
 mod transaction_record_query;
 mod transaction_response;
-mod transfer_transaction;
-
-#[cfg(feature = "ffi")]
-mod ffi;
-mod hbar;
 mod transfer;
+mod transfer_transaction;
 
 pub use account::{
     AccountAllowanceApproveTransaction,
@@ -110,6 +110,7 @@ pub use account::{
     AllProxyStakers,
     ProxyStaker,
 };
+pub use checksum::Checksum;
 pub use client::Client;
 pub(crate) use client::Operator;
 pub use contract::{

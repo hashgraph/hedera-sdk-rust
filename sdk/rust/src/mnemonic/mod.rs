@@ -19,7 +19,10 @@
  */
 
 use std::cmp::Ordering;
-use std::fmt;
+use std::fmt::{
+    self,
+    Write,
+};
 use std::str::FromStr;
 
 use fraction::{
@@ -227,7 +230,8 @@ impl fmt::Display for Mnemonic {
             f.write_str(first)?;
 
             for word in rest.iter() {
-                write!(f, " {word}")?;
+                f.write_char(' ')?;
+                f.write_str(word)?;
             }
         }
 
