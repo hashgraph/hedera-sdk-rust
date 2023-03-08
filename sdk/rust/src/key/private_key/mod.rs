@@ -528,10 +528,8 @@ impl PrivateKey {
         const HARDEND_MASK: u32 = 1 << 31;
         let index = index as u32;
 
-        let chain_code = match &self.0.chain_code {
-            Some(chain_code) => chain_code,
-            None => return Err(Error::key_derive("key is underivable")),
-        };
+        let chain_code =
+            self.0.chain_code.as_ref().ok_or_else(|| Error::key_derive("key is underivable"))?;
 
         match &self.0.data {
             PrivateKeyData::Ed25519(key) => {

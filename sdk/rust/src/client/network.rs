@@ -188,7 +188,12 @@ impl Network {
     pub(crate) fn node_indexes_for_ids(&self, ids: &[AccountId]) -> crate::Result<Vec<usize>> {
         let mut indexes = Vec::new();
         for id in ids {
-            indexes.push(self.map.get(id).copied().ok_or(Error::NodeAccountUnknown(*id))?);
+            indexes.push(
+                self.map
+                    .get(id)
+                    .copied()
+                    .ok_or_else(|| Error::NodeAccountUnknown(Box::new(*id)))?,
+            );
         }
 
         Ok(indexes)

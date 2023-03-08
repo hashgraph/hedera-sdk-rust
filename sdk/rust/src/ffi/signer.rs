@@ -74,7 +74,9 @@ pub struct Signer {
 
 impl Signer {
     pub(super) fn to_csigner(&self) -> CSigner {
+        // the dance here is because we actually want to own the public key (it's currently in a `Box`, we probably should replace it with a `)
         let public_key = *unsafe { self.public_key.as_ref() }.unwrap();
+        let public_key = Box::new(public_key);
         let sign_func = self.sign_func.unwrap();
         let free_signature_func = self.free_signature_func.unwrap();
         CSigner {
@@ -102,7 +104,7 @@ pub(super) type FreeSignatureFn =
     unsafe extern "C" fn(context: *mut c_void, signature: *mut u8, signature_size: size_t);
 
 pub(crate) struct CSigner {
-    public_key: PublicKey,
+    public_key: Box<PublicKey>,
     /// Safety: It must be safe to send `context` to other threads.
     /// Safety: It must be safe to share `context` between threads.
     context: *mut c_void,
@@ -113,7 +115,7 @@ pub(crate) struct CSigner {
 
 impl CSigner {
     pub(crate) fn public_key(&self) -> PublicKey {
-        self.public_key
+        *self.public_key
     }
 
     pub(crate) fn sign(&self, message: &[u8]) -> (PublicKey, Vec<u8>) {
@@ -133,7 +135,7 @@ impl CSigner {
             (self.free_signature_func)(self.context, signature.cast_mut(), signature_size);
         }
 
-        (self.public_key, signature_out)
+        (*self.public_key, signature_out)
     }
 }
 

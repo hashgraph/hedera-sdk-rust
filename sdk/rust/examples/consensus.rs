@@ -101,7 +101,7 @@ async fn main() -> anyhow::Result<()> {
         if latencies.len() == 100 {
             let avg: f64 = latencies.iter().copied().sum::<f64>() / (latencies.len() as f64);
 
-            println!("---- average latency: {:.5}s ----", avg);
+            println!("---- average latency: {avg:.5}s ----");
 
             latencies.clear();
         }

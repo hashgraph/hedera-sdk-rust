@@ -163,10 +163,7 @@ impl QueryExecute for TransactionReceiptQueryData {
         // without altering or freeing the memory from the response
 
         let receipt_status = {
-            let r = match &response.response {
-                Some(services::response::Response::TransactionGetReceipt(r)) => r,
-                _ => return false,
-            };
+            let Some(services::response::Response::TransactionGetReceipt(r)) = &response.response else { return false };
 
             match r.receipt.as_ref().and_then(|it| Status::from_i32(it.status)) {
                 Some(receipt_status) => receipt_status,
@@ -183,7 +180,7 @@ impl QueryExecute for TransactionReceiptQueryData {
 
         if self.validate_status && receipt.status != Status::Success {
             return Err(Error::ReceiptStatus {
-                transaction_id: self.transaction_id,
+                transaction_id: self.transaction_id.map(Box::new),
                 status: receipt.status,
             });
         }

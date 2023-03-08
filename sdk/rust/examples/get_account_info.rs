@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
         .execute(&client)
         .await?;
 
-    println!("info = {:#?}", info);
+    println!("info = {info:#?}");
 
     Ok(())
 }

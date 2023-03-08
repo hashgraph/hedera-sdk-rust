@@ -69,7 +69,7 @@ impl Execute for PingQuery {
 
     fn make_request(
         &self,
-        _transaction_id: &Option<crate::TransactionId>,
+        _transaction_id: Option<&crate::TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         const HEADER: services::QueryHeader = services::QueryHeader {
@@ -108,7 +108,7 @@ impl Execute for PingQuery {
         _response: Self::GrpcResponse,
         _context: Self::Context,
         _node_account_id: AccountId,
-        _transaction_id: Option<crate::TransactionId>,
+        _transaction_id: Option<&crate::TransactionId>,
     ) -> crate::Result<Self::Response> {
         Ok(())
     }
@@ -116,7 +116,7 @@ impl Execute for PingQuery {
     fn make_error_pre_check(
         &self,
         status: hedera_proto::services::ResponseCodeEnum,
-        _transaction_id: Option<crate::TransactionId>,
+        _transaction_id: Option<&crate::TransactionId>,
     ) -> crate::Error {
         crate::Error::QueryNoPaymentPreCheckStatus { status }
     }

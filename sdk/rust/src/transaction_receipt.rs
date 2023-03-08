@@ -134,7 +134,10 @@ impl TransactionReceipt {
     /// - [`Error::ReceiptStatus`] if `validate && self.status != Status::Ok`
     pub fn validate_status(&self, validate: bool) -> crate::Result<&Self> {
         if validate && self.status != Status::Ok {
-            Err(Error::ReceiptStatus { status: self.status, transaction_id: self.transaction_id })
+            Err(Error::ReceiptStatus {
+                status: self.status,
+                transaction_id: self.transaction_id.map(Box::new),
+            })
         } else {
             Ok(self)
         }
@@ -146,11 +149,8 @@ impl TransactionReceipt {
         children: Vec<Self>,
         transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self> {
-        let status = if let Some(status) = Status::from_i32(receipt.status) {
-            status
-        } else {
-            return Err(Error::ResponseStatusUnrecognized(receipt.status));
-        };
+        let status = Status::from_i32(receipt.status)
+            .ok_or(Error::ResponseStatusUnrecognized(receipt.status))?;
 
         let account_id = Option::from_protobuf(receipt.account_id)?;
         let file_id = Option::from_protobuf(receipt.file_id)?;
