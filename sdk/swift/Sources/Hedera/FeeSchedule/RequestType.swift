@@ -18,11 +18,11 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The functionality provided by Hedera.
-public enum RequestType: Codable {
+public enum RequestType {
     /// UNSPECIFIED - Need to keep first value as unspecified because first element is ignored and not parsed (0 is ignored by parser)
     case none
 
@@ -241,4 +241,170 @@ public enum RequestType: Codable {
 
     /// Execute a PRNG transaction.
     case utilPrng
+}
+
+extension RequestType: TryProtobufCodable {
+    internal typealias Protobuf = Proto_HederaFunctionality
+
+    // this literally can't be smaller.
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    internal init(protobuf proto: Protobuf) throws {
+        switch proto {
+        case .none: self = .none
+        case .cryptoTransfer: self = .cryptoTransfer
+        case .cryptoUpdate: self = .cryptoUpdate
+        case .cryptoDelete: self = .cryptoDelete
+        case .cryptoAddLiveHash: self = .cryptoAddLiveHash
+        case .cryptoDeleteLiveHash: self = .cryptoDeleteLiveHash
+        case .contractCall: self = .contractCall
+        case .contractCreate: self = .contractCreate
+        case .contractUpdate: self = .contractUpdate
+        case .fileCreate: self = .fileCreate
+        case .fileAppend: self = .fileAppend
+        case .fileUpdate: self = .fileUpdate
+        case .fileDelete: self = .fileDelete
+        case .cryptoGetAccountBalance: self = .cryptoGetAccountBalance
+        case .cryptoGetAccountRecords: self = .cryptoGetAccountRecords
+        case .cryptoGetInfo: self = .cryptoGetInfo
+        case .contractCallLocal: self = .contractCallLocal
+        case .contractGetInfo: self = .contractGetInfo
+        case .contractGetBytecode: self = .contractGetBytecode
+        case .getBySolidityID: self = .getBySolidityId
+        case .getByKey: self = .getByKey
+        case .cryptoGetLiveHash: self = .cryptoGetLiveHash
+        case .cryptoGetStakers: self = .cryptoGetStakers
+        case .fileGetContents: self = .fileGetContents
+        case .fileGetInfo: self = .fileGetInfo
+        case .transactionGetRecord: self = .transactionGetRecord
+        case .contractGetRecords: self = .contractGetRecords
+        case .cryptoCreate: self = .cryptoCreate
+        case .systemDelete: self = .systemDelete
+        case .systemUndelete: self = .systemUndelete
+        case .contractDelete: self = .contractDelete
+        case .freeze: self = .freeze
+        case .createTransactionRecord: self = .createTransactionRecord
+        case .cryptoAccountAutoRenew: self = .cryptoAccountAutoRenew
+        case .contractAutoRenew: self = .contractAutoRenew
+        case .getVersionInfo: self = .getVersionInfo
+        case .transactionGetReceipt: self = .transactionGetReceipt
+        case .consensusCreateTopic: self = .consensusCreateTopic
+        case .consensusUpdateTopic: self = .consensusUpdateTopic
+        case .consensusDeleteTopic: self = .consensusDeleteTopic
+        case .consensusGetTopicInfo: self = .consensusGetTopicInfo
+        case .consensusSubmitMessage: self = .consensusSubmitMessage
+        case .uncheckedSubmit: self = .uncheckedSubmit
+        case .tokenCreate: self = .tokenCreate
+        case .tokenGetInfo: self = .tokenGetInfo
+        case .tokenFreezeAccount: self = .tokenFreezeAccount
+        case .tokenUnfreezeAccount: self = .tokenUnfreezeAccount
+        case .tokenGrantKycToAccount: self = .tokenGrantKycToAccount
+        case .tokenRevokeKycFromAccount: self = .tokenRevokeKycFromAccount
+        case .tokenDelete: self = .tokenDelete
+        case .tokenUpdate: self = .tokenUpdate
+        case .tokenMint: self = .tokenMint
+        case .tokenBurn: self = .tokenBurn
+        case .tokenAccountWipe: self = .tokenAccountWipe
+        case .tokenAssociateToAccount: self = .tokenAssociateToAccount
+        case .tokenDissociateFromAccount: self = .tokenDissociateFromAccount
+        case .scheduleCreate: self = .scheduleCreate
+        case .scheduleDelete: self = .scheduleDelete
+        case .scheduleSign: self = .scheduleSign
+        case .scheduleGetInfo: self = .scheduleGetInfo
+        case .tokenGetAccountNftInfos: self = .tokenGetAccountNftInfos
+        case .tokenGetNftInfo: self = .tokenGetNftInfo
+        case .tokenGetNftInfos: self = .tokenGetNftInfos
+        case .tokenFeeScheduleUpdate: self = .tokenFeeScheduleUpdate
+        case .networkGetExecutionTime: self = .networkGetExecutionTime
+        case .tokenPause: self = .tokenPause
+        case .tokenUnpause: self = .tokenUnpause
+        case .cryptoApproveAllowance: self = .cryptoApproveAllowance
+        case .cryptoDeleteAllowance: self = .cryptoDeleteAllowance
+        case .getAccountDetails: self = .getAccountDetails
+        case .ethereumTransaction: self = .ethereumTransaction
+        case .nodeStakeUpdate: self = .nodeStakeUpdate
+        case .utilPrng: self = .utilPrng
+        case .UNRECOGNIZED(let code):
+            throw HError.fromProtobuf("unrecognized RequestType: `\(code)`")
+        }
+    }
+
+    // this literally can't be smaller.
+    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    internal func toProtobuf() -> Protobuf {
+        switch self {
+        case .none: return .none
+        case .cryptoTransfer: return .cryptoTransfer
+        case .cryptoUpdate: return .cryptoUpdate
+        case .cryptoDelete: return .cryptoDelete
+        case .cryptoAddLiveHash: return .cryptoAddLiveHash
+        case .cryptoDeleteLiveHash: return .cryptoDeleteLiveHash
+        case .contractCall: return .contractCall
+        case .contractCreate: return .contractCreate
+        case .contractUpdate: return .contractUpdate
+        case .fileCreate: return .fileCreate
+        case .fileAppend: return .fileAppend
+        case .fileUpdate: return .fileUpdate
+        case .fileDelete: return .fileDelete
+        case .cryptoGetAccountBalance: return .cryptoGetAccountBalance
+        case .cryptoGetAccountRecords: return .cryptoGetAccountRecords
+        case .cryptoGetInfo: return .cryptoGetInfo
+        case .contractCallLocal: return .contractCallLocal
+        case .contractGetInfo: return .contractGetInfo
+        case .contractGetBytecode: return .contractGetBytecode
+        case .getBySolidityId: return .getBySolidityID
+        case .getByKey: return .getByKey
+        case .cryptoGetLiveHash: return .cryptoGetLiveHash
+        case .cryptoGetStakers: return .cryptoGetStakers
+        case .fileGetContents: return .fileGetContents
+        case .fileGetInfo: return .fileGetInfo
+        case .transactionGetRecord: return .transactionGetRecord
+        case .contractGetRecords: return .contractGetRecords
+        case .cryptoCreate: return .cryptoCreate
+        case .systemDelete: return .systemDelete
+        case .systemUndelete: return .systemUndelete
+        case .contractDelete: return .contractDelete
+        case .freeze: return .freeze
+        case .createTransactionRecord: return .createTransactionRecord
+        case .cryptoAccountAutoRenew: return .cryptoAccountAutoRenew
+        case .contractAutoRenew: return .contractAutoRenew
+        case .getVersionInfo: return .getVersionInfo
+        case .transactionGetReceipt: return .transactionGetReceipt
+        case .consensusCreateTopic: return .consensusCreateTopic
+        case .consensusUpdateTopic: return .consensusUpdateTopic
+        case .consensusDeleteTopic: return .consensusDeleteTopic
+        case .consensusGetTopicInfo: return .consensusGetTopicInfo
+        case .consensusSubmitMessage: return .consensusSubmitMessage
+        case .uncheckedSubmit: return .uncheckedSubmit
+        case .tokenCreate: return .tokenCreate
+        case .tokenGetInfo: return .tokenGetInfo
+        case .tokenFreezeAccount: return .tokenFreezeAccount
+        case .tokenUnfreezeAccount: return .tokenUnfreezeAccount
+        case .tokenGrantKycToAccount: return .tokenGrantKycToAccount
+        case .tokenRevokeKycFromAccount: return .tokenRevokeKycFromAccount
+        case .tokenDelete: return .tokenDelete
+        case .tokenUpdate: return .tokenUpdate
+        case .tokenMint: return .tokenMint
+        case .tokenBurn: return .tokenBurn
+        case .tokenAccountWipe: return .tokenAccountWipe
+        case .tokenAssociateToAccount: return .tokenAssociateToAccount
+        case .tokenDissociateFromAccount: return .tokenDissociateFromAccount
+        case .scheduleCreate: return .scheduleCreate
+        case .scheduleDelete: return .scheduleDelete
+        case .scheduleSign: return .scheduleSign
+        case .scheduleGetInfo: return .scheduleGetInfo
+        case .tokenGetAccountNftInfos: return .tokenGetAccountNftInfos
+        case .tokenGetNftInfo: return .tokenGetNftInfo
+        case .tokenGetNftInfos: return .tokenGetNftInfos
+        case .tokenFeeScheduleUpdate: return .tokenFeeScheduleUpdate
+        case .networkGetExecutionTime: return .networkGetExecutionTime
+        case .tokenPause: return .tokenPause
+        case .tokenUnpause: return .tokenUnpause
+        case .cryptoApproveAllowance: return .cryptoApproveAllowance
+        case .cryptoDeleteAllowance: return .cryptoDeleteAllowance
+        case .getAccountDetails: return .getAccountDetails
+        case .ethereumTransaction: return .ethereumTransaction
+        case .nodeStakeUpdate: return .nodeStakeUpdate
+        case .utilPrng: return .utilPrng
+        }
+    }
 }
