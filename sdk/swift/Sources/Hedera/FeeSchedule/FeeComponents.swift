@@ -18,11 +18,11 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The different components used for fee calculation.
-public struct FeeComponents: Codable {
+public struct FeeComponents {
     public init(
         min: UInt64,
         max: UInt64,
@@ -85,17 +85,46 @@ public struct FeeComponents: Codable {
     public var responseDiskByte: UInt64
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension FeeComponents: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_fee_components_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_fee_components_to_bytes }
+extension FeeComponents: ProtobufCodable {
+    internal typealias Protobuf = Proto_FeeComponents
+
+    internal init(protobuf proto: Proto_FeeComponents) {
+        self.init(
+            min: UInt64(proto.min),
+            max: UInt64(proto.max),
+            constant: UInt64(proto.constant),
+            bandwidthByte: UInt64(proto.bpt),
+            verification: UInt64(proto.vpt),
+            storageByteHour: UInt64(proto.sbh),
+            ramByteHour: UInt64(proto.rbh),
+            contractTransactionGas: UInt64(proto.gas),
+            transferVolumeHbar: UInt64(proto.tv),
+            responseMemoryByte: UInt64(proto.bpr),
+            responseDiskByte: UInt64(proto.sbpr)
+        )
+    }
+
+    internal func toProtobuf() -> Proto_FeeComponents {
+        .with { proto in
+            proto.min = Int64(min)
+            proto.max = Int64(max)
+            proto.constant = Int64(constant)
+            proto.bpt = Int64(bandwidthByte)
+            proto.vpt = Int64(verification)
+            proto.sbh = Int64(storageByteHour)
+            proto.rbh = Int64(ramByteHour)
+            proto.gas = Int64(contractTransactionGas)
+            proto.tv = Int64(transferVolumeHbar)
+            proto.bpr = Int64(responseMemoryByte)
+            proto.sbpr = Int64(responseDiskByte)
+        }
+    }
 }

@@ -18,15 +18,15 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Contains the current and next `FeeSchedule`s.
 ///
 /// See the [Hedera documentation]
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/currentandnextfeeschedule
-public struct FeeSchedules: Codable {
+public struct FeeSchedules {
     public init(current: FeeSchedule? = nil, next: FeeSchedule? = nil) {
         self.current = current
         self.next = next
@@ -39,17 +39,33 @@ public struct FeeSchedules: Codable {
     public var next: FeeSchedule?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension FeeSchedules: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_fee_schedule_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_fee_schedule_to_bytes }
+extension FeeSchedules: TryProtobufCodable {
+    internal typealias Protobuf = Proto_CurrentAndNextFeeSchedule
+
+    internal init(protobuf proto: Protobuf) throws {
+        self.init(
+            current: proto.hasCurrentFeeSchedule ? try .fromProtobuf(proto.currentFeeSchedule) : nil,
+            next: proto.hasNextFeeSchedule ? try .fromProtobuf(proto.nextFeeSchedule) : nil
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let current = current?.toProtobuf() {
+                proto.currentFeeSchedule = current
+            }
+
+            if let next = next?.toProtobuf() {
+                proto.nextFeeSchedule = next
+            }
+        }
+    }
 }

@@ -27,7 +27,6 @@ mod callback;
 mod client;
 mod crypto;
 mod execute;
-mod fee_schedules;
 mod key;
 mod mnemonic;
 mod nft_id;
