@@ -701,7 +701,9 @@ mod tests {
                 .wipe_key(PublicKey::from_str(WIPE_KEY)?)
                 .supply_key(PublicKey::from_str(SUPPLY_KEY)?)
                 .freeze_default(false)
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
+                    1_656_352_251_277_559_886,
+                )?)
                 .auto_renew_account_id(AccountId::from_str("0.0.1002")?)
                 .auto_renew_period(Duration::days(90))
                 .token_memo("A memo")
@@ -736,7 +738,7 @@ mod tests {
             assert_eq!(data.freeze_default, false);
             assert_eq!(
                 data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
             );
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
             assert_eq!(data.token_memo, "A memo");

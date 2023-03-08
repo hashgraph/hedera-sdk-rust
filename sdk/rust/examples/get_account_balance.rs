@@ -22,12 +22,13 @@ use hedera::{AccountBalanceQuery, AccountId, Client};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let client = Client::for_testnet();
+    let client = Client::for_mainnet();
 
-    let id = AccountId::from(1001);
+    let id = AccountId::from(7);
 
     let ab = AccountBalanceQuery::new()
         .account_id(id)
+        // .node_account_ids([AccountId::from(7)])
         .execute(&client)
         .await?;
 

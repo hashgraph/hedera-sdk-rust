@@ -85,7 +85,7 @@ fn ed25519_legacy_derive_2() {
     )
     .unwrap();
 
-    let private_key_mhw = private_key.legacy_derive(0xffffffffff).unwrap();
+    let private_key_mhw = private_key.legacy_derive(0x00ff_ffff_ffff).unwrap();
 
     assert_eq!(private_key_mhw.to_string(), "302e020100300506032b6570042204206890dc311754ce9d3fc36bdf83301aa1c8f2556e035a6d0d13c2cccdbbab1242")
 }

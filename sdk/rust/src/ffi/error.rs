@@ -182,31 +182,17 @@ impl From<crate::Error> for ErrorDetails {
     fn from(value: crate::Error) -> Self {
         use crate::Error;
         match value {
-            Error::GrpcStatus(status) => return ErrorDetails::ErrorGrpcStatus(status.code() as i32),
-            Error::TransactionPreCheckStatus { status, transaction_id } => {
+            Error::GrpcStatus(status) => ErrorDetails::ErrorGrpcStatus(status.code() as i32),
+            Error::TransactionPreCheckStatus { status, transaction_id }
+            | Error::QueryPreCheckStatus { status, transaction_id }
+            | Error::QueryPaymentPreCheckStatus { status, transaction_id }
+            | Error::ReceiptStatus { status, transaction_id: Some(transaction_id) } => {
                 Self::ErrorStatusTransactionId {
                     status: status as i32,
-                    transaction_id: transaction_id.into(),
+                    transaction_id: (*transaction_id).into(),
                 }
             }
-            Error::TransactionNoIdPreCheckStatus { status } => {
-                Self::ErrorStatusNoTransactionId { status: status as i32 }
-            }
-            Error::QueryPreCheckStatus { status, transaction_id } => {
-                Self::ErrorStatusTransactionId {
-                    status: status as i32,
-                    transaction_id: transaction_id.into(),
-                }
-            }
-            Error::QueryPaymentPreCheckStatus { status, transaction_id } => {
-                Self::ErrorStatusTransactionId {
-                    status: status as i32,
-                    transaction_id: transaction_id.into(),
-                }
-            }
-            Error::QueryNoPaymentPreCheckStatus { status } => {
-                Self::ErrorStatusNoTransactionId { status: status as i32 }
-            }
+
             Error::MaxQueryPaymentExceeded { max_query_payment, query_cost } => {
                 Self::ErrorMaxQueryPaymentExceeded {
                     max_query_payment: max_query_payment.to_tinybars(),
@@ -222,13 +208,9 @@ impl From<crate::Error> for ErrorDetails {
                     expected_checksum: expected_checksum.to_bytes(),
                 }
             }
-            Error::ReceiptStatus { status, transaction_id: Some(transaction_id) } => {
-                Self::ErrorStatusTransactionId {
-                    status: status as i32,
-                    transaction_id: transaction_id.into(),
-                }
-            }
-            Error::ReceiptStatus { status, transaction_id: None } => {
+            Error::TransactionNoIdPreCheckStatus { status }
+            | Error::QueryNoPaymentPreCheckStatus { status }
+            | Error::ReceiptStatus { status, transaction_id: None } => {
                 Self::ErrorStatusNoTransactionId { status: status as i32 }
             }
             _ => ErrorDetails::None,
