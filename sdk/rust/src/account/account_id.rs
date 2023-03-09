@@ -27,17 +27,13 @@ use std::fmt::{
 use std::str::FromStr;
 
 use hedera_proto::services;
-use hedera_proto::services::account_id::Account;
 
 use crate::entity_id::{
     Checksum,
     PartialEntityId,
     ValidateChecksums,
 };
-use crate::evm_address::{
-    EvmAddress,
-    IdEvmAddress,
-};
+use crate::evm_address::EvmAddress;
 use crate::{
     Client,
     EntityId,
@@ -205,11 +201,11 @@ impl FromProtobuf<services::AccountId> for AccountId {
 
         let (num, alias, evm_address) = match account {
             services::account_id::Account::AccountNum(num) => (num, None, None),
-            services::account_id::Account::Alias(alias) => {
-                (0, Some(FromProtobuf::from_bytes(&alias)?), None)
-            }
-            Account::EvmAddress(evm_address) => {
-                (0, None, Some(IdEvmAddress::try_from(evm_address)?.0))
+            services::account_id::Account::Alias(bytes) => {
+                match <&EvmAddress>::try_from(bytes.as_slice()).ok() {
+                    Some(evm_address) => (0, None, Some(*evm_address)),
+                    None => (0, Some(FromProtobuf::from_bytes(&bytes)?), None),
+                }
             }
         };
 

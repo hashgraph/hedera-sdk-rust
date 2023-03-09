@@ -146,6 +146,8 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// The account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public var autoRenewAccountId: AccountId? {
         willSet {
             ensureNotFrozen()
@@ -154,6 +156,8 @@ public final class AccountUpdateTransaction: Transaction {
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     @discardableResult
     public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
         self.autoRenewAccountId = autoRenewAccountId

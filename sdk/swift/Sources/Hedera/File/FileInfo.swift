@@ -68,10 +68,14 @@ public final class FileInfo: Codable {
     public let ledgerId: LedgerId
 
     /// The auto renew period for this file.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public let autoRenewPeriod: Duration?
 
     /// The account to be used at this file's expiration time to extend the
     /// life of the file.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public let autoRenewAccountId: AccountId?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
@@ -88,8 +92,6 @@ extension FileInfo: TryProtobufCodable {
 
     internal convenience init(protobuf proto: Protobuf) throws {
         let expirationTime = proto.hasExpirationTime ? proto.expirationTime : nil
-        let autoRenewPeriod = proto.hasAutoRenewPeriod ? proto.autoRenewPeriod : nil
-        let autoRenewAccountId = proto.hasAutoRenewAccount ? proto.autoRenewAccount : nil
         self.init(
             fileId: .fromProtobuf(proto.fileID),
             size: UInt64(proto.size),
@@ -98,8 +100,8 @@ extension FileInfo: TryProtobufCodable {
             keys: try .fromProtobuf(proto.keys),
             fileMemo: proto.memo,
             ledgerId: LedgerId(proto.ledgerID),
-            autoRenewPeriod: .fromProtobuf(autoRenewPeriod),
-            autoRenewAccountId: try .fromProtobuf(autoRenewAccountId)
+            autoRenewPeriod: nil,
+            autoRenewAccountId: nil
         )
     }
 
@@ -114,6 +116,7 @@ extension FileInfo: TryProtobufCodable {
 
             proto.deleted = isDeleted
             proto.memo = fileMemo
+            proto.keys = keys.toProtobuf()
             proto.ledgerID = ledgerId.bytes
         }
     }

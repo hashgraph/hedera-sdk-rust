@@ -1186,6 +1186,10 @@ public enum Proto_ResponseCodeEnum: SwiftProtobuf.Enum {
   ///*
   /// The account cannot be modified. Account's key is not set
   case accountIsImmutable // = 331
+
+  ///*
+  /// An alias that is assigned to an account or contract cannot be assigned to another account or contract.
+  case aliasAlreadyAssigned // = 332
   case UNRECOGNIZED(Int)
 
   public init() {
@@ -1484,6 +1488,7 @@ public enum Proto_ResponseCodeEnum: SwiftProtobuf.Enum {
     case 329: self = .insufficientBalancesForRenewalFees
     case 330: self = .transactionHasUnknownFields
     case 331: self = .accountIsImmutable
+    case 332: self = .aliasAlreadyAssigned
     default: self = .UNRECOGNIZED(rawValue)
     }
   }
@@ -1780,6 +1785,7 @@ public enum Proto_ResponseCodeEnum: SwiftProtobuf.Enum {
     case .insufficientBalancesForRenewalFees: return 329
     case .transactionHasUnknownFields: return 330
     case .accountIsImmutable: return 331
+    case .aliasAlreadyAssigned: return 332
     case .UNRECOGNIZED(let i): return i
     }
   }
@@ -2081,6 +2087,7 @@ extension Proto_ResponseCodeEnum: CaseIterable {
     .insufficientBalancesForRenewalFees,
     .transactionHasUnknownFields,
     .accountIsImmutable,
+    .aliasAlreadyAssigned,
   ]
 }
 
@@ -2384,5 +2391,6 @@ extension Proto_ResponseCodeEnum: SwiftProtobuf._ProtoNameProviding {
     329: .same(proto: "INSUFFICIENT_BALANCES_FOR_RENEWAL_FEES"),
     330: .same(proto: "TRANSACTION_HAS_UNKNOWN_FIELDS"),
     331: .same(proto: "ACCOUNT_IS_IMMUTABLE"),
+    332: .same(proto: "ALIAS_ALREADY_ASSIGNED"),
   ]
 }
