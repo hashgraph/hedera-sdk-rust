@@ -131,6 +131,8 @@ public final class AccountCreateTransaction: Transaction {
 
     /// The account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public var autoRenewAccountId: AccountId? {
         willSet {
             ensureNotFrozen()
@@ -139,6 +141,8 @@ public final class AccountCreateTransaction: Transaction {
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `nil`, this account pays for its own auto renewal fee.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     @discardableResult
     public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
         self.autoRenewAccountId = autoRenewAccountId
@@ -177,6 +181,8 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// A key to be used as the account's alias.
+    ///
+    /// > Warning: This not supported on any mainnet at this time.
     public var alias: PublicKey? {
         willSet {
             ensureNotFrozen()
@@ -184,6 +190,8 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// Sets the key to be used as the account's alias.
+    ///
+    /// > Warning: This not supported on any mainnet at this time.
     @discardableResult
     public func alias(_ alias: PublicKey) -> Self {
         self.alias = alias
@@ -192,12 +200,17 @@ public final class AccountCreateTransaction: Transaction {
     }
 
     /// A 20-byte EVM address to be used as the account's evm address.
+    ///
+    /// > Warning: This not supported on any mainnet at this time.
     public var evmAddress: EvmAddress? {
         willSet {
             ensureNotFrozen()
         }
     }
 
+    /// Sets the 20-byte evm address to be used as the account's evm address.
+    ///
+    /// > Warning: This not supported on any mainnet at this time.
     @discardableResult
     public func evmAddress(_ evmAddress: EvmAddress) -> Self {
         self.evmAddress = evmAddress

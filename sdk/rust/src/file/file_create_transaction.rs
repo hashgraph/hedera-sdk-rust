@@ -139,12 +139,18 @@ impl FileCreateTransaction {
     }
 
     /// Returns the auto renew period for this file.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
         self.data().auto_renew_period
     }
 
     /// Sets the auto renew period for this file.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     pub fn auto_renew_period(&mut self, duration: Duration) -> &mut Self {
         self.data_mut().auto_renew_period = Some(duration);
         self
@@ -152,6 +158,9 @@ impl FileCreateTransaction {
 
     /// Returns the account to be used at the file's expiration time to extend the
     /// life of the file.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
         self.data().auto_renew_account_id
@@ -159,6 +168,9 @@ impl FileCreateTransaction {
 
     /// Sets the account to be used at the files's expiration time to extend the
     /// life of the file.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.data_mut().auto_renew_account_id = Some(id);
         self
@@ -229,8 +241,8 @@ impl FromProtobuf<services::FileCreateTransactionBody> for FileCreateTransaction
             file_memo: pb.memo,
             keys: Option::from_protobuf(pb.keys)?,
             contents: Some(pb.contents),
-            auto_renew_period: pb.auto_renew_period.map(Into::into),
-            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            auto_renew_period: None,
+            auto_renew_account_id: None,
             expiration_time: pb.expiration_time.map(Into::into),
         })
     }
@@ -241,8 +253,6 @@ impl ToProtobuf for FileCreateTransactionData {
 
     fn to_protobuf(&self) -> Self::Protobuf {
         services::FileCreateTransactionBody {
-            auto_renew_period: self.auto_renew_period.to_protobuf(),
-            auto_renew_account: self.auto_renew_account_id.to_protobuf(),
             expiration_time: self.expiration_time.to_protobuf(),
             keys: self.keys.to_protobuf(),
             contents: self.contents.clone().unwrap_or_default(),

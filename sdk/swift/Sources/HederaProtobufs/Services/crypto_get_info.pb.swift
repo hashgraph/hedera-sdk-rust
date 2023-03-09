@@ -282,26 +282,6 @@ public struct Proto_CryptoGetInfoResponse {
     /// Clears the value of `stakingInfo`. Subsequent reads from it will return its default value.
     public mutating func clearStakingInfo() {_uniqueStorage()._stakingInfo = nil}
 
-    ///*
-    /// If present, the account that will be charged for auto-renewal of this account. If not set,
-    /// or set to an account with zero hbar balance, the account's own hbar balance will be used to
-    /// cover auto-renewal fees.
-    public var autoRenewAccount: Proto_AccountID {
-      get {return _storage._autoRenewAccount ?? Proto_AccountID()}
-      set {_uniqueStorage()._autoRenewAccount = newValue}
-    }
-    /// Returns true if `autoRenewAccount` has been explicitly set.
-    public var hasAutoRenewAccount: Bool {return _storage._autoRenewAccount != nil}
-    /// Clears the value of `autoRenewAccount`. Subsequent reads from it will return its default value.
-    public mutating func clearAutoRenewAccount() {_uniqueStorage()._autoRenewAccount = nil}
-
-    ///*
-    /// List of virtual addresses each of which is an EVM address that maps to an ECDSA key pair a user must prove ownership of.
-    public var virtualAddresses: [Proto_VirtualAddress] {
-      get {return _storage._virtualAddresses}
-      set {_uniqueStorage()._virtualAddresses = newValue}
-    }
-
     public var unknownFields = SwiftProtobuf.UnknownStorage()
 
     public init() {}
@@ -433,8 +413,6 @@ extension Proto_CryptoGetInfoResponse.AccountInfo: SwiftProtobuf.Message, SwiftP
     20: .standard(proto: "ledger_id"),
     21: .standard(proto: "ethereum_nonce"),
     22: .standard(proto: "staking_info"),
-    23: .standard(proto: "auto_renew_account"),
-    24: .standard(proto: "virtual_addresses"),
   ]
 
   fileprivate class _StorageClass {
@@ -459,8 +437,6 @@ extension Proto_CryptoGetInfoResponse.AccountInfo: SwiftProtobuf.Message, SwiftP
     var _ledgerID: Data = Data()
     var _ethereumNonce: Int64 = 0
     var _stakingInfo: Proto_StakingInfo? = nil
-    var _autoRenewAccount: Proto_AccountID? = nil
-    var _virtualAddresses: [Proto_VirtualAddress] = []
 
     static let defaultInstance = _StorageClass()
 
@@ -488,8 +464,6 @@ extension Proto_CryptoGetInfoResponse.AccountInfo: SwiftProtobuf.Message, SwiftP
       _ledgerID = source._ledgerID
       _ethereumNonce = source._ethereumNonce
       _stakingInfo = source._stakingInfo
-      _autoRenewAccount = source._autoRenewAccount
-      _virtualAddresses = source._virtualAddresses
     }
   }
 
@@ -529,8 +503,6 @@ extension Proto_CryptoGetInfoResponse.AccountInfo: SwiftProtobuf.Message, SwiftP
         case 20: try { try decoder.decodeSingularBytesField(value: &_storage._ledgerID) }()
         case 21: try { try decoder.decodeSingularInt64Field(value: &_storage._ethereumNonce) }()
         case 22: try { try decoder.decodeSingularMessageField(value: &_storage._stakingInfo) }()
-        case 23: try { try decoder.decodeSingularMessageField(value: &_storage._autoRenewAccount) }()
-        case 24: try { try decoder.decodeRepeatedMessageField(value: &_storage._virtualAddresses) }()
         default: break
         }
       }
@@ -606,12 +578,6 @@ extension Proto_CryptoGetInfoResponse.AccountInfo: SwiftProtobuf.Message, SwiftP
       try { if let v = _storage._stakingInfo {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 22)
       } }()
-      try { if let v = _storage._autoRenewAccount {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 23)
-      } }()
-      if !_storage._virtualAddresses.isEmpty {
-        try visitor.visitRepeatedMessageField(value: _storage._virtualAddresses, fieldNumber: 24)
-      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -642,8 +608,6 @@ extension Proto_CryptoGetInfoResponse.AccountInfo: SwiftProtobuf.Message, SwiftP
         if _storage._ledgerID != rhs_storage._ledgerID {return false}
         if _storage._ethereumNonce != rhs_storage._ethereumNonce {return false}
         if _storage._stakingInfo != rhs_storage._stakingInfo {return false}
-        if _storage._autoRenewAccount != rhs_storage._autoRenewAccount {return false}
-        if _storage._virtualAddresses != rhs_storage._virtualAddresses {return false}
         return true
       }
       if !storagesAreEqual {return false}

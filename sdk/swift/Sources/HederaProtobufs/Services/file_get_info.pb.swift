@@ -73,24 +73,24 @@ public struct Proto_FileGetInfoResponse {
   /// Standard response from node to client, including the requested fields: cost, or state proof,
   /// or both, or neither
   public var header: Proto_ResponseHeader {
-    get {return _storage._header ?? Proto_ResponseHeader()}
-    set {_uniqueStorage()._header = newValue}
+    get {return _header ?? Proto_ResponseHeader()}
+    set {_header = newValue}
   }
   /// Returns true if `header` has been explicitly set.
-  public var hasHeader: Bool {return _storage._header != nil}
+  public var hasHeader: Bool {return self._header != nil}
   /// Clears the value of `header`. Subsequent reads from it will return its default value.
-  public mutating func clearHeader() {_uniqueStorage()._header = nil}
+  public mutating func clearHeader() {self._header = nil}
 
   ///*
   /// The information about the file
   public var fileInfo: Proto_FileGetInfoResponse.FileInfo {
-    get {return _storage._fileInfo ?? Proto_FileGetInfoResponse.FileInfo()}
-    set {_uniqueStorage()._fileInfo = newValue}
+    get {return _fileInfo ?? Proto_FileGetInfoResponse.FileInfo()}
+    set {_fileInfo = newValue}
   }
   /// Returns true if `fileInfo` has been explicitly set.
-  public var hasFileInfo: Bool {return _storage._fileInfo != nil}
+  public var hasFileInfo: Bool {return self._fileInfo != nil}
   /// Clears the value of `fileInfo`. Subsequent reads from it will return its default value.
-  public mutating func clearFileInfo() {_uniqueStorage()._fileInfo = nil}
+  public mutating func clearFileInfo() {self._fileInfo = nil}
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
@@ -148,28 +148,6 @@ public struct Proto_FileGetInfoResponse {
     /// The ledger ID the response was returned from; please see <a href="https://github.com/hashgraph/hedera-improvement-proposal/blob/master/HIP/hip-198.md">HIP-198</a> for the network-specific IDs.
     public var ledgerID: Data = Data()
 
-    ///*
-    /// If set, the account that is used to pay for auto-renewal of the file.
-    public var autoRenewAccount: Proto_AccountID {
-      get {return _autoRenewAccount ?? Proto_AccountID()}
-      set {_autoRenewAccount = newValue}
-    }
-    /// Returns true if `autoRenewAccount` has been explicitly set.
-    public var hasAutoRenewAccount: Bool {return self._autoRenewAccount != nil}
-    /// Clears the value of `autoRenewAccount`. Subsequent reads from it will return its default value.
-    public mutating func clearAutoRenewAccount() {self._autoRenewAccount = nil}
-
-    ///*
-    /// If an auto-renew account is in use, the added lifetime (in seconds) of each auto-renewal.
-    public var autoRenewPeriod: Proto_Duration {
-      get {return _autoRenewPeriod ?? Proto_Duration()}
-      set {_autoRenewPeriod = newValue}
-    }
-    /// Returns true if `autoRenewPeriod` has been explicitly set.
-    public var hasAutoRenewPeriod: Bool {return self._autoRenewPeriod != nil}
-    /// Clears the value of `autoRenewPeriod`. Subsequent reads from it will return its default value.
-    public mutating func clearAutoRenewPeriod() {self._autoRenewPeriod = nil}
-
     public var unknownFields = SwiftProtobuf.UnknownStorage()
 
     public init() {}
@@ -177,13 +155,12 @@ public struct Proto_FileGetInfoResponse {
     fileprivate var _fileID: Proto_FileID? = nil
     fileprivate var _expirationTime: Proto_Timestamp? = nil
     fileprivate var _keys: Proto_KeyList? = nil
-    fileprivate var _autoRenewAccount: Proto_AccountID? = nil
-    fileprivate var _autoRenewPeriod: Proto_Duration? = nil
   }
 
   public init() {}
 
-  fileprivate var _storage = _StorageClass.defaultInstance
+  fileprivate var _header: Proto_ResponseHeader? = nil
+  fileprivate var _fileInfo: Proto_FileGetInfoResponse.FileInfo? = nil
 }
 
 #if swift(>=5.5) && canImport(_Concurrency)
@@ -245,70 +222,36 @@ extension Proto_FileGetInfoResponse: SwiftProtobuf.Message, SwiftProtobuf._Messa
     2: .same(proto: "fileInfo"),
   ]
 
-  fileprivate class _StorageClass {
-    var _header: Proto_ResponseHeader? = nil
-    var _fileInfo: Proto_FileGetInfoResponse.FileInfo? = nil
-
-    static let defaultInstance = _StorageClass()
-
-    private init() {}
-
-    init(copying source: _StorageClass) {
-      _header = source._header
-      _fileInfo = source._fileInfo
-    }
-  }
-
-  fileprivate mutating func _uniqueStorage() -> _StorageClass {
-    if !isKnownUniquelyReferenced(&_storage) {
-      _storage = _StorageClass(copying: _storage)
-    }
-    return _storage
-  }
-
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    _ = _uniqueStorage()
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      while let fieldNumber = try decoder.nextFieldNumber() {
-        // The use of inline closures is to circumvent an issue where the compiler
-        // allocates stack space for every case branch when no optimizations are
-        // enabled. https://github.com/apple/swift-protobuf/issues/1034
-        switch fieldNumber {
-        case 1: try { try decoder.decodeSingularMessageField(value: &_storage._header) }()
-        case 2: try { try decoder.decodeSingularMessageField(value: &_storage._fileInfo) }()
-        default: break
-        }
+    while let fieldNumber = try decoder.nextFieldNumber() {
+      // The use of inline closures is to circumvent an issue where the compiler
+      // allocates stack space for every case branch when no optimizations are
+      // enabled. https://github.com/apple/swift-protobuf/issues/1034
+      switch fieldNumber {
+      case 1: try { try decoder.decodeSingularMessageField(value: &self._header) }()
+      case 2: try { try decoder.decodeSingularMessageField(value: &self._fileInfo) }()
+      default: break
       }
     }
   }
 
   public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    try withExtendedLifetime(_storage) { (_storage: _StorageClass) in
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every if/case branch local when no optimizations
-      // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
-      // https://github.com/apple/swift-protobuf/issues/1182
-      try { if let v = _storage._header {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
-      } }()
-      try { if let v = _storage._fileInfo {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
-      } }()
-    }
+    // The use of inline closures is to circumvent an issue where the compiler
+    // allocates stack space for every if/case branch local when no optimizations
+    // are enabled. https://github.com/apple/swift-protobuf/issues/1034 and
+    // https://github.com/apple/swift-protobuf/issues/1182
+    try { if let v = self._header {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 1)
+    } }()
+    try { if let v = self._fileInfo {
+      try visitor.visitSingularMessageField(value: v, fieldNumber: 2)
+    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
   public static func ==(lhs: Proto_FileGetInfoResponse, rhs: Proto_FileGetInfoResponse) -> Bool {
-    if lhs._storage !== rhs._storage {
-      let storagesAreEqual: Bool = withExtendedLifetime((lhs._storage, rhs._storage)) { (_args: (_StorageClass, _StorageClass)) in
-        let _storage = _args.0
-        let rhs_storage = _args.1
-        if _storage._header != rhs_storage._header {return false}
-        if _storage._fileInfo != rhs_storage._fileInfo {return false}
-        return true
-      }
-      if !storagesAreEqual {return false}
-    }
+    if lhs._header != rhs._header {return false}
+    if lhs._fileInfo != rhs._fileInfo {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
@@ -324,8 +267,6 @@ extension Proto_FileGetInfoResponse.FileInfo: SwiftProtobuf.Message, SwiftProtob
     5: .same(proto: "keys"),
     6: .same(proto: "memo"),
     7: .standard(proto: "ledger_id"),
-    8: .standard(proto: "auto_renew_account"),
-    9: .standard(proto: "auto_renew_period"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -341,8 +282,6 @@ extension Proto_FileGetInfoResponse.FileInfo: SwiftProtobuf.Message, SwiftProtob
       case 5: try { try decoder.decodeSingularMessageField(value: &self._keys) }()
       case 6: try { try decoder.decodeSingularStringField(value: &self.memo) }()
       case 7: try { try decoder.decodeSingularBytesField(value: &self.ledgerID) }()
-      case 8: try { try decoder.decodeSingularMessageField(value: &self._autoRenewAccount) }()
-      case 9: try { try decoder.decodeSingularMessageField(value: &self._autoRenewPeriod) }()
       default: break
       }
     }
@@ -374,12 +313,6 @@ extension Proto_FileGetInfoResponse.FileInfo: SwiftProtobuf.Message, SwiftProtob
     if !self.ledgerID.isEmpty {
       try visitor.visitSingularBytesField(value: self.ledgerID, fieldNumber: 7)
     }
-    try { if let v = self._autoRenewAccount {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 8)
-    } }()
-    try { if let v = self._autoRenewPeriod {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -391,8 +324,6 @@ extension Proto_FileGetInfoResponse.FileInfo: SwiftProtobuf.Message, SwiftProtob
     if lhs._keys != rhs._keys {return false}
     if lhs.memo != rhs.memo {return false}
     if lhs.ledgerID != rhs.ledgerID {return false}
-    if lhs._autoRenewAccount != rhs._autoRenewAccount {return false}
-    if lhs._autoRenewPeriod != rhs._autoRenewPeriod {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }
