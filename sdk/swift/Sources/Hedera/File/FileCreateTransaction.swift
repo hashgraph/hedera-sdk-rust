@@ -60,7 +60,11 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The memo associated with the file.
-    public var fileMemo: String = ""
+    public var fileMemo: String = "" {
+        willSet {
+            ensureNotFrozen(fieldName: "fileMemo")
+        }
+    }
 
     /// Sets the memo associated with the file.
     @discardableResult
@@ -73,7 +77,11 @@ public final class FileCreateTransaction: Transaction {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    public var keys: KeyList = []
+    public var keys: KeyList = [] {
+        willSet {
+            ensureNotFrozen(fieldName: "keys")
+        }
+    }
 
     /// Sets the keys for this file.
     ///
@@ -89,7 +97,11 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The bytes that are to be the contents of the file.
-    public var contents: Data = Data()
+    public var contents: Data = Data() {
+        willSet {
+            ensureNotFrozen(fieldName: "contents")
+        }
+    }
 
     /// Sets the bytes that are to be the contents of the file.
     @discardableResult
@@ -100,7 +112,11 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The auto renew period for this file.
-    public var autoRenewPeriod: Duration?
+    public var autoRenewPeriod: Duration? {
+        willSet {
+            ensureNotFrozen(fieldName: "autoRenewPeriod")
+        }
+    }
 
     /// Set the auto renew period for this file.
     public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
@@ -111,7 +127,11 @@ public final class FileCreateTransaction: Transaction {
 
     /// The account to be used at the files's expiration time to extend the
     /// life of the file.
-    public var autoRenewAccountId: AccountId?
+    public var autoRenewAccountId: AccountId? {
+        willSet {
+            ensureNotFrozen(fieldName: "autoRenewAccountId")
+        }
+    }
 
     /// Sets the account to be used at the files's expiration time to extend the
     /// life of the file.
@@ -122,8 +142,11 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The time at which this file should expire.
-    public var expirationTime: Timestamp? = Timestamp(
-        from: Calendar.current.date(byAdding: .day, value: 90, to: Date())!)
+    public var expirationTime: Timestamp? = .now + .days(90) {
+        willSet {
+            ensureNotFrozen(fieldName: "expirationTime")
+        }
+    }
 
     /// Sets the time at which this file should expire.
     @discardableResult

@@ -254,7 +254,7 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// ID of the node this account is staked to.
-    /// This is mutually exclusive with `staked_account_id`.
+    /// This is mutually exclusive with `stakedAccountId`.
     public var stakedNodeId: UInt64? {
         willSet {
             ensureNotFrozen()
@@ -262,7 +262,7 @@ public final class AccountUpdateTransaction: Transaction {
     }
 
     /// Sets the ID of the node this account is staked to.
-    /// This is mutually exclusive with `staked_account_id`.
+    /// This is mutually exclusive with `stakedAccountId`.
     @discardableResult
     public func stakedNodeId(_ stakedNodeId: UInt64) -> Self {
         self.stakedNodeId = stakedNodeId
