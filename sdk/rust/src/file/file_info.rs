@@ -94,9 +94,7 @@ impl FileInfo {
             deleted: self.is_deleted,
             memo: self.file_memo.clone(),
             ledger_id: self.ledger_id.to_bytes(),
-
-            // unimplemented fields
-            keys: None,
+            keys: Some(self.keys.to_protobuf()),
         }
         .encode_to_vec()
     }
