@@ -602,15 +602,8 @@ impl PrivateKey {
         }
     }
 
-    /// Recover a `PrivateKey` from a mnemonic phrase and a passphrase.
-    // this is specifically for the two `try_into`s which depend on `split_array_ref`.
-    // There *is* a 3rd unwrap for a "key is not derivable" error, but we construct a key that _is_ derivable.
-    // Any panic would indicate a bug in this crate or a dependency of it, not in user code.
-    #[allow(clippy::missing_panics_doc)]
-    #[must_use]
-    pub fn from_mnemonic(mnemonic: &crate::Mnemonic, passphrase: &str) -> PrivateKey {
-        let seed = mnemonic.to_seed(passphrase);
-
+    #[cfg(any(feature = "ffi", feature = "mnemonic"))]
+    pub(crate) fn from_mnemonic_seed(seed: &[u8]) -> Self {
         let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(b"ed25519 seed")
             .expect("hmac can take a seed of any size")
             .chain_update(seed)
@@ -636,6 +629,18 @@ impl PrivateKey {
         }
 
         key
+    }
+
+    /// Recover a `PrivateKey` from a mnemonic phrase and a passphrase.
+    // this is specifically for the two `try_into`s which depend on `split_array_ref`.
+    // There *is* a 3rd unwrap for a "key is not derivable" error, but we construct a key that _is_ derivable.
+    // Any panic would indicate a bug in this crate or a dependency of it, not in user code.
+    #[cfg(feature = "mnemonic")]
+    #[allow(clippy::missing_panics_doc)]
+    #[must_use]
+    pub fn from_mnemonic(mnemonic: &crate::Mnemonic, passphrase: &str) -> Self {
+        let seed = mnemonic.to_seed(passphrase);
+        Self::from_mnemonic_seed(&seed)
     }
 
     #[must_use]

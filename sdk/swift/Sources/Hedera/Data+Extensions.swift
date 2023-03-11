@@ -99,6 +99,14 @@ extension Data {
             try body(pointer.bindMemory(to: UInt8.self))
         }
     }
+
+    internal mutating func withUnsafeMutableTypedBytes<R>(_ body: (UnsafeMutableBufferPointer<UInt8>) throws -> R)
+        rethrows -> R
+    {
+        try self.withUnsafeMutableBytes { pointer in
+            try body(pointer.bindMemory(to: UInt8.self))
+        }
+    }
 }
 
 extension Data.Deallocator {
