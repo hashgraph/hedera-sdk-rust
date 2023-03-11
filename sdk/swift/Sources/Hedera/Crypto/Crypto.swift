@@ -1,6 +1,6 @@
 /*
  * ‌
- * Hedera Rust SDK
+ * Hedera Swift SDK
  * ​
  * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
  * ​
@@ -18,25 +18,15 @@
  * ‍
  */
 
-#[macro_use]
-mod error;
+// used as a namespace
+internal enum Crypto {}
 
-mod account_id;
-mod c_util;
-mod callback;
-mod client;
-mod crypto;
-mod execute;
-mod key;
-mod runtime;
-mod schedule_info;
-mod semantic_version;
-mod signer;
-mod timestamp;
-mod transaction;
-mod transaction_id;
-mod util;
+extension Crypto {
+    internal enum Hmac {
+        case sha2(Crypto.Sha2)
+        case sha3(Crypto.Sha3)
+    }
+}
 
-use account_id::AccountId;
-pub(crate) use signer::CSigner;
-use timestamp::Timestamp;
+extension Crypto.Hmac {
+}

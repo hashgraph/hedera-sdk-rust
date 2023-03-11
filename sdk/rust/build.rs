@@ -35,6 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     cbindgen::Builder::new()
         .with_config(Config {
             cpp_compat: true,
+            // pointer: cbindgen::PtrConfig { non_null_attribute: Some("_Nonnull".to_owned()) },
             enumeration: EnumConfig {
                 rename_variants: RenameRule::QualifiedScreamingSnakeCase,
                 ..Default::default()

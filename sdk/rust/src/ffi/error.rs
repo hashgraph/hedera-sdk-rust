@@ -50,7 +50,7 @@ pub(crate) fn set_last_error(error: crate::Error) {
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 #[repr(C)]
 pub enum Error {
-    Ok,
+    Ok = 0,
     TimedOut,
     GrpcStatus,
     FromProtobuf,
@@ -69,8 +69,6 @@ pub enum Error {
     ResponseStatusUnrecognized,
     ReceiptStatus,
     RequestParse,
-    MnemonicParse,
-    MnemonicEntropy,
     SignatureVerify,
     BadEntityId,
     CannotCreateChecksum,
@@ -98,8 +96,10 @@ impl Error {
             crate::Error::ResponseStatusUnrecognized(_) => Self::ResponseStatusUnrecognized,
             crate::Error::ReceiptStatus { .. } => Self::ReceiptStatus,
             crate::Error::RequestParse(_) => Self::RequestParse,
-            crate::Error::MnemonicParse { .. } => Self::MnemonicParse,
-            crate::Error::MnemonicEntropy(_) => Self::MnemonicEntropy,
+            #[cfg(feature = "mnemonic")]
+            crate::Error::MnemonicParse { .. } | crate::Error::MnemonicEntropy(_) => {
+                panic!("Mnemonics not supported on FFI")
+            }
             crate::Error::SignatureVerify(_) => Self::SignatureVerify,
             crate::Error::BadEntityId { .. } => Self::BadEntityId,
             crate::Error::CannotCreateChecksum => Self::CannotCreateChecksum,

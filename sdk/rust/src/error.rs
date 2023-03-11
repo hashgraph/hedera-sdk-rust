@@ -158,6 +158,7 @@ pub enum Error {
     ///
     /// the `Mnemonic` is provided because invalid `Mnemonics`
     /// can technically still provide valid [`PrivateKeys`](crate::PrivateKey).
+    #[cfg(feature = "mnemonic")]
     #[error("failed to parse a mnemonic: {reason}")]
     MnemonicParse {
         /// This error's source.
@@ -168,6 +169,7 @@ pub enum Error {
     },
 
     /// An error occurred while attempting to convert a [`Mnemonic`](crate::Mnemonic) to a [`PrivateKey`](crate::PrivateKey)
+    #[cfg(feature = "mnemonic")]
     #[error("failed to convert a mnemonic to entropy: {0}")]
     MnemonicEntropy(#[from] MnemonicEntropyError),
 
@@ -246,6 +248,7 @@ impl Error {
 }
 
 /// Failed to parse a mnemonic.
+#[cfg(feature = "mnemonic")]
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum MnemonicParseError {
@@ -269,6 +272,7 @@ pub enum MnemonicParseError {
 
 /// Failed to convert a [`Mnemonic`](crate::Mnemonic) to a [`PrivateKey`](crate::PrivateKey)
 // todo: find a better name before release.
+#[cfg(feature = "mnemonic")]
 #[derive(Debug, thiserror::Error)]
 #[non_exhaustive]
 pub enum MnemonicEntropyError {

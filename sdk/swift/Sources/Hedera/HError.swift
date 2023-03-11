@@ -76,34 +76,6 @@ private enum HederaErrorDetails {
 
 /// Represents any possible error from a fallible function in the Hedera SDK.
 public struct HError: Error, CustomStringConvertible {
-    /// An entity ID had an invalid checksum
-    public struct BadEntityId: Equatable, CustomStringConvertible {
-        /// The entity ID's shard.
-        public let shard: UInt64
-        /// The entity ID's realm.
-        public let realm: UInt64
-        /// The entity ID's num.
-        public let num: UInt64
-        /// The (invalid) checksum that was present on the entity ID.
-        public let presentChecksum: Checksum
-        /// The checksum that should've been present on the entity ID.
-        public let expectedChecksum: Checksum
-
-        fileprivate static func fromCHedera(_ error: HederaErrorBadEntityId_Body) -> Self {
-            Self(
-                shard: error.shard,
-                realm: error.realm,
-                num: error.num,
-                presentChecksum: Checksum(bytes: error.present_checksum),
-                expectedChecksum: Checksum(bytes: error.expected_checksum)
-            )
-        }
-
-        public var description: String {
-            "entity ID \(shard).\(realm).\(num)-\(presentChecksum) was incorrect"
-        }
-    }
-
     // https://developer.apple.com/documentation/swift/error#2845903
     public enum ErrorKind: Equatable {
         case timedOut
@@ -123,8 +95,8 @@ public struct HError: Error, CustomStringConvertible {
         case responseStatusUnrecognized
         case receiptStatus(status: Status, transactionId: TransactionId?)
         case requestParse
-        case mnemonicParse
-        case mnemonicEntropy
+        case mnemonicParse(reason: MnemonicParse, mnemonic: Mnemonic)
+        case mnemonicEntropy(MnemonicEntropy)
         case signatureVerify
         /// An entity ID had an invalid checksum
         case badEntityId(BadEntityId)
@@ -234,12 +206,6 @@ public struct HError: Error, CustomStringConvertible {
         case HEDERA_ERROR_REQUEST_PARSE:
             kind = .requestParse
 
-        case HEDERA_ERROR_MNEMONIC_PARSE:
-            kind = .mnemonicParse
-
-        case HEDERA_ERROR_MNEMONIC_ENTROPY:
-            kind = .mnemonicEntropy
-
         case HEDERA_ERROR_SIGNATURE_VERIFY:
             kind = .signatureVerify
 
@@ -279,6 +245,20 @@ public struct HError: Error, CustomStringConvertible {
         }
     }
 
+    internal static func mnemonicParse(_ error: MnemonicParse, _ mnemonic: Mnemonic) -> Self {
+        Self(
+            kind: .mnemonicParse(reason: error, mnemonic: mnemonic),
+            description: String(describing: error)
+        )
+    }
+
+    internal static func mnemonicEntropy(_ error: MnemonicEntropy) -> Self {
+        Self(
+            kind: .mnemonicEntropy(error),
+            description: String(describing: error)
+        )
+    }
+
     internal static func badEntityId(
         shard: UInt64, realm: UInt64, num: UInt64, presentChecksum: Checksum, expectedChecksum: Checksum
     ) -> Self {
@@ -298,5 +278,76 @@ public struct HError: Error, CustomStringConvertible {
 extension HError: LocalizedError {
     public var errorDescription: String? {
         description
+    }
+}
+
+extension HError {
+    /// An entity ID had an invalid checksum
+    public struct BadEntityId: Equatable, CustomStringConvertible {
+        /// The entity ID's shard.
+        public let shard: UInt64
+        /// The entity ID's realm.
+        public let realm: UInt64
+        /// The entity ID's num.
+        public let num: UInt64
+        /// The (invalid) checksum that was present on the entity ID.
+        public let presentChecksum: Checksum
+        /// The checksum that should've been present on the entity ID.
+        public let expectedChecksum: Checksum
+
+        fileprivate static func fromCHedera(_ error: HederaErrorBadEntityId_Body) -> Self {
+            Self(
+                shard: error.shard,
+                realm: error.realm,
+                num: error.num,
+                presentChecksum: Checksum(bytes: error.present_checksum),
+                expectedChecksum: Checksum(bytes: error.expected_checksum)
+            )
+        }
+
+        public var description: String {
+            "entity ID \(shard).\(realm).\(num)-\(presentChecksum) was incorrect"
+        }
+    }
+}
+
+extension HError {
+    public enum MnemonicParse: Equatable, CustomStringConvertible {
+        /// The mnemonic has an unexpected length.
+        case badLength(Int)
+        /// The mnemonic contains words that are not in the wordlist.
+        case unknownWords([Int])
+        /// The checksum for the mnemonic isn't as expected
+        case checksumMismatch(expected: UInt8, actual: UInt8)
+
+        public var description: String {
+            switch self {
+            case .badLength(let length):
+                return "bad length: expected `12` or `24` words, found `\(length)`"
+            case .unknownWords(let words):
+                return "unknown words at indecies: `\(words)`"
+            case .checksumMismatch(let expected, let actual):
+                return
+                    "checksum mismatch: expected `0x\(String(expected, radix: 16))`, found `0x\(String(actual, radix: 16))`"
+            }
+        }
+    }
+
+    public enum MnemonicEntropy: Equatable, CustomStringConvertible {
+        case badLength(expected: Int, actual: Int)
+        case checksumMismatch(expected: UInt8, actual: UInt8)
+        case legacyWithPassphrase
+
+        public var description: String {
+            switch self {
+            case .badLength(let expected, let actual):
+                return "bad length: expected `\(expected)` words, found \(actual) words"
+            case .checksumMismatch(let expected, let actual):
+                return
+                    "checksum mismatch: expected `0x\(String(expected, radix: 16))`, found `0x\(String(actual, radix: 16))`"
+            case .legacyWithPassphrase:
+                return "used a passphrase with a legacy mnemonic"
+            }
+        }
     }
 }
