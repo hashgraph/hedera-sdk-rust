@@ -82,13 +82,7 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         // don't need the six 0 bytes.
         let h = ledgerId.bytes
 
-        let d = entity.description.map { char -> Int in
-            if char == "." {
-                return 10
-            } else {
-                return char.wholeNumberValue!
-            }
-        }
+        let d = entity.description.map { $0 == "." ? 10 : $0.wholeNumberValue! }
 
         // Weighted sum of all positions (mod P3)
         var s = 0
@@ -128,7 +122,8 @@ public struct Checksum: LosslessStringConvertible, Hashable {
         var output: [UInt8] = [0, 0, 0, 0, 0]
 
         for i in (0..<5).reversed() {
-            output[i] = UInt8(0x61 + c % 26)
+            let asciiLowercaseA = 0x61
+            output[i] = UInt8(asciiLowercaseA + c % 26)
             c /= 26
         }
 

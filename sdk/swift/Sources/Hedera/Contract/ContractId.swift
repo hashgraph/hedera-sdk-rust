@@ -142,8 +142,10 @@ public struct ContractId: EntityId {
         }
     }
 
-    public func toStringWithChecksum(_ client: Client) -> String {
-        precondition(evmAddress == nil, "cannot create a checksum for a `ContractId` with an evmAddress")
+    public func toStringWithChecksum(_ client: Client) throws -> String {
+        guard evmAddress == nil else {
+            throw HError.cannotCreateChecksum
+        }
 
         return helper.toStringWithChecksum(client)
     }

@@ -426,13 +426,12 @@ impl<D: ValidateChecksums> Transaction<D> {
 
         if let Some(client) = client {
             if client.auto_validate_checksums() {
-                if let Some(ledger_id) = &*client.ledger_id_internal() {
-                    self.validate_checksums(ledger_id)?;
-                } else {
-                    return Err(crate::Error::CannotPerformTaskWithoutLedgerId {
-                        task: "validate checksums",
-                    });
-                }
+                let ledger_id = client.ledger_id_internal();
+                let ledger_id = ledger_id
+                    .as_ref()
+                    .expect("Client had auto_validate_checksums enabled but no ledger ID");
+
+                self.validate_checksums(ledger_id)?;
             }
         }
 

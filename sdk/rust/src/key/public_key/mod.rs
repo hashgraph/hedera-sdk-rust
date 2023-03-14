@@ -32,6 +32,8 @@ use std::str::FromStr;
 
 use ed25519_dalek::Verifier as _;
 use hedera_proto::services;
+use hmac::digest::generic_array::sequence::Split;
+use hmac::digest::generic_array::GenericArray;
 use k256::ecdsa;
 use k256::ecdsa::signature::DigestVerifier as _;
 use pkcs8::der::{
@@ -48,6 +50,7 @@ use crate::transaction::TransactionSources;
 use crate::{
     AccountId,
     Error,
+    EvmAddress,
     FromProtobuf,
     Transaction,
 };
@@ -293,7 +296,7 @@ impl PublicKey {
         hex::encode(self.to_bytes_raw())
     }
 
-    /// Creates an [`AccountId`] with the given `shard`, `realm`, and `self` as an [`alias`](AccountId::alias).
+    /// Creates an [`AccountId`] with the given `shard`, `realm`, and `self` as an [`alias`](AccountId.alias).
     ///
     /// # Examples
     ///
@@ -310,20 +313,26 @@ impl PublicKey {
         AccountId { shard, realm, alias: Some(*self), evm_address: None, num: 0, checksum: None }
     }
 
-    /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
+    /// Convert this public key into an evm address.
+    /// The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
     ///
-    /// # Errors
-    /// - [`Error::WrongKeyType`] if `!self.is_ecdsa()`
-    pub fn to_evm_address(&self) -> crate::Result<String> {
+    /// Returns `Some(evm_address)` if `self.is_ecdsa`, otherwise `None`.
+    #[must_use]
+    pub fn to_evm_address(&self) -> Option<EvmAddress> {
         if let PublicKeyData::Ecdsa(ecdsa_key) = &self.0 {
-            let hash = sha3::Keccak256::digest(ecdsa_key.to_encoded_point(true).to_bytes());
-            Ok(format!("0x{}", hex::encode(&hash[12..32])))
+            // we specifically want the uncompressed form ...
+            let encoded_point = ecdsa_key.to_encoded_point(false);
+            let bytes = encoded_point.as_bytes();
+            // ... and without the tag (04):
+            let bytes = &bytes[1..];
+            let hash = sha3::Keccak256::digest(bytes);
+
+            let (_, sliced): (GenericArray<u8, hmac::digest::typenum::U12>, _) = hash.split();
+
+            let sliced: [u8; 20] = sliced.into();
+            Some(EvmAddress::from(sliced))
         } else {
-            Err(Error::WrongKeyType {
-                task: "convert to evm address",
-                key_enum: "PublicKey",
-                key_variant: "Ed25519",
-            })
+            None
         }
     }
 
