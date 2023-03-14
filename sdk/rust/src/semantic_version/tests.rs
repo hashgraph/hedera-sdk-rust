@@ -265,8 +265,8 @@ mod display {
                 major: 1,
                 minor: 2,
                 patch: 3,
-                prerelease: "".to_owned(),
-                build: "".to_owned(),
+                prerelease: String::new(),
+                build: String::new(),
             },
             expect!["1.2.3"],
         )
@@ -280,7 +280,7 @@ mod display {
                 minor: 1,
                 patch: 4,
                 prerelease: "15.92".to_owned(),
-                build: "".to_owned(),
+                build: String::new(),
             },
             expect!["3.1.4-15.92"],
         )
@@ -293,7 +293,7 @@ mod display {
                 major: 1,
                 minor: 41,
                 patch: 1,
-                prerelease: "".to_owned(),
+                prerelease: String::new(),
                 build: "6535asd".to_owned(),
             },
             expect!["1.41.1+6535asd"],

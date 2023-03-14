@@ -188,13 +188,13 @@ where
 
     fn make_request(
         &self,
-        transaction_id: &Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         assert!(self.is_frozen());
 
         Ok(self.make_request_inner(&ChunkInfo::single(
-            transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
+            *transaction_id.ok_or(Error::NoPayerAccountOrTransactionId)?,
             node_account_id,
         )))
     }
@@ -212,11 +212,11 @@ where
         _response: Self::GrpcResponse,
         transaction_hash: Self::Context,
         node_account_id: AccountId,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self::Response> {
         Ok(TransactionResponse {
             node_account_id,
-            transaction_id: transaction_id.unwrap(),
+            transaction_id: *transaction_id.unwrap(),
             transaction_hash,
             validate_status: true,
         })
@@ -225,10 +225,13 @@ where
     fn make_error_pre_check(
         &self,
         status: crate::Status,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Error {
         if let Some(transaction_id) = transaction_id {
-            crate::Error::TransactionPreCheckStatus { status, transaction_id }
+            crate::Error::TransactionPreCheckStatus {
+                status,
+                transaction_id: Box::new(*transaction_id),
+            }
         } else {
             crate::Error::TransactionNoIdPreCheckStatus { status }
         }
@@ -382,10 +385,10 @@ impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> 
 
     fn make_request(
         &self,
-        transaction_id: &Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
-        debug_assert_eq!(transaction_id, &self.transaction_id());
+        debug_assert_eq!(transaction_id, self.transaction_id().as_ref());
 
         let index = *self.indecies_by_node_id.get(&node_account_id).unwrap();
         Ok((self.chunk.transactions()[index].clone(), self.chunk.transaction_hashes()[index]))
@@ -404,7 +407,7 @@ impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> 
         response: Self::GrpcResponse,
         context: Self::Context,
         node_account_id: AccountId,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self::Response> {
         self.transaction.make_response(response, context, node_account_id, transaction_id)
     }
@@ -412,7 +415,7 @@ impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> 
     fn make_error_pre_check(
         &self,
         status: crate::Status,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Error {
         self.transaction.make_error_pre_check(status, transaction_id)
     }

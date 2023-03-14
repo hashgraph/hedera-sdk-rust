@@ -304,7 +304,9 @@ mod tests {
                 .file_memo("File memo")
                 .keys([PublicKey::from_str(SIGN_KEY)?])
                 .contents("Hello, world!")
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?);
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
+                    1_656_352_251_277_559_886,
+                )?);
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
@@ -322,7 +324,7 @@ mod tests {
             assert_eq!(data.file_memo, "File memo");
             assert_eq!(
                 data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
             );
 
             let sign_key = assert_matches!(data.keys.unwrap().remove(0), Key::Single(public_key) => public_key);

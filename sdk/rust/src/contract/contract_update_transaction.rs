@@ -392,7 +392,9 @@ mod tests {
 
             transaction
                 .contract_id(ContractId::from(1001))
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
+                    1_656_352_251_277_559_886,
+                )?)
                 .admin_key(PublicKey::from_str(ADMIN_KEY)?)
                 .auto_renew_period(Duration::days(90))
                 .contract_memo("A contract memo")
@@ -418,7 +420,7 @@ mod tests {
             assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
             assert_eq!(
                 data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
             );
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
             assert_eq!(data.contract_memo.unwrap(), "A contract memo");

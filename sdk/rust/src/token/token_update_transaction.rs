@@ -526,7 +526,9 @@ mod tests {
                 .freeze_key(PublicKey::from_str(FREEZE_KEY)?)
                 .wipe_key(PublicKey::from_str(WIPE_KEY)?)
                 .supply_key(PublicKey::from_str(SUPPLY_KEY)?)
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
+                    1_656_352_251_277_559_886,
+                )?)
                 .auto_renew_account_id(AccountId::from(1003))
                 .auto_renew_period(Duration::days(90))
                 .token_memo("A new memo")
@@ -553,7 +555,7 @@ mod tests {
             assert_eq!(data.token_memo, "A new memo");
             assert_eq!(
                 data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
             );
 
             assert_eq!(data.treasury_account_id, Some(AccountId::from(1002)));

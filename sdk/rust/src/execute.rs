@@ -27,6 +27,7 @@ use prost::Message;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use time::OffsetDateTime;
+use tonic::metadata::AsciiMetadataValue;
 use tonic::transport::Channel;
 
 use crate::{
@@ -78,7 +79,7 @@ pub(crate) trait Execute: ValidateChecksums {
     /// `TransactionExpired`; in which case, the request cache is cleared.
     fn make_request(
         &self,
-        transaction_id: &Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)>;
 
@@ -96,14 +97,14 @@ pub(crate) trait Execute: ValidateChecksums {
         response: Self::GrpcResponse,
         context: Self::Context,
         node_account_id: AccountId,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self::Response>;
 
     /// Create an error from the given pre-check status.
     fn make_error_pre_check(
         &self,
         status: Status,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Error;
 
     /// Extract the pre-check status from the GRPC response.
@@ -212,6 +213,37 @@ where
     crate::retry(backoff, layer).await
 }
 
+fn map_tonic_error(status: tonic::Status, client: &Client, node_index: usize) -> retry::Error {
+    const MIME_HTML: &[u8] = b"text/html";
+
+    match status.code() {
+        // if the node says it isn't available, then we should just try again with a different node.
+        tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
+            // NOTE: this is an "unhealthy" node
+            client.network().mark_node_unhealthy(node_index);
+
+            // try the next node in our allowed list, immediately
+            retry::Error::Transient(status.into())
+        }
+
+        // todo: find a way to make this less fragile
+        // if this happens:
+        // the node is completely borked (we're probably seeing the load balancer's response),
+        // and we have no clue if the effect went through
+        tonic::Code::Internal
+            if status.metadata().get("content-type").map(AsciiMetadataValue::as_bytes)
+                == Some(MIME_HTML) =>
+        {
+            client.network().mark_node_unhealthy(node_index);
+
+            retry::Error::Permanent(status.into())
+        }
+
+        // fail immediately
+        _ => retry::Error::Permanent(status.into()),
+    }
+}
+
 async fn execute_single<E: Execute + Sync>(
     client: &Client,
     executable: &E,
@@ -222,43 +254,14 @@ async fn execute_single<E: Execute + Sync>(
     let (node_account_id, channel) = client.network().channel(node_index);
 
     let (request, context) = executable
-        .make_request(transaction_id, node_account_id)
+        .make_request(transaction_id.as_ref(), node_account_id)
         .map_err(crate::retry::Error::Permanent)?;
 
-    let response =
-        executable.execute(channel, request).await.map(tonic::Response::into_inner).map_err(
-            |status| {
-                const HACKY_MESSAGE: &str = concat!(
-                    "protocol error: ",
-                    "received message with invalid compression flag: ",
-                    "60 (valid flags are 0 and 1) ",
-                    "while receiving response with status: ",
-                    "503 Service Unavailable"
-                );
-                match status.code() {
-                    tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
-                        // NOTE: this is an "unhealthy" node
-                        client.network().mark_node_unhealthy(node_index);
-
-                        // try the next node in our allowed list, immediately
-                        retry::Error::Transient(status.into())
-                    }
-
-                    // todo: find a way to make this less fragile
-                    tonic::Code::Internal if status.message() == HACKY_MESSAGE => {
-                        // this node is completely borked, and we have no clue if the effect went through
-                        client.network().mark_node_unhealthy(node_index);
-
-                        retry::Error::Permanent(status.into())
-                    }
-
-                    _ => {
-                        // fail immediately
-                        retry::Error::Permanent(status.into())
-                    }
-                }
-            },
-        );
+    let response = executable
+        .execute(channel, request)
+        .await
+        .map(tonic::Response::into_inner)
+        .map_err(|status| map_tonic_error(status, client, node_index));
 
     let response = match response {
         Ok(response) => response,
@@ -270,27 +273,28 @@ async fn execute_single<E: Execute + Sync>(
     };
 
     let status = E::response_pre_check_status(&response)
-        .map_err(retry::Error::Permanent)
         .and_then(|status| {
             // not sure how to proceed, fail immediately
-            Status::from_i32(status)
-                .ok_or_else(|| retry::Error::Permanent(Error::ResponseStatusUnrecognized(status)))
-        })?;
+            Status::from_i32(status).ok_or_else(|| Error::ResponseStatusUnrecognized(status))
+        })
+        .map_err(retry::Error::Permanent)?;
 
     match status {
-        Status::Ok if executable.should_retry(&response) => {
-            Err(retry::Error::Transient(executable.make_error_pre_check(status, *transaction_id)))
-        }
+        Status::Ok if executable.should_retry(&response) => Err(retry::Error::Transient(
+            executable.make_error_pre_check(status, transaction_id.as_ref()),
+        )),
 
         Status::Ok => executable
-            .make_response(response, context, node_account_id, *transaction_id)
+            .make_response(response, context, node_account_id, transaction_id.as_ref())
             .map(ControlFlow::Break)
             .map_err(retry::Error::Permanent),
 
         Status::Busy | Status::PlatformNotActive => {
             // NOTE: this is a "busy" node
             // try the next node in our allowed list, immediately
-            Ok(ControlFlow::Continue(executable.make_error_pre_check(status, *transaction_id)))
+            Ok(ControlFlow::Continue(
+                executable.make_error_pre_check(status, transaction_id.as_ref()),
+            ))
         }
 
         Status::TransactionExpired if !has_explicit_transaction_id => {
@@ -298,17 +302,23 @@ async fn execute_single<E: Execute + Sync>(
             // re-generate the transaction ID and try again, immediately
             let _ = transaction_id.insert(client.generate_transaction_id().unwrap());
 
-            Ok(ControlFlow::Continue(executable.make_error_pre_check(status, *transaction_id)))
+            Ok(ControlFlow::Continue(
+                executable.make_error_pre_check(status, transaction_id.as_ref()),
+            ))
         }
 
         _ if executable.should_retry_pre_check(status) => {
             // conditional retry on pre-check should back-off and try again
-            Err(retry::Error::Transient(executable.make_error_pre_check(status, *transaction_id)))
+            Err(retry::Error::Transient(
+                executable.make_error_pre_check(status, transaction_id.as_ref()),
+            ))
         }
 
         _ => {
             // any other pre-check is an error that the user needs to fix, fail immediately
-            Err(retry::Error::Permanent(executable.make_error_pre_check(status, *transaction_id)))
+            Err(retry::Error::Permanent(
+                executable.make_error_pre_check(status, transaction_id.as_ref()),
+            ))
         }
     }
 }
