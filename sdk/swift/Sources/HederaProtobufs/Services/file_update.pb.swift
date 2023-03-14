@@ -81,29 +81,6 @@ public struct Proto_FileUpdateTransactionBody {
   /// Clears the value of `memo`. Subsequent reads from it will return its default value.
   public mutating func clearMemo() {self._memo = nil}
 
-  ///*
-  /// If set to the sentinel <tt>0.0.0</tt> AccountID, this field removes the file's auto-renew
-  /// account. Otherwise it updates the file's auto-renew account to the referenced account.
-  public var autoRenewAccount: Proto_AccountID {
-    get {return _autoRenewAccount ?? Proto_AccountID()}
-    set {_autoRenewAccount = newValue}
-  }
-  /// Returns true if `autoRenewAccount` has been explicitly set.
-  public var hasAutoRenewAccount: Bool {return self._autoRenewAccount != nil}
-  /// Clears the value of `autoRenewAccount`. Subsequent reads from it will return its default value.
-  public mutating func clearAutoRenewAccount() {self._autoRenewAccount = nil}
-
-  ///*
-  /// If an auto-renew account is in use, the lifetime to be added by each auto-renewal.
-  public var autoRenewPeriod: Proto_Duration {
-    get {return _autoRenewPeriod ?? Proto_Duration()}
-    set {_autoRenewPeriod = newValue}
-  }
-  /// Returns true if `autoRenewPeriod` has been explicitly set.
-  public var hasAutoRenewPeriod: Bool {return self._autoRenewPeriod != nil}
-  /// Clears the value of `autoRenewPeriod`. Subsequent reads from it will return its default value.
-  public mutating func clearAutoRenewPeriod() {self._autoRenewPeriod = nil}
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -112,8 +89,6 @@ public struct Proto_FileUpdateTransactionBody {
   fileprivate var _expirationTime: Proto_Timestamp? = nil
   fileprivate var _keys: Proto_KeyList? = nil
   fileprivate var _memo: SwiftProtobuf.Google_Protobuf_StringValue? = nil
-  fileprivate var _autoRenewAccount: Proto_AccountID? = nil
-  fileprivate var _autoRenewPeriod: Proto_Duration? = nil
 }
 
 #if swift(>=5.5) && canImport(_Concurrency)
@@ -132,8 +107,6 @@ extension Proto_FileUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
     3: .same(proto: "keys"),
     4: .same(proto: "contents"),
     5: .same(proto: "memo"),
-    6: .standard(proto: "auto_renew_account"),
-    7: .standard(proto: "auto_renew_period"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -147,8 +120,6 @@ extension Proto_FileUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
       case 3: try { try decoder.decodeSingularMessageField(value: &self._keys) }()
       case 4: try { try decoder.decodeSingularBytesField(value: &self.contents) }()
       case 5: try { try decoder.decodeSingularMessageField(value: &self._memo) }()
-      case 6: try { try decoder.decodeSingularMessageField(value: &self._autoRenewAccount) }()
-      case 7: try { try decoder.decodeSingularMessageField(value: &self._autoRenewPeriod) }()
       default: break
       }
     }
@@ -174,12 +145,6 @@ extension Proto_FileUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
     try { if let v = self._memo {
       try visitor.visitSingularMessageField(value: v, fieldNumber: 5)
     } }()
-    try { if let v = self._autoRenewAccount {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 6)
-    } }()
-    try { if let v = self._autoRenewPeriod {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 7)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -189,8 +154,6 @@ extension Proto_FileUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs._keys != rhs._keys {return false}
     if lhs.contents != rhs.contents {return false}
     if lhs._memo != rhs._memo {return false}
-    if lhs._autoRenewAccount != rhs._autoRenewAccount {return false}
-    if lhs._autoRenewPeriod != rhs._autoRenewPeriod {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

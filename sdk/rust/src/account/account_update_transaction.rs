@@ -207,6 +207,9 @@ impl AccountUpdateTransaction {
     }
 
     /// Returns the new auto renew account id.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
         self.data().auto_renew_account_id
@@ -214,6 +217,9 @@ impl AccountUpdateTransaction {
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.data_mut().auto_renew_account_id = Some(id);
         self
@@ -345,7 +351,7 @@ impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransa
             key: Option::from_protobuf(pb.key)?,
             receiver_signature_required,
             auto_renew_period: pb.auto_renew_period.map(Into::into),
-            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            auto_renew_account_id: None,
             proxy_account_id: Option::from_protobuf(pb.proxy_account_id)?,
             expiration_time: pb.expiration_time.map(Into::into),
             account_memo: pb.memo,
@@ -365,7 +371,6 @@ impl ToProtobuf for AccountUpdateTransactionData {
         let account_id = self.account_id.to_protobuf();
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
-        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
         let expiration_time = self.expiration_time.to_protobuf();
 
         let receiver_signature_required = self.receiver_signature_required.map(|required| {
@@ -390,7 +395,6 @@ impl ToProtobuf for AccountUpdateTransactionData {
             proxy_account_id: self.proxy_account_id.to_protobuf(),
             proxy_fraction: 0,
             auto_renew_period,
-            auto_renew_account,
             expiration_time,
             memo: self.account_memo.clone(),
             max_automatic_token_associations: self.max_automatic_token_associations.map(Into::into),
@@ -399,7 +403,6 @@ impl ToProtobuf for AccountUpdateTransactionData {
             receive_record_threshold_field: None,
             receiver_sig_required_field: receiver_signature_required,
             staked_id,
-            virtual_address_update: None, // TODO
         }
     }
 }

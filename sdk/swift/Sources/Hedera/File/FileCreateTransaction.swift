@@ -112,6 +112,8 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// The auto renew period for this file.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public var autoRenewPeriod: Duration? {
         willSet {
             ensureNotFrozen(fieldName: "autoRenewPeriod")
@@ -119,6 +121,8 @@ public final class FileCreateTransaction: Transaction {
     }
 
     /// Set the auto renew period for this file.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public func autoRenewPeriod(_ autoRenewPeriod: Duration) -> Self {
         self.autoRenewPeriod = autoRenewPeriod
 
@@ -127,6 +131,8 @@ public final class FileCreateTransaction: Transaction {
 
     /// The account to be used at the files's expiration time to extend the
     /// life of the file.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public var autoRenewAccountId: AccountId? {
         willSet {
             ensureNotFrozen(fieldName: "autoRenewAccountId")
@@ -135,6 +141,8 @@ public final class FileCreateTransaction: Transaction {
 
     /// Sets the account to be used at the files's expiration time to extend the
     /// life of the file.
+    ///
+    /// > Warning: This not supported on any hedera network at this time.
     public func autoRenewAccountId(_ autoRenewAccountId: AccountId) -> Self {
         self.autoRenewAccountId = autoRenewAccountId
 

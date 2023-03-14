@@ -165,22 +165,24 @@ extension AccountId: TryProtobufCodable {
         let shard = UInt64(proto.shardNum)
         let realm = UInt64(proto.realmNum)
 
-        if proto.alias.isEmpty {
-            if proto.evmAddress.isEmpty {
-                self.init(shard: shard, realm: realm, num: UInt64(proto.accountNum))
-            } else {
-                let evmAddress = try EvmAddress(proto.evmAddress)
-                self.init(evmAddress: evmAddress)
+        switch proto.account {
+        case .accountNum(let num):
+            self.init(shard: shard, realm: realm, num: UInt64(num))
+        // thanks swift.
+        case .alias(let data):
+            switch try? EvmAddress.fromBytes(data) {
+            case .some(let evmAddress): self.init(evmAddress: evmAddress)
+            case nil: self.init(shard: shard, realm: realm, alias: try PublicKey(protobufBytes: data))
             }
-        } else {
-            self.init(shard: shard, realm: realm, alias: try PublicKey(protobufBytes: proto.alias))
+
+        case nil: throw HError.fromProtobuf("Unexpected missing `account`")
         }
     }
 
     internal func toProtobuf() -> Protobuf {
         .with { proto in
             if let evmAddress = evmAddress {
-                proto.evmAddress = evmAddress.data
+                proto.alias = evmAddress.data
                 return
             }
 

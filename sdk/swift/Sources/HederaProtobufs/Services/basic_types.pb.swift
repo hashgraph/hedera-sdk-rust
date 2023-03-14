@@ -1005,32 +1005,24 @@ public struct Proto_AccountID {
   /// a protobuf Key message for any primitive key type. Currently only primitive key bytes are supported as an alias
   /// (ThresholdKey, KeyList, ContractID, and delegatable_contract_id are not supported)
   ///
+  /// May also be the ethereum account 20-byte EVM address to be used initially in place of the public key bytes. This EVM
+  /// address may be either the encoded form of the shard.realm.num or the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+  ///
   /// At most one account can ever have a given alias and it is used for account creation if it
   /// was automatically created using a crypto transfer. It will be null if an account is created normally.
   /// It is immutable once it is set for an account.
   ///
   /// If a transaction auto-creates the account, any further transfers to that alias will simply be deposited
   /// in that account, without creating anything, and with no creation fee being charged.
+  ///
+  /// If a transaction lazily-creates this account, a subsequent transaction will be required containing the public key bytes
+  /// that map to the EVM address bytes. The provided public key bytes will then serve as the final alias bytes.
   public var alias: Data {
     get {
       if case .alias(let v)? = account {return v}
       return Data()
     }
     set {account = .alias(newValue)}
-  }
-
-  ///*
-  /// The ethereum account 20-byte EVM address to be used initially in place of the public key bytes. This EVM
-  /// address may be either the encoded form of the shard.realm.num or the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
-  ///
-  /// If a transaction lazily-creates this account, a subsequent transaction will be required containing the public key bytes
-  /// that map to the EVM address bytes. Lazy account creates will only support the keccak-256 hash of a ECDSA_SECP256K1 primitive key form.
-  public var evmAddress: Data {
-    get {
-      if case .evmAddress(let v)? = account {return v}
-      return Data()
-    }
-    set {account = .evmAddress(newValue)}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -1048,20 +1040,19 @@ public struct Proto_AccountID {
     /// a protobuf Key message for any primitive key type. Currently only primitive key bytes are supported as an alias
     /// (ThresholdKey, KeyList, ContractID, and delegatable_contract_id are not supported)
     ///
+    /// May also be the ethereum account 20-byte EVM address to be used initially in place of the public key bytes. This EVM
+    /// address may be either the encoded form of the shard.realm.num or the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+    ///
     /// At most one account can ever have a given alias and it is used for account creation if it
     /// was automatically created using a crypto transfer. It will be null if an account is created normally.
     /// It is immutable once it is set for an account.
     ///
     /// If a transaction auto-creates the account, any further transfers to that alias will simply be deposited
     /// in that account, without creating anything, and with no creation fee being charged.
-    case alias(Data)
-    ///*
-    /// The ethereum account 20-byte EVM address to be used initially in place of the public key bytes. This EVM
-    /// address may be either the encoded form of the shard.realm.num or the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     ///
     /// If a transaction lazily-creates this account, a subsequent transaction will be required containing the public key bytes
-    /// that map to the EVM address bytes. Lazy account creates will only support the keccak-256 hash of a ECDSA_SECP256K1 primitive key form.
-    case evmAddress(Data)
+    /// that map to the EVM address bytes. The provided public key bytes will then serve as the final alias bytes.
+    case alias(Data)
 
   #if !swift(>=4.1)
     public static func ==(lhs: Proto_AccountID.OneOf_Account, rhs: Proto_AccountID.OneOf_Account) -> Bool {
@@ -1075,10 +1066,6 @@ public struct Proto_AccountID {
       }()
       case (.alias, .alias): return {
         guard case .alias(let l) = lhs, case .alias(let r) = rhs else { preconditionFailure() }
-        return l == r
-      }()
-      case (.evmAddress, .evmAddress): return {
-        guard case .evmAddress(let l) = lhs, case .evmAddress(let r) = rhs else { preconditionFailure() }
         return l == r
       }()
       default: return false
@@ -2762,24 +2749,6 @@ public struct Proto_StakingInfo {
   fileprivate var _stakePeriodStart: Proto_Timestamp? = nil
 }
 
-public struct Proto_VirtualAddress {
-  // SwiftProtobuf.Message conformance is added in an extension below. See the
-  // `Message` and `Message+*Additions` files in the SwiftProtobuf library for
-  // methods supported on all messages.
-
-  ///*
-  /// The 20-byte EVM address that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
-  public var address: Data = Data()
-
-  ///*
-  /// Flag if this address should now be set or is the default address on the account.
-  public var isDefault: Bool = false
-
-  public var unknownFields = SwiftProtobuf.UnknownStorage()
-
-  public init() {}
-}
-
 #if swift(>=5.5) && canImport(_Concurrency)
 extension Proto_TokenType: @unchecked Sendable {}
 extension Proto_SubType: @unchecked Sendable {}
@@ -2832,7 +2801,6 @@ extension Proto_TokenBalances: @unchecked Sendable {}
 extension Proto_TokenAssociation: @unchecked Sendable {}
 extension Proto_StakingInfo: @unchecked Sendable {}
 extension Proto_StakingInfo.OneOf_StakedID: @unchecked Sendable {}
-extension Proto_VirtualAddress: @unchecked Sendable {}
 #endif  // swift(>=5.5) && canImport(_Concurrency)
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
@@ -3043,7 +3011,6 @@ extension Proto_AccountID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplemen
     2: .same(proto: "realmNum"),
     3: .same(proto: "accountNum"),
     4: .same(proto: "alias"),
-    5: .standard(proto: "evm_address"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -3070,14 +3037,6 @@ extension Proto_AccountID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplemen
           self.account = .alias(v)
         }
       }()
-      case 5: try {
-        var v: Data?
-        try decoder.decodeSingularBytesField(value: &v)
-        if let v = v {
-          if self.account != nil {try decoder.handleConflictingOneOf()}
-          self.account = .evmAddress(v)
-        }
-      }()
       default: break
       }
     }
@@ -3102,10 +3061,6 @@ extension Proto_AccountID: SwiftProtobuf.Message, SwiftProtobuf._MessageImplemen
     case .alias?: try {
       guard case .alias(let v)? = self.account else { preconditionFailure() }
       try visitor.visitSingularBytesField(value: v, fieldNumber: 4)
-    }()
-    case .evmAddress?: try {
-      guard case .evmAddress(let v)? = self.account else { preconditionFailure() }
-      try visitor.visitSingularBytesField(value: v, fieldNumber: 5)
     }()
     case nil: break
     }
@@ -5094,44 +5049,6 @@ extension Proto_StakingInfo: SwiftProtobuf.Message, SwiftProtobuf._MessageImplem
     if lhs.pendingReward != rhs.pendingReward {return false}
     if lhs.stakedToMe != rhs.stakedToMe {return false}
     if lhs.stakedID != rhs.stakedID {return false}
-    if lhs.unknownFields != rhs.unknownFields {return false}
-    return true
-  }
-}
-
-extension Proto_VirtualAddress: SwiftProtobuf.Message, SwiftProtobuf._MessageImplementationBase, SwiftProtobuf._ProtoNameProviding {
-  public static let protoMessageName: String = _protobuf_package + ".VirtualAddress"
-  public static let _protobuf_nameMap: SwiftProtobuf._NameMap = [
-    1: .same(proto: "address"),
-    2: .standard(proto: "is_default"),
-  ]
-
-  public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
-    while let fieldNumber = try decoder.nextFieldNumber() {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch fieldNumber {
-      case 1: try { try decoder.decodeSingularBytesField(value: &self.address) }()
-      case 2: try { try decoder.decodeSingularBoolField(value: &self.isDefault) }()
-      default: break
-      }
-    }
-  }
-
-  public func traverse<V: SwiftProtobuf.Visitor>(visitor: inout V) throws {
-    if !self.address.isEmpty {
-      try visitor.visitSingularBytesField(value: self.address, fieldNumber: 1)
-    }
-    if self.isDefault != false {
-      try visitor.visitSingularBoolField(value: self.isDefault, fieldNumber: 2)
-    }
-    try unknownFields.traverse(visitor: &visitor)
-  }
-
-  public static func ==(lhs: Proto_VirtualAddress, rhs: Proto_VirtualAddress) -> Bool {
-    if lhs.address != rhs.address {return false}
-    if lhs.isDefault != rhs.isDefault {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

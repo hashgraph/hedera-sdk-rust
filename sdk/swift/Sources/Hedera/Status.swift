@@ -382,7 +382,7 @@ public enum Status: Equatable {
     /// The Topic ID specified is not in the system.
     case invalidTopicID  // = 150
 
-    /// A provided admin key was invalid.
+    /// A provided admin key was invalid. Verify the bytes for an Ed25519 public key are exactly 32 bytes; and the bytes for a compressed ECDSA(secp256k1) key are exactly 33 bytes, with the first byte either 0x02 or 0x03..
     case invalidAdminKey  // = 155
 
     /// A provided submit key was invalid.
@@ -903,6 +903,39 @@ public enum Status: Equatable {
     /// The staking account id or staking node id given is invalid or does not exist.
     case invalidStakingID  // = 322
 
+    /// Native staking, while implemented, has not yet enabled by the council.
+    case stakingNotEnabled  // = 323
+
+    /// The range provided in UtilPrng transaction is negative.
+    case invalidPrngRange  // = 324
+
+    /// The maximum number of entities allowed in the current price regime have been created.
+    case maxEntitiesInPriceRegimeHaveBeenCreated  // = 325
+
+    /// The full prefix signature for precompile is not valid
+    case invalidFullPrefixSignatureForPrecompile  // = 326
+
+    /// The combined balances of a contract and its auto-renew account (if any) did not cover
+    /// the rent charged for net new storage used in a transaction.
+    case insufficientBalancesForStorageRent  // = 327
+
+    /// A contract transaction tried to use more than the allowed number of child records, via
+    /// either system contract records or internal contract creations.
+    case maxChildRecordsExceeded  // = 328
+
+    /// The combined balances of a contract and its auto-renew account (if any) or balance of an account did not cover
+    /// the auto-renewal fees in a transaction.
+    case insufficientBalancesForRenewalFees  // = 329
+
+    /// A transaction's protobuf message includes unknown fields; could mean that a client
+    /// expects not-yet-released functionality to be available.
+    case transactionHasUnknownFields  // = 330
+
+    /// The account cannot be modified. Account's key is not set
+    case accountIsImmutable  // = 331
+
+    /// An alias that is assigned to an account or contract cannot be assigned to another account or contract.
+    case aliasAlreadyAssigned  // = 332
     // swift-format-ignore: AlwaysUseLowerCamelCase
     case UNRECOGNIZED(Int32)
 
@@ -1191,6 +1224,16 @@ public enum Status: Equatable {
         case 320: self = .proxyAccountIDFieldIsDeprecated
         case 321: self = .selfStakingIsNotAllowed
         case 322: self = .invalidStakingID
+        case 323: self = .stakingNotEnabled
+        case 324: self = .invalidPrngRange
+        case 325: self = .maxEntitiesInPriceRegimeHaveBeenCreated
+        case 326: self = .invalidFullPrefixSignatureForPrecompile
+        case 327: self = .insufficientBalancesForStorageRent
+        case 328: self = .maxChildRecordsExceeded
+        case 329: self = .insufficientBalancesForRenewalFees
+        case 330: self = .transactionHasUnknownFields
+        case 331: self = .accountIsImmutable
+        case 332: self = .aliasAlreadyAssigned
         default: self = .UNRECOGNIZED(rawValue)
         }
     }
@@ -1478,6 +1521,16 @@ public enum Status: Equatable {
         case .proxyAccountIDFieldIsDeprecated: return 320
         case .selfStakingIsNotAllowed: return 321
         case .invalidStakingID: return 322
+        case .stakingNotEnabled: return 323
+        case .invalidPrngRange: return 324
+        case .maxEntitiesInPriceRegimeHaveBeenCreated: return 325
+        case .invalidFullPrefixSignatureForPrecompile: return 326
+        case .insufficientBalancesForStorageRent: return 327
+        case .maxChildRecordsExceeded: return 328
+        case .insufficientBalancesForRenewalFees: return 329
+        case .transactionHasUnknownFields: return 330
+        case .accountIsImmutable: return 331
+        case .aliasAlreadyAssigned: return 332
         case .UNRECOGNIZED(let i): return i
         }
     }
@@ -1768,12 +1821,22 @@ extension Status: CaseIterable {
         .proxyAccountIDFieldIsDeprecated,
         .selfStakingIsNotAllowed,
         .invalidStakingID,
+        .stakingNotEnabled,
+        .invalidPrngRange,
+        .maxEntitiesInPriceRegimeHaveBeenCreated,
+        .invalidFullPrefixSignatureForPrecompile,
+        .insufficientBalancesForStorageRent,
+        .maxChildRecordsExceeded,
+        .insufficientBalancesForRenewalFees,
+        .transactionHasUnknownFields,
+        .accountIsImmutable,
+        .aliasAlreadyAssigned,
     ]
 }
 
 // minimal edit from proto-generated file:
 extension Status {
-    internal static var nameMap: NameMap {
+    internal static let nameMap: NameMap =
         [
             0: "OK",
             1: "INVALID_TRANSACTION",
@@ -2056,6 +2119,15 @@ extension Status {
             320: "PROXY_ACCOUNT_ID_FIELD_IS_DEPRECATED",
             321: "SELF_STAKING_IS_NOT_ALLOWED",
             322: "INVALID_STAKING_ID",
+            323: "STAKING_NOT_ENABLED",
+            324: "INVALID_PRNG_RANGE",
+            325: "MAX_ENTITIES_IN_PRICE_REGIME_HAVE_BEEN_CREATED",
+            326: "INVALID_FULL_PREFIX_SIGNATURE_FOR_PRECOMPILE",
+            327: "INSUFFICIENT_BALANCES_FOR_STORAGE_RENT",
+            328: "MAX_CHILD_RECORDS_EXCEEDED",
+            329: "INSUFFICIENT_BALANCES_FOR_RENEWAL_FEES",
+            330: "TRANSACTION_HAS_UNKNOWN_FIELDS",
+            331: "ACCOUNT_IS_IMMUTABLE",
+            332: "ALIAS_ALREADY_ASSIGNED",
         ]
-    }
 }
