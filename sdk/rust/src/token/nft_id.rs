@@ -108,20 +108,14 @@ impl FromStr for NftId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<&str>;
-        if s.contains('/') {
-            parts = s.split('/').collect();
-        } else if s.contains('@') {
-            parts = s.split('@').collect();
-        } else {
-            return Err(Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"));
-        }
+        let (token_id, serial) = s
+            .rsplit_once('/')
+            .or_else(|| s.rsplit_once('@'))
+            .ok_or_else(|| Error::basic_parse("unexpected NftId format - expected [token_id]/[serial_number] or [token_id]@[serial_number]"))?;
 
-        let serial = parts[1]
-            .parse()
-            .map_err(|_| Error::basic_parse("unexpected error - could not parse serial number"))?;
+        let serial = serial.parse().map_err(|_| Error::basic_parse("invalid serial number"))?;
 
-        Ok(Self { token_id: TokenId::from_str(parts[0])?, serial })
+        Ok(Self { token_id: TokenId::from_str(token_id)?, serial })
     }
 }
 
