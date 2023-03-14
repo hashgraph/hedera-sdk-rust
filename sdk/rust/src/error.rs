@@ -65,7 +65,7 @@ pub enum Error {
         /// The status that caused the [`Transaction`](crate::Transaction) to fail pre-check.
         status: Status,
         /// The `TransactionId` of the failed [`Transaction`](crate::Transaction) .
-        transaction_id: TransactionId,
+        transaction_id: Box<TransactionId>,
     },
 
     /// A transaction failed pre-check.
@@ -87,7 +87,7 @@ pub enum Error {
         /// The `Status` that caused the [`Query`](crate::Query) to fail pre-check.
         status: Status,
         /// The associated transaction's ID.
-        transaction_id: TransactionId,
+        transaction_id: Box<TransactionId>,
     },
 
     /// A [`Query`](crate::Query) failed pre-check.
@@ -102,7 +102,7 @@ pub enum Error {
         /// The `Status` that caused the [`Query`](crate::Query) to fail pre-check.
         status: Status,
         /// The associated `PaymentTransaction`'s `TransactionId`.
-        transaction_id: TransactionId,
+        transaction_id: Box<TransactionId>,
     },
 
     /// A [`Query`](crate::Query) failed pre-check.
@@ -215,7 +215,7 @@ pub enum Error {
 
     /// The associated node account was not found in the network.
     #[error("node account `{0}` was not found in the configured network")]
-    NodeAccountUnknown(AccountId),
+    NodeAccountUnknown(Box<AccountId>),
 
     /// Received an unrecognized status code from the Hedera Network.
     ///
@@ -230,7 +230,7 @@ pub enum Error {
         /// The Error's status code.
         status: Status,
         /// The [`Transaction`](crate::Transaction)'s ID.
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<Box<TransactionId>>,
     },
 
     /// Failed to sign a message.

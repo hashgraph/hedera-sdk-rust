@@ -371,15 +371,11 @@ impl PublicKey {
                 }
 
                 found = true;
-
-                let sig = match &sig_pair.signature {
-                    Some(Signature::EcdsaSecp256k1(it) | Signature::Ed25519(it)) => it,
-                    _ => {
+                let Some(Signature::EcdsaSecp256k1(sig) | Signature::Ed25519(sig)) = &sig_pair.signature else {
                         return Err(Error::signature_verify(
                             "Unsupported transaction signature type",
                         ))
-                    }
-                };
+                    };
 
                 self.verify(&transaction.signed_transaction_bytes, sig)?;
             }

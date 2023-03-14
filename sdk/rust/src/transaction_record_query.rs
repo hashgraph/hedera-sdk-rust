@@ -159,7 +159,7 @@ impl QueryExecute for TransactionRecordQueryData {
 
         if self.validate_status && record.receipt.status != Status::Success {
             return Err(Error::ReceiptStatus {
-                transaction_id: self.transaction_id,
+                transaction_id: self.transaction_id.map(Box::new),
                 status: record.receipt.status,
             });
         }

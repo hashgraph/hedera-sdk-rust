@@ -76,7 +76,7 @@ fn ed25519_from_str() {
         s
     };
 
-    assert_eq!(PK, s)
+    assert_eq!(PK, s);
 }
 
 // todo: The rest of these tests (it's a lot of work )

@@ -453,7 +453,9 @@ mod tests {
 
             transaction
                 .account_id(AccountId::from(1001))
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
+                    1_656_352_251_277_559_886,
+                )?)
                 .key(PublicKey::from_str(KEY)?)
                 .receiver_signature_required(true)
                 .auto_renew_period(Duration::days(90))
@@ -481,7 +483,7 @@ mod tests {
 
             assert_eq!(
                 data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
             );
             assert_eq!(data.receiver_signature_required.unwrap(), true);
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));

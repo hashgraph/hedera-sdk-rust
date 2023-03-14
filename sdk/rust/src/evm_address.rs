@@ -134,10 +134,7 @@ impl FromStr for IdEvmAddress {
 }
 
 fn error_len(bytes: usize) -> crate::Error {
-    Error::basic_parse(format!(
-        "expected 20 byte (40 character) evm address, got: `{}` bytes",
-        bytes
-    ))
+    Error::basic_parse(format!("expected 20 byte (40 character) evm address, got: `{bytes}` bytes"))
 }
 
 impl fmt::Debug for IdEvmAddress {

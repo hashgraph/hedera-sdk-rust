@@ -218,7 +218,7 @@ mod tests {
 
             transaction
                 .token_id(TokenId::from(1981))
-                .amount(8675309)
+                .amount(8_675_309)
                 .metadata(["Jenny I've got your number"]);
 
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
@@ -235,7 +235,7 @@ mod tests {
             let data = assert_matches!(transaction.data(), AnyTransactionData::TokenMint(transaction) => transaction);
 
             assert_eq!(data.token_id.unwrap(), TokenId::from(1981));
-            assert_eq!(data.amount, 8675309);
+            assert_eq!(data.amount, 8_675_309);
 
             let bytes: Vec<u8> = "Jenny I've got your number".into();
             assert_eq!(data.metadata, [bytes]);

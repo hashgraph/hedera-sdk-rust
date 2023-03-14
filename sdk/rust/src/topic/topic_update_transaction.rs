@@ -314,7 +314,9 @@ mod tests {
 
             transaction
                 .topic_id(TopicId::from(1001))
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?)
+                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
+                    1_656_352_251_277_559_886,
+                )?)
                 .topic_memo("A topic memo")
                 .admin_key(PublicKey::from_str(ADMIN_KEY)?)
                 .submit_key(PublicKey::from_str(SUBMIT_KEY)?)
@@ -337,7 +339,7 @@ mod tests {
             assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
             assert_eq!(
                 data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1656352251277559886)?
+                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
             );
             assert_eq!(data.topic_memo.unwrap(), "A topic memo");
             assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));

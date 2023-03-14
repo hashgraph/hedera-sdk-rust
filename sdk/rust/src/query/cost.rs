@@ -81,7 +81,7 @@ where
 
     fn make_request(
         &self,
-        _transaction_id: &Option<TransactionId>,
+        _transaction_id: Option<&TransactionId>,
         _node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
         let header = services::QueryHeader {
@@ -105,7 +105,7 @@ where
         response: Self::GrpcResponse,
         _context: Self::Context,
         _node_account_id: AccountId,
-        _transaction_id: Option<TransactionId>,
+        _transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self::Response> {
         let cost = Hbar::from_tinybars(response_header(&response.response)?.cost as Tinybar);
 
@@ -115,12 +115,15 @@ where
     fn make_error_pre_check(
         &self,
         status: crate::Status,
-        transaction_id: Option<TransactionId>,
+        transaction_id: Option<&TransactionId>,
     ) -> crate::Error {
         if let Some(transaction_id) = self.0.data.transaction_id() {
-            crate::Error::QueryPreCheckStatus { status, transaction_id }
+            crate::Error::QueryPreCheckStatus { status, transaction_id: Box::new(transaction_id) }
         } else if let Some(transaction_id) = transaction_id {
-            crate::Error::QueryPaymentPreCheckStatus { status, transaction_id }
+            crate::Error::QueryPaymentPreCheckStatus {
+                status,
+                transaction_id: Box::new(*transaction_id),
+            }
         } else {
             crate::Error::QueryNoPaymentPreCheckStatus { status }
         }

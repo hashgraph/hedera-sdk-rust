@@ -605,7 +605,7 @@ mod tests {
             &hex!("4e172857ab9ac2563fee9c829a4b2e9b"),
         ];
 
-        for (entropy, s) in ENTROPY.into_iter().zip(KNOWN_GOOD_MNEMONICS) {
+        for (entropy, s) in ENTROPY.iter().zip(KNOWN_GOOD_MNEMONICS) {
             let mnemonic = Mnemonic(super::MnemonicV2V3::from_entropy(entropy).into());
 
             assert_eq!(&mnemonic.to_string(), s);
@@ -615,7 +615,7 @@ mod tests {
     #[test]
     fn mnemonic_3() {
         // rustfmt does *not* like long strings.
-        const MNEMONIC: &'static str = concat!(
+        const MNEMONIC: &str = concat!(
             "obvious favorite remain caution ",
             "remove laptop base vacant ",
             "increase video erase pass ",
