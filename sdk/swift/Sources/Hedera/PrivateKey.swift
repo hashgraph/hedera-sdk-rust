@@ -29,6 +29,15 @@ private typealias UnsafeFromBytesFunc = @convention(c) (
 public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     internal let ptr: OpaquePointer
 
+    private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
+        let description = description.stripPrefix("0x") ?? description[...]
+        guard let bytes = Data(hexEncoded: description) else {
+            throw HError(kind: .keyParse, description: "Invalid hex string")
+        }
+
+        return bytes
+    }
+
     // sadly, we can't avoid a leaky abstraction here.
     internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
         Self(ptr)
@@ -36,6 +45,19 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
 
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
+    }
+
+    private init(bytes: Data, unsafeCallback chederaCallback: UnsafeFromBytesFunc) throws {
+        self.ptr = try bytes.withUnsafeTypedBytes { pointer -> OpaquePointer in
+            var key: OpaquePointer?
+            try HError.throwing(error: chederaCallback(pointer.baseAddress, pointer.count, &key))
+
+            return key!
+        }
+    }
+
+    private convenience init(bytes: Data) throws {
+        try self.init(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes)
     }
 
     /// Generates a new Ed25519 private key.
@@ -53,39 +75,27 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         PublicKey.unsafeFromPtr(hedera_private_key_get_public_key(ptr))
     }
 
-    private static func unsafeFromAnyBytes(_ bytes: Data, _ chederaCallback: UnsafeFromBytesFunc) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer -> Self in
-            var key: OpaquePointer?
-            try HError.throwing(error: chederaCallback(pointer.baseAddress, pointer.count, &key))
-
-            return Self(key!)
-        }
-    }
-
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes)
+        try Self(bytes: bytes)
     }
 
     public static func fromBytesEd25519(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_ed25519)
+        try Self(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes_ed25519)
     }
 
     public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_ecdsa)
+        try Self(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes_ecdsa)
     }
 
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
-        try unsafeFromAnyBytes(bytes, hedera_private_key_from_bytes_der)
+        try Self(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes_der)
     }
 
-    private init(parsing description: String) throws {
-        var key: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_from_string(description, &key))
-
-        self.ptr = key!
+    private convenience init<S: StringProtocol>(parsing description: S) throws {
+        try self.init(bytes: Self.decodeBytes(description))
     }
 
-    public static func fromString(_ description: String) throws -> Self {
+    public static func fromString<S: StringProtocol>(_ description: S) throws -> Self {
         try Self(parsing: description)
     }
 
@@ -98,25 +108,16 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         try! self.init(parsing: value)
     }
 
-    public static func fromStringDer(_ description: String) throws -> Self {
-        var key: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_from_string_der(description, &key))
-
-        return Self(key!)
+    public static func fromStringDer<S: StringProtocol>(_ description: S) throws -> Self {
+        try fromBytesDer(decodeBytes(description))
     }
 
     public static func fromStringEd25519(_ description: String) throws -> Self {
-        var key: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_from_string_ed25519(description, &key))
-
-        return Self(key!)
+        try fromBytesEd25519(decodeBytes(description))
     }
 
     public static func fromStringEcdsa(_ description: String) throws -> Self {
-        var key: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_from_string_ecdsa(description, &key))
-
-        return Self(key!)
+        try fromBytesEcdsa(decodeBytes(description))
     }
 
     /// Parse a `PrivateKey` from a [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded string.
@@ -157,22 +158,19 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public var description: String {
-        let descriptionBytes = hedera_private_key_to_string(ptr)
-        return String(hString: descriptionBytes!)
+        toStringDer()
     }
 
     public func toString() -> String {
-        description
+        String(describing: self)
     }
 
     public func toStringDer() -> String {
-        let stringBytes = hedera_private_key_to_string_der(ptr)
-        return String(hString: stringBytes!)
+        toBytesDer().hexStringEncoded()
     }
 
     public func toStringRaw() -> String {
-        let stringBytes = hedera_private_key_to_string_raw(ptr)
-        return String(hString: stringBytes!)
+        toBytesRaw().hexStringEncoded()
     }
 
     public func toAccountId(shard: UInt64, realm: UInt64) -> AccountId {

@@ -456,75 +456,6 @@ enum HederaError hedera_private_key_from_bytes_der(const uint8_t *bytes,
                                                    struct HederaPrivateKey **key);
 
 /**
- * Parse a Hedera private key from the passed string.
- *
- * Optionally strips a `0x` prefix.
- * See [`hedera_private_key_from_bytes`]
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a `PrivateKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_private_key_from_string(const char *s, struct HederaPrivateKey **key);
-
-/**
- * Parse a `PrivateKey` from a der encoded string.
- *
- * Optionally strips a `0x` prefix.
- * See [`hedera_private_key_from_bytes_der`].
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a `PrivateKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_private_key_from_string_der(const char *s, struct HederaPrivateKey **key);
-
-/**
- * Parse a Ed25519 `PrivateKey` from a string containing the raw key material.
- *
- * Optionally strips a `0x` prefix.
- * See: [`hedera_private_key_from_bytes_ed25519`]
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a ed25519 `PrivateKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_private_key_from_string_ed25519(const char *s,
-                                                        struct HederaPrivateKey **key);
-
-/**
- * Parse a ECDSA(secp256k1) `PrivateKey` from a string containing the raw key material.
- *
- * Optionally strips a `0x` prefix.
- * See: [`hedera_private_key_from_bytes_ecdsa`]
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a ECDSA(secp256k1) `PrivateKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_private_key_from_string_ecdsa(const char *s, struct HederaPrivateKey **key);
-
-/**
  * Parse a Hedera private key from the passed pem encoded string
  *
  * # Safety
@@ -607,48 +538,6 @@ size_t hedera_private_key_to_bytes(struct HederaPrivateKey *key, uint8_t **buf);
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
 size_t hedera_private_key_to_bytes_raw(struct HederaPrivateKey *key, uint8_t **buf);
-
-/**
- * Format a Hedera private key as a string.
- *
- * Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - the length of the returned string must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_private_key_to_string(struct HederaPrivateKey *key);
-
-/**
- * Format a Hedera private key as a der encoded string.
- *
- * Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - the length of the returned string must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_private_key_to_string_der(struct HederaPrivateKey *key);
-
-/**
- * Format a Hedera private key as a string.
- *
- * Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - the length of the returned string must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_private_key_to_string_raw(struct HederaPrivateKey *key);
 
 /**
  * Returns `true` if `key` is an Ed25519 `PrivateKey`.
@@ -806,74 +695,6 @@ enum HederaError hedera_public_key_from_bytes_der(const uint8_t *bytes,
                                                   struct HederaPublicKey **key);
 
 /**
- * Parse a Hedera public key from the passed string.
- *
- * Optionally strips a `0x` prefix.
- * See [`hedera_public_key_from_bytes`]
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a `PublicKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_public_key_from_string(const char *s, struct HederaPublicKey **key);
-
-/**
- * Parse a `PublicKey` from a der encoded string.
- *
- * Optionally strips a `0x` prefix.
- * See [`hedera_public_key_from_bytes_der`].
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a `PublicKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_public_key_from_string_der(const char *s, struct HederaPublicKey **key);
-
-/**
- * Parse a Ed25519 `PublicKey` from a string containing the raw key material.
- *
- * Optionally strips a `0x` prefix.
- * See: [`hedera_public_key_from_bytes_ed25519`]
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a ed25519 `PublicKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_public_key_from_string_ed25519(const char *s, struct HederaPublicKey **key);
-
-/**
- * Parse a ECDSA(secp256k1) `PublicKey` from a string containing the raw key material.
- *
- * Optionally strips a `0x` prefix.
- * See: [`hedera_public_key_from_bytes_ecdsa`]
- *
- * # Safety
- * - `s` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `s` cannot be parsed into a ECDSA(secp256k1) `PublicKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_public_key_from_string_ecdsa(const char *s, struct HederaPublicKey **key);
-
-/**
  * Return `key`, serialized as der encoded bytes.
  *
  * Note: the returned `buf` must be freed via `hedera_bytes_free` in order to prevent a memory leak.
@@ -919,48 +740,6 @@ size_t hedera_public_key_to_bytes(struct HederaPublicKey *key, uint8_t **buf);
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
 size_t hedera_public_key_to_bytes_raw(struct HederaPublicKey *key, uint8_t **buf);
-
-/**
- * Format a Hedera public key as a string.
- *
- * Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - the length of the returned string must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_public_key_to_string(struct HederaPublicKey *key);
-
-/**
- * Format a Hedera public key as a der encoded string.
- *
- * Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - the length of the returned string must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_public_key_to_string_der(struct HederaPublicKey *key);
-
-/**
- * Format a Hedera public key as a string.
- *
- * Note: the returned string must be freed via `hedera_string_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be a pointer that is valid for reads according to the [*Rust* pointer rules].
- * - the length of the returned string must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-char *hedera_public_key_to_string_raw(struct HederaPublicKey *key);
 
 /**
  * Verify a `signature` on a `message` with this public key.
