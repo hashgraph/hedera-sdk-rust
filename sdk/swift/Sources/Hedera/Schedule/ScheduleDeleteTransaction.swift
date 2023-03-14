@@ -37,7 +37,11 @@ public final class ScheduleDeleteTransaction: Transaction {
     }
 
     /// The schedule to delete.
-    public var scheduleId: ScheduleId?
+    public var scheduleId: ScheduleId? {
+        willSet {
+            ensureNotFrozen(fieldName: "scheduleId")
+        }
+    }
 
     /// Sets the schedule to delete.
     @discardableResult

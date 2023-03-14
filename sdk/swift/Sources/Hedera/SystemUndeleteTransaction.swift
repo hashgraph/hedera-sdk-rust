@@ -43,7 +43,11 @@ public final class SystemUndeleteTransaction: Transaction {
     }
 
     /// The file ID to undelete.
-    public var fileId: FileId?
+    public var fileId: FileId? {
+        willSet {
+            ensureNotFrozen(fieldName: "fileId")
+        }
+    }
 
     /// Sets the file ID to undelete.
     @discardableResult
@@ -54,7 +58,11 @@ public final class SystemUndeleteTransaction: Transaction {
     }
 
     /// The contract ID to undelete.
-    public var contractId: ContractId?
+    public var contractId: ContractId? {
+        willSet {
+            ensureNotFrozen(fieldName: "contractId")
+        }
+    }
 
     /// Sets the contract ID to undelete.
     @discardableResult
