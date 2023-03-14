@@ -1,4 +1,3 @@
-use std::ffi::c_char;
 use std::{
     ptr,
     slice,
@@ -7,38 +6,9 @@ use std::{
 use libc::size_t;
 
 use super::error::Error;
-use crate::ffi::util::cstr_from_ptr;
 
 mod private;
 mod public;
-
-/// Parse a `key` with the given function.
-///
-/// Internal function to reduce boilerplate.
-///
-/// # Safety
-/// - `s` must be a valid string
-/// - `key` must be valid for writes according to [*Rust* pointer rules].
-///
-/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
-
-#[track_caller]
-#[inline]
-unsafe fn parse_str<T, F>(s: *const c_char, key: *mut *mut T, f: F) -> Error
-where
-    F: FnOnce(&str) -> crate::Result<T>,
-{
-    assert!(!key.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    // perf note: it's perfectly fine to do this, Rust is really smart when you pass function pointers of static functions.
-    let parsed = ffi_try!(f(&s));
-
-    // safety: caller promises that `key` is valid for writes.
-    unsafe { ptr::write(key, Box::into_raw(Box::new(parsed))) }
-
-    Error::Ok
-}
 
 // note: this function fails to compile on platforms where `size_t != usize` or `c_char != u8`.
 // very very *very* little can even remotely be done about that without explicitly supporting them.
