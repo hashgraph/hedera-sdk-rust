@@ -33,7 +33,6 @@ mod runtime;
 mod schedule_info;
 mod semantic_version;
 mod signer;
-mod subscribe;
 mod timestamp;
 mod transaction;
 mod transaction_id;
