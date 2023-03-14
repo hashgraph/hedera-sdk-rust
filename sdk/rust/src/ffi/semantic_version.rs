@@ -20,13 +20,9 @@
 
 use std::ffi::{
     c_char,
-    CStr,
     CString,
 };
-use std::{
-    ptr,
-    slice,
-};
+use std::ptr;
 
 use super::error::Error;
 use crate::ffi::util::cstr_from_ptr;
@@ -80,29 +76,6 @@ pub struct SemanticVersion {
 }
 
 impl SemanticVersion {
-    // todo(sr): avoid a copy, we don't need it (see how it was done in `AccountInfo`).
-    pub(super) unsafe fn to_rust(self) -> crate::SemanticVersion {
-        unsafe fn string_from_ptr(string: *const c_char) -> String {
-            let string = match string.is_null() {
-                true => None,
-                false => {
-                    let prerelease = unsafe { CStr::from_ptr(string) };
-                    let prerelease = prerelease.to_str().unwrap().to_owned();
-                    Some(prerelease)
-                }
-            };
-
-            string.unwrap_or_default()
-        }
-
-        let Self { major, minor, patch, prerelease, build } = self;
-
-        let prerelease = unsafe { string_from_ptr(prerelease) };
-        let build = unsafe { string_from_ptr(build) };
-
-        crate::SemanticVersion { major, minor, patch, prerelease, build }
-    }
-
     pub(super) fn from_rust(semver: crate::SemanticVersion) -> Self {
         fn string_to_ptr(string: String) -> *mut c_char {
             match string.is_empty() {
@@ -118,27 +91,6 @@ impl SemanticVersion {
 
         Self { major, minor, patch, prerelease, build }
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn hedera_semantic_version_from_bytes(
-    bytes: *const u8,
-    bytes_size: libc::size_t,
-    semver: *mut SemanticVersion,
-) -> Error {
-    assert!(!bytes.is_null());
-    assert!(!semver.is_null());
-
-    let bytes = unsafe { slice::from_raw_parts(bytes, bytes_size) };
-
-    let parsed = ffi_try!(crate::SemanticVersion::from_bytes(bytes));
-    let parsed = SemanticVersion::from_rust(parsed);
-
-    unsafe {
-        ptr::write(semver, parsed);
-    }
-
-    Error::Ok
 }
 
 #[no_mangle]
@@ -159,24 +111,4 @@ pub unsafe extern "C" fn hedera_semantic_version_from_string(
     }
 
     Error::Ok
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn hedera_semantic_version_to_bytes(
-    semver: SemanticVersion,
-    buf: *mut *mut u8,
-) -> libc::size_t {
-    let semver = unsafe { semver.to_rust() };
-    let bytes = semver.to_bytes().into_boxed_slice();
-
-    let bytes = Box::leak(bytes);
-    let len = bytes.len();
-    let bytes = bytes.as_mut_ptr();
-
-    // safety: invariants promise that `buf` must be valid for writes.
-    unsafe {
-        ptr::write(buf, bytes);
-    }
-
-    len
 }

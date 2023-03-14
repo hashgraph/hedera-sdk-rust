@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The unique identifier for a topic on Hedera.
 public struct TopicId: EntityId, ValidateChecksums {
@@ -43,26 +43,34 @@ public struct TopicId: EntityId, ValidateChecksums {
     public let checksum: Checksum?
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var shard: UInt64 = 0
-            var realm: UInt64 = 0
-            var num: UInt64 = 0
-
-            try HError.throwing(
-                error: hedera_topic_id_from_bytes(pointer.baseAddress, pointer.count, &shard, &realm, &num))
-
-            return Self(shard: shard, realm: realm, num: num)
-        }
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_topic_id_to_bytes(shard, realm, num, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        toProtobufBytes()
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try helper.validateChecksum(on: ledgerId)
+    }
+}
+
+extension TopicId: ProtobufCodable {
+    internal typealias Protobuf = HederaProtobufs.Proto_TopicID
+
+    internal init(protobuf proto: Protobuf) {
+        self.init(
+            shard: UInt64(proto.shardNum),
+            realm: UInt64(proto.realmNum),
+            num: UInt64(proto.topicNum)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.shardNum = Int64(shard)
+            proto.realmNum = Int64(realm)
+            proto.topicNum = Int64(num)
+        }
     }
 }

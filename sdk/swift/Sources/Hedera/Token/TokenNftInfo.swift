@@ -18,8 +18,8 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Response from `TokenNftInfoQuery`.
 public final class TokenNftInfo: Codable {
@@ -41,19 +41,57 @@ public final class TokenNftInfo: Codable {
     /// The ledger ID the response was returned from
     public let ledgerId: LedgerId
 
+    internal init(
+        nftId: NftId,
+        accountId: AccountId,
+        creationTime: Timestamp,
+        metadata: Data,
+        spenderId: AccountId?,
+        ledgerId: LedgerId
+    ) {
+        self.nftId = nftId
+        self.accountId = accountId
+        self.creationTime = creationTime
+        self.metadata = metadata
+        self.spenderId = spenderId
+        self.ledgerId = ledgerId
+    }
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! self.toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension TokenNftInfo: ToFromJsonBytes {
-    internal static var cToBytes: ToJsonBytesFunc { hedera_token_nft_info_to_bytes }
+extension TokenNftInfo: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TokenNftInfo
 
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_token_nft_info_from_bytes }
+    internal convenience init(protobuf proto: Protobuf) throws {
+        let spenderId = proto.hasSpenderID ? proto.spenderID : nil
+
+        self.init(
+            nftId: .fromProtobuf(proto.nftID),
+            accountId: try .fromProtobuf(proto.accountID),
+            creationTime: .fromProtobuf(proto.creationTime),
+            metadata: proto.metadata,
+            spenderId: try .fromProtobuf(spenderId),
+            ledgerId: LedgerId(proto.ledgerID)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.nftID = nftId.toProtobuf()
+            proto.accountID = accountId.toProtobuf()
+            proto.creationTime = creationTime.toProtobuf()
+            proto.metadata = metadata
+
+            if let spenderId = spenderId?.toProtobuf() {
+                proto.spenderID = spenderId
+            }
+        }
+    }
 }

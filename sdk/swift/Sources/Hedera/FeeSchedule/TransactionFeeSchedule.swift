@@ -18,15 +18,15 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The fees for a specific transaction or query based on the fee data.
 ///
 /// See the [Hedera documentation].
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/transactionfeeschedule
-public struct TransactionFeeSchedule: Codable {
+public struct TransactionFeeSchedule {
     public init(requestType: RequestType, feeData: FeeData? = nil, fees: [FeeData]) {
         self.requestType = requestType
         self.feeData = feeData
@@ -45,17 +45,33 @@ public struct TransactionFeeSchedule: Codable {
     public var fees: [FeeData]
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension TransactionFeeSchedule: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_fee_schedule_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_fee_schedule_to_bytes }
+extension TransactionFeeSchedule: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TransactionFeeSchedule
+
+    internal init(protobuf proto: Protobuf) throws {
+        self.init(
+            requestType: try .fromProtobuf(proto.hederaFunctionality),
+            feeData: proto.hasFeeData ? try .fromProtobuf(proto.feeData) : nil,
+            fees: try .fromProtobuf(proto.fees)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.hederaFunctionality = requestType.toProtobuf()
+            if let feeData = feeData?.toProtobuf() {
+                proto.feeData = feeData
+            }
+
+            proto.fees = fees.toProtobuf()
+        }
+    }
 }

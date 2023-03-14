@@ -1,6 +1,6 @@
 included:
   - Examples/
-  - Sources/
+  - Sources/Hedera/
   - Tests/
 
 excluded:

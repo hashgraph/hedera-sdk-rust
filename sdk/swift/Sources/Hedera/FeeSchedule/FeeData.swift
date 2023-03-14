@@ -18,12 +18,12 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The total fees charged for a transaction, consisting of 3 parts:
 /// The node fee, the network fee, and the service fee.
-public struct FeeData: Codable {
+public struct FeeData {
     public init(node: FeeComponents, network: FeeComponents, service: FeeComponents, kind: FeeDataType) {
         self.node = node
         self.network = network
@@ -45,17 +45,32 @@ public struct FeeData: Codable {
     public var kind: FeeDataType
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension FeeData: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_fee_data_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_fee_data_to_bytes }
+extension FeeData: TryProtobufCodable {
+    internal typealias Protobuf = Proto_FeeData
+
+    internal init(protobuf proto: Protobuf) throws {
+        self.init(
+            node: .fromProtobuf(proto.nodedata),
+            network: .fromProtobuf(proto.networkdata),
+            service: .fromProtobuf(proto.servicedata),
+            kind: try .fromProtobuf(proto.subType)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.nodedata = node.toProtobuf()
+            proto.networkdata = network.toProtobuf()
+            proto.servicedata = service.toProtobuf()
+            proto.subType = kind.toProtobuf()
+        }
+    }
 }

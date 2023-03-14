@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 import Network
 
 public struct SocketAddressV4: LosslessStringConvertible, Codable {
@@ -27,28 +28,44 @@ public struct SocketAddressV4: LosslessStringConvertible, Codable {
     public var ip: IPv4Address
     public var port: UInt16
 
-    public init?(_ description: String) {
-        let parts = description.components(separatedBy: ":")
-        guard parts.count == 2 else {
-            return nil
+    fileprivate init(ipBytes: Data, port: Int32) throws {
+        guard let ipAddress = IPv4Address(ipBytes) else {
+            throw HError(kind: .basicParse, description: "expected 4 byte ip address, got `\(ipBytes.count)` bytes")
         }
 
-        // name is is to match the field
-        // swiftlint:disable:next identifier_name
-        guard let ip = IPv4Address(parts[0]) else {
-            return nil
+        guard let port = UInt16(exactly: port) else {
+            throw HError(
+                kind: .basicParse,
+                description: "expected 16 bit non-negative port number, but the port was actually `\(port)`")
         }
 
-        guard let port = UInt16(parts[1]) else {
-            return nil
-        }
-
-        self.ip = ip
+        self.ip = ipAddress
         self.port = port
     }
 
+    fileprivate init<S: StringProtocol>(parsing description: S) throws {
+        guard let (ipAddress, port) = description.splitOnce(on: ":") else {
+            throw HError(kind: .basicParse, description: "expected ip:port")
+        }
+
+        guard let ipAddress = IPv4Address(String(ipAddress)) else {
+            throw HError(kind: .basicParse, description: "expected `ip` to be a valid IP")
+        }
+
+        guard let port = UInt16(port) else {
+            throw HError(kind: .basicParse, description: "expected 16 bit port number")
+        }
+
+        self.ip = ipAddress
+        self.port = port
+    }
+
+    public init?(_ description: String) {
+        try? self.init(parsing: description)
+    }
+
     public init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
+        try self.init(parsing: decoder.singleValueContainer().decode(String.self))
     }
 
     public var description: String {
@@ -59,6 +76,21 @@ public struct SocketAddressV4: LosslessStringConvertible, Codable {
         var container = encoder.singleValueContainer()
 
         try container.encode(String(describing: self))
+    }
+}
+
+extension SocketAddressV4: TryProtobufCodable {
+    internal typealias Protobuf = Proto_ServiceEndpoint
+
+    internal init(protobuf proto: Protobuf) throws {
+        try self.init(ipBytes: proto.ipAddressV4, port: proto.port)
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.ipAddressV4 = ip.rawValue
+            proto.port = Int32(port)
+        }
     }
 }
 
@@ -86,4 +118,39 @@ public struct NodeAddress: Codable {
 
     /// A description of the node, up to 100 bytes.
     public var description: String
+}
+
+extension NodeAddress: TryProtobufCodable {
+    internal typealias Protobuf = Proto_NodeAddress
+
+    internal init(protobuf proto: Protobuf) throws {
+        var addresses: [SocketAddressV4] = []
+        if !proto.ipAddress.isEmpty {
+            addresses.append(try SocketAddressV4(ipBytes: proto.ipAddress, port: proto.portno))
+        }
+
+        for address in proto.serviceEndpoint {
+            addresses.append(try .fromProtobuf(address))
+        }
+
+        self.init(
+            nodeId: UInt64(proto.nodeID),
+            rsaPublicKey: Data(hexEncoded: proto.rsaPubKey) ?? Data(),
+            nodeAccountId: try .fromProtobuf(proto.nodeAccountID),
+            tlsCertificateHash: proto.nodeCertHash,
+            serviceEndpoints: addresses,
+            description: proto.description_p
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.nodeID = Int64(nodeId)
+            proto.rsaPubKey = rsaPublicKey.hexStringEncoded()
+            proto.nodeAccountID = nodeAccountId.toProtobuf()
+            proto.nodeCertHash = tlsCertificateHash
+            proto.serviceEndpoint = serviceEndpoints.toProtobuf()
+            proto.description_p = description
+        }
+    }
 }

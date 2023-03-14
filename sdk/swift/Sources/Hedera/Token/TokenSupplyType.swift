@@ -18,10 +18,37 @@
  * ‍
  */
 
+import HederaProtobufs
+import SwiftProtobuf
+
 /// Possible token supply types.
 /// Can be used to restrict supply to a set maximum.
 /// Defaults to `infinite`.
 public enum TokenSupplyType: Codable {
     case infinite
     case finite
+}
+
+extension TokenSupplyType: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TokenSupplyType
+
+    internal init(protobuf proto: HederaProtobufs.Proto_TokenSupplyType) throws {
+        switch proto {
+        case .infinite:
+            self = .infinite
+        case .finite:
+            self = .finite
+        case .UNRECOGNIZED(let value):
+            throw HError.fromProtobuf("unrecognized TokenSupplyType: `\(value)`")
+        }
+    }
+
+    internal func toProtobuf() -> HederaProtobufs.Proto_TokenSupplyType {
+        switch self {
+        case .infinite:
+            return .infinite
+        case .finite:
+            return .finite
+        }
+    }
 }

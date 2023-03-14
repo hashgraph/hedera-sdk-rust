@@ -18,38 +18,49 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// The fee schedules for hedera functionality and the time at which this fee schedule will expire.
 ///
 /// See the [Hedera documentation].
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/feeschedule
-public struct FeeSchedule: Codable {
-    public init(transactionFeeSchedules: TransactionFeeSchedule? = nil, expirationTime: Timestamp) {
+public struct FeeSchedule {
+    public init(transactionFeeSchedules: [TransactionFeeSchedule] = [], expirationTime: Timestamp) {
         self.transactionFeeSchedules = transactionFeeSchedules
         self.expirationTime = expirationTime
     }
 
     /// The fee schedules per specific piece of functionality.
-    public var transactionFeeSchedules: TransactionFeeSchedule?
+    public var transactionFeeSchedules: [TransactionFeeSchedule]
 
     /// The time this fee schedule will expire at.
     public var expirationTime: Timestamp
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self.fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension FeeSchedule: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_fee_schedule_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_fee_schedule_to_bytes }
+extension FeeSchedule: TryProtobufCodable {
+    internal typealias Protobuf = Proto_FeeSchedule
+
+    internal init(protobuf proto: Protobuf) throws {
+        self.init(
+            transactionFeeSchedules: try .fromProtobuf(proto.transactionFeeSchedule),
+            expirationTime: .init(seconds: UInt64(proto.expiryTime.seconds), subSecondNanos: 0)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.transactionFeeSchedule = transactionFeeSchedules.toProtobuf()
+            proto.expiryTime = .with { $0.seconds = Int64(expirationTime.seconds) }
+        }
+    }
 }
