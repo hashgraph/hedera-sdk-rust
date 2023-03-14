@@ -64,6 +64,7 @@ pub struct CustomFee<Fee> {
     pub fee: Fee,
 
     /// The account to receive the custom fee.
+    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "Option::is_none"))]
     pub fee_collector_account_id: Option<AccountId>,
 
     pub all_collectors_are_exempt: bool,
@@ -327,6 +328,7 @@ pub struct RoyaltyFeeData {
 
     /// If present, the fixed fee to assess to the NFT receiver when no fungible value is exchanged
     /// with the sender
+    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "Option::is_none"))]
     pub fallback_fee: Option<FixedFeeData>,
 }
 
