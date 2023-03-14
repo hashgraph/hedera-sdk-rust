@@ -916,15 +916,6 @@ char *hedera_mnemonic_to_string(struct HederaMnemonic *mnemonic);
 void hedera_mnemonic_free(struct HederaMnemonic *mnemonic);
 
 /**
- * Parse a Hedera `NftId` from the passed string.
- */
-enum HederaError hedera_nft_id_from_string(const char *s,
-                                           uint64_t *token_id_shard,
-                                           uint64_t *token_id_realm,
-                                           uint64_t *token_id_num,
-                                           uint64_t *serial);
-
-/**
  * # Safety
  * - `bytes` must be valid for reads of up to `bytes_size` bytes.
  * - `s` must only be freed with `hedera_string_free`,
@@ -936,15 +927,6 @@ enum HederaError hedera_schedule_info_to_bytes(const char *s, uint8_t **buf, siz
 
 enum HederaError hedera_semantic_version_from_string(const char *s,
                                                      struct HederaSemanticVersion *semver);
-
-/**
- * Subscribe with this request against the provided client of the Hedera network.
- * On successful completion, calls `callback` with `ERROR_OK` and a `NULL` `message`.
- */
-enum HederaError hedera_subscribe(const struct HederaClient *client,
-                                  const char *request,
-                                  const void *context,
-                                  void (*callback)(const void *context, enum HederaError err, const char *message));
 
 /**
  * Convert the provided transaction to protobuf-encoded bytes.
