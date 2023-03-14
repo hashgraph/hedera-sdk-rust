@@ -37,7 +37,11 @@ public final class ScheduleSignTransaction: Transaction {
     }
 
     /// The schedule to add signing keys to.
-    public var scheduleId: ScheduleId?
+    public var scheduleId: ScheduleId? {
+        willSet {
+            ensureNotFrozen(fieldName: "scheduleId")
+        }
+    }
 
     /// Set the schedule to add signing keys to.
     @discardableResult

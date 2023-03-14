@@ -46,7 +46,11 @@ public final class SystemDeleteTransaction: Transaction {
     }
 
     /// The file ID which should be deleted.
-    public var fileId: FileId?
+    public var fileId: FileId? {
+        willSet {
+            ensureNotFrozen(fieldName: "fileId")
+        }
+    }
 
     /// Sets the file ID which should be deleted.
     @discardableResult
@@ -57,7 +61,11 @@ public final class SystemDeleteTransaction: Transaction {
     }
 
     /// The contract ID which should be deleted.
-    public var contractId: ContractId?
+    public var contractId: ContractId? {
+        willSet {
+            ensureNotFrozen(fieldName: "contractId")
+        }
+    }
 
     /// Sets the contract ID which should be deleted.
     @discardableResult
@@ -69,7 +77,11 @@ public final class SystemDeleteTransaction: Transaction {
 
     /// The timestamp at which the "deleted" file should
     /// truly be permanently deleted.
-    public var expirationTime: Timestamp?
+    public var expirationTime: Timestamp? {
+        willSet {
+            ensureNotFrozen(fieldName: "expirationTime")
+        }
+    }
 
     /// Sets the timestamp at which the "deleted" file should
     /// truly be permanently deleted.
