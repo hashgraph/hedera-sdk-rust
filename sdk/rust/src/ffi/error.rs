@@ -25,7 +25,7 @@ use std::ptr;
 
 thread_local! {
     static LAST_ERROR: RefCell<Option<crate::Error>> = RefCell::new(None);
-    static LAST_ERROR_MESSAGE: RefCell<CString> = RefCell::new(CString::new("").unwrap());
+    static LAST_ERROR_MESSAGE: RefCell<CString> = RefCell::new(CString::default());
 }
 
 macro_rules! ffi_try {
