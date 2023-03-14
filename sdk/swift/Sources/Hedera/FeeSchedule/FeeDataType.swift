@@ -18,11 +18,11 @@
  * ‍
  */
 
-import CHedera
 import Foundation
+import HederaProtobufs
 
 /// Possible `FeeData` subtypes.
-public enum FeeDataType: Codable {
+public enum FeeDataType {
     /// The resource prices have no special scope.
     case `default`
 
@@ -41,4 +41,32 @@ public enum FeeDataType: Codable {
     /// The resource prices are scoped to a `ScheduleCreateTransaction`
     /// containing a `ContractExecuteTransaction`.
     case scheduleCreateContractCall
+}
+
+extension FeeDataType: TryProtobufCodable {
+    internal typealias Protobuf = Proto_SubType
+
+    internal init(protobuf proto: Proto_SubType) throws {
+        switch proto {
+        case .default: self = .default
+        case .tokenFungibleCommon: self = .tokenFungibleCommon
+        case .tokenNonFungibleUnique: self = .tokenNonFungibleUnique
+        case .tokenFungibleCommonWithCustomFees: self = .tokenFungibleCommonWithCustomFees
+        case .tokenNonFungibleUniqueWithCustomFees: self = .tokenNonFungibleUniqueWithCustomFees
+        case .scheduleCreateContractCall: self = .scheduleCreateContractCall
+        case .UNRECOGNIZED(let code):
+            throw HError.fromProtobuf("unrecognized FeeDataType `\(code)`")
+        }
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        switch self {
+        case .default: return .default
+        case .tokenFungibleCommon: return .tokenFungibleCommon
+        case .tokenNonFungibleUnique: return .tokenNonFungibleUnique
+        case .tokenFungibleCommonWithCustomFees: return .tokenFungibleCommonWithCustomFees
+        case .tokenNonFungibleUniqueWithCustomFees: return .tokenNonFungibleUniqueWithCustomFees
+        case .scheduleCreateContractCall: return .scheduleCreateContractCall
+        }
+    }
 }

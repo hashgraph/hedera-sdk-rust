@@ -7,9 +7,7 @@ use std::{
 use libc::size_t;
 
 use super::error::Error;
-use crate::ffi::util;
 use crate::ffi::util::cstr_from_ptr;
-use crate::Key;
 
 mod private;
 mod public;
@@ -109,13 +107,4 @@ where
     }
 
     len
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn hedera_key_to_bytes(
-    s: *const c_char,
-    buf: *mut *mut u8,
-    buf_size: *mut libc::size_t,
-) -> Error {
-    unsafe { util::json_to_bytes(s, buf, buf_size, Key::to_bytes) }
 }

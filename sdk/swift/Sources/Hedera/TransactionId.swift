@@ -1,5 +1,6 @@
 import CHedera
 import Foundation
+import HederaProtobufs
 
 public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, LosslessStringConvertible,
     ValidateChecksums
@@ -61,22 +62,11 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try bytes.withUnsafeTypedBytes { pointer in
-            var id = HederaTransactionId()
-
-            try HError.throwing(error: hedera_transaction_id_from_bytes(pointer.baseAddress, pointer.count, &id))
-
-            return Self(unsafeFromCHedera: id)
-        }
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        unsafeWithCHedera { hedera in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_transaction_id_to_bytes(hedera, &buf)
-
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
-        }
+        self.toProtobufBytes()
     }
 
     public var description: String {
@@ -103,15 +93,26 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try accountId.validateChecksums(on: ledgerId)
     }
+}
 
-    //     public var foo: Bar {
-    //     // `ensureNotFrozen` is a bikesheddable, need to find a balance between "this will die" and "name that's short enough"
-    //     // for instance:
-    //     // precondition(!frozen, "`foo` cannot be set while `\(String(describing: type(of: self)))` is frozen")
-    //     // gives wonderful information, but is also really long
-    //     // whereas:
-    //     // ensureNotFrozen(fieldName: "foo")
-    //     // is a decent chunk shorter and should be able to give all the same info.
-    //     willSet { ensureNotFrozen() }
-    // }
+extension TransactionId: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TransactionID
+
+    internal init(protobuf proto: Protobuf) throws {
+        self.init(
+            accountId: try .fromProtobuf(proto.accountID),
+            validStart: .fromProtobuf(proto.transactionValidStart),
+            scheduled: proto.scheduled,
+            nonce: proto.nonce != 0 ? proto.nonce : nil
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.transactionValidStart = validStart.toProtobuf()
+            proto.scheduled = scheduled
+            proto.nonce = nonce ?? 0
+        }
+    }
 }

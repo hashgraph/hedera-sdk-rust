@@ -18,6 +18,10 @@
  * ‍
  */
 
+import Foundation
+import HederaProtobufs
+import SwiftProtobuf
+
 /// Possible token types.
 ///
 /// Apart from fungible and non-fungible, tokens can have either a common or
@@ -29,4 +33,26 @@
 public enum TokenType: Codable {
     case fungibleCommon
     case nonFungibleUnique
+}
+
+extension TokenType: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TokenType
+
+    internal init(protobuf proto: Protobuf) throws {
+        switch proto {
+        case .fungibleCommon: self = .fungibleCommon
+        case .nonFungibleUnique: self = .nonFungibleUnique
+        case .UNRECOGNIZED(let value):
+            throw HError.fromProtobuf("unrecognized token type \(value)")
+        }
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        switch self {
+        case .fungibleCommon:
+            return .fungibleCommon
+        case .nonFungibleUnique:
+            return .nonFungibleUnique
+        }
+    }
 }
