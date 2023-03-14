@@ -121,7 +121,6 @@ public struct HError: Error, CustomStringConvertible {
         case maxQueryPaymentExceeded
         case nodeAccountUnknown
         case responseStatusUnrecognized
-        case signature
         case receiptStatus(status: Status, transactionId: TransactionId?)
         case requestParse
         case mnemonicParse
@@ -129,9 +128,7 @@ public struct HError: Error, CustomStringConvertible {
         case signatureVerify
         /// An entity ID had an invalid checksum
         case badEntityId(BadEntityId)
-        case cannotToStringWithChecksum
-        case cannotPerformTaskWithoutLedgerId
-        case wrongKeyType
+        case cannotCreateChecksum
         case freezeUnsetNodeAccountIds
     }
 
@@ -218,9 +215,6 @@ public struct HError: Error, CustomStringConvertible {
         case HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED:
             kind = .responseStatusUnrecognized
 
-        case HEDERA_ERROR_SIGNATURE:
-            kind = .signature
-
         case HEDERA_ERROR_RECEIPT_STATUS:
             let status: Status
             let transactionId: TransactionId?
@@ -256,14 +250,8 @@ public struct HError: Error, CustomStringConvertible {
 
             kind = .badEntityId(field)
 
-        case HEDERA_ERROR_CANNOT_TO_STRING_WITH_CHECKSUM:
-            kind = .cannotToStringWithChecksum
-
-        case HEDERA_ERROR_CANNOT_PERFORM_TASK_WITHOUT_LEDGER_ID:
-            kind = .cannotPerformTaskWithoutLedgerId
-
-        case HEDERA_ERROR_WRONG_KEY_TYPE:
-            kind = .wrongKeyType
+        case HEDERA_ERROR_CANNOT_CREATE_CHECKSUM:
+            kind = .cannotCreateChecksum
 
         case HEDERA_ERROR_FREEZE_UNSET_NODE_ACCOUNT_IDS:
             kind = .freezeUnsetNodeAccountIds
@@ -294,6 +282,11 @@ public struct HError: Error, CustomStringConvertible {
             shard: shard, realm: realm, num: num, presentChecksum: presentChecksum, expectedChecksum: expectedChecksum)
         return Self(kind: .badEntityId(err), description: err.description)
     }
+
+    internal static let cannotCreateChecksum: Self = Self(
+        kind: .cannotCreateChecksum,
+        description: "an entity ID with an alias or evmAddress cannot have a checksum"
+    )
 
     // swiftlint:enable cyclomatic_complexity function_body_length
 }

@@ -107,10 +107,8 @@ impl FileId {
     }
 
     /// Convert `self` to a string with a valid checksum.
-    ///
-    /// # Errors
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
-    pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
+    #[must_use]
+    pub fn to_string_with_checksum(&self, client: &Client) -> String {
         EntityId::to_string_with_checksum(self.to_string(), client)
     }
 

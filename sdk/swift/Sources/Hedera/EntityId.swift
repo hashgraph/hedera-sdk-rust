@@ -63,7 +63,7 @@ where
 
     func toString() -> String
 
-    func toStringWithChecksum(_ client: Client) -> String
+    func toStringWithChecksum(_ client: Client) throws -> String
 
     func validateChecksum(_ client: Client) throws
 
@@ -125,7 +125,7 @@ extension EntityId {
         self.description
     }
 
-    internal func generateChecksum(for ledgerId: LedgerId) -> Checksum {
+    internal func makeChecksum(ledger ledgerId: LedgerId) -> Checksum {
         Checksum.generate(for: self, on: ledgerId)
     }
 
@@ -156,18 +156,21 @@ internal struct EntityIdHelper<E: EntityId> {
 
     // note: this *expicitly* ignores the current checksum.
     internal func toStringWithChecksum(_ client: Client) -> String {
-        let checksum = id.generateChecksum(for: client.ledgerId!)
+        let checksum = id.makeChecksum(ledger: client.ledgerId!)
         return "\(description)-\(checksum)"
     }
 
     internal func validateChecksum(on ledgerId: LedgerId) throws {
-        if let checksum = id.checksum {
-            let expected = id.generateChecksum(for: ledgerId)
-            if checksum != expected {
-                throw HError.badEntityId(
-                    shard: id.shard, realm: id.realm, num: id.num, presentChecksum: checksum, expectedChecksum: expected
-                )
-            }
+        guard let checksum = id.checksum else {
+            return
+        }
+
+        let expected = id.makeChecksum(ledger: ledgerId)
+
+        guard checksum == expected else {
+            throw HError.badEntityId(
+                shard: id.shard, realm: id.realm, num: id.num, presentChecksum: checksum, expectedChecksum: expected
+            )
         }
     }
 

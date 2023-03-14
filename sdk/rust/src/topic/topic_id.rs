@@ -95,17 +95,14 @@ impl TopicId {
     }
 
     /// Convert `self` to a string with a valid checksum.
-    ///
-    /// # Errors
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
-    pub fn to_string_with_checksum(&self, client: &Client) -> crate::Result<String> {
+    #[must_use]
+    pub fn to_string_with_checksum(&self, client: &Client) -> String {
         EntityId::to_string_with_checksum(self.to_string(), client)
     }
 
     /// Validates `self.checksum` (if it exists) for `client`.
     ///
     /// # Errors
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no `ledger_id`.
     /// - [`Error::BadEntityId`] if there is a checksum, and the checksum is not valid for the client's `ledger_id`.
     pub fn validate_checksum(&self, client: &Client) -> crate::Result<()> {
         EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)

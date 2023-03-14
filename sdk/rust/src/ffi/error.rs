@@ -68,16 +68,12 @@ pub enum Error {
     NodeAccountUnknown,
     ResponseStatusUnrecognized,
     ReceiptStatus,
-    Signature,
     RequestParse,
     MnemonicParse,
     MnemonicEntropy,
     SignatureVerify,
     BadEntityId,
-    CannotToStringWithChecksum,
-    CannotPerformTaskWithoutLedgerId,
-    NoEvmAddressPresent,
-    WrongKeyType,
+    CannotCreateChecksum,
 }
 
 impl Error {
@@ -101,18 +97,12 @@ impl Error {
             crate::Error::NodeAccountUnknown(_) => Self::NodeAccountUnknown,
             crate::Error::ResponseStatusUnrecognized(_) => Self::ResponseStatusUnrecognized,
             crate::Error::ReceiptStatus { .. } => Self::ReceiptStatus,
-            crate::Error::Signature(_) => Self::Signature,
             crate::Error::RequestParse(_) => Self::RequestParse,
             crate::Error::MnemonicParse { .. } => Self::MnemonicParse,
             crate::Error::MnemonicEntropy(_) => Self::MnemonicEntropy,
             crate::Error::SignatureVerify(_) => Self::SignatureVerify,
             crate::Error::BadEntityId { .. } => Self::BadEntityId,
-            crate::Error::CannotToStringWithChecksum => Self::CannotToStringWithChecksum,
-            crate::Error::CannotPerformTaskWithoutLedgerId { .. } => {
-                Self::CannotPerformTaskWithoutLedgerId
-            }
-            crate::Error::NoEvmAddressPresent { .. } => Self::NoEvmAddressPresent,
-            crate::Error::WrongKeyType { .. } => Self::WrongKeyType,
+            crate::Error::CannotCreateChecksum => Self::CannotCreateChecksum,
             crate::Error::FreezeUnsetNodeAccountIds => Self::FreezeUnsetNodeAccountIds,
         };
 
@@ -149,10 +139,6 @@ pub extern "C" fn hedera_last_error_details() -> ErrorDetails {
     })
 }
 
-// todo:
-// #[repr(C)]
-// struct ErasedError(Box<dyn std::error::Error>);
-
 #[repr(C)]
 pub enum ErrorDetails {
     None,
@@ -177,7 +163,6 @@ pub enum ErrorDetails {
     },
 }
 
-// todo: Return `ErasedError`
 impl From<crate::Error> for ErrorDetails {
     fn from(value: crate::Error) -> Self {
         use crate::Error;
@@ -192,7 +177,6 @@ impl From<crate::Error> for ErrorDetails {
                     transaction_id: (*transaction_id).into(),
                 }
             }
-
             Error::MaxQueryPaymentExceeded { max_query_payment, query_cost } => {
                 Self::ErrorMaxQueryPaymentExceeded {
                     max_query_payment: max_query_payment.to_tinybars(),

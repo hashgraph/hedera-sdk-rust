@@ -40,7 +40,7 @@ public enum Program {
         // 3 ED25519 keys part of a 2-of-3 threshold key.
         let initialAdminKeys = (0..<3).map { _ in PrivateKey.generateEd25519() }
 
-        let thresholdKey = KeyList(keys: initialAdminKeys.map { .single($0.getPublicKey()) }, threshold: 2)
+        let thresholdKey = KeyList(keys: initialAdminKeys.map { .single($0.publicKey) }, threshold: 2)
 
         let transaction = try TopicCreateTransaction()
             .topicMemo("demo topic")
@@ -66,7 +66,7 @@ public enum Program {
         // 4 ED25519 keys part of a 3-of-4 threshold key.
         let newAdminKeys = (0..<4).map { _ in PrivateKey.generateEd25519() }
 
-        let thresholdKey = KeyList(keys: newAdminKeys.map { .single($0.getPublicKey()) }, threshold: 3)
+        let thresholdKey = KeyList(keys: newAdminKeys.map { .single($0.publicKey) }, threshold: 3)
 
         let transaction = try TopicUpdateTransaction().topicId(topicId).topicMemo("updated example topic").adminKey(
             .keyList(thresholdKey)

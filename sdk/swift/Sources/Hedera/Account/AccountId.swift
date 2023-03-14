@@ -75,7 +75,7 @@ public struct AccountId: EntityId, ValidateChecksums {
                         kind: .basicParse, description: "checksum not supported with `<shard>.<realm>.<alias>`")
                 }
 
-                // might have `evmAddress`
+                // might have `alias`
                 self.init(
                     shard: shard,
                     realm: realm,
@@ -83,7 +83,6 @@ public struct AccountId: EntityId, ValidateChecksums {
                 )
             }
 
-        // check for `evmAddress` eventually
         case .other(let description):
             let evmAddress = try EvmAddress(parsing: description)
             self.init(evmAddress: evmAddress)
@@ -141,9 +140,10 @@ public struct AccountId: EntityId, ValidateChecksums {
         }
     }
 
-    public func toStringWithChecksum(_ client: Client) -> String {
-        precondition(alias == nil, "cannot create a checksum for an `AccountId` with an alias")
-        precondition(evmAddress == nil, "cannot create a checksum for an `AccountId` with an evmAddress")
+    public func toStringWithChecksum(_ client: Client) throws -> String {
+        guard alias == nil, evmAddress == nil else {
+            throw HError.cannotCreateChecksum
+        }
 
         return helper.toStringWithChecksum(client)
     }
@@ -166,8 +166,4 @@ public struct AccountId: EntityId, ValidateChecksums {
     public static func fromEvmAddress(_ evmAddress: EvmAddress) -> Self {
         Self(evmAddress: evmAddress)
     }
-
-    // todo: public func `toEvmAddress`/`getEvmAddress`
 }
-
-// TODO: to evm address
