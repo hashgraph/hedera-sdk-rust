@@ -24,6 +24,12 @@ import NumberKit
 
 ///  `BIP-39` 24-word mnemonic phrase compatible with the Android and iOS mobile wallets.
 public struct Mnemonic: Equatable {
+    // *sigh*.
+    // We need this to ensure the generate functions will actually give the right results.
+    internal static func fromEntropyForTesting(entropy: Data) -> Self {
+        Self(kind: .v2v3(.fromEntropy(entropy)))
+    }
+
     private init(kind: Mnemonic.Kind) {
         self.kind = kind
     }
@@ -44,7 +50,7 @@ public struct Mnemonic: Equatable {
         return false
     }
 
-    var words: [String] {
+    public var words: [String] {
         switch kind {
         case .v1(let data):
             return data.words
