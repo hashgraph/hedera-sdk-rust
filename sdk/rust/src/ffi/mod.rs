@@ -29,7 +29,6 @@ mod crypto;
 mod execute;
 mod key;
 mod mnemonic;
-mod nft_id;
 mod runtime;
 mod schedule_info;
 mod semantic_version;
