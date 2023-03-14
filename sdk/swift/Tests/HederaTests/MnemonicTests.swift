@@ -39,10 +39,131 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
+    public func testInvalidLengthError() {
+        // we can't test for up to `usize` length, but we can test several lengths to be modestly sure.
+        // it might seem that testing many lengths would be slow.
+        // we test:
+
+        // todo: this feels overengineered.
+        // every length up to (and including `DENSE_LIMIT`).
+        // arbitrarily chosen to be 48.
+
+        let denseLimit = 48
+        let denseLengths = Array(0...denseLimit)
+        let lengths = denseLengths + Array((0...10).lazy.map { $0 * 12 }.drop { $0 < denseLimit })
+
+        for length in lengths.lazy.filter({ ![12, 22, 24].contains($0) }) {
+            // this is a word that's explicitly in the word list,
+            // to ensure we aren't accidentally testing that this error happens before "word(s) not in list"
+
+            let words = Array(repeating: "apple", count: length)
+
+            XCTAssertThrowsError(try Mnemonic.fromWords(words: words)) { error in
+                guard let error = error as? HError,
+                    case .mnemonicParse(let reason, _) = error.kind
+                else {
+                    XCTFail("Unexpected error: \(error)")
+                    return
+                }
+
+                XCTAssertEqual(reason, .badLength(length))
+            }
+        }
+    }
+
+    public func testUnknownWords1() {
+        let mnemonic = "obvious favorite remain caution remove laptop base vacant alone fever slush dune"
+
+        for index in 0..<12 {
+            var words = mnemonic.split(separator: " ").map(String.init)
+
+            words[index] = "lorum"
+
+            XCTAssertThrowsError(try Mnemonic.fromWords(words: words)) { error in
+                guard let error = error as? HError,
+                    case .mnemonicParse(let reason, _) = error.kind
+                else {
+                    XCTFail("Unexpected error: \(error)")
+                    return
+                }
+
+                XCTAssertEqual(reason, .unknownWords([index]))
+            }
+        }
+    }
+
+    public func testUnknownWords2() {
+        // a 24 word mnemonic containing the following typos:
+        // absorb -> adsorb
+        // account -> acount
+        // acquire -> acquired
+        let mnemonic =
+            "abandon ability able about above absent adsorb abstract absurd abuse access accident "
+            + "acount accuse achieve acid acoustic acquired across act action actor actress actual"
+
+        XCTAssertThrowsError(try Mnemonic.fromString(mnemonic)) { error in
+            guard let error = error as? HError,
+                case .mnemonicParse(let reason, _) = error.kind
+            else {
+                XCTFail("Unexpected error: \(error)")
+                return
+            }
+
+            XCTAssertEqual(reason, .unknownWords([6, 12, 17]))
+        }
+    }
+
+    public func testChecksumMismatch1() {
+        let mnemonic =
+            "abandon ability able about above absent absorb abstract absurd abuse access accident "
+            + "account accuse achieve acid acoustic acquire across act action actor actress actual"
+
+        XCTAssertThrowsError(try Mnemonic.fromString(mnemonic)) { error in
+            guard let error = error as? HError,
+                case .mnemonicParse(let reason, _) = error.kind
+            else {
+                XCTFail("Unexpected error: \(error)")
+                return
+            }
+
+            XCTAssertEqual(reason, .checksumMismatch(expected: 0xba, actual: 0x17))
+        }
+    }
+
+    public func testChecksumMismatch2() {
+        let mnemonic = "abandon ability able about above absent absorb abstract absurd abuse access accident"
+
+        XCTAssertThrowsError(try Mnemonic.fromString(mnemonic)) { error in
+            guard let error = error as? HError,
+                case .mnemonicParse(let reason, _) = error.kind
+            else {
+                XCTFail("Unexpected error: \(error)")
+                return
+            }
+
+            XCTAssertEqual(reason, .checksumMismatch(expected: 0x10, actual: 0xb0))
+        }
+    }
+
+    public func testFromEntropy() throws {
+        let entropy = [
+            Data(hexEncoded: "744b201a7c399733691c2fda5c6f605ceb0c016882cb14f64ea9eb5b6d68298b")!,
+            Data(hexEncoded: "e2674c8eb2fcada0c433984da6f52bac56466f914b49bd1a8087ed8b12b15248")!,
+            Data(hexEncoded: "b1615de02c5da95e15ee0f646f7c5cb02f41e69c9c71df683c1fc78db9b825c7")!,
+            Data(hexEncoded: "4e172857ab9ac2563fee9c829a4b2e9b")!,
+        ]
+
+        for (entropy, string) in zip(entropy, knownGoodMnemonics) {
+            let mnemonic = Mnemonic.fromEntropyForTesting(entropy: entropy)
+
+            XCTAssertEqual(String(describing: mnemonic), string)
+        }
+    }
+
     public func testMnemonic3() throws {
         let str =
-            "obvious favorite remain caution " + "remove laptop base vacant " + "increase video erase pass "
-            + "sniff sausage knock grid " + "argue salt romance way " + "alone fever slush dune"
+            "obvious favorite remain caution remove laptop base vacant increase video erase pass "
+            + "sniff sausage knock grid argue salt romance way alone fever slush dune"
 
         let mnemonic = try Mnemonic.fromString(str)
 
@@ -62,6 +183,8 @@ public final class MnemonicTests: XCTestCase {
         let mnemonic = try Mnemonic.fromString(str)
         let privateKey = try mnemonic.toLegacyPrivateKey()
 
+        // skip the derives and just test the key.
+        // (bugs in `legacy_derive` shouldn't make this function fail.)
         XCTAssertEqual(
             privateKey.description,
             "302e020100300506032b65700422042000c2f59212cb3417f0ee0d38e7bd876810d04f2dd2cb5c2d8f26ff406573f2bd"
