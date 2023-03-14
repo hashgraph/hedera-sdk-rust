@@ -178,6 +178,9 @@ impl AccountCreateTransaction {
 
     /// Gets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
         self.data().auto_renew_account_id
@@ -185,6 +188,9 @@ impl AccountCreateTransaction {
 
     /// Sets the account to be used at this account's expiration time to extend the
     /// life of the account.  If `None`, this account pays for its own auto renewal fee.
+    ///
+    /// # Network Support
+    /// Please note that this not supported on any hedera network at this time.
     pub fn auto_renew_account_id(&mut self, id: AccountId) -> &mut Self {
         self.data_mut().auto_renew_account_id = Some(id);
         self
@@ -217,6 +223,9 @@ impl AccountCreateTransaction {
     }
 
     /// Returns the public key to be used as the account's alias.
+    ///
+    /// # Network Support
+    /// Please note that this not currently supported on mainnet.
     #[must_use]
     pub fn get_alias(&self) -> Option<&PublicKey> {
         self.data().alias.as_ref()
@@ -229,18 +238,27 @@ impl AccountCreateTransaction {
     ///
     /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
     /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
+    ///
+    /// # Network Support
+    /// Please note that this not currently supported on mainnet.
     pub fn alias(&mut self, key: PublicKey) -> &mut Self {
         self.data_mut().alias = Some(key);
         self
     }
 
     /// Returns the evm address the account will be created with.
+    ///
+    /// # Network Support
+    /// Please note that this not currently supported on mainnet.
     #[must_use]
     pub fn get_evm_address(&self) -> Option<[u8; 20]> {
         self.data().evm_address
     }
 
     /// The last 20 bytes of the keccak-256 hash of a `ECDSA_SECP256K1` primitive key.
+    ///
+    /// # Network Support
+    /// Please note that this not currently supported on mainnet.
     pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
         self.data_mut().evm_address = Some(evm_address);
         self
@@ -332,20 +350,22 @@ impl From<AccountCreateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransactionData {
     fn from_protobuf(pb: services::CryptoCreateTransactionBody) -> crate::Result<Self> {
-        let evm_address = (!pb.evm_address.is_empty())
-            .then(|| pb.evm_address.as_slice().try_into())
-            .transpose()
-            .map_err(Error::basic_parse)?;
+        let evm_address = pb.alias.as_slice().try_into().ok();
+
+        let alias = (pb.alias.len() != 20)
+            .then(|| PublicKey::from_alias_bytes(&pb.alias).transpose())
+            .flatten()
+            .transpose()?;
 
         Ok(Self {
             key: Option::from_protobuf(pb.key)?,
             initial_balance: Hbar::from_tinybars(pb.initial_balance as i64),
             receiver_signature_required: pb.receiver_sig_required,
-            auto_renew_period: pb.auto_renew_period.map(Into::into),
-            auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
+            auto_renew_period: None,
+            auto_renew_account_id: None,
             account_memo: pb.memo,
             max_automatic_token_associations: pb.max_automatic_token_associations as u16,
-            alias: PublicKey::from_alias_bytes(&pb.alias)?,
+            alias,
             evm_address,
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
@@ -359,7 +379,6 @@ impl ToProtobuf for AccountCreateTransactionData {
     fn to_protobuf(&self) -> Self::Protobuf {
         let key = self.key.to_protobuf();
         let auto_renew_period = self.auto_renew_period.to_protobuf();
-        let auto_renew_account = self.auto_renew_account_id.to_protobuf();
         let staked_id = self.staked_id.map(|it| match it {
             StakedId::NodeId(id) => {
                 services::crypto_create_transaction_body::StakedId::StakedNodeId(id as i64)
@@ -380,14 +399,12 @@ impl ToProtobuf for AccountCreateTransactionData {
             receive_record_threshold: i64::MAX as u64,
             receiver_sig_required: self.receiver_signature_required,
             auto_renew_period,
-            auto_renew_account,
             shard_id: None,
             realm_id: None,
             new_realm_admin_key: None,
             memo: self.account_memo.clone(),
             max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
             alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
-            evm_address: self.evm_address.map_or(vec![], Vec::from),
             decline_reward: self.decline_staking_reward,
             staked_id,
         }

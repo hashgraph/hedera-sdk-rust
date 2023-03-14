@@ -247,43 +247,6 @@ public struct Proto_CryptoUpdateTransactionBody {
   /// Clears the value of `declineReward`. Subsequent reads from it will return its default value.
   public mutating func clearDeclineReward() {_uniqueStorage()._declineReward = nil}
 
-  ///*
-  /// If set to the sentinel <tt>0.0.0</tt> AccountID, this field removes the account's auto-renew
-  /// account. Otherwise it updates the account's auto-renew account to the referenced account.
-  public var autoRenewAccount: Proto_AccountID {
-    get {return _storage._autoRenewAccount ?? Proto_AccountID()}
-    set {_uniqueStorage()._autoRenewAccount = newValue}
-  }
-  /// Returns true if `autoRenewAccount` has been explicitly set.
-  public var hasAutoRenewAccount: Bool {return _storage._autoRenewAccount != nil}
-  /// Clears the value of `autoRenewAccount`. Subsequent reads from it will return its default value.
-  public mutating func clearAutoRenewAccount() {_uniqueStorage()._autoRenewAccount = nil}
-
-  public var virtualAddressUpdate: OneOf_VirtualAddressUpdate? {
-    get {return _storage._virtualAddressUpdate}
-    set {_uniqueStorage()._virtualAddressUpdate = newValue}
-  }
-
-  ///*
-  /// The virtual address to be added.
-  public var add: Proto_VirtualAddress {
-    get {
-      if case .add(let v)? = _storage._virtualAddressUpdate {return v}
-      return Proto_VirtualAddress()
-    }
-    set {_uniqueStorage()._virtualAddressUpdate = .add(newValue)}
-  }
-
-  ///*
-  /// The 20-byte EVM address of the virtual address that is being removed.
-  public var remove: Data {
-    get {
-      if case .remove(let v)? = _storage._virtualAddressUpdate {return v}
-      return Data()
-    }
-    set {_uniqueStorage()._virtualAddressUpdate = .remove(newValue)}
-  }
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public enum OneOf_SendRecordThresholdField: Equatable {
@@ -409,34 +372,6 @@ public struct Proto_CryptoUpdateTransactionBody {
   #endif
   }
 
-  public enum OneOf_VirtualAddressUpdate: Equatable {
-    ///*
-    /// The virtual address to be added.
-    case add(Proto_VirtualAddress)
-    ///*
-    /// The 20-byte EVM address of the virtual address that is being removed.
-    case remove(Data)
-
-  #if !swift(>=4.1)
-    public static func ==(lhs: Proto_CryptoUpdateTransactionBody.OneOf_VirtualAddressUpdate, rhs: Proto_CryptoUpdateTransactionBody.OneOf_VirtualAddressUpdate) -> Bool {
-      // The use of inline closures is to circumvent an issue where the compiler
-      // allocates stack space for every case branch when no optimizations are
-      // enabled. https://github.com/apple/swift-protobuf/issues/1034
-      switch (lhs, rhs) {
-      case (.add, .add): return {
-        guard case .add(let l) = lhs, case .add(let r) = rhs else { preconditionFailure() }
-        return l == r
-      }()
-      case (.remove, .remove): return {
-        guard case .remove(let l) = lhs, case .remove(let r) = rhs else { preconditionFailure() }
-        return l == r
-      }()
-      default: return false
-      }
-    }
-  #endif
-  }
-
   public init() {}
 
   fileprivate var _storage = _StorageClass.defaultInstance
@@ -448,7 +383,6 @@ extension Proto_CryptoUpdateTransactionBody.OneOf_SendRecordThresholdField: @unc
 extension Proto_CryptoUpdateTransactionBody.OneOf_ReceiveRecordThresholdField: @unchecked Sendable {}
 extension Proto_CryptoUpdateTransactionBody.OneOf_ReceiverSigRequiredField: @unchecked Sendable {}
 extension Proto_CryptoUpdateTransactionBody.OneOf_StakedID: @unchecked Sendable {}
-extension Proto_CryptoUpdateTransactionBody.OneOf_VirtualAddressUpdate: @unchecked Sendable {}
 #endif  // swift(>=5.5) && canImport(_Concurrency)
 
 // MARK: - Code below here is support for the SwiftProtobuf runtime.
@@ -475,9 +409,6 @@ extension Proto_CryptoUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
     16: .standard(proto: "staked_account_id"),
     17: .standard(proto: "staked_node_id"),
     18: .standard(proto: "decline_reward"),
-    19: .standard(proto: "auto_renew_account"),
-    20: .same(proto: "add"),
-    21: .same(proto: "remove"),
   ]
 
   fileprivate class _StorageClass {
@@ -494,8 +425,6 @@ extension Proto_CryptoUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
     var _maxAutomaticTokenAssociations: SwiftProtobuf.Google_Protobuf_Int32Value? = nil
     var _stakedID: Proto_CryptoUpdateTransactionBody.OneOf_StakedID?
     var _declineReward: SwiftProtobuf.Google_Protobuf_BoolValue? = nil
-    var _autoRenewAccount: Proto_AccountID? = nil
-    var _virtualAddressUpdate: Proto_CryptoUpdateTransactionBody.OneOf_VirtualAddressUpdate?
 
     static let defaultInstance = _StorageClass()
 
@@ -515,8 +444,6 @@ extension Proto_CryptoUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
       _maxAutomaticTokenAssociations = source._maxAutomaticTokenAssociations
       _stakedID = source._stakedID
       _declineReward = source._declineReward
-      _autoRenewAccount = source._autoRenewAccount
-      _virtualAddressUpdate = source._virtualAddressUpdate
     }
   }
 
@@ -628,28 +555,6 @@ extension Proto_CryptoUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
           }
         }()
         case 18: try { try decoder.decodeSingularMessageField(value: &_storage._declineReward) }()
-        case 19: try { try decoder.decodeSingularMessageField(value: &_storage._autoRenewAccount) }()
-        case 20: try {
-          var v: Proto_VirtualAddress?
-          var hadOneofValue = false
-          if let current = _storage._virtualAddressUpdate {
-            hadOneofValue = true
-            if case .add(let m) = current {v = m}
-          }
-          try decoder.decodeSingularMessageField(value: &v)
-          if let v = v {
-            if hadOneofValue {try decoder.handleConflictingOneOf()}
-            _storage._virtualAddressUpdate = .add(v)
-          }
-        }()
-        case 21: try {
-          var v: Data?
-          try decoder.decodeSingularBytesField(value: &v)
-          if let v = v {
-            if _storage._virtualAddressUpdate != nil {try decoder.handleConflictingOneOf()}
-            _storage._virtualAddressUpdate = .remove(v)
-          }
-        }()
         default: break
         }
       }
@@ -718,20 +623,6 @@ extension Proto_CryptoUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
       try { if let v = _storage._declineReward {
         try visitor.visitSingularMessageField(value: v, fieldNumber: 18)
       } }()
-      try { if let v = _storage._autoRenewAccount {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
-      } }()
-      switch _storage._virtualAddressUpdate {
-      case .add?: try {
-        guard case .add(let v)? = _storage._virtualAddressUpdate else { preconditionFailure() }
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 20)
-      }()
-      case .remove?: try {
-        guard case .remove(let v)? = _storage._virtualAddressUpdate else { preconditionFailure() }
-        try visitor.visitSingularBytesField(value: v, fieldNumber: 21)
-      }()
-      case nil: break
-      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -754,8 +645,6 @@ extension Proto_CryptoUpdateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
         if _storage._maxAutomaticTokenAssociations != rhs_storage._maxAutomaticTokenAssociations {return false}
         if _storage._stakedID != rhs_storage._stakedID {return false}
         if _storage._declineReward != rhs_storage._declineReward {return false}
-        if _storage._autoRenewAccount != rhs_storage._autoRenewAccount {return false}
-        if _storage._virtualAddressUpdate != rhs_storage._virtualAddressUpdate {return false}
         return true
       }
       if !storagesAreEqual {return false}

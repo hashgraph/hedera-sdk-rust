@@ -124,35 +124,6 @@ public struct Proto_FileCreateTransactionBody {
   /// The memo associated with the file (UTF-8 encoding max 100 bytes)
   public var memo: String = String()
 
-  ///*
-  /// An account to charge for auto-renewal of this file. If not set, or set to an
-  /// account with zero hbar balance, the file's expiration must be manually extended
-  /// using a FileUpdate transaction, since the network will not have authorization
-  /// for any kind of auto-renewal fee collection.
-  public var autoRenewAccount: Proto_AccountID {
-    get {return _autoRenewAccount ?? Proto_AccountID()}
-    set {_autoRenewAccount = newValue}
-  }
-  /// Returns true if `autoRenewAccount` has been explicitly set.
-  public var hasAutoRenewAccount: Bool {return self._autoRenewAccount != nil}
-  /// Clears the value of `autoRenewAccount`. Subsequent reads from it will return its default value.
-  public mutating func clearAutoRenewAccount() {self._autoRenewAccount = nil}
-
-  ///*
-  /// If an auto-renew account is in use, the lifetime to be added by each
-  /// auto-renewal. When both auto-renew account and auto-renew period are
-  /// set in the create transaction, the initial expiry of the file will be
-  /// the valid start of the create transaction plus the auto-renew period.
-  /// (I.e., the expirationTime field will be ignored.)
-  public var autoRenewPeriod: Proto_Duration {
-    get {return _autoRenewPeriod ?? Proto_Duration()}
-    set {_autoRenewPeriod = newValue}
-  }
-  /// Returns true if `autoRenewPeriod` has been explicitly set.
-  public var hasAutoRenewPeriod: Bool {return self._autoRenewPeriod != nil}
-  /// Clears the value of `autoRenewPeriod`. Subsequent reads from it will return its default value.
-  public mutating func clearAutoRenewPeriod() {self._autoRenewPeriod = nil}
-
   public var unknownFields = SwiftProtobuf.UnknownStorage()
 
   public init() {}
@@ -162,8 +133,6 @@ public struct Proto_FileCreateTransactionBody {
   fileprivate var _shardID: Proto_ShardID? = nil
   fileprivate var _realmID: Proto_RealmID? = nil
   fileprivate var _newRealmAdminKey: Proto_Key? = nil
-  fileprivate var _autoRenewAccount: Proto_AccountID? = nil
-  fileprivate var _autoRenewPeriod: Proto_Duration? = nil
 }
 
 #if swift(>=5.5) && canImport(_Concurrency)
@@ -184,8 +153,6 @@ extension Proto_FileCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
     6: .same(proto: "realmID"),
     7: .same(proto: "newRealmAdminKey"),
     8: .same(proto: "memo"),
-    9: .standard(proto: "auto_renew_account"),
-    10: .standard(proto: "auto_renew_period"),
   ]
 
   public mutating func decodeMessage<D: SwiftProtobuf.Decoder>(decoder: inout D) throws {
@@ -201,8 +168,6 @@ extension Proto_FileCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
       case 6: try { try decoder.decodeSingularMessageField(value: &self._realmID) }()
       case 7: try { try decoder.decodeSingularMessageField(value: &self._newRealmAdminKey) }()
       case 8: try { try decoder.decodeSingularStringField(value: &self.memo) }()
-      case 9: try { try decoder.decodeSingularMessageField(value: &self._autoRenewAccount) }()
-      case 10: try { try decoder.decodeSingularMessageField(value: &self._autoRenewPeriod) }()
       default: break
       }
     }
@@ -234,12 +199,6 @@ extension Proto_FileCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
     if !self.memo.isEmpty {
       try visitor.visitSingularStringField(value: self.memo, fieldNumber: 8)
     }
-    try { if let v = self._autoRenewAccount {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 9)
-    } }()
-    try { if let v = self._autoRenewPeriod {
-      try visitor.visitSingularMessageField(value: v, fieldNumber: 10)
-    } }()
     try unknownFields.traverse(visitor: &visitor)
   }
 
@@ -251,8 +210,6 @@ extension Proto_FileCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobuf.
     if lhs._realmID != rhs._realmID {return false}
     if lhs._newRealmAdminKey != rhs._newRealmAdminKey {return false}
     if lhs.memo != rhs.memo {return false}
-    if lhs._autoRenewAccount != rhs._autoRenewAccount {return false}
-    if lhs._autoRenewPeriod != rhs._autoRenewPeriod {return false}
     if lhs.unknownFields != rhs.unknownFields {return false}
     return true
   }

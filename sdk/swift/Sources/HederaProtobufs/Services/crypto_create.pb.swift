@@ -215,6 +215,8 @@ public struct Proto_CryptoCreateTransactionBody {
   /// supported as the key for an account with an alias. ThresholdKey, KeyList, ContractID, and
   /// delegatable_contract_id are not supported.
   ///
+  /// May also be the EOA 20-byte address to create that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
+  ///
   /// A given alias can map to at most one account on the network at a time. This uniqueness will be enforced
   /// relative to aliases currently on the network at alias assignment.
   ///
@@ -223,26 +225,6 @@ public struct Proto_CryptoCreateTransactionBody {
   public var alias: Data {
     get {return _storage._alias}
     set {_uniqueStorage()._alias = newValue}
-  }
-
-  ///*
-  /// An account to charge for auto-renewal of this account . If not set, or set to an
-  /// account with zero hbar balance, the account's own hbar balance will be used to
-  /// cover auto-renewal fees.
-  public var autoRenewAccount: Proto_AccountID {
-    get {return _storage._autoRenewAccount ?? Proto_AccountID()}
-    set {_uniqueStorage()._autoRenewAccount = newValue}
-  }
-  /// Returns true if `autoRenewAccount` has been explicitly set.
-  public var hasAutoRenewAccount: Bool {return _storage._autoRenewAccount != nil}
-  /// Clears the value of `autoRenewAccount`. Subsequent reads from it will return its default value.
-  public mutating func clearAutoRenewAccount() {_uniqueStorage()._autoRenewAccount = nil}
-
-  ///*
-  /// EOA 20-byte address to create that is derived from the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
-  public var evmAddress: Data {
-    get {return _storage._evmAddress}
-    set {_uniqueStorage()._evmAddress = newValue}
   }
 
   public var unknownFields = SwiftProtobuf.UnknownStorage()
@@ -310,8 +292,6 @@ extension Proto_CryptoCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
     16: .standard(proto: "staked_node_id"),
     17: .standard(proto: "decline_reward"),
     18: .same(proto: "alias"),
-    19: .standard(proto: "auto_renew_account"),
-    20: .standard(proto: "evm_address"),
   ]
 
   fileprivate class _StorageClass {
@@ -330,8 +310,6 @@ extension Proto_CryptoCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
     var _stakedID: Proto_CryptoCreateTransactionBody.OneOf_StakedID?
     var _declineReward: Bool = false
     var _alias: Data = Data()
-    var _autoRenewAccount: Proto_AccountID? = nil
-    var _evmAddress: Data = Data()
 
     static let defaultInstance = _StorageClass()
 
@@ -353,8 +331,6 @@ extension Proto_CryptoCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
       _stakedID = source._stakedID
       _declineReward = source._declineReward
       _alias = source._alias
-      _autoRenewAccount = source._autoRenewAccount
-      _evmAddress = source._evmAddress
     }
   }
 
@@ -408,8 +384,6 @@ extension Proto_CryptoCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
         }()
         case 17: try { try decoder.decodeSingularBoolField(value: &_storage._declineReward) }()
         case 18: try { try decoder.decodeSingularBytesField(value: &_storage._alias) }()
-        case 19: try { try decoder.decodeSingularMessageField(value: &_storage._autoRenewAccount) }()
-        case 20: try { try decoder.decodeSingularBytesField(value: &_storage._evmAddress) }()
         default: break
         }
       }
@@ -475,12 +449,6 @@ extension Proto_CryptoCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
       if !_storage._alias.isEmpty {
         try visitor.visitSingularBytesField(value: _storage._alias, fieldNumber: 18)
       }
-      try { if let v = _storage._autoRenewAccount {
-        try visitor.visitSingularMessageField(value: v, fieldNumber: 19)
-      } }()
-      if !_storage._evmAddress.isEmpty {
-        try visitor.visitSingularBytesField(value: _storage._evmAddress, fieldNumber: 20)
-      }
     }
     try unknownFields.traverse(visitor: &visitor)
   }
@@ -505,8 +473,6 @@ extension Proto_CryptoCreateTransactionBody: SwiftProtobuf.Message, SwiftProtobu
         if _storage._stakedID != rhs_storage._stakedID {return false}
         if _storage._declineReward != rhs_storage._declineReward {return false}
         if _storage._alias != rhs_storage._alias {return false}
-        if _storage._autoRenewAccount != rhs_storage._autoRenewAccount {return false}
-        if _storage._evmAddress != rhs_storage._evmAddress {return false}
         return true
       }
       if !storagesAreEqual {return false}
