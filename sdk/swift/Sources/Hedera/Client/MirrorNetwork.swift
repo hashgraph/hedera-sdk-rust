@@ -34,21 +34,21 @@ internal struct MirrorNetwork {
         self.channel = channel
     }
 
-    private init(eventLoop: EventLoopGroup, target: GRPC.ConnectionTarget) {
+    private init(target: GRPC.ConnectionTarget, eventLoop: EventLoopGroup) {
         self.init(
             channel: GRPC.ClientConnection(configuration: .default(target: target, eventLoopGroup: eventLoop))
         )
     }
 
     internal static func mainnet(_ eventLoop: NIOCore.EventLoopGroup) -> Self {
-        Self(eventLoop: eventLoop, target: Targets.mainnet)
+        Self(target: Targets.mainnet, eventLoop: eventLoop)
     }
 
     internal static func testnet(_ eventLoop: NIOCore.EventLoopGroup) -> Self {
-        Self(eventLoop: eventLoop, target: Targets.testnet)
+        Self(target: Targets.testnet, eventLoop: eventLoop)
     }
 
     internal static func previewnet(_ eventLoop: NIOCore.EventLoopGroup) -> Self {
-        Self(eventLoop: eventLoop, target: Targets.previewnet)
+        Self(target: Targets.previewnet, eventLoop: eventLoop)
     }
 }

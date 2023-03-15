@@ -29,12 +29,16 @@ public final class Client {
 
     internal let ptr: OpaquePointer
     private let mirrorNetwork: MirrorNetwork
+    internal let network: Network
 
-    private init(unsafeFromPtr ptr: OpaquePointer, _ eventLoop: NIOCore.EventLoopGroup, _ mirrorNetwork: MirrorNetwork)
-    {
+    private init(
+        unsafeFromPtr ptr: OpaquePointer, network: Network, mirrorNetwork: MirrorNetwork,
+        _ eventLoop: NIOCore.EventLoopGroup
+    ) {
         self.eventLoop = eventLoop
         self.ptr = ptr
         self.mirrorNetwork = mirrorNetwork
+        self.network = network
     }
 
     /// Note: this operation is O(n)
@@ -91,19 +95,34 @@ public final class Client {
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
         let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
-        return Self(unsafeFromPtr: hedera_client_for_mainnet(), eventLoop, .mainnet(eventLoop))
+        return Self(
+            unsafeFromPtr: hedera_client_for_mainnet(),
+            network: .mainnet(eventLoop),
+            mirrorNetwork: .mainnet(eventLoop),
+            eventLoop
+        )
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Self {
         let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
-        return Self(unsafeFromPtr: hedera_client_for_testnet(), eventLoop, .testnet(eventLoop))
+        return Self(
+            unsafeFromPtr: hedera_client_for_testnet(),
+            network: .testnet(eventLoop),
+            mirrorNetwork: .testnet(eventLoop),
+            eventLoop
+        )
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     public static func forPreviewnet() -> Self {
         let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
-        return Self(unsafeFromPtr: hedera_client_for_previewnet(), eventLoop, .previewnet(eventLoop))
+        return Self(
+            unsafeFromPtr: hedera_client_for_previewnet(),
+            network: .previewnet(eventLoop),
+            mirrorNetwork: .previewnet(eventLoop),
+            eventLoop
+        )
     }
 
     // wish I could write `init(for name: String)`
@@ -135,12 +154,11 @@ public final class Client {
     }
 
     public func ping(_ nodeAccountId: AccountId) async throws {
-        _ = try await AccountBalanceQuery(accountId: nodeAccountId).nodeAccountIds([nodeAccountId]).execute(self)
+        try await PingQuery(nodeAccountId: nodeAccountId).execute(self)
     }
 
     public func ping(_ nodeAccountId: AccountId, _ timeout: TimeInterval) async throws {
-        _ = try await AccountBalanceQuery(accountId: nodeAccountId).nodeAccountIds([nodeAccountId]).execute(
-            self, timeout)
+        try await PingQuery(nodeAccountId: nodeAccountId).execute(self, timeout: timeout)
     }
 
     public func pingAll() async throws {
@@ -194,15 +212,24 @@ public final class Client {
         }
     }
 
+    fileprivate var autoValidateChecksums: Bool {
+        get { hedera_client_get_auto_validate_checksums(ptr) }
+        set(value) { hedera_client_set_auto_validate_checksums(ptr, value) }
+    }
+
     @discardableResult
     public func setAutoValidateChecksums(_ autoValidateChecksums: Bool) -> Self {
-        hedera_client_set_auto_validate_checksums(ptr, autoValidateChecksums)
+        self.autoValidateChecksums = autoValidateChecksums
 
         return self
     }
 
     public func isAutoValidateChecksumsEnabled() -> Bool {
-        hedera_client_get_auto_validate_checksums(ptr)
+        autoValidateChecksums
+    }
+
+    internal func generateTransactionId() -> TransactionId? {
+        (self.operator?.accountId).map { .generateFrom($0) }
     }
 
     deinit {

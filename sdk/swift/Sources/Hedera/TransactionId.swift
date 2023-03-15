@@ -23,6 +23,15 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
         self.nonce = nonce
     }
 
+    /// Generates a new transaction ID for the given account ID.
+    internal static func generateFrom(_ accountId: AccountId) -> Self {
+        let random = UInt64.random(in: 5_000_000_000..<8_000_000_000)
+
+        let validStart = Timestamp.now.subtracting(nanos: random)
+
+        return Self(accountId: accountId, validStart: validStart, scheduled: false)
+    }
+
     internal init(unsafeFromCHedera hedera: HederaTransactionId) {
         accountId = AccountId(unsafeFromCHedera: hedera.account_id)
         validStart = Timestamp(fromCHedera: hedera.valid_start)
