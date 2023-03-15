@@ -45,8 +45,6 @@ pub struct MirrorQuery<D> {
 
 // intentionally inaccessable despite publicity.
 #[derive(Clone, Debug, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct MirrorQueryCommon {
     // empty for now
     // TODO: request_timeout
