@@ -60,11 +60,17 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/objecthub/swift-numberkit.git", from: "2.4.1"),
         .package(url: "https://github.com/thebarndog/swift-dotenv.git", from: "1.0.0"),
+        .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.9.0"),
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
     ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
-        .target(name: "HederaProtobufs", dependencies: [.product(name: "SwiftProtobuf", package: "swift-protobuf")]),
+        .target(
+            name: "HederaProtobufs",
+            dependencies: [
+                .product(name: "SwiftProtobuf", package: "swift-protobuf"),
+                .product(name: "GRPC", package: "grpc-swift"),
+            ]),
         .target(
             name: "Hedera",
             dependencies: [

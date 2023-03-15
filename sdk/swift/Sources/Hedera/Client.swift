@@ -58,20 +58,20 @@ public final class Client {
         var skPtr: OpaquePointer?
         var accountId = HederaAccountId()
 
-        if hedera_client_get_operator(ptr, &accountId, &skPtr) {
-            return Operator(
-                accountId: AccountId(unsafeFromCHedera: accountId),
-                signer: .unsafeFromPtr(skPtr!)
-            )
-        } else {
+        guard hedera_client_get_operator(ptr, &accountId, &skPtr) else {
             return nil
         }
+
+        return Operator(
+            accountId: AccountId(unsafeFromCHedera: accountId),
+            signer: .unsafeFromPtr(skPtr!)
+        )
     }
 
     internal var maxTransactionFee: Hbar? {
         let val = hedera_client_get_max_transaction_fee(ptr)
 
-        if val == 0 {
+        guard val != 0 else {
             return nil
         }
 
