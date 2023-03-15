@@ -53,25 +53,15 @@ use crate::{
 pub type TopicMessageQuery = MirrorQuery<TopicMessageQueryData>;
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TopicMessageQueryData {
     /// The topic ID to retrieve messages for.
     topic_id: Option<TopicId>,
 
     /// Include messages which reached consensus on or after this time.
     /// Defaults to the current time.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     start_time: Option<OffsetDateTime>,
 
     /// Include messages which reached consensus before this time.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     end_time: Option<OffsetDateTime>,
 
     /// The maximum number of messages to receive before stopping.

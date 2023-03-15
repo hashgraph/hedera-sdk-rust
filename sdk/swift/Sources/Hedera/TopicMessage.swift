@@ -1,8 +1,29 @@
 import Foundation
+import HederaProtobufs
 
 // fixme: chunking
 /// Topic message records.
 public struct TopicMessage: Codable {
+    internal init(
+        consensusTimestamp: Timestamp,
+        contents: Data,
+        runningHash: Data,
+        runningHashVersion: UInt64,
+        sequenceNumber: UInt64,
+        initialTransactionId: TransactionId?,
+        chunkNumber: UInt32,
+        chunkTotal: UInt32
+    ) {
+        self.consensusTimestamp = consensusTimestamp
+        self.contents = contents
+        self.runningHash = runningHash
+        self.runningHashVersion = runningHashVersion
+        self.sequenceNumber = sequenceNumber
+        self.initialTransactionId = initialTransactionId
+        self.chunkNumber = chunkNumber
+        self.chunkTotal = chunkTotal
+    }
+
     /// The consensus timestamp of the message.
     public let consensusTimestamp: Timestamp
 
@@ -40,5 +61,36 @@ public struct TopicMessage: Codable {
         initialTransactionId = try container.decode(TransactionId.self, forKey: .initialTransactionId)
         chunkNumber = try container.decode(UInt32.self, forKey: .chunkNumber)
         chunkTotal = try container.decode(UInt32.self, forKey: .chunkTotal)
+    }
+}
+
+extension TopicMessage: TryFromProtobuf {
+    internal typealias Protobuf = Com_Hedera_Mirror_Api_Proto_ConsensusTopicResponse
+
+    internal init(protobuf proto: Protobuf) throws {
+        let initialTransactionId: TransactionId?
+        let chunkNumber: UInt32
+        let chunkTotal: UInt32
+
+        if proto.hasChunkInfo {
+            initialTransactionId = try .fromProtobuf(proto.chunkInfo.initialTransactionID)
+            chunkNumber = UInt32(proto.chunkInfo.number)
+            chunkTotal = UInt32(proto.chunkInfo.total)
+        } else {
+            initialTransactionId = nil
+            chunkNumber = 1
+            chunkTotal = 1
+        }
+
+        self.init(
+            consensusTimestamp: .fromProtobuf(proto.consensusTimestamp),
+            contents: proto.message,
+            runningHash: proto.runningHash,
+            runningHashVersion: proto.runningHashVersion,
+            sequenceNumber: proto.sequenceNumber,
+            initialTransactionId: initialTransactionId,
+            chunkNumber: chunkNumber,
+            chunkTotal: chunkTotal
+        )
     }
 }
