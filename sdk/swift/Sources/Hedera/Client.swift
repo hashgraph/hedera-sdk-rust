@@ -20,13 +20,21 @@
 
 import CHedera
 import Foundation
+import GRPC
+import NIOCore
 
 /// Managed client for use on the Hedera network.
 public final class Client {
-    internal let ptr: OpaquePointer
+    internal let eventLoop: NIOCore.EventLoopGroup
 
-    private init(unsafeFromPtr ptr: OpaquePointer) {
+    internal let ptr: OpaquePointer
+    private let mirrorNetwork: MirrorNetwork
+
+    private init(unsafeFromPtr ptr: OpaquePointer, _ eventLoop: NIOCore.EventLoopGroup, _ mirrorNetwork: MirrorNetwork)
+    {
+        self.eventLoop = eventLoop
         self.ptr = ptr
+        self.mirrorNetwork = mirrorNetwork
     }
 
     /// Note: this operation is O(n)
@@ -41,6 +49,8 @@ public final class Client {
 
         return nodes
     }
+
+    internal var mirrorChannel: GRPCChannel { mirrorNetwork.channel }
 
     internal func randomNodeIds() -> [AccountId] {
         var ids: UnsafeMutablePointer<HederaAccountId>?
@@ -80,17 +90,20 @@ public final class Client {
 
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_mainnet())
+        let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
+        return Self(unsafeFromPtr: hedera_client_for_mainnet(), eventLoop, .mainnet(eventLoop))
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     public static func forTestnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_testnet())
+        let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
+        return Self(unsafeFromPtr: hedera_client_for_testnet(), eventLoop, .testnet(eventLoop))
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     public static func forPreviewnet() -> Self {
-        Self(unsafeFromPtr: hedera_client_for_previewnet())
+        let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
+        return Self(unsafeFromPtr: hedera_client_for_previewnet(), eventLoop, .previewnet(eventLoop))
     }
 
     // wish I could write `init(for name: String)`

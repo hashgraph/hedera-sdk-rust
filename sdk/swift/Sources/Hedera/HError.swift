@@ -292,6 +292,8 @@ public struct HError: Error, CustomStringConvertible {
         description: "an entity ID with an alias or evmAddress cannot have a checksum"
     )
 
+    internal static let timedOut: Self = Self(kind: .timedOut, description: "Operation timed out")
+
     // swiftlint:enable cyclomatic_complexity function_body_length
 }
 
