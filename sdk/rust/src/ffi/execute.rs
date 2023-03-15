@@ -33,7 +33,6 @@ use crate::ffi::signer::Signer;
 use crate::ffi::util::cstr_from_ptr;
 use crate::transaction::AnyTransaction;
 use crate::{
-    AnyMirrorQuery,
     AnyQuery,
     Client,
 };
@@ -43,7 +42,6 @@ use crate::{
 enum AnyRequest {
     Transaction(Box<AnyTransaction>),
     Query(Box<AnyQuery>),
-    MirrorQuery(AnyMirrorQuery),
     QueryCost(QueryCostRequest),
 }
 
@@ -106,11 +104,6 @@ pub unsafe extern "C" fn hedera_execute(
                     .await
                     .map(|response| serde_json::to_string(&response).unwrap())
             }
-
-            AnyRequest::MirrorQuery(mirror_query) => mirror_query
-                .execute_with_optional_timeout(client, timeout)
-                .await
-                .map(|response| serde_json::to_string(&response).unwrap()),
 
             AnyRequest::QueryCost(req) => req
                 .query
