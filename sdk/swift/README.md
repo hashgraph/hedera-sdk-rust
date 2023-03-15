@@ -78,6 +78,9 @@ protoc-gen-grpc-swift (from https://github.com/grpc/grpc-swift)
 ```bash
 # cwd: `$REPO/sdk/swift`
 protoc --swift_opt=Visibility=Public --swift_out=./Sources/HederaProtobufs/Services --proto_path=../../protobufs/services ../../protobufs/services/*
+
+# generate GRPC (if needed)
+protoc --grpc-swift_opt=Visibility=Public,Server=false --grpc-swift_out=./Sources/HederaProtobufs/Services --proto_path=../../protobufs/services ../../protobufs/services/*
 ```
 
 ### Generate Mirror
