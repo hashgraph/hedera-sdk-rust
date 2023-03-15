@@ -116,8 +116,7 @@ public final class HbarTests: XCTestCase {
             XCTAssertEqual(hbar.description, expected)
         }
 
-        for amount in -20000...20_000 {
-            guard !innerRange.contains(amount) else { continue }
+        for amount in -20000...20_000 where innerRange.contains(amount) {
             let hbar = Hbar.fromTinybars(Int64(amount))
 
             let expected = "\(hbar.to(.hbar)) ℏ"

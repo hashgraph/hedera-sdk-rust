@@ -49,10 +49,8 @@ public struct ContractId: EntityId {
                         "expected `<shard>.<realm>.<num>` or `<shard>.<realm>.<evmAddress>`, got, \(description)")
             }
 
-            if evmAddress.count != 20 {
-                throw HError(
-                    kind: .basicParse,
-                    description: "expected `20` byte evm address, got `\(evmAddress.count)` bytes")
+            guard evmAddress.count == 20 else {
+                throw HError.basicParse("expected `20` byte evm address, got `\(evmAddress.count)` bytes")
             }
 
             guard checksum == nil else {
@@ -83,11 +81,10 @@ public struct ContractId: EntityId {
     }
 
     public var description: String {
-        if let evmAddress = evmAddress {
-            return "\(shard).\(realm).\(evmAddress)"
-        } else {
+        guard let evmAddress = evmAddress else {
             return helper.description
         }
+        return "\(shard).\(realm).\(evmAddress)"
     }
 
     public func toStringWithChecksum(_ client: Client) throws -> String {
@@ -103,7 +100,7 @@ public struct ContractId: EntityId {
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
-        if evmAddress != nil {
+        guard evmAddress == nil else {
             return
         }
 
