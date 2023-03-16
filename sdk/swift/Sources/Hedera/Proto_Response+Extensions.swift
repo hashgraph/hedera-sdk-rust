@@ -19,6 +19,7 @@
  */
 
 import HederaProtobufs
+
 extension Proto_Response {
     internal func header() throws -> Proto_ResponseHeader {
         guard let header = self.response?.responseHeader() else {

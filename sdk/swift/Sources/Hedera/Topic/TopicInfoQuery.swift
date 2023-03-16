@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Retrieve the latest state of a topic.
 public final class TopicInfoQuery: Query<TopicInfo> {
     /// Create a new `TopicInfoQuery`.
@@ -48,6 +51,19 @@ public final class TopicInfoQuery: Query<TopicInfo> {
         try container.encodeIfPresent(topicId, forKey: .topicId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.consensusGetTopicInfo = .with { proto in
+                proto.header = header
+                topicId?.toProtobufInto(&proto.topicID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).getTopicInfo(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

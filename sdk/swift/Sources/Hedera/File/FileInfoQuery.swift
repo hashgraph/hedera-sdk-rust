@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the information about a file.
 public final class FileInfoQuery: Query<FileInfo> {
     /// Create a new `FileInfoQuery`.
@@ -48,6 +51,19 @@ public final class FileInfoQuery: Query<FileInfo> {
         try container.encodeIfPresent(fileId, forKey: .fileId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.fileGetInfo = .with { proto in
+                proto.header = header
+                fileId?.toProtobufInto(&proto.fileID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_FileServiceAsyncClient(channel: channel).getFileInfo(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

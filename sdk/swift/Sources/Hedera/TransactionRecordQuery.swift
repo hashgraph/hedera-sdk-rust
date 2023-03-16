@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the record of a transaction, given its transaction ID.
 ///
 public final class TransactionRecordQuery: Query<TransactionRecord> {
@@ -84,6 +87,23 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
 
         try super.encode(to: encoder)
     }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.transactionGetRecord = .with { proto in
+                proto.header = header
+                proto.includeDuplicates = includeDuplicates
+                proto.includeChildRecords = includeChildren
+                transactionId?.toProtobufInto(&proto.transactionID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getTxRecordByTxID(request)
+    }
+
+    internal override var relatedTransactionId: TransactionId? { transactionId }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try transactionId?.validateChecksums(on: ledgerId)

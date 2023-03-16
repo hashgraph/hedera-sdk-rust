@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the information about a schedule.
 public final class ScheduleInfoQuery: Query<ScheduleInfo> {
     /// Create a new `ScheduleInfoQuery`.
@@ -48,6 +51,19 @@ public final class ScheduleInfoQuery: Query<ScheduleInfo> {
         try container.encodeIfPresent(scheduleId, forKey: .scheduleId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.scheduleGetInfo = .with { proto in
+                proto.header = header
+                scheduleId?.toProtobufInto(&proto.scheduleID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).getScheduleInfo(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

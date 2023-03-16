@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the balance of a cryptocurrency account.
 ///
 /// This returns only the balance, so it is a smaller reply
@@ -73,6 +76,25 @@ public final class AccountBalanceQuery: Query<AccountBalance> {
         try container.encodeIfPresent(contractId, forKey: .contractId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptogetAccountBalance = .with { proto in
+                proto.header = header
+                if let accountId = self.accountId {
+                    proto.accountID = accountId.toProtobuf()
+                }
+
+                if let contractId = self.contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
     }
 
     public override func validateChecksums(on ledgerId: LedgerId) throws {
