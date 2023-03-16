@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get information about a smart contract instance.
 public final class ContractInfoQuery: Query<ContractInfo> {
     /// Create a new `ContractInfoQuery`.
@@ -48,6 +51,19 @@ public final class ContractInfoQuery: Query<ContractInfo> {
         try container.encodeIfPresent(contractId, forKey: .contractId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.contractGetInfo = .with { proto in
+                proto.header = header
+                contractId?.toProtobufInto(&proto.contractID)
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).getContractInfo(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

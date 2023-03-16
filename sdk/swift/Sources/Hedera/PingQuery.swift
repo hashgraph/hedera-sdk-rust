@@ -67,7 +67,8 @@ extension PingQuery: Execute {
                 .with { proto in
                     proto.accountID = nodeAccountId.toProtobuf()
                     proto.header = header
-                })
+                }
+            )
         }
 
         return (query, ())
