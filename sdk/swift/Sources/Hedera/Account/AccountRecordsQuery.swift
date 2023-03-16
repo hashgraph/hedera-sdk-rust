@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the records for an account for any transfers into it and out of it,
 /// that were above the threshold, during the last 25 hours.
 public final class AccountRecordsQuery: Query<[TransactionRecord]> {
@@ -49,6 +52,21 @@ public final class AccountRecordsQuery: Query<[TransactionRecord]> {
         try container.encodeIfPresent(accountId, forKey: .accountId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptoGetInfo = .with { proto in
+                proto.header = header
+                if let accountId = self.accountId {
+                    proto.accountID = accountId.toProtobuf()
+                }
+            }
+        }
+    }
+
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getAccountRecords(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

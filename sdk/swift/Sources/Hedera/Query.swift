@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// A query that can be executed on the Hedera network.
 public class Query<Response: Decodable>: Request {
@@ -26,7 +28,27 @@ public class Query<Response: Decodable>: Request {
 
     internal init() {}
 
-    private var payment: PaymentTransaction = PaymentTransaction()
+    private final var payment: PaymentTransaction = PaymentTransaction()
+
+    internal final var nodeAccountIds: [AccountId]? {
+        payment.nodeAccountIds
+    }
+
+    internal func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        fatalError("Method `Query.toQueryProtobufWith` must be overridden by `\(type(of: self))`")
+    }
+
+    internal func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        fatalError("Method `Query.queryExecute` must be overridden by `\(type(of: self))`")
+    }
+
+    // reasonable default: the actual cost is expected.
+    internal func mapCost(_ cost: Hbar) -> Hbar {
+        cost
+    }
+
+    /// The transaction ID that this query is for, if this query is about a transaction (eg: TransactionReceiptQuery).
+    internal var relatedTransactionId: TransactionId? { nil }
 
     /// Set the account IDs of the nodes that this query may be submitted to.
     ///
@@ -116,8 +138,7 @@ public class Query<Response: Decodable>: Request {
         return self
     }
 
-    public func getCost(_ client: Client) async throws -> Hbar {
-
+    public final func getCost(_ client: Client) async throws -> Hbar {
         try await QueryCost(query: self).execute(client)
     }
 

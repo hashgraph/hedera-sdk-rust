@@ -62,19 +62,19 @@ extension PingQuery: Execute {
 
         assert(nodeAccountId == self.nodeAccountId)
 
-        let query = Proto_Query.with { proto in 
-            proto.query = .cryptogetAccountBalance(.with { proto in 
-                proto.accountID = nodeAccountId.toProtobuf()
-                proto.header = header
-            })
+        let query = Proto_Query.with { proto in
+            proto.query = .cryptogetAccountBalance(
+                .with { proto in
+                    proto.accountID = nodeAccountId.toProtobuf()
+                    proto.header = header
+                })
         }
 
         return (query, ())
     }
 
     func execute(_ channel: GRPC.GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
-        print("hello from ping query")
-        return try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
     }
 
     func makeResponse(
@@ -82,7 +82,10 @@ extension PingQuery: Execute {
     ) throws {}
 
     func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
-        HError(kind: .queryNoPaymentPreCheckStatus(status: status), description: "query with no payment transaction failed pre-check with status \(status)")
+        HError(
+            kind: .queryNoPaymentPreCheckStatus(status: status),
+            description: "query with no payment transaction failed pre-check with status \(status)"
+        )
     }
 
     static func responsePrecheckStatus(_ response: HederaProtobufs.Proto_Response) throws -> Int32 {
