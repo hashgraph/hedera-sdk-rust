@@ -52,3 +52,13 @@ extension FixedWidthInteger {
         return Data(bytes: &num, count: MemoryLayout.size(ofValue: num))
     }
 }
+
+extension FixedWidthInteger {
+    internal init<S: StringProtocol>(parsing description: S) throws {
+        guard let value = Self(description) else {
+            throw HError(kind: .basicParse, description: "Invalid numeric string `\(description)`")
+        }
+
+        self = value
+    }
+}
