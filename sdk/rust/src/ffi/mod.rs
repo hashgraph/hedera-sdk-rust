@@ -31,7 +31,6 @@ mod key;
 mod mnemonic;
 mod runtime;
 mod schedule_info;
-mod semantic_version;
 mod signer;
 mod timestamp;
 mod transaction;

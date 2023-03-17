@@ -54,12 +54,36 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     }
 
     // internal API, do NOT expose.
-    private init(parsing description: String) throws {
-        var csemver = HederaSemanticVersion()
+    // internal API, do NOT expose.
+    private init<S: StringProtocol>(parsing description: S) throws {
+        let parts = description.split(separator: ".", maxSplits: 2)
 
-        try HError.throwing(error: hedera_semantic_version_from_string(description, &csemver))
+        guard parts.count == 3 else {
+            throw HError.basicParse("expected major.minor.patch for semver")
+        }
 
-        self.init(unsafeFromCHedera: csemver)
+        let patchStr: S.SubSequence
+        let pre: S.SubSequence?
+        let buildStr: S.SubSequence?
+
+        do {
+            // while it seems like this is a weird order,
+            // it actually makes more sense than `pre` first,
+            // because `pre` is in the middle of the string.
+            var tmp = parts[2]
+            (tmp, buildStr) = tmp.splitOnce(on: "+") ?? (tmp, nil)
+
+            (patchStr, pre) = tmp.splitOnce(on: "-") ?? (tmp, nil)
+        }
+
+        let major = try parseVersion(parts[0], section: "major")
+        let minor = try parseVersion(parts[1], section: "minor")
+        let patch = try parseVersion(patchStr, section: "patch")
+
+        let prerelease = try pre.map { String(try parsePrerelease($0)) } ?? ""
+        let build = try buildStr.map { String(try parseBuild($0)) } ?? ""
+
+        self.init(major: major, minor: minor, patch: patch, prerelease: prerelease, build: build)
     }
 
     public init(stringLiteral value: StringLiteralType) {
@@ -71,14 +95,6 @@ public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStri
     // semver parsing is shockingly hard. So the FFI really does carry its weight.
     public init?(_ description: String) {
         try? self.init(parsing: description)
-    }
-
-    internal init(unsafeFromCHedera hedera: HederaSemanticVersion) {
-        major = hedera.major
-        minor = hedera.minor
-        patch = hedera.patch
-        prerelease = hedera.prerelease.map { String(hString: $0) } ?? ""
-        build = hedera.build.map { String(hString: $0) } ?? ""
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
@@ -122,4 +138,76 @@ extension SemanticVersion: ProtobufCodable {
             proto.build = build
         }
     }
+}
+
+extension Character {
+    fileprivate var isASCIIAlphamumeric: Bool {
+        isASCII && (isLetter || isNumber)
+    }
+
+    fileprivate var isASCIIDigit: Bool {
+        isASCII && isNumber
+    }
+
+    fileprivate var isValidIdent: Bool {
+        isASCIIAlphamumeric || self == "-"
+    }
+}
+
+extension StringProtocol {
+    fileprivate var isNumericWithLeadingZero: Bool {
+        guard let rest = stripPrefix("0") else {
+            return false
+        }
+
+        return !rest.isEmpty && rest.allSatisfy { $0.isASCIIDigit }
+    }
+}
+
+private func parseVersion<S: StringProtocol>(_ string: S, section: String) throws -> UInt32 {
+    if string.isNumericWithLeadingZero {
+        throw HError.basicParse("semver section `\(section)` starts with leading 0: `\(string)`")
+    }
+
+    return try UInt32(parsing: string)
+}
+
+private func parsePrerelease<S: StringProtocol>(_ string: S) throws -> S {
+    if string.isEmpty {
+        throw HError.basicParse("semver with empty prerelease")
+    }
+
+    for identifier in string.split(separator: ".") {
+        if identifier.isEmpty {
+            throw HError.basicParse("semver with empty -pre identifier")
+        }
+
+        if !(identifier.allSatisfy { $0.isValidIdent }) {
+            throw HError.basicParse("semver with invalid identifier for the -pre section: `\(identifier)`")
+        }
+
+        if identifier.isNumericWithLeadingZero {
+            throw HError.basicParse("numeric pre-release identifier has leading zero: `\(identifier)`")
+        }
+    }
+
+    return string
+}
+
+private func parseBuild<S: StringProtocol>(_ string: S) throws -> S {
+    if string.isEmpty {
+        throw HError.basicParse("semver with empty build")
+    }
+
+    for identifier in string.split(separator: ".") {
+        if identifier.isEmpty {
+            throw HError.basicParse("semver with empty build section identifier")
+        }
+
+        if !(identifier.allSatisfy { $0.isValidIdent }) {
+            throw HError.basicParse("semver with invalid identifier for the build section: `\(identifier)`")
+        }
+    }
+
+    return string
 }
