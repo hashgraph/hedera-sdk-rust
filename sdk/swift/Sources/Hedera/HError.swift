@@ -287,6 +287,10 @@ public struct HError: Error, CustomStringConvertible {
         return Self(kind: .badEntityId(err), description: err.description)
     }
 
+    internal static func basicParse(_ description: String) -> Self {
+        Self(kind: .basicParse, description: description)
+    }
+
     internal static let cannotCreateChecksum: Self = Self(
         kind: .cannotCreateChecksum,
         description: "an entity ID with an alias or evmAddress cannot have a checksum"
