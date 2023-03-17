@@ -75,7 +75,7 @@ internal func resumeUnmanagedContinuation(
     continuation.resume(throwing: error)
 }
 
-private class ContinuationHandle<T, E: Error> {
+private final class ContinuationHandle<T, E: Error> {
     let continuation: UnsafeContinuation<T, E>
 
     init(_ continuation: UnsafeContinuation<T, E>) {
