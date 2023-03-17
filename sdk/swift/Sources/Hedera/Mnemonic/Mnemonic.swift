@@ -222,9 +222,10 @@ private struct MnemonicV1Data: Equatable {
             legacyWordList.indexOf(word: word).map(Int32.init) ?? -1
         }
 
-        var data = Self.convertRadix(indecies, from: 4096, to: 256, outputLength: 33).map {
-            UInt8(truncatingIfNeeded: $0)
-        }
+        var data = Self.convertRadix(indecies, from: 4096, to: 256, outputLength: 33).map(
+            UInt8.init(truncatingIfNeeded:)
+        )
+
         precondition(data.count == 33)
 
         let crc = data.popLast()!
