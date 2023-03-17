@@ -1,9 +1,22 @@
-use std::ffi::c_char;
-use std::ptr;
-use std::str::FromStr;
-
-use super::error::Error;
-use crate::ffi::util::cstr_from_ptr;
+/*
+ * ‌
+ * Hedera Rust SDK
+ * ​
+ * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
+ * ​
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ‍
+ */
 
 #[repr(C)]
 pub struct TransactionId {
@@ -23,26 +36,4 @@ impl From<crate::TransactionId> for TransactionId {
             scheduled,
         }
     }
-}
-
-// this function mostly exists because Rust parsing is nicer, has better errors, etc.
-// plus the module is needed anyway for to/from bytes. So, might as well.
-/// # Safety
-/// - `s` must be a valid string
-/// - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
-#[no_mangle]
-pub unsafe extern "C" fn hedera_transaction_id_from_string(
-    s: *const c_char,
-    transation_id: *mut TransactionId,
-) -> Error {
-    assert!(!transation_id.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-    let parsed = ffi_try!(crate::TransactionId::from_str(&s)).into();
-
-    unsafe {
-        ptr::write(transation_id, parsed);
-    }
-
-    Error::Ok
 }
