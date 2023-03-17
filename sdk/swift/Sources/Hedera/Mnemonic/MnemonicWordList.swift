@@ -19,7 +19,7 @@
  */
 
 internal struct MnemonicWordList: ExpressibleByStringLiteral {
-    init(stringLiteral value: StringLiteralType) {
+    internal init(stringLiteral value: StringLiteralType) {
         backingData = value
         words = value.split { $0.isNewline }
         isSorted = words.isSorted()
