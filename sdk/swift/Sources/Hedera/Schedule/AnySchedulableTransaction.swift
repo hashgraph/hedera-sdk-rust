@@ -42,7 +42,7 @@ internal enum AnySchedulableTransaction {
     }
 
     // There's unfortunately very little that can be done about this.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    // swiftlint:disable:next function_body_length
     fileprivate init(_ anyTransaction: AnyTransaction) {
         switch anyTransaction {
         case .accountCreate(let transaction):

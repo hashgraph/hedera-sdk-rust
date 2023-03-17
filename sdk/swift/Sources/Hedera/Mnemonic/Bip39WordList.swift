@@ -18,6 +18,8 @@
  * ‍
  */
 
+// swiftlint:disable file_length
+
 internal let bip39WordList: MnemonicWordList = """
     abandon
     ability

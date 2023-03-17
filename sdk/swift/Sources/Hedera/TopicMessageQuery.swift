@@ -97,7 +97,7 @@ extension TopicMessageQuery: ToProtobuf {
             topicId?.toProtobufInto(&proto.topicID)
             startTime?.toProtobufInto(&proto.consensusStartTime)
             endTime?.toProtobufInto(&proto.consensusEndTime)
-            limit = limit
+            proto.limit = limit
         }
     }
 }

@@ -60,7 +60,6 @@ internal enum AnyTransaction {
     case scheduleDelete(ScheduleDeleteTransaction)
     case ethereum(EthereumTransaction)
 
-    // swiftlint:disable:next cyclomatic_complexity
     internal init(upcasting transaction: Transaction) {
         switch transaction {
         case let transaction as AccountCreateTransaction: self = .accountCreate(transaction)
@@ -201,7 +200,7 @@ extension AnyTransaction: Decodable {
         case type = "$type"
     }
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    // swiftlint:disable:next function_body_length
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 

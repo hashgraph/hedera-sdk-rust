@@ -51,14 +51,6 @@ extension Array where Element: Comparable {
             return true
         }
 
-        for i in 1..<count {
-            let lhs = self[i - 1]
-            let rhs = self[i]
-            if lhs > rhs {
-                return false
-            }
-        }
-
-        return true
+        return zip(self[1...], self).allSatisfy { !($0 > $1) }
     }
 }
