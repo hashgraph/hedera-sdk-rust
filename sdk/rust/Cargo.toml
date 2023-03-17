@@ -15,6 +15,7 @@ bench = false
 crate-type = ["lib", "staticlib"]
 
 [features]
+default = ["mnemonic"]
 ffi = [
   "cbindgen",
   "libc",
@@ -27,6 +28,7 @@ ffi = [
   "triomphe",
   "rust_decimal/serde"
 ]
+mnemonic = []
 
 [dependencies]
 async-stream = "0.3.3"

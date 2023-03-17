@@ -32,7 +32,6 @@ use crate::ffi::error::Error;
 use crate::ffi::key::to_bytes;
 use crate::ffi::util;
 use crate::{
-    Mnemonic,
     PrivateKey,
     PublicKey,
 };
@@ -338,18 +337,10 @@ pub unsafe extern "C" fn hedera_private_key_sign(
     // safety: caller promises that `message` is valid for r/w of up to `message_size`, which is exactly what `slice::from_raw_parts` wants.
     let message = unsafe { slice::from_raw_parts(message, message_size) };
 
-    let bytes = key.sign(message).into_boxed_slice();
+    let bytes = key.sign(message);
 
-    let bytes = Box::leak(bytes);
-    let len = bytes.len();
-    let bytes = bytes.as_mut_ptr();
-
-    // safety: invariants promise that `buf` must be valid for writes.
-    unsafe {
-        ptr::write(buf, bytes);
-    }
-
-    len
+    // safety: invariants passed to the caller.
+    unsafe { util::make_bytes(bytes, buf) }
 }
 
 /// Returns true if calling [`derive`](Self::derive) on `key` would succeed.
@@ -430,19 +421,18 @@ pub unsafe extern "C" fn hedera_private_key_legacy_derive(
 /// Recover a `PrivateKey` from a mnemonic phrase and a passphrase.
 ///
 /// # Safety
-/// - `mnemonic` must be valid for reads according to the [*Rust* pointer rules].
-/// - `passphrase` must be valid for reads up until and including the first NUL (`'\0'`) byte.
+/// - `seed` must be valid for reads of up to `seed_size` bytes according to the [*Rust* pointer rules].
 /// - the retured `PrivateKey` must only be freed via [`hedera_private_key_free`], notably, this means that it *must not* be freed with `free`.
-
 #[no_mangle]
-pub unsafe extern "C" fn hedera_private_key_from_mnemonic(
-    mnemonic: *mut Mnemonic,
-    passphrase: *const c_char,
+pub unsafe extern "C" fn hedera_private_key_from_mnemonic_seed(
+    seed: *const u8,
+    seed_size: libc::size_t,
 ) -> *mut PrivateKey {
-    let mnemonic = unsafe { mnemonic.as_ref() }.unwrap();
-    let passphrase = unsafe { util::cstr_from_ptr(passphrase) };
+    // safety: caller promises that `seed` is valid for reads of up to `seed_size`,
+    // which is exactly what `slice::from_raw_parts` wants.
+    let seed = unsafe { slice::from_raw_parts(seed, seed_size) };
+    let sk = PrivateKey::from_mnemonic_seed(seed);
 
-    let sk = PrivateKey::from_mnemonic(mnemonic, &passphrase);
     Box::into_raw(Box::new(sk))
 }
 
