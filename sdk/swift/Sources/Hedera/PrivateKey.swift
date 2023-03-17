@@ -212,7 +212,10 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public static func fromMnemonic(_ mnemonic: Mnemonic, _ passphrase: String) -> Self {
-        Self(hedera_private_key_from_mnemonic(mnemonic.ptr, passphrase))
+        let seed = mnemonic.toSeed(passphrase: passphrase)
+        return seed.withUnsafeTypedBytes { buffer in
+            Self(hedera_private_key_from_mnemonic_seed(buffer.baseAddress, buffer.count))
+        }
     }
 
     public static func fromMnemonic(_ mnemonic: Mnemonic) -> Self {

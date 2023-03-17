@@ -134,6 +134,7 @@ mod file;
 mod key;
 mod ledger_id;
 mod mirror_query;
+#[cfg(feature = "mnemonic")]
 mod mnemonic;
 mod network_version_info;
 mod network_version_info_query;
@@ -201,9 +202,12 @@ pub use entity_id::EntityId;
 pub(crate) use entity_id::ValidateChecksums;
 pub use error::{
     Error,
+    Result,
+};
+#[cfg(feature = "mnemonic")]
+pub use error::{
     MnemonicEntropyError,
     MnemonicParseError,
-    Result,
 };
 pub use ethereum_transaction::EthereumTransaction;
 pub use evm_address::EvmAddress;
@@ -249,6 +253,7 @@ pub use mirror_query::{
     AnyMirrorQueryResponse,
     MirrorQuery,
 };
+#[cfg(feature = "mnemonic")]
 pub use mnemonic::Mnemonic;
 pub use network_version_info::NetworkVersionInfo;
 pub use network_version_info_query::NetworkVersionInfoQuery;

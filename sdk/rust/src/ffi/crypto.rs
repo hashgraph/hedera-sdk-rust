@@ -18,13 +18,15 @@
  * ‍
  */
 
-use std::ptr;
+use core::slice;
 
+use hmac::Hmac;
 use libc::size_t;
 use sha3::Digest;
 
-#[no_mangle]
-pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
+use crate::ffi::util;
+
+unsafe fn digest<H: Digest>(
     bytes: *const u8,
     bytes_size: size_t,
     result_out: *mut *mut u8,
@@ -34,16 +36,81 @@ pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
 
     let bytes = unsafe { std::slice::from_raw_parts(bytes, bytes_size) };
 
-    let result = sha3::Keccak256::digest(bytes).to_vec().into_boxed_slice();
-
-    let bytes = Box::leak(result);
-    let len = bytes.len();
-    let bytes = bytes.as_mut_ptr();
+    let result = H::digest(bytes);
 
     // safety: invariants promise that `buf` must be valid for writes.
-    unsafe {
-        ptr::write(result_out, bytes);
-    }
+    unsafe { super::util::make_bytes(result.to_vec(), result_out) }
+}
 
-    len
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
+    bytes: *const u8,
+    bytes_size: size_t,
+    result_out: *mut *mut u8,
+) -> size_t {
+    // safety: we pass the safety requirements up to the caller.
+    unsafe { digest::<sha3::Keccak256>(bytes, bytes_size, result_out) }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_sha2_sha256_digest(
+    bytes: *const u8,
+    bytes_size: size_t,
+    result_out: *mut *mut u8,
+) -> size_t {
+    // safety: we pass the safety requirements up to the caller.
+    unsafe { digest::<sha2::Sha256>(bytes, bytes_size, result_out) }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_sha2_sha512_digest(
+    bytes: *const u8,
+    bytes_size: size_t,
+    result_out: *mut *mut u8,
+) -> size_t {
+    // safety: we pass the safety requirements up to the caller.
+    unsafe { digest::<sha2::Sha512>(bytes, bytes_size, result_out) }
+}
+
+// it's weird that I have to allow this,
+// since a no-mangle function kinda implies that this is
+// usable from elsewhere, but like...
+#[allow(dead_code)]
+#[repr(C)]
+pub enum HmacVariant {
+    Sha2Sha256,
+    Sha2Sha512,
+    Sha3Keccak256,
+}
+
+/// # Safety
+/// - `variant` must be one of the recognized values, it _must not_ be anything else.
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_pbkdf2_hmac(
+    variant: HmacVariant,
+    password: *const u8,
+    password_size: size_t,
+    salt: *const u8,
+    salt_size: size_t,
+    rounds: u32,
+    key_buffer: *mut u8,
+    key_size: size_t,
+) {
+    assert!(!key_buffer.is_null());
+
+    let password = unsafe { util::slice_from_buffer(password, password_size) };
+    let salt = unsafe { util::slice_from_buffer(salt, salt_size) };
+    let key_buffer = unsafe { slice::from_raw_parts_mut(key_buffer, key_size) };
+
+    match variant {
+        HmacVariant::Sha2Sha256 => {
+            pbkdf2::pbkdf2::<Hmac<sha2::Sha256>>(password, salt, rounds, key_buffer)
+        }
+        HmacVariant::Sha2Sha512 => {
+            pbkdf2::pbkdf2::<Hmac<sha2::Sha512>>(password, salt, rounds, key_buffer)
+        }
+        HmacVariant::Sha3Keccak256 => {
+            pbkdf2::pbkdf2::<Hmac<sha3::Keccak256>>(password, salt, rounds, key_buffer)
+        }
+    }
 }
