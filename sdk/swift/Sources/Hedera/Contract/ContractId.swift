@@ -31,7 +31,7 @@ public struct ContractId: EntityId {
     }
 
     public init<S: StringProtocol>(parsing description: S) throws {
-        switch try PartialEntityId<S.SubSequence>(parsing: description) {
+        switch try PartialEntityId(parsing: description) {
         case .short(let num):
             self.init(num: num)
 

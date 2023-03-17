@@ -88,7 +88,7 @@ extension EntityId {
     }
 
     public init<S: StringProtocol>(parsing description: S) throws {
-        self = try PartialEntityId<S.SubSequence>(parsing: description).intoNum()
+        self = try PartialEntityId(parsing: description).intoNum()
     }
 
     public init?(_ description: String) {
@@ -179,15 +179,15 @@ internal struct EntityIdHelper<E: EntityId> {
     }
 }
 
-internal enum PartialEntityId<S> {
+internal enum PartialEntityId<S: StringProtocol> {
     // entity ID in the form `<num>`
     case short(num: UInt64)
     // entity ID in the form `<shard>.<realm>.<last>`
-    case long(shard: UInt64, realm: UInt64, last: S, checksum: Checksum?)
+    case long(shard: UInt64, realm: UInt64, last: S.SubSequence, checksum: Checksum?)
     // entity ID in some other format (for example `0x<evmAddress>`)
-    case other(S)
+    case other(S.SubSequence)
 
-    internal init<D: StringProtocol>(parsing description: D) throws where S == D.SubSequence {
+    internal init(parsing description: S) throws {
         switch description.splitOnce(on: ".") {
         case .some((let shard, let rest)):
             // `shard.realm.num` format
@@ -210,7 +210,7 @@ internal enum PartialEntityId<S> {
         }
     }
 
-    internal func intoNum<E: EntityId>() throws -> E where S: StringProtocol {
+    internal func intoNum<E: EntityId>() throws -> E {
         switch self {
         case .short(let num):
             return E(num: num)
