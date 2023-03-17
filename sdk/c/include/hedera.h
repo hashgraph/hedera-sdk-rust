@@ -1006,14 +1006,6 @@ const struct HederaTransactionSources *hedera_transaction_sources_sign_single(co
  */
 void hedera_transaction_sources_free(const struct HederaTransactionSources *sources);
 
-/**
- * # Safety
- * - `s` must be a valid string
- * - `transaction_id` must be a valid for writes according to [*Rust* pointer rules].
- */
-enum HederaError hedera_transaction_id_from_string(const char *s,
-                                                   struct HederaTransactionId *transation_id);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus
