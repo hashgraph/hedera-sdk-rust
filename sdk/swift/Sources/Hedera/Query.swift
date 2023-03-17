@@ -26,7 +26,7 @@ public class Query<Response: Decodable>: Request {
 
     internal init() {}
 
-    private var payment: PaymentTransaction = PaymentTransaction()
+    private final var payment: PaymentTransaction = PaymentTransaction()
 
     /// Set the account IDs of the nodes that this query may be submitted to.
     ///
@@ -34,7 +34,7 @@ public class Query<Response: Decodable>: Request {
     /// configured on the query payment transaction (if explicitly provided).
     ///
     @discardableResult
-    public func nodeAccountIds(_ nodeAccountIds: [AccountId]) -> Self {
+    public final func nodeAccountIds(_ nodeAccountIds: [AccountId]) -> Self {
         self.payment.nodeAccountIds = nodeAccountIds
 
         return self
@@ -45,7 +45,7 @@ public class Query<Response: Decodable>: Request {
     /// The client will submit exactly this amount for the payment of this query. Hedera
     /// will not return any remainder (over the actual cost for this query).
     ///
-    public func paymentAmount(_ amount: Hbar) -> Self {
+    public final func paymentAmount(_ amount: Hbar) -> Self {
         self.payment.amount = amount
 
         return self
@@ -64,7 +64,7 @@ public class Query<Response: Decodable>: Request {
     ///
     /// Set to `None` to allow unlimited payment amounts.
     ///
-    public func maxPaymentAmount(_ maxAmount: Hbar?) -> Self {
+    public final func maxPaymentAmount(_ maxAmount: Hbar?) -> Self {
         self.payment.maxAmount = maxAmount
 
         return self
@@ -74,7 +74,7 @@ public class Query<Response: Decodable>: Request {
     ///
     /// Defaults to 120 seconds (or two minutes).
     ///
-    public func paymentTransactionValidDuration(_ validDuration: Duration) -> Self {
+    public final func paymentTransactionValidDuration(_ validDuration: Duration) -> Self {
         self.payment.transactionValidDuration = validDuration
 
         return self
@@ -85,7 +85,7 @@ public class Query<Response: Decodable>: Request {
     ///
     /// Defaults to 1 hbar.
     ///
-    public func maxPaymentTransactionFee(_ maxPaymentTransactionFee: Hbar) -> Self {
+    public final func maxPaymentTransactionFee(_ maxPaymentTransactionFee: Hbar) -> Self {
         self.payment.maxTransactionFee = maxPaymentTransactionFee
 
         return self
@@ -93,14 +93,14 @@ public class Query<Response: Decodable>: Request {
 
     /// Set a note or description that should be recorded in the transaction record (maximum length
     /// of 100 characters) for the payment transaction.
-    public func paymentTransactionMemo(_ memo: String) -> Self {
+    public final func paymentTransactionMemo(_ memo: String) -> Self {
         self.payment.transactionMemo = memo
 
         return self
     }
 
     /// Sets the account that will be paying for this query.
-    public func payerAccountId(_ payerAccountId: AccountId) -> Self {
+    public final func payerAccountId(_ payerAccountId: AccountId) -> Self {
         self.payment.payerAccountId = payerAccountId
 
         return self
@@ -110,14 +110,13 @@ public class Query<Response: Decodable>: Request {
     /// on this query.
     ///
     /// Overrides payer account defined on this query or on the client.
-    public func paymentTransactionId(_ transactionId: TransactionId) -> Self {
+    public final func paymentTransactionId(_ transactionId: TransactionId) -> Self {
         self.payment.transactionId = transactionId
 
         return self
     }
 
-    public func getCost(_ client: Client) async throws -> Hbar {
-
+    public final func getCost(_ client: Client) async throws -> Hbar {
         try await QueryCost(query: self).execute(client)
     }
 
@@ -138,7 +137,7 @@ public class Query<Response: Decodable>: Request {
         try container.encode(payment, forKey: .payment)
     }
 
-    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+    public final func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
         try await executeInternal(client, timeout)
     }
 

@@ -49,9 +49,9 @@ internal final class TransactionSources {
 public class Transaction: Request, ValidateChecksums, Decodable {
     public init() {}
 
-    internal private(set) var signers: [Signer] = []
-    internal private(set) var sources: TransactionSources?
-    public private(set) var isFrozen: Bool = false
+    internal private(set) final var signers: [Signer] = []
+    internal private(set) final var sources: TransactionSources?
+    public private(set) final var isFrozen: Bool = false
 
     public typealias Response = TransactionResponse
 
@@ -64,23 +64,23 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         case transactionId
     }
 
-    private var `operator`: Operator?
+    private final var `operator`: Operator?
 
-    private var nodeAccountIds: [AccountId]? {
+    private final var nodeAccountIds: [AccountId]? {
         willSet {
             ensureNotFrozen(fieldName: "nodeAccountIds")
         }
     }
 
     /// Explicit transaction ID for this transaction.
-    public var transactionId: TransactionId? {
+    public final var transactionId: TransactionId? {
         willSet {
             ensureNotFrozen(fieldName: "transactionId")
         }
     }
 
     /// The maximum allowed transaction fee for this transaction.
-    public var maxTransactionFee: Hbar? {
+    public final var maxTransactionFee: Hbar? {
         willSet {
             ensureNotFrozen(fieldName: "maxTransactionFee")
         }
@@ -88,7 +88,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
 
     /// Sets the maximum allowed transaction fee for this transaction.
     @discardableResult
-    public func maxTransactionFee(_ maxTransactionFee: Hbar) -> Self {
+    public final func maxTransactionFee(_ maxTransactionFee: Hbar) -> Self {
         self.maxTransactionFee = maxTransactionFee
 
         return self
@@ -96,13 +96,13 @@ public class Transaction: Request, ValidateChecksums, Decodable {
 
     /// Sets the explicit transaction ID for this transaction.
     @discardableResult
-    public func transactionId(_ transactionId: TransactionId) -> Self {
+    public final func transactionId(_ transactionId: TransactionId) -> Self {
         self.transactionId = transactionId
 
         return self
     }
 
-    internal func addSignatureSigner(_ signer: Signer) {
+    internal final func addSignatureSigner(_ signer: Signer) {
         precondition(isFrozen)
 
         precondition(nodeAccountIds?.count == 1, "cannot manually add a signature to a transaction with multiple nodes")
@@ -114,24 +114,24 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     @discardableResult
-    public func sign(_ privateKey: PrivateKey) -> Self {
+    public final func sign(_ privateKey: PrivateKey) -> Self {
         self.signWith(privateKey.publicKey) { privateKey.sign($0) }
     }
 
     @discardableResult
-    public func signWith(_ publicKey: PublicKey, _ signer: @escaping (Data) -> (Data)) -> Self {
+    public final func signWith(_ publicKey: PublicKey, _ signer: @escaping (Data) -> (Data)) -> Self {
         self.signers.append(Signer(publicKey, signer))
 
         return self
     }
 
     @discardableResult
-    public func freeze() throws -> Self {
+    public final func freeze() throws -> Self {
         try freezeWith(nil)
     }
 
     @discardableResult
-    public func freezeWith(_ client: Client?) throws -> Self {
+    public final func freezeWith(_ client: Client?) throws -> Self {
         if isFrozen {
             return self
         }
@@ -159,7 +159,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     @discardableResult
-    internal func makeSources() throws -> TransactionSources {
+    internal final func makeSources() throws -> TransactionSources {
         precondition(isFrozen)
         if let sources = sources {
             return sources.signedWith(self.signers)
@@ -181,7 +181,8 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         try await executeInternal(client, timeout)
     }
 
-    internal func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse
+    internal final func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws
+        -> TransactionResponse
     {
         try freezeWith(client)
 
@@ -193,7 +194,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         return try await executeEncoded(client, request: request, timeout: timeout)
     }
 
-    private func executeEncoded(_ client: Client, request: String, timeout: TimeInterval?)
+    private final func executeEncoded(_ client: Client, request: String, timeout: TimeInterval?)
         async throws -> Response
     {
         if client.isAutoValidateChecksumsEnabled() {
@@ -231,7 +232,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     // hack: this should totally be on ChunkedTransaction
-    internal func executeAllEncoded(_ client: Client, request: String, timeoutPerChunk: TimeInterval?)
+    internal final func executeAllEncoded(_ client: Client, request: String, timeoutPerChunk: TimeInterval?)
         async throws -> [Response]
     {
         if client.isAutoValidateChecksumsEnabled() {
@@ -317,7 +318,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         }
     }
 
-    public func toBytes() throws -> Data {
+    public final func toBytes() throws -> Data {
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 
@@ -337,7 +338,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         try transactionId?.validateChecksums(on: ledgerId)
     }
 
-    internal func ensureNotFrozen(fieldName: String? = nil) {
+    internal final func ensureNotFrozen(fieldName: String? = nil) {
         if let fieldName = fieldName {
             precondition(!isFrozen, "\(fieldName) cannot be set while `\(type(of: self))` is frozen")
         } else {

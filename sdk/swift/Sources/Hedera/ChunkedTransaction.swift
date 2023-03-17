@@ -26,7 +26,7 @@ public class ChunkedTransaction: Transaction {
     /// Message/contents for this transaction.
     ///
     /// Please expose this under the appropriate name (with the frozen check) when inheriting from this class.
-    internal var data: Data = Data() {
+    internal final var data: Data = Data() {
         willSet {
             // note: This exists in case one is forgotten, prefer the `willSet` elsewhere.
             ensureNotFrozen(fieldName: "data")
@@ -34,7 +34,7 @@ public class ChunkedTransaction: Transaction {
     }
 
     /// The maximum number of chunks this transaction will be split into.
-    public var maxChunks = defaultMaxChunks {
+    public final var maxChunks = defaultMaxChunks {
         willSet {
             ensureNotFrozen(fieldName: "maxChunks")
         }
@@ -42,14 +42,14 @@ public class ChunkedTransaction: Transaction {
 
     /// Sets the maximum number of chunks this transaction will be split into.
     @discardableResult
-    public func maxChunks(_ maxChunks: Int) -> Self {
+    public final func maxChunks(_ maxChunks: Int) -> Self {
         self.maxChunks = maxChunks
 
         return self
     }
 
     /// The maximum size of any chunk of this transaction.
-    public var chunkSize = defaultChunkSize {
+    public final var chunkSize = defaultChunkSize {
         willSet {
             ensureNotFrozen(fieldName: "chunkSize")
         }
@@ -57,7 +57,7 @@ public class ChunkedTransaction: Transaction {
 
     /// Sets the maximum size of any chunk of this transaction.
     @discardableResult
-    public func chunkSize(_ chunkSize: Int) -> Self {
+    public final func chunkSize(_ chunkSize: Int) -> Self {
         precondition(chunkSize != 0)
 
         self.chunkSize = chunkSize
@@ -91,7 +91,7 @@ public class ChunkedTransaction: Transaction {
         try await executeAll(client, timeout)[0]
     }
 
-    public func executeAll(_ client: Client, _ timeoutPerChunk: TimeInterval? = nil) async throws
+    public final func executeAll(_ client: Client, _ timeoutPerChunk: TimeInterval? = nil) async throws
         -> [TransactionResponse]
     {
         try freezeWith(client)
@@ -99,7 +99,7 @@ public class ChunkedTransaction: Transaction {
         return try await executeAllInternal(client, timeoutPerChunk)
     }
 
-    private func executeAllInternal(_ client: Client, _ timeoutPerChunk: TimeInterval? = nil) async throws
+    private final func executeAllInternal(_ client: Client, _ timeoutPerChunk: TimeInterval? = nil) async throws
         -> [TransactionResponse]
     {
         try freezeWith(client)
