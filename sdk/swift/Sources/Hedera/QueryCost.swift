@@ -20,7 +20,7 @@
 
 import Foundation
 
-final internal class QueryCost<T: Decodable, U: Query<T>>: Request, ValidateChecksums {
+internal final class QueryCost<T: Decodable, U: Query<T>>: Request, ValidateChecksums {
     internal typealias Response = Hbar
 
     private let query: U

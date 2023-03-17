@@ -20,7 +20,7 @@
 
 import Foundation
 
-public class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
+public final class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
     private var fileId: FileId
     private var limit: UInt32
 
