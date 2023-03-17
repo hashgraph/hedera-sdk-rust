@@ -18,6 +18,8 @@
  * ‍
  */
 
+// swiftlint:disable file_length
+
 internal let legacyWordList: MnemonicWordList = """
     aback
     abbey

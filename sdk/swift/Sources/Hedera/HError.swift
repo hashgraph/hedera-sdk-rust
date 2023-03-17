@@ -112,7 +112,7 @@ public struct HError: Error, CustomStringConvertible {
         self.description = description
     }
 
-    // swiftlint:disable cyclomatic_complexity function_body_length
+    // swiftlint:disable function_body_length
     internal init?(_ error: HederaError) {
         // this consumes the error, so we have to get the message first if it exists
         let (errorInfo, message) = HederaErrorDetails.last()
@@ -278,7 +278,7 @@ public struct HError: Error, CustomStringConvertible {
 
     internal static let timedOut: Self = Self(kind: .timedOut, description: "Operation timed out")
 
-    // swiftlint:enable cyclomatic_complexity function_body_length
+    // swiftlint:enable function_body_length
 }
 
 extension HError: LocalizedError {
