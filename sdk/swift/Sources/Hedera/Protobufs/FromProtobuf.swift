@@ -2,13 +2,13 @@ import Foundation
 import SwiftProtobuf
 
 internal protocol TryFromProtobuf {
-    associatedtype Protobuf
+    associatedtype Protobuf: Sendable
 
     init(protobuf proto: Protobuf) throws
 }
 
 extension TryFromProtobuf {
-    internal static func fromProtobuf(_ proto: Protobuf) throws -> Self {
+    @Sendable internal static func fromProtobuf(_ proto: Protobuf) throws -> Self {
         try Self(protobuf: proto)
     }
 
@@ -23,7 +23,7 @@ internal protocol FromProtobuf: TryFromProtobuf {
 }
 
 extension FromProtobuf {
-    internal static func fromProtobuf(_ proto: Protobuf) -> Self {
+    @Sendable internal static func fromProtobuf(_ proto: Protobuf) -> Self {
         Self(protobuf: proto)
     }
 }

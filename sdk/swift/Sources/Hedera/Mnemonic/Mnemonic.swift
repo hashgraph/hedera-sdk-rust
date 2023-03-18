@@ -243,6 +243,8 @@ private struct MnemonicV1Data: Equatable {
     }
 }
 
+extension Mnemonic: Sendable {}
+
 private struct MnemonicV2V3Data: Equatable {
     let words: [String]
 

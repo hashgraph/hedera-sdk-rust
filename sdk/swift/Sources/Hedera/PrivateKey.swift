@@ -232,3 +232,5 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         hedera_private_key_free(ptr)
     }
 }
+
+extension PrivateKey: Sendable {}

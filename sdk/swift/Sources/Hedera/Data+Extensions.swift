@@ -47,9 +47,6 @@ extension Data {
         return contains(range: range) ? self.subdata(in: range) : nil
     }
 
-    private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
-
-    // (sr): swift compiler wins the "useless acl vs explicit acl debate
     internal func hexStringEncoded() -> String {
         String(
             reduce(into: "".unicodeScalars) { result, value in
@@ -58,7 +55,6 @@ extension Data {
             })
     }
 
-    // (sr): swift compiler wins the "useless acl vs explicit acl debate
     internal init?<S: StringProtocol>(hexEncoded: S) {
         let chars = Array(hexEncoded.utf8)
         // note: hex check is done character by character
@@ -83,6 +79,8 @@ extension Data {
 
         self.init(arr)
     }
+
+    private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
 
     internal static func base64Encoded(_ description: String) throws -> Self {
         guard let tmp = Self(base64Encoded: description) else {
