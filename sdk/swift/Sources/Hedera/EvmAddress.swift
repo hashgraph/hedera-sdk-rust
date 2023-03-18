@@ -1,6 +1,8 @@
 import Foundation
 
-public struct EvmAddress: CustomStringConvertible, LosslessStringConvertible, ExpressibleByStringLiteral, Hashable {
+public struct EvmAddress:
+    CustomStringConvertible, LosslessStringConvertible, ExpressibleByStringLiteral, Hashable
+{
     internal let data: Data
 
     internal init(_ data: Data) throws {
@@ -53,6 +55,13 @@ public struct EvmAddress: CustomStringConvertible, LosslessStringConvertible, Ex
         data
     }
 }
+
+#if compiler(<5.7)
+    // for some reason this wasn't `Sendable` before `5.7`
+    extension EvmAddress: @unchecked Sendable {}
+#else
+    extension EvmAddress: Sendable {}
+#endif
 
 extension EvmAddress: Codable {
     public init(from decoder: Decoder) throws {

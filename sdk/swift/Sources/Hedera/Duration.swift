@@ -1,7 +1,7 @@
 import Foundation
 import HederaProtobufs
 
-public struct Duration: Codable {
+public struct Duration: Sendable, Codable {
     public let seconds: UInt64
 
     public init(seconds: UInt64) {

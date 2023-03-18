@@ -81,7 +81,11 @@ let package = Package(
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "NumberKit", package: "swift-numberkit"),
                 .product(name: "GRPC", package: "grpc-swift"),
-            ]),
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+            ]
+        ),
         .testTarget(name: "HederaTests", dependencies: ["Hedera"]),
     ] + exampleTargets
 )

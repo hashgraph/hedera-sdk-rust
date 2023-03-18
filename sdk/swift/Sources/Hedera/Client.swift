@@ -24,7 +24,7 @@ import GRPC
 import NIOCore
 
 /// Managed client for use on the Hedera network.
-public final class Client {
+public final class Client: Sendable {
     internal let eventLoop: NIOCore.EventLoopGroup
 
     internal let ptr: OpaquePointer
