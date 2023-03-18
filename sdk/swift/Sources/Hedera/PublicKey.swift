@@ -287,3 +287,5 @@ extension PublicKey: TryProtobufCodable {
         }
     }
 }
+
+extension PublicKey: Sendable {}

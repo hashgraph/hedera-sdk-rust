@@ -357,3 +357,8 @@ extension HError {
         }
     }
 }
+
+extension HError.ErrorKind: Sendable {}
+extension HError.MnemonicEntropy: Sendable {}
+extension HError.MnemonicParse: Sendable {}
+extension HError.BadEntityId: Sendable {}

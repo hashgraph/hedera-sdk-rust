@@ -2131,3 +2131,5 @@ extension Status {
             332: "ALIAS_ALREADY_ASSIGNED",
         ]
 }
+
+extension Status: Sendable {}

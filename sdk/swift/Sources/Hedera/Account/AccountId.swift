@@ -23,7 +23,7 @@ import Foundation
 import HederaProtobufs
 
 /// The unique identifier for a cryptocurrency account on Hedera.
-public struct AccountId: EntityId, ValidateChecksums {
+public struct AccountId: Sendable, EntityId, ValidateChecksums {
     public let shard: UInt64
     public let realm: UInt64
     public let num: UInt64
