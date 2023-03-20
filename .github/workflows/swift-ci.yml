@@ -69,9 +69,9 @@ jobs:
   build:
     strategy:
       matrix:
-        swift: ["5.6.1", "5.7"]
+        swift: ["5.6", "5.7"]
     needs: build-ffi
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - uses: swift-actions/setup-swift@v1
         with:
@@ -105,7 +105,7 @@ jobs:
       matrix:
         swift: ["5.6", "5.7"]
     needs: [build-ffi, build]
-    runs-on: macos-11
+    runs-on: macos-12
     steps:
       - uses: swift-actions/setup-swift@v1
         with:
