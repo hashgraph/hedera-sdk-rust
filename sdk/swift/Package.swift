@@ -60,7 +60,7 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/objecthub/swift-numberkit.git", from: "2.4.1"),
         .package(url: "https://github.com/thebarndog/swift-dotenv.git", from: "1.0.0"),
-        .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.9.0"),
+        .package(url: "https://github.com/grpc/grpc-swift.git", from: "1.14.2"),
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
         .package(url: "https://github.com/vsanthanam/AnyAsyncSequence.git", from: "1.0.0"),
     ],
@@ -81,9 +81,6 @@ let package = Package(
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "NumberKit", package: "swift-numberkit"),
                 .product(name: "GRPC", package: "grpc-swift"),
-            ],
-            swiftSettings: [
-                .unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
             ]
         ),
         .testTarget(name: "HederaTests", dependencies: ["Hedera"]),
