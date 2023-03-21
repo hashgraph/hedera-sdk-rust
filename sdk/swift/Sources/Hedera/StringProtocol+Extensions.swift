@@ -45,7 +45,7 @@ extension StringProtocol {
 
     internal func stripSuffix<S: StringProtocol>(_ suffix: S) -> SubSequence? {
         if self.hasSuffix(suffix) {
-            return self[...self.index(self.endIndex, offsetBy: -suffix.count)]
+            return self[..<self.index(self.endIndex, offsetBy: -suffix.count)]
         }
 
         return nil
