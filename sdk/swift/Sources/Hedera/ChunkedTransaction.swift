@@ -65,6 +65,17 @@ public class ChunkedTransaction: Transaction {
         return self
     }
 
+    internal final var usedChunks: Int {
+        if data.isEmpty {
+            return 1
+        }
+
+        // div ceil algorithm
+        return (data.count + chunkSize) / chunkSize
+    }
+
+    internal var waitForReceipt: Bool { false }
+
     private enum CodingKeys: CodingKey {
         case data
         case maxChunks
@@ -87,7 +98,18 @@ public class ChunkedTransaction: Transaction {
         try super.encode(to: encoder)
     }
 
-    override public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> TransactionResponse {
+    internal final override func addSignatureSigner(_ signer: Signer) {
+        precondition(
+            self.usedChunks <= 1,
+            "cannot manually add a signature to a chunked transaction with multiple chunks (message length `\(data.count)` > chunk size `\(chunkSize)`)"
+        )
+
+        super.addSignatureSigner(signer)
+    }
+
+    public final override func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws
+        -> TransactionResponse
+    {
         try await executeAll(client, timeout)[0]
     }
 
@@ -103,6 +125,11 @@ public class ChunkedTransaction: Transaction {
         -> [TransactionResponse]
     {
         try freezeWith(client)
+
+        if let sources = sources {
+            return try await SourceTransaction(inner: self, sources: sources).executeAll(
+                client, timeoutPerChunk: timeoutPerChunk)
+        }
 
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Adds zero or more signing keys to a schedule.
 public final class ScheduleSignTransaction: Transaction {
     /// Create a new `ScheduleSignTransaction`.
@@ -73,5 +76,11 @@ public final class ScheduleSignTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try scheduleId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).signSchedule(request)
     }
 }

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
 /// a designated receiver.
 public final class ContractDeleteTransaction: Transaction {
@@ -105,4 +108,12 @@ public final class ContractDeleteTransaction: Transaction {
         try transferContractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
+
+        internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).deleteContract(request)
+    }
+
+
 }

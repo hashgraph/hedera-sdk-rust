@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new file, containing the given contents.
 public final class FileCreateTransaction: Transaction {
@@ -188,5 +190,11 @@ public final class FileCreateTransaction: Transaction {
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
+    }
+
+        internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).createFile(request)
     }
 }

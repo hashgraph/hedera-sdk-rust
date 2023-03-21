@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Updates the fields of a smart contract to the given values.
 public final class ContractUpdateTransaction: Transaction {
@@ -310,6 +312,12 @@ public final class ContractUpdateTransaction: Transaction {
         try container.encodeIfPresent(proxyAccountId, forKey: .proxyAccountId)
 
         try super.encode(to: encoder)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).updateContract(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

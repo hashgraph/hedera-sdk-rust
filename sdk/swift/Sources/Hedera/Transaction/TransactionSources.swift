@@ -20,6 +20,7 @@
 
 import Atomics
 import Foundation
+import GRPC
 import HederaProtobufs
 import NIOConcurrencyHelpers
 
@@ -64,13 +65,13 @@ private struct OnceRace<T> {
 extension OnceRace: @unchecked Sendable where T: Sendable {}
 
 internal struct SourceChunk: Sendable {
-    fileprivate init(map: TransactionSources2.Ref, index: Int) {
+    fileprivate init(map: TransactionSources.Ref, index: Int) {
         self.map = map
         self.index = index
     }
 
     // Note: This is very explicitly a *strong* reference.
-    private let map: TransactionSources2.Ref
+    private let map: TransactionSources.Ref
     private let index: Int
 
     internal var range: Range<Int> { map.chunks[index] }
@@ -84,7 +85,7 @@ internal struct SourceChunk: Sendable {
 /// Serialized transaction data.
 ///
 /// This has COW semantics.
-internal struct TransactionSources2: Sendable {
+internal struct TransactionSources: Sendable {
     fileprivate final class Ref: Sendable {
         fileprivate init(
             signedTransactions: [Proto_SignedTransaction],
@@ -139,16 +140,7 @@ internal struct TransactionSources2: Sendable {
     internal var transactionHashes: [TransactionHash] { guts.hashes }
 }
 
-// todo: put this where it belongs.
-public struct TransactionHash: Sendable {
-    internal init(hashing data: Data) {
-        self.data = Crypto.Sha2.sha384(data)
-    }
-
-    public let data: Data
-}
-
-extension TransactionSources2 {
+extension TransactionSources {
     // this is every bit as insane as the rust method I ported it from :/
     init(transactions: [Proto_Transaction]) throws {
         if transactions.isEmpty {
@@ -314,5 +306,133 @@ extension TransactionSources2 {
                 hashes: guts.lazyHashes
             )
         )
+    }
+
+    internal static func fromBytes(_ bytes: Data) throws -> Self {
+        try Self(protobufBytes: bytes)
+    }
+
+    internal func toBytes() -> Data {
+        toProtobufBytes()
+    }
+}
+
+extension TransactionSources: TryProtobufCodable {
+    internal typealias Protobuf = Proto_TransactionList
+
+    internal init(protobuf proto: Proto_TransactionList) throws {
+        try self.init(transactions: proto.transactionList)
+    }
+
+    internal func toProtobuf() -> Proto_TransactionList {
+        .with { $0.transactionList = self.transactions }
+    }
+}
+
+// fixme: find a better name.
+internal struct SourceTransaction<Tx: Transaction> {
+    let inner: Tx
+    let sources: TransactionSources
+
+    internal init(inner: Tx, sources: TransactionSources) {
+        self.inner = inner
+        self.sources = sources.signWithSigners(inner.signers)
+    }
+
+    internal func execute(_ client: Client, timeout: TimeInterval? = nil) async throws -> TransactionResponse {
+        try await self.executeAll(client, timeoutPerChunk: timeout)[0]
+    }
+
+    internal func executeAll(_ client: Client, timeoutPerChunk: TimeInterval? = nil) async throws
+        -> [TransactionResponse]
+    {
+        var responses: [TransactionResponse] = []
+
+        // fixme: remove the downcast, somehow.
+        let waitForReceipt = (inner as? ChunkedTransaction)?.waitForReceipt ?? false
+
+        for chunk in sources.chunks {
+            let response = try await executeAny(
+                client, SourceTransactionExecuteView(inner: inner, chunk: chunk), timeoutPerChunk)
+
+            if waitForReceipt {
+                _ = try await response.getReceipt(client)
+            }
+
+            responses.append(response)
+        }
+
+        return responses
+    }
+}
+
+// fixme: better name.
+struct SourceTransactionExecuteView<Tx: Transaction> {
+    let inner: Tx
+    let chunk: SourceChunk
+    let indicesByNodeId: [AccountId: Int]
+
+    init(inner: Tx, chunk: SourceChunk) {
+        self.inner = inner
+        self.chunk = chunk
+
+        indicesByNodeId = Dictionary(
+            chunk.nodeIds.enumerated().map { (key: $0.element, value: $0.offset) },
+            uniquingKeysWith: { (first, _) in first }
+        )
+    }
+}
+
+extension SourceTransactionExecuteView: ValidateChecksums {
+    func validateChecksums(on ledgerId: LedgerId) throws {
+        try inner.validateChecksums(on: ledgerId)
+    }
+}
+
+extension SourceTransactionExecuteView: Execute {
+    internal typealias GrpcRequest = Proto_Transaction
+    internal typealias GrpcResponse = Proto_TransactionResponse
+    internal typealias Context = TransactionHash
+    internal typealias Response = TransactionResponse
+
+    internal var nodeAccountIds: [AccountId]? {
+        chunk.nodeIds
+    }
+
+    internal var explicitTransactionId: TransactionId? {
+        chunk.transactionId
+    }
+
+    internal var requiresTransactionId: Bool {
+        true
+    }
+
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
+        GrpcRequest, Context
+    ) {
+        assert(transactionId == chunk.transactionId)
+
+        let index = self.indicesByNodeId[nodeAccountId]!
+
+        return (self.chunk.transactions[index], self.chunk.transactionHashes[index])
+    }
+
+    internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
+        try await inner.transactionExecute(channel, request)
+    }
+
+    internal func makeResponse(
+        _ response: GrpcResponse, _ context: TransactionHash, _ nodeAccountId: AccountId,
+        _ transactionId: TransactionId?
+    ) -> Response {
+        inner.makeResponse(response, context, nodeAccountId, transactionId)
+    }
+
+    internal func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        inner.makeErrorPrecheck(status, transactionId)
+    }
+
+    static func responsePrecheckStatus(_ response: GrpcResponse) -> Int32 {
+        Tx.responsePrecheckStatus(response)
     }
 }

@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+
 
 /// Create a new Hedera™ account.
 public final class AccountCreateTransaction: Transaction {
@@ -304,5 +307,11 @@ public final class AccountCreateTransaction: Transaction {
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).createAccount(request)
     }
 }

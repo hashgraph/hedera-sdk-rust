@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Unfreezes transfers of the specified token for the account.
 public final class TokenUnfreezeTransaction: Transaction {
     /// Create a new `TokenUnfreezeTransaction`.
@@ -86,5 +89,12 @@ public final class TokenUnfreezeTransaction: Transaction {
         try accountId?.validateChecksums(on: ledgerId)
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).unfreezeTokenAccount(request)
     }
 }

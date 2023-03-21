@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+
 
 /// At consensus, updates an already created token to the given values.
 public final class TokenUpdateTransaction: Transaction {
@@ -360,5 +363,11 @@ public final class TokenUpdateTransaction: Transaction {
         try treasuryAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).updateToken(request)
     }
 }

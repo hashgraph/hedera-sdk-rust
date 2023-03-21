@@ -20,30 +20,8 @@
 
 import CHedera
 import Foundation
-
-internal final class TransactionSources {
-    fileprivate init(unsafeFromPtr ptr: OpaquePointer) {
-        self.ptr = ptr
-    }
-
-    internal let ptr: OpaquePointer
-
-    internal func signedWithSingle(_ signer: Signer) -> Self {
-        let sourcesOut = hedera_transaction_sources_sign_single(ptr, signer.unsafeIntoHederaSigner())
-
-        return Self(unsafeFromPtr: sourcesOut!)
-    }
-
-    internal func signedWith(_ signers: [Signer]) -> Self {
-        let sourcesOut = hedera_transaction_sources_sign(ptr, makeHederaSignersFromArray(signers: signers))
-
-        return Self(unsafeFromPtr: sourcesOut!)
-    }
-
-    deinit {
-        hedera_transaction_sources_free(ptr)
-    }
-}
+import GRPC
+import HederaProtobufs
 
 /// A transaction that can be executed on the Hedera network.
 public class Transaction: Request, ValidateChecksums, Decodable {
@@ -66,10 +44,16 @@ public class Transaction: Request, ValidateChecksums, Decodable {
 
     private final var `operator`: Operator?
 
-    private final var nodeAccountIds: [AccountId]? {
+    internal private(set) final var nodeAccountIds: [AccountId]? {
         willSet {
             ensureNotFrozen(fieldName: "nodeAccountIds")
         }
+    }
+
+    internal func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        fatalError("Method `Transaction.transactionExecute` must be overridden by `\(type(of: self))`")
     }
 
     /// Explicit transaction ID for this transaction.
@@ -102,7 +86,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         return self
     }
 
-    internal final func addSignatureSigner(_ signer: Signer) {
+    internal func addSignatureSigner(_ signer: Signer) {
         precondition(isFrozen)
 
         precondition(nodeAccountIds?.count == 1, "cannot manually add a signature to a transaction with multiple nodes")
@@ -110,7 +94,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         // swiftlint:disable:next force_try
         let sources = try! makeSources()
 
-        self.sources = sources.signedWithSingle(signer)
+        self.sources = sources.signWithSigners([signer])
     }
 
     @discardableResult
@@ -162,19 +146,21 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     internal final func makeSources() throws -> TransactionSources {
         precondition(isFrozen)
         if let sources = sources {
-            return sources.signedWith(self.signers)
+            return sources.signWithSigners(self.signers)
         }
 
-        var out: OpaquePointer?
+        var out: UnsafeMutablePointer<UInt8>?
+        var outSize: Int = 0
 
         let requestBytes = try JSONEncoder().encode(self)
 
         let request = String(data: requestBytes, encoding: .utf8)!
 
         try HError.throwing(
-            error: hedera_transaction_make_sources(request, makeHederaSignersFromArray(signers: signers), &out))
+            error: hedera_transaction_make_sources(
+                request, makeHederaSignersFromArray(signers: signers), &out, &outSize))
 
-        return TransactionSources(unsafeFromPtr: out!)
+        return try .fromBytes(Data(bytesNoCopy: out!, count: outSize, deallocator: .unsafeCHederaBytesFree))
     }
 
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
@@ -185,6 +171,10 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         -> TransactionResponse
     {
         try freezeWith(client)
+
+        if let sources = sources {
+            return try await SourceTransaction(inner: self, sources: sources).execute(client, timeout: timeout)
+        }
 
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
@@ -207,7 +197,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
             // invoke `hedera_execute`, callback will be invoked on request completion
             let err = hedera_transaction_execute(
                 client.ptr, request, continuation, signers, timeout != nil,
-                timeout ?? 0.0, sources?.ptr
+                timeout ?? 0.0
             ) { continuation, err, responsePtr in
                 if let err = HError(err) {
                     // an error has occurred, consume from the TLS storage for the error
@@ -245,7 +235,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
             // invoke `hedera_execute`, callback will be invoked on request completion
             let err = hedera_transaction_execute_all(
                 client.ptr, request, continuation, signers, timeoutPerChunk != nil,
-                timeoutPerChunk ?? 0.0, sources?.ptr
+                timeoutPerChunk ?? 0.0
             ) { continuation, err, responsePtr in
                 if let err = HError(err) {
                     // an error has occurred, consume from the TLS storage for the error
@@ -294,15 +284,28 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Transaction {
-        try bytes.withUnsafeTypedBytes { buffer in
-            var sourcesPointer: OpaquePointer?
+        let list: [Proto_Transaction]
+        do {
+            let tmp = try Proto_TransactionList(contiguousBytes: bytes)
+
+            if tmp.transactionList.isEmpty {
+                list = [try Proto_Transaction(contiguousBytes: bytes)]
+            } else {
+                list = tmp.transactionList
+            }
+        } catch {
+            throw HError.fromProtobuf(String(describing: error))
+        }
+
+        let sources = try TransactionSources(transactions: list)
+
+        return try bytes.withUnsafeTypedBytes { buffer in
             var transactionData: UnsafeMutablePointer<CChar>?
 
             try HError.throwing(
                 error: hedera_transaction_from_bytes(
                     buffer.baseAddress,
                     buffer.count,
-                    &sourcesPointer,
                     &transactionData
                 )
             )
@@ -312,13 +315,19 @@ public class Transaction: Request, ValidateChecksums, Decodable {
             // decode the response as the generic output type of this query types
             let transaction = try JSONDecoder().decode(AnyTransaction.self, from: responseBytes).transaction
 
-            transaction.sources = TransactionSources(unsafeFromPtr: sourcesPointer!)
+            transaction.sources = sources
 
             return transaction
         }
     }
 
     public final func toBytes() throws -> Data {
+        precondition(isFrozen, "Transaction must be frozen to call `toBytes`")
+
+        if let sources = self.sources {
+            return sources.toBytes()
+        }
+
         // encode self as a JSON request to pass to Rust
         let requestBytes = try JSONEncoder().encode(self)
 
@@ -346,5 +355,32 @@ public class Transaction: Request, ValidateChecksums, Decodable {
                 !isFrozen,
                 "`\(type(of: self))` is immutable; it has at least one signature or has been explicitly frozen")
         }
+    }
+}
+
+extension Transaction {
+    internal final func makeResponse(
+        _: Proto_TransactionResponse, _ context: TransactionHash, _ nodeAccountId: AccountId,
+        _ transactionId: TransactionId?
+    ) -> TransactionResponse {
+        TransactionResponse(nodeAccountId: nodeAccountId, transactionId: transactionId!, transactionHash: context)
+    }
+
+    internal final func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        if let transactionId = transactionId {
+            return HError(
+                kind: .transactionPreCheckStatus(status: status, transactionId: transactionId),
+                description: "transaction `\(transactionId)` failed pre-check with status `\(status)"
+            )
+        } else {
+            return HError(
+                kind: .transactionNoIdPreCheckStatus(status: status),
+                description: "transaction without transaction id failed pre-check with status `\(status)`"
+            )
+        }
+    }
+
+    static func responsePrecheckStatus(_ response: Proto_TransactionResponse) -> Int32 {
+        Int32(response.nodeTransactionPrecheckCode.rawValue)
     }
 }

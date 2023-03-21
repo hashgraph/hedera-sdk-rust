@@ -64,7 +64,21 @@ internal final class ChannelBalancer: GRPCChannel {
     }
 }
 
-internal final class Network {
+// todo: remove this once `Atomic` 1.1 is released (where they add Sendable declarations to things)
+internal struct ManagedAtomicWrapper<Value> where Value: Atomics.AtomicValue {
+    internal init(_ value: Value) {
+        self.inner = ManagedAtomic(value)
+    }
+
+    internal let inner: ManagedAtomic<Value>
+}
+
+// safety: Atomics just forgot to put the 
+extension ManagedAtomicWrapper: @unchecked Sendable where Value: Sendable {
+
+}
+
+internal final class Network: Sendable {
     internal struct Config {
         internal init(map: [AccountId: Int], nodes: [AccountId], addresses: [[String]]) {
             self.map = map
@@ -82,8 +96,8 @@ internal final class Network {
         nodes: [AccountId],
         addresses: [[String]],
         channels: [GRPCChannel],
-        healthy: [ManagedAtomic<Int64>],
-        lastPinged: [ManagedAtomic<Int64>]
+        healthy: [ManagedAtomicWrapper<Int64>],
+        lastPinged: [ManagedAtomicWrapper<Int64>]
     ) {
         self.map = map
         self.nodes = nodes
@@ -97,8 +111,9 @@ internal final class Network {
     let nodes: [AccountId]
     let addresses: [[String]]
     let channels: [GRPCChannel]
-    var healthy: [ManagedAtomic<Int64>]
-    var lastPinged: [ManagedAtomic<Int64>]
+    // these warn about them not being sendable but they really are :/
+    let healthy: [ManagedAtomicWrapper<Int64>]
+    let lastPinged: [ManagedAtomicWrapper<Int64>]
 
     fileprivate convenience init(config: Config, eventLoop: NIOCore.EventLoopGroup) {
         // todo: someone verify this code pls.
@@ -107,8 +122,8 @@ internal final class Network {
         }
 
         // note: `Array(repeating: <element>, count: Int)` does *not* work the way you'd want with reference types.
-        let healthy = (0..<config.nodes.count).map { _ in ManagedAtomic(Int64(0)) }
-        let lastPinged = (0..<config.nodes.count).map { _ in ManagedAtomic(Int64(0)) }
+        let healthy = (0..<config.nodes.count).map { _ in ManagedAtomicWrapper(Int64(0)) }
+        let lastPinged = (0..<config.nodes.count).map { _ in ManagedAtomicWrapper(Int64(0)) }
 
         self.init(
             map: config.map,
@@ -160,15 +175,15 @@ internal final class Network {
     }
 
     internal func markNodeUsed(_ index: Int, now: Timestamp) {
-        lastPinged[index].store(Int64(now.unixTimestampNanos), ordering: .relaxed)
+        lastPinged[index].inner.store(Int64(now.unixTimestampNanos), ordering: .relaxed)
     }
 
     internal func nodeRecentlyPinged(_ index: Int, now: Timestamp) -> Bool {
-        lastPinged[index].load(ordering: .relaxed) > Int64((now - .minutes(15)).unixTimestampNanos)
+        lastPinged[index].inner.load(ordering: .relaxed) > Int64((now - .minutes(15)).unixTimestampNanos)
     }
 
     internal func isNodeHealthy(_ index: Int, _ now: Timestamp) -> Bool {
-        healthy[index].load(ordering: .relaxed) < Int64(now.unixTimestampNanos)
+        healthy[index].inner.load(ordering: .relaxed) < Int64(now.unixTimestampNanos)
     }
 }
 

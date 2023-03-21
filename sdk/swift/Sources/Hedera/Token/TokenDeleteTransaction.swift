@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Marks a token as deleted, though it will remain in the ledger.
 public final class TokenDeleteTransaction: Transaction {
     /// Create a new `TokenDeleteTransaction`.
@@ -67,5 +70,11 @@ public final class TokenDeleteTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).deleteToken(request)
     }
 }

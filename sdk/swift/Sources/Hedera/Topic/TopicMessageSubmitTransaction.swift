@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+
 
 /// Submit a message for consensus.
 ///
@@ -99,5 +102,11 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try topicId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).submitMessage(request)
     }
 }

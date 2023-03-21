@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
 ///
@@ -188,5 +190,12 @@ public final class ScheduleCreateTransaction: Transaction {
         try payerAccountId?.validateChecksums(on: ledgerId)
         try scheduledTransaction?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).createSchedule(request)
     }
 }

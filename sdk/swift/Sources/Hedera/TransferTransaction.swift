@@ -18,6 +18,9 @@
  * ‍
  */
 
+import HederaProtobufs
+import GRPC
+
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
 ///
@@ -225,5 +228,11 @@ public final class TransferTransaction: Transaction {
         try transfers.validateChecksums(on: ledgerId)
         try tokenTransfers.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoTransfer(request)
     }
 }
