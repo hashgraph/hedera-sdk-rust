@@ -58,6 +58,10 @@ internal final class Signer {
     internal static func privateKey(_ key: PrivateKey) -> Self {
         Self(key.publicKey, key.sign(_:))
     }
+
+    internal func callAsFunction(_ message: Data) -> (PublicKey, Data) {
+        (publicKey, signFunc(message))
+    }
 }
 
 private func freeHederaSigners(_ ptr: UnsafePointer<HederaSigner>?, _ size: size_t) {

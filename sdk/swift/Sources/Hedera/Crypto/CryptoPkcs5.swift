@@ -38,6 +38,7 @@ extension Crypto.Pkcs5 {
 
         switch variant {
         case .sha2(.sha256): hmac = HEDERA_HMAC_VARIANT_SHA2_SHA256
+        case .sha2(.sha384): hmac = HEDERA_HMAC_VARIANT_SHA2_SHA384
         case .sha2(.sha512): hmac = HEDERA_HMAC_VARIANT_SHA2_SHA512
         case .sha3(.keccak256): hmac = HEDERA_HMAC_VARIANT_SHA3_KECCAK256
         }

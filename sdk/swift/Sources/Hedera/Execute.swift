@@ -75,6 +75,7 @@ extension Execute {
     }
 }
 
+// swiftlint:disable:next function_body_length
 internal func executeAny<E: Execute & ValidateChecksums>(_ client: Client, _ executable: E, _ timeout: TimeInterval?)
     async throws -> E.Response
 {

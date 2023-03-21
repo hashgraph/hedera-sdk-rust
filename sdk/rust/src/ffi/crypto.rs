@@ -61,6 +61,15 @@ pub unsafe extern "C" fn hedera_crypto_sha2_sha256_digest(
     // safety: we pass the safety requirements up to the caller.
     unsafe { digest::<sha2::Sha256>(bytes, bytes_size, result_out) }
 }
+#[no_mangle]
+pub unsafe extern "C" fn hedera_crypto_sha2_sha384_digest(
+    bytes: *const u8,
+    bytes_size: size_t,
+    result_out: *mut *mut u8,
+) -> size_t {
+    // safety: we pass the safety requirements up to the caller.
+    unsafe { digest::<sha2::Sha384>(bytes, bytes_size, result_out) }
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn hedera_crypto_sha2_sha512_digest(
@@ -79,6 +88,7 @@ pub unsafe extern "C" fn hedera_crypto_sha2_sha512_digest(
 #[repr(C)]
 pub enum HmacVariant {
     Sha2Sha256,
+    Sha2Sha384,
     Sha2Sha512,
     Sha3Keccak256,
 }
@@ -105,6 +115,9 @@ pub unsafe extern "C" fn hedera_crypto_pbkdf2_hmac(
     match variant {
         HmacVariant::Sha2Sha256 => {
             pbkdf2::pbkdf2::<Hmac<sha2::Sha256>>(password, salt, rounds, key_buffer)
+        }
+        HmacVariant::Sha2Sha384 => {
+            pbkdf2::pbkdf2::<Hmac<sha2::Sha384>>(password, salt, rounds, key_buffer)
         }
         HmacVariant::Sha2Sha512 => {
             pbkdf2::pbkdf2::<Hmac<sha2::Sha512>>(password, salt, rounds, key_buffer)
