@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Append the given contents to the end of the specified file.
 public final class FileAppendTransaction: ChunkedTransaction {
@@ -75,6 +77,8 @@ public final class FileAppendTransaction: ChunkedTransaction {
         return self
     }
 
+    internal override var waitForReceipt: Bool { true }
+
     private enum CodingKeys: String, CodingKey {
         case fileId
     }
@@ -90,5 +94,11 @@ public final class FileAppendTransaction: ChunkedTransaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).appendContent(request)
     }
 }

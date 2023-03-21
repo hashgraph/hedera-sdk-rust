@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Revokes KYC from the account for the given token.
 public final class TokenRevokeKycTransaction: Transaction {
     /// Create a new `TokenRevokeKycTransaction`.
@@ -88,5 +91,11 @@ public final class TokenRevokeKycTransaction: Transaction {
         try accountId?.validateChecksums(on: ledgerId)
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).revokeKycFromTokenAccount(request)
     }
 }

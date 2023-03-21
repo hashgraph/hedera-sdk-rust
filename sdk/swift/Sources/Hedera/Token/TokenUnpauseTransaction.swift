@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Unpauses a previously paused token.
 public final class TokenUnpauseTransaction: Transaction {
     /// Create a new `TokenUnpauseTransaction`.
@@ -68,4 +71,11 @@ public final class TokenUnpauseTransaction: Transaction {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).unpauseToken(request)
+    }
+
 }

@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Mark an account as deleted, moving all its current hbars to another account.
 ///
@@ -87,5 +89,11 @@ public final class AccountDeleteTransaction: Transaction {
         try transferAccountId?.validateChecksums(on: ledgerId)
         try accountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoDelete(request)
     }
 }

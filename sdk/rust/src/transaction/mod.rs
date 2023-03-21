@@ -66,8 +66,6 @@ pub(crate) use chunked::{
     ChunkInfo,
     ChunkedTransactionData,
 };
-#[cfg(feature = "ffi")]
-pub(crate) use execute::SourceTransaction;
 pub(crate) use execute::{
     TransactionData,
     TransactionExecute,

@@ -30,7 +30,6 @@ use super::{
     to_bytes,
 };
 use crate::ffi::error::Error;
-use crate::transaction::TransactionSources;
 use crate::PublicKey;
 
 /// Parse a `PublicKey` from a sequence of bytes.
@@ -258,19 +257,6 @@ pub unsafe extern "C" fn hedera_public_key_to_evm_address(key: *mut PublicKey) -
     };
 
     Box::into_raw(Box::new(out.to_bytes())).cast::<u8>()
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn hedera_public_key_verify_sources(
-    key: *mut PublicKey,
-    sources: *mut TransactionSources,
-) -> Error {
-    let key = unsafe { key.as_ref() }.unwrap();
-    let sources = unsafe { sources.as_ref() }.unwrap();
-
-    ffi_try!(key.verify_transaction_sources(sources));
-
-    Error::Ok
 }
 
 /// Releases memory associated with the public key.

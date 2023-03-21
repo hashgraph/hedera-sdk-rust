@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Burns tokens from the token's treasury account.
 public final class TokenBurnTransaction: Transaction {
     /// Create a new `TokenBurnTransaction`.
@@ -116,5 +119,11 @@ public final class TokenBurnTransaction: Transaction {
         try tokenId?.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).burnToken(request)
     }
 }

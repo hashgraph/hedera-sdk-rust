@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Submit an Ethereum transaction.
 public final class EthereumTransaction: Transaction {
@@ -123,5 +125,11 @@ public final class EthereumTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try callDataFileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).callEthereum(request)
     }
 }

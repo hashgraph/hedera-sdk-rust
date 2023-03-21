@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Pauses the token from being involved in any kind of transaction until it is unpaused.
 public final class TokenPauseTransaction: Transaction {
     /// Create a new `TokenPauseTransaction`.
@@ -67,5 +70,11 @@ public final class TokenPauseTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).pauseToken(request)
     }
 }

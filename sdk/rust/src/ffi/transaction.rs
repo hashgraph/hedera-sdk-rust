@@ -18,7 +18,6 @@
  * ‍
  */
 
-use std::borrow::Cow;
 use std::ffi::{
     c_char,
     CString,
@@ -32,7 +31,7 @@ use libc::{
     c_void,
     size_t,
 };
-use triomphe::Arc;
+use prost::Message;
 
 use super::error::Error;
 use super::signer::{
@@ -45,10 +44,7 @@ use super::util::{
 };
 use crate::ffi::callback::Callback;
 use crate::signer::AnySigner;
-use crate::transaction::{
-    AnyTransaction,
-    TransactionSources,
-};
+use crate::transaction::AnyTransaction;
 use crate::Client;
 
 /// Convert the provided transaction to protobuf-encoded bytes.
@@ -88,18 +84,14 @@ pub unsafe extern "C" fn hedera_transaction_to_bytes(
 pub unsafe extern "C" fn hedera_transaction_from_bytes(
     bytes: *const u8,
     bytes_size: size_t,
-    sources_out: *mut *const crate::transaction::TransactionSources,
     transaction_out: *mut *mut c_char,
 ) -> Error {
     assert!(!bytes.is_null());
-    assert!(!sources_out.is_null());
     assert!(!transaction_out.is_null());
 
     let bytes = unsafe { slice::from_raw_parts(bytes, bytes_size) };
 
     let tx = ffi_try!(AnyTransaction::from_bytes(bytes));
-
-    let sources = hedera_transaction_sources_new(tx.sources().unwrap().clone());
 
     // let sources = Box::into_raw(sources);
 
@@ -108,7 +100,6 @@ pub unsafe extern "C" fn hedera_transaction_from_bytes(
     let out = CString::new(out).unwrap().into_raw();
 
     unsafe {
-        ptr::write(sources_out, sources);
         ptr::write(transaction_out, out);
     }
 
@@ -128,13 +119,11 @@ pub unsafe extern "C" fn hedera_transaction_execute(
     signers: Signers,
     has_timeout: bool,
     timeout: f64,
-    sources: *const crate::transaction::TransactionSources,
     callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
 ) -> Error {
     assert!(!client.is_null());
 
     let client = unsafe { &*client };
-    let sources = unsafe { sources.as_ref() };
     let request = unsafe { cstr_from_ptr(request) };
 
     let mut transaction: AnyTransaction =
@@ -161,14 +150,7 @@ pub unsafe extern "C" fn hedera_transaction_execute(
                 transaction.sign_signer(crate::signer::AnySigner::C(signer));
             }
 
-            let res = match sources {
-                Some(sources) => {
-                    crate::transaction::SourceTransaction::new(&transaction, sources)
-                        .execute(client, timeout)
-                        .await
-                }
-                None => transaction.execute_with_optional_timeout(client, timeout).await,
-            };
+            let res = transaction.execute_with_optional_timeout(client, timeout).await;
 
             res.map(|response| serde_json::to_string(&response).unwrap())
         };
@@ -205,13 +187,11 @@ pub unsafe extern "C" fn hedera_transaction_execute_all(
     signers: Signers,
     has_timeout: bool,
     timeout: f64,
-    sources: *const crate::transaction::TransactionSources,
     callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
 ) -> Error {
     assert!(!client.is_null());
 
     let client = unsafe { &*client };
-    let sources = unsafe { sources.as_ref() };
     let request = unsafe { cstr_from_ptr(request) };
 
     let mut transaction: AnyTransaction =
@@ -238,14 +218,7 @@ pub unsafe extern "C" fn hedera_transaction_execute_all(
                 transaction.sign_signer(crate::signer::AnySigner::C(signer));
             }
 
-            let res = match sources {
-                Some(sources) => {
-                    crate::transaction::SourceTransaction::new(&transaction, sources)
-                        .execute_all(client, timeout)
-                        .await
-                }
-                None => transaction.execute_all_with_optional_timeout(client, timeout).await,
-            };
+            let res = transaction.execute_all_with_optional_timeout(client, timeout).await;
 
             res.map(|response| serde_json::to_string(&response).unwrap())
         };
@@ -272,9 +245,11 @@ pub unsafe extern "C" fn hedera_transaction_execute_all(
 pub unsafe extern "C" fn hedera_transaction_make_sources(
     transaction: *const c_char,
     signers: Signers,
-    out: *mut *const TransactionSources,
+    out: *mut *mut u8,
+    out_size: *mut size_t,
 ) -> Error {
     assert!(!out.is_null());
+    assert!(!out_size.is_null());
     let transaction = unsafe { cstr_from_ptr(transaction) };
 
     let mut transaction: AnyTransaction =
@@ -291,74 +266,11 @@ pub unsafe extern "C" fn hedera_transaction_make_sources(
     }
 
     let sources = ffi_try!(transaction.make_sources());
+    let bytes =
+        hedera_proto::sdk::TransactionList { transaction_list: sources.transactions().to_vec() }
+            .encode_to_vec();
 
-    unsafe {
-        out.write(hedera_transaction_sources_new(sources.into_owned()));
-    }
+    unsafe { make_bytes2(bytes, out, out_size) }
 
     Error::Ok
-}
-
-/// Signs `sources` with the given `signers`
-///
-/// # Safety
-/// - `sources` must not be null.
-/// - `signers` must follow the associated safety requirements.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_transaction_sources_sign(
-    sources: *const TransactionSources,
-    signers: Signers,
-) -> *const TransactionSources {
-    let sources = unsafe { triomphe::ArcBorrow::from_ref(sources.as_ref().unwrap()) };
-
-    let signers = {
-        let tmp: Vec<_> =
-            signers.as_slice().iter().map(Signer::to_csigner).map(AnySigner::C).collect();
-        drop(signers);
-        tmp
-    };
-
-    let value = sources.sign_with(&signers);
-
-    match value {
-        Cow::Borrowed(_) => Arc::into_raw(sources.clone_arc()),
-        Cow::Owned(value) => hedera_transaction_sources_new(value),
-    }
-}
-
-/// Signs `sources` with the given `signer`
-///
-/// # Safety
-/// - `sources` must not be null.
-/// - `signer` must follow the associated safety requirements.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_transaction_sources_sign_single(
-    sources: *const TransactionSources,
-    signer: Signer,
-) -> *const TransactionSources {
-    let sources = unsafe { triomphe::ArcBorrow::from_ref(sources.as_ref().unwrap()) };
-
-    let signer = AnySigner::C(signer.to_csigner());
-
-    let value = sources.sign_with(slice::from_ref(&signer));
-
-    match value {
-        Cow::Borrowed(_) => Arc::into_raw(sources.clone_arc()),
-        Cow::Owned(value) => hedera_transaction_sources_new(value),
-    }
-}
-
-fn hedera_transaction_sources_new(sources: TransactionSources) -> *const TransactionSources {
-    Arc::into_raw(Arc::from(sources))
-}
-
-/// # Safety
-/// - `sources` must be non-null and point to a `HederaTransactionSources` allocated by the Hedera SDK.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_transaction_sources_free(
-    sources: *const crate::transaction::TransactionSources,
-) {
-    assert!(!sources.is_null());
-
-    drop(unsafe { triomphe::Arc::from_raw(sources) });
 }

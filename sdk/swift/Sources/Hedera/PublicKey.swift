@@ -222,6 +222,33 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         }
     }
 
+    internal func verifyTransactionSources(_ sources: TransactionSources) throws {
+        let pkBytes = self.toBytesRaw()
+
+        for signedTransaction in sources.signedTransactions {
+            var found = false
+
+            for sigPair in signedTransaction.sigMap.sigPair
+            where pkBytes.starts(with: sigPair.pubKeyPrefix) {
+                found = true
+
+                let signature: Data
+
+                switch sigPair.signature {
+                case .ecdsaSecp256K1(let data), .ed25519(let data): signature = data
+                default: throw HError(kind: .signatureVerify, description: "Unsupported transaction signature type")
+                }
+
+                try verify(signedTransaction.bodyBytes, signature)
+            }
+
+            if !found {
+                throw HError(kind: .signatureVerify, description: "signer not in transaction")
+            }
+        }
+
+    }
+
     public func verifyTransaction(_ transaction: Transaction) throws {
         // we're a signer.
         if transaction.signers.contains(where: { self == $0.publicKey }) {
@@ -232,7 +259,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
             throw HError(kind: .signatureVerify, description: "signer not in transaction")
         }
 
-        try HError.throwing(error: hedera_public_key_verify_sources(ptr, sources.ptr))
+        try verifyTransactionSources(sources)
     }
 
     deinit {

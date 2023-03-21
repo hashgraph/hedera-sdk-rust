@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a topic to be used for consensus.
 ///
@@ -162,5 +164,11 @@ public final class TopicCreateTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).createTopic(request)
     }
 }

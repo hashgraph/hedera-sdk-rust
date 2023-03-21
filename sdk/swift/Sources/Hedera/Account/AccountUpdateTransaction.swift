@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Change properties for the given account.
 ///
@@ -329,5 +331,11 @@ public final class AccountUpdateTransaction: Transaction {
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try proxyAccountIdInner?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).updateAccount(request)
     }
 }

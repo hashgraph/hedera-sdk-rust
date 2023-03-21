@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Undelete a file or smart contract that was deleted by SystemDelete.
 public final class SystemUndeleteTransaction: Transaction {
@@ -90,5 +92,19 @@ public final class SystemUndeleteTransaction: Transaction {
         try fileId?.validateChecksums(on: ledgerId)
         try contractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        if let _ = fileId {
+            return try await Proto_FileServiceAsyncClient(channel: channel).systemUndelete(request)
+        }
+
+        if let _ = contractId {
+            return try await Proto_SmartContractServiceAsyncClient(channel: channel).systemUndelete(request)
+        }
+
+        fatalError("\(type(of: self)) has no `fileId`/`contractId`")
     }
 }

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Wipes the provided amount of tokens from the specified account.
 public final class TokenWipeTransaction: Transaction {
     /// Create a new `TokenWipeTransaction`.
@@ -133,5 +136,11 @@ public final class TokenWipeTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).wipeTokenAccount(request)
     }
 }
