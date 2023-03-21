@@ -27,7 +27,7 @@ import SwiftProtobuf
 // Note: Ideally this would use some form of algorithm to balance better (IE P2C, but how do you check connection metrics?)
 // Random is surprisingly good at this though (avoids the thundering herd that would happen if round-robin was used), so...
 internal final class ChannelBalancer: GRPCChannel {
-    public var eventLoop: EventLoop
+    public let eventLoop: EventLoop
     let channels: [GRPC.ClientConnection]
 
     internal init(eventLoop: EventLoop, _ channelTargets: [GRPC.ConnectionTarget]) {
