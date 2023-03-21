@@ -38,6 +38,7 @@ typedef enum HederaError {
 
 typedef enum HederaHmacVariant {
   HEDERA_HMAC_VARIANT_SHA2_SHA256,
+  HEDERA_HMAC_VARIANT_SHA2_SHA384,
   HEDERA_HMAC_VARIANT_SHA2_SHA512,
   HEDERA_HMAC_VARIANT_SHA3_KECCAK256,
 } HederaHmacVariant;
@@ -304,6 +305,10 @@ size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            uint8_t **result_out);
 
 size_t hedera_crypto_sha2_sha256_digest(const uint8_t *bytes,
+                                        size_t bytes_size,
+                                        uint8_t **result_out);
+
+size_t hedera_crypto_sha2_sha384_digest(const uint8_t *bytes,
                                         size_t bytes_size,
                                         uint8_t **result_out);
 
