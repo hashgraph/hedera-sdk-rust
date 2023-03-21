@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Marks a schedule in the network's action queue as deleted.
 public final class ScheduleDeleteTransaction: Transaction {
     /// Create a new `ScheduleDeleteTransaction`.
@@ -66,5 +69,11 @@ public final class ScheduleDeleteTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try scheduleId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).deleteSchedule(request)
     }
 }

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
 public final class TokenFeeScheduleUpdateTransaction: Transaction {
     /// Create a new `TokenFeeScheduleUpdateTransaction`.
@@ -90,4 +93,9 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).updateTokenFeeSchedule(request)
+    }
 }

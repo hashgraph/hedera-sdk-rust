@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Associates the provided account with the provided tokens.
 ///
 /// Must be signed by the provided account's key.
@@ -93,4 +96,9 @@ public final class TokenAssociateTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).associateTokens(request)
+    }
 }

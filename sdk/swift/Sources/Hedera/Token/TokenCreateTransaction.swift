@@ -22,6 +22,8 @@
 // swiftlint:disable file_length type_body_length
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new token.
 public final class TokenCreateTransaction: Transaction {
@@ -474,5 +476,11 @@ public final class TokenCreateTransaction: Transaction {
         try customFees.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).createToken(request)
     }
 }

@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Call a function of the given smart contract instance, giving it
 /// parameters as its inputs.
@@ -167,4 +169,9 @@ public final class ContractExecuteTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).contractCallMethod(request)
+    }
 }

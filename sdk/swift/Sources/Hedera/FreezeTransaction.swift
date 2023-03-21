@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Set the freezing period in which the platform will stop creating
 /// events and accepting transactions.
@@ -130,5 +132,11 @@ public final class FreezeTransaction: Transaction {
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FreezeServiceAsyncClient(channel: channel).freeze(request)
     }
 }

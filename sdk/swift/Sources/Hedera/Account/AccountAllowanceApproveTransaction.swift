@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Creates one or more hbar/token approved allowances **relative to the owner account specified in the allowances of
 /// this transaction**.
 ///
@@ -179,5 +182,11 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         try nftAllowances.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).approveAllowances(request)
     }
 }
