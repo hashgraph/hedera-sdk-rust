@@ -57,8 +57,8 @@ pub type TopicUpdateTransaction = Transaction<TopicUpdateTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TopicUpdateTransactionData {
     /// The topic ID which is being updated in this transaction.
     topic_id: Option<TopicId>,
@@ -269,19 +269,13 @@ mod tests {
     mod ffi {
         use std::str::FromStr;
 
-        use assert_matches::assert_matches;
         use time::{
             Duration,
             OffsetDateTime,
         };
 
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             AccountId,
-            Key,
             PublicKey,
             TopicId,
             TopicUpdateTransaction,
@@ -326,33 +320,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOPIC_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOPIC_UPDATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TopicUpdate(transaction) => transaction);
-
-            assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-            assert_eq!(
-                data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
-            );
-            assert_eq!(data.topic_memo.unwrap(), "A topic memo");
-            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-
-            let admin_key =
-                assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
-
-            let submit_key =
-                assert_matches!(data.submit_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(submit_key, PublicKey::from_str(SUBMIT_KEY)?);
-
-            assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1001)));
 
             Ok(())
         }

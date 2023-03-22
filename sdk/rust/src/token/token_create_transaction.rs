@@ -77,7 +77,7 @@ pub type TokenCreateTransaction = Transaction<TokenCreateTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TokenCreateTransactionData {
     /// The publicly visible name of the token.
@@ -593,7 +593,6 @@ mod tests {
     mod ffi {
         use std::str::FromStr;
 
-        use assert_matches::assert_matches;
         use time::{
             Duration,
             OffsetDateTime,
@@ -605,22 +604,12 @@ mod tests {
         };
         use crate::token::token_supply_type::TokenSupplyType;
         use crate::token::token_type::TokenType;
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             AccountId,
-            Key,
             PublicKey,
             TokenCreateTransaction,
             TokenId,
         };
-
-        // language=JSON
-        const TOKEN_CREATE_EMPTY: &str = r#"{
-  "$type": "tokenCreate"
-}"#;
 
         // language=JSON
         const TOKEN_CREATE_TRANSACTION_JSON: &str = r#"{
@@ -721,82 +710,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOKEN_CREATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOKEN_CREATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TokenCreate(transaction) => transaction);
-
-            assert_eq!(data.name, "Pound");
-            assert_eq!(data.symbol, "LB");
-            assert_eq!(data.decimals, 9);
-            assert_eq!(data.initial_supply, 1_000_000_000);
-            assert_eq!(data.freeze_default, false);
-            assert_eq!(
-                data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
-            );
-            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-            assert_eq!(data.token_memo, "A memo");
-            assert_eq!(data.token_type, TokenType::FungibleCommon);
-            assert_eq!(data.token_supply_type, TokenSupplyType::Finite);
-            assert_eq!(data.max_supply, 1_000_000_000);
-            assert_eq!(data.treasury_account_id, Some(AccountId::from(1001)));
-            assert_eq!(data.auto_renew_account_id, Some(AccountId::from(1002)));
-
-            let admin_key =
-                assert_matches!(data.admin_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(admin_key, PublicKey::from_str(ADMIN_KEY)?);
-
-            let kyc_key =
-                assert_matches!(data.kyc_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(kyc_key, PublicKey::from_str(KYC_KEY)?);
-
-            let freeze_key =
-                assert_matches!(data.freeze_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(freeze_key, PublicKey::from_str(FREEZE_KEY)?);
-
-            let wipe_key =
-                assert_matches!(data.wipe_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(wipe_key, PublicKey::from_str(WIPE_KEY)?);
-
-            let supply_key =
-                assert_matches!(data.supply_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(supply_key, PublicKey::from_str(SUPPLY_KEY)?);
-
-            let fee_schedule_key = assert_matches!(data.fee_schedule_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(fee_schedule_key, PublicKey::from_str(FEE_SCHEDULE_KEY)?);
-
-            let pause_key =
-                assert_matches!(data.pause_key.unwrap(), Key::Single(public_key) => public_key);
-            assert_eq!(pause_key, PublicKey::from_str(PAUSE_KEY)?);
-
-            assert_eq!(
-                data.custom_fees,
-                [CustomFee {
-                    fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
-                    fee_collector_account_id: Some(AccountId::from(8)),
-                    all_collectors_are_exempt: false,
-                }]
-            );
-
-            Ok(())
-        }
-
-        #[test]
-        #[ignore = "auto renew period is `None`"]
-        fn it_should_deserialize_empty() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOKEN_CREATE_EMPTY)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenCreate(transaction) => transaction);
-
-            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-            assert_eq!(data.token_type, TokenType::FungibleCommon);
-            assert_eq!(data.token_supply_type, TokenSupplyType::Infinite);
 
             Ok(())
         }

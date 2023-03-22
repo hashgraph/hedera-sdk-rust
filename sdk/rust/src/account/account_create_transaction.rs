@@ -57,7 +57,7 @@ pub type AccountCreateTransaction = Transaction<AccountCreateTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct AccountCreateTransactionData {
     /// The key that must sign each transfer out of the account.
@@ -417,24 +417,13 @@ mod tests {
     mod ffi {
         use std::str::FromStr;
 
-        use assert_matches::assert_matches;
         use time::Duration;
 
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             AccountCreateTransaction,
             Hbar,
-            Key,
             PublicKey,
         };
-
-        // language=JSON
-        const ACCOUNT_CREATE_EMPTY: &str = r#"{
-  "$type": "accountCreate"
-}"#;
 
         // language=JSON
         const ACCOUNT_CREATE_TRANSACTION_JSON: &str = r#"{
@@ -455,18 +444,6 @@ mod tests {
         "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
 
         #[test]
-        #[ignore = "auto renew period is `None`"]
-        fn it_should_deserialize_empty() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(ACCOUNT_CREATE_EMPTY)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountCreate(transaction) => transaction);
-
-            assert_eq!(data.auto_renew_period, Some(Duration::days(90)));
-
-            Ok(())
-        }
-
-        #[test]
         fn it_should_serialize() -> anyhow::Result<()> {
             let mut transaction = AccountCreateTransaction::new();
 
@@ -483,28 +460,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, ACCOUNT_CREATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(ACCOUNT_CREATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountCreate(transaction) => transaction);
-
-            assert_eq!(data.initial_balance.to_tinybars(), 1000);
-            assert_eq!(data.receiver_signature_required, true);
-            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-            assert_eq!(data.account_memo, "An account memo");
-            assert_eq!(data.max_automatic_token_associations, 256);
-            assert_eq!(data.staked_id, Some(7.into()));
-            assert_eq!(data.decline_staking_reward, false);
-
-            let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);
-
-            assert_eq!(key, PublicKey::from_str(KEY)?);
 
             Ok(())
         }

@@ -75,7 +75,7 @@ use crate::{
 pub type AnyQuery = Query<AnyQueryData>;
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
@@ -447,32 +447,14 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
 //  derive(Deserialize).
 
 #[cfg(feature = "ffi")]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 struct AnyQueryProxy {
     #[cfg_attr(feature = "ffi", serde(flatten))]
     data: AnyQueryData,
     #[cfg_attr(feature = "ffi", serde(default))]
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     payment: Option<
         crate::transaction::AnyTransactionBody<super::payment_transaction::PaymentTransactionData>,
     >,
-}
-
-#[cfg(feature = "ffi")]
-impl<D> serde::Serialize for Query<D>
-where
-    D: QueryExecute,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        // TODO: remove the clones, should be possible with Cows
-
-        let payment = self.data.is_payment_required().then(|| self.payment.body().clone().into());
-
-        AnyQueryProxy { payment, data: self.data.clone().into() }.serialize(serializer)
-    }
 }
 
 #[cfg(feature = "ffi")]

@@ -41,9 +41,8 @@ use crate::{
 /// Get information about a smart contract instance.
 pub type ContractInfoQuery = Query<ContractInfoQueryData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractInfoQueryData {
     /// The contract for which information is requested.

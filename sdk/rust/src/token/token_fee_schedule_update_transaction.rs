@@ -56,8 +56,8 @@ pub type TokenFeeScheduleUpdateTransaction = Transaction<TokenFeeScheduleUpdateT
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenFeeScheduleUpdateTransactionData {
     /// The token whose fee schedule is to be updated.
     token_id: Option<TokenId>,
@@ -168,15 +168,9 @@ impl ToProtobuf for TokenFeeScheduleUpdateTransactionData {
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use assert_matches::assert_matches;
-
         use crate::token::custom_fees::{
             CustomFee,
             FixedFeeData,
-        };
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
         };
         use crate::{
             AccountId,
@@ -212,26 +206,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(TOKEN_FEE_SCHEDULE_UPDATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenFeeScheduleUpdate(transaction) => transaction);
-
-            assert_eq!(data.token_id.unwrap(), TokenId::from(1001));
-            assert_eq!(
-                data.custom_fees,
-                [CustomFee {
-                    fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
-                    fee_collector_account_id: Some(AccountId::from(8)),
-                    all_collectors_are_exempt: false,
-                }]
-            );
 
             Ok(())
         }
