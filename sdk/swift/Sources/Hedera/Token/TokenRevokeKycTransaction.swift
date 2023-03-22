@@ -102,11 +102,23 @@ public final class TokenRevokeKycTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenRevokeKyc(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                accountId?.toProtobufInto(&proto.account)
-            }
-        )
+        return .tokenRevokeKyc(toProtobuf())
+    }
+}
+
+extension TokenRevokeKycTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenRevokeKycTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            accountId?.toProtobufInto(&proto.account)
+        }
+    }
+}
+
+extension TokenRevokeKycTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenRevokeKyc(toProtobuf())
     }
 }

@@ -175,14 +175,26 @@ public final class TopicCreateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .consensusCreateTopic(
-            .with { proto in
-                proto.memo = topicMemo
-                adminKey?.toProtobufInto(&proto.adminKey)
-                submitKey?.toProtobufInto(&proto.submitKey)
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
-            }
-        )
+        return .consensusCreateTopic(toProtobuf())
+    }
+}
+
+extension TopicCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ConsensusCreateTopicTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.memo = topicMemo
+            adminKey?.toProtobufInto(&proto.adminKey)
+            submitKey?.toProtobufInto(&proto.submitKey)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+        }
+    }
+}
+
+extension TopicCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .consensusCreateTopic(toProtobuf())
     }
 }

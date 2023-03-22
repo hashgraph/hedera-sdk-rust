@@ -81,10 +81,22 @@ public final class TokenUnpauseTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenUnpause(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-            }
-        )
+        return .tokenUnpause(toProtobuf())
+    }
+}
+
+extension TokenUnpauseTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenUnpauseTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+        }
+    }
+}
+
+extension TokenUnpauseTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenUnpause(toProtobuf())
     }
 }

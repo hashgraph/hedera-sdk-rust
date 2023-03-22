@@ -111,3 +111,16 @@ public final class FileAppendTransaction: ChunkedTransaction {
         )
     }
 }
+
+extension FileAppendTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        precondition(self.usedChunks == 1)
+
+        return .fileAppend(
+            .with { proto in
+                self.fileId?.toProtobufInto(&proto.fileID)
+                proto.contents = contents
+            }
+        )
+    }
+}

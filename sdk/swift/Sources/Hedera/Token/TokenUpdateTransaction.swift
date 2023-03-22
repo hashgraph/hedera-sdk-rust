@@ -374,24 +374,36 @@ public final class TokenUpdateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenUpdate(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                proto.name = tokenName
-                proto.symbol = tokenSymbol
-                treasuryAccountId?.toProtobufInto(&proto.treasury)
-                adminKey?.toProtobufInto(&proto.adminKey)
-                kycKey?.toProtobufInto(&proto.kycKey)
-                freezeKey?.toProtobufInto(&proto.freezeKey)
-                wipeKey?.toProtobufInto(&proto.wipeKey)
-                supplyKey?.toProtobufInto(&proto.supplyKey)
-                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                expirationTime?.toProtobufInto(&proto.expiry)
-                proto.memo = Google_Protobuf_StringValue(tokenMemo)
-                feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
-                pauseKey?.toProtobufInto(&proto.pauseKey)
-            }
-        )
+        return .tokenUpdate(toProtobuf())
+    }
+}
+
+extension TokenUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            proto.name = tokenName
+            proto.symbol = tokenSymbol
+            treasuryAccountId?.toProtobufInto(&proto.treasury)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            kycKey?.toProtobufInto(&proto.kycKey)
+            freezeKey?.toProtobufInto(&proto.freezeKey)
+            wipeKey?.toProtobufInto(&proto.wipeKey)
+            supplyKey?.toProtobufInto(&proto.supplyKey)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            expirationTime?.toProtobufInto(&proto.expiry)
+            proto.memo = Google_Protobuf_StringValue(tokenMemo)
+            feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+            pauseKey?.toProtobufInto(&proto.pauseKey)
+        }
+    }
+}
+
+extension TokenUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenUpdate(toProtobuf())
     }
 }

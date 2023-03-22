@@ -87,10 +87,22 @@ public final class FileDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .fileDelete(
-            .with { proto in
-                fileId?.toProtobufInto(&proto.fileID)
-            }
-        )
+        return .fileDelete(toProtobuf())
+    }
+}
+
+extension FileDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FileDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            fileId?.toProtobufInto(&proto.fileID)
+        }
+    }
+}
+
+extension FileDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .fileDelete(toProtobuf())
     }
 }

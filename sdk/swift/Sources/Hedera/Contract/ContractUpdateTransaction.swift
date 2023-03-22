@@ -332,33 +332,45 @@ public final class ContractUpdateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .contractUpdateInstance(
-            .with { proto in
-                contractId?.toProtobufInto(&proto.contractID)
-                expirationTime?.toProtobufInto(&proto.expirationTime)
-                adminKey?.toProtobufInto(&proto.adminKey)
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+        return .contractUpdateInstance(toProtobuf())
+    }
+}
 
-                if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
-                    proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
-                        Int32(maxAutomaticTokenAssociations))
-                }
+extension ContractUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractUpdateTransactionBody
 
-                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
-                proxyAccountId?.toProtobufInto(&proto.proxyAccountID)
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            contractId?.toProtobufInto(&proto.contractID)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
 
-                if let stakedNodeId = stakedNodeId {
-                    proto.stakedNodeID = Int64(stakedNodeId)
-                }
-
-                if let stakedAccountId = stakedAccountId {
-                    proto.stakedAccountID = stakedAccountId.toProtobuf()
-                }
-
-                if let declineStakingReward = declineStakingReward {
-                    proto.declineReward = Google_Protobuf_BoolValue(declineStakingReward)
-                }
+            if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                    Int32(maxAutomaticTokenAssociations))
             }
-        )
+
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+            proxyAccountId?.toProtobufInto(&proto.proxyAccountID)
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+
+            if let stakedAccountId = stakedAccountId {
+                proto.stakedAccountID = stakedAccountId.toProtobuf()
+            }
+
+            if let declineStakingReward = declineStakingReward {
+                proto.declineReward = Google_Protobuf_BoolValue(declineStakingReward)
+            }
+        }
+    }
+}
+
+extension ContractUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractUpdateInstance(toProtobuf())
     }
 }

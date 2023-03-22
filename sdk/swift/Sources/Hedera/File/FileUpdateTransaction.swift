@@ -227,14 +227,26 @@ public final class FileUpdateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .fileUpdate(
-            .with { proto in
-                fileId?.toProtobufInto(&proto.fileID)
-                proto.memo = Google_Protobuf_StringValue(fileMemo)
-                keys?.toProtobufInto(&proto.keys)
-                proto.contents = contents
-                expirationTime?.toProtobufInto(&proto.expirationTime)
-            }
-        )
+        return .fileUpdate(toProtobuf())
+    }
+}
+
+extension FileUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FileUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            fileId?.toProtobufInto(&proto.fileID)
+            proto.memo = Google_Protobuf_StringValue(fileMemo)
+            keys?.toProtobufInto(&proto.keys)
+            proto.contents = contents
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+        }
+    }
+}
+
+extension FileUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .fileUpdate(toProtobuf())
     }
 }

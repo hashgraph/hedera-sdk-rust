@@ -275,11 +275,11 @@ extension TransactionSources {
         var mutated: Bool = false
 
         for signer in signers {
-            let pkBytes = signer.publicKey.toBytesRaw()
+            let key = signer.publicKey.toBytesRaw()
 
             let sigPairs = signedTransactions.first?.sigMap.sigPair
 
-            if sigPairs?.contains(where: { pkBytes.starts(with: $0.pubKeyPrefix) }) ?? false {
+            if sigPairs?.contains(where: { key.starts(with: $0.pubKeyPrefix) }) ?? false {
                 // this signer already signed these transactions.
                 continue
             }
@@ -373,11 +373,11 @@ internal struct SourceTransaction<Tx: Transaction> {
 
 // fixme: better name.
 private struct SourceTransactionExecuteView<Tx: Transaction> {
-    let inner: Tx
-    let chunk: SourceChunk
-    let indicesByNodeId: [AccountId: Int]
+    fileprivate let inner: Tx
+    fileprivate let chunk: SourceChunk
+    fileprivate let indicesByNodeId: [AccountId: Int]
 
-    init(inner: Tx, chunk: SourceChunk) {
+    internal init(inner: Tx, chunk: SourceChunk) {
         self.inner = inner
         self.chunk = chunk
 

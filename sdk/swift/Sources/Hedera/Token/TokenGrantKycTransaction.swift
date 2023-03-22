@@ -102,11 +102,23 @@ public final class TokenGrantKycTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenGrantKyc(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                accountId?.toProtobufInto(&proto.account)
-            }
-        )
+        return .tokenGrantKyc(toProtobuf())
+    }
+}
+
+extension TokenGrantKycTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenGrantKycTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            accountId?.toProtobufInto(&proto.account)
+        }
+    }
+}
+
+extension TokenGrantKycTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenGrantKyc(toProtobuf())
     }
 }

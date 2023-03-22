@@ -179,15 +179,15 @@ public class ChunkedTransaction: Transaction {
 
 extension ChunkedTransaction {
     fileprivate struct FirstChunkView<Tx: ChunkedTransaction> {
-        let transaction: Tx
-        let totalChunks: Int
+        fileprivate let transaction: Tx
+        fileprivate let totalChunks: Int
     }
 
     fileprivate struct ChunkView<Tx: ChunkedTransaction> {
-        let transaction: Tx
-        let initialTransactionId: TransactionId
-        let currentChunk: Int
-        let totalChunks: Int
+        fileprivate let transaction: Tx
+        fileprivate let initialTransactionId: TransactionId
+        fileprivate let currentChunk: Int
+        fileprivate let totalChunks: Int
     }
 }
 

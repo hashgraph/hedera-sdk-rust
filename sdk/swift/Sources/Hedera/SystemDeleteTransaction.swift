@@ -150,3 +150,29 @@ public final class SystemDeleteTransaction: Transaction {
         )
     }
 }
+
+extension SystemDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_SystemDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let fileId = fileId {
+                proto.fileID = fileId.toProtobuf()
+            }
+
+            if let contractId = contractId {
+                proto.contractID = contractId.toProtobuf()
+            }
+
+            if let expirationTime = expirationTime {
+                proto.expirationTime = .with { $0.seconds = Int64(expirationTime.seconds) }
+            }
+        }
+    }
+}
+
+extension SystemDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .systemDelete(toProtobuf())
+    }
+}

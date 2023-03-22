@@ -75,7 +75,7 @@ extension PingQuery: Execute {
     }
 
     internal func execute(_ channel: GRPC.GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
-        return try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
     }
 
     internal func makeResponse(

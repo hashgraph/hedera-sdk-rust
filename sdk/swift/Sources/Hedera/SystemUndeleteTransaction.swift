@@ -124,3 +124,25 @@ public final class SystemUndeleteTransaction: Transaction {
         )
     }
 }
+
+extension SystemUndeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_SystemUndeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let fileId = fileId {
+                proto.fileID = fileId.toProtobuf()
+            }
+
+            if let contractId = contractId {
+                proto.contractID = contractId.toProtobuf()
+            }
+        }
+    }
+}
+
+extension SystemUndeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .systemUndelete(toProtobuf())
+    }
+}

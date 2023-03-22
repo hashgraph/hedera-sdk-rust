@@ -81,10 +81,22 @@ public final class TokenDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenDeletion(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-            }
-        )
+        return .tokenDeletion(toProtobuf())
+    }
+}
+
+extension TokenDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+        }
+    }
+}
+
+extension TokenDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenDeletion(toProtobuf())
     }
 }

@@ -193,12 +193,24 @@ public final class AccountAllowanceApproveTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .cryptoApproveAllowance(
-            .with { proto in
-                proto.cryptoAllowances = hbarAllowances.toProtobuf()
-                proto.tokenAllowances = tokenAllowances.toProtobuf()
-                proto.nftAllowances = nftAllowances.toProtobuf()
-            }
-        )
+        return .cryptoApproveAllowance(toProtobuf())
+    }
+}
+
+extension AccountAllowanceApproveTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoApproveAllowanceTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.cryptoAllowances = hbarAllowances.toProtobuf()
+            proto.tokenAllowances = tokenAllowances.toProtobuf()
+            proto.nftAllowances = nftAllowances.toProtobuf()
+        }
+    }
+}
+
+extension AccountAllowanceApproveTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoApproveAllowance(toProtobuf())
     }
 }

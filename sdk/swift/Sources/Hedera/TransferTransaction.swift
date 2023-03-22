@@ -240,12 +240,7 @@ public final class TransferTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .cryptoTransfer(
-            .with { proto in
-                proto.transfers = .with { $0.accountAmounts = transfers.toProtobuf() }
-                proto.tokenTransfers = tokenTransfers.toProtobuf()
-            }
-        )
+        return .cryptoTransfer(toProtobuf())
     }
 }
 
@@ -314,5 +309,22 @@ extension TransferTransaction.NftTransfer: TryProtobufCodable {
             proto.serialNumber = Int64(proto.serialNumber)
             proto.isApproval = isApproval
         }
+    }
+}
+
+extension TransferTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoTransferTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.transfers = .with { $0.accountAmounts = transfers.toProtobuf() }
+            proto.tokenTransfers = tokenTransfers.toProtobuf()
+        }
+    }
+}
+
+extension TransferTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoTransfer(toProtobuf())
     }
 }
