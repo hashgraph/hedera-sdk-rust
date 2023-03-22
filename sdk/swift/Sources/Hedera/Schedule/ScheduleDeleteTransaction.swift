@@ -76,4 +76,14 @@ public final class ScheduleDeleteTransaction: Transaction {
     {
         try await Proto_ScheduleServiceAsyncClient(channel: channel).deleteSchedule(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .scheduleDelete(
+            .with { proto in
+                scheduleId?.toProtobufInto(&proto.scheduleID)
+            }
+        )
+    }
 }

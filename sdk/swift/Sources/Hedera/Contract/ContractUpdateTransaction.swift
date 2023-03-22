@@ -21,6 +21,7 @@
 import Foundation
 import GRPC
 import HederaProtobufs
+import SwiftProtobuf
 
 /// Updates the fields of a smart contract to the given values.
 public final class ContractUpdateTransaction: Transaction {
@@ -53,7 +54,7 @@ public final class ContractUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         contractId = try container.decodeIfPresent(.contractId)
@@ -326,5 +327,38 @@ public final class ContractUpdateTransaction: Transaction {
         try proxyAccountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractUpdateInstance(
+            .with { proto in
+                contractId?.toProtobufInto(&proto.contractID)
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+                adminKey?.toProtobufInto(&proto.adminKey)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+
+                if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                    proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                        Int32(maxAutomaticTokenAssociations))
+                }
+
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+                proxyAccountId?.toProtobufInto(&proto.proxyAccountID)
+
+                if let stakedNodeId = stakedNodeId {
+                    proto.stakedNodeID = Int64(stakedNodeId)
+                }
+
+                if let stakedAccountId = stakedAccountId {
+                    proto.stakedAccountID = stakedAccountId.toProtobuf()
+                }
+
+                if let declineStakingReward = declineStakingReward {
+                    proto.declineReward = Google_Protobuf_BoolValue(declineStakingReward)
+                }
+            }
+        )
     }
 }

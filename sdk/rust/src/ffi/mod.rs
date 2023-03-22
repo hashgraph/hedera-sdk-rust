@@ -30,12 +30,10 @@ mod execute;
 mod key;
 mod runtime;
 mod schedule_info;
-mod signer;
 mod timestamp;
 mod transaction;
 mod transaction_id;
 mod util;
 
 use account_id::AccountId;
-pub(crate) use signer::CSigner;
 use timestamp::Timestamp;

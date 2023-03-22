@@ -101,4 +101,15 @@ public final class TokenAssociateTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).associateTokens(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenAssociate(
+            .with { proto in
+                proto.tokens = tokenIds.toProtobuf()
+                accountId?.toProtobufInto(&proto.account)
+            }
+        )
+    }
 }

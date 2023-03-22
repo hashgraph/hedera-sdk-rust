@@ -132,4 +132,16 @@ public final class EthereumTransaction: Transaction {
     {
         try await Proto_SmartContractServiceAsyncClient(channel: channel).callEthereum(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .ethereumTransaction(
+            .with { proto in
+                proto.ethereumData = ethereumData ?? Data()
+                callDataFileId?.toProtobufInto(&proto.callData)
+                proto.maxGasAllowance = Int64(maxGasAllowanceHbar)
+            }
+        )
+    }
 }

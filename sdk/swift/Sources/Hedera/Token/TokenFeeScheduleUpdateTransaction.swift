@@ -98,4 +98,15 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).updateTokenFeeSchedule(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenFeeScheduleUpdate(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.tokenID)
+                proto.customFees = customFees.toProtobuf()
+            }
+        )
+    }
 }

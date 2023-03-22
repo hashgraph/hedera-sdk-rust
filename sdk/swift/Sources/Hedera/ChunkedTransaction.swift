@@ -1,5 +1,6 @@
 import CHedera
 import Foundation
+import GRPC
 
 public class ChunkedTransaction: Transaction {
     internal static let defaultMaxChunks = 20
@@ -74,7 +75,19 @@ public class ChunkedTransaction: Transaction {
         return (data.count + chunkSize) / chunkSize
     }
 
+    fileprivate final var maxMessageSize: Int { maxChunks * chunkSize }
+
     internal var waitForReceipt: Bool { false }
+
+    internal final func messageChunk(_ chunkInfo: ChunkInfo) -> Data {
+        assert(chunkInfo.current < usedChunks)
+
+        let start = self.chunkSize * chunkInfo.current
+        let end = min(self.chunkSize * (chunkInfo.current + 1), self.data.count)
+
+        return self.data[start..<end]
+
+    }
 
     private enum CodingKeys: CodingKey {
         case data
@@ -110,6 +123,7 @@ public class ChunkedTransaction: Transaction {
     public final override func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws
         -> TransactionResponse
     {
+        // note: this could be called directly from something that sees a `Transaction`
         try await executeAll(client, timeout)[0]
     }
 
@@ -118,24 +132,166 @@ public class ChunkedTransaction: Transaction {
     {
         try freezeWith(client)
 
-        return try await executeAllInternal(client, timeoutPerChunk)
-    }
+        precondition(self.data.count < self.maxMessageSize, "todo: throw an actual error here")
 
-    private final func executeAllInternal(_ client: Client, _ timeoutPerChunk: TimeInterval? = nil) async throws
-        -> [TransactionResponse]
-    {
-        try freezeWith(client)
+        var responses: [Response] = []
 
-        if let sources = sources {
-            return try await SourceTransaction(inner: self, sources: sources).executeAll(
-                client, timeoutPerChunk: timeoutPerChunk)
+        let initialTransactionId: TransactionId
+
+        let usedChunks = self.usedChunks
+
+        do {
+            let resp = try await executeAny(
+                client,
+                FirstChunkView(transaction: self, totalChunks: usedChunks),
+                timeoutPerChunk
+            )
+
+            if waitForReceipt {
+                _ = try await resp.getReceipt(client, timeoutPerChunk)
+            }
+
+            initialTransactionId = resp.transactionId
+
+            responses.append(resp)
         }
 
-        // encode self as a JSON request to pass to Rust
-        let requestBytes = try JSONEncoder().encode(self)
+        for chunk in 1..<usedChunks {
+            let resp = try await executeAny(
+                client,
+                ChunkView(
+                    transaction: self, initialTransactionId: initialTransactionId, currentChunk: chunk,
+                    totalChunks: usedChunks),
+                timeoutPerChunk
+            )
 
-        let request = String(data: requestBytes, encoding: .utf8)!
+            if waitForReceipt {
+                _ = try await resp.getReceipt(client, timeoutPerChunk)
+            }
 
-        return try await executeAllEncoded(client, request: request, timeoutPerChunk: timeoutPerChunk)
+            responses.append(resp)
+
+        }
+
+        return responses
+    }
+}
+
+extension ChunkedTransaction {
+    fileprivate struct FirstChunkView<Tx: ChunkedTransaction> {
+        let transaction: Tx
+        let totalChunks: Int
+    }
+
+    fileprivate struct ChunkView<Tx: ChunkedTransaction> {
+        let transaction: Tx
+        let initialTransactionId: TransactionId
+        let currentChunk: Int
+        let totalChunks: Int
+    }
+}
+
+extension ChunkedTransaction.FirstChunkView: Execute {
+    internal typealias GrpcRequest = Tx.GrpcRequest
+    internal typealias GrpcResponse = Tx.GrpcResponse
+    internal typealias Context = Tx.Context
+    internal typealias Response = Tx.Response
+
+    internal var nodeAccountIds: [AccountId]? { transaction.nodeAccountIds }
+    internal var explicitTransactionId: TransactionId? { transaction.transactionId }
+    internal var requiresTransactionId: Bool { true }
+
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
+        GrpcRequest, Context
+    ) {
+        assert(transaction.isFrozen)
+
+        guard let transactionId = transactionId else {
+            throw HError.noPayerAccountOrTransactionId
+        }
+
+        return transaction.makeRequestInner(
+            chunkInfo: .initial(total: totalChunks, transactionId: transactionId, nodeAccountId: nodeAccountId)
+        )
+    }
+
+    internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
+        try await transaction.transactionExecute(channel, request)
+    }
+
+    internal func makeResponse(
+        _ response: GrpcResponse, _ context: Context, _ nodeAccountId: AccountId, _ transactionId: TransactionId?
+    ) -> Response {
+        transaction.makeResponse(response, context, nodeAccountId, transactionId)
+    }
+
+    internal func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        transaction.makeErrorPrecheck(status, transactionId)
+    }
+
+    internal static func responsePrecheckStatus(_ response: GrpcResponse) throws -> Int32 {
+        Tx.responsePrecheckStatus(response)
+    }
+}
+
+extension ChunkedTransaction.ChunkView: Execute {
+    internal typealias GrpcRequest = Tx.GrpcRequest
+    internal typealias GrpcResponse = Tx.GrpcResponse
+    internal typealias Context = Tx.Context
+    internal typealias Response = Tx.Response
+
+    internal var nodeAccountIds: [AccountId]? { transaction.nodeAccountIds }
+    internal var explicitTransactionId: TransactionId? { nil }
+    internal var requiresTransactionId: Bool { true }
+
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
+        GrpcRequest, Context
+    ) {
+        assert(transaction.isFrozen)
+
+        guard let transactionId = transactionId else {
+            throw HError.noPayerAccountOrTransactionId
+        }
+
+        return transaction.makeRequestInner(
+            chunkInfo: .init(
+                current: currentChunk,
+                total: totalChunks,
+                initialTransactionId: initialTransactionId,
+                currentTransactionId: transactionId,
+                nodeAccountId: nodeAccountId
+            )
+        )
+    }
+
+    internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
+        try await transaction.transactionExecute(channel, request)
+    }
+
+    internal func makeResponse(
+        _ response: GrpcResponse, _ context: Context, _ nodeAccountId: AccountId, _ transactionId: TransactionId?
+    ) -> Response {
+        transaction.makeResponse(response, context, nodeAccountId, transactionId)
+    }
+
+    internal func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        transaction.makeErrorPrecheck(status, transactionId)
+    }
+
+    internal static func responsePrecheckStatus(_ response: GrpcResponse) throws -> Int32 {
+        Tx.responsePrecheckStatus(response)
+    }
+}
+
+extension ChunkedTransaction.FirstChunkView: ValidateChecksums {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try self.transaction.validateChecksums(on: ledgerId)
+    }
+}
+
+extension ChunkedTransaction.ChunkView: ValidateChecksums {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try self.transaction.validateChecksums(on: ledgerId)
+        try self.initialTransactionId.validateChecksums(on: ledgerId)
     }
 }

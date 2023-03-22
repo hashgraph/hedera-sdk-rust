@@ -30,21 +30,23 @@ extension Transaction {
             publicKey = pair.0
             signature = pair.1
         }
+    }
+}
 
-        internal func toProtobuf() -> Proto_SignaturePair {
-            .with { proto in
-                switch publicKey {
-                case _ where publicKey.isEcdsa():
-                    proto.ecdsaSecp256K1 = signature
+extension Transaction.SignaturePair: ToProtobuf {
+    internal func toProtobuf() -> Proto_SignaturePair {
+        .with { proto in
+            switch publicKey {
+            case _ where publicKey.isEcdsa():
+                proto.ecdsaSecp256K1 = signature
 
-                case _ where publicKey.isEd25519():
-                    proto.ed25519 = signature
+            case _ where publicKey.isEd25519():
+                proto.ed25519 = signature
 
-                default:
-                    fatalError("Unknown public key kind")
-                }
-                proto.pubKeyPrefix = publicKey.toBytesRaw()
+            default:
+                fatalError("Unknown public key kind")
             }
+            proto.pubKeyPrefix = publicKey.toBytesRaw()
         }
     }
 }

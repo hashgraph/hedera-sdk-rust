@@ -77,4 +77,14 @@ public final class TokenPauseTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).pauseToken(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenPause(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+            }
+        )
+    }
 }

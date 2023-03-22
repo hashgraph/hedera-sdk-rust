@@ -21,6 +21,7 @@
 import Foundation
 import GRPC
 import HederaProtobufs
+import SwiftProtobuf
 
 /// Modify the metadata and/or the contents of a file.
 ///
@@ -53,7 +54,7 @@ public final class FileUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         fileId = try container.decodeIfPresent(.fileId)
@@ -221,5 +222,19 @@ public final class FileUpdateTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_FileServiceAsyncClient(channel: channel).updateFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .fileUpdate(
+            .with { proto in
+                fileId?.toProtobufInto(&proto.fileID)
+                proto.memo = Google_Protobuf_StringValue(fileMemo)
+                keys?.toProtobufInto(&proto.keys)
+                proto.contents = contents
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+            }
+        )
     }
 }

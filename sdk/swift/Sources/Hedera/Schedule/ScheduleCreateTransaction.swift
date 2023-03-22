@@ -197,4 +197,10 @@ public final class ScheduleCreateTransaction: Transaction {
     {
         try await Proto_ScheduleServiceAsyncClient(channel: channel).createSchedule(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        fatalError("WIP: Todo")
+    }
 }

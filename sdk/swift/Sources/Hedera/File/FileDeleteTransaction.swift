@@ -83,4 +83,14 @@ public final class FileDeleteTransaction: Transaction {
     {
         try await Proto_FileServiceAsyncClient(channel: channel).deleteFile(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .fileDelete(
+            .with { proto in
+                fileId?.toProtobufInto(&proto.fileID)
+            }
+        )
+    }
 }

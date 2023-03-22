@@ -114,4 +114,26 @@ public final class ContractDeleteTransaction: Transaction {
     {
         try await Proto_SmartContractServiceAsyncClient(channel: channel).deleteContract(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractDeleteInstance(
+            .with { proto in
+                switch (transferAccountId, transferContractId) {
+                case (.some, .some):
+                    // fixme: do what rust does
+                    fatalError("unreachable: transferAccount & transferContract")
+                case (.some(let id), nil):
+                    proto.transferAccountID = id.toProtobuf()
+                case (nil, .some(let id)):
+                    proto.transferContractID = id.toProtobuf()
+                case (nil, nil):
+                    break
+                }
+
+                contractId?.toProtobufInto(&proto.contractID)
+            }
+        )
+    }
 }

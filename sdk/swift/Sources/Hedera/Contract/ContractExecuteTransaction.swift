@@ -174,4 +174,17 @@ public final class ContractExecuteTransaction: Transaction {
     {
         try await Proto_SmartContractServiceAsyncClient(channel: channel).contractCallMethod(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractCall(
+            .with { proto in
+                contractId?.toProtobufInto(&proto.contractID)
+                proto.gas = Int64(gas)
+                proto.amount = payableAmount.toTinybars()
+                proto.functionParameters = functionParameters ?? Data()
+            }
+        )
+    }
 }
