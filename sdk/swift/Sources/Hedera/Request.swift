@@ -53,7 +53,7 @@ internal protocol Request: Encodable, ValidateChecksums {
 }
 
 extension Request {
-    internal func executeEncoded(_ client: Client, request: String, signers: [Signer], timeout: TimeInterval?)
+    internal func executeEncoded(_ client: Client, request: String, timeout: TimeInterval?)
         async throws -> Response
     {
         if client.isAutoValidateChecksumsEnabled() {
@@ -64,7 +64,7 @@ extension Request {
         let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
             // invoke `hedera_execute`, callback will be invoked on request completion
             let err = hedera_execute(
-                client.ptr, request, continuation, makeHederaSignersFromArray(signers: signers), timeout != nil,
+                client.ptr, request, continuation, timeout != nil,
                 timeout ?? 0.0
             ) { continuation, err, responsePtr in
 
@@ -97,7 +97,7 @@ extension Request {
 
         let request = String(data: requestBytes, encoding: .utf8)!
 
-        return try await executeEncoded(client, request: request, signers: [], timeout: timeout)
+        return try await executeEncoded(client, request: request, timeout: timeout)
     }
 
     internal static func decodeResponse(_ responseBytes: Data) throws -> Response {

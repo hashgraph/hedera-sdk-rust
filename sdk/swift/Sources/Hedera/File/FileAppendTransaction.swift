@@ -101,4 +101,11 @@ public final class FileAppendTransaction: ChunkedTransaction {
     {
         try await Proto_FileServiceAsyncClient(channel: channel).appendContent(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        .fileAppend(.with { proto in 
+            self.fileId?.toProtobufInto(&proto.fileID)
+            proto.contents = self.messageChunk(chunkInfo)
+        })
+    }
 }

@@ -192,9 +192,23 @@ public final class FileCreateTransaction: Transaction {
         try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
     }
 
-        internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
         -> Proto_TransactionResponse
     {
         try await Proto_FileServiceAsyncClient(channel: channel).createFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .fileCreate(
+            .with { proto in
+                proto.memo = fileMemo
+                proto.keys = keys.toProtobuf()
+                proto.contents = contents
+
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+            }
+        )
     }
 }

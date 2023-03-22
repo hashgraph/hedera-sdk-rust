@@ -73,7 +73,7 @@ internal struct ManagedAtomicWrapper<Value> where Value: Atomics.AtomicValue {
     internal let inner: ManagedAtomic<Value>
 }
 
-// safety: Atomics just forgot to put the 
+// safety: Atomics just forgot to put the
 extension ManagedAtomicWrapper: @unchecked Sendable where Value: Sendable {
 
 }

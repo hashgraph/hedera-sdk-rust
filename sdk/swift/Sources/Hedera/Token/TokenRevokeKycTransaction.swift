@@ -98,4 +98,15 @@ public final class TokenRevokeKycTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).revokeKycFromTokenAccount(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenRevokeKyc(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                accountId?.toProtobufInto(&proto.account)
+            }
+        )
+    }
 }

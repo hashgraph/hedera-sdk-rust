@@ -77,4 +77,14 @@ public final class TokenDeleteTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).deleteToken(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenDeletion(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+            }
+        )
+    }
 }

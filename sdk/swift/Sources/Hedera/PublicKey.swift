@@ -258,7 +258,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         guard let sources = transaction.sources else {
             throw HError(kind: .signatureVerify, description: "signer not in transaction")
         }
-        
+
         try verifyTransactionSources(sources)
     }
 

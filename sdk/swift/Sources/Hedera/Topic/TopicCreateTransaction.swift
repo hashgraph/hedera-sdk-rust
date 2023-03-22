@@ -22,7 +22,6 @@ import Foundation
 import GRPC
 import HederaProtobufs
 
-
 /// Create a topic to be used for consensus.
 ///
 /// If an `autoRenewAccountId` is specified, that account must also sign this transaction.
@@ -171,5 +170,19 @@ public final class TopicCreateTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).createTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusCreateTopic(
+            .with { proto in
+                proto.memo = topicMemo
+                adminKey?.toProtobufInto(&proto.adminKey)
+                submitKey?.toProtobufInto(&proto.submitKey)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            }
+        )
     }
 }

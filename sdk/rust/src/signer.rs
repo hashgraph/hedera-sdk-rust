@@ -32,8 +32,6 @@ pub(crate) enum AnySigner {
     PrivateKey(PrivateKey),
     // public key is 216 bytes.
     Arbitrary(Box<PublicKey>, Signer),
-    #[cfg(feature = "ffi")]
-    C(crate::ffi::CSigner),
 }
 
 impl AnySigner {
@@ -42,8 +40,6 @@ impl AnySigner {
         match self {
             AnySigner::PrivateKey(it) => it.public_key(),
             AnySigner::Arbitrary(it, _) => **it,
-            #[cfg(feature = "ffi")]
-            AnySigner::C(it) => it.public_key(),
         }
     }
 
@@ -54,8 +50,6 @@ impl AnySigner {
                 let bytes = signer(message);
                 (**public, bytes)
             }
-            #[cfg(feature = "ffi")]
-            AnySigner::C(it) => it.sign(message),
         }
     }
 }

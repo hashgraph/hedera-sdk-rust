@@ -107,4 +107,20 @@ public final class SystemUndeleteTransaction: Transaction {
 
         fatalError("\(type(of: self)) has no `fileId`/`contractId`")
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .systemUndelete(
+            .with { proto in
+                if let fileId = fileId {
+                    proto.fileID = fileId.toProtobuf()
+                }
+
+                if let contractId = contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+            }
+        )
+    }
 }

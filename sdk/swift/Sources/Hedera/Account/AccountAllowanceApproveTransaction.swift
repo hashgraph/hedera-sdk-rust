@@ -189,4 +189,16 @@ public final class AccountAllowanceApproveTransaction: Transaction {
     {
         try await Proto_CryptoServiceAsyncClient(channel: channel).approveAllowances(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoApproveAllowance(
+            .with { proto in
+                proto.cryptoAllowances = hbarAllowances.toProtobuf()
+                proto.tokenAllowances = tokenAllowances.toProtobuf()
+                proto.nftAllowances = nftAllowances.toProtobuf()
+            }
+        )
+    }
 }

@@ -25,24 +25,14 @@ use std::ffi::{
 use std::os::raw::c_char;
 use std::ptr;
 
-use super::signer::Signers;
 use crate::ffi::callback::Callback;
 use crate::ffi::error::Error;
 use crate::ffi::runtime::RUNTIME;
-use crate::ffi::signer::Signer;
 use crate::ffi::util::cstr_from_ptr;
-use crate::transaction::AnyTransaction;
 use crate::{
     AnyQuery,
     Client,
 };
-
-#[derive(serde::Deserialize)]
-#[cfg_attr(feature = "ffi", serde(untagged))]
-enum AnyRequest {
-    Transaction(Box<AnyTransaction>),
-    Query(Box<AnyQuery>),
-}
 
 /// Execute this request against the provided client of the Hedera network.
 ///
@@ -54,7 +44,6 @@ pub unsafe extern "C" fn hedera_execute(
     client: *const Client,
     request: *const c_char,
     context: *const c_void,
-    signers: Signers,
     has_timeout: bool,
     timeout: f64,
     callback: extern "C" fn(context: *const c_void, err: Error, response: *const c_char),
@@ -64,10 +53,8 @@ pub unsafe extern "C" fn hedera_execute(
     let client = unsafe { &*client };
     let request = unsafe { cstr_from_ptr(request) };
 
-    let request: AnyRequest =
+    let request: AnyQuery =
         ffi_try!(serde_json::from_str(&request).map_err(crate::Error::request_parse));
-
-    let signers_2: Vec<_> = signers.as_slice().iter().map(Signer::to_csigner).collect();
 
     let timeout = has_timeout
         .then(|| std::time::Duration::try_from_secs_f64(timeout))
@@ -76,29 +63,14 @@ pub unsafe extern "C" fn hedera_execute(
 
     let timeout = ffi_try!(timeout);
 
-    drop(signers);
-    let signers = signers_2;
-
     let callback = Callback::new(context, callback);
 
     RUNTIME.spawn(async move {
-        let response = match request {
-            AnyRequest::Query(mut query) => query
-                .execute_with_optional_timeout(client, timeout)
-                .await
-                .map(|response| serde_json::to_string(&response).unwrap()),
-
-            AnyRequest::Transaction(mut transaction) => {
-                for signer in signers {
-                    transaction.sign_signer(crate::signer::AnySigner::C(signer));
-                }
-
-                transaction
-                    .execute_with_optional_timeout(client, timeout)
-                    .await
-                    .map(|response| serde_json::to_string(&response).unwrap())
-            }
-        };
+        let mut query = request;
+        let response = query
+            .execute_with_optional_timeout(client, timeout)
+            .await
+            .map(|response| serde_json::to_string(&response).unwrap());
 
         let response =
             response.map(|response| CString::new(response).unwrap().into_raw().cast_const());

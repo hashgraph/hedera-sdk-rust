@@ -22,7 +22,6 @@ import Foundation
 import GRPC
 import HederaProtobufs
 
-
 /// Delete a topic.
 ///
 /// No more transactions or queries on the topic will succeed.
@@ -80,5 +79,15 @@ public final class TopicDeleteTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).deleteTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusDeleteTopic(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+            }
+        )
     }
 }

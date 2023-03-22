@@ -88,4 +88,14 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
     {
         try await Proto_CryptoServiceAsyncClient(channel: channel).deleteAllowances(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoDeleteAllowance(
+            .with { proto in
+                proto.nftAllowances = nftAllowances.toProtobuf()
+            }
+        )
+    }
 }

@@ -129,4 +129,24 @@ public final class SystemDeleteTransaction: Transaction {
 
         fatalError("\(type(of: self)) has no `fileId`/`contractId`")
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .systemDelete(
+            .with { proto in
+                if let fileId = fileId {
+                    proto.fileID = fileId.toProtobuf()
+                }
+
+                if let contractId = contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+
+                if let expirationTime = expirationTime {
+                    proto.expirationTime = .with { $0.seconds = Int64(expirationTime.seconds) }
+                }
+            }
+        )
+    }
 }

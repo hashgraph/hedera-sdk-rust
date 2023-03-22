@@ -22,7 +22,6 @@ import Foundation
 import GRPC
 import HederaProtobufs
 
-
 /// Start a new smart contract instance.
 public final class ContractCreateTransaction: Transaction {
     /// Create a new `ContractCreateTransaction`.
@@ -51,8 +50,14 @@ public final class ContractCreateTransaction: Transaction {
         self.contractMemo = contractMemo
         self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
         self.autoRenewAccountId = autoRenewAccountId
+
         self.stakedAccountId = stakedAccountId
-        self.stakedNodeId = stakedNodeId
+
+        if let stakedNodeId = stakedNodeId {
+            // just ensure one "wins" for now.
+            self.stakedAccountId = nil
+            self.stakedNodeId = stakedNodeId
+        }
         self.declineStakingReward = declineStakingReward
 
         super.init()
@@ -253,6 +258,7 @@ public final class ContractCreateTransaction: Transaction {
     @discardableResult
     public func stakedAccountId(_ stakedAccountId: AccountId) -> Self {
         self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = nil
 
         return self
     }
@@ -268,6 +274,7 @@ public final class ContractCreateTransaction: Transaction {
     @discardableResult
     public func stakedNodeId(_ stakedNodeId: UInt64) -> Self {
         self.stakedNodeId = stakedNodeId
+        self.stakedAccountId = nil
 
         return self
     }
@@ -330,11 +337,46 @@ public final class ContractCreateTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
-        internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
         -> Proto_TransactionResponse
     {
-
         try await Proto_SmartContractServiceAsyncClient(channel: channel).createContract(request)
     }
 
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractCreateInstance(
+            .with { proto in
+                switch (bytecode, bytecodeFileId) {
+                // todo: just do whatever rust does
+                case (.some, .some): fatalError("Cannot set both bytecode and bytecodeFileId")
+                case (.some(let code), nil): proto.initcode = code
+                case (nil, .some(let fileId)): proto.fileID = fileId.toProtobuf()
+                default:
+                    break
+                }
+
+                adminKey?.toProtobufInto(&proto.adminKey)
+                proto.gas = Int64(gas)
+                proto.initialBalance = initialBalance.toTinybars()
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+                proto.constructorParameters = constructorParameters ?? Data()
+                proto.memo = contractMemo
+                proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+
+                if let stakedAccountId = stakedAccountId?.toProtobuf() {
+                    proto.stakedAccountID = stakedAccountId
+                }
+
+                if let stakedNodeId = stakedNodeId {
+                    proto.stakedNodeID = Int64(stakedNodeId)
+                }
+
+                proto.declineReward = declineStakingReward
+            }
+        )
+
+    }
 }

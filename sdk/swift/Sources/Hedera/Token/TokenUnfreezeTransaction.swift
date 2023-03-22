@@ -91,10 +91,20 @@ public final class TokenUnfreezeTransaction: Transaction {
         try super.validateChecksums(on: ledgerId)
     }
 
-
     internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
         -> Proto_TransactionResponse
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).unfreezeTokenAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenUnfreeze(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                accountId?.toProtobufInto(&proto.account)
+            }
+        )
     }
 }

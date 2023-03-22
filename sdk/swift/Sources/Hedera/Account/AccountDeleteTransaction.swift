@@ -22,7 +22,6 @@ import Foundation
 import GRPC
 import HederaProtobufs
 
-
 /// Mark an account as deleted, moving all its current hbars to another account.
 ///
 /// It will remain in the ledger, marked as deleted, until it expires.
@@ -96,5 +95,16 @@ public final class AccountDeleteTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoDelete(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoDelete(
+            .with { proto in
+                accountId?.toProtobufInto(&proto.deleteAccountID)
+                transferAccountId?.toProtobufInto(&proto.transferAccountID)
+            }
+        )
     }
 }

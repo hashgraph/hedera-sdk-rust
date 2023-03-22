@@ -22,7 +22,6 @@ import Foundation
 import GRPC
 import HederaProtobufs
 
-
 /// Create a new Hedera™ account.
 public final class AccountCreateTransaction: Transaction {
     /// Create a new `AccountCreateTransaction` ready for configuration.
@@ -313,5 +312,39 @@ public final class AccountCreateTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_CryptoServiceAsyncClient(channel: channel).createAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoCreateAccount(
+            .with { proto in
+                key?.toProtobufInto(&proto.key)
+                proto.initialBalance = UInt64(initialBalance.toTinybars())
+                proto.receiverSigRequired = receiverSignatureRequired
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+                proto.memo = accountMemo
+                proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+
+                if let alias = alias?.toProtobufBytes() {
+                    proto.alias = alias
+                }
+
+                // if let evmAddress = evmAddress {
+                //     proto.evmAddress = evmAddress.data
+                // }
+
+                if let stakedNodeId = stakedNodeId {
+                    proto.stakedNodeID = Int64(stakedNodeId)
+                }
+
+                if let stakedAccountId = stakedAccountId {
+                    proto.stakedAccountID = stakedAccountId.toProtobuf()
+                }
+
+                proto.declineReward = declineStakingReward
+            }
+        )
     }
 }
