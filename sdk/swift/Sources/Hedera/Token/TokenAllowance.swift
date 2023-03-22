@@ -13,11 +13,10 @@ public struct TokenAllowance: Codable, ValidateChecksums {
     }
 }
 
-
 extension TokenAllowance: TryProtobufCodable {
-    typealias Protobuf = Proto_TokenAllowance
+    internal typealias Protobuf = Proto_TokenAllowance
 
-    init(protobuf proto: Protobuf) throws {
+    internal init(protobuf proto: Protobuf) throws {
         self.init(
             tokenId: .fromProtobuf(proto.tokenID),
             ownerAccountId: try .fromProtobuf(proto.owner),
@@ -26,7 +25,7 @@ extension TokenAllowance: TryProtobufCodable {
         )
     }
 
-    func toProtobuf() -> Protobuf {
+    internal func toProtobuf() -> Protobuf {
         .with { proto in
             proto.tokenID = tokenId.toProtobuf()
             proto.owner = ownerAccountId.toProtobuf()

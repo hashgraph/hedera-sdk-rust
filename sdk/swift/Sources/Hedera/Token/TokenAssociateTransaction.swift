@@ -105,11 +105,23 @@ public final class TokenAssociateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenAssociate(
-            .with { proto in
-                proto.tokens = tokenIds.toProtobuf()
-                accountId?.toProtobufInto(&proto.account)
-            }
-        )
+        return .tokenAssociate(toProtobuf())
+    }
+}
+
+extension TokenAssociateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenAssociateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.tokens = tokenIds.toProtobuf()
+            accountId?.toProtobufInto(&proto.account)
+        }
+    }
+}
+
+extension TokenAssociateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenAssociate(toProtobuf())
     }
 }

@@ -12,7 +12,7 @@ public struct HbarAllowance: Codable, ValidateChecksums {
 }
 
 extension HbarAllowance: TryProtobufCodable {
-    typealias Protobuf = Proto_CryptoAllowance
+    internal typealias Protobuf = Proto_CryptoAllowance
 
     internal init(protobuf proto: Protobuf) throws {
         self.init(

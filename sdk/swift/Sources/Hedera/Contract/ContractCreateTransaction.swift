@@ -346,37 +346,48 @@ public final class ContractCreateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .contractCreateInstance(
-            .with { proto in
-                switch (bytecode, bytecodeFileId) {
-                // todo: just do whatever rust does
-                case (.some, .some): fatalError("Cannot set both bytecode and bytecodeFileId")
-                case (.some(let code), nil): proto.initcode = code
-                case (nil, .some(let fileId)): proto.fileID = fileId.toProtobuf()
-                default:
-                    break
-                }
+        return .contractCreateInstance(toProtobuf())
+    }
+}
 
-                adminKey?.toProtobufInto(&proto.adminKey)
-                proto.gas = Int64(gas)
-                proto.initialBalance = initialBalance.toTinybars()
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
-                proto.constructorParameters = constructorParameters ?? Data()
-                proto.memo = contractMemo
-                proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+extension ContractCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractCreateTransactionBody
 
-                if let stakedAccountId = stakedAccountId?.toProtobuf() {
-                    proto.stakedAccountID = stakedAccountId
-                }
-
-                if let stakedNodeId = stakedNodeId {
-                    proto.stakedNodeID = Int64(stakedNodeId)
-                }
-
-                proto.declineReward = declineStakingReward
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            switch (bytecode, bytecodeFileId) {
+            // todo: just do whatever rust does
+            case (.some, .some): fatalError("Cannot set both bytecode and bytecodeFileId")
+            case (.some(let code), nil): proto.initcode = code
+            case (nil, .some(let fileId)): proto.fileID = fileId.toProtobuf()
+            default:
+                break
             }
-        )
 
+            adminKey?.toProtobufInto(&proto.adminKey)
+            proto.gas = Int64(gas)
+            proto.initialBalance = initialBalance.toTinybars()
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+            proto.constructorParameters = constructorParameters ?? Data()
+            proto.memo = contractMemo
+            proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+
+            if let stakedAccountId = stakedAccountId?.toProtobuf() {
+                proto.stakedAccountID = stakedAccountId
+            }
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+
+            proto.declineReward = declineStakingReward
+        }
+    }
+}
+
+extension ContractCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractCreateInstance(toProtobuf())
     }
 }

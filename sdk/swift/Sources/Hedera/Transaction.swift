@@ -314,7 +314,7 @@ extension Transaction {
         }
     }
 
-    static func responsePrecheckStatus(_ response: Proto_TransactionResponse) -> Int32 {
+    internal static func responsePrecheckStatus(_ response: Proto_TransactionResponse) -> Int32 {
         Int32(response.nodeTransactionPrecheckCode.rawValue)
     }
 }
@@ -425,13 +425,13 @@ extension Transaction: Execute {
     internal typealias GrpcResponse = Proto_TransactionResponse
     internal typealias Context = TransactionHash
 
-    var explicitTransactionId: TransactionId? {
+    internal var explicitTransactionId: TransactionId? {
         transactionId
     }
 
-    var requiresTransactionId: Bool { true }
+    internal var requiresTransactionId: Bool { true }
 
-    func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
         GrpcRequest, TransactionHash
     ) {
         assert(isFrozen)
@@ -443,7 +443,7 @@ extension Transaction: Execute {
         return self.makeRequestInner(chunkInfo: .single(transactionId: transactionId, nodeAccountId: nodeAccountId))
     }
 
-    func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
+    internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
         try await transactionExecute(channel, request)
     }
 }

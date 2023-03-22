@@ -82,8 +82,8 @@ public class ChunkedTransaction: Transaction {
     internal final func messageChunk(_ chunkInfo: ChunkInfo) -> Data {
         assert(chunkInfo.current < usedChunks)
 
-        let start = self.chunkSize * chunkInfo.current;
-        let end = min(self.chunkSize * (chunkInfo.current + 1), self.data.count);
+        let start = self.chunkSize * chunkInfo.current
+        let end = min(self.chunkSize * (chunkInfo.current + 1), self.data.count)
 
         return self.data[start..<end]
 
@@ -179,15 +179,15 @@ public class ChunkedTransaction: Transaction {
 
 extension ChunkedTransaction {
     fileprivate struct FirstChunkView<Tx: ChunkedTransaction> {
-        let transaction: Tx
-        let totalChunks: Int
+        fileprivate let transaction: Tx
+        fileprivate let totalChunks: Int
     }
 
     fileprivate struct ChunkView<Tx: ChunkedTransaction> {
-        let transaction: Tx
-        let initialTransactionId: TransactionId
-        let currentChunk: Int
-        let totalChunks: Int
+        fileprivate let transaction: Tx
+        fileprivate let initialTransactionId: TransactionId
+        fileprivate let currentChunk: Int
+        fileprivate let totalChunks: Int
     }
 }
 
@@ -284,13 +284,13 @@ extension ChunkedTransaction.ChunkView: Execute {
 }
 
 extension ChunkedTransaction.FirstChunkView: ValidateChecksums {
-    func validateChecksums(on ledgerId: LedgerId) throws {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         try self.transaction.validateChecksums(on: ledgerId)
     }
 }
 
 extension ChunkedTransaction.ChunkView: ValidateChecksums {
-    func validateChecksums(on ledgerId: LedgerId) throws {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         try self.transaction.validateChecksums(on: ledgerId)
         try self.initialTransactionId.validateChecksums(on: ledgerId)
     }

@@ -103,9 +103,24 @@ public final class FileAppendTransaction: ChunkedTransaction {
     }
 
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
-        .fileAppend(.with { proto in 
-            self.fileId?.toProtobufInto(&proto.fileID)
-            proto.contents = self.messageChunk(chunkInfo)
-        })
+        .fileAppend(
+            .with { proto in
+                self.fileId?.toProtobufInto(&proto.fileID)
+                proto.contents = self.messageChunk(chunkInfo)
+            }
+        )
+    }
+}
+
+extension FileAppendTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        precondition(self.usedChunks == 1)
+
+        return .fileAppend(
+            .with { proto in
+                self.fileId?.toProtobufInto(&proto.fileID)
+                proto.contents = contents
+            }
+        )
     }
 }

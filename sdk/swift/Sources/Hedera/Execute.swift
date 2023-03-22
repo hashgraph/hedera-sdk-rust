@@ -66,11 +66,11 @@ internal protocol Execute {
 }
 
 extension Execute {
-    func shouldRetryPrecheck(forStatus status: Status) -> Bool {
+    internal func shouldRetryPrecheck(forStatus status: Status) -> Bool {
         false
     }
 
-    func shouldRetry(forResponse response: GrpcResponse) -> Bool {
+    internal func shouldRetry(forResponse response: GrpcResponse) -> Bool {
         false
     }
 }
@@ -81,7 +81,7 @@ internal func executeAny<E: Execute & ValidateChecksums>(_ client: Client, _ exe
     let timeout = timeout ?? LegacyExponentialBackoff.defaultMaxElapsedTime
 
     var backoff = LegacyExponentialBackoff(maxElapsedTime: .limited(timeout))
-    var lastError: HError? = nil
+    var lastError: HError?
 
     if client.isAutoValidateChecksumsEnabled() {
         try executable.validateChecksums(on: client)

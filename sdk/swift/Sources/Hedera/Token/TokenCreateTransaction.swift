@@ -487,30 +487,42 @@ public final class TokenCreateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenCreation(
-            .with { proto in
-                proto.name = name
-                proto.symbol = symbol
-                proto.decimals = decimals
-                proto.initialSupply = initialSupply
-                treasuryAccountId?.toProtobufInto(&proto.treasury)
-                adminKey?.toProtobufInto(&proto.adminKey)
-                kycKey?.toProtobufInto(&proto.kycKey)
-                freezeKey?.toProtobufInto(&proto.freezeKey)
-                wipeKey?.toProtobufInto(&proto.wipeKey)
-                supplyKey?.toProtobufInto(&proto.supplyKey)
-                proto.freezeDefault = freezeDefault
-                expirationTime?.toProtobufInto(&proto.expiry)
-                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                proto.memo = tokenMemo
-                proto.tokenType = tokenType.toProtobuf()
-                proto.supplyType = tokenSupplyType.toProtobuf()
-                proto.maxSupply = Int64(bitPattern: maxSupply)
-                feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
-                proto.customFees = customFees.toProtobuf()
-                pauseKey?.toProtobufInto(&proto.pauseKey)
-            }
-        )
+        return .tokenCreation(toProtobuf())
+    }
+}
+
+extension TokenCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.name = name
+            proto.symbol = symbol
+            proto.decimals = decimals
+            proto.initialSupply = initialSupply
+            treasuryAccountId?.toProtobufInto(&proto.treasury)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            kycKey?.toProtobufInto(&proto.kycKey)
+            freezeKey?.toProtobufInto(&proto.freezeKey)
+            wipeKey?.toProtobufInto(&proto.wipeKey)
+            supplyKey?.toProtobufInto(&proto.supplyKey)
+            proto.freezeDefault = freezeDefault
+            expirationTime?.toProtobufInto(&proto.expiry)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            proto.memo = tokenMemo
+            proto.tokenType = tokenType.toProtobuf()
+            proto.supplyType = tokenSupplyType.toProtobuf()
+            proto.maxSupply = Int64(bitPattern: maxSupply)
+            feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+            proto.customFees = customFees.toProtobuf()
+            pauseKey?.toProtobufInto(&proto.pauseKey)
+        }
+    }
+}
+
+extension TokenCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenCreation(toProtobuf())
     }
 }

@@ -84,10 +84,22 @@ public final class TopicDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .consensusDeleteTopic(
-            .with { proto in
-                topicId?.toProtobufInto(&proto.topicID)
-            }
-        )
+        return .consensusDeleteTopic(toProtobuf())
+    }
+}
+
+extension TopicDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ConsensusDeleteTopicTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            topicId?.toProtobufInto(&proto.topicID)
+        }
+    }
+}
+
+extension TopicDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .consensusDeleteTopic(toProtobuf())
     }
 }

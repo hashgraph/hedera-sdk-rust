@@ -139,4 +139,38 @@ public final class FreezeTransaction: Transaction {
     {
         try await Proto_FreezeServiceAsyncClient(channel: channel).freeze(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .freeze(toProtobuf())
+    }
+}
+
+extension FreezeTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FreezeTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let fileId = fileId {
+                proto.updateFile = fileId.toProtobuf()
+            }
+
+            if let startTime = startTime {
+                proto.startTime = startTime.toProtobuf()
+            }
+
+            if let fileHash = fileHash {
+                proto.fileHash = fileHash
+            }
+
+            proto.freezeType = freezeType.toProtobuf()
+        }
+    }
+}
+
+extension FreezeTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .freeze(toProtobuf())
+    }
 }

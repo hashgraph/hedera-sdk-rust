@@ -27,8 +27,8 @@ import SwiftProtobuf
 // Note: Ideally this would use some form of algorithm to balance better (IE P2C, but how do you check connection metrics?)
 // Random is surprisingly good at this though (avoids the thundering herd that would happen if round-robin was used), so...
 internal final class ChannelBalancer: GRPCChannel {
-    public let eventLoop: EventLoop
-    let channels: [GRPC.ClientConnection]
+    internal let eventLoop: EventLoop
+    internal let channels: [GRPC.ClientConnection]
 
     internal init(eventLoop: EventLoop, _ channelTargets: [GRPC.ConnectionTarget]) {
         self.eventLoop = eventLoop
@@ -38,7 +38,7 @@ internal final class ChannelBalancer: GRPCChannel {
         }
     }
 
-    func makeCall<Request, Response>(
+    internal func makeCall<Request, Response>(
         path: String,
         type: GRPC.GRPCCallType,
         callOptions: GRPC.CallOptions,
@@ -49,7 +49,7 @@ internal final class ChannelBalancer: GRPCChannel {
         channels.randomElement()!.makeCall(path: path, type: type, callOptions: callOptions, interceptors: interceptors)
     }
 
-    func makeCall<Request, Response>(
+    internal func makeCall<Request, Response>(
         path: String,
         type: GRPC.GRPCCallType,
         callOptions: GRPC.CallOptions,
@@ -59,7 +59,7 @@ internal final class ChannelBalancer: GRPCChannel {
     }
 
     // todo: have someone look at this.
-    func close() -> NIOCore.EventLoopFuture<Void> {
+    internal func close() -> NIOCore.EventLoopFuture<Void> {
         return EventLoopFuture.reduce(into: (), channels.map { $0.close() }, on: eventLoop, { (_, _) in })
     }
 }
@@ -80,15 +80,9 @@ extension ManagedAtomicWrapper: @unchecked Sendable where Value: Sendable {
 
 internal final class Network: Sendable {
     internal struct Config {
-        internal init(map: [AccountId: Int], nodes: [AccountId], addresses: [[String]]) {
-            self.map = map
-            self.nodes = nodes
-            self.addresses = addresses
-        }
-
-        let map: [AccountId: Int]
-        let nodes: [AccountId]
-        let addresses: [[String]]
+        internal let map: [AccountId: Int]
+        internal let nodes: [AccountId]
+        internal let addresses: [[String]]
     }
 
     private init(
@@ -107,13 +101,13 @@ internal final class Network: Sendable {
         self.lastPinged = lastPinged
     }
 
-    let map: [AccountId: Int]
-    let nodes: [AccountId]
-    let addresses: [[String]]
-    let channels: [GRPCChannel]
+    internal let map: [AccountId: Int]
+    internal let nodes: [AccountId]
+    internal let addresses: [[String]]
+    internal let channels: [GRPCChannel]
     // these warn about them not being sendable but they really are :/
-    let healthy: [ManagedAtomicWrapper<Int64>]
-    let lastPinged: [ManagedAtomicWrapper<Int64>]
+    internal let healthy: [ManagedAtomicWrapper<Int64>]
+    internal let lastPinged: [ManagedAtomicWrapper<Int64>]
 
     fileprivate convenience init(config: Config, eventLoop: NIOCore.EventLoopGroup) {
         // todo: someone verify this code pls.

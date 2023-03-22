@@ -87,10 +87,16 @@ public final class ScheduleSignTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .scheduleSign(
-            .with { proto in
-                scheduleId?.toProtobufInto(&proto.scheduleID)
-            }
-        )
+        return .scheduleSign(toProtobuf())
+    }
+}
+
+extension ScheduleSignTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleSignTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            scheduleId?.toProtobufInto(&proto.scheduleID)
+        }
     }
 }

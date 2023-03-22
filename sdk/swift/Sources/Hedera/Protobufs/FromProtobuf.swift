@@ -23,7 +23,8 @@ internal protocol FromProtobuf: TryFromProtobuf {
 }
 
 extension FromProtobuf {
-    @Sendable internal static func fromProtobuf(_ proto: Protobuf) -> Self {
+    @Sendable
+    internal static func fromProtobuf(_ proto: Protobuf) -> Self {
         Self(protobuf: proto)
     }
 }

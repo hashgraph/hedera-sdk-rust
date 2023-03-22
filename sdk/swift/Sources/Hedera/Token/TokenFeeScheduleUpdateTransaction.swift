@@ -102,11 +102,23 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenFeeScheduleUpdate(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.tokenID)
-                proto.customFees = customFees.toProtobuf()
-            }
-        )
+        return .tokenFeeScheduleUpdate(toProtobuf())
+    }
+}
+
+extension TokenFeeScheduleUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenFeeScheduleUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.tokenID)
+            proto.customFees = customFees.toProtobuf()
+        }
+    }
+}
+
+extension TokenFeeScheduleUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenFeeScheduleUpdate(toProtobuf())
     }
 }

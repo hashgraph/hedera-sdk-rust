@@ -80,10 +80,22 @@ public final class ScheduleDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .scheduleDelete(
-            .with { proto in
-                scheduleId?.toProtobufInto(&proto.scheduleID)
-            }
-        )
+        return .scheduleDelete(toProtobuf())
+    }
+}
+
+extension ScheduleDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            scheduleId?.toProtobufInto(&proto.scheduleID)
+        }
+    }
+}
+
+extension ScheduleDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .scheduleDelete(toProtobuf())
     }
 }

@@ -272,9 +272,10 @@ extension TransactionSources {
         var mutated: Bool = false
 
         for signer in signers {
-            let pk = signer.publicKey.toBytesRaw()
+            let key = signer.publicKey.toBytesRaw()
 
-            if signedTransactions.first?.sigMap.sigPair.contains(where: { pk.starts(with: $0.pubKeyPrefix) }) ?? false {
+            if signedTransactions.first?.sigMap.sigPair.contains(where: { key.starts(with: $0.pubKeyPrefix) }) ?? false
+            {
                 // this signer already signed these transactions.
                 continue
             }
@@ -331,8 +332,8 @@ extension TransactionSources: TryProtobufCodable {
 
 // fixme: find a better name.
 internal struct SourceTransaction<Tx: Transaction> {
-    let inner: Tx
-    let sources: TransactionSources
+    fileprivate let inner: Tx
+    fileprivate let sources: TransactionSources
 
     internal init(inner: Tx, sources: TransactionSources) {
         self.inner = inner
@@ -367,12 +368,12 @@ internal struct SourceTransaction<Tx: Transaction> {
 }
 
 // fixme: better name.
-struct SourceTransactionExecuteView<Tx: Transaction> {
-    let inner: Tx
-    let chunk: SourceChunk
-    let indicesByNodeId: [AccountId: Int]
+private struct SourceTransactionExecuteView<Tx: Transaction> {
+    fileprivate let inner: Tx
+    fileprivate let chunk: SourceChunk
+    fileprivate let indicesByNodeId: [AccountId: Int]
 
-    init(inner: Tx, chunk: SourceChunk) {
+    internal init(inner: Tx, chunk: SourceChunk) {
         self.inner = inner
         self.chunk = chunk
 
@@ -384,7 +385,7 @@ struct SourceTransactionExecuteView<Tx: Transaction> {
 }
 
 extension SourceTransactionExecuteView: ValidateChecksums {
-    func validateChecksums(on ledgerId: LedgerId) throws {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         try inner.validateChecksums(on: ledgerId)
     }
 }
@@ -432,7 +433,7 @@ extension SourceTransactionExecuteView: Execute {
         inner.makeErrorPrecheck(status, transactionId)
     }
 
-    static func responsePrecheckStatus(_ response: GrpcResponse) -> Int32 {
+    internal static func responsePrecheckStatus(_ response: GrpcResponse) -> Int32 {
         Tx.responsePrecheckStatus(response)
     }
 }

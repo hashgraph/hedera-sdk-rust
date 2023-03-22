@@ -136,12 +136,18 @@ public final class EthereumTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .ethereumTransaction(
-            .with { proto in
-                proto.ethereumData = ethereumData ?? Data()
-                callDataFileId?.toProtobufInto(&proto.callData)
-                proto.maxGasAllowance = Int64(maxGasAllowanceHbar)
-            }
-        )
+        return .ethereumTransaction(toProtobuf())
+    }
+}
+
+extension EthereumTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_EthereumTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.ethereumData = ethereumData ?? Data()
+            callDataFileId?.toProtobufInto(&proto.callData)
+            proto.maxGasAllowance = Int64(maxGasAllowanceHbar)
+        }
     }
 }

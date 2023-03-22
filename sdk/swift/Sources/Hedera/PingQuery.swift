@@ -35,29 +35,29 @@ internal struct PingQuery {
 }
 
 extension PingQuery: ValidateChecksums {
-    func validateChecksums(on ledgerId: LedgerId) throws {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         try nodeAccountId.validateChecksums(on: ledgerId)
     }
 }
 
 extension PingQuery: Execute {
-    typealias GrpcRequest = Proto_Query
+    internal typealias GrpcRequest = Proto_Query
 
-    typealias GrpcResponse = Proto_Response
+    internal typealias GrpcResponse = Proto_Response
 
-    typealias Context = ()
+    internal typealias Context = ()
 
-    typealias Response = ()
+    internal typealias Response = ()
 
-    var nodeAccountIds: [AccountId]? {
+    internal var nodeAccountIds: [AccountId]? {
         [nodeAccountId]
     }
 
-    var explicitTransactionId: TransactionId? { nil }
+    internal var explicitTransactionId: TransactionId? { nil }
 
-    var requiresTransactionId: Bool { false }
+    internal var requiresTransactionId: Bool { false }
 
-    func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (Proto_Query, ()) {
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (Proto_Query, ()) {
         let header = Proto_QueryHeader.with { $0.responseType = .answerOnly }
 
         assert(nodeAccountId == self.nodeAccountId)
@@ -73,22 +73,22 @@ extension PingQuery: Execute {
         return (query, ())
     }
 
-    func execute(_ channel: GRPC.GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+    internal func execute(_ channel: GRPC.GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
         try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
     }
 
-    func makeResponse(
+    internal func makeResponse(
         _ response: Proto_Response, _ context: (), _ nodeAccountId: AccountId, _ transactionId: TransactionId?
     ) throws {}
 
-    func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+    internal func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
         HError(
             kind: .queryNoPaymentPreCheckStatus(status: status),
             description: "query with no payment transaction failed pre-check with status \(status)"
         )
     }
 
-    static func responsePrecheckStatus(_ response: HederaProtobufs.Proto_Response) throws -> Int32 {
+    internal static func responsePrecheckStatus(_ response: HederaProtobufs.Proto_Response) throws -> Int32 {
         try Int32(response.header().nodeTransactionPrecheckCode.rawValue)
     }
 }

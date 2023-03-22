@@ -29,7 +29,7 @@ public final class AccountCreateTransaction: Transaction {
         key: Key? = nil,
         initialBalance: Hbar = 0,
         receiverSignatureRequired: Bool = false,
-        autoRenewPeriod: Duration? = nil,
+        autoRenewPeriod: Duration? = .days(90),
         autoRenewAccountId: AccountId? = nil,
         accountMemo: String = "",
         maxAutomaticTokenAssociations: UInt32 = 0,
@@ -317,34 +317,47 @@ public final class AccountCreateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .cryptoCreateAccount(
-            .with { proto in
-                key?.toProtobufInto(&proto.key)
-                proto.initialBalance = UInt64(initialBalance.toTinybars())
-                proto.receiverSigRequired = receiverSignatureRequired
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
-                proto.memo = accountMemo
-                proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+        return .cryptoCreateAccount(toProtobuf())
 
-                if let alias = alias?.toProtobufBytes() {
-                    proto.alias = alias
-                }
+    }
+}
 
-                // if let evmAddress = evmAddress {
-                //     proto.evmAddress = evmAddress.data
-                // }
+extension AccountCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoCreateTransactionBody
 
-                if let stakedNodeId = stakedNodeId {
-                    proto.stakedNodeID = Int64(stakedNodeId)
-                }
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            key?.toProtobufInto(&proto.key)
+            proto.initialBalance = UInt64(initialBalance.toTinybars())
+            proto.receiverSigRequired = receiverSignatureRequired
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            proto.memo = accountMemo
+            proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
 
-                if let stakedAccountId = stakedAccountId {
-                    proto.stakedAccountID = stakedAccountId.toProtobuf()
-                }
-
-                proto.declineReward = declineStakingReward
+            if let alias = alias?.toProtobufBytes() {
+                proto.alias = alias
             }
-        )
+
+            // if let evmAddress = evmAddress {
+            //     proto.evmAddress = evmAddress.data
+            // }
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+
+            if let stakedAccountId = stakedAccountId {
+                proto.stakedAccountID = stakedAccountId.toProtobuf()
+            }
+
+            proto.declineReward = declineStakingReward
+        }
+    }
+}
+
+extension AccountCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoCreateAccount(toProtobuf())
     }
 }

@@ -39,7 +39,7 @@ internal struct ChunkInfo {
         )
     }
 
-    func assertSingleTransaction() -> (transactionId: TransactionId, nodeAccountId: AccountId) {
+    internal func assertSingleTransaction() -> (transactionId: TransactionId, nodeAccountId: AccountId) {
         precondition(self.current == 0 && self.total == 1)
 
         return (transactionId: self.currentTransactionId, nodeAccountId: self.nodeAccountId)

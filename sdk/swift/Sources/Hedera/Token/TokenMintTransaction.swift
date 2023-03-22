@@ -122,12 +122,24 @@ public final class TokenMintTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenMint(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                proto.amount = amount
-                proto.metadata = metadata
-            }
-        )
+        return .tokenMint(toProtobuf())
+    }
+}
+
+extension TokenMintTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenMintTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            proto.amount = amount
+            proto.metadata = metadata
+        }
+    }
+}
+
+extension TokenMintTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenMint(toProtobuf())
     }
 }

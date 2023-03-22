@@ -130,12 +130,24 @@ public final class TokenBurnTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenBurn(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                proto.amount = amount
-                proto.serialNumbers = serials.map(Int64.init(bitPattern:))
-            }
-        )
+        return .tokenBurn(toProtobuf())
+    }
+}
+
+extension TokenBurnTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenBurnTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            proto.amount = amount
+            proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+        }
+    }
+}
+
+extension TokenBurnTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenBurn(toProtobuf())
     }
 }

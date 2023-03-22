@@ -147,14 +147,26 @@ public final class TokenWipeTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenWipe(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                accountId?.toProtobufInto(&proto.account)
-                proto.amount = amount
-                proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+        return .tokenWipe(toProtobuf())
+    }
+}
 
-            }
-        )
+extension TokenWipeTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenWipeAccountTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            accountId?.toProtobufInto(&proto.account)
+            proto.amount = amount
+            proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+
+        }
+    }
+}
+
+extension TokenWipeTransaction: ToSchedulableTransactionData {
+    func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenWipe(toProtobuf())
     }
 }
