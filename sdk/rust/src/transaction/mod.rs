@@ -452,41 +452,37 @@ impl<D: TransactionExecute> Transaction<D> {
                 .generate_transaction_id(),
         };
 
-        let transaction_list = {
-            let used_chunks = self.data().maybe_chunk_data().map_or(1, ChunkData::used_chunks);
-            let node_account_ids = self.body.node_account_ids.as_deref().unwrap();
+        let used_chunks = self.data().maybe_chunk_data().map_or(1, ChunkData::used_chunks);
+        let node_account_ids = self.body.node_account_ids.as_deref().unwrap();
 
-            let mut transaction_list = Vec::with_capacity(used_chunks * node_account_ids.len());
+        let mut transaction_list = Vec::with_capacity(used_chunks * node_account_ids.len());
 
-            // Note: This ordering is *important*,
-            // there's no documentation for it but `TransactionList` is sorted by chunk number,
-            // then `node_id` (in the order they were added to the transaction)
-            for chunk in 0..used_chunks {
-                let current_transaction_id = match chunk {
-                    0 => initial_transaction_id,
-                    _ => self
-                        .body
-                        .operator
-                        .as_ref()
-                        .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
-                        .generate_transaction_id(),
+        // Note: This ordering is *important*,
+        // there's no documentation for it but `TransactionList` is sorted by chunk number,
+        // then `node_id` (in the order they were added to the transaction)
+        for chunk in 0..used_chunks {
+            let current_transaction_id = match chunk {
+                0 => initial_transaction_id,
+                _ => self
+                    .body
+                    .operator
+                    .as_ref()
+                    .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
+                    .generate_transaction_id(),
+            };
+
+            for node_account_id in node_account_ids.iter().copied() {
+                let chunk_info = ChunkInfo {
+                    current: chunk,
+                    total: used_chunks,
+                    initial_transaction_id,
+                    current_transaction_id,
+                    node_account_id,
                 };
 
-                for node_account_id in node_account_ids.iter().copied() {
-                    let chunk_info = ChunkInfo {
-                        current: chunk,
-                        total: used_chunks,
-                        initial_transaction_id,
-                        current_transaction_id,
-                        node_account_id,
-                    };
-
-                    transaction_list.push(self.make_request_inner(&chunk_info).0);
-                }
+                transaction_list.push(self.make_request_inner(&chunk_info).0);
             }
-
-            transaction_list
-        };
+        }
 
         Ok(transaction_list)
     }

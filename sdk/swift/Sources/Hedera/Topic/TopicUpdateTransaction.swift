@@ -21,6 +21,7 @@
 import Foundation
 import GRPC
 import HederaProtobufs
+import SwiftProtobuf
 
 /// Change properties for the given topic.
 ///
@@ -52,7 +53,7 @@ public final class TopicUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         topicId = try container.decodeIfPresent(.topicId)
@@ -208,5 +209,21 @@ public final class TopicUpdateTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).updateTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusUpdateTopic(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+                proto.memo = Google_Protobuf_StringValue(topicMemo)
+                adminKey?.toProtobufInto(&proto.adminKey)
+                submitKey?.toProtobufInto(&proto.submitKey)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            }
+        )
     }
 }

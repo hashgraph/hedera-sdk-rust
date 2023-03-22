@@ -336,8 +336,8 @@ extension TransactionSources: TryProtobufCodable {
 
 // fixme: find a better name.
 internal struct SourceTransaction<Tx: Transaction> {
-    let inner: Tx
-    let sources: TransactionSources
+    private let inner: Tx
+    private let sources: TransactionSources
 
     internal init(inner: Tx, sources: TransactionSources) {
         self.inner = inner
@@ -372,7 +372,7 @@ internal struct SourceTransaction<Tx: Transaction> {
 }
 
 // fixme: better name.
-struct SourceTransactionExecuteView<Tx: Transaction> {
+private struct SourceTransactionExecuteView<Tx: Transaction> {
     let inner: Tx
     let chunk: SourceChunk
     let indicesByNodeId: [AccountId: Int]
@@ -389,7 +389,7 @@ struct SourceTransactionExecuteView<Tx: Transaction> {
 }
 
 extension SourceTransactionExecuteView: ValidateChecksums {
-    func validateChecksums(on ledgerId: LedgerId) throws {
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         try inner.validateChecksums(on: ledgerId)
     }
 }
@@ -437,7 +437,7 @@ extension SourceTransactionExecuteView: Execute {
         inner.makeErrorPrecheck(status, transactionId)
     }
 
-    static func responsePrecheckStatus(_ response: GrpcResponse) -> Int32 {
+    internal static func responsePrecheckStatus(_ response: GrpcResponse) -> Int32 {
         Tx.responsePrecheckStatus(response)
     }
 }

@@ -83,4 +83,14 @@ public final class ScheduleSignTransaction: Transaction {
     {
         try await Proto_ScheduleServiceAsyncClient(channel: channel).signSchedule(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .scheduleSign(
+            .with { proto in
+                scheduleId?.toProtobufInto(&proto.scheduleID)
+            }
+        )
+    }
 }

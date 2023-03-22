@@ -108,4 +108,19 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
     {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).submitMessage(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        .consensusSubmitMessage(
+            .with { proto in
+                self.topicId?.toProtobufInto(&proto.topicID)
+                proto.message = self.messageChunk(chunkInfo)
+                if chunkInfo.total > 1 {
+                    proto.chunkInfo = .with { protoChunkInfo in
+                        protoChunkInfo.initialTransactionID = chunkInfo.initialTransactionId.toProtobuf()
+                        protoChunkInfo.number = Int32(chunkInfo.current + 1)
+                        protoChunkInfo.total = Int32(chunkInfo.total)
+                    }
+                }
+            })
+    }
 }

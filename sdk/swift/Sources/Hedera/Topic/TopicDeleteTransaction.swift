@@ -80,4 +80,14 @@ public final class TopicDeleteTransaction: Transaction {
     {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).deleteTopic(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusDeleteTopic(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+            }
+        )
+    }
 }

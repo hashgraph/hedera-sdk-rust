@@ -483,4 +483,34 @@ public final class TokenCreateTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).createToken(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenCreation(
+            .with { proto in
+                proto.name = name
+                proto.symbol = symbol
+                proto.decimals = decimals
+                proto.initialSupply = initialSupply
+                treasuryAccountId?.toProtobufInto(&proto.treasury)
+                adminKey?.toProtobufInto(&proto.adminKey)
+                kycKey?.toProtobufInto(&proto.kycKey)
+                freezeKey?.toProtobufInto(&proto.freezeKey)
+                wipeKey?.toProtobufInto(&proto.wipeKey)
+                supplyKey?.toProtobufInto(&proto.supplyKey)
+                proto.freezeDefault = freezeDefault
+                expirationTime?.toProtobufInto(&proto.expiry)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                proto.memo = tokenMemo
+                proto.tokenType = tokenType.toProtobuf()
+                proto.supplyType = tokenSupplyType.toProtobuf()
+                proto.maxSupply = Int64(bitPattern: maxSupply)
+                feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+                proto.customFees = customFees.toProtobuf()
+                pauseKey?.toProtobufInto(&proto.pauseKey)
+            }
+        )
+    }
 }

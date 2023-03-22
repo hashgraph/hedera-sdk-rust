@@ -96,4 +96,15 @@ public final class AccountDeleteTransaction: Transaction {
     {
         try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoDelete(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoDelete(
+            .with { proto in
+                accountId?.toProtobufInto(&proto.deleteAccountID)
+                transferAccountId?.toProtobufInto(&proto.transferAccountID)
+            }
+        )
+    }
 }

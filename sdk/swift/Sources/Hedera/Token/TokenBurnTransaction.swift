@@ -126,4 +126,16 @@ public final class TokenBurnTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).burnToken(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenBurn(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                proto.amount = amount
+                proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+            }
+        )
+    }
 }

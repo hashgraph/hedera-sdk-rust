@@ -46,4 +46,8 @@ internal struct Operator: Codable {
         try container.encode(accountId, forKey: .accountId)
         try container.encode(signer.toStringDer(), forKey: .signer)
     }
+
+    internal func generateTransactionId() -> TransactionId {
+        .generateFrom(accountId)
+    }
 }

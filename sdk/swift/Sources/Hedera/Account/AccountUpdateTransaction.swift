@@ -21,6 +21,7 @@
 import Foundation
 import GRPC
 import HederaProtobufs
+import SwiftProtobuf
 
 /// Change properties for the given account.
 ///
@@ -65,7 +66,7 @@ public final class AccountUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
+    public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         accountId = try container.decodeIfPresent(.accountId)
@@ -337,5 +338,41 @@ public final class AccountUpdateTransaction: Transaction {
         -> Proto_TransactionResponse
     {
         try await Proto_CryptoServiceAsyncClient(channel: channel).updateAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoUpdateAccount(
+            .with { proto in
+                accountId?.toProtobufInto(&proto.accountIdtoUpdate)
+                key?.toProtobufInto(&proto.key)
+                if let receiverSignatureRequired = receiverSignatureRequired {
+                    proto.receiverSigRequiredWrapper = Google_Protobuf_BoolValue(receiverSignatureRequired)
+                }
+
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+                proxyAccountIdInner?.toProtobufInto(&proto.proxyAccountID)
+                expirationTime?.toProtobufInto(&proto.expirationTime)
+
+                if let accountMemo = accountMemo {
+                    proto.memo = Google_Protobuf_StringValue(accountMemo)
+                }
+
+                if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                    proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                        Int32(maxAutomaticTokenAssociations))
+                }
+
+                if let stakedAccountId = stakedAccountId {
+                    proto.stakedAccountID = stakedAccountId.toProtobuf()
+                }
+
+                if let stakedNodeId = stakedNodeId {
+                    proto.stakedNodeID = Int64(stakedNodeId)
+                }
+            }
+        )
     }
 }

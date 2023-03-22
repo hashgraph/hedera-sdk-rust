@@ -171,4 +171,18 @@ public final class TopicCreateTransaction: Transaction {
     {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).createTopic(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusCreateTopic(
+            .with { proto in
+                proto.memo = topicMemo
+                adminKey?.toProtobufInto(&proto.adminKey)
+                submitKey?.toProtobufInto(&proto.submitKey)
+                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            }
+        )
+    }
 }

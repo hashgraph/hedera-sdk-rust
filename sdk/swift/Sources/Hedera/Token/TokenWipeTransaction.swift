@@ -143,4 +143,18 @@ public final class TokenWipeTransaction: Transaction {
     {
         try await Proto_TokenServiceAsyncClient(channel: channel).wipeTokenAccount(request)
     }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenWipe(
+            .with { proto in
+                tokenId?.toProtobufInto(&proto.token)
+                accountId?.toProtobufInto(&proto.account)
+                proto.amount = amount
+                proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+
+            }
+        )
+    }
 }

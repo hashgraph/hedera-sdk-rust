@@ -97,14 +97,30 @@ public final class SystemUndeleteTransaction: Transaction {
     internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
         -> Proto_TransactionResponse
     {
-        if let _ = fileId {
+        if fileId != nil {
             return try await Proto_FileServiceAsyncClient(channel: channel).systemUndelete(request)
         }
 
-        if let _ = contractId {
+        if contractId != nil {
             return try await Proto_SmartContractServiceAsyncClient(channel: channel).systemUndelete(request)
         }
 
         fatalError("\(type(of: self)) has no `fileId`/`contractId`")
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .systemUndelete(
+            .with { proto in
+                if let fileId = fileId {
+                    proto.fileID = fileId.toProtobuf()
+                }
+
+                if let contractId = contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+            }
+        )
     }
 }
