@@ -106,7 +106,7 @@ mod data {
 pub type AnyTransaction = Transaction<AnyTransactionData>;
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyTransactionData {
     AccountCreate(data::AccountCreate),
@@ -588,17 +588,6 @@ impl<D> From<AnyTransactionBody<D>> for TransactionBody<D> {
             is_frozen: body.is_frozen,
             operator: body.operator,
         }
-    }
-}
-
-#[cfg(feature = "ffi")]
-impl<'de> serde::Deserialize<'de> for AnyTransaction {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        <AnyTransactionBody<AnyTransactionData> as serde::Deserialize>::deserialize(deserializer)
-            .map(AnyTransactionBody::into)
     }
 }
 

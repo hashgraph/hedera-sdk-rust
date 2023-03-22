@@ -56,8 +56,8 @@ pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractExecuteTransactionData {
     /// The contract instance to call.
     contract_id: Option<ContractId>,
@@ -199,12 +199,7 @@ impl ToProtobuf for ContractExecuteTransactionData {
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use assert_matches::assert_matches;
 
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             ContractExecuteTransaction,
             ContractId,
@@ -247,23 +242,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, CONTRACT_EXECUTE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(CONTRACT_EXECUTE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::ContractExecute(transaction) => transaction);
-
-            assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
-            assert_eq!(data.gas, 1000);
-            assert_eq!(data.payable_amount.to_tinybars(), 10);
-
-            let bytes: Vec<u8> = "Hello, world!".into();
-            assert_eq!(data.function_parameters, bytes);
 
             Ok(())
         }

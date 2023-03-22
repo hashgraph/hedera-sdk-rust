@@ -64,8 +64,8 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountUpdateTransactionData {
     /// The account ID which is being updated in this transaction.
     account_id: Option<AccountId>,
@@ -412,20 +412,14 @@ mod tests {
     mod ffi {
         use std::str::FromStr;
 
-        use assert_matches::assert_matches;
         use time::{
             Duration,
             OffsetDateTime,
         };
 
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             AccountId,
             AccountUpdateTransaction,
-            Key,
             PublicKey,
         };
 
@@ -472,33 +466,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, ACCOUNT_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        #[allow(deprecated)]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(ACCOUNT_UPDATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::AccountUpdate(transaction) => transaction);
-
-            assert_eq!(
-                data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
-            );
-            assert_eq!(data.receiver_signature_required.unwrap(), true);
-            assert_eq!(data.auto_renew_period.unwrap(), Duration::days(90));
-            assert_eq!(data.account_memo.as_deref(), Some("An account memo"));
-            assert_eq!(data.max_automatic_token_associations.unwrap(), 256);
-            assert_eq!(data.decline_staking_reward.unwrap(), false);
-            assert_eq!(data.account_id, Some(AccountId::from(1001)));
-            assert_eq!(data.staked_id, Some(AccountId::from(1002).into()));
-            assert_eq!(data.proxy_account_id, Some(AccountId::from(3141)));
-
-            let key = assert_matches!(data.key, Some(Key::Single(public_key)) => public_key);
-            assert_eq!(key, PublicKey::from_str(KEY)?);
 
             Ok(())
         }

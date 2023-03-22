@@ -63,7 +63,7 @@ pub type TopicMessageSubmitTransaction = Transaction<TopicMessageSubmitTransacti
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TopicMessageSubmitTransactionData {
     /// The topic ID to submit this message to.
@@ -227,21 +227,10 @@ impl FromProtobuf<Vec<services::ConsensusSubmitMessageTransactionBody>>
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             TopicId,
             TopicMessageSubmitTransaction,
         };
-
-        // language=JSON
-        const TOPIC_MESSAGE_SUBMIT_EMPTY: &str = r#"{
-  "$type": "topicMessageSubmit"
-}"#;
 
         // language=JSON
         const TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON: &str = r#"{
@@ -260,34 +249,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(TOPIC_MESSAGE_SUBMIT_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
-
-            assert_eq!(data.topic_id.unwrap(), TopicId::from(1001));
-
-            assert_eq!(data.chunk_data.data, b"Message".to_vec());
-            assert_eq!(data.chunk_data.max_chunks, 1);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize_empty() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOPIC_MESSAGE_SUBMIT_EMPTY)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TopicMessageSubmit(transaction) => transaction);
-
-            assert_eq!(data.chunk_data.chunk_size.get(), 1024);
-            assert_eq!(data.chunk_data.max_chunks, 20);
-            assert_eq!(data.chunk_data.data, Vec::<u8>::new());
 
             Ok(())
         }

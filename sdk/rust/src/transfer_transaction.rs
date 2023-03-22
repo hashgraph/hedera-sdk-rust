@@ -57,7 +57,7 @@ pub type TransferTransaction = Transaction<TransferTransactionData>;
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TransferTransactionData {
     transfers: Vec<Transfer>,
@@ -66,7 +66,7 @@ pub struct TransferTransactionData {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct Transfer {
     account_id: AccountId,
@@ -80,7 +80,7 @@ struct Transfer {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct TokenTransfer {
     token_id: TokenId,
@@ -97,7 +97,7 @@ struct TokenTransfer {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct NftTransfer {
     sender_account_id: AccountId,

@@ -29,8 +29,6 @@ use std::{
     slice,
 };
 
-use libc::size_t;
-
 use crate::ffi::error::Error;
 
 pub(crate) unsafe fn cstr_from_ptr<'a>(ptr: *const c_char) -> Cow<'a, str> {
@@ -67,25 +65,6 @@ pub(crate) unsafe fn json_from_bytes<T: serde::Serialize, F: FnOnce(&[u8]) -> cr
     Error::Ok
 }
 
-pub(crate) unsafe fn json_to_bytes<T: serde::de::DeserializeOwned, F: FnOnce(&T) -> Vec<u8>>(
-    s: *const c_char,
-    buf: *mut *mut u8,
-    buf_size: *mut libc::size_t,
-    f: F,
-) -> Error {
-    assert!(!buf.is_null());
-    assert!(!s.is_null());
-    assert!(!buf_size.is_null());
-
-    let s = unsafe { cstr_from_ptr(s) };
-
-    let data: T = ffi_try!(serde_json::from_str(&s).map_err(crate::Error::request_parse));
-
-    unsafe { make_bytes2(f(&data), buf, buf_size) };
-
-    Error::Ok
-}
-
 /// Convert something bytes-like into a format C understands
 ///
 /// # Safety
@@ -105,24 +84,6 @@ where
     }
 
     len
-}
-
-// fixme: better name
-/// Convert something bytes-like into a format C understands
-///
-/// Unlike [`make_bytes`] this function uses an out-param for `buf_size`
-///
-/// # Safety
-/// - `buf` must be non-null and writable.
-/// - `buf_size` must be non-null and writable.
-pub(crate) unsafe fn make_bytes2<T>(bytes: T, buf: *mut *mut u8, buf_size: *mut size_t)
-where
-    T: Into<Box<[u8]>>,
-{
-    unsafe {
-        let size = make_bytes(bytes.into(), buf);
-        ptr::write(buf_size, size);
-    }
 }
 
 /// This function is like `slice::from_raw_parts` but allows for buf to be `null` if `buf_size` is zero.

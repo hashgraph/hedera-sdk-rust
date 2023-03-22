@@ -23,7 +23,7 @@ import Foundation
 import HederaProtobufs
 
 /// Response from `ScheduleInfoQuery`.
-public final class ScheduleInfo: Codable {
+public final class ScheduleInfo: Decodable {
     /// The ID of the schedule for which information is requested.
     public let scheduleId: ScheduleId
 
@@ -80,13 +80,54 @@ public final class ScheduleInfo: Codable {
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension ScheduleInfo: ToFromJsonBytes {
+extension ScheduleInfo: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleInfo
+
+    internal func toProtobuf() -> HederaProtobufs.Proto_ScheduleInfo {
+        .with { proto in
+            proto.scheduleID = scheduleId.toProtobuf()
+            if let expirationTime = expirationTime?.toProtobuf() {
+                proto.expirationTime = expirationTime
+            }
+
+            proto.memo = memo
+            if let adminKey = adminKey?.toProtobuf() {
+                proto.adminKey = adminKey
+            }
+
+            if !signatories.isEmpty {
+                proto.signers = signatories.toProtobuf()
+            }
+
+            proto.creatorAccountID = creatorAccountId.toProtobuf()
+
+            if let payerAccountId = payerAccountId?.toProtobuf() {
+                proto.payerAccountID = payerAccountId
+            }
+
+            proto.scheduledTransactionID = scheduledTransactionId.toProtobuf()
+
+            proto.ledgerID = self.ledgerId.bytes
+            proto.waitForExpiry = self.waitForExpiry
+
+            proto.scheduledTransactionBody = .with { proto in
+                proto.data = scheduledTransaction.toSchedulableTransactionData()
+                proto.memo = scheduledTransaction.transaction.transactionMemo
+
+                let transactionFee =
+                    scheduledTransaction.transaction.maxTransactionFee
+                    ?? scheduledTransaction.transaction.defaultMaxTransactionFee
+
+                proto.transactionFee = UInt64(transactionFee.toTinybars())
+            }
+        }
+    }
+}
+
+extension ScheduleInfo: FromJsonBytes {
     internal static var cFromBytes: FromJsonBytesFunc { hedera_schedule_info_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_schedule_info_to_bytes }
 }

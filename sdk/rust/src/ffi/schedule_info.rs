@@ -36,12 +36,3 @@ pub unsafe extern "C" fn hedera_schedule_info_from_bytes(
 ) -> Error {
     unsafe { util::json_from_bytes(bytes, bytes_size, s, ScheduleInfo::from_bytes) }
 }
-
-#[no_mangle]
-pub unsafe extern "C" fn hedera_schedule_info_to_bytes(
-    s: *const c_char,
-    buf: *mut *mut u8,
-    buf_size: *mut libc::size_t,
-) -> Error {
-    unsafe { util::json_to_bytes(s, buf, buf_size, ScheduleInfo::to_bytes) }
-}

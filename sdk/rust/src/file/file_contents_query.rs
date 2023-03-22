@@ -42,7 +42,7 @@ use crate::{
 pub type FileContentsQuery = Query<FileContentsQueryData>;
 
 #[derive(Clone, Default, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileContentsQueryData {
     /// The file ID for which contents are requested.
