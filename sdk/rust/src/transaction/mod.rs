@@ -208,11 +208,6 @@ impl<D> Transaction<D> {
         );
     }
 
-    #[cfg(feature = "ffi")]
-    pub(crate) fn body(&self) -> &TransactionBody<D> {
-        &self.body
-    }
-
     /// # Panics
     /// If `self.is_frozen()`.
     fn body_mut(&mut self) -> &mut TransactionBody<D> {

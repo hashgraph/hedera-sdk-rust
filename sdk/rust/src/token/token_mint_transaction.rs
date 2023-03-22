@@ -65,8 +65,8 @@ pub type TokenMintTransaction = Transaction<TokenMintTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenMintTransactionData {
     /// The token for which to mint tokens.
     token_id: Option<TokenId>,
@@ -191,12 +191,6 @@ impl ToProtobuf for TokenMintTransactionData {
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             TokenId,
             TokenMintTransaction,
@@ -224,21 +218,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOKEN_MINT_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(TOKEN_MINT_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenMint(transaction) => transaction);
-
-            assert_eq!(data.token_id.unwrap(), TokenId::from(1981));
-            assert_eq!(data.amount, 8_675_309);
-
-            let bytes: Vec<u8> = "Jenny I've got your number".into();
-            assert_eq!(data.metadata, [bytes]);
 
             Ok(())
         }

@@ -59,8 +59,8 @@ pub type TokenAssociateTransaction = Transaction<TokenAssociateTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
     account_id: Option<AccountId>,
@@ -166,12 +166,6 @@ impl ToProtobuf for TokenAssociateTransactionData {
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             AccountId,
             TokenAssociateTransaction,
@@ -196,19 +190,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOKEN_ASSOCIATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(TOKEN_ASSOCIATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenAssociate(transaction) => transaction);
-
-            assert_eq!(data.token_ids[0], TokenId::from(1002));
-            assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
             Ok(())
         }

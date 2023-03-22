@@ -42,7 +42,7 @@ use crate::{
 pub type NetworkVersionInfoQuery = Query<NetworkVersionInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct NetworkVersionInfoQueryData {
     // make this not publicly constructable.

@@ -59,8 +59,8 @@ pub type FileUpdateTransaction = Transaction<FileUpdateTransactionData>;
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileUpdateTransactionData {
     /// The file ID which is being updated in this transaction.
     file_id: Option<FileId>,
@@ -274,17 +274,11 @@ mod tests {
     mod ffi {
         use std::str::FromStr;
 
-        use assert_matches::assert_matches;
         use time::OffsetDateTime;
 
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             FileId,
             FileUpdateTransaction,
-            Key,
             PublicKey,
         };
 
@@ -323,28 +317,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, FILE_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction = serde_json::from_str(FILE_UPDATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.into_body().data, AnyTransactionData::FileUpdate(transaction) => transaction);
-
-            assert_eq!(data.file_id.unwrap(), FileId::from(1001));
-            assert_eq!(data.file_memo.unwrap(), "File memo");
-            assert_eq!(
-                data.expiration_time.unwrap(),
-                OffsetDateTime::from_unix_timestamp_nanos(1_656_352_251_277_559_886)?
-            );
-
-            let sign_key = assert_matches!(data.keys.unwrap().remove(0), Key::Single(public_key) => public_key);
-            assert_eq!(sign_key, PublicKey::from_str(SIGN_KEY)?);
-
-            let bytes: Vec<u8> = "Hello, world!".into();
-            assert_eq!(data.contents, Some(bytes));
 
             Ok(())
         }

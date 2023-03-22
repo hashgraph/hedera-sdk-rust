@@ -65,8 +65,8 @@ pub type TokenDissociateTransaction = Transaction<TokenDissociateTransactionData
 
 #[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
+#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenDissociateTransactionData {
     /// The account to be dissociated with the provided tokens.
     account_id: Option<AccountId>,
@@ -172,12 +172,6 @@ impl ToProtobuf for TokenDissociateTransactionData {
 mod tests {
     #[cfg(feature = "ffi")]
     mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
         use crate::{
             AccountId,
             TokenDissociateTransaction,
@@ -205,19 +199,6 @@ mod tests {
             let transaction_json = serde_json::to_string_pretty(&transaction)?;
 
             assert_eq!(transaction_json, TOKEN_DISSOCIATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(TOKEN_DISSOCIATE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenDissociate(transaction) => transaction);
-
-            assert_eq!(data.token_ids, [TokenId::from(1002), TokenId::from(1003)]);
-            assert_eq!(data.account_id, Some(AccountId::from(1001)));
 
             Ok(())
         }

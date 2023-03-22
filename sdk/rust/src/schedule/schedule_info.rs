@@ -40,7 +40,7 @@ use crate::{
 // TODO: scheduled_transaction
 /// Response from [`ScheduleInfoQuery`][crate::ScheduleInfoQuery].
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleInfo {
     /// The ID of the schedule for which information is requested.

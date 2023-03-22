@@ -43,7 +43,7 @@ use crate::{
 pub type TokenInfoQuery = Query<TokenInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 #[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenInfoQueryData {
     token_id: Option<TokenId>,
@@ -111,7 +111,6 @@ mod tests {
         use crate::{
             AnyQuery,
             TokenId,
-            TokenInfoQuery,
         };
 
         // language=JSON
@@ -120,17 +119,6 @@ mod tests {
   "tokenId": "0.0.1001",
   "payment": {}
 }"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut query = TokenInfoQuery::new();
-            query.token_id(TokenId::from(1001));
-
-            let s = serde_json::to_string_pretty(&query)?;
-            assert_eq!(s, TOKEN_INFO);
-
-            Ok(())
-        }
 
         #[test]
         fn it_should_deserialize() -> anyhow::Result<()> {
