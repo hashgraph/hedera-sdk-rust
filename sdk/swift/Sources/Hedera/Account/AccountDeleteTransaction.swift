@@ -100,11 +100,23 @@ public final class AccountDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .cryptoDelete(
-            .with { proto in
-                accountId?.toProtobufInto(&proto.deleteAccountID)
-                transferAccountId?.toProtobufInto(&proto.transferAccountID)
-            }
-        )
+        return .cryptoDelete(toProtobuf())
+    }
+}
+
+extension AccountDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            accountId?.toProtobufInto(&proto.deleteAccountID)
+            transferAccountId?.toProtobufInto(&proto.transferAccountID)
+        }
+    }
+}
+
+extension AccountDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoDelete(toProtobuf())
     }
 }

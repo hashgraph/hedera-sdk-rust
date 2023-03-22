@@ -102,11 +102,23 @@ public final class TokenFreezeTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenFreeze(
-            .with { proto in
-                tokenId?.toProtobufInto(&proto.token)
-                accountId?.toProtobufInto(&proto.account)
-            }
-        )
+        return .tokenFreeze(toProtobuf())
+    }
+}
+
+extension TokenFreezeTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenFreezeAccountTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            accountId?.toProtobufInto(&proto.account)
+        }
+    }
+}
+
+extension TokenFreezeTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenFreeze(toProtobuf())
     }
 }

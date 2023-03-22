@@ -105,11 +105,23 @@ public final class TokenDissociateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .tokenDissociate(
-            .with { proto in
-                proto.tokens = tokenIds.toProtobuf()
-                accountId?.toProtobufInto(&proto.account)
-            }
-        )
+        return .tokenDissociate(toProtobuf())
+    }
+}
+
+extension TokenDissociateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenDissociateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.tokens = tokenIds.toProtobuf()
+            accountId?.toProtobufInto(&proto.account)
+        }
+    }
+}
+
+extension TokenDissociateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenDissociate(toProtobuf())
     }
 }

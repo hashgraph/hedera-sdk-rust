@@ -124,3 +124,16 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
             })
     }
 }
+
+extension TopicMessageSubmitTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        precondition(usedChunks == 1)
+
+        return .consensusSubmitMessage(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+                proto.message = self.message
+            }
+        )
+    }
+}

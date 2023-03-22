@@ -201,14 +201,26 @@ public final class FileCreateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .fileCreate(
-            .with { proto in
-                proto.memo = fileMemo
-                proto.keys = keys.toProtobuf()
-                proto.contents = contents
+        return .fileCreate(toProtobuf())
+    }
+}
 
-                expirationTime?.toProtobufInto(&proto.expirationTime)
-            }
-        )
+extension FileCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FileCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.memo = fileMemo
+            proto.keys = keys.toProtobuf()
+            proto.contents = contents
+
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+        }
+    }
+}
+
+extension FileCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .fileCreate(toProtobuf())
     }
 }

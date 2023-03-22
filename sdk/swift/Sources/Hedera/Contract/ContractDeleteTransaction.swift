@@ -118,22 +118,35 @@ public final class ContractDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .contractDeleteInstance(
-            .with { proto in
-                switch (transferAccountId, transferContractId) {
-                case (.some, .some):
-                    // fixme: do what rust does
-                    fatalError("unreachable: transferAccount & transferContract")
-                case (.some(let id), nil):
-                    proto.transferAccountID = id.toProtobuf()
-                case (nil, .some(let id)):
-                    proto.transferContractID = id.toProtobuf()
-                case (nil, nil):
-                    break
-                }
+        return .contractDeleteInstance(toProtobuf())
+    }
+}
 
-                contractId?.toProtobufInto(&proto.contractID)
+extension ContractDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+
+        .with { proto in
+            switch (transferAccountId, transferContractId) {
+            case (.some, .some):
+                // fixme: do what rust does
+                fatalError("unreachable: transferAccount & transferContract")
+            case (.some(let id), nil):
+                proto.transferAccountID = id.toProtobuf()
+            case (nil, .some(let id)):
+                proto.transferContractID = id.toProtobuf()
+            case (nil, nil):
+                break
             }
-        )
+
+            contractId?.toProtobufInto(&proto.contractID)
+        }
+    }
+}
+
+extension ContractDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractDeleteInstance(toProtobuf())
     }
 }

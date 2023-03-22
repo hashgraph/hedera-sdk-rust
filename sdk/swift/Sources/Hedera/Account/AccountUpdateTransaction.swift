@@ -344,35 +344,48 @@ public final class AccountUpdateTransaction: Transaction {
         _ = chunkInfo.assertSingleTransaction()
 
         return .cryptoUpdateAccount(
-            .with { proto in
-                accountId?.toProtobufInto(&proto.accountIdtoUpdate)
-                key?.toProtobufInto(&proto.key)
-                if let receiverSignatureRequired = receiverSignatureRequired {
-                    proto.receiverSigRequiredWrapper = Google_Protobuf_BoolValue(receiverSignatureRequired)
-                }
+            toProtobuf())
+    }
+}
 
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
-                proxyAccountIdInner?.toProtobufInto(&proto.proxyAccountID)
-                expirationTime?.toProtobufInto(&proto.expirationTime)
+extension AccountUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoUpdateTransactionBody
 
-                if let accountMemo = accountMemo {
-                    proto.memo = Google_Protobuf_StringValue(accountMemo)
-                }
-
-                if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
-                    proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
-                        Int32(maxAutomaticTokenAssociations))
-                }
-
-                if let stakedAccountId = stakedAccountId {
-                    proto.stakedAccountID = stakedAccountId.toProtobuf()
-                }
-
-                if let stakedNodeId = stakedNodeId {
-                    proto.stakedNodeID = Int64(stakedNodeId)
-                }
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            accountId?.toProtobufInto(&proto.accountIdtoUpdate)
+            key?.toProtobufInto(&proto.key)
+            if let receiverSignatureRequired = receiverSignatureRequired {
+                proto.receiverSigRequiredWrapper = Google_Protobuf_BoolValue(receiverSignatureRequired)
             }
-        )
+
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            proxyAccountIdInner?.toProtobufInto(&proto.proxyAccountID)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+
+            if let accountMemo = accountMemo {
+                proto.memo = Google_Protobuf_StringValue(accountMemo)
+            }
+
+            if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                    Int32(maxAutomaticTokenAssociations))
+            }
+
+            if let stakedAccountId = stakedAccountId {
+                proto.stakedAccountID = stakedAccountId.toProtobuf()
+            }
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+        }
+    }
+}
+
+extension AccountUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoUpdateAccount(toProtobuf())
     }
 }

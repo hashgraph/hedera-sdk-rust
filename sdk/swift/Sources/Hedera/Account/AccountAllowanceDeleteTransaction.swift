@@ -92,10 +92,22 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .cryptoDeleteAllowance(
-            .with { proto in
-                proto.nftAllowances = nftAllowances.toProtobuf()
-            }
-        )
+        return .cryptoDeleteAllowance(toProtobuf())
+    }
+}
+
+extension AccountAllowanceDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoDeleteAllowanceTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.nftAllowances = nftAllowances.toProtobuf()
+        }
+    }
+}
+
+extension AccountAllowanceDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoDeleteAllowance(toProtobuf())
     }
 }

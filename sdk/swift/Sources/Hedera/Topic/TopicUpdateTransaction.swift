@@ -214,16 +214,28 @@ public final class TopicUpdateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .consensusUpdateTopic(
-            .with { proto in
-                topicId?.toProtobufInto(&proto.topicID)
-                expirationTime?.toProtobufInto(&proto.expirationTime)
-                proto.memo = Google_Protobuf_StringValue(topicMemo)
-                adminKey?.toProtobufInto(&proto.adminKey)
-                submitKey?.toProtobufInto(&proto.submitKey)
-                autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
-                autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
-            }
-        )
+        return .consensusUpdateTopic(toProtobuf())
+    }
+}
+
+extension TopicUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ConsensusUpdateTopicTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            topicId?.toProtobufInto(&proto.topicID)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+            proto.memo = Google_Protobuf_StringValue(topicMemo)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            submitKey?.toProtobufInto(&proto.submitKey)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+        }
+    }
+}
+
+extension TopicUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .consensusUpdateTopic(toProtobuf())
     }
 }

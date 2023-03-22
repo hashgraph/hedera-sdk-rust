@@ -201,6 +201,51 @@ public final class ScheduleCreateTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        fatalError("WIP: Todo")
+        return .scheduleCreate(toProtobuf())
+    }
+}
+
+extension ScheduleCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        let body = self.scheduledTransactionInner.map { scheduledTransaction in
+            Proto_SchedulableTransactionBody.with { proto in
+                proto.data = scheduledTransaction.toSchedulableTransactionData()
+                proto.memo = scheduledTransaction.transaction.transactionMemo
+
+                let transactionFee =
+                    scheduledTransaction.transaction.maxTransactionFee
+                    ?? scheduledTransaction.transaction.defaultMaxTransactionFee
+
+                // FIXME: does not use the client to default the max transaction fee
+                proto.transactionFee = UInt64(transactionFee.toTinybars())
+            }
+        }
+
+        return
+            .with { proto in
+                if let body = body {
+                    proto.scheduledTransactionBody = body
+                }
+
+                proto.memo = self.scheduleMemo
+
+                if let adminKey = adminKey?.toProtobuf() {
+                    proto.adminKey = adminKey
+                }
+
+                if let payerAccountId = payerAccountId?.toProtobuf() {
+                    proto.payerAccountID = payerAccountId
+                }
+
+                if let expirationTime = expirationTime?.toProtobuf() {
+                    proto.expirationTime = expirationTime
+                }
+
+                if isWaitForExpiry {
+                    proto.waitForExpiry = true
+                }
+            }
     }
 }

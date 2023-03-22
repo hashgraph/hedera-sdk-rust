@@ -178,13 +178,25 @@ public final class ContractExecuteTransaction: Transaction {
     internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
         _ = chunkInfo.assertSingleTransaction()
 
-        return .contractCall(
-            .with { proto in
-                contractId?.toProtobufInto(&proto.contractID)
-                proto.gas = Int64(gas)
-                proto.amount = payableAmount.toTinybars()
-                proto.functionParameters = functionParameters ?? Data()
-            }
-        )
+        return .contractCall(toProtobuf())
+    }
+}
+
+extension ContractExecuteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractCallTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            contractId?.toProtobufInto(&proto.contractID)
+            proto.gas = Int64(gas)
+            proto.amount = payableAmount.toTinybars()
+            proto.functionParameters = functionParameters ?? Data()
+        }
+    }
+}
+
+extension ContractExecuteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractCall(toProtobuf())
     }
 }
