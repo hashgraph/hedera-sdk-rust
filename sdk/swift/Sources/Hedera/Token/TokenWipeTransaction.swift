@@ -47,6 +47,15 @@ public final class TokenWipeTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenWipeAccountTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
+        self.amount = data.amount
+        self.serials = data.serialNumbers.map(UInt64.init)
+
+        try super.init(protobuf: proto)
+    }
+
     /// The token for which to wipe tokens.
     public var tokenId: TokenId? {
         willSet {
@@ -78,7 +87,7 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The amount of a fungible token to wipe from the specified account.
-    public var amount: UInt64 {
+    public var amount: UInt64 = 0 {
         willSet {
             ensureNotFrozen()
         }
@@ -93,7 +102,7 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The serial numbers of a non-fungible token to wipe from the specified account.
-    public var serials: [UInt64] {
+    public var serials: [UInt64] = [] {
         willSet {
             ensureNotFrozen()
         }

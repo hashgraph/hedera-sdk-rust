@@ -66,6 +66,51 @@ public final class AccountUpdateTransaction: Transaction {
         super.init()
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoUpdateTransactionBody) throws {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: UInt64?
+
+        switch data.stakedID {
+        case .stakedAccountID(let value):
+            stakedAccountId = try .fromProtobuf(value)
+            stakedNodeId = nil
+        case .stakedNodeID(let value):
+            stakedNodeId = UInt64(value)
+            stakedAccountId = nil
+        case nil:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        }
+
+        let receiverSignatureRequired: Bool?
+        switch data.receiverSigRequiredField {
+        case .receiverSigRequired(let value):
+            receiverSignatureRequired = value
+        case .receiverSigRequiredWrapper(let value):
+            receiverSignatureRequired = value.value
+        case nil:
+            receiverSignatureRequired = nil
+        }
+
+        self.accountId = data.hasAccountIdtoUpdate ? try .fromProtobuf(data.accountIdtoUpdate) : nil
+        self.key = data.hasKey ? try .fromProtobuf(data.key) : nil
+        self.receiverSignatureRequired = receiverSignatureRequired
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        // self.autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+        self.autoRenewAccountId = nil
+        self.proxyAccountIdInner = data.hasProxyAccountID ? try .fromProtobuf(data.proxyAccountID) : nil
+        self.expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+        self.accountMemo = data.hasMemo ? data.memo.value : nil
+        self.maxAutomaticTokenAssociations =
+            data.hasMaxAutomaticTokenAssociations
+            ? UInt32(data.maxAutomaticTokenAssociations.value) : nil
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = data.hasDeclineReward ? data.declineReward.value : nil
+
+        try super.init(protobuf: proto)
+    }
+
     public required init(from decoder: Swift.Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 

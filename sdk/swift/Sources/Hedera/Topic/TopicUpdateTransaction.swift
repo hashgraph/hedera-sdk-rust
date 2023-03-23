@@ -67,6 +67,18 @@ public final class TopicUpdateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ConsensusUpdateTopicTransactionBody) throws {
+        topicId = data.hasTopicID ? .fromProtobuf(data.topicID) : nil
+        expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+        topicMemo = data.hasMemo ? data.memo.value : ""
+        adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        submitKey = data.hasSubmitKey ? try .fromProtobuf(data.submitKey) : nil
+        autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The topic ID which is being updated in this transaction.
     public var topicId: TopicId? {
         willSet {

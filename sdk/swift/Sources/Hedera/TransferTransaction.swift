@@ -92,6 +92,14 @@ public final class TransferTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoTransferTransactionBody) throws {
+        // init fields
+        transfers = try .fromProtobuf(data.transfers.accountAmounts)
+        tokenTransfers = try .fromProtobuf(data.tokenTransfers)
+
+        try super.init(protobuf: proto)
+    }
+
     /// Add a non-approved hbar transfer to the transaction.
     @discardableResult
     public func hbarTransfer(_ accountId: AccountId, _ amount: Int64) -> Self {

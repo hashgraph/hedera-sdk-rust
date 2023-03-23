@@ -61,6 +61,19 @@ public final class FileCreateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileCreateTransactionBody) throws {
+        fileMemo = data.memo
+        keys = try .fromProtobuf(data.keys)
+        contents = data.contents
+        expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+
+        // hedera doesn't have these currently.
+        autoRenewPeriod = nil
+        autoRenewAccountId = nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The memo associated with the file.
     public var fileMemo: String = "" {
         willSet {

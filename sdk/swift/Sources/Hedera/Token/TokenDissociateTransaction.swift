@@ -46,6 +46,13 @@ public final class TokenDissociateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenDissociateTransactionBody) throws {
+        self.tokenIds = .fromProtobuf(data.tokens)
+        self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The account to be dissociated with the provided tokens.
     public var accountId: AccountId? {
         willSet {

@@ -83,6 +83,54 @@ public final class ContractCreateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractCreateTransactionBody) throws {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: UInt64?
+
+        switch data.stakedID {
+        case .stakedAccountID(let value):
+            stakedAccountId = try .fromProtobuf(value)
+            stakedNodeId = nil
+        case .stakedNodeID(let value):
+            stakedNodeId = UInt64(value)
+            stakedAccountId = nil
+        case nil:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        }
+
+        let bytecode: Data?
+        let bytecodeFileId: FileId?
+
+        switch data.initcodeSource {
+        case .initcode(let initcode):
+            bytecode = initcode
+            bytecodeFileId = nil
+        case .fileID(let fileId):
+            bytecode = nil
+            bytecodeFileId = .fromProtobuf(fileId)
+        case nil:
+            bytecode = nil
+            bytecodeFileId = nil
+        }
+
+        self.bytecode = bytecode
+        self.bytecodeFileId = bytecodeFileId
+        self.adminKey = try .fromProtobuf(data.adminKey)
+        self.gas = UInt64(data.gas)
+        self.initialBalance = .fromTinybars(data.initialBalance)
+        self.autoRenewPeriod = .fromProtobuf(data.autoRenewPeriod)
+        self.constructorParameters = !data.constructorParameters.isEmpty ? data.constructorParameters : nil
+        self.contractMemo = data.memo
+        self.maxAutomaticTokenAssociations = UInt32(data.maxAutomaticTokenAssociations)
+        self.autoRenewAccountId = data.hasAutoRenewAccountID ? try .fromProtobuf(data.autoRenewAccountID) : nil
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = data.declineReward
+
+        try super.init(protobuf: proto)
+    }
+
     /// The bytes of the smart contract.
     public var bytecode: Data? {
         willSet {

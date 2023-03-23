@@ -47,6 +47,14 @@ public final class TokenMintTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenMintTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.amount = data.amount
+        self.metadata = data.metadata
+
+        try super.init(protobuf: proto)
+    }
+
     /// The token for which to mint tokens.
     public var tokenId: TokenId? {
         willSet {

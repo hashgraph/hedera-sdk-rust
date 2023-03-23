@@ -43,6 +43,14 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenFeeScheduleUpdateTransactionBody) throws {
+        self.tokenId = data.hasTokenID ? .fromProtobuf(data.tokenID) : nil
+        self.customFees = try .fromProtobuf(data.customFees)
+
+        try super.init(protobuf: proto)
+
+    }
+
     /// The token whose fee schedule is to be updated.
     public var tokenId: TokenId? {
         willSet {

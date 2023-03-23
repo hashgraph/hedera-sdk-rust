@@ -63,6 +63,10 @@ public final class ScheduleCreateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleCreateTransactionBody) throws {
+        fatalError("Fixme: ScheduleCreateTransaction from bytes")
+    }
+
     /// The timestamp for when the transaction should be evaluated for execution and then expire.
     public var expirationTime: Timestamp? {
         willSet {

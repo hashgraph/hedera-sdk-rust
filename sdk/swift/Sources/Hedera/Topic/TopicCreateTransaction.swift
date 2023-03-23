@@ -63,6 +63,16 @@ public final class TopicCreateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ConsensusCreateTopicTransactionBody) throws {
+        topicMemo = data.memo
+        adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        submitKey = data.hasSubmitKey ? try .fromProtobuf(data.submitKey) : nil
+        autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
     public var topicMemo: String = "" {
         willSet {

@@ -84,6 +84,26 @@ public final class TokenUpdateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenUpdateTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.tokenName = data.name
+        self.tokenSymbol = data.symbol
+        self.treasuryAccountId = data.hasTreasury ? try .fromProtobuf(data.treasury) : nil
+        self.adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        self.kycKey = data.hasKycKey ? try .fromProtobuf(data.kycKey) : nil
+        self.freezeKey = data.hasFreezeKey ? try .fromProtobuf(data.freezeKey) : nil
+        self.wipeKey = data.hasWipeKey ? try .fromProtobuf(data.wipeKey) : nil
+        self.supplyKey = data.hasSupplyKey ? try .fromProtobuf(data.supplyKey) : nil
+        self.autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        self.expirationTime = data.hasExpiry ? .fromProtobuf(data.expiry) : nil
+        self.tokenMemo = data.hasMemo ? data.memo.value : nil ?? ""
+        self.feeScheduleKey = data.hasFeeScheduleKey ? try .fromProtobuf(data.feeScheduleKey) : nil
+        self.pauseKey = data.hasPauseKey ? try .fromProtobuf(data.pauseKey) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The token to be updated.
     public var tokenId: TokenId? {
         willSet {
