@@ -64,6 +64,14 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoApproveAllowanceTransactionBody) throws {
+        hbarAllowances = try .fromProtobuf(data.cryptoAllowances)
+        tokenAllowances = try .fromProtobuf(data.tokenAllowances)
+        nftAllowances = try .fromProtobuf(data.nftAllowances)
+
+        try super.init(protobuf: proto)
+    }
+
     /// Approves the hbar allowance.
     @discardableResult
     public func approveHbarAllowance(

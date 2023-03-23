@@ -43,6 +43,13 @@ public final class TokenRevokeKycTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenRevokeKycTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The account to have their KYC revoked.
     public var accountId: AccountId? {
         willSet {

@@ -37,6 +37,23 @@ public final class FileAppendTransaction: ChunkedTransaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: [Proto_FileAppendTransactionBody]) throws {
+        var iter = data.makeIterator()
+        let first = iter.next()!
+
+        self.fileId = first.hasFileID ? .fromProtobuf(first.fileID) : nil
+        let chunks = data.count
+        var contents: Data = first.contents
+        var largestChunkSize = max(first.contents.count, 1)
+
+        for item in iter {
+            largestChunkSize = max(largestChunkSize, item.contents.count)
+            contents.append(item.contents)
+        }
+
+        try super.init(protobuf: proto, data: contents, chunks: chunks, largestChunkSize: largestChunkSize)
+    }
+
     /// The file to which the bytes will be appended.
     public var fileId: FileId? {
         willSet {

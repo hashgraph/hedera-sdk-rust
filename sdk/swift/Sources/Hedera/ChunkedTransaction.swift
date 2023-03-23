@@ -1,6 +1,6 @@
-import CHedera
 import Foundation
 import GRPC
+import HederaProtobufs
 
 public class ChunkedTransaction: Transaction {
     internal static let defaultMaxChunks = 20
@@ -22,6 +22,14 @@ public class ChunkedTransaction: Transaction {
         chunkSize = try container.decodeIfPresent(.chunkSize) ?? Self.defaultChunkSize
 
         try super.init(from: decoder)
+    }
+
+    internal init(protobuf proto: Proto_TransactionBody, data: Data, chunks: Int, largestChunkSize: Int) throws {
+        self.data = data
+        self.chunkSize = largestChunkSize
+        self.maxChunks = chunks
+
+        try super.init(protobuf: proto)
     }
 
     /// Message/contents for this transaction.

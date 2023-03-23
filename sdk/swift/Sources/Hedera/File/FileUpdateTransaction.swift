@@ -68,6 +68,21 @@ public final class FileUpdateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileUpdateTransactionBody) throws {
+        fileId = data.hasFileID ? .fromProtobuf(data.fileID) : nil
+        fileMemo = data.hasMemo ? data.memo.value : nil ?? ""
+        keys = data.hasKeys ? try .fromProtobuf(data.keys) : nil
+        contents = data.contents
+        expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+
+        // hedera doesn't have these currently.
+        autoRenewPeriod = nil
+        autoRenewAccountId = nil
+
+        try super.init(protobuf: proto)
+
+    }
+
     /// The file ID which is being updated in this transaction.
     public var fileId: FileId? {
         willSet {

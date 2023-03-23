@@ -43,6 +43,13 @@ public final class TokenFreezeTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenFreezeAccountTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The account to be frozen.
     public var accountId: AccountId? {
         willSet {

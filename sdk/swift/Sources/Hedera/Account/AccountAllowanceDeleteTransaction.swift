@@ -46,6 +46,12 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoDeleteAllowanceTransactionBody) throws {
+        nftAllowances = try .fromProtobuf(data.nftAllowances)
+
+        try super.init(protobuf: proto)
+    }
+
     /// Remove all nft token allowances.
     @discardableResult
     public func deleteAllTokenNftAllowances(_ nftId: NftId, _ ownerAccountId: AccountId) -> Self {

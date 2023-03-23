@@ -46,6 +46,15 @@ public final class TokenBurnTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenBurnTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.amount = data.amount
+        self.serials = data.serialNumbers.map(UInt64.init)
+
+        try super.init(protobuf: proto)
+
+    }
+
     /// The token for which to burn tokens.
     public var tokenId: TokenId? {
         willSet {
