@@ -28,7 +28,7 @@ import HederaProtobufs
 ///
 public final class FileDeleteTransaction: Transaction {
     /// Create a new `FileDeleteTransaction`.
-    public init(
+    public required init(
         fileId: FileId? = nil
     ) {
         self.fileId = fileId
@@ -42,6 +42,12 @@ public final class FileDeleteTransaction: Transaction {
         fileId = try container.decodeIfPresent(.fileId)
 
         try super.init(from: decoder)
+    }
+
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileDeleteTransactionBody) throws {
+        fileId = data.hasFileID ? .fromProtobuf(data.fileID) : nil
+
+        try super.init(protobuf: proto)
     }
 
     /// The file to delete. It will be marked as deleted until it expires.

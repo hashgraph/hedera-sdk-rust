@@ -41,6 +41,22 @@ public final class ContractDeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractDeleteTransactionBody) throws {
+        contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
+
+        switch data.obtainers {
+        case .transferAccountID(let account):
+            self.transferAccountId = try .fromProtobuf(account)
+        case .transferContractID(let contract):
+            self.transferContractId = try .fromProtobuf(contract)
+        case nil:
+            break
+
+        }
+
+        try super.init(protobuf: proto)
+    }
+
     /// The contract to be deleted.
     public var contractId: ContractId? {
         willSet {

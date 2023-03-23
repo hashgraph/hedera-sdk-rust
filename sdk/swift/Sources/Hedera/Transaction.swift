@@ -29,6 +29,13 @@ public class Transaction: ValidateChecksums, Codable {
 
     public init() {}
 
+    internal init(protobuf proto: Proto_TransactionBody) throws {
+        transactionValidDuration = .fromProtobuf(proto.transactionValidDuration)
+        maxTransactionFee = .fromTinybars(Int64(proto.transactionFee))
+        transactionMemo = proto.memo
+        transactionId = try .fromProtobuf(proto.transactionID)
+    }
+
     internal private(set) final var signers: [Signer] = []
     internal private(set) final var sources: TransactionSources?
     public private(set) final var isFrozen: Bool = false
@@ -239,26 +246,55 @@ public class Transaction: ValidateChecksums, Codable {
 
         let sources = try TransactionSources(transactions: list)
 
-        return try bytes.withUnsafeTypedBytes { buffer in
-            var transactionData: UnsafeMutablePointer<CChar>?
-
-            try HError.throwing(
-                error: hedera_transaction_from_bytes(
-                    buffer.baseAddress,
-                    buffer.count,
-                    &transactionData
-                )
-            )
-
-            let transactionString = String(hString: transactionData!)
-            let responseBytes = transactionString.data(using: .utf8)!
-            // decode the response as the generic output type of this query types
-            let transaction = try JSONDecoder().decode(AnyTransaction.self, from: responseBytes).transaction
-
-            transaction.sources = sources
-
-            return transaction
+        let transactionBodies = try sources.signedTransactions.map { signed in
+            do {
+                return try Proto_TransactionBody(contiguousBytes: signed.bodyBytes)
+            } catch {
+                throw HError.fromProtobuf(String(describing: error))
+            }
         }
+
+        do {
+            let (first, rest) = (transactionBodies[0], transactionBodies[1...])
+
+            for body in rest {
+                guard protoTransactionBodyEqual(body, first) else {
+                    throw HError.fromProtobuf("transaction parts unexpectedly unequal")
+                }
+            }
+
+        }
+
+        let transactionData =
+            try sources
+            .chunks
+            .compactMap { $0.signedTransactions.first }
+            .lazy
+            .map { signed in
+                do {
+                    return try Proto_TransactionBody(contiguousBytes: signed.bodyBytes)
+                } catch {
+                    throw HError.fromProtobuf(String(describing: error))
+                }
+
+            }
+            .map { body in
+                guard let data = body.data else {
+                    throw HError.fromProtobuf("Unexpected missing `data`")
+                }
+
+                return data
+            }
+
+        // note: this creates the transaction in a unfrozen state by pure need.
+        let transaction = try AnyTransaction.fromProtobuf(transactionBodies[0], transactionData).transaction
+
+        transaction.nodeAccountIds = sources.nodeAccountIds
+        transaction.sources = sources
+        // explicitly avoid `freeze`.
+        transaction.isFrozen = true
+
+        return transaction
     }
 
     public final func toBytes() throws -> Data {
@@ -446,4 +482,89 @@ extension Transaction: Execute {
     internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
         try await transactionExecute(channel, request)
     }
+}
+
+/// Returns true if `lhs == rhs`` other than `transactionId` and `nodeAccountId`, false otherwise.
+private func protoTransactionBodyEqual(_ lhs: Proto_TransactionBody, _ rhs: Proto_TransactionBody) -> Bool {
+    guard lhs.transactionFee == rhs.transactionFee else {
+        return false
+    }
+
+    guard lhs.transactionValidDuration == rhs.transactionValidDuration else {
+        return false
+    }
+
+    guard lhs.generateRecord == rhs.generateRecord else {
+        return false
+    }
+
+    guard lhs.memo == rhs.memo else {
+        return false
+    }
+
+    guard lhs.data == rhs.data else {
+        return false
+    }
+
+    let lhsData: Proto_TransactionBody.OneOf_Data
+    let rhsData: Proto_TransactionBody.OneOf_Data
+
+    switch (lhs.data, rhs.data) {
+    case (nil, nil):
+        return true
+
+    case (.some, nil), (nil, .some):
+        return false
+
+    case (.some(let lhs), .some(let rhs)):
+        lhsData = lhs
+        rhsData = rhs
+    }
+
+    switch (lhsData, rhsData) {
+    case (.consensusSubmitMessage(let lhs), .consensusSubmitMessage(let rhs)):
+        guard lhs.hasTopicID == rhs.hasTopicID else {
+            return false
+        }
+
+        guard lhs.topicID == rhs.topicID else {
+            return false
+        }
+
+        guard lhs.hasChunkInfo == rhs.hasChunkInfo else {
+            return false
+        }
+
+        if lhs.hasChunkInfo /* && rhs.hasChunkInfo */ {
+            guard lhs.chunkInfo.initialTransactionID == rhs.chunkInfo.initialTransactionID else {
+                return false
+            }
+
+            guard lhs.chunkInfo.total == rhs.chunkInfo.total else {
+                return false
+            }
+
+            // allow lhs.chunkInfo.number != rhs.chunkInfo.number
+        }
+
+    // allow lhs.message != rhs.message
+
+    case (.fileAppend(let lhs), .fileAppend(let rhs)):
+        guard lhs.fileID == rhs.fileID else {
+            return false
+        }
+
+        // allow lhs.contents != rhs.contents
+
+        guard lhs.unknownFields == rhs.unknownFields else {
+            return false
+        }
+
+    default:
+        guard lhsData == rhsData else {
+            return false
+        }
+    }
+
+    return true
 }

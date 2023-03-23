@@ -53,6 +53,24 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: [Proto_ConsensusSubmitMessageTransactionBody]) throws {
+        var iter = data.makeIterator()
+        let first = iter.next()!
+
+        self.topicId = first.hasTopicID ? .fromProtobuf(first.topicID) : nil
+        let chunks = data.count
+        var message: Data = first.message
+        var largestChunkSize = max(first.message.count, 1)
+
+        // note: no other SDK checks for correctness here... so let's not do it here either?
+        for item in iter {
+            largestChunkSize = max(largestChunkSize, item.message.count)
+            message.append(item.message)
+        }
+
+        try super.init(protobuf: proto, data: message, chunks: chunks, largestChunkSize: largestChunkSize)
+    }
+
     /// The topic ID to submit this message to.
     public var topicId: TopicId? {
         willSet {

@@ -47,6 +47,22 @@ public final class SystemDeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_SystemDeleteTransactionBody) throws {
+        switch data.id {
+        case .contractID(let contractId):
+            self.contractId = try .fromProtobuf(contractId)
+        case .fileID(let fileId):
+            self.fileId = .fromProtobuf(fileId)
+        case nil:
+            break
+        }
+
+        self.expirationTime =
+            data.hasExpirationTime ? .init(seconds: UInt64(data.expirationTime.seconds), subSecondNanos: 0) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The file ID which should be deleted.
     public var fileId: FileId? {
         willSet {

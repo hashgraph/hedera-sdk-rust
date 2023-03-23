@@ -728,10 +728,6 @@ void hedera_public_key_free(struct HederaPublicKey *key);
  */
 enum HederaError hedera_schedule_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
-enum HederaError hedera_transaction_from_bytes(const uint8_t *bytes,
-                                               size_t bytes_size,
-                                               char **transaction_out);
-
 #ifdef __cplusplus
 } // extern "C"
 #endif // __cplusplus

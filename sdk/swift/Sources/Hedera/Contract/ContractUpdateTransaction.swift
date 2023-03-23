@@ -73,6 +73,50 @@ public final class ContractUpdateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractUpdateTransactionBody) throws {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: Int64?
+
+        switch data.stakedID {
+        case .stakedAccountID(let value):
+            stakedAccountId = try .fromProtobuf(value)
+            stakedNodeId = nil
+        case .stakedNodeID(let value):
+            stakedNodeId = value
+            stakedAccountId = nil
+        case nil:
+            stakedAccountId = nil
+            stakedNodeId = nil
+            break
+        }
+
+        let memo: String?
+
+        switch data.memoField {
+        case .memo(let value):
+            memo = value
+        case .memoWrapper(let value):
+            memo = value.value
+        case nil:
+            memo = nil
+        }
+
+        self.contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
+        self.expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+        self.adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        self.contractMemo = memo
+        self.maxAutomaticTokenAssociations =
+            data.hasMaxAutomaticTokenAssociations ? UInt32(data.maxAutomaticTokenAssociations.value) : nil
+        self.autoRenewAccountId = data.hasAutoRenewAccountID ? try .fromProtobuf(data.autoRenewAccountID) : nil
+        self.proxyAccountId = data.hasProxyAccountID ? try .fromProtobuf(data.proxyAccountID) : nil
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = data.hasDeclineReward ? data.declineReward.value : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The contract to be updated.
     public var contractId: ContractId? {
         willSet {
@@ -244,7 +288,7 @@ public final class ContractUpdateTransaction: Transaction {
     }
 
     /// Set the ID of the node to which this contract is staking.
-    /// This is mutually exclusive with `staked_account_id`.
+    /// This is mutually exclusive with `stakedAccountId`.
     @discardableResult
     public func stakedNodeId(_ stakedNodeId: Int64?) -> Self {
         self.stakedNodeId = stakedNodeId

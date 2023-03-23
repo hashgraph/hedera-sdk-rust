@@ -46,6 +46,14 @@ public final class TokenAssociateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenAssociateTransactionBody) throws {
+        self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
+        self.tokenIds = .fromProtobuf(data.tokens)
+
+        try super.init(protobuf: proto)
+
+    }
+
     /// The account to be associated with the provided tokens.
     public var accountId: AccountId? {
         willSet {

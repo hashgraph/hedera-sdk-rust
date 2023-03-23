@@ -52,6 +52,30 @@ public final class AccountCreateTransaction: Transaction {
         super.init()
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoCreateTransactionBody) throws {
+        self.key = data.hasKey ? try .fromProtobuf(data.key) : nil
+        self.initialBalance = .fromTinybars(Int64(data.initialBalance))
+        self.receiverSignatureRequired = data.receiverSigRequired
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        self.accountMemo = data.memo
+        self.maxAutomaticTokenAssociations = UInt32(data.maxAutomaticTokenAssociations)
+
+        if let id = data.stakedID {
+            switch id {
+            case .stakedAccountID(let value):
+                stakedAccountId = try .fromProtobuf(value)
+                stakedNodeId = 0
+            case .stakedNodeID(let value):
+                stakedNodeId = UInt64(value)
+                stakedAccountId = nil
+            }
+        }
+
+        self.declineStakingReward = data.declineReward
+
+        try super.init(protobuf: proto)
+    }
+
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 

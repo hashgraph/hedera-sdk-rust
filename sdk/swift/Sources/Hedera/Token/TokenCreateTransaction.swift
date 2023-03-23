@@ -104,6 +104,32 @@ public final class TokenCreateTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenCreateTransactionBody) throws {
+        name = data.name
+        symbol = data.symbol
+        decimals = data.decimals
+        initialSupply = data.initialSupply
+        treasuryAccountId = data.hasTreasury ? try .fromProtobuf(data.treasury) : nil
+        adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        kycKey = data.hasKycKey ? try .fromProtobuf(data.kycKey) : nil
+        freezeKey = data.hasFreezeKey ? try .fromProtobuf(data.freezeKey) : nil
+        wipeKey = data.hasWipeKey ? try .fromProtobuf(data.wipeKey) : nil
+        supplyKey = data.hasSupplyKey ? try .fromProtobuf(data.supplyKey) : nil
+        freezeDefault = data.freezeDefault
+        expirationTime = data.hasExpiry ? .fromProtobuf(data.expiry) : nil
+        autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+        autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        tokenMemo = data.memo
+        tokenType = try .fromProtobuf(data.tokenType)
+        tokenSupplyType = try .fromProtobuf(data.supplyType)
+        maxSupply = UInt64(data.maxSupply)
+        feeScheduleKey = data.hasFeeScheduleKey ? try .fromProtobuf(data.feeScheduleKey) : nil
+        customFees = try .fromProtobuf(data.customFees)
+        pauseKey = data.hasPauseKey ? try .fromProtobuf(data.pauseKey) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The publicly visible name of the token.
     public var name: String {
         willSet {

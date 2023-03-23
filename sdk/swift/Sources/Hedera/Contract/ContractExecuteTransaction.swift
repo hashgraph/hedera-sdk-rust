@@ -59,6 +59,15 @@ public final class ContractExecuteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractCallTransactionBody) throws {
+        contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
+        gas = UInt64(data.gas)
+        payableAmount = .fromTinybars(data.amount)
+        functionParameters = !data.functionParameters.isEmpty ? data.functionParameters : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The contract instance to call.
     public var contractId: ContractId? {
         willSet {

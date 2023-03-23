@@ -51,6 +51,15 @@ public final class FreezeTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FreezeTransactionBody) throws {
+        startTime = data.hasStartTime ? .fromProtobuf(data.startTime) : nil
+        fileId = data.hasUpdateFile ? .fromProtobuf(data.updateFile) : nil
+        fileHash = !data.fileHash.isEmpty ? data.fileHash : nil
+        freezeType = try .fromProtobuf(data.freezeType)
+
+        try super.init(protobuf: proto)
+    }
+
     /// The start time.
     public var startTime: Timestamp? {
         willSet {

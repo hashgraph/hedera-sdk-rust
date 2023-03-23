@@ -36,6 +36,14 @@ public final class EthereumTransaction: Transaction {
         super.init()
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_EthereumTransactionBody) throws {
+        self.ethereumData = !data.ethereumData.isEmpty ? data.ethereumData : nil
+        self.callDataFileId = data.hasCallData ? .fromProtobuf(data.callData) : nil
+        self.maxGasAllowanceHbar = UInt64(data.maxGasAllowance)
+
+        try super.init(protobuf: proto)
+    }
+
     public required init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 

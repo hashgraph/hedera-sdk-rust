@@ -40,6 +40,12 @@ public final class TokenDeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenDeleteTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The token to be deleted.
     public var tokenId: TokenId? {
         willSet {

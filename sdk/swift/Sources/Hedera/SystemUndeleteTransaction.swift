@@ -44,6 +44,19 @@ public final class SystemUndeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_SystemUndeleteTransactionBody) throws {
+        switch data.id {
+        case .contractID(let contractId):
+            self.contractId = try .fromProtobuf(contractId)
+        case .fileID(let fileId):
+            self.fileId = .fromProtobuf(fileId)
+        case nil:
+            break
+        }
+
+        try super.init(protobuf: proto)
+    }
+
     /// The file ID to undelete.
     public var fileId: FileId? {
         willSet {

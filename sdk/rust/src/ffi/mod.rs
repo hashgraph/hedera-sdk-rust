@@ -31,7 +31,6 @@ mod key;
 mod runtime;
 mod schedule_info;
 mod timestamp;
-mod transaction;
 mod transaction_id;
 mod util;
 

@@ -41,6 +41,13 @@ public final class AccountDeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoDeleteTransactionBody) throws {
+        accountId = data.hasDeleteAccountID ? try .fromProtobuf(data.deleteAccountID) : nil
+        transferAccountId = data.hasTransferAccountID ? try .fromProtobuf(data.transferAccountID) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The account ID which will receive all remaining hbars.
     public var transferAccountId: AccountId? {
         willSet {

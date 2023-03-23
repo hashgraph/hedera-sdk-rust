@@ -39,6 +39,12 @@ public final class ScheduleSignTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleSignTransactionBody) throws {
+        scheduleId = data.hasScheduleID ? .fromProtobuf(data.scheduleID) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The schedule to add signing keys to.
     public var scheduleId: ScheduleId? {
         willSet {

@@ -39,6 +39,12 @@ public final class ScheduleDeleteTransaction: Transaction {
         try super.init(from: decoder)
     }
 
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleDeleteTransactionBody) throws {
+        scheduleId = data.hasScheduleID ? .fromProtobuf(data.scheduleID) : nil
+
+        try super.init(protobuf: proto)
+    }
+
     /// The schedule to delete.
     public var scheduleId: ScheduleId? {
         willSet {
