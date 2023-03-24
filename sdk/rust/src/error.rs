@@ -213,11 +213,6 @@ pub enum Error {
     /// Failed to verify a signature.
     #[error("failed to verify a signature: {0}")]
     SignatureVerify(#[source] BoxStdError),
-
-    /// Failed to parse a request from JSON.
-    #[cfg(feature = "ffi")]
-    #[error("failed to parse a request from JSON: {0}")]
-    RequestParse(#[source] BoxStdError),
 }
 
 impl Error {
@@ -235,11 +230,6 @@ impl Error {
 
     pub(crate) fn basic_parse<E: Into<BoxStdError>>(error: E) -> Self {
         Self::BasicParse(error.into())
-    }
-
-    #[cfg(feature = "ffi")]
-    pub(crate) fn request_parse<E: Into<BoxStdError>>(error: E) -> Self {
-        Self::RequestParse(error.into())
     }
 
     pub(crate) fn signature_verify(error: impl Into<BoxStdError>) -> Self {

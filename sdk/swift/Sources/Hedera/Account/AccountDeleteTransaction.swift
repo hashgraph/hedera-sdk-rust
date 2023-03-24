@@ -33,14 +33,6 @@ public final class AccountDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        transferAccountId = try container.decodeIfPresent(AccountId.self, forKey: .transferAccountId)
-        accountId = try container.decodeIfPresent(AccountId.self, forKey: .accountId)
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoDeleteTransactionBody) throws {
         accountId = data.hasDeleteAccountID ? try .fromProtobuf(data.deleteAccountID) : nil
         transferAccountId = data.hasTransferAccountID ? try .fromProtobuf(data.transferAccountID) : nil
@@ -76,20 +68,6 @@ public final class AccountDeleteTransaction: Transaction {
         self.accountId = accountId
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case transferAccountId
-        case accountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
-        try container.encodeIfPresent(accountId, forKey: .accountId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

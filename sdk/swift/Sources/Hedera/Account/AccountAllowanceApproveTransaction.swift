@@ -54,16 +54,6 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        hbarAllowances = try container.decodeIfPresent(.hbarAllowances) ?? []
-        tokenAllowances = try container.decodeIfPresent(.tokenAllowances) ?? []
-        nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoApproveAllowanceTransactionBody) throws {
         hbarAllowances = try .fromProtobuf(data.cryptoAllowances)
         tokenAllowances = try .fromProtobuf(data.tokenAllowances)
@@ -166,22 +156,6 @@ public final class AccountAllowanceApproveTransaction: Transaction {
 
     public func getNftApprovals() -> [TokenNftAllowance] {
         self.nftAllowances
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case hbarAllowances
-        case tokenAllowances
-        case nftAllowances
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(hbarAllowances, forKey: .hbarAllowances)
-        try container.encode(tokenAllowances, forKey: .tokenAllowances)
-        try container.encode(nftAllowances, forKey: .nftAllowances)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

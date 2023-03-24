@@ -31,16 +31,6 @@ public final class ContractDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        contractId = try container.decodeIfPresent(.contractId)
-        transferAccountId = try container.decodeIfPresent(.transferAccountId)
-        transferContractId = try container.decodeIfPresent(.transferContractId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractDeleteTransactionBody) throws {
         contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
 
@@ -100,22 +90,6 @@ public final class ContractDeleteTransaction: Transaction {
         self.transferContractId = transferContractId
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case transferAccountId
-        case transferContractId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
-        try container.encodeIfPresent(transferContractId, forKey: .transferContractId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

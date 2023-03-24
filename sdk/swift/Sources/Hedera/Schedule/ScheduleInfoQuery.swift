@@ -41,18 +41,6 @@ public final class ScheduleInfoQuery: Query<ScheduleInfo> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case scheduleId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(scheduleId, forKey: .scheduleId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.scheduleGetInfo = .with { proto in
@@ -64,6 +52,14 @@ public final class ScheduleInfoQuery: Query<ScheduleInfo> {
 
     internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
         try await Proto_ScheduleServiceAsyncClient(channel: channel).getScheduleInfo(request)
+    }
+
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .scheduleGetInfo(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `scheduleGetInfo`")
+        }
+
+        return try .fromProtobuf(proto.scheduleInfo)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

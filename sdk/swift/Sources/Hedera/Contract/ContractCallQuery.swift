@@ -114,24 +114,6 @@ public final class ContractCallQuery: Query<ContractFunctionResult> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case gas
-        case functionParameters
-        case senderAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encode(gas, forKey: .gas)
-        try container.encodeIfPresent(functionParameters?.base64EncodedString(), forKey: .functionParameters)
-        try container.encodeIfPresent(senderAccountId, forKey: .senderAccountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.contractCallLocal = .with { proto in
@@ -149,6 +131,14 @@ public final class ContractCallQuery: Query<ContractFunctionResult> {
 
     internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
         try await Proto_SmartContractServiceAsyncClient(channel: channel).contractCallLocalMethod(request)
+    }
+
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .contractCallLocal(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `contractCallLocal`")
+        }
+
+        return try .fromProtobuf(proto.functionResult)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

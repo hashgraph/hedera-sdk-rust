@@ -50,19 +50,6 @@ public final class ScheduleCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        isWaitForExpiry = try container.decodeIfPresent(.isWaitForExpiry) ?? false
-        payerAccountId = try container.decodeIfPresent(.payerAccountId)
-        scheduledTransactionInner = try container.decodeIfPresent(.scheduledTransaction)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        scheduleMemo = try container.decodeIfPresent(.scheduleMemo) ?? ""
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleCreateTransactionBody) throws {
         fatalError("Fixme: ScheduleCreateTransaction from bytes")
     }
@@ -166,28 +153,6 @@ public final class ScheduleCreateTransaction: Transaction {
         self.scheduleMemo = scheduleMemo
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case expirationTime
-        case isWaitForExpiry
-        case payerAccountId
-        case scheduledTransaction
-        case adminKey
-        case scheduleMemo
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encode(isWaitForExpiry, forKey: .isWaitForExpiry)
-        try container.encodeIfPresent(payerAccountId, forKey: .payerAccountId)
-        try container.encodeIfPresent(scheduledTransaction, forKey: .scheduledTransaction)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encode(scheduleMemo, forKey: .scheduleMemo)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

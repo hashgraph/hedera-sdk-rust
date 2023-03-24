@@ -18,52 +18,10 @@
  * ‍
  */
 
-use std::borrow::Cow;
-use std::ffi::{
-    CStr,
-    CString,
-};
-use std::os::raw::c_char;
 use std::{
     ptr,
     slice,
 };
-
-use crate::ffi::error::Error;
-
-pub(crate) unsafe fn cstr_from_ptr<'a>(ptr: *const c_char) -> Cow<'a, str> {
-    assert!(!ptr.is_null());
-
-    unsafe { CStr::from_ptr(ptr).to_string_lossy() }
-}
-
-/// # Safety
-/// - `bytes` must be valid for reads of up to `bytes_size` bytes.
-/// - `s` must only be freed with `hedera_string_free`,
-///   notably this means it must not be freed with `free`.
-pub(crate) unsafe fn json_from_bytes<T: serde::Serialize, F: FnOnce(&[u8]) -> crate::Result<T>>(
-    bytes: *const u8,
-    bytes_size: libc::size_t,
-    s: *mut *mut c_char,
-    f: F,
-) -> Error {
-    assert!(!bytes.is_null());
-    assert!(!s.is_null());
-
-    let bytes = unsafe { slice::from_raw_parts(bytes, bytes_size) };
-
-    let parsed = ffi_try!(f(bytes));
-
-    let out = serde_json::to_vec(&parsed).unwrap();
-
-    let out = CString::new(out).unwrap().into_raw();
-
-    unsafe {
-        ptr::write(s, out);
-    }
-
-    Error::Ok
-}
 
 /// Convert something bytes-like into a format C understands
 ///

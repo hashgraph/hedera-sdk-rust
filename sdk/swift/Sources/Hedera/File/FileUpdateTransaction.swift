@@ -54,20 +54,6 @@ public final class FileUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        fileId = try container.decodeIfPresent(.fileId)
-        fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
-        keys = try container.decodeIfPresent(.keys)
-        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileUpdateTransactionBody) throws {
         fileId = data.hasFileID ? .fromProtobuf(data.fileID) : nil
         fileMemo = data.hasMemo ? data.memo.value : nil ?? ""
@@ -201,30 +187,6 @@ public final class FileUpdateTransaction: Transaction {
         self.expirationTime = expirationTime
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-        case fileMemo
-        case keys
-        case contents
-        case expirationTime
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(fileId, forKey: .fileId)
-        try container.encode(fileMemo, forKey: .fileMemo)
-        try container.encodeIfPresent(keys, forKey: .keys)
-        try container.encode(contents.base64EncodedString(), forKey: .contents)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

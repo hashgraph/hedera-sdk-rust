@@ -37,16 +37,6 @@ public final class SystemDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        fileId = try container.decodeIfPresent(.fileId)
-        contractId = try container.decodeIfPresent(.contractId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_SystemDeleteTransactionBody) throws {
         switch data.id {
         case .contractID(let contractId):
@@ -108,22 +98,6 @@ public final class SystemDeleteTransaction: Transaction {
         self.expirationTime = expirationTime
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-        case contractId
-        case expirationTime
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

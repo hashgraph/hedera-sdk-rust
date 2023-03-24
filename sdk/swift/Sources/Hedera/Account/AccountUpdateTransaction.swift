@@ -111,27 +111,6 @@ public final class AccountUpdateTransaction: Transaction {
         try super.init(protobuf: proto)
     }
 
-    public required init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        accountId = try container.decodeIfPresent(.accountId)
-        key = try container.decodeIfPresent(.key)
-        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        proxyAccountIdInner = try container.decodeIfPresent(.proxyAccountId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        accountMemo = try container.decodeIfPresent(.accountMemo)
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
-        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired)
-        proxyAccountIdInner = try container.decodeIfPresent(.proxyAccountId)
-
-        try super.init(from: decoder)
-    }
-
     /// The account ID which is being updated in this transaction.
     public var accountId: AccountId? {
         willSet {
@@ -335,40 +314,6 @@ public final class AccountUpdateTransaction: Transaction {
         self.declineStakingReward = declineStakingReward
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case accountId
-        case key
-        case accountMemo
-        case autoRenewPeriod
-        case expirationTime
-        case maxAutomaticTokenAssociations
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-        case autoRenewAccountId
-        case receiverSignatureRequired
-        case proxyAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(accountId, forKey: .accountId)
-        try container.encodeIfPresent(key, forKey: .key)
-        try container.encodeIfPresent(accountMemo, forKey: .accountMemo)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(receiverSignatureRequired, forKey: .receiverSignatureRequired)
-        try container.encodeIfPresent(proxyAccountIdInner, forKey: .proxyAccountId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

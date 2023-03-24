@@ -68,7 +68,6 @@ pub enum Error {
     NodeAccountUnknown,
     ResponseStatusUnrecognized,
     ReceiptStatus,
-    RequestParse,
     SignatureVerify,
     BadEntityId,
     CannotCreateChecksum,
@@ -95,7 +94,6 @@ impl Error {
             crate::Error::NodeAccountUnknown(_) => Self::NodeAccountUnknown,
             crate::Error::ResponseStatusUnrecognized(_) => Self::ResponseStatusUnrecognized,
             crate::Error::ReceiptStatus { .. } => Self::ReceiptStatus,
-            crate::Error::RequestParse(_) => Self::RequestParse,
             #[cfg(feature = "mnemonic")]
             crate::Error::MnemonicParse { .. } | crate::Error::MnemonicEntropy(_) => {
                 panic!("Mnemonics not supported on FFI")

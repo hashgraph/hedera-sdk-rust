@@ -34,15 +34,6 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        tokenId = try container.decodeIfPresent(.tokenId)
-        customFees = try container.decodeIfPresent(.customFees) ?? []
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenFeeScheduleUpdateTransactionBody) throws {
         self.tokenId = data.hasTokenID ? .fromProtobuf(data.tokenID) : nil
         self.customFees = try .fromProtobuf(data.customFees)
@@ -79,20 +70,6 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         self.customFees = customFees
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case tokenId
-        case customFees
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(tokenId, forKey: .tokenId)
-        try container.encode(customFees, forKey: .customFees)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

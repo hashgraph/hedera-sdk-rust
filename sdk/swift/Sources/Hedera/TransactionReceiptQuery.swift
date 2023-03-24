@@ -73,23 +73,7 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case transactionId
-        case includeChildren
-        case includeDuplicates
-        case validateStatus
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(transactionId, forKey: .transactionId)
-        try container.encode(includeDuplicates, forKey: .includeDuplicates)
-        try container.encode(includeChildren, forKey: .includeChildren)
-        try container.encode(validateStatus, forKey: .validateStatus)
-
-        try super.encode(to: encoder)
-    }
+    internal override var requiresPayment: Bool { false }
 
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
@@ -107,6 +91,25 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
     }
 
     internal override var relatedTransactionId: TransactionId? { transactionId }
+
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .transactionGetReceipt(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `transactionGetReceipt`")
+        }
+
+        let receipt = try Response.fromProtobuf(proto.receipt)
+
+        let status = receipt.status
+
+        if validateStatus && status != .success {
+            throw HError(
+                kind: .receiptStatus(status: status, transactionId: transactionId),
+                description:
+                    "receipt for transaction `\(String(describing: transactionId))` failed with status `\(status)")
+        }
+
+        return receipt
+    }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try transactionId?.validateChecksums(on: ledgerId)

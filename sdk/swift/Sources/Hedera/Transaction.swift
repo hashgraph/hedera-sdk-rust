@@ -24,7 +24,7 @@ import GRPC
 import HederaProtobufs
 
 /// A transaction that can be executed on the Hedera network.
-public class Transaction: ValidateChecksums, Codable {
+public class Transaction: ValidateChecksums {
     public typealias Response = TransactionResponse
 
     public init() {}
@@ -40,20 +40,9 @@ public class Transaction: ValidateChecksums, Codable {
     internal private(set) final var sources: TransactionSources?
     public private(set) final var isFrozen: Bool = false
 
-    private enum CodingKeys: String, CodingKey {
-        case maxTransactionFee
-        case `operator`
-        case isFrozen
-        case nodeAccountIds
-        case type = "$type"
-        case transactionId
-        case transactionMemo
-        case transactionValidDuration
-    }
-
     private final var `operator`: Operator?
 
-    internal private(set) final var nodeAccountIds: [AccountId]? {
+    internal final var nodeAccountIds: [AccountId]? {
         willSet {
             ensureNotFrozen(fieldName: "nodeAccountIds")
         }
@@ -202,33 +191,6 @@ public class Transaction: ValidateChecksums, Codable {
         try freezeWith(client)
 
         return try await executeAny(client, self, timeout)
-    }
-
-    public required init(from decoder: Decoder) throws {
-        // note: `AnyTransaction` is responsible for checking `$type`
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        transactionId = try container.decodeIfPresent(.transactionId)
-        nodeAccountIds = try container.decodeIfPresent(.nodeAccountIds)
-        isFrozen = try container.decodeIfPresent(.isFrozen) ?? false
-        transactionValidDuration = try container.decodeIfPresent(.transactionValidDuration)
-        transactionMemo = try container.decodeIfPresent(.transactionMemo) ?? ""
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        let typeName = String(describing: type(of: self))
-        let requestName = typeName.prefix(1).lowercased() + typeName.dropFirst().dropLast(11)
-
-        try container.encode(requestName, forKey: .type)
-        try container.encodeIfPresent(maxTransactionFee, forKey: .maxTransactionFee)
-        try container.encode(`operator`, forKey: .operator)
-        try container.encodeIfPresent(isFrozen ? isFrozen : nil, forKey: .isFrozen)
-        try container.encodeIfPresent(transactionId, forKey: .transactionId)
-        try container.encodeIfPresent(transactionValidDuration, forKey: .transactionValidDuration)
-        try container.encodeIfPresent(transactionMemo, forKey: .transactionMemo)
-        try container.encodeIfPresent(nodeAccountIds, forKey: .nodeAccountIds)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Transaction {

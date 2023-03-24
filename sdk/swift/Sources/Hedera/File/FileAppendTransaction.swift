@@ -29,14 +29,6 @@ public final class FileAppendTransaction: ChunkedTransaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        fileId = try container.decodeIfPresent(.fileId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: [Proto_FileAppendTransactionBody]) throws {
         var iter = data.makeIterator()
         let first = iter.next()!
@@ -95,18 +87,6 @@ public final class FileAppendTransaction: ChunkedTransaction {
     }
 
     internal override var waitForReceipt: Bool { true }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-
-        try super.encode(to: encoder)
-    }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)

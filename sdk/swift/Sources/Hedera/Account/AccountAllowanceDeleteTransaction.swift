@@ -38,14 +38,6 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        self.nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoDeleteAllowanceTransactionBody) throws {
         nftAllowances = try .fromProtobuf(data.nftAllowances)
 
@@ -70,18 +62,6 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         }
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case nftAllowances
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(nftAllowances, forKey: .nftAllowances)
-
-        try super.encode(to: encoder)
     }
 
     public override func validateChecksums(on ledgerId: LedgerId) throws {

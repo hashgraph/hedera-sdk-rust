@@ -37,16 +37,6 @@ public final class TokenMintTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        tokenId = try container.decodeIfPresent(.tokenId)
-        amount = try container.decodeIfPresent(.amount) ?? 0
-        metadata = try container.decodeIfPresent(.metadata) ?? []
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenMintTransactionBody) throws {
         self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
         self.amount = data.amount
@@ -98,22 +88,6 @@ public final class TokenMintTransaction: Transaction {
         self.metadata = metadata
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case tokenId
-        case amount
-        case metadata
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(tokenId, forKey: .tokenId)
-        try container.encode(amount, forKey: .amount)
-        try container.encode(metadata.map { $0.base64EncodedString() }, forKey: .metadata)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

@@ -70,23 +70,7 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case transactionId
-        case includeChildren
-        case includeDuplicates
-        case validateStatus
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(transactionId, forKey: .transactionId)
-        try container.encode(includeDuplicates, forKey: .includeDuplicates)
-        try container.encode(includeChildren, forKey: .includeChildren)
-        try container.encode(validateStatus, forKey: .validateStatus)
-
-        try super.encode(to: encoder)
-    }
+    internal override var requiresPayment: Bool { false }
 
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
@@ -103,6 +87,25 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
         try await Proto_CryptoServiceAsyncClient(channel: channel).getTxRecordByTxID(request)
     }
 
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .transactionGetRecord(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `transactionGetRecord`")
+        }
+
+        let record = try Response.fromProtobuf(proto)
+
+        let status = record.receipt.status
+
+        if validateStatus && status != .success {
+            throw HError(
+                kind: .receiptStatus(status: status, transactionId: transactionId),
+                description:
+                    "receipt for transaction `\(String(describing: transactionId))` failed with status `\(status)"
+            )
+        }
+
+        return record
+    }
     internal override var relatedTransactionId: TransactionId? { transactionId }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

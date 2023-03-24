@@ -40,17 +40,6 @@ public final class FreezeTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        startTime = try container.decodeIfPresent(.startTime)
-        fileId = try container.decodeIfPresent(.fileId)
-        fileHash = try container.decodeIfPresent(.fileHash).map(Data.base64Encoded)
-        freezeType = try container.decodeIfPresent(.freezeType) ?? .unknown
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FreezeTransactionBody) throws {
         startTime = data.hasStartTime ? .fromProtobuf(data.startTime) : nil
         fileId = data.hasUpdateFile ? .fromProtobuf(data.updateFile) : nil
@@ -118,24 +107,6 @@ public final class FreezeTransaction: Transaction {
         self.freezeType = freezeType
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case startTime
-        case fileId
-        case fileHash
-        case freezeType
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(startTime, forKey: .startTime)
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-        try container.encodeIfPresent(fileHash, forKey: .fileHash)
-        try container.encode(freezeType, forKey: .freezeType)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

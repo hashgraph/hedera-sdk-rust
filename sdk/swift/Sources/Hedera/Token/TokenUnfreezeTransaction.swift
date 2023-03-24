@@ -34,15 +34,6 @@ public final class TokenUnfreezeTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        accountId = try container.decodeIfPresent(.accountId)
-        tokenId = try container.decodeIfPresent(.tokenId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenUnfreezeAccountTransactionBody) throws {
         self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
         self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
@@ -76,20 +67,6 @@ public final class TokenUnfreezeTransaction: Transaction {
         self.tokenId = tokenId
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case accountId
-        case tokenId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(accountId, forKey: .accountId)
-        try container.encode(tokenId, forKey: .tokenId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

@@ -83,15 +83,6 @@ public final class TransferTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        transfers = try container.decodeIfPresent(.transfers) ?? []
-        tokenTransfers = try container.decodeIfPresent(.tokenTransfers) ?? []
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoTransferTransactionBody) throws {
         // init fields
         transfers = try .fromProtobuf(data.transfers.accountAmounts)
@@ -217,20 +208,6 @@ public final class TransferTransaction: Transaction {
         }
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case transfers
-        case tokenTransfers
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(transfers, forKey: .transfers)
-        try container.encode(tokenTransfers, forKey: .tokenTransfers)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

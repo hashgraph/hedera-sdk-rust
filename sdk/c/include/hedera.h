@@ -30,7 +30,6 @@ typedef enum HederaError {
   HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN,
   HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED,
   HEDERA_ERROR_RECEIPT_STATUS,
-  HEDERA_ERROR_REQUEST_PARSE,
   HEDERA_ERROR_SIGNATURE_VERIFY,
   HEDERA_ERROR_BAD_ENTITY_ID,
   HEDERA_ERROR_CANNOT_CREATE_CHECKSUM,
@@ -281,20 +280,6 @@ void hedera_crypto_pbkdf2_hmac(enum HederaHmacVariant variant,
                                uint32_t rounds,
                                uint8_t *key_buffer,
                                size_t key_size);
-
-/**
- * Execute this request against the provided client of the Hedera network.
- *
- * # Safety
- * - todo(sr): Missing basically everything
- * - `callback` must not store `response` after it returns.
- */
-enum HederaError hedera_execute(const struct HederaClient *client,
-                                const char *request,
-                                const void *context,
-                                bool has_timeout,
-                                double timeout,
-                                void (*callback)(const void *context, enum HederaError err, const char *response));
 
 /**
  * Generates a new Ed25519 private key.
@@ -719,14 +704,6 @@ uint8_t *hedera_public_key_to_evm_address(struct HederaPublicKey *key);
  * Releases memory associated with the public key.
  */
 void hedera_public_key_free(struct HederaPublicKey *key);
-
-/**
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `s` must only be freed with `hedera_string_free`,
- *   notably this means it must not be freed with `free`.
- */
-enum HederaError hedera_schedule_info_from_bytes(const uint8_t *bytes, size_t bytes_size, char **s);
 
 #ifdef __cplusplus
 } // extern "C"

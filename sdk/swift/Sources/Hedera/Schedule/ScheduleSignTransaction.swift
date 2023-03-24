@@ -31,14 +31,6 @@ public final class ScheduleSignTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        scheduleId = try container.decodeIfPresent(.scheduleId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleSignTransactionBody) throws {
         scheduleId = data.hasScheduleID ? .fromProtobuf(data.scheduleID) : nil
 
@@ -65,18 +57,6 @@ public final class ScheduleSignTransaction: Transaction {
         scheduleId = nil
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case scheduleId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(scheduleId, forKey: .scheduleId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

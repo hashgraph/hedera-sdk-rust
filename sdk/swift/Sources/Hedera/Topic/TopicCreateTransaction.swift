@@ -51,18 +51,6 @@ public final class TopicCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        topicMemo = try container.decodeIfPresent(.topicMemo) ?? ""
-        adminKey = try container.decodeIfPresent(.adminKey)
-        submitKey = try container.decodeIfPresent(.submitKey)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ConsensusCreateTopicTransactionBody) throws {
         topicMemo = data.memo
         adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
@@ -149,26 +137,6 @@ public final class TopicCreateTransaction: Transaction {
         self.autoRenewAccountId = autoRenewAccountId
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case topicMemo
-        case adminKey
-        case submitKey
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(topicMemo, forKey: .topicMemo)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(submitKey, forKey: .submitKey)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
