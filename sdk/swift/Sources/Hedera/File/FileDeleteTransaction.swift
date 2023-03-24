@@ -36,14 +36,6 @@ public final class FileDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        fileId = try container.decodeIfPresent(.fileId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileDeleteTransactionBody) throws {
         fileId = data.hasFileID ? .fromProtobuf(data.fileID) : nil
 
@@ -65,18 +57,6 @@ public final class FileDeleteTransaction: Transaction {
         self.fileId = fileId
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

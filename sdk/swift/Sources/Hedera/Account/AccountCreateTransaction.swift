@@ -76,25 +76,6 @@ public final class AccountCreateTransaction: Transaction {
         try super.init(protobuf: proto)
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        key = try container.decodeIfPresent(.key)
-        initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
-        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired) ?? false
-        accountMemo = try container.decodeIfPresent(.accountMemo) ?? ""
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
-        alias = try container.decodeIfPresent(.alias)
-        evmAddress = try container.decodeIfPresent(.evmAddress)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-
-        try super.init(from: decoder)
-    }
-
     /// The key that must sign each transfer out of the account.
     public var key: Key? {
         willSet {
@@ -291,39 +272,6 @@ public final class AccountCreateTransaction: Transaction {
         self.declineStakingReward = declineStakingReward
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case key
-        case initialBalance
-        case receiverSignatureRequired
-        case accountMemo
-        case autoRenewPeriod
-        case maxAutomaticTokenAssociations
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-        case alias
-        case evmAddress
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(key, forKey: .key)
-        try container.encode(initialBalance, forKey: .initialBalance)
-        try container.encode(accountMemo, forKey: .accountMemo)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encode(declineStakingReward, forKey: .declineStakingReward)
-        try container.encodeIfPresent(alias, forKey: .alias)
-        try container.encodeIfPresent(evmAddress, forKey: .evmAddress)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

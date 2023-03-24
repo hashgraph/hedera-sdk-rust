@@ -48,19 +48,6 @@ public final class FileCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
-        keys = try container.decodeIfPresent(.keys) ?? []
-        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileCreateTransactionBody) throws {
         fileMemo = data.memo
         keys = try .fromProtobuf(data.keys)
@@ -178,29 +165,6 @@ public final class FileCreateTransaction: Transaction {
 
         return self
     }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileMemo
-        case keys
-        case contents
-        case expirationTime
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(fileMemo, forKey: .fileMemo)
-        try container.encode(keys, forKey: .keys)
-        try container.encode(contents.base64EncodedString(), forKey: .contents)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
     }

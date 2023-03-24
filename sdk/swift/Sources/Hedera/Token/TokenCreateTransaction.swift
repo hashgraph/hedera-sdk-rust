@@ -76,34 +76,6 @@ public final class TokenCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        name = try container.decodeIfPresent(.name) ?? ""
-        symbol = try container.decodeIfPresent(.symbol) ?? ""
-        decimals = try container.decodeIfPresent(.decimals) ?? 0
-        initialSupply = try container.decodeIfPresent(.initialSupply) ?? 0
-        treasuryAccountId = try container.decodeIfPresent(.treasuryAccountId)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        kycKey = try container.decodeIfPresent(.kycKey)
-        freezeKey = try container.decodeIfPresent(.freezeKey)
-        wipeKey = try container.decodeIfPresent(.wipeKey)
-        supplyKey = try container.decodeIfPresent(.supplyKey)
-        freezeDefault = try container.decodeIfPresent(.freezeDefault) ?? false
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        tokenMemo = try container.decodeIfPresent(.tokenMemo) ?? ""
-        tokenType = try container.decodeIfPresent(.tokenType) ?? .fungibleCommon
-        tokenSupplyType = try container.decodeIfPresent(.tokenSupplyType) ?? .infinite
-        maxSupply = try container.decodeIfPresent(.maxSupply) ?? 0
-        feeScheduleKey = try container.decodeIfPresent(.feeScheduleKey)
-        customFees = try container.decodeIfPresent(.customFees) ?? []
-        pauseKey = try container.decodeIfPresent(.pauseKey)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenCreateTransactionBody) throws {
         name = data.name
         symbol = data.symbol
@@ -442,58 +414,6 @@ public final class TokenCreateTransaction: Transaction {
         self.pauseKey = pauseKey
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case name
-        case symbol
-        case decimals
-        case initialSupply
-        case treasuryAccountId
-        case adminKey
-        case kycKey
-        case freezeKey
-        case wipeKey
-        case supplyKey
-        case freezeDefault
-        case expirationTime
-        case autoRenewAccountId
-        case autoRenewPeriod
-        case tokenMemo
-        case tokenType
-        case tokenSupplyType
-        case maxSupply
-        case feeScheduleKey
-        case customFees
-        case pauseKey
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(name, forKey: .name)
-        try container.encode(symbol, forKey: .symbol)
-        try container.encode(decimals, forKey: .decimals)
-        try container.encode(initialSupply, forKey: .initialSupply)
-        try container.encodeIfPresent(treasuryAccountId, forKey: .treasuryAccountId)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(kycKey, forKey: .kycKey)
-        try container.encodeIfPresent(freezeKey, forKey: .freezeKey)
-        try container.encodeIfPresent(wipeKey, forKey: .wipeKey)
-        try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
-        try container.encode(freezeDefault, forKey: .freezeDefault)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encode(tokenMemo, forKey: .tokenMemo)
-        try container.encode(tokenType, forKey: .tokenType)
-        try container.encode(tokenSupplyType, forKey: .tokenSupplyType)
-        try container.encode(maxSupply, forKey: .maxSupply)
-        try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)
-        try container.encode(customFees, forKey: .customFees)
-        try container.encodeIfPresent(pauseKey, forKey: .pauseKey)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

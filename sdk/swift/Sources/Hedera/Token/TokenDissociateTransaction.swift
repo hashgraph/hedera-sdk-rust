@@ -37,15 +37,6 @@ public final class TokenDissociateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        accountId = try container.decodeIfPresent(.accountId)
-        tokenIds = try container.decodeIfPresent(.tokenIds) ?? []
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenDissociateTransactionBody) throws {
         self.tokenIds = .fromProtobuf(data.tokens)
         self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
@@ -81,20 +72,6 @@ public final class TokenDissociateTransaction: Transaction {
         self.tokenIds = tokenIds
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case accountId
-        case tokenIds
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(accountId, forKey: .accountId)
-        try container.encode(tokenIds, forKey: .tokenIds)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

@@ -63,26 +63,6 @@ public final class ContractCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        bytecode = try container.decodeIfPresent(.bytecode).map(Data.base64Encoded)
-        bytecodeFileId = try container.decodeIfPresent(.bytecodeFileId)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        gas = try container.decodeIfPresent(.gas) ?? 0
-        initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        constructorParameters = try container.decodeIfPresent(.constructorParameters).map(Data.base64Encoded)
-        contractMemo = try container.decodeIfPresent(.contractMemo) ?? ""
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractCreateTransactionBody) throws {
         let stakedAccountId: AccountId?
         let stakedNodeId: UInt64?
@@ -340,42 +320,6 @@ public final class ContractCreateTransaction: Transaction {
         self.declineStakingReward = declineStakingReward
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case bytecode
-        case bytecodeFileId
-        case adminKey
-        case gas
-        case initialBalance
-        case autoRenewPeriod
-        case constructorParameters
-        case contractMemo
-        case maxAutomaticTokenAssociations
-        case autoRenewAccountId
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(bytecode?.base64EncodedString(), forKey: .bytecode)
-        try container.encodeIfPresent(bytecodeFileId, forKey: .bytecodeFileId)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encode(gas, forKey: .gas)
-        try container.encode(initialBalance, forKey: .initialBalance)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(constructorParameters?.base64EncodedString(), forKey: .constructorParameters)
-        try container.encode(contractMemo, forKey: .contractMemo)
-        try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encode(declineStakingReward, forKey: .declineStakingReward)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

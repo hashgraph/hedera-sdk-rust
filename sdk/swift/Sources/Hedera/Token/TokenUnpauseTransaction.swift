@@ -32,14 +32,6 @@ public final class TokenUnpauseTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        tokenId = try container.decodeIfPresent(.tokenId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenUnpauseTransactionBody) throws {
         self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
 
@@ -59,18 +51,6 @@ public final class TokenUnpauseTransaction: Transaction {
         self.tokenId = tokenId
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case tokenId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(tokenId, forKey: .tokenId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

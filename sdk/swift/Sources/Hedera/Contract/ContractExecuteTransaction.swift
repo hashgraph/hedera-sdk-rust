@@ -48,17 +48,6 @@ public final class ContractExecuteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        contractId = try container.decodeIfPresent(.contractId)
-        gas = try container.decodeIfPresent(.gas) ?? 0
-        payableAmount = try container.decodeIfPresent(.payableAmount) ?? 0
-        functionParameters = try container.decodeIfPresent(.functionParameters).map(Data.base64Encoded)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractCallTransactionBody) throws {
         contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
         gas = UInt64(data.gas)
@@ -153,24 +142,6 @@ public final class ContractExecuteTransaction: Transaction {
     @discardableResult
     public func function(_ name: String, _ parameters: ContractFunctionParameters) -> Self {
         functionParameters(parameters.toBytes(name))
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case gas
-        case payableAmount
-        case functionParameters
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encode(gas, forKey: .gas)
-        try container.encode(payableAmount, forKey: .payableAmount)
-        try container.encodeIfPresent(functionParameters?.base64EncodedString(), forKey: .functionParameters)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

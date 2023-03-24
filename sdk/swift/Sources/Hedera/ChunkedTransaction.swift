@@ -15,15 +15,6 @@ public class ChunkedTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        data = try container.decodeIfPresent(.data).map(Data.base64Encoded) ?? Data()
-        maxChunks = try container.decodeIfPresent(.maxChunks) ?? Self.defaultMaxChunks
-        chunkSize = try container.decodeIfPresent(.chunkSize) ?? Self.defaultChunkSize
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, data: Data, chunks: Int, largestChunkSize: Int) throws {
         self.data = data
         self.chunkSize = largestChunkSize
@@ -95,28 +86,6 @@ public class ChunkedTransaction: Transaction {
 
         return self.data[start..<end]
 
-    }
-
-    private enum CodingKeys: CodingKey {
-        case data
-        case maxChunks
-        case chunkSize
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(data, forKey: .data)
-
-        if maxChunks != Self.defaultMaxChunks {
-            try container.encode(maxChunks, forKey: .maxChunks)
-        }
-
-        if chunkSize != Self.defaultChunkSize {
-            try container.encode(chunkSize, forKey: .chunkSize)
-        }
-
-        try super.encode(to: encoder)
     }
 
     internal final override func addSignatureSigner(_ signer: Signer) {

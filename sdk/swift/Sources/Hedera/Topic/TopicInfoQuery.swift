@@ -41,18 +41,6 @@ public final class TopicInfoQuery: Query<TopicInfo> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case topicId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(topicId, forKey: .topicId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.consensusGetTopicInfo = .with { proto in
@@ -64,6 +52,14 @@ public final class TopicInfoQuery: Query<TopicInfo> {
 
     internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
         try await Proto_ConsensusServiceAsyncClient(channel: channel).getTopicInfo(request)
+    }
+
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .consensusGetTopicInfo(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `consensusGetTopicInfo`")
+        }
+
+        return try .fromProtobuf(proto)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

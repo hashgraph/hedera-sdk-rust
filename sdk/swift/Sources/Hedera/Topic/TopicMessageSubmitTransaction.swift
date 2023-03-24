@@ -45,14 +45,6 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        topicId = try container.decodeIfPresent(.topicId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: [Proto_ConsensusSubmitMessageTransactionBody]) throws {
         var iter = data.makeIterator()
         let first = iter.next()!
@@ -102,18 +94,6 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
         self.message = message
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case topicId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(topicId, forKey: .topicId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

@@ -41,18 +41,6 @@ public final class TokenNftInfoQuery: Query<TokenNftInfo> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case nftId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(nftId, forKey: .nftId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.tokenGetNftInfo = .with { proto in
@@ -64,6 +52,14 @@ public final class TokenNftInfoQuery: Query<TokenNftInfo> {
 
     internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
         try await Proto_TokenServiceAsyncClient(channel: channel).getTokenNftInfo(request)
+    }
+
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .tokenGetNftInfo(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `tokenGetNftInfo`")
+        }
+
+        return try .fromProtobuf(proto.nft)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

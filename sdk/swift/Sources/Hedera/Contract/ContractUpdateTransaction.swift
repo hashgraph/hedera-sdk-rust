@@ -54,25 +54,6 @@ public final class ContractUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        contractId = try container.decodeIfPresent(.contractId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        contractMemo = try container.decodeIfPresent(.contractMemo)
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
-        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
-
-        try super.init(from: decoder)
-    }
-
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractUpdateTransactionBody) throws {
         let stakedAccountId: AccountId?
         let stakedNodeId: Int64?
@@ -87,7 +68,6 @@ public final class ContractUpdateTransaction: Transaction {
         case nil:
             stakedAccountId = nil
             stakedNodeId = nil
-            break
         }
 
         let memo: String?
@@ -325,38 +305,6 @@ public final class ContractUpdateTransaction: Transaction {
         declineStakingReward = nil
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case expirationTime
-        case adminKey
-        case autoRenewPeriod
-        case contractMemo
-        case maxAutomaticTokenAssociations
-        case autoRenewAccountId
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-        case proxyAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(expirationTime, forKey: .adminKey)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(contractMemo, forKey: .contractMemo)
-        try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
-        try container.encodeIfPresent(proxyAccountId, forKey: .proxyAccountId)
-
-        try super.encode(to: encoder)
     }
 
     internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws

@@ -44,16 +44,6 @@ public final class EthereumTransaction: Transaction {
         try super.init(protobuf: proto)
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        ethereumData = try container.decodeIfPresent(.ethereumData).map(Data.base64Encoded)
-        callDataFileId = try container.decodeIfPresent(.callDataFileId)
-        maxGasAllowanceHbar = try container.decodeIfPresent(.maxGasAllowanceHbar) ?? 0
-
-        try super.init(from: decoder)
-    }
-
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
     public var ethereumData: Data? {
         willSet {
@@ -112,22 +102,6 @@ public final class EthereumTransaction: Transaction {
         self.maxGasAllowanceHbar = maxGasAllowanceHbar
 
         return self
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case ethereumData
-        case callDataFileId
-        case maxGasAllowanceHbar
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(ethereumData?.base64EncodedString(), forKey: .ethereumData)
-        try container.encodeIfPresent(callDataFileId, forKey: .callDataFileId)
-        try container.encodeIfPresent(maxGasAllowanceHbar, forKey: .maxGasAllowanceHbar)
-
-        try super.encode(to: encoder)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

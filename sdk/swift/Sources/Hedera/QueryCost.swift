@@ -22,7 +22,7 @@ import Foundation
 import GRPC
 import HederaProtobufs
 
-internal struct QueryCost<T: Decodable, U: Query<T>> {
+internal struct QueryCost<T, U: Query<T>> {
     private let query: U
 
     internal init(query: U) {

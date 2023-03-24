@@ -272,16 +272,6 @@ extension AnySchedulableTransaction {
     }
 }
 
-extension AnySchedulableTransaction: Codable {
-    internal init(from decoder: Decoder) throws {
-        self.init(try AnyTransaction(from: decoder))
-    }
-
-    internal func encode(to encoder: Encoder) throws {
-        try transaction.encode(to: encoder)
-    }
-}
-
 extension AnySchedulableTransaction: ToSchedulableTransactionData {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         switch self {
