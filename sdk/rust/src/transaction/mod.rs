@@ -18,9 +18,6 @@
  * ‍
  */
 
-// serde appears to insert the bound twice.
-#![cfg_attr(feature = "ffi", allow(clippy::type_repetition_in_bounds))]
-
 use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
@@ -58,8 +55,6 @@ mod source;
 mod tests;
 
 pub use any::AnyTransaction;
-#[cfg(feature = "ffi")]
-pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
 pub(crate) use chunked::{
     ChunkData,
@@ -80,59 +75,30 @@ pub(crate) use source::TransactionSources;
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 /// A transaction that can be executed on the Hedera network.
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct Transaction<D> {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    #[cfg_attr(feature = "ffi", serde(bound = "D: Into<AnyTransactionData> + Clone"))]
     body: TransactionBody<D>,
 
-    #[cfg_attr(feature = "ffi", serde(skip))]
     signers: Vec<AnySigner>,
 
-    #[cfg_attr(feature = "ffi", serde(skip))]
     sources: Option<TransactionSources>,
 }
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub(crate) struct TransactionBody<D> {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    #[cfg_attr(
-        feature = "ffi",
-        serde(
-            with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>",
-            bound = "D: Into<AnyTransactionData> + Clone"
-        )
-    )]
     pub(crate) data: D,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(
-            with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>",
-            skip_serializing_if = "Option::is_none"
-        )
-    )]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) max_transaction_fee: Option<Hbar>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub(crate) transaction_memo: String,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) transaction_id: Option<TransactionId>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) operator: Option<Operator>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
     pub(crate) is_frozen: bool,
 }
 

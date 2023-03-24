@@ -39,8 +39,6 @@ use crate::{
 
 /// The unique identifier for a token on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
-#[repr(C)]
 pub struct NftId {
     /// The (non-fungible) token of which this NFT is an instance.
     pub token_id: TokenId,

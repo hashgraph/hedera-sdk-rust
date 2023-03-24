@@ -20,38 +20,11 @@ use crate::{
     TransactionResponse,
 };
 
-// the lengths we're willing to go to in order to not waste wire space.
-#[cfg(feature = "ffi")]
-// the function signature needs the ref.
-#[allow(clippy::trivially_copy_pass_by_ref)]
-const fn max_chunks_is_default(value: &usize) -> bool {
-    *value == ChunkData::DEFAULT_MAX_CHUNKS
-}
-
-#[cfg(feature = "ffi")]
-// the function signature needs the ref.
-#[allow(clippy::trivially_copy_pass_by_ref)]
-const fn chunk_size_is_default(value: &NonZeroUsize) -> bool {
-    value.get() == ChunkData::DEFAULT_CHUNK_SIZE.get()
-}
-
 /// Per transaction chunk data (you'd add this to any chunked transaction)
 #[derive(Clone, Debug, PartialEq)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct ChunkData {
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "max_chunks_is_default"))]
     pub(crate) max_chunks: usize,
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "chunk_size_is_default"))]
     pub(crate) chunk_size: NonZeroUsize,
-
-    #[cfg_attr(
-        feature = "ffi",
-        serde(
-            with = "serde_with::As::<serde_with::base64::Base64>",
-            skip_serializing_if = "Vec::is_empty"
-        )
-    )]
     pub(crate) data: Vec<u8>,
 }
 

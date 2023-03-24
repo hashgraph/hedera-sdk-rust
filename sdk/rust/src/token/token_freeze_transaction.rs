@@ -58,10 +58,7 @@ use crate::{
 /// - If no Freeze Key is defined, the transaction will resolve to `TOKEN_HAS_NO_FREEZE_KEY`.
 pub type TokenFreezeTransaction = Transaction<TokenFreezeTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenFreezeTransactionData {
     /// The account to be frozen.
     account_id: Option<AccountId>,
@@ -157,37 +154,5 @@ impl ToProtobuf for TokenFreezeTransactionData {
         let token = self.token_id.to_protobuf();
 
         services::TokenFreezeAccountTransactionBody { token, account }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            AccountId,
-            TokenFreezeTransaction,
-            TokenId,
-        };
-
-        // language=JSON
-        const TOKEN_FREEZE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenFreeze",
-  "accountId": "0.0.1001",
-  "tokenId": "0.0.1002"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenFreezeTransaction::new();
-
-            transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_FREEZE_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

@@ -63,10 +63,7 @@ use crate::{
 /// balance is not zero. The transaction will resolve to `TRANSACTION_REQUIRED_ZERO_TOKEN_BALANCES`.
 pub type TokenDissociateTransaction = Transaction<TokenDissociateTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenDissociateTransactionData {
     /// The account to be dissociated with the provided tokens.
     account_id: Option<AccountId>,
@@ -165,42 +162,5 @@ impl ToProtobuf for TokenDissociateTransactionData {
         let tokens = self.token_ids.to_protobuf();
 
         services::TokenDissociateTransactionBody { account, tokens }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            AccountId,
-            TokenDissociateTransaction,
-            TokenId,
-        };
-
-        // language=JSON
-        const TOKEN_DISSOCIATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenDissociate",
-  "accountId": "0.0.1001",
-  "tokenIds": [
-    "0.0.1002",
-    "0.0.1003"
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenDissociateTransaction::new();
-
-            transaction
-                .account_id(AccountId::from(1001))
-                .token_ids([TokenId::from(1002), TokenId::from(1003)]);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_DISSOCIATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

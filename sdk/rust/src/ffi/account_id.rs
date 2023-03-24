@@ -18,10 +18,7 @@
  * ‍
  */
 
-use core::slice;
 use std::ptr;
-
-use libc::size_t;
 
 use crate::PublicKey;
 
@@ -76,23 +73,4 @@ impl From<AccountId> for crate::AccountId {
             checksum: None,
         }
     }
-}
-
-/// Free an array of account IDs.
-///
-/// # Safety
-/// - `ids` must point to an allocation made by `hedera`.
-/// - `ids` must not already have been freed.
-/// - `ids` must be valid for `size` elements.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_account_id_array_free(ids: *mut AccountId, size: size_t) {
-    assert!(!ids.is_null());
-
-    // safety: function contract promises that we own this `Box<[AccountId]>`.
-    let buf = unsafe {
-        let ids = slice::from_raw_parts_mut(ids, size);
-        Box::from_raw(ids)
-    };
-
-    drop(buf);
 }

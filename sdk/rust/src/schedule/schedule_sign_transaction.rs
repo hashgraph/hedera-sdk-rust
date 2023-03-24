@@ -46,8 +46,6 @@ use crate::{
 pub type ScheduleSignTransaction = Transaction<ScheduleSignTransactionData>;
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleSignTransactionData {
     schedule_id: Option<ScheduleId>,
 }

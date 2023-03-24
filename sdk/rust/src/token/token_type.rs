@@ -34,8 +34,6 @@ use crate::{
 /// may be added in the future.
 ///
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[repr(C)]
 pub enum TokenType {
     /// Interchangeable value with one another, where any quantity of them has the same value as

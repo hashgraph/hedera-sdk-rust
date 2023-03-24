@@ -39,8 +39,6 @@ use crate::{
 
 /// Response from [`AccountInfoQuery`][crate::AccountInfoQuery].
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountInfo {
     /// The account that is being referenced.
     pub account_id: AccountId,
@@ -89,17 +87,9 @@ pub struct AccountInfo {
     pub is_receiver_signature_required: bool,
 
     /// The time at which this account is set to expire.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The duration for expiration time will extend every this many seconds.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
     pub auto_renew_period: Option<Duration>,
 
     /// The memo associated with the account.

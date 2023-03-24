@@ -54,10 +54,7 @@ use crate::{
 ///
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractExecuteTransactionData {
     /// The contract instance to call.
     contract_id: Option<ContractId>,
@@ -192,58 +189,6 @@ impl ToProtobuf for ContractExecuteTransactionData {
             amount: self.payable_amount.to_tinybars(),
             contract_id: self.contract_id.to_protobuf(),
             function_parameters: self.function_parameters.clone(),
-        }
-    }
-}
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-
-        use crate::{
-            ContractExecuteTransaction,
-            ContractId,
-            Hbar,
-        };
-
-        // language=JSON
-        const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
-  "$type": "contractExecute",
-  "contractId": "0.0.1001",
-  "gas": 1000,
-  "payableAmount": 10,
-  "functionParameters": [
-    72,
-    101,
-    108,
-    108,
-    111,
-    44,
-    32,
-    119,
-    111,
-    114,
-    108,
-    100,
-    33
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = ContractExecuteTransaction::new();
-
-            transaction
-                .contract_id(ContractId::from(1001))
-                .gas(1000)
-                .payable_amount(Hbar::from_tinybars(10))
-                .function_parameters("Hello, world!".into());
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, CONTRACT_EXECUTE_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

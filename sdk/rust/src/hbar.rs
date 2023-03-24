@@ -107,7 +107,6 @@ impl FromStr for HbarUnit {
 
 /// A quantity of `hbar`.
 #[derive(Default, Copy, Clone, Hash, PartialEq, Eq, Ord, PartialOrd)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub struct Hbar(i64);
 
 impl Hbar {

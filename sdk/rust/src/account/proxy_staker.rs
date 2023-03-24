@@ -31,8 +31,6 @@ pub type AllProxyStakers = Vec<ProxyStaker>;
 
 /// Information about a single account that is proxy staking.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ProxyStaker {
     /// The Account ID that is proxy staking.
     pub account_id: AccountId,

@@ -43,8 +43,6 @@ use crate::{
 pub type TokenInfoQuery = Query<TokenInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenInfoQueryData {
     token_id: Option<TokenId>,
 }
@@ -98,38 +96,5 @@ impl QueryExecute for TokenInfoQueryData {
 impl ValidateChecksums for TokenInfoQueryData {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.token_id.validate_checksums(ledger_id)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::query::AnyQueryData;
-        use crate::{
-            AnyQuery,
-            TokenId,
-        };
-
-        // language=JSON
-        const TOKEN_INFO: &str = r#"{
-  "$type": "tokenInfo",
-  "tokenId": "0.0.1001",
-  "payment": {}
-}"#;
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let query: AnyQuery = serde_json::from_str(TOKEN_INFO)?;
-
-            let data = assert_matches!(query.data, AnyQueryData::TokenInfo(query) => query);
-            assert_eq!(
-                data.token_id,
-                Some(TokenId { shard: 0, realm: 0, num: 1001, checksum: None })
-            );
-            Ok(())
-        }
     }
 }

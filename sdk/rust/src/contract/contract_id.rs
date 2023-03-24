@@ -45,7 +45,6 @@ use crate::{
 
 /// A unique identifier for a smart contract on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct ContractId {
     /// A non-negative number identifying the shard containing this contract instance.
     pub shard: u64,

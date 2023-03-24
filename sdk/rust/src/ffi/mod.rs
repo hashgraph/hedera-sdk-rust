@@ -23,7 +23,6 @@ mod error;
 
 mod account_id;
 mod c_util;
-mod client;
 mod crypto;
 mod key;
 mod timestamp;

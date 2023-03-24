@@ -34,8 +34,6 @@ use crate::{
 
 /// Response from [`AccountBalanceQuery`][crate::AccountBalanceQuery].
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountBalance {
     /// The account that is being referenced.
     pub account_id: AccountId,
@@ -108,39 +106,5 @@ impl FromProtobuf<services::response::Response> for AccountBalance {
         let response = pb_getv!(pb, CryptogetAccountBalance, services::response::Response);
 
         Self::from_protobuf(response)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::collections::HashMap;
-
-        use crate::{
-            AccountBalance,
-            Hbar,
-        };
-
-        #[test]
-        #[allow(deprecated)]
-        fn serialize() {
-            expect_test::expect![[r#"
-                {
-                  "accountId": "0.0.3",
-                  "hbars": 200000000,
-                  "tokens": {},
-                  "tokenDecimals": {}
-                }"#]]
-            .assert_eq(
-                &serde_json::to_string_pretty(&AccountBalance {
-                    account_id: 3.into(),
-                    hbars: Hbar::new(2),
-                    tokens: HashMap::new(),
-                    token_decimals: HashMap::new(),
-                })
-                .unwrap(),
-            )
-        }
     }
 }

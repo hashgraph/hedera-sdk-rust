@@ -90,7 +90,6 @@ impl<T: ValidateChecksums> ValidateChecksums for Option<T> {
 
 /// The ID of an entity on the Hedera network.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct EntityId {
     /// A non-negative number identifying the shard containing this entity.
     pub shard: u64,

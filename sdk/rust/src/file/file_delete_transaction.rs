@@ -50,10 +50,7 @@ use crate::{
 ///
 pub type FileDeleteTransaction = Transaction<FileDeleteTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileDeleteTransactionData {
     /// The file to delete. It will be marked as deleted until it expires.
     /// Then it will disappear.
@@ -128,35 +125,5 @@ impl ToProtobuf for FileDeleteTransactionData {
 
     fn to_protobuf(&self) -> Self::Protobuf {
         services::FileDeleteTransactionBody { file_id: self.file_id.to_protobuf() }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            FileDeleteTransaction,
-            FileId,
-        };
-
-        // language=JSON
-        const FILE_DELETE_TRANSACTION_JSON: &str = r#"{
-  "$type": "fileDelete",
-  "fileId": "0.0.1001"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = FileDeleteTransaction::new();
-
-            transaction.file_id(FileId::from(1001));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, FILE_DELETE_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

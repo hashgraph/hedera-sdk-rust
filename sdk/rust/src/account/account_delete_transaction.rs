@@ -50,10 +50,7 @@ use crate::{
 ///
 pub type AccountDeleteTransaction = Transaction<AccountDeleteTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct AccountDeleteTransactionData {
     /// The account ID which will receive all remaining hbars.
     transfer_account_id: Option<AccountId>,

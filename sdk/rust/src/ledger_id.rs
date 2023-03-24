@@ -63,7 +63,6 @@ impl ToOwned for RefLedgerId {
 // wouldn't allocate 99.99% of the time, and could be const constructable in 99.999% of cases.
 /// The ID of a Hedera Ledger.
 #[derive(Eq, PartialEq)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct LedgerId(Box<RefLedgerId>);
 
 impl LedgerId {

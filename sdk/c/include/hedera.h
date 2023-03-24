@@ -43,11 +43,6 @@ typedef enum HederaHmacVariant {
 } HederaHmacVariant;
 
 /**
- * Managed client for use on the Hedera network.
- */
-typedef struct HederaClient HederaClient;
-
-/**
  * A private key on the Hedera network.
  */
 typedef struct HederaPrivateKey HederaPrivateKey;
@@ -154,16 +149,6 @@ char *hedera_error_message(void);
 struct HederaErrorDetails hedera_last_error_details(void);
 
 /**
- * Free an array of account IDs.
- *
- * # Safety
- * - `ids` must point to an allocation made by `hedera`.
- * - `ids` must not already have been freed.
- * - `ids` must be valid for `size` elements.
- */
-void hedera_account_id_array_free(struct HederaAccountId *ids, size_t size);
-
-/**
  * Free a string returned from a hedera API.
  *
  * A function will tell you if the string needs to be freed with this method.
@@ -186,71 +171,6 @@ void hedera_string_free(char *s);
  * - `buf` must not be used after this call.
  */
 void hedera_bytes_free(uint8_t *buf, size_t size);
-
-/**
- * Construct a Hedera client pre-configured for mainnet access.
- */
-struct HederaClient *hedera_client_for_mainnet(void);
-
-/**
- * Construct a Hedera client pre-configured for testnet access.
- */
-struct HederaClient *hedera_client_for_testnet(void);
-
-/**
- * Construct a Hedera client pre-configured for previewnet access.
- */
-struct HederaClient *hedera_client_for_previewnet(void);
-
-/**
- * Sets the account that will, by default, be paying for transactions and queries built with
- * this client.
- */
-void hedera_client_set_operator(struct HederaClient *client,
-                                struct HederaAccountId id,
-                                struct HederaPrivateKey *key);
-
-/**
- * Returns `true` if there was an operator and `false` if there wasn't.
- *
- * If this method returns `false`, variables will not be modified.
- */
-bool hedera_client_get_operator(struct HederaClient *client,
-                                struct HederaAccountId *id_out,
-                                struct HederaPrivateKey **key_out);
-
-uint64_t hedera_client_get_max_transaction_fee(struct HederaClient *client);
-
-size_t hedera_client_get_random_node_ids(struct HederaClient *client, struct HederaAccountId **ids);
-
-/**
- * Get all the nodes for the `Client`
- *
- * For internal use _only_.
- *
- * # Safety:
- * - `Client` must be valid for reads.
- * - `ids` must be freed by using `hedera_account_id_array_free`, notably this means that it must *not* be freed with `free`.
- * - the length of `ids` must not be changed.
- */
-size_t hedera_client_get_nodes(struct HederaClient *client,
-                               struct HederaAccountId **ids);
-
-void hedera_client_set_ledger_id(struct HederaClient *client,
-                                 const uint8_t *ledger_id_bytes,
-                                 size_t ledger_id_size);
-
-size_t hedera_client_get_ledger_id(struct HederaClient *client, uint8_t **ledger_id_bytes);
-
-void hedera_client_set_auto_validate_checksums(struct HederaClient *client,
-                                               bool auto_validate_checksums);
-
-bool hedera_client_get_auto_validate_checksums(struct HederaClient *client);
-
-/**
- * Release memory associated with the previously-opened Hedera client.
- */
-void hedera_client_free(struct HederaClient *client);
 
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,

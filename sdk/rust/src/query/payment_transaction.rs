@@ -41,10 +41,7 @@ use crate::{
 
 pub type PaymentTransaction = Transaction<PaymentTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct PaymentTransactionData {
     amount: Option<Hbar>,
     max_amount: Option<Hbar>,

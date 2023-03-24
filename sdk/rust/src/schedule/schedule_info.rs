@@ -40,8 +40,6 @@ use crate::{
 // TODO: scheduled_transaction
 /// Response from [`ScheduleInfoQuery`][crate::ScheduleInfoQuery].
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleInfo {
     /// The ID of the schedule for which information is requested.
     pub schedule_id: ScheduleId,
@@ -73,24 +71,12 @@ pub struct ScheduleInfo {
     pub memo: String,
 
     /// The date and time the schedule transaction will expire
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The time the schedule transaction was executed.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     pub executed_at: Option<OffsetDateTime>,
 
     /// The time the schedule transaction was deleted.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     pub deleted_at: Option<OffsetDateTime>,
 
     /// The ledger ID the response was returned from

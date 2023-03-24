@@ -55,16 +55,12 @@ pub type RoyaltyFee = CustomFee<RoyaltyFeeData>;
 /// A transfer fee to assess during a `CryptoTransfer` that transfers units of the token to which the
 /// fee is attached. A custom fee may be either fixed or fractional, and must specify a fee collector
 /// account to receive the assessed fees. Only positive fees may be assessed.
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub struct CustomFee<Fee> {
     /// The fee to be charged
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     pub fee: Fee,
 
     /// The account to receive the custom fee.
-    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "Option::is_none"))]
     pub fee_collector_account_id: Option<AccountId>,
 
     pub all_collectors_are_exempt: bool,
@@ -149,8 +145,6 @@ impl From<RoyaltyFee> for AnyCustomFee {
 
 /// Represents the possible fee types.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(tag = "$type", rename_all = "camelCase"))]
 pub enum Fee {
     Fixed(FixedFeeData),
     Fractional(FractionalFeeData),
@@ -206,8 +200,6 @@ impl From<RoyaltyFeeData> for Fee {
 /// A fixed number of units (hbar or token) to assess as a fee during a `CryptoTransfer` that transfers
 /// units of the token to which this fixed fee is attached.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FixedFeeData {
     /// The number of units to assess as a fee
     pub amount: i64,
@@ -257,8 +249,6 @@ impl ToProtobuf for FixedFeeData {
 /// be less than the given `minimum_amount`, and never greater than the given `maximum_amount`.  The
 /// denomination is always units of the token to which this fractional fee is attached.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FractionalFeeData {
     /// The denominator of the fraction of transferred units to assess as a fee
     pub denominator: u64,
@@ -317,8 +307,6 @@ impl ToProtobuf for FractionalFeeData {
 /// any fungible value, the ledger will assess the fallback fee, if present, to the new NFT owner.
 /// Royalty fees can only be added to tokens of type type `NON_FUNGIBLE_UNIQUE`.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct RoyaltyFeeData {
     /// The denominator of the fraction of fungible value exchanged for an NFT to collect as royalty
     pub denominator: u64,
@@ -328,7 +316,6 @@ pub struct RoyaltyFeeData {
 
     /// If present, the fixed fee to assess to the NFT receiver when no fungible value is exchanged
     /// with the sender
-    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "Option::is_none"))]
     pub fallback_fee: Option<FixedFeeData>,
 }
 
@@ -362,8 +349,6 @@ impl ToProtobuf for RoyaltyFeeData {
 ///
 /// The terminology here (exclusive vs inclusive) is borrowed from tax assessment.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub enum FeeAssessmentMethod {
     /// The recipient recieves the transfer amount, minus the fee.
     ///
