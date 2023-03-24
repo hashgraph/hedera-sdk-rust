@@ -51,25 +51,14 @@ use crate::{
 /// Updates the fields of a smart contract to the given values.
 pub type ContractUpdateTransaction = Transaction<ContractUpdateTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct ContractUpdateTransactionData {
     contract_id: Option<ContractId>,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     expiration_time: Option<OffsetDateTime>,
 
     admin_key: Option<Key>,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
     auto_renew_period: Option<Duration>,
 
     contract_memo: Option<String>,
@@ -81,7 +70,6 @@ pub struct ContractUpdateTransactionData {
     proxy_account_id: Option<AccountId>,
 
     /// ID of the account or node to which this contract is staking, if any.
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     staked_id: Option<StakedId>,
 
     decline_staking_reward: Option<bool>,
@@ -340,68 +328,5 @@ impl ToProtobuf for ContractUpdateTransactionData {
 impl From<ContractUpdateTransactionData> for AnyTransactionData {
     fn from(transaction: ContractUpdateTransactionData) -> Self {
         Self::ContractUpdate(transaction)
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::str::FromStr;
-
-        use time::{
-            Duration,
-            OffsetDateTime,
-        };
-
-        use crate::{
-            AccountId,
-            ContractId,
-            ContractUpdateTransaction,
-            PublicKey,
-        };
-
-        // language=JSON
-        const CONTRACT_UPDATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "contractUpdate",
-  "contractId": "0.0.1001",
-  "expirationTime": 1656352251277559886,
-  "adminKey": {
-    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-  },
-  "autoRenewPeriod": 7776000,
-  "contractMemo": "A contract memo",
-  "maxAutomaticTokenAssociations": 1024,
-  "autoRenewAccountId": "0.0.1002",
-  "stakedAccountId": "0.0.1003",
-  "declineStakingReward": true
-}"#;
-
-        const ADMIN_KEY: &str =
-        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = ContractUpdateTransaction::new();
-
-            transaction
-                .contract_id(ContractId::from(1001))
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
-                    1_656_352_251_277_559_886,
-                )?)
-                .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-                .auto_renew_period(Duration::days(90))
-                .contract_memo("A contract memo")
-                .max_automatic_token_associations(1024)
-                .auto_renew_account_id(AccountId::from(1002))
-                .staked_account_id(AccountId::from(1003))
-                .decline_staking_reward(true);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, CONTRACT_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

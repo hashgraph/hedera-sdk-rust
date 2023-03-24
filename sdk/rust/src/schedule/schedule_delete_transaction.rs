@@ -49,8 +49,6 @@ use crate::{
 pub type ScheduleDeleteTransaction = Transaction<ScheduleDeleteTransactionData>;
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleDeleteTransactionData {
     schedule_id: Option<ScheduleId>,
 }

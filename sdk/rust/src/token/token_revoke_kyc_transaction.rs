@@ -59,10 +59,7 @@ use crate::{
 /// - If no KYC Key is defined, the transaction will resolve to `TOKEN_HAS_NO_KYC_KEY`.
 pub type TokenRevokeKycTransaction = Transaction<TokenRevokeKycTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenRevokeKycTransactionData {
     /// The account to have their KYC revoked.
     account_id: Option<AccountId>,
@@ -158,38 +155,6 @@ impl ToProtobuf for TokenRevokeKycTransactionData {
         services::TokenRevokeKycTransactionBody {
             token: self.token_id.to_protobuf(),
             account: self.account_id.to_protobuf(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            AccountId,
-            TokenId,
-            TokenRevokeKycTransaction,
-        };
-
-        // language=JSON
-        const TOKEN_REVOKE_KYC_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenRevokeKyc",
-  "accountId": "0.0.1001",
-  "tokenId": "0.0.1002"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenRevokeKycTransaction::new();
-
-            transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_REVOKE_KYC_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

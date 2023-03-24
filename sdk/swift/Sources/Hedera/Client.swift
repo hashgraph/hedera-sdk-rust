@@ -18,87 +18,94 @@
  * ‍
  */
 
+import Atomics
 import CHedera
 import Foundation
 import GRPC
+import NIOConcurrencyHelpers
 import NIOCore
+
+// safety: Atomics just forgot to put the conformance.
+private struct AtomicBool: @unchecked Sendable {
+    init(_ value: Bool) {
+        self.inner = .init(value)
+    }
+
+    fileprivate let inner: ManagedAtomic<Bool>
+}
+
+// safety: Atomics just forgot to put the conformance.
+private struct AtomicInt64: @unchecked Sendable {
+    init(_ value: Int64) {
+        self.inner = .init(value)
+    }
+
+    fileprivate let inner: ManagedAtomic<Int64>
+}
 
 /// Managed client for use on the Hedera network.
 public final class Client: Sendable {
     internal let eventLoop: NIOCore.EventLoopGroup
 
-    internal let ptr: OpaquePointer
     private let mirrorNetwork: MirrorNetwork
     internal let network: Network
+    private let operatorInner: NIOLockedValueBox<Operator?>
+    private let autoValidateChecksumsInner: AtomicBool
+    private let maxTransactionFeeInner: AtomicInt64
 
     private init(
-        unsafeFromPtr ptr: OpaquePointer, network: Network, mirrorNetwork: MirrorNetwork,
+        network: Network,
+        mirrorNetwork: MirrorNetwork,
+        ledgerId: LedgerId?,
         _ eventLoop: NIOCore.EventLoopGroup
     ) {
         self.eventLoop = eventLoop
-        self.ptr = ptr
+        // self.ptr = ptr
         self.mirrorNetwork = mirrorNetwork
         self.network = network
+        self.operatorInner = .init(nil)
+        self.ledgerIdInner = .init(ledgerId)
+        self.autoValidateChecksumsInner = .init(false)
+        self.maxTransactionFeeInner = .init(0)
     }
 
     /// Note: this operation is O(n)
     private var nodes: [AccountId] {
-        var ids: UnsafeMutablePointer<HederaAccountId>?
-
-        let len = hedera_client_get_nodes(ptr, &ids)
-
-        let nodes = UnsafeMutableBufferPointer(start: ids, count: len).map { AccountId(unsafeFromCHedera: $0) }
-
-        hedera_account_id_array_free(ids, len)
-
-        return nodes
+        network.nodes
     }
 
     internal var mirrorChannel: GRPCChannel { mirrorNetwork.channel }
 
     internal func randomNodeIds() -> [AccountId] {
-        var ids: UnsafeMutablePointer<HederaAccountId>?
+        let nodeIds = self.network.healthyNodeIds()
 
-        let len = hedera_client_get_random_node_ids(ptr, &ids)
+        let nodeSampleAmount = (nodeIds.count + 2) / 3
 
-        let nodes = UnsafeMutableBufferPointer(start: ids, count: len).map { AccountId(unsafeFromCHedera: $0) }
-
-        hedera_account_id_array_free(ids, len)
-
-        return nodes
+        let nodeIdIndecies = randomIndexes(upTo: nodeIds.count, amount: nodeSampleAmount)
+        return nodeIdIndecies.map { nodeIds[$0] }
     }
 
     internal var `operator`: Operator? {
-        var skPtr: OpaquePointer?
-        var accountId = HederaAccountId()
-
-        guard hedera_client_get_operator(ptr, &accountId, &skPtr) else {
-            return nil
-        }
-
-        return Operator(
-            accountId: AccountId(unsafeFromCHedera: accountId),
-            signer: .unsafeFromPtr(skPtr!)
-        )
+        return operatorInner.withLockedValue { $0 }
     }
 
     internal var maxTransactionFee: Hbar? {
-        let val = hedera_client_get_max_transaction_fee(ptr)
+        let value = maxTransactionFeeInner.inner.load(ordering: .relaxed)
 
-        guard val != 0 else {
+        guard value != 0 else {
             return nil
         }
 
-        return .fromTinybars(Int64(bitPattern: val))
+        return .fromTinybars(value)
     }
 
     /// Construct a Hedera client pre-configured for mainnet access.
     public static func forMainnet() -> Self {
         let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
         return Self(
-            unsafeFromPtr: hedera_client_for_mainnet(),
             network: .mainnet(eventLoop),
             mirrorNetwork: .mainnet(eventLoop),
+            ledgerId: .mainnet,
             eventLoop
         )
     }
@@ -107,9 +114,9 @@ public final class Client: Sendable {
     public static func forTestnet() -> Self {
         let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
         return Self(
-            unsafeFromPtr: hedera_client_for_testnet(),
             network: .testnet(eventLoop),
             mirrorNetwork: .testnet(eventLoop),
+            ledgerId: .testnet,
             eventLoop
         )
     }
@@ -118,9 +125,9 @@ public final class Client: Sendable {
     public static func forPreviewnet() -> Self {
         let eventLoop = PlatformSupport.makeEventLoopGroup(loopCount: 1)
         return Self(
-            unsafeFromPtr: hedera_client_for_previewnet(),
             network: .previewnet(eventLoop),
             mirrorNetwork: .previewnet(eventLoop),
+            ledgerId: .previewnet,
             eventLoop
         )
     }
@@ -146,9 +153,7 @@ public final class Client: Sendable {
     /// this client.
     @discardableResult
     public func setOperator(_ accountId: AccountId, _ privateKey: PrivateKey) -> Self {
-        accountId.unsafeWithCHedera { hAccountId in
-            hedera_client_set_operator(ptr, hAccountId, privateKey.ptr)
-        }
+        operatorInner.withLockedValue { $0 = .init(accountId: accountId, signer: privateKey) }
 
         return self
     }
@@ -185,6 +190,8 @@ public final class Client: Sendable {
         }
     }
 
+    private let ledgerIdInner: NIOLockedValueBox<LedgerId?>
+
     @discardableResult
     public func setLedgerId(_ ledgerId: LedgerId?) -> Self {
         self.ledgerId = ledgerId
@@ -195,26 +202,17 @@ public final class Client: Sendable {
     // note: matches JS
     public var ledgerId: LedgerId? {
         get {
-            var bytes: UnsafeMutablePointer<UInt8>?
-            let count = hedera_client_get_ledger_id(ptr, &bytes)
-
-            return bytes.map { LedgerId(Data(bytesNoCopy: $0, count: count, deallocator: .unsafeCHederaBytesFree)) }
+            ledgerIdInner.withLockedValue { $0 }
         }
 
         set(value) {
-            if let ledgerId = value {
-                ledgerId.bytes.withUnsafeTypedBytes { ledgerIdPtr in
-                    hedera_client_set_ledger_id(ptr, ledgerIdPtr.baseAddress, ledgerIdPtr.count)
-                }
-            } else {
-                hedera_client_set_ledger_id(ptr, nil, 0)
-            }
+            ledgerIdInner.withLockedValue { $0 = value }
         }
     }
 
     fileprivate var autoValidateChecksums: Bool {
-        get { hedera_client_get_auto_validate_checksums(ptr) }
-        set(value) { hedera_client_set_auto_validate_checksums(ptr, value) }
+        get { self.autoValidateChecksumsInner.inner.load(ordering: .relaxed) }
+        set(value) { self.autoValidateChecksumsInner.inner.store(value, ordering: .relaxed) }
     }
 
     @discardableResult
@@ -230,9 +228,5 @@ public final class Client: Sendable {
 
     internal func generateTransactionId() -> TransactionId? {
         (self.operator?.accountId).map { .generateFrom($0) }
-    }
-
-    deinit {
-        hedera_client_free(ptr)
     }
 }

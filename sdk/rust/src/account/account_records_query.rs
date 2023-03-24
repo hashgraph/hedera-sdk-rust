@@ -44,8 +44,6 @@ use crate::{
 pub type AccountRecordsQuery = Query<AccountRecordsQueryData>;
 
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountRecordsQueryData {
     account_id: Option<AccountId>,
 }

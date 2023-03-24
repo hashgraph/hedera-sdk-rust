@@ -53,15 +53,11 @@ use crate::{
 ///
 pub type FileAppendTransaction = Transaction<FileAppendTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileAppendTransactionData {
     /// The file to which the bytes will be appended.
     file_id: Option<FileId>,
 
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     chunk_data: ChunkData,
 }
 
@@ -195,38 +191,5 @@ impl FromProtobuf<Vec<services::FileAppendTransactionBody>> for FileAppendTransa
                 data: contents,
             },
         })
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            FileAppendTransaction,
-            FileId,
-        };
-
-        // language=JSON
-        const FILE_APPEND_TRANSACTION_JSON: &str = r#"{
-  "$type": "fileAppend",
-  "fileId": "0.0.1001",
-  "data": "QXBwZW5kaW5nIHRoZXNlIGJ5dGVzIHRvIGZpbGUgMTAwMQ=="
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = FileAppendTransaction::new();
-
-            transaction
-                .file_id(FileId::from(1001))
-                .contents(b"Appending these bytes to file 1001".to_vec());
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, FILE_APPEND_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

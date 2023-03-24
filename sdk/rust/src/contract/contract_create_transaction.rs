@@ -49,15 +49,8 @@ use crate::{
 /// Start a new smart contract instance.
 pub type ContractCreateTransaction = Transaction<ContractCreateTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct ContractCreateTransactionData {
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
     bytecode: Option<Vec<u8>>,
 
     bytecode_file_id: Option<FileId>,
@@ -68,13 +61,8 @@ pub struct ContractCreateTransactionData {
 
     initial_balance: Hbar,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<serde_with::DurationSeconds<i64>>")
-    )]
     auto_renew_period: Duration,
 
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     constructor_parameters: Vec<u8>,
 
     contract_memo: String,
@@ -84,7 +72,6 @@ pub struct ContractCreateTransactionData {
     auto_renew_account_id: Option<AccountId>,
 
     /// ID of the account or node to which this contract is staking, if any.
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     staked_id: Option<StakedId>,
 
     decline_staking_reward: bool,
@@ -399,71 +386,6 @@ impl ToProtobuf for ContractCreateTransactionData {
             decline_reward: self.decline_staking_reward,
             initcode_source,
             staked_id,
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::str::FromStr;
-
-        use time::Duration;
-
-        use crate::{
-            AccountId,
-            ContractCreateTransaction,
-            FileId,
-            Hbar,
-            PublicKey,
-        };
-
-        // language=JSON
-        const CONTRACT_CREATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "contractCreate",
-  "bytecode": "SGVsbG8sIHdvcmxkIQ==",
-  "bytecodeFileId": "0.0.1001",
-  "adminKey": {
-    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-  },
-  "gas": 1000,
-  "initialBalance": 1000000,
-  "autoRenewPeriod": 7776000,
-  "constructorParameters": "BQoP",
-  "contractMemo": "A contract memo",
-  "maxAutomaticTokenAssociations": 512,
-  "autoRenewAccountId": "0.0.1002",
-  "stakedAccountId": "0.0.1003",
-  "declineStakingReward": false
-}"#;
-
-        const ADMIN_KEY: &str =
-        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = ContractCreateTransaction::new();
-
-            transaction
-                .bytecode("Hello, world!")
-                .bytecode_file_id(FileId::from(1001))
-                .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-                .gas(1000)
-                .initial_balance(Hbar::from_tinybars(1_000_000))
-                .auto_renew_period(Duration::days(90))
-                .constructor_parameters([5, 10, 15])
-                .contract_memo("A contract memo")
-                .max_automatic_token_associations(512)
-                .auto_renew_account_id(AccountId::from(1002))
-                .staked_account_id(AccountId::from(1003))
-                .decline_staking_reward(false);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, CONTRACT_CREATE_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

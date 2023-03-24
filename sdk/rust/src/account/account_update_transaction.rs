@@ -62,10 +62,7 @@ pub type AccountUpdateTransaction = Transaction<AccountUpdateTransactionData>;
 // TODO: realm_id: Option<RealmId>
 // TODO: new_realm_admin_key: Option<Key>,
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountUpdateTransactionData {
     /// The account ID which is being updated in this transaction.
     account_id: Option<AccountId>,
@@ -77,10 +74,6 @@ pub struct AccountUpdateTransactionData {
     receiver_signature_required: Option<bool>,
 
     /// The account is charged to extend its expiration date every this many seconds.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
     auto_renew_period: Option<Duration>,
 
     auto_renew_account_id: Option<AccountId>,
@@ -98,10 +91,6 @@ pub struct AccountUpdateTransactionData {
     proxy_account_id: Option<AccountId>,
 
     /// The new expiration time to extend to (ignored if equal to or before the current one).
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the account.
@@ -114,7 +103,6 @@ pub struct AccountUpdateTransactionData {
     max_automatic_token_associations: Option<u16>,
 
     /// ID of the account or node to which this account is staking, if any.
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     staked_id: Option<StakedId>,
 
     /// If true, the account declines receiving a staking reward. The default value is false.
@@ -403,71 +391,6 @@ impl ToProtobuf for AccountUpdateTransactionData {
             receive_record_threshold_field: None,
             receiver_sig_required_field: receiver_signature_required,
             staked_id,
-        }
-    }
-}
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::str::FromStr;
-
-        use time::{
-            Duration,
-            OffsetDateTime,
-        };
-
-        use crate::{
-            AccountId,
-            AccountUpdateTransaction,
-            PublicKey,
-        };
-
-        // language=JSON
-        const ACCOUNT_UPDATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "accountUpdate",
-  "accountId": "0.0.1001",
-  "key": {
-    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-  },
-  "receiverSignatureRequired": true,
-  "autoRenewPeriod": 7776000,
-  "proxyAccountId": "0.0.3141",
-  "expirationTime": 1656352251277559886,
-  "accountMemo": "An account memo",
-  "maxAutomaticTokenAssociations": 256,
-  "stakedAccountId": "0.0.1002",
-  "declineStakingReward": false
-}"#;
-
-        const KEY: &str =
-        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-
-        #[test]
-        #[allow(deprecated)]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = AccountUpdateTransaction::new();
-
-            transaction
-                .account_id(AccountId::from(1001))
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
-                    1_656_352_251_277_559_886,
-                )?)
-                .key(PublicKey::from_str(KEY)?)
-                .receiver_signature_required(true)
-                .auto_renew_period(Duration::days(90))
-                .account_memo("An account memo")
-                .max_automatic_token_associations(256)
-                .staked_node_id(7)
-                .staked_account_id(AccountId::from(1002))
-                .proxy_account_id(AccountId::from(3141))
-                .decline_staking_reward(false);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, ACCOUNT_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

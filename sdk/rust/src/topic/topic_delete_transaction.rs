@@ -52,10 +52,7 @@ use crate::{
 ///
 pub type TopicDeleteTransaction = Transaction<TopicDeleteTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TopicDeleteTransactionData {
     /// The topic ID which is being deleted in this transaction.
     topic_id: Option<TopicId>,
@@ -129,35 +126,5 @@ impl ToProtobuf for TopicDeleteTransactionData {
 
     fn to_protobuf(&self) -> Self::Protobuf {
         services::ConsensusDeleteTopicTransactionBody { topic_id: self.topic_id.to_protobuf() }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            TopicDeleteTransaction,
-            TopicId,
-        };
-
-        // language=JSON
-        const TOPIC_DELETE_TRANSACTION_JSON: &str = r#"{
-  "$type": "topicDelete",
-  "topicId": "0.0.1001"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TopicDeleteTransaction::new();
-
-            transaction.topic_id(TopicId::from(1001));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOPIC_DELETE_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

@@ -21,7 +21,7 @@
 import Foundation
 
 public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable,
-    CustomStringConvertible
+    CustomStringConvertible, Sendable
 {
     public static let mainnet = LedgerId(Data([0]))
 

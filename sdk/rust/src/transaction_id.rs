@@ -52,7 +52,6 @@ use crate::{
 /// and internally by the network for detecting when duplicate transactions are submitted.
 ///
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct TransactionId {
     /// The account that pays for this transaction.
     pub account_id: AccountId,

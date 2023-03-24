@@ -63,16 +63,11 @@ mod data {
 // Hack: In rust this is this, but in swift this is just a less densely populatable `AnyTransaction`.
 // As a result, the sources stuff doesn't carry over... That can be fixed after SDK level FFI is removed.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub(super) struct SchedulableTransactionBody {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     pub(super) data: Box<AnySchedulableTransactionData>,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     pub(super) max_transaction_fee: Option<Hbar>,
 
-    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "String::is_empty"))]
     pub(super) transaction_memo: String,
 }
 
@@ -101,8 +96,6 @@ impl SchedulableTransactionBody {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub(super) enum AnySchedulableTransactionData {
     AccountCreate(data::AccountCreate),
     AccountUpdate(data::AccountUpdate),

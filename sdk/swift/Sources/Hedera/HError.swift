@@ -94,7 +94,6 @@ public struct HError: Error, CustomStringConvertible {
         case nodeAccountUnknown
         case responseStatusUnrecognized
         case receiptStatus(status: Status, transactionId: TransactionId?)
-        case requestParse
         case mnemonicParse(reason: MnemonicParse, mnemonic: Mnemonic)
         case mnemonicEntropy(MnemonicEntropy)
         case signatureVerify
@@ -202,9 +201,6 @@ public struct HError: Error, CustomStringConvertible {
 
             }
             kind = .receiptStatus(status: status, transactionId: transactionId)
-
-        case HEDERA_ERROR_REQUEST_PARSE:
-            kind = .requestParse
 
         case HEDERA_ERROR_SIGNATURE_VERIFY:
             kind = .signatureVerify

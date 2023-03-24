@@ -60,7 +60,6 @@ mod tests;
 
 /// A public key on the Hedera network.
 #[derive(Clone, Eq, Copy, Hash, PartialEq)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct PublicKey(PublicKeyData);
 
 #[derive(Clone, Copy)]

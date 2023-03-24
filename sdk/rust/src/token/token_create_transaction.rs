@@ -75,10 +75,7 @@ use crate::{
 ///
 pub type TokenCreateTransaction = Transaction<TokenCreateTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TokenCreateTransactionData {
     /// The publicly visible name of the token.
     name: String,
@@ -115,10 +112,6 @@ pub struct TokenCreateTransactionData {
     freeze_default: bool,
 
     /// The time at which the token should expire.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     expiration_time: Option<OffsetDateTime>,
 
     /// An account which will be automatically charged to renew the token's expiration, at
@@ -126,10 +119,6 @@ pub struct TokenCreateTransactionData {
     auto_renew_account_id: Option<AccountId>,
 
     /// The interval at which the auto-renew account will be charged to extend the token's expiry
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
     auto_renew_period: Option<Duration>,
 
     /// The memo associated with the token.
@@ -583,135 +572,6 @@ impl ToProtobuf for TokenCreateTransactionData {
             fee_schedule_key: self.fee_schedule_key.to_protobuf(),
             custom_fees: self.custom_fees.to_protobuf(),
             pause_key: self.pause_key.to_protobuf(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::str::FromStr;
-
-        use time::{
-            Duration,
-            OffsetDateTime,
-        };
-
-        use crate::token::custom_fees::{
-            CustomFee,
-            FixedFeeData,
-        };
-        use crate::token::token_supply_type::TokenSupplyType;
-        use crate::token::token_type::TokenType;
-        use crate::{
-            AccountId,
-            PublicKey,
-            TokenCreateTransaction,
-            TokenId,
-        };
-
-        // language=JSON
-        const TOKEN_CREATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenCreate",
-  "name": "Pound",
-  "symbol": "LB",
-  "decimals": 9,
-  "initialSupply": 1000000000,
-  "treasuryAccountId": "0.0.1001",
-  "adminKey": {
-    "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-  },
-  "kycKey": {
-    "single": "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500"
-  },
-  "freezeKey": {
-    "single": "302a300506032b657003210004e540b5fba8fc1ee1cc5cc450019c578b36311733507fabf4f85bf2744583e7"
-  },
-  "wipeKey": {
-    "single": "302a300506032b657003210099f8981cad75fc7322bf5c89d5f4ce4f2af76b2a63780b22cbce1bfdfa237f4e"
-  },
-  "supplyKey": {
-    "single": "302a300506032b6570032100c80c04aaca1783aafbaf6eba462bac89236ec82ac4db31953329ffbfeacdb88b"
-  },
-  "freezeDefault": false,
-  "expirationTime": 1656352251277559886,
-  "autoRenewAccountId": "0.0.1002",
-  "autoRenewPeriod": 7776000,
-  "tokenMemo": "A memo",
-  "tokenType": "fungibleCommon",
-  "tokenSupplyType": "finite",
-  "maxSupply": 1000000000,
-  "feeScheduleKey": {
-    "single": "302a300506032b65700321000cd029bfd4a818de944c21799f4b5f6b5616702d0495520c818d92488e5395fc"
-  },
-  "customFees": [
-    {
-      "$type": "fixed",
-      "amount": 1,
-      "denominatingTokenId": "0.0.7",
-      "feeCollectorAccountId": "0.0.8",
-      "allCollectorsAreExempt": false
-    }
-  ],
-  "pauseKey": {
-    "single": "302a300506032b65700321008b020177031eae1e4a721c814b08a3ef2c3f473781a570e9daaf9f7ad27f8967"
-  }
-}"#;
-
-        const ADMIN_KEY: &str =
-        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-        const KYC_KEY: &str =
-        "302a300506032b6570032100b5b4d9351ebdf266ef3989aed4fd8f0cfcf24b75ba3d0df19cd3946771b40500";
-        const FREEZE_KEY: &str =
-        "302a300506032b657003210004e540b5fba8fc1ee1cc5cc450019c578b36311733507fabf4f85bf2744583e7";
-        const WIPE_KEY: &str =
-        "302a300506032b657003210099f8981cad75fc7322bf5c89d5f4ce4f2af76b2a63780b22cbce1bfdfa237f4e";
-        const SUPPLY_KEY: &str =
-        "302a300506032b6570032100c80c04aaca1783aafbaf6eba462bac89236ec82ac4db31953329ffbfeacdb88b";
-        const FEE_SCHEDULE_KEY: &str =
-        "302a300506032b65700321000cd029bfd4a818de944c21799f4b5f6b5616702d0495520c818d92488e5395fc";
-        const PAUSE_KEY: &str =
-        "302a300506032b65700321008b020177031eae1e4a721c814b08a3ef2c3f473781a570e9daaf9f7ad27f8967";
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenCreateTransaction::new();
-
-            transaction
-                .name("Pound")
-                .symbol("LB")
-                .decimals(9)
-                .initial_supply(1_000_000_000)
-                .treasury_account_id(AccountId::from_str("0.0.1001")?)
-                .admin_key(PublicKey::from_str(ADMIN_KEY)?)
-                .kyc_key(PublicKey::from_str(KYC_KEY)?)
-                .freeze_key(PublicKey::from_str(FREEZE_KEY)?)
-                .wipe_key(PublicKey::from_str(WIPE_KEY)?)
-                .supply_key(PublicKey::from_str(SUPPLY_KEY)?)
-                .freeze_default(false)
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
-                    1_656_352_251_277_559_886,
-                )?)
-                .auto_renew_account_id(AccountId::from_str("0.0.1002")?)
-                .auto_renew_period(Duration::days(90))
-                .token_memo("A memo")
-                .token_type(TokenType::FungibleCommon)
-                .token_supply_type(TokenSupplyType::Finite)
-                .max_supply(1_000_000_000)
-                .fee_schedule_key(PublicKey::from_str(FEE_SCHEDULE_KEY)?)
-                .custom_fees([CustomFee {
-                    fee: FixedFeeData { amount: 1, denominating_token_id: TokenId::from(7) }.into(),
-                    fee_collector_account_id: Some(AccountId::from(8)),
-                    all_collectors_are_exempt: false,
-                }])
-                .pause_key(PublicKey::from_str(PAUSE_KEY)?);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_CREATE_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

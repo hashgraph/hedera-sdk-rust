@@ -74,10 +74,7 @@ use crate::{
 ///
 pub type TokenWipeTransaction = Transaction<TokenWipeTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenWipeTransactionData {
     /// The account to be wiped.
     account_id: Option<AccountId>,
@@ -207,48 +204,6 @@ impl ToProtobuf for TokenWipeTransactionData {
             account: self.account_id.to_protobuf(),
             amount: self.amount.unwrap_or_default(),
             serial_numbers: self.serials.iter().map(|num| *num as i64).collect(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            AccountId,
-            TokenId,
-            TokenWipeTransaction,
-        };
-
-        // language=JSON
-        const TOKEN_WIPE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenWipe",
-  "accountId": "0.0.1001",
-  "tokenId": "0.0.1002",
-  "amount": 123,
-  "serials": [
-    1,
-    2,
-    3
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenWipeTransaction::new();
-
-            transaction
-                .account_id(AccountId::from(1001))
-                .token_id(TokenId::from(1002))
-                .amount(123u64)
-                .serials([1, 2, 3]);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_WIPE_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

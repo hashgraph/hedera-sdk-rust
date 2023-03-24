@@ -57,10 +57,7 @@ use crate::{
 /// ready to interact with the tokens.
 pub type TokenAssociateTransaction = Transaction<TokenAssociateTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenAssociateTransactionData {
     /// The account to be associated with the provided tokens.
     account_id: Option<AccountId>,
@@ -159,39 +156,5 @@ impl ToProtobuf for TokenAssociateTransactionData {
         let tokens = self.token_ids.to_protobuf();
 
         services::TokenAssociateTransactionBody { account, tokens }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            AccountId,
-            TokenAssociateTransaction,
-            TokenId,
-        };
-
-        // language=JSON
-        const TOKEN_ASSOCIATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenAssociate",
-  "accountId": "0.0.1001",
-  "tokenIds": [
-    "0.0.1002"
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenAssociateTransaction::new();
-
-            transaction.account_id(AccountId::from(1001)).token_ids([TokenId::from(1002)]);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_ASSOCIATE_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

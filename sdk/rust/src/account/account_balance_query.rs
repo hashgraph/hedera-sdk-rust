@@ -48,9 +48,7 @@ use crate::{
 pub type AccountBalanceQuery = Query<AccountBalanceQueryData>;
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
 pub struct AccountBalanceQueryData {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
     source: AccountBalanceSource,
 }
 
@@ -68,8 +66,6 @@ impl From<AccountBalanceQueryData> for AnyQueryData {
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 enum AccountBalanceSource {
     AccountId(AccountId),
     ContractId(ContractId),
@@ -152,36 +148,6 @@ impl ValidateChecksums for AccountBalanceQueryData {
             AccountBalanceSource::ContractId(contract_id) => {
                 contract_id.validate_checksums(ledger_id)
             }
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::account::account_balance_query::AccountBalanceSource;
-        use crate::query::AnyQueryData;
-        use crate::AnyQuery;
-
-        // language=JSON
-        const ACCOUNT_BALANCE: &str = r#"{
-  "$type": "accountBalance",
-  "accountId": "0.0.1001"
-}"#;
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let query: AnyQuery = serde_json::from_str(ACCOUNT_BALANCE)?;
-
-            let data = assert_matches!(query.data, AnyQueryData::AccountBalance(query) => query);
-            let source = assert_matches!(data.source, AccountBalanceSource::AccountId(id) => id);
-
-            assert_eq!(source.num, 1001);
-
-            Ok(())
         }
     }
 }

@@ -46,7 +46,6 @@ use crate::{
 
 /// A unique identifier for a cryptocurrency account on Hedera.
 #[derive(Copy, Hash, PartialEq, Eq, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct AccountId {
     /// A non-negative number identifying the shard containing this account.
     pub shard: u64,

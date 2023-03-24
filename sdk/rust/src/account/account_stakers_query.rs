@@ -43,8 +43,6 @@ use crate::{
 pub type AccountStakersQuery = Query<AccountStakersQueryData>;
 
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountStakersQueryData {
     account_id: Option<AccountId>,
 }

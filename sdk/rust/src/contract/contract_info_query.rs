@@ -42,8 +42,6 @@ use crate::{
 pub type ContractInfoQuery = Query<ContractInfoQueryData>;
 
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractInfoQueryData {
     /// The contract for which information is requested.
     contract_id: Option<ContractId>,

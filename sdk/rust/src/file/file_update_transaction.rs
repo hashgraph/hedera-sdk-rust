@@ -57,10 +57,7 @@ use crate::{
 ///
 pub type FileUpdateTransaction = Transaction<FileUpdateTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileUpdateTransactionData {
     /// The file ID which is being updated in this transaction.
     file_id: Option<FileId>,
@@ -71,21 +68,12 @@ pub struct FileUpdateTransactionData {
     /// All keys at the top level of a key list must sign to create or
     /// modify the file. Any one of the keys at the top level key list
     /// can sign to delete the file.
-    #[cfg_attr(feature = "ffi", serde(default))]
     keys: Option<KeyList>,
 
     /// The bytes that are to be the contents of the file.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
     contents: Option<Vec<u8>>,
 
     /// The time at which this file should expire.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     expiration_time: Option<OffsetDateTime>,
 
     auto_renew_account_id: Option<AccountId>,
@@ -264,61 +252,6 @@ impl ToProtobuf for FileUpdateTransactionData {
             keys: self.keys.to_protobuf(),
             contents: self.contents.clone().unwrap_or_default(),
             memo: self.file_memo.clone(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use std::str::FromStr;
-
-        use time::OffsetDateTime;
-
-        use crate::{
-            FileId,
-            FileUpdateTransaction,
-            PublicKey,
-        };
-
-        // language=JSON
-        const FILE_UPDATE_TRANSACTION_JSON: &str = r#"{
-  "$type": "fileUpdate",
-  "fileId": "0.0.1001",
-  "fileMemo": "File memo",
-  "keys": {
-    "keys": [
-      {
-        "single": "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd"
-      }
-    ]
-  },
-  "contents": "SGVsbG8sIHdvcmxkIQ==",
-  "expirationTime": 1656352251277559886
-}"#;
-
-        const SIGN_KEY: &str =
-        "302a300506032b6570032100d1ad76ed9b057a3d3f2ea2d03b41bcd79aeafd611f941924f0f6da528ab066fd";
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = FileUpdateTransaction::new();
-
-            transaction
-                .file_id(FileId::from(1001))
-                .file_memo("File memo")
-                .keys([PublicKey::from_str(SIGN_KEY)?])
-                .contents("Hello, world!".into())
-                .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(
-                    1_656_352_251_277_559_886,
-                )?);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, FILE_UPDATE_TRANSACTION_JSON);
-
-            Ok(())
         }
     }
 }

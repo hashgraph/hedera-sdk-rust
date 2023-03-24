@@ -6,8 +6,6 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub(crate) struct Operator {
     pub account_id: AccountId,
     pub signer: PrivateKey,

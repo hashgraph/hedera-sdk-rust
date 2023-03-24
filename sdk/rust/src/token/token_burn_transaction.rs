@@ -68,10 +68,7 @@ use crate::{
 /// response code will be returned.
 pub type TokenBurnTransaction = Transaction<TokenBurnTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenBurnTransactionData {
     /// The token for which to burn tokens.
     token_id: Option<TokenId>,
@@ -183,41 +180,5 @@ impl ToProtobuf for TokenBurnTransactionData {
         let serial_numbers = self.serials.clone();
 
         services::TokenBurnTransactionBody { token, amount, serial_numbers }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use crate::{
-            TokenBurnTransaction,
-            TokenId,
-        };
-
-        // language=JSON
-        const TOKEN_BURN_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenBurn",
-  "tokenId": "0.0.1002",
-  "amount": 100,
-  "serials": [
-    1,
-    2,
-    3
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenBurnTransaction::new();
-
-            transaction.token_id(TokenId::from(1002)).amount(100u64).serials([1, 2, 3]);
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_BURN_TRANSACTION_JSON);
-
-            Ok(())
-        }
     }
 }

@@ -42,8 +42,6 @@ use crate::{
 pub type ScheduleInfoQuery = Query<ScheduleInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ScheduleInfoQueryData {
     schedule_id: Option<ScheduleId>,
 }
