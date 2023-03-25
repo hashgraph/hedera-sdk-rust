@@ -164,14 +164,19 @@ private struct MirrorQuerySubscribeIterator<R: MirrorRequest>: AsyncIteratorProt
                     case let code where request.shouldRetry(forStatus: code):
                         state = .start
                         guard let timeout = backoff.next() else {
-                            throw HError.timedOut
+                            throw HError.timedOut(
+                                String(
+                                    describing: HError(
+                                        kind: .grpcStatus(status: Int32(code.rawValue)),
+                                        description: error.description
+                                    )))
                         }
 
                         try await Task.sleep(nanoseconds: UInt64(timeout * 1e9))
 
                     case let code:
                         state = .finished
-                        throw HError.init(
+                        throw HError(
                             kind: .grpcStatus(status: Int32(code.rawValue)),
                             description: error.description
                         )

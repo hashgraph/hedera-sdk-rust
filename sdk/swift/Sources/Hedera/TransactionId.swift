@@ -32,13 +32,6 @@ public struct TransactionId: Sendable, Codable, Equatable, ExpressibleByStringLi
         return Self(accountId: accountId, validStart: validStart, scheduled: false)
     }
 
-    internal init(unsafeFromCHedera hedera: HederaTransactionId) {
-        accountId = AccountId(unsafeFromCHedera: hedera.account_id)
-        validStart = Timestamp(fromCHedera: hedera.valid_start)
-        nonce = hedera.nonce != 0 ? hedera.nonce : nil
-        scheduled = hedera.scheduled
-    }
-
     private init<S: StringProtocol>(parsing description: S) throws {
         let expected = "expecting <accountId>@<validStart>[?scheduled][/<nonce>]"
 

@@ -609,7 +609,6 @@ dependencies = [
  "assert_matches",
  "async-stream",
  "backoff",
- "cbindgen",
  "clap",
  "dotenvy",
  "ed25519-dalek",
@@ -622,7 +621,6 @@ dependencies = [
  "hex-literal",
  "hmac",
  "k256",
- "libc",
  "log",
  "num-bigint",
  "once_cell",
@@ -640,6 +638,24 @@ dependencies = [
  "tinystr",
  "tokio",
  "tonic",
+]
+
+[[package]]
+name = "hedera-crypto"
+version = "0.0.0"
+dependencies = [
+ "cbindgen",
+ "ed25519-dalek",
+ "hmac",
+ "k256",
+ "libc",
+ "pbkdf2",
+ "pem-rfc7468",
+ "pkcs8",
+ "rand",
+ "sha2",
+ "sha3",
+ "thiserror",
 ]
 
 [[package]]

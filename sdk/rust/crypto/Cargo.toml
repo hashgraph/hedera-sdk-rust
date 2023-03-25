@@ -1,0 +1,39 @@
+# ffi dependencies for hedera-sdk-swift
+# This is *NOT* for consumer use.
+# The only way to interact with this crate is via FFI, and users using this crate for FFI are *NOT* supported.
+# This is basically a duplicate of the varying modules in hedera-sdk-rust.
+# purely for the smaller surface area.
+# Thiis library is *also* temporary.
+[package]
+name = "hedera-crypto"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[lib]
+bench = false
+crate-type = ["lib", "staticlib"]
+
+[dependencies]
+ed25519-dalek = { version = "2.0.0-pre.0", features = ["rand_core"] }
+thiserror = "1.0.31"
+pbkdf2 = { version = "0.11.0", default-features = false }
+libc = { version = "0.2.135" }
+sha2 = "0.10.2"
+sha3 = "0.10.2"
+pem-rfc7468 = { version = "0.6.0", features = ["std"] }
+rand = "0.8.5"
+hmac = "0.12.1"
+
+[dependencies.pkcs8]
+version = "0.9.0"
+default_features = false
+features = ["encryption"]
+
+[dependencies.k256]
+version = "0.12.0"
+default-features = false
+features = ["arithmetic", "ecdsa", "pkcs8", "precomputed-tables", "std"]
+
+[build-dependencies]
+cbindgen = { version = "0.24.3", default-features = false }

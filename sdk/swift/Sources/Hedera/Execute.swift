@@ -162,8 +162,7 @@ internal func executeAny<E: Execute & ValidateChecksums>(_ client: Client, _ exe
             }
 
             guard let timeout = backoff.next() else {
-                // todo last error
-                throw HError.timedOut
+                throw HError.timedOut(String(describing: lastError))
             }
 
             try await Task.sleep(nanoseconds: UInt64(timeout * 1e9))

@@ -40,7 +40,7 @@ jobs:
 
 
       - name: Check
-        run: cargo check --features ffi
+        run: cargo check --workspace
         
   
   test:
@@ -62,4 +62,4 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Test
-        run: cargo test --features ffi
+        run: cargo test --workspace

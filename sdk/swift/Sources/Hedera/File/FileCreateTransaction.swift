@@ -30,8 +30,7 @@ public final class FileCreateTransaction: Transaction {
         contents: Data = Data(),
         autoRenewPeriod: Duration? = nil,
         autoRenewAccountId: AccountId? = nil,
-        expirationTime: Timestamp? = Timestamp(
-            from: Calendar.current.date(byAdding: .day, value: 90, to: Date())!)
+        expirationTime: Timestamp? = .now + .days(90)
     ) {
         self.fileMemo = fileMemo
         self.keys = keys

@@ -20,8 +20,5 @@
     ],
     "settings": {
         "git.alwaysSignOff": true,
-        "rust-analyzer.cargo.features": [
-            "ffi"
-        ]
     }
 }

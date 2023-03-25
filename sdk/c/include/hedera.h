@@ -13,26 +13,9 @@
  */
 typedef enum HederaError {
   HEDERA_ERROR_OK = 0,
-  HEDERA_ERROR_TIMED_OUT,
-  HEDERA_ERROR_GRPC_STATUS,
-  HEDERA_ERROR_FROM_PROTOBUF,
-  HEDERA_ERROR_TRANSACTION_PRE_CHECK_STATUS,
-  HEDERA_ERROR_TRANSACTION_NO_ID_PRE_CHECK_STATUS,
-  HEDERA_ERROR_QUERY_PRE_CHECK_STATUS,
-  HEDERA_ERROR_QUERY_PAYMENT_PRE_CHECK_STATUS,
-  HEDERA_ERROR_QUERY_NO_PAYMENT_PRE_CHECK_STATUS,
-  HEDERA_ERROR_BASIC_PARSE,
   HEDERA_ERROR_KEY_PARSE,
   HEDERA_ERROR_KEY_DERIVE,
-  HEDERA_ERROR_NO_PAYER_ACCOUNT_OR_TRANSACTION_ID,
-  HEDERA_ERROR_FREEZE_UNSET_NODE_ACCOUNT_IDS,
-  HEDERA_ERROR_MAX_QUERY_PAYMENT_EXCEEDED,
-  HEDERA_ERROR_NODE_ACCOUNT_UNKNOWN,
-  HEDERA_ERROR_RESPONSE_STATUS_UNRECOGNIZED,
-  HEDERA_ERROR_RECEIPT_STATUS,
   HEDERA_ERROR_SIGNATURE_VERIFY,
-  HEDERA_ERROR_BAD_ENTITY_ID,
-  HEDERA_ERROR_CANNOT_CREATE_CHECKSUM,
 } HederaError;
 
 typedef enum HederaHmacVariant {
@@ -52,84 +35,6 @@ typedef struct HederaPrivateKey HederaPrivateKey;
  */
 typedef struct HederaPublicKey HederaPublicKey;
 
-typedef struct HederaAccountId {
-  uint64_t shard;
-  uint64_t realm;
-  uint64_t num;
-  /**
-   * Safety:
-   * - If `alias` is not null, it must:
-   *   - be properly aligned
-   *   - be dereferenceable
-   *   - point to a valid instance of `PublicKey` (any `PublicKey` that `hedera` provides which hasn't been freed yet)
-   */
-  struct HederaPublicKey *alias;
-  /**
-   * Safety:
-   * - if `evm_address` is not null, it must:
-   * - be properly aligned
-   * - be dereferencable
-   * - point to an array of 20 bytes
-   */
-  uint8_t *evm_address;
-} HederaAccountId;
-
-typedef struct HederaTimestamp {
-  uint64_t secs;
-  uint32_t nanos;
-} HederaTimestamp;
-
-typedef struct HederaTransactionId {
-  struct HederaAccountId account_id;
-  struct HederaTimestamp valid_start;
-  int32_t nonce;
-  bool scheduled;
-} HederaTransactionId;
-
-typedef enum HederaErrorDetails_Tag {
-  HEDERA_ERROR_DETAILS_NONE,
-  HEDERA_ERROR_DETAILS_ERROR_GRPC_STATUS,
-  HEDERA_ERROR_DETAILS_ERROR_STATUS_TRANSACTION_ID,
-  HEDERA_ERROR_DETAILS_ERROR_STATUS_NO_TRANSACTION_ID,
-  HEDERA_ERROR_DETAILS_ERROR_MAX_QUERY_PAYMENT_EXCEEDED,
-  HEDERA_ERROR_DETAILS_ERROR_BAD_ENTITY_ID,
-} HederaErrorDetails_Tag;
-
-typedef struct HederaErrorStatusTransactionId_Body {
-  int32_t status;
-  struct HederaTransactionId transaction_id;
-} HederaErrorStatusTransactionId_Body;
-
-typedef struct HederaErrorStatusNoTransactionId_Body {
-  int32_t status;
-} HederaErrorStatusNoTransactionId_Body;
-
-typedef struct HederaErrorMaxQueryPaymentExceeded_Body {
-  int64_t max_query_payment;
-  int64_t query_cost;
-} HederaErrorMaxQueryPaymentExceeded_Body;
-
-typedef struct HederaErrorBadEntityId_Body {
-  uint64_t shard;
-  uint64_t realm;
-  uint64_t num;
-  uint8_t present_checksum[5];
-  uint8_t expected_checksum[5];
-} HederaErrorBadEntityId_Body;
-
-typedef struct HederaErrorDetails {
-  HederaErrorDetails_Tag tag;
-  union {
-    struct {
-      int32_t error_grpc_status;
-    };
-    HederaErrorStatusTransactionId_Body ERROR_STATUS_TRANSACTION_ID;
-    HederaErrorStatusNoTransactionId_Body ERROR_STATUS_NO_TRANSACTION_ID;
-    HederaErrorMaxQueryPaymentExceeded_Body ERROR_MAX_QUERY_PAYMENT_EXCEEDED;
-    HederaErrorBadEntityId_Body ERROR_BAD_ENTITY_ID;
-  };
-} HederaErrorDetails;
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -145,8 +50,6 @@ extern "C" {
  * - the returned string must NOT be freed with `free`.
  */
 char *hedera_error_message(void);
-
-struct HederaErrorDetails hedera_last_error_details(void);
 
 /**
  * Free a string returned from a hedera API.

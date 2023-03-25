@@ -18,22 +18,7 @@
  * ‍
  */
 
-#[repr(C)]
-pub struct TransactionId {
-    account_id: super::AccountId,
-    valid_start: super::Timestamp,
-    nonce: i32,
-    scheduled: bool,
-}
-
-impl From<crate::TransactionId> for TransactionId {
-    fn from(it: crate::TransactionId) -> Self {
-        let crate::TransactionId { account_id, valid_start, nonce, scheduled } = it;
-        Self {
-            account_id: account_id.into(),
-            nonce: nonce.unwrap_or_default(),
-            valid_start: valid_start.into(),
-            scheduled,
-        }
-    }
-}
+mod private;
+mod public;
+pub use private::PrivateKey;
+pub use public::PublicKey;
