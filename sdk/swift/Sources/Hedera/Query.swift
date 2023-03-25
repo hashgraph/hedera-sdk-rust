@@ -46,6 +46,14 @@ public class Query<Response>: ValidateChecksums {
         fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
     }
 
+    internal func shouldRetry(forResponse response: GrpcResponse) -> Bool {
+        false
+    }
+
+    internal func shouldRetryPrecheck(forStatus status: Status) -> Bool {
+        false
+    }
+
     // reasonable default: the actual cost is expected.
     internal func mapCost(_ cost: Hbar) -> Hbar {
         cost

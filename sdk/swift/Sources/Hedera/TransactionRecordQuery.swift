@@ -106,6 +106,14 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
 
         return record
     }
+
+    internal override func shouldRetryPrecheck(forStatus status: Status) -> Bool {
+        switch status {
+        case .receiptNotFound, .recordNotFound: return true
+        default: return false
+        }
+    }
+
     internal override var relatedTransactionId: TransactionId? { transactionId }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

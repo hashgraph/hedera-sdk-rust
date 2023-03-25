@@ -113,6 +113,25 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
         return receipt
     }
 
+    internal override func shouldRetry(forResponse response: GrpcResponse) -> Bool {
+        guard case .transactionGetReceipt(let response) = response.response else {
+            return false
+        }
+
+        guard case .unknown = Status(rawValue: Int32(response.receipt.status.rawValue)) else {
+            return false
+        }
+
+        return true
+    }
+
+    internal override func shouldRetryPrecheck(forStatus status: Status) -> Bool {
+        switch status {
+        case .receiptNotFound, .recordNotFound: return true
+        default: return false
+        }
+    }
+
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try transactionId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
