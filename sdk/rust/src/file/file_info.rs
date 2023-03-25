@@ -52,7 +52,7 @@ pub struct FileInfo {
     /// Please note that this not supported on any hedera network at this time.
     pub auto_renew_period: Option<Duration>,
 
-    /// The account to be used at this ffile's expiration time to extend the
+    /// The account to be used at this file's expiration time to extend the
     /// life of the file.
     ///
     /// # Network Support

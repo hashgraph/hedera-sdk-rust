@@ -47,19 +47,9 @@ public struct Timestamp: Sendable, Codable, Equatable, CustomStringConvertible {
         self.init(fromUnixTimestampNanos: try container.decode(UInt64.self))
     }
 
-    // note(sr): these have the same abi lol, no "unsafe" here.
-    internal init(fromCHedera timestamp: HederaTimestamp) {
-        seconds = timestamp.secs
-        subSecondNanos = timestamp.nanos
-    }
-
     // todo: what do on overflow?
     public var unixTimestampNanos: UInt64 {
         seconds * nanosPerSecond + UInt64(subSecondNanos)
-    }
-
-    internal func toCHederaTimestamp() -> HederaTimestamp {
-        HederaTimestamp(secs: seconds, nanos: subSecondNanos)
     }
 
     /// Convert from a `Timestamp` to a `Date`

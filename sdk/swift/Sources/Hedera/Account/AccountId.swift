@@ -90,30 +90,6 @@ public struct AccountId: Sendable, EntityId, ValidateChecksums {
         }
     }
 
-    internal init(unsafeFromCHedera hedera: HederaAccountId) {
-        shard = hedera.shard
-        realm = hedera.realm
-        num = hedera.num
-        alias = hedera.alias.map(PublicKey.unsafeFromPtr)
-        checksum = nil
-        evmAddress = hedera.evm_address.map { ptr in
-            // swiftlint:disable:next force_try
-            try! EvmAddress(Data(bytesNoCopy: ptr, count: 20, deallocator: .unsafeCHederaBytesFree))
-        }
-    }
-
-    internal func unsafeWithCHedera<Result>(_ body: (HederaAccountId) throws -> Result) rethrows -> Result {
-        if let evmAddress = evmAddress {
-            return try evmAddress.data.withUnsafeTypedBytes { evmAddress in
-                let evmAddress = UnsafeMutablePointer(mutating: evmAddress.baseAddress)
-                return try body(
-                    HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr, evm_address: evmAddress))
-            }
-        }
-
-        return try body(HederaAccountId(shard: shard, realm: realm, num: num, alias: alias?.ptr, evm_address: nil))
-    }
-
     public var description: String {
         if let alias = alias {
             return "\(shard).\(realm).\(alias)"

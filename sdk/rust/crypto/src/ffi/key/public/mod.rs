@@ -256,7 +256,7 @@ pub unsafe extern "C" fn hedera_public_key_to_evm_address(key: *mut PublicKey) -
         return ptr::null_mut();
     };
 
-    Box::into_raw(Box::new(out.to_bytes())).cast::<u8>()
+    Box::into_raw(Box::new(out)).cast::<u8>()
 }
 
 /// Releases memory associated with the public key.
