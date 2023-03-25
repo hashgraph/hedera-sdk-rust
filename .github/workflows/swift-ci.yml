@@ -31,14 +31,6 @@ jobs:
           workspaces: |
             sdk/rust
 
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install rust-src
-        run: rustup component add rust-src
-
       - name: Add target `${{ matrix.target }}`
         run: rustup target add ${{ matrix.target }}
       - name: Build for `${{ matrix.target }}`
