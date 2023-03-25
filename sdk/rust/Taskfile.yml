@@ -113,27 +113,27 @@ tasks:
             # Build for target: x86_64-apple-darwin
             - rustup target add x86_64-apple-darwin 2> /dev/null
             - cargo build --release -p hedera-crypto -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-apple-darwin
-            - strip -X -S -N -x ./target/x86_64-apple-darwin/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/x86_64-apple-darwin/release/libhedera_crypto.a 2> /dev/null
 
             # Build for target: x86_64-apple-ios
             - rustup target add x86_64-apple-ios 2> /dev/null
             - cargo build --release -p hedera-crypto -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target x86_64-apple-ios
-            - strip -X -S -N -x ./target/x86_64-apple-ios/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/x86_64-apple-ios/release/libhedera_crypto.a 2> /dev/null
 
             # Build for target: aarch64-apple-darwin
             - rustup target add aarch64-apple-darwin 2> /dev/null
             - cargo build --release -p hedera-crypto -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target aarch64-apple-darwin
-            - strip -X -S -N -x ./target/aarch64-apple-darwin/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/aarch64-apple-darwin/release/libhedera_crypto.a 2> /dev/null
 
             # Build for target: aarch64-apple-ios
             - rustup target add aarch64-apple-ios 2> /dev/null
             - cargo build --release -p hedera-crypto -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target aarch64-apple-ios
-            - strip -X -S -N -x ./target/aarch64-apple-ios/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/aarch64-apple-ios/release/libhedera_crypto.a 2> /dev/null
 
             # Build for target: aarch64-apple-ios-sim
             - rustup target add aarch64-apple-ios-sim 2> /dev/null
             - cargo build --release -p hedera-crypto -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort --target aarch64-apple-ios-sim
-            - strip -X -S -N -x ./target/aarch64-apple-ios-sim/release/libhedera.a 2> /dev/null
+            - strip -X -S -N -x ./target/aarch64-apple-ios-sim/release/libhedera_crypto.a 2> /dev/null
 
             #
             # Package for C
