@@ -42,13 +42,13 @@ jobs:
       - name: Add target `${{ matrix.target }}`
         run: rustup target add ${{ matrix.target }}
       - name: Build for `${{ matrix.target }}`
-        run: cargo build --features ffi -p hedera --target ${{ matrix.target }}
+        run: cargo build -p hedera-crypto --target ${{ matrix.target }}
 
       - name: 'Upload `${{ matrix.target }}` Artifact'
         uses: actions/upload-artifact@v3
         with:
           name: chedera-${{ matrix.target }}
-          path: sdk/rust/target/${{ matrix.target }}/debug/libhedera.a
+          path: sdk/rust/target/${{ matrix.target }}/debug/libhedera_crypto.a
           retention-days: 1
       - name: 'Upload `${{ matrix.target }}` Artifact'
         uses: actions/upload-artifact@v3
@@ -95,7 +95,7 @@ jobs:
           mkdir -p sdk/swift/CHedera.xcframework/macos-universal/Headers
           cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/macos-universal/headers
           cp .tmp/chedera-aarch64-apple-darwin/hedera.h sdk/swift/CHedera.xcframework/macos-universal/headers
-          lipo .tmp/chedera-aarch64-apple-darwin/libhedera.a .tmp/chedera-x86_64-apple-darwin/libhedera.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
+          lipo .tmp/chedera-aarch64-apple-darwin/libhedera_crypto.a .tmp/chedera-x86_64-apple-darwin/libhedera_crypto.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
         working-directory: .
 
       - name: Build
@@ -136,8 +136,8 @@ jobs:
         run: |
           mkdir -p sdk/swift/CHedera.xcframework/macos-universal/Headers
           cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/macos-universal/headers
-          cp .tmp/chedera/aarch64-apple-darwin/hedera.h sdk/swift/CHedera.xcframework/macos-universal/headers
-          lipo .tmp/chedera/aarch64-apple-darwin/libhedera.a .tmp/chedera/x86_64-apple-darwin/libhedera.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
+          cp .tmp/chedera-aarch64-apple-darwin/hedera.h sdk/swift/CHedera.xcframework/macos-universal/headers
+          lipo .tmp/chedera-aarch64-apple-darwin/libhedera_crypto.a .tmp/chedera-x86_64-apple-darwin/libhedera_crypto.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
         working-directory: .
 
       - name: Test
