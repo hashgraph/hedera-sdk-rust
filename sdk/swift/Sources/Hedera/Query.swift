@@ -152,6 +152,21 @@ public class Query<Response>: ValidateChecksums {
     // TODO: paymentSigner
 
     public final func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
+        if self.payment.amount == nil {
+            // should this inherit the timeout?
+            // payment is required but none was specified, query the cost
+            let cost = try await self.getCost(client)
+
+            if let maxAmount = self.payment.maxAmount {
+                guard cost <= maxAmount else {
+                    throw HError.maxQueryPaymentExceeded(queryCost: cost, maxQueryPayment: maxAmount)
+                }
+            }
+
+            self.payment.amount = cost
+
+        }
+
         if self.requiresPayment {
             if self.payment.amount == nil {
                 self.payment.amount = try await getCost(client)

@@ -88,8 +88,8 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
     }
 }
 
-public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLiteral,
-    ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Equatable
+public struct Hbar: LosslessStringConvertible, ExpressibleByIntegerLiteral,
+    ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Codable, Sendable
 {
     /// A constant value of zero hbars.
     public static let zero: Hbar = 0
@@ -204,5 +204,12 @@ public struct Hbar: LosslessStringConvertible, Codable, ExpressibleByIntegerLite
         var container = encoder.singleValueContainer()
 
         try container.encode(toTinybars())
+    }
+}
+
+extension Hbar: Equatable, Comparable {
+    @inlinable
+    public static func < (lhs: Hbar, rhs: Hbar) -> Bool {
+        lhs.toTinybars() < rhs.toTinybars()
     }
 }

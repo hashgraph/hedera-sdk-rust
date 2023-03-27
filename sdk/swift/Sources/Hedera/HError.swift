@@ -45,7 +45,7 @@ public struct HError: Error, CustomStringConvertible {
         case keyParse
         case keyDerive
         case noPayerAccountOrTransactionId
-        case maxQueryPaymentExceeded
+        case maxQueryPaymentExceeded(queryCost: Hbar, maxQueryPayment: Hbar)
         case nodeAccountUnknown
         case responseStatusUnrecognized
         case receiptStatus(status: Status, transactionId: TransactionId?)
@@ -139,6 +139,15 @@ public struct HError: Error, CustomStringConvertible {
         description:
             "client must be configured with a payer account or requests must be given an explicit transaction id"
     )
+
+    internal static func maxQueryPaymentExceeded(queryCost: Hbar, maxQueryPayment: Hbar) -> Self {
+        let kind = ErrorKind.maxQueryPaymentExceeded(queryCost: queryCost, maxQueryPayment: maxQueryPayment)
+
+        let description =
+            "cost of (queryCost) without explicit payment is greater than the maximum allowed payment of \(maxQueryPayment)"
+
+        return Self(kind: kind, description: description)
+    }
 
     internal static func timedOut(_ description: String) -> Self {
         Self(
