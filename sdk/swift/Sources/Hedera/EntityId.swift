@@ -21,7 +21,7 @@
 import Foundation
 import HederaProtobufs
 
-public protocol EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral, Codable,
+public protocol EntityId: LosslessStringConvertible, ExpressibleByIntegerLiteral,
     ExpressibleByStringLiteral, Hashable
 where
     Self.IntegerLiteralType == UInt64,
@@ -106,16 +106,6 @@ extension EntityId {
     }
 
     public var description: String { helper.description }
-
-    public init(from decoder: Decoder) throws {
-        try self.init(parsing: decoder.singleValueContainer().decode(String.self))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
-    }
 
     public static func fromSolidityAddress<S: StringProtocol>(_ description: S) throws -> Self {
         try SolidityAddress(parsing: description).toEntityId()

@@ -75,7 +75,7 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
         case "Gℏ":
             self = .gigabar
         default:
-            throw HError(kind: .basicParse, description: "unit must be a valid hbar unit")
+            throw HError.basicParse("unit must be a valid hbar unit")
         }
     }
 
@@ -89,7 +89,7 @@ public enum HbarUnit: UInt64, LosslessStringConvertible, ExpressibleByStringLite
 }
 
 public struct Hbar: LosslessStringConvertible, ExpressibleByIntegerLiteral,
-    ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Codable, Sendable
+    ExpressibleByStringLiteral, ExpressibleByFloatLiteral, Sendable
 {
     /// A constant value of zero hbars.
     public static let zero: Hbar = 0
@@ -162,10 +162,6 @@ public struct Hbar: LosslessStringConvertible, ExpressibleByIntegerLiteral,
         Self(tinybars: amount)
     }
 
-    public init(from decoder: Decoder) throws {
-        self.init(tinybars: try decoder.singleValueContainer().decode(Int64.self))
-    }
-
     private init(tinybars: Int64) {
         self.tinybars = tinybars
     }
@@ -198,12 +194,6 @@ public struct Hbar: LosslessStringConvertible, ExpressibleByIntegerLiteral,
 
     public var description: String {
         toString()
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(toTinybars())
     }
 }
 

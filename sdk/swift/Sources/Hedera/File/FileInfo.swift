@@ -24,7 +24,7 @@ import HederaProtobufs
 // TODO: keys
 
 /// Response from `FileInfoQuery`.
-public final class FileInfo: Codable {
+public final class FileInfo {
     internal init(
         fileId: FileId,
         size: UInt64,

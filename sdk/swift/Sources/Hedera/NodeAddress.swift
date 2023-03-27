@@ -22,7 +22,7 @@ import Foundation
 import HederaProtobufs
 import Network
 
-public struct SocketAddressV4: LosslessStringConvertible, Codable {
+public struct SocketAddressV4: LosslessStringConvertible {
     // name is is to match the other SDKs.
     // swiftlint:disable:next identifier_name
     public var ip: IPv4Address
@@ -64,18 +64,8 @@ public struct SocketAddressV4: LosslessStringConvertible, Codable {
         try? self.init(parsing: description)
     }
 
-    public init(from decoder: Decoder) throws {
-        try self.init(parsing: decoder.singleValueContainer().decode(String.self))
-    }
-
     public var description: String {
         "\(ip):\(port)"
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
     }
 }
 
@@ -94,7 +84,7 @@ extension SocketAddressV4: TryProtobufCodable {
     }
 }
 
-public struct NodeAddress: Codable {
+public struct NodeAddress {
     /// A non-sequential, unique, static identifier for the node
     public var nodeId: UInt64
 

@@ -31,7 +31,7 @@ import SwiftProtobuf
 ///
 public final class TransferTransaction: Transaction {
     // avoid scope collisions by nesting :/
-    fileprivate struct Transfer: Codable, ValidateChecksums {
+    fileprivate struct Transfer: ValidateChecksums {
         let accountId: AccountId
         let amount: Int64
         let isApproval: Bool
@@ -41,7 +41,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    fileprivate struct TokenTransfer: Codable, ValidateChecksums {
+    fileprivate struct TokenTransfer: ValidateChecksums {
         let tokenId: TokenId
         var transfers: [TransferTransaction.Transfer]
         var nftTransfers: [TransferTransaction.NftTransfer]
@@ -54,7 +54,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    fileprivate struct NftTransfer: Codable, ValidateChecksums {
+    fileprivate struct NftTransfer: ValidateChecksums {
         let senderAccountId: AccountId
         let receiverAccountId: AccountId
         let serial: UInt64

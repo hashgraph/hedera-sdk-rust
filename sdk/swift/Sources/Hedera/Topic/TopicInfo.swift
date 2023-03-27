@@ -22,7 +22,7 @@ import Foundation
 import HederaProtobufs
 
 /// Response from `TopicInfoQuery`.
-public struct TopicInfo: Codable {
+public struct TopicInfo {
     /// The ID of the topic for which information is requested.
     public let topicId: TopicId
 

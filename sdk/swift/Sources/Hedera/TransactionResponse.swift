@@ -28,19 +28,7 @@ import Foundation
 ///
 /// To learn the consensus result, the client should later obtain a
 /// receipt (free), or can buy a more detailed record (not free).
-public struct TransactionResponse: Decodable {
-    internal init(
-        nodeAccountId: AccountId,
-        transactionId: TransactionId,
-        transactionHash: TransactionHash,
-        validateStatus: Bool = true
-    ) {
-        self.nodeAccountId = nodeAccountId
-        self.transactionId = transactionId
-        self.transactionHash = transactionHash
-        self.validateStatus = validateStatus
-    }
-
+public struct TransactionResponse {
     /// The account ID of the node that the transaction was submitted to.
     public let nodeAccountId: AccountId
 
@@ -55,20 +43,6 @@ public struct TransactionResponse: Decodable {
     public let transactionHash: TransactionHash
 
     public var validateStatus: Bool = true
-
-    private enum CodingKeys: String, CodingKey {
-        case nodeAccountId
-        case transactionId
-        case transactionHash
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        nodeAccountId = try container.decode(AccountId.self, forKey: .nodeAccountId)
-        transactionId = try container.decode(TransactionId.self, forKey: .transactionId)
-        transactionHash = try container.decode(TransactionHash.self, forKey: .transactionHash)
-    }
 
     @discardableResult
     public mutating func validateStatus(_ validateStatus: Bool) -> Self {

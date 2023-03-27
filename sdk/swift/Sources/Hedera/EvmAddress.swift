@@ -62,15 +62,3 @@ public struct EvmAddress:
 #else
     extension EvmAddress: Sendable {}
 #endif
-
-extension EvmAddress: Codable {
-    public init(from decoder: Decoder) throws {
-        try self.init(parsing: decoder.singleValueContainer().decode(String.self))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
-    }
-}

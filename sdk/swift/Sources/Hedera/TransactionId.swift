@@ -2,7 +2,7 @@ import CHedera
 import Foundation
 import HederaProtobufs
 
-public struct TransactionId: Sendable, Codable, Equatable, ExpressibleByStringLiteral, LosslessStringConvertible,
+public struct TransactionId: Sendable, Equatable, ExpressibleByStringLiteral, LosslessStringConvertible,
     ValidateChecksums
 {
     /// The Account ID that paid for this transaction.
@@ -105,16 +105,6 @@ public struct TransactionId: Sendable, Codable, Equatable, ExpressibleByStringLi
 
     public func toString() -> String {
         String(describing: self)
-    }
-
-    public init(from decoder: Decoder) throws {
-        try self.init(parsing: try decoder.singleValueContainer().decode(String.self))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {

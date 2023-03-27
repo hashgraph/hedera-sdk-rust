@@ -72,47 +72,6 @@ public enum AnyCustomFee {
     }
 }
 
-extension AnyCustomFee: Codable {
-    private enum CodingKeys: String, CodingKey {
-        case type = "$type"
-    }
-
-    public init(from decoder: Swift.Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        let type = try container.decode(String.self, forKey: .type)
-
-        // note: intentionally use *this* decoder rather than a nested decoder
-        switch type {
-        case "fixed":
-            self = .fixed(try FixedFee(from: decoder))
-        case "fractional":
-            self = .fractional(try FractionalFee(from: decoder))
-
-        case "royalty":
-            self = .royalty(try RoyaltyFee(from: decoder))
-        default:
-            fatalError("unexpected custom fee kind: \(type)")
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case .fixed(let fee):
-            try container.encode("fixed", forKey: .type)
-            try fee.encode(to: encoder)
-        case .fractional(let fee):
-            try container.encode("fractional", forKey: .type)
-            try fee.encode(to: encoder)
-
-        case .royalty(let fee):
-            try container.encode("royalty", forKey: .type)
-            try fee.encode(to: encoder)
-        }
-    }
-}
-
 extension AnyCustomFee: CustomFee {
     public var feeCollectorAccountId: AccountId? {
         get {
@@ -239,7 +198,7 @@ extension AnyCustomFee: TryProtobufCodable {
 
 /// A fixed number of units (hbar or token) to assess as a fee during a `TransferTransaction` that transfers
 /// units of the token to which this fixed fee is attached.
-public struct FixedFee: CustomFee, Codable, ValidateChecksums {
+public struct FixedFee: CustomFee, ValidateChecksums {
     public var feeCollectorAccountId: AccountId?
 
     public var allCollectorsAreExempt: Bool
@@ -321,7 +280,7 @@ public struct FixedFee: CustomFee, Codable, ValidateChecksums {
 ///
 /// The denomination is always in units of the token to which this fractional fee is attached.
 ///
-public struct FractionalFee: CustomFee, Codable, ValidateChecksums {
+public struct FractionalFee: CustomFee, ValidateChecksums {
     public var feeCollectorAccountId: AccountId?
 
     public var allCollectorsAreExempt: Bool
@@ -466,7 +425,7 @@ extension FractionalFee {
     /// Enum for the fee assessment method.
     ///
     /// The terminology here (exclusive vs inclusive) is borrowed from tax assessment.
-    public enum FeeAssessmentMethod: Codable, Equatable, Hashable {
+    public enum FeeAssessmentMethod: Equatable, Hashable {
         /// - Returns: `inclusive` if `false`, `exclusive` if `true`.
         public init(netOfTransfers: Bool) {
             self = netOfTransfers ? .exclusive : .inclusive
@@ -490,7 +449,7 @@ extension FractionalFee {
 ///
 /// Defines the fraction of the fungible value exchanged for an NFT that the ledger
 /// should collect as a royalty.
-public struct RoyaltyFee: CustomFee, Codable {
+public struct RoyaltyFee: CustomFee {
     public var feeCollectorAccountId: AccountId?
 
     public var allCollectorsAreExempt: Bool

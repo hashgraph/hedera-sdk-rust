@@ -22,7 +22,7 @@ import CHedera
 import Foundation
 import HederaProtobufs
 
-public final class TokenInfo: Codable {
+public final class TokenInfo {
     internal init(
         tokenId: TokenId,
         name: String,

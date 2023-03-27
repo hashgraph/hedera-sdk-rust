@@ -1,7 +1,7 @@
 import HederaProtobufs
 import SwiftProtobuf
 
-public struct TokenNftAllowance: Codable, ValidateChecksums {
+public struct TokenNftAllowance: ValidateChecksums {
     public let tokenId: TokenId
     public let ownerAccountId: AccountId
     public let spenderAccountId: AccountId
@@ -47,7 +47,7 @@ extension TokenNftAllowance: TryProtobufCodable {
     }
 }
 
-public struct NftRemoveAllowance: Codable, ValidateChecksums {
+public struct NftRemoveAllowance: ValidateChecksums {
     public let tokenId: TokenId
     public let ownerAccountId: AccountId
     public var serials: [UInt64]

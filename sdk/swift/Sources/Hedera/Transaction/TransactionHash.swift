@@ -20,22 +20,12 @@
 
 import Foundation
 
-public struct TransactionHash: Sendable, Codable, CustomStringConvertible {
+public struct TransactionHash: Sendable, CustomStringConvertible {
     internal init(hashing data: Data) {
         self.data = Crypto.Sha2.sha384(data)
     }
 
     public let data: Data
-
-    public init(from decoder: Decoder) throws {
-        data = Data(hexEncoded: try decoder.singleValueContainer().decode(String.self))!
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(data.hexStringEncoded())
-    }
 
     public var description: String {
         data.hexStringEncoded()
