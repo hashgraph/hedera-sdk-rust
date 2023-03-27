@@ -23,7 +23,7 @@ import Foundation
 import HederaProtobufs
 
 /// The unique identifier for a non-fungible token (NFT) instance on Hedera.
-public struct NftId: Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
+public struct NftId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, ValidateChecksums {
     /// The (non-fungible) token of which this NFT is an instance.
     public let tokenId: TokenId
 
@@ -59,16 +59,6 @@ public struct NftId: Codable, LosslessStringConvertible, ExpressibleByStringLite
     public init(stringLiteral value: StringLiteralType) {
         // swiftlint:disable:next force_try
         try! self.init(parsing: value)
-    }
-
-    public init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
     }
 
     public var description: String {

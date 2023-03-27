@@ -29,7 +29,7 @@ private typealias UnsafeFromBytesFunc = @convention(c) (
 ) -> HederaError
 
 /// A public key on the Hedera network.
-public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Codable, Equatable, Hashable {
+public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
     internal let ptr: OpaquePointer
 
     private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
@@ -130,10 +130,6 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         try fromBytesEcdsa(decodeBytes(description))
     }
 
-    public required convenience init(from decoder: Decoder) throws {
-        try self.init(parsing: try decoder.singleValueContainer().decode(String.self))
-    }
-
     public func toBytesDer() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_public_key_to_bytes_der(ptr, &buf)
@@ -193,12 +189,6 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     public func isEcdsa() -> Bool {
         hedera_public_key_is_ecdsa(ptr)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
     }
 
     public static func == (lhs: PublicKey, rhs: PublicKey) -> Bool {

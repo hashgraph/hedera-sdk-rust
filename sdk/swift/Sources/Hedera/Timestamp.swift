@@ -9,7 +9,7 @@ private let timeZoneUTC: TimeZone = TimeZone(abbreviation: "UTC")!
 private let unixEpoch: Date = Calendar.current.date(from: DateComponents(timeZone: timeZoneUTC, year: 1970))!
 
 /// UNIX timestamp with nanosecond precision
-public struct Timestamp: Sendable, Codable, Equatable, CustomStringConvertible {
+public struct Timestamp: Sendable, Equatable, CustomStringConvertible {
     public let seconds: UInt64
     public let subSecondNanos: UInt32
 
@@ -41,12 +41,6 @@ public struct Timestamp: Sendable, Codable, Equatable, CustomStringConvertible {
         subSecondNanos = UInt32(components.nanosecond!)
     }
 
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-
-        self.init(fromUnixTimestampNanos: try container.decode(UInt64.self))
-    }
-
     // todo: what do on overflow?
     public var unixTimestampNanos: UInt64 {
         seconds * nanosPerSecond + UInt64(subSecondNanos)
@@ -59,12 +53,6 @@ public struct Timestamp: Sendable, Codable, Equatable, CustomStringConvertible {
         let components = DateComponents(timeZone: timeZoneUTC, second: Int(seconds), nanosecond: Int(subSecondNanos))
 
         return Calendar.current.date(byAdding: components, to: unixEpoch)!
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(self.unixTimestampNanos)
     }
 
     public var description: String {

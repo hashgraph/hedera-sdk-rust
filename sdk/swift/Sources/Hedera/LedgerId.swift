@@ -20,7 +20,7 @@
 
 import Foundation
 
-public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable,
+public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable,
     CustomStringConvertible, Sendable
 {
     public static let mainnet = LedgerId(Data([0]))
@@ -39,10 +39,6 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
 
     public init(_ bytes: Data) {
         self.bytes = bytes
-    }
-
-    public init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
     public init(stringLiteral value: StringLiteralType) {
@@ -85,12 +81,6 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
 
     public static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.bytes == rhs.bytes
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
     }
 
     public var description: String {

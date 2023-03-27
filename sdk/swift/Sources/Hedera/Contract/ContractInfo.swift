@@ -21,7 +21,7 @@
 import Foundation
 import HederaProtobufs
 
-public final class ContractInfo: Codable {
+public final class ContractInfo {
     internal init(
         contractId: ContractId,
         accountId: AccountId,

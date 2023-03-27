@@ -32,48 +32,6 @@ public enum Key: Equatable {
     }
 }
 
-extension Key: Codable {
-    private enum CodingKeys: CodingKey {
-        case single
-        case contractId
-        case delegatableContractId
-        case keyList
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        switch self {
-        case .single(let publicKey):
-            try container.encode(publicKey, forKey: .single)
-
-        case .contractId(let contractId):
-            try container.encode(contractId, forKey: .contractId)
-
-        case .delegatableContractId(let contractId):
-            try container.encode(contractId, forKey: .delegatableContractId)
-
-        case .keyList(let keyList):
-            try container.encode(keyList, forKey: .keyList)
-        }
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        if let single = try container.decodeIfPresent(PublicKey.self, forKey: .single) {
-            self = .single(single)
-        } else if let contractId = try container.decodeIfPresent(ContractId.self, forKey: .contractId) {
-            self = .contractId(contractId)
-        } else if let contractId = try container.decodeIfPresent(ContractId.self, forKey: .delegatableContractId) {
-            self = .delegatableContractId(contractId)
-        } else if let keyList = try container.decodeIfPresent(KeyList.self, forKey: .keyList) {
-            self = .keyList(keyList)
-        } else {
-            fatalError("(BUG) unexpected variant for Key")
-        }
-    }
-}
 extension Key: TryProtobufCodable {
     internal typealias Protobuf = Proto_Key
 

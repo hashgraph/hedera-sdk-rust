@@ -20,7 +20,7 @@
 
 import HederaProtobufs
 
-public enum FreezeType: Codable {
+public enum FreezeType {
     /// An (invalid) default value for this enum, to ensure the client explicitly sets
     /// the intended type of freeze transaction.
     case unknown

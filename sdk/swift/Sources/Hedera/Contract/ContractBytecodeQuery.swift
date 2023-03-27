@@ -42,13 +42,6 @@ public final class ContractBytecodeQuery: Query<Data> {
         return self
     }
 
-    public func decodeResponse(_ responseBytes: Data) throws -> Response {
-        let bytecodeBase64 = try JSONDecoder().decode(String.self, from: responseBytes)
-        let bytecode = Data(base64Encoded: bytecodeBase64)!
-
-        return bytecode
-    }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.contractGetBytecode = .with { proto in

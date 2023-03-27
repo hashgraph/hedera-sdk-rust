@@ -23,7 +23,7 @@ import Foundation
 import HederaProtobufs
 
 /// A token <-> account association.
-public struct TokenAssociation: Codable {
+public struct TokenAssociation {
     /// The token involved in the association.
     public let tokenId: TokenId
 

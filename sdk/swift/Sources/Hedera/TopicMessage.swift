@@ -3,27 +3,7 @@ import HederaProtobufs
 
 // fixme: chunking
 /// Topic message records.
-public struct TopicMessage: Codable {
-    internal init(
-        consensusTimestamp: Timestamp,
-        contents: Data,
-        runningHash: Data,
-        runningHashVersion: UInt64,
-        sequenceNumber: UInt64,
-        initialTransactionId: TransactionId?,
-        chunkNumber: UInt32,
-        chunkTotal: UInt32
-    ) {
-        self.consensusTimestamp = consensusTimestamp
-        self.contents = contents
-        self.runningHash = runningHash
-        self.runningHashVersion = runningHashVersion
-        self.sequenceNumber = sequenceNumber
-        self.initialTransactionId = initialTransactionId
-        self.chunkNumber = chunkNumber
-        self.chunkTotal = chunkTotal
-    }
-
+public struct TopicMessage {
     /// The consensus timestamp of the message.
     public let consensusTimestamp: Timestamp
 
@@ -49,19 +29,6 @@ public struct TopicMessage: Codable {
 
     /// The total number of chunks in the message.
     public let chunkTotal: UInt32
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        consensusTimestamp = try container.decodeIfPresent(Timestamp.self, forKey: .consensusTimestamp)!
-        contents = Data(base64Encoded: try container.decode(String.self, forKey: .contents))!
-        runningHash = Data(base64Encoded: try container.decode(String.self, forKey: .runningHash))!
-        runningHashVersion = try container.decode(UInt64.self, forKey: .runningHashVersion)
-        sequenceNumber = try container.decode(UInt64.self, forKey: .sequenceNumber)
-        initialTransactionId = try container.decode(TransactionId.self, forKey: .initialTransactionId)
-        chunkNumber = try container.decode(UInt32.self, forKey: .chunkNumber)
-        chunkTotal = try container.decode(UInt32.self, forKey: .chunkTotal)
-    }
 }
 
 extension TopicMessage: TryFromProtobuf {

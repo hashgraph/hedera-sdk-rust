@@ -40,21 +40,6 @@ extension KeyList: Collection, RandomAccessCollection {
     public var endIndex: Int { keys.endIndex }
 }
 
-extension KeyList: Codable {
-    private enum CodingKeys: CodingKey {
-        case keys
-        case threshold
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            keys: try container.decodeIfPresent(.keys) ?? [],
-            threshold: try container.decodeIfPresent(.threshold)
-        )
-    }
-}
-
 extension KeyList: TryProtobufCodable {
     internal typealias Protobuf = Proto_KeyList
 

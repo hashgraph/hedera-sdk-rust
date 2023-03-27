@@ -152,7 +152,7 @@ internal enum AnySchedulableTransaction {
 }
 
 extension AnySchedulableTransaction {
-    internal enum Kind: String, Codable {
+    internal enum Kind: String {
         case accountCreate
         case accountUpdate
         case accountDelete
