@@ -63,6 +63,7 @@ mod data {
         FileDeleteTransactionData as FileDelete,
         FileUpdateTransactionData as FileUpdate,
     };
+    pub(super) use crate::prng_transaction::PrngTransactionData as Prng;
     pub(super) use crate::schedule::{
         ScheduleCreateTransactionData as ScheduleCreate,
         ScheduleDeleteTransactionData as ScheduleDelete,
@@ -103,6 +104,7 @@ mod data {
 pub type AnyTransaction = Transaction<AnyTransactionData>;
 
 #[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum AnyTransactionData {
     AccountCreate(data::AccountCreate),
     AccountUpdate(data::AccountUpdate),
@@ -122,6 +124,10 @@ pub enum AnyTransactionData {
     FileCreate(data::FileCreate),
     FileUpdate(data::FileUpdate),
     FileDelete(data::FileDelete),
+    Prng(data::Prng),
+    ScheduleCreate(data::ScheduleCreate),
+    ScheduleSign(data::ScheduleSign),
+    ScheduleDelete(data::ScheduleDelete),
     TokenAssociate(data::TokenAssociate),
     TokenBurn(data::TokenBurn),
     TokenCreate(data::TokenCreate),
@@ -140,9 +146,6 @@ pub enum AnyTransactionData {
     SystemDelete(data::SystemDelete),
     SystemUndelete(data::SystemUndelete),
     Freeze(data::Freeze),
-    ScheduleCreate(data::ScheduleCreate),
-    ScheduleSign(data::ScheduleSign),
-    ScheduleDelete(data::ScheduleDelete),
     Ethereum(data::Ethereum),
 }
 
@@ -199,6 +202,8 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::FileUpdate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::FileDelete(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
+
+            Self::Prng(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::TokenAssociate(transaction) => {
                 transaction.to_transaction_data_protobuf(chunk_info)
@@ -292,6 +297,7 @@ impl TransactionData for AnyTransactionData {
             Self::FileCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::FileUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::FileDelete(transaction) => transaction.default_max_transaction_fee(),
+            Self::Prng(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenAssociate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenBurn(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenCreate(transaction) => transaction.default_max_transaction_fee(),
@@ -341,6 +347,7 @@ impl TransactionData for AnyTransactionData {
             Self::FileCreate(it) => it.maybe_chunk_data(),
             Self::FileUpdate(it) => it.maybe_chunk_data(),
             Self::FileDelete(it) => it.maybe_chunk_data(),
+            Self::Prng(it) => it.maybe_chunk_data(),
             Self::TokenAssociate(it) => it.maybe_chunk_data(),
             Self::TokenBurn(it) => it.maybe_chunk_data(),
             Self::TokenCreate(it) => it.maybe_chunk_data(),
@@ -386,6 +393,7 @@ impl TransactionData for AnyTransactionData {
             Self::FileCreate(it) => it.wait_for_receipt(),
             Self::FileUpdate(it) => it.wait_for_receipt(),
             Self::FileDelete(it) => it.wait_for_receipt(),
+            Self::Prng(it) => it.wait_for_receipt(),
             Self::TokenAssociate(it) => it.wait_for_receipt(),
             Self::TokenBurn(it) => it.wait_for_receipt(),
             Self::TokenCreate(it) => it.wait_for_receipt(),
@@ -433,6 +441,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::FileCreate(transaction) => transaction.execute(channel, request),
             Self::FileUpdate(transaction) => transaction.execute(channel, request),
             Self::FileDelete(transaction) => transaction.execute(channel, request),
+            Self::Prng(transaction) => transaction.execute(channel, request),
             Self::TokenAssociate(transaction) => transaction.execute(channel, request),
             Self::TokenBurn(transaction) => transaction.execute(channel, request),
             Self::TokenCreate(transaction) => transaction.execute(channel, request),
@@ -486,6 +495,10 @@ impl ValidateChecksums for AnyTransactionData {
             Self::FileCreate(transaction) => transaction.validate_checksums(ledger_id),
             Self::FileUpdate(transaction) => transaction.validate_checksums(ledger_id),
             Self::FileDelete(transaction) => transaction.validate_checksums(ledger_id),
+            Self::Prng(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ScheduleCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ScheduleSign(transaction) => transaction.validate_checksums(ledger_id),
+            Self::ScheduleDelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenAssociate(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenBurn(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenCreate(transaction) => transaction.validate_checksums(ledger_id),
@@ -504,9 +517,6 @@ impl ValidateChecksums for AnyTransactionData {
             Self::SystemDelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::SystemUndelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::Freeze(transaction) => transaction.validate_checksums(ledger_id),
-            Self::ScheduleCreate(transaction) => transaction.validate_checksums(ledger_id),
-            Self::ScheduleSign(transaction) => transaction.validate_checksums(ledger_id),
-            Self::ScheduleDelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
         }
     }
@@ -538,6 +548,7 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::FileCreate(pb) => data::FileCreate::from_protobuf(pb)?.into(),
             Data::FileDelete(pb) => data::FileDelete::from_protobuf(pb)?.into(),
             Data::FileUpdate(pb) => data::FileUpdate::from_protobuf(pb)?.into(),
+            Data::UtilPrng(pb) => data::Prng::from_protobuf(pb)?.into(),
             Data::SystemDelete(pb) => data::SystemDelete::from_protobuf(pb)?.into(),
             Data::SystemUndelete(pb) => data::SystemUndelete::from_protobuf(pb)?.into(),
             Data::Freeze(pb) => data::Freeze::from_protobuf(pb)?.into(),
@@ -584,9 +595,6 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `NodeStakeUpdateTransaction`",
                 ))
-            }
-            Data::UtilPrng(_) => {
-                return Err(Error::from_protobuf("unimplemented transaction `PrngTransaction`"))
             }
         };
 
@@ -726,6 +734,9 @@ impl AnyTransactionData {
             ServicesTransactionDataList::Ethereum(v) => {
                 data::Ethereum::from_protobuf(try_into_only_element(v)?)?.into()
             }
+            ServicesTransactionDataList::UtilPrng(v) => {
+                data::Prng::from_protobuf(try_into_only_element(v)?)?.into()
+            }
         };
 
         Ok(data)
@@ -802,6 +813,7 @@ enum ServicesTransactionDataList {
     ScheduleSign(Vec<services::ScheduleSignTransactionBody>),
     ScheduleDelete(Vec<services::ScheduleDeleteTransactionBody>),
     Ethereum(Vec<services::EthereumTransactionBody>),
+    UtilPrng(Vec<services::UtilPrngTransactionBody>),
 }
 
 impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransactionDataList {
@@ -864,6 +876,7 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             Data::ScheduleCreate(it) => Self::ScheduleCreate(make_vec(it, len)),
             Data::ScheduleDelete(it) => Self::ScheduleDelete(make_vec(it, len)),
             Data::ScheduleSign(it) => Self::ScheduleSign(make_vec(it, len)),
+            Data::UtilPrng(it) => Self::UtilPrng(make_vec(it, len)),
 
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
@@ -885,9 +898,6 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                 return Err(Error::from_protobuf(
                     "unsupported transaction `NodeStakeUpdateTransaction`",
                 ))
-            }
-            Data::UtilPrng(_) => {
-                return Err(Error::from_protobuf("unimplemented transaction `PrngTransaction`"))
             }
         };
 
@@ -941,6 +951,7 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                 (Self::ScheduleSign(v), Data::ScheduleSign(element)) => v.push(element),
                 (Self::ScheduleDelete(v), Data::ScheduleDelete(element)) => v.push(element),
                 (Self::Ethereum(v), Data::EthereumTransaction(element)) => v.push(element),
+                (Self::UtilPrng(v), Data::UtilPrng(element)) => v.push(element),
                 _ => return Err(Error::from_protobuf("mismatched transaction types")),
             }
         }
