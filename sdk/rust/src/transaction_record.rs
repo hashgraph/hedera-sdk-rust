@@ -220,8 +220,8 @@ impl TransactionRecord {
             token_nft_transfers,
             assessed_custom_fees: Vec::from_protobuf(record.assessed_custom_fees)?,
             evm_address,
-            prng_bytes: prng_bytes,
-            prng_number: prng_number,
+            prng_bytes,
+            prng_number,
         })
     }
 }

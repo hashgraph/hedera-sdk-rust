@@ -54,8 +54,10 @@ impl PrngTransaction {
     /// Sets the upper-bound for the random number.
     ///
     /// If the value is zero, instead of returning a 32-bit number, a 384-bit number will be returned.
-    pub fn range(&mut self, range: u32) {
-        self.data_mut().range = Some(range)
+    pub fn range(&mut self, range: u32) -> &mut Self {
+        self.data_mut().range = Some(range);
+
+        return self;
     }
 }
 
