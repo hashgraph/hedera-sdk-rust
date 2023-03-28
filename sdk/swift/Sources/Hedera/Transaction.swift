@@ -465,10 +465,6 @@ private func protoTransactionBodyEqual(_ lhs: Proto_TransactionBody, _ rhs: Prot
         return false
     }
 
-    guard lhs.data == rhs.data else {
-        return false
-    }
-
     let lhsData: Proto_TransactionBody.OneOf_Data
     let rhsData: Proto_TransactionBody.OneOf_Data
 
@@ -504,6 +500,10 @@ private func protoTransactionBodyEqual(_ lhs: Proto_TransactionBody, _ rhs: Prot
             }
 
             guard lhs.chunkInfo.total == rhs.chunkInfo.total else {
+                return false
+            }
+
+            guard lhs.unknownFields == rhs.unknownFields else {
                 return false
             }
 
