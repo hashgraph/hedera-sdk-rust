@@ -21,7 +21,6 @@ pbkdf2 = { version = "0.11.0", default-features = false }
 libc = { version = "0.2.135" }
 sha2 = "0.10.2"
 sha3 = "0.10.2"
-pem-rfc7468 = { version = "0.6.0", features = ["std"] }
 rand = "0.8.5"
 hmac = "0.12.1"
 

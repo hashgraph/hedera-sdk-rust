@@ -18,7 +18,6 @@
  * ‍
  */
 
-use std::iter;
 use std::sync::Arc;
 
 use ed25519_dalek::Signer;
@@ -164,44 +163,13 @@ impl PrivateKey {
         Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
-    pub fn from_pem(pem: impl AsRef<[u8]>) -> crate::Result<Self> {
-        fn inner(pem: &[u8]) -> crate::Result<PrivateKey> {
-            let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
+    pub(crate) fn from_encrypted_info(der: &[u8], password: &[u8]) -> crate::Result<Self> {
+        let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
+            .map_err(|e| Error::key_parse(e.to_string()))?;
 
-            if type_label != "PRIVATE KEY" {
-                return Err(Error::key_parse(format!(
-                    "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
-                )));
-            }
+        let decrypted = info.decrypt(password).map_err(|e| Error::key_parse(e.to_string()))?;
 
-            PrivateKey::from_bytes_der(&der)
-        }
-
-        inner(pem.as_ref())
-    }
-
-    pub fn from_pem_with_password(
-        pem: impl AsRef<[u8]>,
-        password: impl AsRef<[u8]>,
-    ) -> crate::Result<Self> {
-        fn inner(pem: &[u8], password: &[u8]) -> crate::Result<PrivateKey> {
-            let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
-
-            if type_label != "ENCRYPTED PRIVATE KEY" {
-                return Err(Error::key_parse(format!(
-                    "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
-                )));
-            }
-
-            let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
-                .map_err(|e| Error::key_parse(e.to_string()))?;
-
-            let decrypted = info.decrypt(password).map_err(|e| Error::key_parse(e.to_string()))?;
-
-            PrivateKey::from_bytes_der(decrypted.as_bytes())
-        }
-
-        inner(pem.as_ref(), password.as_ref())
+        PrivateKey::from_bytes_der(decrypted.as_bytes())
     }
 
     #[allow(clippy::missing_panics_doc)]
@@ -340,7 +308,7 @@ impl PrivateKey {
 
                 seed.extend_from_slice(&i1.to_be_bytes());
                 // any better way to do this?
-                seed.extend(iter::repeat(i2).take(4));
+                seed.extend_from_slice(&[i2, i2, i2, i2]);
 
                 let salt: Vec<u8> = vec![0xff];
 
