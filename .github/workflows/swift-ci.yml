@@ -61,7 +61,7 @@ jobs:
   build:
     strategy:
       matrix:
-        swift: ["5.6.1", "5.7"]
+        swift: ["5.7"]
     needs: build-ffi
     runs-on: macos-11
     steps:
@@ -96,7 +96,7 @@ jobs:
   test:
     strategy:
       matrix:
-        swift: ["5.6.1", "5.7"]
+        swift: ["5.7"]
     needs: [build-ffi, build]
     runs-on: macos-11
     steps:
@@ -112,17 +112,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.swift }}-spm-
 
-      - name: Download CHedera `x86_64-apple-darwin`
-        uses: actions/download-artifact@v3
-        with:
-          name: chedera-x86_64-apple-darwin
-          path: .tmp/chedera/x86_64-apple-darwin
 
-      - name: Download CHedera `aarch64-apple-darwin`
+      - name: Download CHedera artifacts
         uses: actions/download-artifact@v3
         with:
-          name: chedera-aarch64-apple-darwin
-          path: .tmp/chedera/aarch64-apple-darwin
+          path: .tmp/
 
       - name: merge into macos-universal
         run: |
