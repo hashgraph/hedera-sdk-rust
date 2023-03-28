@@ -209,7 +209,7 @@ public class Transaction: ValidateChecksums {
 
         let sources = try TransactionSources(transactions: list)
 
-        let transactionBodies = try sources.signedTransactions.map { signed in
+        let transactionBodies = try sources.signedTransactions.map { signed -> Proto_TransactionBody in
             do {
                 return try Proto_TransactionBody(contiguousBytes: signed.bodyBytes)
             } catch {
@@ -233,7 +233,7 @@ public class Transaction: ValidateChecksums {
             .chunks
             .compactMap { $0.signedTransactions.first }
             .lazy
-            .map { signed in
+            .map { signed -> Proto_TransactionBody in
                 do {
                     return try Proto_TransactionBody(contiguousBytes: signed.bodyBytes)
                 } catch {
@@ -241,7 +241,7 @@ public class Transaction: ValidateChecksums {
                 }
 
             }
-            .map { body in
+            .map { body -> Proto_TransactionBody.OneOf_Data in
                 guard let data = body.data else {
                     throw HError.fromProtobuf("Unexpected missing `data`")
                 }

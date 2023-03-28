@@ -21,7 +21,7 @@
 import Foundation
 
 public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable,
-    CustomStringConvertible, Sendable
+    CustomStringConvertible
 {
     public static let mainnet = LedgerId(Data([0]))
 
@@ -103,3 +103,10 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         description
     }
 }
+
+#if compiler(<5.7)
+    // Swift 5.7 added the conformance to data, despite to the best of my knowledge, not changing anything in the underlying type.
+    extension LedgerId: @unchecked Sendable {}
+#else
+    extension LedgerId: Sendable {}
+#endif

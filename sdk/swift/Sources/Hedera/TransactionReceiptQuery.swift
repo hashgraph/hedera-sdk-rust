@@ -101,8 +101,6 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
 
         let status = receipt.status
 
-        print(status.rawValue)
-
         if validateStatus && status != .success {
             throw HError(
                 kind: .receiptStatus(status: status, transactionId: transactionId),
