@@ -129,6 +129,10 @@ public struct HError: Error, CustomStringConvertible {
         Self(kind: .basicParse, description: description)
     }
 
+    internal static func keyParse(_ description: String) -> Self {
+        Self(kind: .keyParse, description: "failed to parse a key: \(description)")
+    }
+
     internal static let cannotCreateChecksum: Self = Self(
         kind: .cannotCreateChecksum,
         description: "an entity ID with an alias or evmAddress cannot have a checksum"

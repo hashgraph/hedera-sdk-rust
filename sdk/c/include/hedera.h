@@ -189,41 +189,23 @@ enum HederaError hedera_private_key_from_bytes_der(const uint8_t *bytes,
                                                    struct HederaPrivateKey **key);
 
 /**
- * Parse a Hedera private key from the passed pem encoded string
+ * Parse a Hedera private key from the passed der bytes with the given password.
  *
  * # Safety
- * - `pem` must be a valid string
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *   The inner pointer need not point to a valid `PrivateKey`, however.
- *
- * # Errors
- * - [`Error::KeyParse`] if `pem` is not valid PEM.
- * - [`Error::KeyParse`] if the type label (BEGIN XYZ) is not `PRIVATE KEY`.
- * - [`Error::KeyParse`] if the data contained inside the PEM is not a valid `PrivateKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_private_key_from_pem(const char *pem, struct HederaPrivateKey **key);
-
-/**
- * Parse a Hedera private key from the passed pem encoded string with the given password.
- *
- * # Safety
- * - `pem` must be a valid string
+ * - `der` must be valid for reads of up to `der_size` bytes.
  * - `password` must be a valid string
  * - `key` must be a valid for writes according to [*Rust* pointer rules].
  *   The inner pointer need not point to a valid `PrivateKey`, however.
  *
  * # Errors
- * - [`Error::KeyParse`] if `pem` is not valid PEM.
- * - [`Error::KeyParse`] if the type label (`BEGIN XYZ`) is not `ENCRYPTED PRIVATE KEY`.
  * - [`Error::KeyParse`] if decrypting the private key fails.
  *
  * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
  */
-enum HederaError hedera_private_key_from_pem_with_password(const char *pem,
-                                                           const char *password,
-                                                           struct HederaPrivateKey **key);
+enum HederaError hedera_private_key_from_encrypted_info(const uint8_t *der,
+                                                        size_t der_size,
+                                                        const char *password,
+                                                        struct HederaPrivateKey **key);
 
 /**
  * Return `key`, serialized as der encoded bytes.

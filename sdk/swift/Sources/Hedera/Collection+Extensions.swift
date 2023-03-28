@@ -13,4 +13,12 @@ extension RandomAccessCollection {
         // but, `indices.contains(range.lowerBound) && indices.contains(range.upperBound)` would return false.
         return range.clamped(to: startIndex..<endIndex) == range
     }
+
+    internal func splitFirst() -> (first: Element, rest: SubSequence)? {
+        first.map { ($0, dropFirst(1)) }
+    }
+
+    internal func splitLast() -> (last: Element, rest: SubSequence)? {
+        last.map { ($0, dropLast(1)) }
+    }
 }
