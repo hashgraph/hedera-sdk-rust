@@ -28,6 +28,7 @@ mod data {
         FileDeleteTransactionData as FileDelete,
         FileUpdateTransactionData as FileUpdate,
     };
+    pub(super) use crate::prng_transaction::PrngTransactionData as Prng;
     pub(super) use crate::schedule::ScheduleDeleteTransactionData as ScheduleDelete;
     pub(super) use crate::system::{
         FreezeTransactionData as Freeze,
@@ -115,6 +116,7 @@ pub(super) enum AnySchedulableTransactionData {
     FileCreate(data::FileCreate),
     FileUpdate(data::FileUpdate),
     FileDelete(data::FileDelete),
+    Prng(data::Prng),
     TokenAssociate(data::TokenAssociate),
     TokenBurn(data::TokenBurn),
     TokenCreate(data::TokenCreate),
@@ -184,6 +186,7 @@ impl AnySchedulableTransactionData {
             AnySchedulableTransactionData::SystemUndelete(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::Freeze(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::ScheduleDelete(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::Prng(it) => it.default_max_transaction_fee(),
         }
     }
 }
@@ -277,7 +280,7 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
             Data::ScheduleDelete(it) => {
                 Ok(Self::ScheduleDelete(data::ScheduleDelete::from_protobuf(it)?))
             }
-            Data::UtilPrng(_) => unimplemented!("Prng transaction not currently implemented"),
+            Data::UtilPrng(it) => Ok(Self::Prng(data::Prng::from_protobuf(it)?)),
         }
     }
 }
@@ -399,6 +402,9 @@ impl ToSchedulableTransactionDataProtobuf for AnySchedulableTransactionData {
             AnySchedulableTransactionData::ScheduleDelete(it) => {
                 it.to_schedulable_transaction_data_protobuf()
             }
+            AnySchedulableTransactionData::Prng(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
         }
     }
 }
@@ -447,6 +453,8 @@ impl TryFrom<AnyTransactionData> for AnySchedulableTransactionData {
             AnyTransactionData::SystemUndelete(it) => Ok(Self::SystemUndelete(it)),
             AnyTransactionData::Freeze(it) => Ok(Self::Freeze(it)),
             AnyTransactionData::ScheduleDelete(it) => Ok(Self::ScheduleDelete(it)),
+            AnyTransactionData::Prng(it) => Ok(Self::Prng(it)),
+
             // fixme: basic-parse isn't suitable for this.
             AnyTransactionData::ScheduleCreate(_) => {
                 Err(crate::Error::basic_parse("Cannot schedule `ScheduleCreateTransaction`"))
@@ -507,6 +515,7 @@ impl From<AnySchedulableTransactionData> for AnyTransactionData {
             AnySchedulableTransactionData::SystemUndelete(it) => Self::SystemUndelete(it),
             AnySchedulableTransactionData::Freeze(it) => Self::Freeze(it),
             AnySchedulableTransactionData::ScheduleDelete(it) => Self::ScheduleDelete(it),
+            AnySchedulableTransactionData::Prng(it) => Self::Prng(it),
         }
     }
 }
