@@ -21,7 +21,6 @@
 import Foundation
 import HederaProtobufs
 
-// TODO: assessed_custom_fees
 /// The complete record for a transaction on Hedera that has reached consensus.
 /// Response from `TransactionRecordQuery`.
 public struct TransactionRecord {
@@ -87,10 +86,17 @@ public struct TransactionRecord {
 
     /// The keccak256 hash of the ethereumData. This field will only be populated for
     /// `EthereumTransaction`.
-    public let ethereumHash: Data?
+    public let ethereumHash: Data
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     public let evmAddress: EvmAddress?
+
+    /// In the record of a PRNG transaction with no output range, a pseudorandom 384-bit string.
+    public let prngBytes: Data?
+
+    /// In the record of a PRNG transaction with an output range, the output of a PRNG
+    /// whose input was a 384-bit string.
+    public let prngNumber: UInt32?
 }
 
 extension TransactionRecord {
@@ -136,6 +142,21 @@ extension TransactionRecord {
 
         let evmAddress = !proto.evmAddress.isEmpty ? try EvmAddress(proto.evmAddress) : nil
 
+        let prngBytes: Data?
+        let prngNumber: UInt32?
+
+        switch proto.entropy {
+        case .prngBytes(let data):
+            prngBytes = data
+            prngNumber = nil
+        case .prngNumber(let number):
+            prngBytes = nil
+            prngNumber = UInt32(bitPattern: number)
+        case nil:
+            prngBytes = nil
+            prngNumber = nil
+        }
+
         self.init(
             receipt: try .fromProtobuf(proto.receipt),
             transactionHash: proto.transactionHash,
@@ -155,7 +176,9 @@ extension TransactionRecord {
             children: children,
             duplicates: duplicates,
             ethereumHash: proto.ethereumHash,
-            evmAddress: evmAddress
+            evmAddress: evmAddress,
+            prngBytes: prngBytes,
+            prngNumber: prngNumber
         )
     }
 }
@@ -165,51 +188,5 @@ extension TransactionRecord: TryFromProtobuf {
 
     internal init(protobuf proto: Protobuf) throws {
         try self.init(protobuf: proto, duplicates: [], children: [])
-    }
-}
-
-/// Hacky struct to work around the lack of CodingKeyRepresentable before swift 5.6 and macos 12.3
-private struct DictionaryWrapper<Key, Value: Codable> where Key: LosslessStringConvertible & Hashable {
-    let value: [Key: Value]
-}
-
-extension DictionaryWrapper: Codable {
-    struct CodingKeys: CodingKey {
-        let stringValue: String
-
-        init(stringValue: String) {
-            self.stringValue = stringValue
-        }
-
-        var intValue: Int? { nil }
-
-        init?(intValue: Int) {
-            nil
-        }
-    }
-
-    init(from decoder: Decoder) throws {
-        var dict: [Key: Value] = [:]
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        for key in container.allKeys {
-            let value = try container.decode(Value.self, forKey: key)
-
-            guard let key = Key(key.stringValue) else {
-                throw DecodingError.typeMismatch(
-                    Key.self, .init(codingPath: container.codingPath, debugDescription: "Invalid key"))
-            }
-
-            dict[key] = value
-        }
-
-        self.value = dict
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        for (key, value) in self.value {
-            try container.encode(value, forKey: CodingKeys(stringValue: String(describing: key)))
-        }
     }
 }

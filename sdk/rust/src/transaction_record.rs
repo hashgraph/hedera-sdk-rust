@@ -107,13 +107,20 @@ pub struct TransactionRecord {
 
     /// The keccak256 hash of the ethereumData. This field will only be populated for
     /// `EthereumTransaction`.
+    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub ethereum_hash: Vec<u8>,
-    // /// In the record of a PRNG transaction with no output range, a pseudorandom 384-bit string.
-    // TODO: pub prng_bytes: Vec<u8>,
-    //
-    // /// In the record of a PRNG transaction with an output range, the output of a PRNG
-    // /// whose input was a 384-bit string.
-    // TODO: pub prng_number: i32,
+
+    /// In the record of a PRNG transaction with no output range, a pseudorandom 384-bit string.
+    #[cfg_attr(
+        feature = "ffi",
+        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
+    )]
+    pub prng_bytes: Option<Vec<u8>>,
+
+    /// In the record of a PRNG transaction with an output range, the output of a PRNG
+    /// whose input was a 384-bit string.
+    pub prng_number: Option<u32>,
+
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub evm_address: Option<EvmAddress>,
 }
@@ -187,6 +194,12 @@ impl TransactionRecord {
             Some(EvmAddress::try_from(record.evm_address)?)
         };
 
+        let (prng_bytes, prng_number) = match record.entropy {
+            Some(services::transaction_record::Entropy::PrngBytes(it)) => (Some(it), None),
+            Some(services::transaction_record::Entropy::PrngNumber(it)) => (None, Some(it as u32)),
+            None => (None, None),
+        };
+
         Ok(Self {
             receipt,
             transaction_hash: record.transaction_hash,
@@ -207,6 +220,8 @@ impl TransactionRecord {
             token_nft_transfers,
             assessed_custom_fees: Vec::from_protobuf(record.assessed_custom_fees)?,
             evm_address,
+            prng_bytes: prng_bytes,
+            prng_number: prng_number,
         })
     }
 }
