@@ -20,7 +20,7 @@
 
 import Foundation
 
-public struct TransactionHash: Sendable, CustomStringConvertible {
+public struct TransactionHash: CustomStringConvertible {
     internal init(hashing data: Data) {
         self.data = Crypto.Sha2.sha384(data)
     }
@@ -31,3 +31,10 @@ public struct TransactionHash: Sendable, CustomStringConvertible {
         data.hexStringEncoded()
     }
 }
+
+#if compiler(<5.7)
+    // Swift 5.7 added the conformance to data, despite to the best of my knowledge, not changing anything in the underlying type.
+    extension TransactionHash: @unchecked Sendable {}
+#else
+    extension TransactionHash: Sendable {}
+#endif

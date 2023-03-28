@@ -151,7 +151,7 @@ extension TransactionSources {
             throw HError.fromProtobuf("`TransactionList` had no transactions")
         }
 
-        let signedTransactions = try transactions.map { transaction in
+        let signedTransactions = try transactions.map { transaction -> Proto_SignedTransaction in
             guard !transaction.signedTransactionBytes.isEmpty else {
                 throw HError.fromProtobuf("Transaction had no signed transaction bytes")
             }
@@ -163,7 +163,7 @@ extension TransactionSources {
         // this doesn't compare or validate the signatures,
         // instead it ensures that all signatures in the first signed transation exist in *all* transactions and none extra exist.
         do {
-            var iter = signedTransactions.lazy.map { signedTx in
+            var iter = signedTransactions.lazy.map { signedTx -> [Data] in
                 var tmp = signedTx.sigMap.sigPair.map { $0.pubKeyPrefix }
 
                 // sort to be generous about signature ordering.
@@ -179,7 +179,8 @@ extension TransactionSources {
             }
         }
 
-        let transactionInfo = try signedTransactions.map { signedTx in
+        let transactionInfo = try signedTransactions.map {
+            signedTx -> (transactionId: TransactionId, nodeAccountId: AccountId) in
             let transactionBody: Proto_TransactionBody
             do {
                 transactionBody = try Proto_TransactionBody(contiguousBytes: signedTx.bodyBytes)
@@ -200,7 +201,7 @@ extension TransactionSources {
         do {
             var current: TransactionId?
 
-            let chunkStarts = transactionInfo.enumerated().lazy.compactMap { (index, rest) in
+            let chunkStarts = transactionInfo.enumerated().lazy.compactMap { (index, rest) -> Int? in
                 let (id, _) = rest
 
                 if current != id {

@@ -103,7 +103,7 @@ extension TransactionRecord {
     }
 
     fileprivate init(protobuf proto: Protobuf, duplicates: [Self], children: [Self]) throws {
-        let contractFunctionResult = try proto.body.map { body in
+        let contractFunctionResult = try proto.body.map { body -> ContractFunctionResult in
             switch body {
             case .contractCallResult(let result), .contractCreateResult(let result):
                 return try ContractFunctionResult.fromProtobuf(result)
