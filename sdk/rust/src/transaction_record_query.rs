@@ -134,10 +134,6 @@ impl ToQueryProtobuf for TransactionRecordQueryData {
 impl QueryExecute for TransactionRecordQueryData {
     type Response = TransactionRecord;
 
-    fn is_payment_required(&self) -> bool {
-        false
-    }
-
     fn transaction_id(&self) -> Option<TransactionId> {
         self.transaction_id
     }
