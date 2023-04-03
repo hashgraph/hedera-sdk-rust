@@ -37,8 +37,6 @@ use crate::{
 
 /// Current information on a smart contract instance.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractInfo {
     /// ID of the contract instance, in the format used by transactions.
     pub contract_id: ContractId,
@@ -55,17 +53,9 @@ pub struct ContractInfo {
     pub admin_key: Option<Key>,
 
     /// The current time at which this contract instance (and its account) is set to expire.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     pub expiration_time: Option<OffsetDateTime>,
 
     /// The auto renew period for this contract instance.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
     pub auto_renew_period: Option<Duration>,
 
     /// Number of bytes of storage being used by this instance.

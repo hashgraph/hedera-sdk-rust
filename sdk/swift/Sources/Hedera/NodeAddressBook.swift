@@ -22,7 +22,7 @@ import Foundation
 import HederaProtobufs
 
 /// A list of nodes and their metadata.
-public struct NodeAddressBook: Codable {
+public struct NodeAddressBook {
     /// all the nodes this address book contains.
     public let nodeAddresses: [NodeAddress]
 

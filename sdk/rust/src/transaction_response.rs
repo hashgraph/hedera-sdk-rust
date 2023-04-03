@@ -39,8 +39,6 @@ use crate::{
 /// receipt (free), or can buy a more detailed record (not free).
 ///
 #[derive(Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionResponse {
     /// The account ID of the node that the transaction was submitted to.
     pub node_account_id: AccountId,
@@ -56,7 +54,6 @@ pub struct TransactionResponse {
     pub transaction_hash: TransactionHash,
 
     /// Whether the receipt/record status should be validated.
-    #[cfg_attr(feature = "ffi", serde(skip))]
     pub validate_status: bool,
 }
 

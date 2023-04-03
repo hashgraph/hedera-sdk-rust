@@ -24,7 +24,7 @@ import SwiftProtobuf
 /// Possible token supply types.
 /// Can be used to restrict supply to a set maximum.
 /// Defaults to `infinite`.
-public enum TokenSupplyType: Codable {
+public enum TokenSupplyType {
     case infinite
     case finite
 }

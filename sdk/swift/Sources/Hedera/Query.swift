@@ -19,14 +19,50 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// A query that can be executed on the Hedera network.
-public class Query<Response: Decodable>: Request {
+public class Query<Response>: ValidateChecksums {
     public typealias Response = Response
 
     internal init() {}
 
     private final var payment: PaymentTransaction = PaymentTransaction()
+
+    internal final var nodeAccountIds: [AccountId]? {
+        payment.nodeAccountIds
+    }
+
+    internal func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        fatalError("Method `Query.toQueryProtobufWith` must be overridden by `\(type(of: self))`")
+    }
+
+    internal func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        fatalError("Method `Query.queryExecute` must be overridden by `\(type(of: self))`")
+    }
+
+    internal func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        fatalError("Method `Query.makeQueryResponse` must be overridden by `\(type(of: self))`")
+    }
+
+    internal func shouldRetry(forResponse response: GrpcResponse) -> Bool {
+        false
+    }
+
+    internal func shouldRetryPrecheck(forStatus status: Status) -> Bool {
+        false
+    }
+
+    // reasonable default: the actual cost is expected.
+    internal func mapCost(_ cost: Hbar) -> Hbar {
+        cost
+    }
+
+    /// The transaction ID that this query is for, if this query is about a transaction (eg: TransactionReceiptQuery).
+    internal var relatedTransactionId: TransactionId? { nil }
+
+    internal var requiresPayment: Bool { true }
 
     /// Set the account IDs of the nodes that this query may be submitted to.
     ///
@@ -99,13 +135,6 @@ public class Query<Response: Decodable>: Request {
         return self
     }
 
-    /// Sets the account that will be paying for this query.
-    public final func payerAccountId(_ payerAccountId: AccountId) -> Self {
-        self.payment.payerAccountId = payerAccountId
-
-        return self
-    }
-
     /// Set an explicit transaction ID to use to identify the payment transaction
     /// on this query.
     ///
@@ -122,26 +151,108 @@ public class Query<Response: Decodable>: Request {
 
     // TODO: paymentSigner
 
-    private enum CodingKeys: String, CodingKey {
-        case type = "$type"
-        case payment
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        let typeName = String(describing: type(of: self))
-        let requestName = typeName.prefix(1).lowercased() + typeName.dropFirst().dropLast(5)
-
-        try container.encode(requestName, forKey: .type)
-        try container.encode(payment, forKey: .payment)
-    }
-
     public final func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
-        try await executeInternal(client, timeout)
+        if self.payment.amount == nil {
+            // should this inherit the timeout?
+            // payment is required but none was specified, query the cost
+            let cost = try await self.getCost(client)
+
+            if let maxAmount = self.payment.maxAmount {
+                guard cost <= maxAmount else {
+                    throw HError.maxQueryPaymentExceeded(queryCost: cost, maxQueryPayment: maxAmount)
+                }
+            }
+
+            self.payment.amount = cost
+
+        }
+
+        if self.requiresPayment {
+            if self.payment.amount == nil {
+                self.payment.amount = try await getCost(client)
+            }
+
+            try payment.freezeWith(client)
+        }
+
+        // hack: this is a TransactionRecordQuery, which means we need to run the receipt first.
+        if let relatedTransactionId = self.relatedTransactionId, self.requiresPayment {
+            _ = try? await TransactionReceiptQuery().transactionId(relatedTransactionId).execute(client, timeout)
+        }
+
+        return try await executeAny(client, self, timeout)
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try payment.validateChecksums(on: ledgerId)
+    }
+}
+
+extension Query: Execute {
+    internal typealias GrpcRequest = Proto_Query
+
+    internal typealias GrpcResponse = Proto_Response
+
+    internal typealias Context = ()
+
+    internal var explicitTransactionId: TransactionId? {
+        payment.transactionId
+    }
+
+    internal var requiresTransactionId: Bool {
+        self.requiresPayment
+    }
+
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (Proto_Query, ()) {
+        let request = toQueryProtobufWith(
+            try .with { proto in
+                proto.responseType = .answerOnly
+
+                if requiresPayment {
+                    proto.payment = try payment.makeRequest(transactionId, nodeAccountId).0
+                }
+            })
+
+        return (request, ())
+    }
+
+    internal func execute(_ channel: GRPC.GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await queryExecute(channel, request)
+    }
+
+    internal func makeResponse(
+        _ response: Proto_Response, _ context: (), _ nodeAccountId: AccountId, _ transactionId: TransactionId?
+    ) throws -> Response {
+        guard let response = response.response else {
+            throw HError.fromProtobuf("unexpectly missing `response`")
+        }
+
+        return try makeQueryResponse(response)
+    }
+
+    internal func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        if let transactionId = relatedTransactionId {
+            return HError(
+                kind: .queryPreCheckStatus(status: status, transactionId: transactionId),
+                description: "query for transaction `\(transactionId)` failed pre-check with status `\(status)`"
+            )
+        }
+
+        if let transactionId = transactionId {
+            return HError(
+                kind: .queryPaymentPreCheckStatus(status: status, transactionId: transactionId),
+                description:
+                    "query with payment transaction `\(transactionId)` failed pre-check with status `\(status)`"
+            )
+        }
+
+        return HError(
+            kind: .queryNoPaymentPreCheckStatus(status: status),
+            description: "query with no payment transaction failed pre-check with status `\(status)`"
+        )
+    }
+
+    internal static func responsePrecheckStatus(_ response: Proto_Response) throws -> Int32 {
+        Int32(try response.header().nodeTransactionPrecheckCode.rawValue)
     }
 }

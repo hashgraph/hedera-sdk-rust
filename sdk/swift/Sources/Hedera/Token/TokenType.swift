@@ -30,7 +30,7 @@ import SwiftProtobuf
 /// Only `fungibleCommon` and `nonFungibleUnique` are supported right now. More
 /// may be added in the future.
 ///
-public enum TokenType: Codable {
+public enum TokenType {
     case fungibleCommon
     case nonFungibleUnique
 }

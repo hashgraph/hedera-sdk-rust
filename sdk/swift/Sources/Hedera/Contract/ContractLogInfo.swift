@@ -25,33 +25,6 @@ public struct ContractLogInfo: Equatable {
     }
 }
 
-extension ContractLogInfo: Codable {
-    private enum CodingKeys: CodingKey {
-        case contractId
-        case bloom
-        case topics
-        case data
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        contractId = try container.decode(.contractId)
-        bloom = try Data(base64Encoded: container.decode(String.self, forKey: .bloom))!
-        topics = try container.decode([String].self, forKey: .topics).map { Data(base64Encoded: $0)! }
-        data = try Data(base64Encoded: container.decode(String.self, forKey: .data))!
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(contractId, forKey: .contractId)
-        try container.encode(bloom.base64EncodedString(), forKey: .bloom)
-        try container.encode(topics.map { $0.base64EncodedString() }, forKey: .topics)
-        try container.encode(data.base64EncodedString(), forKey: .data)
-    }
-}
-
 extension ContractLogInfo: TryProtobufCodable {
     internal typealias Protobuf = Proto_ContractLoginfo
 

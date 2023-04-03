@@ -18,9 +18,15 @@
  * ‍
  */
 
+import AnyAsyncSequence
 import Foundation
+import GRPC
+import HederaProtobufs
 
-public final class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
+public final class NodeAddressBookQuery: ValidateChecksums, MirrorQuery {
+    public typealias Item = NodeAddress
+    public typealias Response = NodeAddressBook
+
     private var fileId: FileId
     private var limit: UInt32
 
@@ -47,8 +53,46 @@ public final class NodeAddressBookQuery: MirrorQuery<NodeAddressBook> {
         return self
     }
 
-    internal override func validateChecksums(on ledgerId: LedgerId) throws {
+    public func subscribe(_ client: Client, _ timeout: TimeInterval? = nil) -> AnyAsyncSequence<NodeAddress> {
+        subscribeInner(client, timeout)
+    }
+
+    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> NodeAddressBook {
+        try await executeInner(client, timeout)
+    }
+
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId.validateChecksums(on: ledgerId)
-        try super.validateChecksums(on: ledgerId)
+    }
+}
+
+extension NodeAddressBookQuery: ToProtobuf {
+    internal typealias Protobuf = Com_Hedera_Mirror_Api_Proto_AddressBookQuery
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.fileID = fileId.toProtobuf()
+            proto.limit = Int32(limit)
+        }
+    }
+}
+
+extension NodeAddressBookQuery: MirrorRequest {
+    internal typealias GrpcItem = NodeAddress.Protobuf
+
+    internal func connect(channel: GRPCChannel) -> GRPCAsyncResponseStream<GrpcItem> {
+        let request = self.toProtobuf()
+
+        return HederaProtobufs.Com_Hedera_Mirror_Api_Proto_NetworkServiceAsyncClient(channel: channel).getNodes(request)
+    }
+
+    internal static func collect<S>(_ stream: S) async throws -> Response
+    where S: AsyncSequence, Item.Protobuf == S.Element {
+        var items: [Item] = []
+        for try await proto in stream {
+            items.append(try Item.fromProtobuf(proto))
+        }
+
+        return Response(nodeAddresses: items)
     }
 }

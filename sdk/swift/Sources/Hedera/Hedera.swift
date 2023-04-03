@@ -19,6 +19,6 @@
  */
 
 // Enforce minimum Swift version for all platforms and build systems.
-#if swift(<5.5)
-    #error("Hedera SDK doesn't support Swift versions below 5.5.")
+#if swift(<5.6)
+    #error("Hedera SDK doesn't support Swift versions below 5.6.")
 #endif

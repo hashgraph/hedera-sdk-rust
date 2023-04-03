@@ -48,10 +48,7 @@ use crate::{
 ///
 pub type ContractCallQuery = Query<ContractCallQueryData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractCallQueryData {
     /// The contract instance to call.
     contract_id: Option<ContractId>,
@@ -60,7 +57,6 @@ pub struct ContractCallQueryData {
     gas: u64,
 
     /// The function parameters as their raw bytes.
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     function_parameters: Vec<u8>,
 
     /// The sender for this transaction.

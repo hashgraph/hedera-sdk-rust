@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Gets info on an NFT for a given TokenID and serial number.
 public final class TokenNftInfoQuery: Query<TokenNftInfo> {
     /// Create a new `TokenNftInfoQuery`.
@@ -38,16 +41,25 @@ public final class TokenNftInfoQuery: Query<TokenNftInfo> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case nftId
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.tokenGetNftInfo = .with { proto in
+                proto.header = header
+                nftId?.toProtobufInto(&proto.nftID)
+            }
+        }
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_TokenServiceAsyncClient(channel: channel).getTokenNftInfo(request)
+    }
 
-        try container.encodeIfPresent(nftId, forKey: .nftId)
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .tokenGetNftInfo(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `tokenGetNftInfo`")
+        }
 
-        try super.encode(to: encoder)
+        return try .fromProtobuf(proto.nft)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

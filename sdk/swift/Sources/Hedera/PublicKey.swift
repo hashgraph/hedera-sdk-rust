@@ -29,7 +29,7 @@ private typealias UnsafeFromBytesFunc = @convention(c) (
 ) -> HederaError
 
 /// A public key on the Hedera network.
-public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Codable, Equatable, Hashable {
+public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
     internal let ptr: OpaquePointer
 
     private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
@@ -130,10 +130,6 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         try fromBytesEcdsa(decodeBytes(description))
     }
 
-    public required convenience init(from decoder: Decoder) throws {
-        try self.init(parsing: try decoder.singleValueContainer().decode(String.self))
-    }
-
     public func toBytesDer() -> Data {
         var buf: UnsafeMutablePointer<UInt8>?
         let size = hedera_public_key_to_bytes_der(ptr, &buf)
@@ -195,12 +191,6 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         hedera_public_key_is_ecdsa(ptr)
     }
 
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
-    }
-
     public static func == (lhs: PublicKey, rhs: PublicKey) -> Bool {
         // this will always be true for public keys, DER is a stable format with canonicalization.
         // ideally we'd do this a different way, but that needs to wait until ffi is gone.
@@ -222,6 +212,33 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         }
     }
 
+    internal func verifyTransactionSources(_ sources: TransactionSources) throws {
+        let pkBytes = self.toBytesRaw()
+
+        for signedTransaction in sources.signedTransactions {
+            var found = false
+
+            for sigPair in signedTransaction.sigMap.sigPair
+            where pkBytes.starts(with: sigPair.pubKeyPrefix) {
+                found = true
+
+                let signature: Data
+
+                switch sigPair.signature {
+                case .ecdsaSecp256K1(let data), .ed25519(let data): signature = data
+                default: throw HError(kind: .signatureVerify, description: "Unsupported transaction signature type")
+                }
+
+                try verify(signedTransaction.bodyBytes, signature)
+            }
+
+            if !found {
+                throw HError(kind: .signatureVerify, description: "signer not in transaction")
+            }
+        }
+
+    }
+
     public func verifyTransaction(_ transaction: Transaction) throws {
         // we're a signer.
         if transaction.signers.contains(where: { self == $0.publicKey }) {
@@ -232,7 +249,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
             throw HError(kind: .signatureVerify, description: "signer not in transaction")
         }
 
-        try HError.throwing(error: hedera_public_key_verify_sources(ptr, sources.ptr))
+        try verifyTransactionSources(sources)
     }
 
     deinit {
@@ -287,3 +304,5 @@ extension PublicKey: TryProtobufCodable {
         }
     }
 }
+
+extension PublicKey: Sendable {}

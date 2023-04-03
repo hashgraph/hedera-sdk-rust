@@ -31,24 +31,16 @@ jobs:
           workspaces: |
             sdk/rust
 
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install rust-src
-        run: rustup component add rust-src
-
       - name: Add target `${{ matrix.target }}`
         run: rustup target add ${{ matrix.target }}
       - name: Build for `${{ matrix.target }}`
-        run: cargo build --features ffi -p hedera --target ${{ matrix.target }}
+        run: cargo build -p hedera-crypto --target ${{ matrix.target }}
 
       - name: 'Upload `${{ matrix.target }}` Artifact'
         uses: actions/upload-artifact@v3
         with:
           name: chedera-${{ matrix.target }}
-          path: sdk/rust/target/${{ matrix.target }}/debug/libhedera.a
+          path: sdk/rust/target/${{ matrix.target }}/debug/libhedera_crypto.a
           retention-days: 1
       - name: 'Upload `${{ matrix.target }}` Artifact'
         uses: actions/upload-artifact@v3
@@ -69,7 +61,7 @@ jobs:
   build:
     strategy:
       matrix:
-        swift: ["5.5", "5.7"]
+        swift: ["5.7"]
     needs: build-ffi
     runs-on: macos-11
     steps:
@@ -95,7 +87,7 @@ jobs:
           mkdir -p sdk/swift/CHedera.xcframework/macos-universal/Headers
           cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/macos-universal/headers
           cp .tmp/chedera-aarch64-apple-darwin/hedera.h sdk/swift/CHedera.xcframework/macos-universal/headers
-          lipo .tmp/chedera-aarch64-apple-darwin/libhedera.a .tmp/chedera-x86_64-apple-darwin/libhedera.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
+          lipo .tmp/chedera-aarch64-apple-darwin/libhedera_crypto.a .tmp/chedera-x86_64-apple-darwin/libhedera_crypto.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
         working-directory: .
 
       - name: Build
@@ -104,7 +96,7 @@ jobs:
   test:
     strategy:
       matrix:
-        swift: ["5.5", "5.7"]
+        swift: ["5.7"]
     needs: [build-ffi, build]
     runs-on: macos-11
     steps:
@@ -120,24 +112,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.swift }}-spm-
 
-      - name: Download CHedera `x86_64-apple-darwin`
-        uses: actions/download-artifact@v3
-        with:
-          name: chedera-x86_64-apple-darwin
-          path: .tmp/chedera/x86_64-apple-darwin
 
-      - name: Download CHedera `aarch64-apple-darwin`
+      - name: Download CHedera artifacts
         uses: actions/download-artifact@v3
         with:
-          name: chedera-aarch64-apple-darwin
-          path: .tmp/chedera/aarch64-apple-darwin
+          path: .tmp/
 
       - name: merge into macos-universal
         run: |
           mkdir -p sdk/swift/CHedera.xcframework/macos-universal/Headers
           cp sdk/swift/CHedera.xcframework/module.modulemap sdk/swift/CHedera.xcframework/macos-universal/headers
-          cp .tmp/chedera/aarch64-apple-darwin/hedera.h sdk/swift/CHedera.xcframework/macos-universal/headers
-          lipo .tmp/chedera/aarch64-apple-darwin/libhedera.a .tmp/chedera/x86_64-apple-darwin/libhedera.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
+          cp .tmp/chedera-aarch64-apple-darwin/hedera.h sdk/swift/CHedera.xcframework/macos-universal/headers
+          lipo .tmp/chedera-aarch64-apple-darwin/libhedera_crypto.a .tmp/chedera-x86_64-apple-darwin/libhedera_crypto.a -output sdk/swift/CHedera.xcframework/macos-universal/libhedera.a -create
         working-directory: .
 
       - name: Test

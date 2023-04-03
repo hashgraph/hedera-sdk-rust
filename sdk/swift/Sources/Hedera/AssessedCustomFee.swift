@@ -3,7 +3,7 @@ import Foundation
 import HederaProtobufs
 
 /// A custom transfer fee that was assessed during the handling of a ``TransferTransaction``.
-public struct AssessedCustomFee: Equatable, Codable {
+public struct AssessedCustomFee: Equatable {
     /// The amount of currency charged to each payer.
     public let amount: Int64
 

@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Start a new smart contract instance.
 public final class ContractCreateTransaction: Transaction {
@@ -48,31 +50,65 @@ public final class ContractCreateTransaction: Transaction {
         self.contractMemo = contractMemo
         self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
         self.autoRenewAccountId = autoRenewAccountId
+
         self.stakedAccountId = stakedAccountId
-        self.stakedNodeId = stakedNodeId
+
+        if let stakedNodeId = stakedNodeId {
+            // just ensure one "wins" for now.
+            self.stakedAccountId = nil
+            self.stakedNodeId = stakedNodeId
+        }
         self.declineStakingReward = declineStakingReward
 
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractCreateTransactionBody) throws {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: UInt64?
 
-        bytecode = try container.decodeIfPresent(.bytecode).map(Data.base64Encoded)
-        bytecodeFileId = try container.decodeIfPresent(.bytecodeFileId)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        gas = try container.decodeIfPresent(.gas) ?? 0
-        initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        constructorParameters = try container.decodeIfPresent(.constructorParameters).map(Data.base64Encoded)
-        contractMemo = try container.decodeIfPresent(.contractMemo) ?? ""
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
+        switch data.stakedID {
+        case .stakedAccountID(let value):
+            stakedAccountId = try .fromProtobuf(value)
+            stakedNodeId = nil
+        case .stakedNodeID(let value):
+            stakedNodeId = UInt64(value)
+            stakedAccountId = nil
+        case nil:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        }
 
-        try super.init(from: decoder)
+        let bytecode: Data?
+        let bytecodeFileId: FileId?
+
+        switch data.initcodeSource {
+        case .initcode(let initcode):
+            bytecode = initcode
+            bytecodeFileId = nil
+        case .fileID(let fileId):
+            bytecode = nil
+            bytecodeFileId = .fromProtobuf(fileId)
+        case nil:
+            bytecode = nil
+            bytecodeFileId = nil
+        }
+
+        self.bytecode = bytecode
+        self.bytecodeFileId = bytecodeFileId
+        self.adminKey = try .fromProtobuf(data.adminKey)
+        self.gas = UInt64(data.gas)
+        self.initialBalance = .fromTinybars(data.initialBalance)
+        self.autoRenewPeriod = .fromProtobuf(data.autoRenewPeriod)
+        self.constructorParameters = !data.constructorParameters.isEmpty ? data.constructorParameters : nil
+        self.contractMemo = data.memo
+        self.maxAutomaticTokenAssociations = UInt32(data.maxAutomaticTokenAssociations)
+        self.autoRenewAccountId = data.hasAutoRenewAccountID ? try .fromProtobuf(data.autoRenewAccountID) : nil
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = data.declineReward
+
+        try super.init(protobuf: proto)
     }
 
     /// The bytes of the smart contract.
@@ -250,6 +286,7 @@ public final class ContractCreateTransaction: Transaction {
     @discardableResult
     public func stakedAccountId(_ stakedAccountId: AccountId) -> Self {
         self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = nil
 
         return self
     }
@@ -265,6 +302,7 @@ public final class ContractCreateTransaction: Transaction {
     @discardableResult
     public func stakedNodeId(_ stakedNodeId: UInt64) -> Self {
         self.stakedNodeId = stakedNodeId
+        self.stakedAccountId = nil
 
         return self
     }
@@ -284,46 +322,64 @@ public final class ContractCreateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case bytecode
-        case bytecodeFileId
-        case adminKey
-        case gas
-        case initialBalance
-        case autoRenewPeriod
-        case constructorParameters
-        case contractMemo
-        case maxAutomaticTokenAssociations
-        case autoRenewAccountId
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(bytecode?.base64EncodedString(), forKey: .bytecode)
-        try container.encodeIfPresent(bytecodeFileId, forKey: .bytecodeFileId)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encode(gas, forKey: .gas)
-        try container.encode(initialBalance, forKey: .initialBalance)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(constructorParameters?.base64EncodedString(), forKey: .constructorParameters)
-        try container.encode(contractMemo, forKey: .contractMemo)
-        try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encode(declineStakingReward, forKey: .declineStakingReward)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try bytecodeFileId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).createContract(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractCreateInstance(toProtobuf())
+    }
+}
+
+extension ContractCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            switch (bytecode, bytecodeFileId) {
+            // todo: just do whatever rust does
+            case (.some, .some): fatalError("Cannot set both bytecode and bytecodeFileId")
+            case (.some(let code), nil): proto.initcode = code
+            case (nil, .some(let fileId)): proto.fileID = fileId.toProtobuf()
+            default:
+                break
+            }
+
+            adminKey?.toProtobufInto(&proto.adminKey)
+            proto.gas = Int64(gas)
+            proto.initialBalance = initialBalance.toTinybars()
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+            proto.constructorParameters = constructorParameters ?? Data()
+            proto.memo = contractMemo
+            proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+
+            if let stakedAccountId = stakedAccountId?.toProtobuf() {
+                proto.stakedAccountID = stakedAccountId
+            }
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+
+            proto.declineReward = declineStakingReward
+        }
+    }
+}
+
+extension ContractCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractCreateInstance(toProtobuf())
     }
 }

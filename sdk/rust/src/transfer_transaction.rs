@@ -57,8 +57,6 @@ pub type TransferTransaction = Transaction<TransferTransactionData>;
 
 #[derive(Debug, Clone, Default)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct TransferTransactionData {
     transfers: Vec<Transfer>,
     token_transfers: Vec<TokenTransfer>,
@@ -66,47 +64,34 @@ pub struct TransferTransactionData {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct Transfer {
     account_id: AccountId,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     amount: i64,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     is_approval: bool,
 }
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct TokenTransfer {
     token_id: TokenId,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     transfers: Vec<Transfer>,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     nft_transfers: Vec<NftTransfer>,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     expected_decimals: Option<u32>,
 }
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct NftTransfer {
     sender_account_id: AccountId,
     receiver_account_id: AccountId,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     serial: u64,
 
-    #[cfg_attr(feature = "ffi", serde(default))]
     is_approval: bool,
 }
 
@@ -399,67 +384,5 @@ impl ToProtobuf for TransferTransactionData {
         let token_transfers = self.token_transfers.to_protobuf();
 
         services::CryptoTransferTransactionBody { transfers, token_transfers }
-    }
-}
-
-// hack(sr): these tests currently don't compile due to `payer_account_id`
-#[cfg(feature = "false")]
-mod tests {
-    use assert_matches::assert_matches;
-
-    use crate::transaction::{
-        AnyTransaction,
-        AnyTransactionData,
-    };
-    use crate::{
-        AccountId,
-        TransferTransaction,
-    };
-
-    // language=JSON
-    const TRANSFER_HBAR: &str = r#"{
-  "$type": "transfer",
-  "transfers": [
-    {
-      "accountId": "0.0.1001",
-      "amount": 20,
-      "isApproval": false
-    },
-    {
-      "accountId": "0.0.1002",
-      "amount": -20,
-      "isApproval": false
-    }
-  ],
-  "tokenTransfers": [],
-  "payerAccountId": "0.0.6189"
-}"#;
-
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut transaction = TransferTransaction::new();
-        transaction
-            .hbar_transfer(AccountId::from(1001), 20)
-            .hbar_transfer(AccountId::from(1002), -20)
-            .payer_account_id(AccountId::from(6189));
-
-        let s = serde_json::to_string_pretty(&transaction)?;
-        assert_eq!(s, TRANSFER_HBAR);
-
-        Ok(())
-    }
-
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let transaction: AnyTransaction = serde_json::from_str(TRANSFER_HBAR)?;
-
-        let data = assert_matches!(transaction.body.data, AnyTransactionData::Transfer(transaction) => transaction);
-
-        assert_eq!(data.transfers.len(), 2);
-
-        assert_eq!(data.transfers[0].amount, 20);
-        assert_eq!(data.transfers[1].amount, -20);
-
-        Ok(())
     }
 }

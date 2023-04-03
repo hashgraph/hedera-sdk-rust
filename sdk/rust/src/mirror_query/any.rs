@@ -35,24 +35,18 @@ use crate::{
 pub type AnyMirrorQuery = MirrorQuery<AnyMirrorQueryData>;
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryData {
     NodeAddressBook(NodeAddressBookQueryData),
     TopicMessage(TopicMessageQueryData),
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryMessage {
     NodeAddressBook(NodeAddress),
     TopicMessage(TopicMessage),
 }
 
 /// Represents the response of any possible query to the mirror network.
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyMirrorQueryResponse {
     /// Response for `AnyMirrorQuery::NodeAddressBook`.
     NodeAddressBook(<NodeAddressBookQueryData as MirrorQueryExecute>::Response),
@@ -108,46 +102,5 @@ impl MirrorQueryExecute for AnyMirrorQueryData {
                     .map(Self::Response::from)
             }),
         }
-    }
-}
-
-// NOTE: as we cannot derive serde on MirrorQuery<T> directly as `T`,
-//  we create a proxy type that has the same layout but is only for AnyMirrorQueryData and does
-//  derive(Deserialize).
-
-#[cfg(feature = "ffi")]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-struct AnyMirrorQueryProxy {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    data: AnyMirrorQueryData,
-
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    common: super::MirrorQueryCommon,
-}
-
-#[cfg(feature = "ffi")]
-impl<D> serde::Serialize for MirrorQuery<D>
-where
-    D: MirrorQueryExecute + Clone,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        // TODO: remove the clones, should be possible with Cows
-
-        AnyMirrorQueryProxy { data: self.data.clone().into(), common: self.common.clone() }
-            .serialize(serializer)
-    }
-}
-
-#[cfg(feature = "ffi")]
-impl<'de> serde::Deserialize<'de> for AnyMirrorQuery {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        <AnyMirrorQueryProxy as serde::Deserialize>::deserialize(deserializer)
-            .map(|query| Self { data: query.data, common: query.common })
     }
 }

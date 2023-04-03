@@ -72,7 +72,6 @@ pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1
 
 /// A private key on the Hedera network.
 #[derive(Clone)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct PrivateKey(Arc<PrivateKeyDataWrapper>);
 
 // find a better name
@@ -602,7 +601,7 @@ impl PrivateKey {
         }
     }
 
-    #[cfg(any(feature = "ffi", feature = "mnemonic"))]
+    #[cfg(feature = "mnemonic")]
     pub(crate) fn from_mnemonic_seed(seed: &[u8]) -> Self {
         let output: [u8; 64] = Hmac::<Sha512>::new_from_slice(b"ed25519 seed")
             .expect("hmac can take a seed of any size")

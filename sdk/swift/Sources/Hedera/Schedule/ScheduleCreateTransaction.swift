@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new schedule entity (or simply, schedule) in the network's action queue.
 ///
@@ -48,17 +50,8 @@ public final class ScheduleCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        isWaitForExpiry = try container.decodeIfPresent(.isWaitForExpiry) ?? false
-        payerAccountId = try container.decodeIfPresent(.payerAccountId)
-        scheduledTransactionInner = try container.decodeIfPresent(.scheduledTransaction)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        scheduleMemo = try container.decodeIfPresent(.scheduleMemo) ?? ""
-
-        try super.init(from: decoder)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleCreateTransactionBody) throws {
+        fatalError("Fixme: ScheduleCreateTransaction from bytes")
     }
 
     /// The timestamp for when the transaction should be evaluated for execution and then expire.
@@ -162,31 +155,66 @@ public final class ScheduleCreateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case expirationTime
-        case isWaitForExpiry
-        case payerAccountId
-        case scheduledTransaction
-        case adminKey
-        case scheduleMemo
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encode(isWaitForExpiry, forKey: .isWaitForExpiry)
-        try container.encodeIfPresent(payerAccountId, forKey: .payerAccountId)
-        try container.encodeIfPresent(scheduledTransaction, forKey: .scheduledTransaction)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encode(scheduleMemo, forKey: .scheduleMemo)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try payerAccountId?.validateChecksums(on: ledgerId)
         try scheduledTransaction?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).createSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .scheduleCreate(toProtobuf())
+    }
+}
+
+extension ScheduleCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        let body = self.scheduledTransactionInner.map { scheduledTransaction in
+            Proto_SchedulableTransactionBody.with { proto in
+                proto.data = scheduledTransaction.toSchedulableTransactionData()
+                proto.memo = scheduledTransaction.transaction.transactionMemo
+
+                let transactionFee =
+                    scheduledTransaction.transaction.maxTransactionFee
+                    ?? scheduledTransaction.transaction.defaultMaxTransactionFee
+
+                // FIXME: does not use the client to default the max transaction fee
+                proto.transactionFee = UInt64(transactionFee.toTinybars())
+            }
+        }
+
+        return
+            .with { proto in
+                if let body = body {
+                    proto.scheduledTransactionBody = body
+                }
+
+                proto.memo = self.scheduleMemo
+
+                if let adminKey = adminKey?.toProtobuf() {
+                    proto.adminKey = adminKey
+                }
+
+                if let payerAccountId = payerAccountId?.toProtobuf() {
+                    proto.payerAccountID = payerAccountId
+                }
+
+                if let expirationTime = expirationTime?.toProtobuf() {
+                    proto.expirationTime = expirationTime
+                }
+
+                if isWaitForExpiry {
+                    proto.waitForExpiry = true
+                }
+            }
     }
 }

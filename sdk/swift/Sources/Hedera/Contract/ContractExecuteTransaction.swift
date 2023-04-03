@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Call a function of the given smart contract instance, giving it
 /// parameters as its inputs.
@@ -46,15 +48,13 @@ public final class ContractExecuteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractCallTransactionBody) throws {
+        contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
+        gas = UInt64(data.gas)
+        payableAmount = .fromTinybars(data.amount)
+        functionParameters = !data.functionParameters.isEmpty ? data.functionParameters : nil
 
-        contractId = try container.decodeIfPresent(.contractId)
-        gas = try container.decodeIfPresent(.gas) ?? 0
-        payableAmount = try container.decodeIfPresent(.payableAmount) ?? 0
-        functionParameters = try container.decodeIfPresent(.functionParameters).map(Data.base64Encoded)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The contract instance to call.
@@ -144,27 +144,39 @@ public final class ContractExecuteTransaction: Transaction {
         functionParameters(parameters.toBytes(name))
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case gas
-        case payableAmount
-        case functionParameters
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encode(gas, forKey: .gas)
-        try container.encode(payableAmount, forKey: .payableAmount)
-        try container.encodeIfPresent(functionParameters?.base64EncodedString(), forKey: .functionParameters)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try contractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).contractCallMethod(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractCall(toProtobuf())
+    }
+}
+
+extension ContractExecuteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractCallTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            contractId?.toProtobufInto(&proto.contractID)
+            proto.gas = Int64(gas)
+            proto.amount = payableAmount.toTinybars()
+            proto.functionParameters = functionParameters ?? Data()
+        }
+    }
+}
+
+extension ContractExecuteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractCall(toProtobuf())
+    }
 }

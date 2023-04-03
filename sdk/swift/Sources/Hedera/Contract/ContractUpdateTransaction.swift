@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+import SwiftProtobuf
 
 /// Updates the fields of a smart contract to the given values.
 public final class ContractUpdateTransaction: Transaction {
@@ -51,23 +54,47 @@ public final class ContractUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractUpdateTransactionBody) throws {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: Int64?
 
-        contractId = try container.decodeIfPresent(.contractId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        contractMemo = try container.decodeIfPresent(.contractMemo)
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
-        proxyAccountId = try container.decodeIfPresent(.proxyAccountId)
+        switch data.stakedID {
+        case .stakedAccountID(let value):
+            stakedAccountId = try .fromProtobuf(value)
+            stakedNodeId = nil
+        case .stakedNodeID(let value):
+            stakedNodeId = value
+            stakedAccountId = nil
+        case nil:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        }
 
-        try super.init(from: decoder)
+        let memo: String?
+
+        switch data.memoField {
+        case .memo(let value):
+            memo = value
+        case .memoWrapper(let value):
+            memo = value.value
+        case nil:
+            memo = nil
+        }
+
+        self.contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
+        self.expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+        self.adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        self.contractMemo = memo
+        self.maxAutomaticTokenAssociations =
+            data.hasMaxAutomaticTokenAssociations ? UInt32(data.maxAutomaticTokenAssociations.value) : nil
+        self.autoRenewAccountId = data.hasAutoRenewAccountID ? try .fromProtobuf(data.autoRenewAccountID) : nil
+        self.proxyAccountId = data.hasProxyAccountID ? try .fromProtobuf(data.proxyAccountID) : nil
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = data.hasDeclineReward ? data.declineReward.value : nil
+
+        try super.init(protobuf: proto)
     }
 
     /// The contract to be updated.
@@ -241,7 +268,7 @@ public final class ContractUpdateTransaction: Transaction {
     }
 
     /// Set the ID of the node to which this contract is staking.
-    /// This is mutually exclusive with `staked_account_id`.
+    /// This is mutually exclusive with `stakedAccountId`.
     @discardableResult
     public func stakedNodeId(_ stakedNodeId: Int64?) -> Self {
         self.stakedNodeId = stakedNodeId
@@ -280,36 +307,10 @@ public final class ContractUpdateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case expirationTime
-        case adminKey
-        case autoRenewPeriod
-        case contractMemo
-        case maxAutomaticTokenAssociations
-        case autoRenewAccountId
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-        case proxyAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(expirationTime, forKey: .adminKey)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(contractMemo, forKey: .contractMemo)
-        try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
-        try container.encodeIfPresent(proxyAccountId, forKey: .proxyAccountId)
-
-        try super.encode(to: encoder)
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).updateContract(request)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
@@ -318,5 +319,50 @@ public final class ContractUpdateTransaction: Transaction {
         try proxyAccountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractUpdateInstance(toProtobuf())
+    }
+}
+
+extension ContractUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            contractId?.toProtobufInto(&proto.contractID)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+
+            if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                    Int32(maxAutomaticTokenAssociations))
+            }
+
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccountID)
+            proxyAccountId?.toProtobufInto(&proto.proxyAccountID)
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+
+            if let stakedAccountId = stakedAccountId {
+                proto.stakedAccountID = stakedAccountId.toProtobuf()
+            }
+
+            if let declineStakingReward = declineStakingReward {
+                proto.declineReward = Google_Protobuf_BoolValue(declineStakingReward)
+            }
+        }
+    }
+}
+
+extension ContractUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractUpdateInstance(toProtobuf())
     }
 }

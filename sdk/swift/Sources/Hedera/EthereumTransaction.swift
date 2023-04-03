@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Submit an Ethereum transaction.
 public final class EthereumTransaction: Transaction {
@@ -34,14 +36,12 @@ public final class EthereumTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_EthereumTransactionBody) throws {
+        self.ethereumData = !data.ethereumData.isEmpty ? data.ethereumData : nil
+        self.callDataFileId = data.hasCallData ? .fromProtobuf(data.callData) : nil
+        self.maxGasAllowanceHbar = UInt64(data.maxGasAllowance)
 
-        ethereumData = try container.decodeIfPresent(.ethereumData).map(Data.base64Encoded)
-        callDataFileId = try container.decodeIfPresent(.callDataFileId)
-        maxGasAllowanceHbar = try container.decodeIfPresent(.maxGasAllowanceHbar) ?? 0
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The raw Ethereum transaction (RLP encoded type 0, 1, and 2).
@@ -104,24 +104,32 @@ public final class EthereumTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case ethereumData
-        case callDataFileId
-        case maxGasAllowanceHbar
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(ethereumData?.base64EncodedString(), forKey: .ethereumData)
-        try container.encodeIfPresent(callDataFileId, forKey: .callDataFileId)
-        try container.encodeIfPresent(maxGasAllowanceHbar, forKey: .maxGasAllowanceHbar)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try callDataFileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).callEthereum(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .ethereumTransaction(toProtobuf())
+    }
+}
+
+extension EthereumTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_EthereumTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.ethereumData = ethereumData ?? Data()
+            callDataFileId?.toProtobufInto(&proto.callData)
+            proto.maxGasAllowance = Int64(maxGasAllowanceHbar)
+        }
     }
 }

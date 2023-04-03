@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Creates one or more hbar/token approved allowances **relative to the owner account specified in the allowances of
 /// this transaction**.
 ///
@@ -51,14 +54,12 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoApproveAllowanceTransactionBody) throws {
+        hbarAllowances = try .fromProtobuf(data.cryptoAllowances)
+        tokenAllowances = try .fromProtobuf(data.tokenAllowances)
+        nftAllowances = try .fromProtobuf(data.nftAllowances)
 
-        hbarAllowances = try container.decodeIfPresent(.hbarAllowances) ?? []
-        tokenAllowances = try container.decodeIfPresent(.tokenAllowances) ?? []
-        nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// Approves the hbar allowance.
@@ -157,27 +158,41 @@ public final class AccountAllowanceApproveTransaction: Transaction {
         self.nftAllowances
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case hbarAllowances
-        case tokenAllowances
-        case nftAllowances
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(hbarAllowances, forKey: .hbarAllowances)
-        try container.encode(tokenAllowances, forKey: .tokenAllowances)
-        try container.encode(nftAllowances, forKey: .nftAllowances)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try hbarAllowances.validateChecksums(on: ledgerId)
         try tokenAllowances.validateChecksums(on: ledgerId)
         try nftAllowances.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).approveAllowances(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoApproveAllowance(toProtobuf())
+    }
+}
+
+extension AccountAllowanceApproveTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoApproveAllowanceTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.cryptoAllowances = hbarAllowances.toProtobuf()
+            proto.tokenAllowances = tokenAllowances.toProtobuf()
+            proto.nftAllowances = nftAllowances.toProtobuf()
+        }
+    }
+}
+
+extension AccountAllowanceApproveTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoApproveAllowance(toProtobuf())
     }
 }

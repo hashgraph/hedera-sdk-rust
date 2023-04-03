@@ -41,10 +41,7 @@ use crate::{
 /// Get the runtime bytecode for a smart contract instance.
 pub type ContractBytecodeQuery = Query<ContractBytecodeQueryData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct ContractBytecodeQueryData {
     /// The contract for which information is requested.
     contract_id: Option<ContractId>,

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Delete the given file.
 ///
 /// After deletion, it will be marked as deleted and will have no contents.
@@ -25,7 +28,7 @@
 ///
 public final class FileDeleteTransaction: Transaction {
     /// Create a new `FileDeleteTransaction`.
-    public init(
+    public required init(
         fileId: FileId? = nil
     ) {
         self.fileId = fileId
@@ -33,12 +36,10 @@ public final class FileDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileDeleteTransactionBody) throws {
+        fileId = data.hasFileID ? .fromProtobuf(data.fileID) : nil
 
-        fileId = try container.decodeIfPresent(.fileId)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The file to delete. It will be marked as deleted until it expires.
@@ -58,20 +59,36 @@ public final class FileDeleteTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).deleteFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .fileDelete(toProtobuf())
+    }
+}
+
+extension FileDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FileDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            fileId?.toProtobufInto(&proto.fileID)
+        }
+    }
+}
+
+extension FileDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .fileDelete(toProtobuf())
     }
 }

@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the information about a file.
 public final class FileInfoQuery: Query<FileInfo> {
     /// Create a new `FileInfoQuery`.
@@ -42,12 +45,25 @@ public final class FileInfoQuery: Query<FileInfo> {
         case fileId
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.fileGetInfo = .with { proto in
+                proto.header = header
+                fileId?.toProtobufInto(&proto.fileID)
+            }
+        }
+    }
 
-        try container.encodeIfPresent(fileId, forKey: .fileId)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_FileServiceAsyncClient(channel: channel).getFileInfo(request)
+    }
 
-        try super.encode(to: encoder)
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .fileGetInfo(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `fileGetInfo`")
+        }
+
+        return try .fromProtobuf(proto.fileInfo)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

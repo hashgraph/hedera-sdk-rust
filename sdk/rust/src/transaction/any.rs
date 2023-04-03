@@ -19,7 +19,6 @@
  */
 
 use hedera_proto::services;
-use time::Duration;
 use tonic::transport::Channel;
 
 use super::chunked::ChunkInfo;
@@ -27,7 +26,6 @@ use super::{
     TransactionData,
     TransactionExecuteChunked,
 };
-use crate::client::Operator;
 use crate::entity_id::ValidateChecksums;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
@@ -36,7 +34,6 @@ use crate::transaction::{
     TransactionExecute,
 };
 use crate::{
-    AccountId,
     BoxGrpcFuture,
     Error,
     Hbar,
@@ -106,8 +103,6 @@ mod data {
 pub type AnyTransaction = Transaction<AnyTransactionData>;
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyTransactionData {
     AccountCreate(data::AccountCreate),
     AccountUpdate(data::AccountUpdate),
@@ -514,91 +509,6 @@ impl ValidateChecksums for AnyTransactionData {
             Self::ScheduleDelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
         }
-    }
-}
-
-// NOTE: as we cannot derive Deserialize on Query<T> directly as `T` is not Deserialize,
-//  we create a proxy type that has the same layout but is only for AnyQueryData and does
-//  derive(Deserialize).
-
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
-#[derive(Debug, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
-pub(crate) struct AnyTransactionBody<D> {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    data: D,
-
-    node_account_ids: Option<Vec<AccountId>>,
-
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>")
-    )]
-    #[cfg_attr(feature = "ffi", serde(default))]
-    transaction_valid_duration: Option<Duration>,
-
-    #[cfg_attr(feature = "ffi", serde(default))]
-    max_transaction_fee: Option<Hbar>,
-
-    #[cfg_attr(feature = "ffi", serde(default, skip_serializing_if = "String::is_empty"))]
-    transaction_memo: String,
-
-    #[cfg_attr(feature = "ffi", serde(default))]
-    transaction_id: Option<TransactionId>,
-
-    #[cfg_attr(feature = "ffi", serde(default))]
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
-    is_frozen: bool,
-
-    #[cfg_attr(feature = "ffi", serde(default))]
-    operator: Option<Operator>,
-}
-
-impl<D> From<AnyTransactionBody<D>> for Transaction<D> {
-    fn from(body: AnyTransactionBody<D>) -> Self {
-        Self { body: body.into(), signers: Vec::new(), sources: None }
-    }
-}
-
-impl<D> From<TransactionBody<D>> for AnyTransactionBody<D> {
-    fn from(body: TransactionBody<D>) -> Self {
-        Self {
-            data: body.data,
-            node_account_ids: body.node_account_ids,
-            transaction_valid_duration: body.transaction_valid_duration,
-            max_transaction_fee: body.max_transaction_fee,
-            transaction_memo: body.transaction_memo,
-            transaction_id: body.transaction_id,
-            is_frozen: body.is_frozen,
-            operator: body.operator,
-        }
-    }
-}
-
-impl<D> From<AnyTransactionBody<D>> for TransactionBody<D> {
-    fn from(body: AnyTransactionBody<D>) -> Self {
-        Self {
-            data: body.data,
-            node_account_ids: body.node_account_ids,
-            transaction_valid_duration: body.transaction_valid_duration,
-            max_transaction_fee: body.max_transaction_fee,
-            transaction_memo: body.transaction_memo,
-            transaction_id: body.transaction_id,
-            is_frozen: body.is_frozen,
-            operator: body.operator,
-        }
-    }
-}
-
-#[cfg(feature = "ffi")]
-impl<'de> serde::Deserialize<'de> for AnyTransaction {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        <AnyTransactionBody<AnyTransactionData> as serde::Deserialize>::deserialize(deserializer)
-            .map(AnyTransactionBody::into)
     }
 }
 

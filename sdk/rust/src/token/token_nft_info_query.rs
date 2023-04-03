@@ -42,8 +42,6 @@ use crate::{
 pub type TokenNftInfoQuery = Query<TokenNftInfoQueryData>;
 
 #[derive(Clone, Default, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenNftInfoQueryData {
     /// The ID of the NFT
     nft_id: Option<NftId>,

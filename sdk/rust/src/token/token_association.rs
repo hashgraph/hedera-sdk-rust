@@ -29,8 +29,6 @@ use crate::{
 
 /// A token <-> account association.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenAssociation {
     /// The token involved in the association.
     pub token_id: TokenId,

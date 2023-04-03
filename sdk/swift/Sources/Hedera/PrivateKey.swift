@@ -122,16 +122,30 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
 
     /// Parse a `PrivateKey` from a [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-10) encoded string.
     public static func fromPem(_ pem: String) throws -> Self {
-        var key: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_from_pem(pem, &key))
+        let document = try Crypto.Pem.decode(pem)
 
-        return Self(key!)
+        guard document.typeLabel == "PRIVATE KEY" else {
+            throw HError.keyParse("incorrect PEM type label: expected: `PRIVATE KEY`, got: `\(document.typeLabel)`")
+        }
+
+        return try fromBytesDer(document.der)
     }
 
     /// Parse a `PrivateKey` from a password protected [PEM](https://www.rfc-editor.org/rfc/rfc7468#section-11) encoded string.
     public static func fromPem(_ pem: String, _ password: String) throws -> Self {
+        let document = try Crypto.Pem.decode(pem)
+
+        guard document.typeLabel == "ENCRYPTED PRIVATE KEY" else {
+            throw HError.keyParse(
+                "incorrect PEM type label: expected: `ENCRYPTED PRIVATE KEY`, got: `\(document.typeLabel)`")
+        }
+
         var key: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_from_pem_with_password(pem, password, &key))
+
+        try document.der.withUnsafeTypedBytes { buffer in
+            try HError.throwing(
+                error: hedera_private_key_from_encrypted_info(buffer.baseAddress, buffer.count, password, &key))
+        }
 
         return Self(key!)
     }
@@ -232,3 +246,5 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         hedera_private_key_free(ptr)
     }
 }
+
+extension PrivateKey: Sendable {}

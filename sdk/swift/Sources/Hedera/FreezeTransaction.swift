@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Set the freezing period in which the platform will stop creating
 /// events and accepting transactions.
@@ -38,15 +40,13 @@ public final class FreezeTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FreezeTransactionBody) throws {
+        startTime = data.hasStartTime ? .fromProtobuf(data.startTime) : nil
+        fileId = data.hasUpdateFile ? .fromProtobuf(data.updateFile) : nil
+        fileHash = !data.fileHash.isEmpty ? data.fileHash : nil
+        freezeType = try .fromProtobuf(data.freezeType)
 
-        startTime = try container.decodeIfPresent(.startTime)
-        fileId = try container.decodeIfPresent(.fileId)
-        fileHash = try container.decodeIfPresent(.fileHash).map(Data.base64Encoded)
-        freezeType = try container.decodeIfPresent(.freezeType) ?? .unknown
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The start time.
@@ -109,26 +109,48 @@ public final class FreezeTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case startTime
-        case fileId
-        case fileHash
-        case freezeType
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(startTime, forKey: .startTime)
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-        try container.encodeIfPresent(fileHash, forKey: .fileHash)
-        try container.encode(freezeType, forKey: .freezeType)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FreezeServiceAsyncClient(channel: channel).freeze(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .freeze(toProtobuf())
+    }
+}
+
+extension FreezeTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FreezeTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let fileId = fileId {
+                proto.updateFile = fileId.toProtobuf()
+            }
+
+            if let startTime = startTime {
+                proto.startTime = startTime.toProtobuf()
+            }
+
+            if let fileHash = fileHash {
+                proto.fileHash = fileHash
+            }
+
+            proto.freezeType = freezeType.toProtobuf()
+        }
+    }
+}
+
+extension FreezeTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .freeze(toProtobuf())
     }
 }

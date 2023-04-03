@@ -60,7 +60,6 @@ mod tests;
 
 /// A public key on the Hedera network.
 #[derive(Clone, Eq, Copy, Hash, PartialEq)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct PublicKey(PublicKeyData);
 
 #[derive(Clone, Copy)]
@@ -368,9 +367,7 @@ impl PublicKey {
         use services::signature_pair::Signature;
         let pk_bytes = self.to_bytes_raw();
 
-        for (transaction, signed_transaction) in
-            sources.transactions().iter().zip(sources.signed_transactions())
-        {
+        for signed_transaction in sources.signed_transactions() {
             let mut found = false;
             for sig_pair in
                 signed_transaction.sig_map.as_ref().map_or_else(|| [].as_slice(), |it| &it.sig_pair)
@@ -386,7 +383,7 @@ impl PublicKey {
                         ))
                     };
 
-                self.verify(&transaction.signed_transaction_bytes, sig)?;
+                self.verify(&signed_transaction.body_bytes, sig)?;
             }
 
             if !found {

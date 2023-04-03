@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the receipt of a transaction, given its transaction ID.
 ///
 /// Once a transaction reaches consensus, then information about whether it succeeded or failed
@@ -70,22 +73,61 @@ public final class TransactionReceiptQuery: Query<TransactionReceipt> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case transactionId
-        case includeChildren
-        case includeDuplicates
-        case validateStatus
+    internal override var requiresPayment: Bool { false }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.transactionGetReceipt = .with { proto in
+                proto.header = header
+                proto.includeDuplicates = includeDuplicates
+                proto.includeChildReceipts = includeChildren
+                transactionId?.toProtobufInto(&proto.transactionID)
+            }
+        }
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getTransactionReceipts(request)
+    }
 
-        try container.encode(transactionId, forKey: .transactionId)
-        try container.encode(includeDuplicates, forKey: .includeDuplicates)
-        try container.encode(includeChildren, forKey: .includeChildren)
-        try container.encode(validateStatus, forKey: .validateStatus)
+    internal override var relatedTransactionId: TransactionId? { transactionId }
 
-        try super.encode(to: encoder)
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .transactionGetReceipt(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `transactionGetReceipt`")
+        }
+
+        let receipt = try Response.fromProtobuf(proto.receipt)
+
+        let status = receipt.status
+
+        if validateStatus && status != .success {
+            throw HError(
+                kind: .receiptStatus(status: status, transactionId: transactionId),
+                description:
+                    "receipt for transaction `\(String(describing: transactionId))` failed with status `\(status)`")
+        }
+
+        return receipt
+    }
+
+    internal override func shouldRetry(forResponse response: GrpcResponse) -> Bool {
+        guard case .transactionGetReceipt(let response) = response.response else {
+            return false
+        }
+
+        guard case .unknown = Status(rawValue: Int32(response.receipt.status.rawValue)) else {
+            return false
+        }
+
+        return true
+    }
+
+    internal override func shouldRetryPrecheck(forStatus status: Status) -> Bool {
+        switch status {
+        case .receiptNotFound, .recordNotFound: return true
+        default: return false
+        }
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

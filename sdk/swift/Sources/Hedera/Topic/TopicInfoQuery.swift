@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Retrieve the latest state of a topic.
 public final class TopicInfoQuery: Query<TopicInfo> {
     /// Create a new `TopicInfoQuery`.
@@ -38,16 +41,25 @@ public final class TopicInfoQuery: Query<TopicInfo> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case topicId
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.consensusGetTopicInfo = .with { proto in
+                proto.header = header
+                topicId?.toProtobufInto(&proto.topicID)
+            }
+        }
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).getTopicInfo(request)
+    }
 
-        try container.encodeIfPresent(topicId, forKey: .topicId)
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .consensusGetTopicInfo(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `consensusGetTopicInfo`")
+        }
 
-        try super.encode(to: encoder)
+        return try .fromProtobuf(proto)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

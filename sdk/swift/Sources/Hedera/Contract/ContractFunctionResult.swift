@@ -19,6 +19,7 @@
  */
 
 import Foundation
+import HederaProtobufs
 import NumberKit
 
 private let slotSize: UInt = 32
@@ -196,53 +197,35 @@ public struct ContractFunctionResult {
     }
 }
 
-extension ContractFunctionResult: Codable {
-    private enum CodingKeys: CodingKey {
-        case contractId
-        case evmAddress
-        case errorMessage
-        case bloom
-        case gasUsed
-        case gas
-        case logs
-        case hbarAmount
-        case contractFunctionParametersBytes
-        case bytes
-        case senderAccountId
-    }
+extension ContractFunctionResult: TryFromProtobuf {
+    internal typealias Protobuf = Proto_ContractFunctionResult
 
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Protobuf) throws {
+        let bytes: Data
 
-        contractId = try container.decode(.contractId)
-        evmAddress = try container.decodeIfPresent(.evmAddress)
-        errorMessage = try container.decodeIfPresent(.errorMessage)
-        bloom = try container.decodeIfPresent(.bloom).map(Data.base64Encoded) ?? Data()
-        gasUsed = try container.decodeIfPresent(.gasUsed) ?? 0
-        gas = try container.decodeIfPresent(.gas) ?? 0
-        logs = try container.decodeIfPresent(.logs) ?? []
-        hbarAmount = try container.decode(.hbarAmount)
-        contractFunctionParametersBytes =
-            try container.decodeIfPresent(.contractFunctionParametersBytes)
-            .map(Data.base64Encoded)
-            ?? Data()
-        bytes = try container.decodeIfPresent(.bytes).map(Data.base64Encoded) ?? Data()
-        senderAccountId = try container.decodeIfPresent(.senderAccountId)
-    }
+        let errorMessage = !proto.errorMessage.isEmpty ? proto.errorMessage : nil
 
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(contractId, forKey: .contractId)
-        try container.encodeIfPresent(evmAddress, forKey: .evmAddress)
-        try container.encodeIfPresent(errorMessage, forKey: .errorMessage)
-        try container.encode(bloom.base64EncodedString(), forKey: .bloom)
-        try container.encode(gasUsed, forKey: .gasUsed)
-        try container.encode(gas, forKey: .gas)
-        try container.encode(logs, forKey: .logs)
-        try container.encode(hbarAmount, forKey: .hbarAmount)
-        try container.encode(
-            contractFunctionParametersBytes.base64EncodedString(), forKey: .contractFunctionParametersBytes)
-        try container.encode(bytes.base64EncodedString(), forKey: .bytes)
-        try container.encodeIfPresent(senderAccountId, forKey: .senderAccountId)
+        if errorMessage != nil && proto.contractCallResult.starts(with: [0x08, 0xc3, 0x79, 0xa0]) {
+            bytes = proto.contractCallResult.subdata(in: 4..<proto.contractCallResult.count)
+        } else {
+            bytes = proto.contractCallResult
+        }
+
+        let contractId = try ContractId.fromProtobuf(proto.contractID)
+
+        self.init(
+            contractId: contractId,
+            evmAddress: proto.hasEvmAddress
+                ? try ContractId.fromEvmAddressBytes(contractId.shard, contractId.realm, proto.evmAddress.value) : nil,
+            errorMessage: errorMessage,
+            bloom: proto.bloom,
+            gasUsed: proto.gasUsed,
+            gas: UInt64(proto.gas),
+            hbarAmount: .fromTinybars(proto.amount),
+            contractFunctionParametersBytes: proto.functionParameters,
+            bytes: bytes,
+            senderAccountId: proto.hasSenderID ? try .fromProtobuf(proto.senderID) : nil,
+            logs: try .fromProtobuf(proto.logInfo)
+        )
     }
 }

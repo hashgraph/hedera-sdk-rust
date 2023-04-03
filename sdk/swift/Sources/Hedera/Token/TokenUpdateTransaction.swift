@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+import SwiftProtobuf
 
 /// At consensus, updates an already created token to the given values.
 public final class TokenUpdateTransaction: Transaction {
@@ -59,26 +62,24 @@ public final class TokenUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenUpdateTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.tokenName = data.name
+        self.tokenSymbol = data.symbol
+        self.treasuryAccountId = data.hasTreasury ? try .fromProtobuf(data.treasury) : nil
+        self.adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        self.kycKey = data.hasKycKey ? try .fromProtobuf(data.kycKey) : nil
+        self.freezeKey = data.hasFreezeKey ? try .fromProtobuf(data.freezeKey) : nil
+        self.wipeKey = data.hasWipeKey ? try .fromProtobuf(data.wipeKey) : nil
+        self.supplyKey = data.hasSupplyKey ? try .fromProtobuf(data.supplyKey) : nil
+        self.autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        self.expirationTime = data.hasExpiry ? .fromProtobuf(data.expiry) : nil
+        self.tokenMemo = data.hasMemo ? data.memo.value : nil ?? ""
+        self.feeScheduleKey = data.hasFeeScheduleKey ? try .fromProtobuf(data.feeScheduleKey) : nil
+        self.pauseKey = data.hasPauseKey ? try .fromProtobuf(data.pauseKey) : nil
 
-        tokenId = try container.decodeIfPresent(.tokenId)
-        tokenName = try container.decodeIfPresent(.tokenName) ?? ""
-        tokenSymbol = try container.decodeIfPresent(.tokenSymbol) ?? ""
-        treasuryAccountId = try container.decodeIfPresent(.treasuryAccountId)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        kycKey = try container.decodeIfPresent(.kycKey)
-        freezeKey = try container.decodeIfPresent(.freezeKey)
-        wipeKey = try container.decodeIfPresent(.wipeKey)
-        supplyKey = try container.decodeIfPresent(.supplyKey)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        tokenMemo = try container.decodeIfPresent(.tokenMemo) ?? ""
-        feeScheduleKey = try container.decodeIfPresent(.feeScheduleKey)
-        pauseKey = try container.decodeIfPresent(.pauseKey)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The token to be updated.
@@ -315,50 +316,52 @@ public final class TokenUpdateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case tokenId
-        case tokenName
-        case tokenSymbol
-        case treasuryAccountId
-        case adminKey
-        case kycKey
-        case freezeKey
-        case wipeKey
-        case supplyKey
-        case autoRenewAccountId
-        case autoRenewPeriod
-        case expirationTime
-        case tokenMemo
-        case feeScheduleKey
-        case pauseKey
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(tokenId, forKey: .tokenId)
-        try container.encode(tokenName, forKey: .tokenName)
-        try container.encode(tokenSymbol, forKey: .tokenSymbol)
-        try container.encodeIfPresent(treasuryAccountId, forKey: .treasuryAccountId)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(kycKey, forKey: .kycKey)
-        try container.encodeIfPresent(freezeKey, forKey: .freezeKey)
-        try container.encodeIfPresent(wipeKey, forKey: .wipeKey)
-        try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encode(tokenMemo, forKey: .tokenMemo)
-        try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)
-        try container.encodeIfPresent(pauseKey, forKey: .pauseKey)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try treasuryAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).updateToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenUpdate(toProtobuf())
+    }
+}
+
+extension TokenUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            proto.name = tokenName
+            proto.symbol = tokenSymbol
+            treasuryAccountId?.toProtobufInto(&proto.treasury)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            kycKey?.toProtobufInto(&proto.kycKey)
+            freezeKey?.toProtobufInto(&proto.freezeKey)
+            wipeKey?.toProtobufInto(&proto.wipeKey)
+            supplyKey?.toProtobufInto(&proto.supplyKey)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            expirationTime?.toProtobufInto(&proto.expiry)
+            proto.memo = Google_Protobuf_StringValue(tokenMemo)
+            feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+            pauseKey?.toProtobufInto(&proto.pauseKey)
+        }
+    }
+}
+
+extension TokenUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenUpdate(toProtobuf())
     }
 }

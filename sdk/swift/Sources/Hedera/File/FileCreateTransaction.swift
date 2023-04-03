@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new file, containing the given contents.
 public final class FileCreateTransaction: Transaction {
@@ -28,8 +30,7 @@ public final class FileCreateTransaction: Transaction {
         contents: Data = Data(),
         autoRenewPeriod: Duration? = nil,
         autoRenewAccountId: AccountId? = nil,
-        expirationTime: Timestamp? = Timestamp(
-            from: Calendar.current.date(byAdding: .day, value: 90, to: Date())!)
+        expirationTime: Timestamp? = .now + .days(90)
     ) {
         self.fileMemo = fileMemo
         self.keys = keys
@@ -46,17 +47,17 @@ public final class FileCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileCreateTransactionBody) throws {
+        fileMemo = data.memo
+        keys = try .fromProtobuf(data.keys)
+        contents = data.contents
+        expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
 
-        fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
-        keys = try container.decodeIfPresent(.keys) ?? []
-        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
+        // hedera doesn't have these currently.
+        autoRenewPeriod = nil
+        autoRenewAccountId = nil
 
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The memo associated with the file.
@@ -163,30 +164,39 @@ public final class FileCreateTransaction: Transaction {
 
         return self
     }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileMemo
-        case keys
-        case contents
-        case expirationTime
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(fileMemo, forKey: .fileMemo)
-        try container.encode(keys, forKey: .keys)
-        try container.encode(contents.base64EncodedString(), forKey: .contents)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try self.autoRenewAccountId?.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).createFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .fileCreate(toProtobuf())
+    }
+}
+
+extension FileCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FileCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.memo = fileMemo
+            proto.keys = keys.toProtobuf()
+            proto.contents = contents
+
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+        }
+    }
+}
+
+extension FileCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .fileCreate(toProtobuf())
     }
 }

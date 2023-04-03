@@ -22,6 +22,8 @@
 // swiftlint:disable file_length type_body_length
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new token.
 public final class TokenCreateTransaction: Transaction {
@@ -74,32 +76,30 @@ public final class TokenCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenCreateTransactionBody) throws {
+        name = data.name
+        symbol = data.symbol
+        decimals = data.decimals
+        initialSupply = data.initialSupply
+        treasuryAccountId = data.hasTreasury ? try .fromProtobuf(data.treasury) : nil
+        adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        kycKey = data.hasKycKey ? try .fromProtobuf(data.kycKey) : nil
+        freezeKey = data.hasFreezeKey ? try .fromProtobuf(data.freezeKey) : nil
+        wipeKey = data.hasWipeKey ? try .fromProtobuf(data.wipeKey) : nil
+        supplyKey = data.hasSupplyKey ? try .fromProtobuf(data.supplyKey) : nil
+        freezeDefault = data.freezeDefault
+        expirationTime = data.hasExpiry ? .fromProtobuf(data.expiry) : nil
+        autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+        autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        tokenMemo = data.memo
+        tokenType = try .fromProtobuf(data.tokenType)
+        tokenSupplyType = try .fromProtobuf(data.supplyType)
+        maxSupply = UInt64(data.maxSupply)
+        feeScheduleKey = data.hasFeeScheduleKey ? try .fromProtobuf(data.feeScheduleKey) : nil
+        customFees = try .fromProtobuf(data.customFees)
+        pauseKey = data.hasPauseKey ? try .fromProtobuf(data.pauseKey) : nil
 
-        name = try container.decodeIfPresent(.name) ?? ""
-        symbol = try container.decodeIfPresent(.symbol) ?? ""
-        decimals = try container.decodeIfPresent(.decimals) ?? 0
-        initialSupply = try container.decodeIfPresent(.initialSupply) ?? 0
-        treasuryAccountId = try container.decodeIfPresent(.treasuryAccountId)
-        adminKey = try container.decodeIfPresent(.adminKey)
-        kycKey = try container.decodeIfPresent(.kycKey)
-        freezeKey = try container.decodeIfPresent(.freezeKey)
-        wipeKey = try container.decodeIfPresent(.wipeKey)
-        supplyKey = try container.decodeIfPresent(.supplyKey)
-        freezeDefault = try container.decodeIfPresent(.freezeDefault) ?? false
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        tokenMemo = try container.decodeIfPresent(.tokenMemo) ?? ""
-        tokenType = try container.decodeIfPresent(.tokenType) ?? .fungibleCommon
-        tokenSupplyType = try container.decodeIfPresent(.tokenSupplyType) ?? .infinite
-        maxSupply = try container.decodeIfPresent(.maxSupply) ?? 0
-        feeScheduleKey = try container.decodeIfPresent(.feeScheduleKey)
-        customFees = try container.decodeIfPresent(.customFees) ?? []
-        pauseKey = try container.decodeIfPresent(.pauseKey)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The publicly visible name of the token.
@@ -416,63 +416,59 @@ public final class TokenCreateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case name
-        case symbol
-        case decimals
-        case initialSupply
-        case treasuryAccountId
-        case adminKey
-        case kycKey
-        case freezeKey
-        case wipeKey
-        case supplyKey
-        case freezeDefault
-        case expirationTime
-        case autoRenewAccountId
-        case autoRenewPeriod
-        case tokenMemo
-        case tokenType
-        case tokenSupplyType
-        case maxSupply
-        case feeScheduleKey
-        case customFees
-        case pauseKey
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(name, forKey: .name)
-        try container.encode(symbol, forKey: .symbol)
-        try container.encode(decimals, forKey: .decimals)
-        try container.encode(initialSupply, forKey: .initialSupply)
-        try container.encodeIfPresent(treasuryAccountId, forKey: .treasuryAccountId)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(kycKey, forKey: .kycKey)
-        try container.encodeIfPresent(freezeKey, forKey: .freezeKey)
-        try container.encodeIfPresent(wipeKey, forKey: .wipeKey)
-        try container.encodeIfPresent(supplyKey, forKey: .supplyKey)
-        try container.encode(freezeDefault, forKey: .freezeDefault)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encode(tokenMemo, forKey: .tokenMemo)
-        try container.encode(tokenType, forKey: .tokenType)
-        try container.encode(tokenSupplyType, forKey: .tokenSupplyType)
-        try container.encode(maxSupply, forKey: .maxSupply)
-        try container.encodeIfPresent(feeScheduleKey, forKey: .feeScheduleKey)
-        try container.encode(customFees, forKey: .customFees)
-        try container.encodeIfPresent(pauseKey, forKey: .pauseKey)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try treasuryAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try customFees.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).createToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenCreation(toProtobuf())
+    }
+}
+
+extension TokenCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.name = name
+            proto.symbol = symbol
+            proto.decimals = decimals
+            proto.initialSupply = initialSupply
+            treasuryAccountId?.toProtobufInto(&proto.treasury)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            kycKey?.toProtobufInto(&proto.kycKey)
+            freezeKey?.toProtobufInto(&proto.freezeKey)
+            wipeKey?.toProtobufInto(&proto.wipeKey)
+            supplyKey?.toProtobufInto(&proto.supplyKey)
+            proto.freezeDefault = freezeDefault
+            expirationTime?.toProtobufInto(&proto.expiry)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            proto.memo = tokenMemo
+            proto.tokenType = tokenType.toProtobuf()
+            proto.supplyType = tokenSupplyType.toProtobuf()
+            proto.maxSupply = Int64(bitPattern: maxSupply)
+            feeScheduleKey?.toProtobufInto(&proto.feeScheduleKey)
+            proto.customFees = customFees.toProtobuf()
+            pauseKey?.toProtobufInto(&proto.pauseKey)
+        }
+    }
+}
+
+extension TokenCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenCreation(toProtobuf())
     }
 }

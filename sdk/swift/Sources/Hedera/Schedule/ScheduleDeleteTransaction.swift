@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Marks a schedule in the network's action queue as deleted.
 public final class ScheduleDeleteTransaction: Transaction {
     /// Create a new `ScheduleDeleteTransaction`.
@@ -28,12 +31,10 @@ public final class ScheduleDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleDeleteTransactionBody) throws {
+        scheduleId = data.hasScheduleID ? .fromProtobuf(data.scheduleID) : nil
 
-        scheduleId = try container.decodeIfPresent(ScheduleId.self, forKey: .scheduleId)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The schedule to delete.
@@ -51,20 +52,36 @@ public final class ScheduleDeleteTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case scheduleId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(scheduleId, forKey: .scheduleId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try scheduleId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).deleteSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .scheduleDelete(toProtobuf())
+    }
+}
+
+extension ScheduleDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            scheduleId?.toProtobufInto(&proto.scheduleID)
+        }
+    }
+}
+
+extension ScheduleDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .scheduleDelete(toProtobuf())
     }
 }

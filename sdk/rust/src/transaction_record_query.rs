@@ -46,8 +46,6 @@ use crate::{
 pub type TransactionRecordQuery = Query<TransactionRecordQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionRecordQueryData {
     transaction_id: Option<TransactionId>,
     include_children: bool,

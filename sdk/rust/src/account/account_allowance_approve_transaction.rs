@@ -56,8 +56,6 @@ use crate::{
 pub type AccountAllowanceApproveTransaction = Transaction<AccountAllowanceApproveTransactionData>;
 
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct AccountAllowanceApproveTransactionData {
     /// List of hbar allowances approved by the account owner.
     hbar_allowances: Vec<HbarAllowance>,
@@ -155,8 +153,6 @@ impl AccountAllowanceApproveTransaction {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct HbarAllowance {
     /// The account ID of the hbar owner (ie. the grantor of the allowance).
     owner_account_id: AccountId,
@@ -169,8 +165,6 @@ struct HbarAllowance {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct TokenAllowance {
     /// The token that the allowance pertains to.
     token_id: TokenId,
@@ -186,8 +180,6 @@ struct TokenAllowance {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 struct NftAllowance {
     /// The token that the allowance pertains to.
     token_id: TokenId,

@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Mark an account as deleted, moving all its current hbars to another account.
 ///
@@ -31,12 +33,11 @@ public final class AccountDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoDeleteTransactionBody) throws {
+        accountId = data.hasDeleteAccountID ? try .fromProtobuf(data.deleteAccountID) : nil
+        transferAccountId = data.hasTransferAccountID ? try .fromProtobuf(data.transferAccountID) : nil
 
-        transferAccountId = try container.decodeIfPresent(AccountId.self, forKey: .transferAccountId)
-        accountId = try container.decodeIfPresent(AccountId.self, forKey: .accountId)
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The account ID which will receive all remaining hbars.
@@ -69,23 +70,38 @@ public final class AccountDeleteTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case transferAccountId
-        case accountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
-        try container.encodeIfPresent(accountId, forKey: .accountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try transferAccountId?.validateChecksums(on: ledgerId)
         try accountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoDelete(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoDelete(toProtobuf())
+    }
+}
+
+extension AccountDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            accountId?.toProtobufInto(&proto.deleteAccountID)
+            transferAccountId?.toProtobufInto(&proto.transferAccountID)
+        }
+    }
+}
+
+extension AccountDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoDelete(toProtobuf())
     }
 }

@@ -18,6 +18,8 @@
  * ‍
  */
 
+import HederaProtobufs
+
 internal enum AnyTransaction {
     case accountCreate(AccountCreateTransaction)
     case accountUpdate(AccountUpdateTransaction)
@@ -60,7 +62,6 @@ internal enum AnyTransaction {
     case scheduleDelete(ScheduleDeleteTransaction)
     case ethereum(EthereumTransaction)
 
-    // swiftlint:disable:next cyclomatic_complexity
     internal init(upcasting transaction: Transaction) {
         switch transaction {
         case let transaction as AccountCreateTransaction: self = .accountCreate(transaction)
@@ -107,7 +108,7 @@ internal enum AnyTransaction {
         }
     }
 
-    internal enum Kind: String, Codable {
+    internal enum Kind: String {
         case accountCreate
         case accountUpdate
         case accountDelete
@@ -196,98 +197,458 @@ internal enum AnyTransaction {
     }
 }
 
-extension AnyTransaction: Decodable {
-    internal enum CodingKeys: String, CodingKey {
-        case type = "$type"
-    }
+extension AnyTransaction {
+    internal static func fromProtobuf(
+        _ firstBody: Proto_TransactionBody, _ data: [Proto_TransactionBody.OneOf_Data]
+    ) throws -> Self {
+        func intoOnlyValue<Element>(_ array: [Element]) throws -> Element {
+            guard array.count == 1 else {
+                throw HError.fromProtobuf("chunks in non chunkable transaction")
+            }
 
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        let kind = try container.decode(Kind.self, forKey: .type)
-
-        switch kind {
-        case .accountCreate:
-            self = .accountCreate(try AccountCreateTransaction(from: decoder))
-        case .accountUpdate:
-            self = .accountUpdate(try AccountUpdateTransaction(from: decoder))
-        case .accountDelete:
-            self = .accountDelete(try AccountDeleteTransaction(from: decoder))
-        case .accountAllowanceApprove:
-            self = .accountAllowanceApprove(try AccountAllowanceApproveTransaction(from: decoder))
-        case .accountAllowanceDelete:
-            self = .accountAllowanceDelete(try AccountAllowanceDeleteTransaction(from: decoder))
-        case .contractCreate:
-            self = .contractCreate(try ContractCreateTransaction(from: decoder))
-        case .contractUpdate:
-            self = .contractUpdate(try ContractUpdateTransaction(from: decoder))
-        case .contractDelete:
-            self = .contractDelete(try ContractDeleteTransaction(from: decoder))
-        case .contractExecute:
-            self = .contractExecute(try ContractExecuteTransaction(from: decoder))
-        case .transfer:
-            self = .transfer(try TransferTransaction(from: decoder))
-        case .topicCreate:
-            self = .topicCreate(try TopicCreateTransaction(from: decoder))
-        case .topicUpdate:
-            self = .topicUpdate(try TopicUpdateTransaction(from: decoder))
-        case .topicDelete:
-            self = .topicDelete(try TopicDeleteTransaction(from: decoder))
-        case .topicMessageSubmit:
-            self = .topicMessageSubmit(try TopicMessageSubmitTransaction(from: decoder))
-        case .fileAppend:
-            self = .fileAppend(try FileAppendTransaction(from: decoder))
-        case .fileCreate:
-            self = .fileCreate(try FileCreateTransaction(from: decoder))
-        case .fileUpdate:
-            self = .fileUpdate(try FileUpdateTransaction(from: decoder))
-        case .fileDelete:
-            self = .fileDelete(try FileDeleteTransaction(from: decoder))
-        case .tokenAssociate:
-            self = .tokenAssociate(try TokenAssociateTransaction(from: decoder))
-        case .tokenBurn:
-            self = .tokenBurn(try TokenBurnTransaction(from: decoder))
-        case .tokenCreate:
-            self = .tokenCreate(try TokenCreateTransaction(from: decoder))
-        case .tokenDelete:
-            self = .tokenDelete(try TokenDeleteTransaction(from: decoder))
-        case .tokenDissociate:
-            self = .tokenDissociate(try TokenDissociateTransaction(from: decoder))
-        case .tokenFeeScheduleUpdate:
-            self = .tokenFeeScheduleUpdate(try TokenFeeScheduleUpdateTransaction(from: decoder))
-        case .tokenFreeze:
-            self = .tokenFreeze(try TokenFreezeTransaction(from: decoder))
-        case .tokenGrantKyc:
-            self = .tokenGrantKyc(try TokenGrantKycTransaction(from: decoder))
-        case .tokenMint:
-            self = .tokenMint(try TokenMintTransaction(from: decoder))
-        case .tokenPause:
-            self = .tokenPause(try TokenPauseTransaction(from: decoder))
-        case .tokenRevokeKyc:
-            self = .tokenRevokeKyc(try TokenRevokeKycTransaction(from: decoder))
-        case .tokenUnfreeze:
-            self = .tokenUnfreeze(try TokenUnfreezeTransaction(from: decoder))
-        case .tokenUnpause:
-            self = .tokenUnpause(try TokenUnpauseTransaction(from: decoder))
-        case .tokenUpdate:
-            self = .tokenUpdate(try TokenUpdateTransaction(from: decoder))
-        case .tokenWipe:
-            self = .tokenWipe(try TokenWipeTransaction(from: decoder))
-        case .systemDelete:
-            self = .systemDelete(try SystemDeleteTransaction(from: decoder))
-        case .systemUndelete:
-            self = .systemUndelete(try SystemUndeleteTransaction(from: decoder))
-        case .freeze:
-            self = .freeze(try FreezeTransaction(from: decoder))
-        case .scheduleCreate:
-            self = .scheduleCreate(try ScheduleCreateTransaction(from: decoder))
-        case .scheduleSign:
-            self = .scheduleSign(try ScheduleSignTransaction(from: decoder))
-        case .scheduleDelete:
-            self = .scheduleDelete(try ScheduleDeleteTransaction(from: decoder))
-        case .ethereum:
-            self = .ethereum(try EthereumTransaction(from: decoder))
+            return array[0]
         }
+
+        let data = try ServicesTransactionDataList.fromProtobuf(data)
+
+        switch data {
+
+        case .accountCreate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try AccountCreateTransaction(protobuf: firstBody, value))
+
+        case .accountUpdate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try AccountUpdateTransaction(protobuf: firstBody, value))
+
+        case .accountDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try AccountDeleteTransaction(protobuf: firstBody, value))
+
+        case .accountAllowanceApprove(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try AccountAllowanceApproveTransaction(protobuf: firstBody, value))
+
+        case .accountAllowanceDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try AccountAllowanceDeleteTransaction(protobuf: firstBody, value))
+
+        case .contractCreate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ContractCreateTransaction(protobuf: firstBody, value))
+
+        case .contractUpdate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ContractUpdateTransaction(protobuf: firstBody, value))
+
+        case .contractDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ContractDeleteTransaction(protobuf: firstBody, value))
+
+        case .contractExecute(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ContractExecuteTransaction(protobuf: firstBody, value))
+
+        case .transfer(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TransferTransaction(protobuf: firstBody, value))
+
+        case .topicCreate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TopicCreateTransaction(protobuf: firstBody, value))
+
+        case .topicUpdate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TopicUpdateTransaction(protobuf: firstBody, value))
+
+        case .topicDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TopicDeleteTransaction(protobuf: firstBody, value))
+
+        case .topicMessageSubmit(let value):
+            return Self(upcasting: try TopicMessageSubmitTransaction(protobuf: firstBody, value))
+
+        case .fileAppend(let value):
+            return Self(upcasting: try FileAppendTransaction(protobuf: firstBody, value))
+
+        case .fileCreate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try FileCreateTransaction(protobuf: firstBody, value))
+
+        case .fileUpdate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try FileUpdateTransaction(protobuf: firstBody, value))
+
+        case .fileDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try FileDeleteTransaction(protobuf: firstBody, value))
+
+        case .tokenAssociate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenAssociateTransaction(protobuf: firstBody, value))
+
+        case .tokenBurn(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenBurnTransaction(protobuf: firstBody, value))
+
+        case .tokenCreate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenCreateTransaction(protobuf: firstBody, value))
+
+        case .tokenDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenDeleteTransaction(protobuf: firstBody, value))
+
+        case .tokenDissociate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenDissociateTransaction(protobuf: firstBody, value))
+
+        case .tokenFeeScheduleUpdate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenFeeScheduleUpdateTransaction(protobuf: firstBody, value))
+
+        case .tokenFreeze(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenFreezeTransaction(protobuf: firstBody, value))
+
+        case .tokenGrantKyc(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenGrantKycTransaction(protobuf: firstBody, value))
+
+        case .tokenMint(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenMintTransaction(protobuf: firstBody, value))
+
+        case .tokenPause(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenPauseTransaction(protobuf: firstBody, value))
+
+        case .tokenRevokeKyc(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenRevokeKycTransaction(protobuf: firstBody, value))
+
+        case .tokenUnfreeze(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenUnfreezeTransaction(protobuf: firstBody, value))
+
+        case .tokenUnpause(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenUnpauseTransaction(protobuf: firstBody, value))
+
+        case .tokenUpdate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenUpdateTransaction(protobuf: firstBody, value))
+
+        case .tokenWipe(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try TokenWipeTransaction(protobuf: firstBody, value))
+
+        case .systemDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try SystemDeleteTransaction(protobuf: firstBody, value))
+
+        case .systemUndelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try SystemUndeleteTransaction(protobuf: firstBody, value))
+
+        case .freeze(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try FreezeTransaction(protobuf: firstBody, value))
+
+        case .scheduleCreate(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ScheduleCreateTransaction(protobuf: firstBody, value))
+
+        case .scheduleSign(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ScheduleSignTransaction(protobuf: firstBody, value))
+
+        case .scheduleDelete(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try ScheduleDeleteTransaction(protobuf: firstBody, value))
+
+        case .ethereum(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try EthereumTransaction(protobuf: firstBody, value))
+
+        }
+    }
+}
+
+// exists for the same reason as rust and still sucks :/\
+internal enum ServicesTransactionDataList {
+    case accountCreate([Proto_CryptoCreateTransactionBody])
+    case accountUpdate([Proto_CryptoUpdateTransactionBody])
+    case accountDelete([Proto_CryptoDeleteTransactionBody])
+    case accountAllowanceApprove([Proto_CryptoApproveAllowanceTransactionBody])
+    case accountAllowanceDelete([Proto_CryptoDeleteAllowanceTransactionBody])
+    case contractCreate([Proto_ContractCreateTransactionBody])
+    case contractUpdate([Proto_ContractUpdateTransactionBody])
+    case contractDelete([Proto_ContractDeleteTransactionBody])
+    case contractExecute([Proto_ContractCallTransactionBody])
+    case transfer([Proto_CryptoTransferTransactionBody])
+    case topicCreate([Proto_ConsensusCreateTopicTransactionBody])
+    case topicUpdate([Proto_ConsensusUpdateTopicTransactionBody])
+    case topicDelete([Proto_ConsensusDeleteTopicTransactionBody])
+    case topicMessageSubmit([Proto_ConsensusSubmitMessageTransactionBody])
+    case fileAppend([Proto_FileAppendTransactionBody])
+    case fileCreate([Proto_FileCreateTransactionBody])
+    case fileUpdate([Proto_FileUpdateTransactionBody])
+    case fileDelete([Proto_FileDeleteTransactionBody])
+    case tokenAssociate([Proto_TokenAssociateTransactionBody])
+    case tokenBurn([Proto_TokenBurnTransactionBody])
+    case tokenCreate([Proto_TokenCreateTransactionBody])
+    case tokenDelete([Proto_TokenDeleteTransactionBody])
+    case tokenDissociate([Proto_TokenDissociateTransactionBody])
+    case tokenFeeScheduleUpdate([Proto_TokenFeeScheduleUpdateTransactionBody])
+    case tokenFreeze([Proto_TokenFreezeAccountTransactionBody])
+    case tokenGrantKyc([Proto_TokenGrantKycTransactionBody])
+    case tokenMint([Proto_TokenMintTransactionBody])
+    case tokenPause([Proto_TokenPauseTransactionBody])
+    case tokenRevokeKyc([Proto_TokenRevokeKycTransactionBody])
+    case tokenUnfreeze([Proto_TokenUnfreezeAccountTransactionBody])
+    case tokenUnpause([Proto_TokenUnpauseTransactionBody])
+    case tokenUpdate([Proto_TokenUpdateTransactionBody])
+    case tokenWipe([Proto_TokenWipeAccountTransactionBody])
+    case systemDelete([Proto_SystemDeleteTransactionBody])
+    case systemUndelete([Proto_SystemUndeleteTransactionBody])
+    case freeze([Proto_FreezeTransactionBody])
+    case scheduleCreate([Proto_ScheduleCreateTransactionBody])
+    case scheduleSign([Proto_ScheduleSignTransactionBody])
+    case scheduleDelete([Proto_ScheduleDeleteTransactionBody])
+    case ethereum([Proto_EthereumTransactionBody])
+
+    internal mutating func append(_ transaction: Proto_TransactionBody.OneOf_Data) throws {
+        switch (self, transaction) {
+        case (.accountCreate(var array), .cryptoCreateAccount(let data)):
+            array.append(data)
+            self = .accountCreate(array)
+
+        case (.accountUpdate(var array), .cryptoUpdateAccount(let data)):
+            array.append(data)
+            self = .accountUpdate(array)
+
+        case (.accountDelete(var array), .cryptoDelete(let data)):
+            array.append(data)
+            self = .accountDelete(array)
+
+        case (.accountAllowanceApprove(var array), .cryptoApproveAllowance(let data)):
+            array.append(data)
+            self = .accountAllowanceApprove(array)
+
+        case (.accountAllowanceDelete(var array), .cryptoDeleteAllowance(let data)):
+            array.append(data)
+            self = .accountAllowanceDelete(array)
+
+        case (.contractCreate(var array), .contractCreateInstance(let data)):
+            array.append(data)
+            self = .contractCreate(array)
+
+        case (.contractUpdate(var array), .contractUpdateInstance(let data)):
+            array.append(data)
+            self = .contractUpdate(array)
+
+        case (.contractDelete(var array), .contractDeleteInstance(let data)):
+            array.append(data)
+            self = .contractDelete(array)
+
+        case (.contractExecute(var array), .contractCall(let data)):
+            array.append(data)
+            self = .contractExecute(array)
+
+        case (.transfer(var array), .cryptoTransfer(let data)):
+            array.append(data)
+            self = .transfer(array)
+
+        case (.topicCreate(var array), .consensusCreateTopic(let data)):
+            array.append(data)
+            self = .topicCreate(array)
+
+        case (.topicUpdate(var array), .consensusUpdateTopic(let data)):
+            array.append(data)
+            self = .topicUpdate(array)
+
+        case (.topicDelete(var array), .consensusDeleteTopic(let data)):
+            array.append(data)
+            self = .topicDelete(array)
+
+        case (.topicMessageSubmit(var array), .consensusSubmitMessage(let data)):
+            array.append(data)
+            self = .topicMessageSubmit(array)
+
+        case (.fileAppend(var array), .fileAppend(let data)):
+            array.append(data)
+            self = .fileAppend(array)
+
+        case (.fileCreate(var array), .fileCreate(let data)):
+            array.append(data)
+            self = .fileCreate(array)
+
+        case (.fileUpdate(var array), .fileUpdate(let data)):
+            array.append(data)
+            self = .fileUpdate(array)
+
+        case (.fileDelete(var array), .fileDelete(let data)):
+            array.append(data)
+            self = .fileDelete(array)
+
+        case (.tokenAssociate(var array), .tokenAssociate(let data)):
+            array.append(data)
+            self = .tokenAssociate(array)
+
+        case (.tokenBurn(var array), .tokenBurn(let data)):
+            array.append(data)
+            self = .tokenBurn(array)
+
+        case (.tokenCreate(var array), .tokenCreation(let data)):
+            array.append(data)
+            self = .tokenCreate(array)
+
+        case (.tokenDelete(var array), .tokenDeletion(let data)):
+            array.append(data)
+            self = .tokenDelete(array)
+
+        case (.tokenDissociate(var array), .tokenDissociate(let data)):
+            array.append(data)
+            self = .tokenDissociate(array)
+
+        case (.tokenFeeScheduleUpdate(var array), .tokenFeeScheduleUpdate(let data)):
+            array.append(data)
+            self = .tokenFeeScheduleUpdate(array)
+
+        case (.tokenFreeze(var array), .tokenFreeze(let data)):
+            array.append(data)
+            self = .tokenFreeze(array)
+
+        case (.tokenGrantKyc(var array), .tokenGrantKyc(let data)):
+            array.append(data)
+            self = .tokenGrantKyc(array)
+
+        case (.tokenMint(var array), .tokenMint(let data)):
+            array.append(data)
+            self = .tokenMint(array)
+
+        case (.tokenPause(var array), .tokenPause(let data)):
+            array.append(data)
+            self = .tokenPause(array)
+
+        case (.tokenRevokeKyc(var array), .tokenRevokeKyc(let data)):
+            array.append(data)
+            self = .tokenRevokeKyc(array)
+
+        case (.tokenUnfreeze(var array), .tokenUnfreeze(let data)):
+            array.append(data)
+            self = .tokenUnfreeze(array)
+
+        case (.tokenUnpause(var array), .tokenUnpause(let data)):
+            array.append(data)
+            self = .tokenUnpause(array)
+
+        case (.tokenUpdate(var array), .tokenUpdate(let data)):
+            array.append(data)
+            self = .tokenUpdate(array)
+
+        case (.tokenWipe(var array), .tokenWipe(let data)):
+            array.append(data)
+            self = .tokenWipe(array)
+
+        case (.systemDelete(var array), .systemDelete(let data)):
+            array.append(data)
+            self = .systemDelete(array)
+
+        case (.systemUndelete(var array), .systemUndelete(let data)):
+            array.append(data)
+            self = .systemUndelete(array)
+
+        case (.freeze(var array), .freeze(let data)):
+            array.append(data)
+            self = .freeze(array)
+
+        case (.scheduleCreate(var array), .scheduleCreate(let data)):
+            array.append(data)
+            self = .scheduleCreate(array)
+
+        case (.scheduleSign(var array), .scheduleSign(let data)):
+            array.append(data)
+            self = .scheduleSign(array)
+
+        case (.scheduleDelete(var array), .scheduleDelete(let data)):
+            array.append(data)
+            self = .scheduleDelete(array)
+
+        case (.ethereum(var array), .ethereumTransaction(let data)):
+            array.append(data)
+            self = .ethereum(array)
+
+        default:
+            throw HError.fromProtobuf("mismatched transaction types")
+        }
+    }
+}
+
+extension ServicesTransactionDataList: TryFromProtobuf {
+    internal typealias Protobuf = [Proto_TransactionBody.OneOf_Data]
+
+    internal init(protobuf proto: Protobuf) throws {
+        var iter = proto.makeIterator()
+
+        let first = iter.next()!
+
+        var value: Self
+
+        switch first {
+        case .contractCall(let data): value = .contractExecute([data])
+        case .contractCreateInstance(let data): value = .contractCreate([data])
+        case .contractUpdateInstance(let data): value = .contractUpdate([data])
+        case .contractDeleteInstance(let data): value = .contractDelete([data])
+        case .ethereumTransaction(let data): value = .ethereum([data])
+        case .cryptoApproveAllowance(let data): value = .accountAllowanceApprove([data])
+        case .cryptoDeleteAllowance(let data): value = .accountAllowanceDelete([data])
+        case .cryptoCreateAccount(let data): value = .accountCreate([data])
+        case .cryptoDelete(let data): value = .accountDelete([data])
+        case .cryptoTransfer(let data): value = .transfer([data])
+        case .cryptoUpdateAccount(let data): value = .accountUpdate([data])
+        case .fileAppend(let data): value = .fileAppend([data])
+        case .fileCreate(let data): value = .fileCreate([data])
+        case .fileDelete(let data): value = .fileDelete([data])
+        case .fileUpdate(let data): value = .fileUpdate([data])
+        case .systemDelete(let data): value = .systemDelete([data])
+        case .systemUndelete(let data): value = .systemUndelete([data])
+        case .freeze(let data): value = .freeze([data])
+        case .consensusCreateTopic(let data): value = .topicCreate([data])
+        case .consensusUpdateTopic(let data): value = .topicUpdate([data])
+        case .consensusDeleteTopic(let data): value = .topicDelete([data])
+        case .consensusSubmitMessage(let data): value = .topicMessageSubmit([data])
+        case .tokenCreation(let data): value = .tokenCreate([data])
+        case .tokenFreeze(let data): value = .tokenFreeze([data])
+        case .tokenUnfreeze(let data): value = .tokenUnfreeze([data])
+        case .tokenGrantKyc(let data): value = .tokenGrantKyc([data])
+        case .tokenRevokeKyc(let data): value = .tokenRevokeKyc([data])
+        case .tokenDeletion(let data): value = .tokenDelete([data])
+        case .tokenUpdate(let data): value = .tokenUpdate([data])
+        case .tokenMint(let data): value = .tokenMint([data])
+        case .tokenBurn(let data): value = .tokenBurn([data])
+        case .tokenWipe(let data): value = .tokenWipe([data])
+        case .tokenAssociate(let data): value = .tokenAssociate([data])
+        case .tokenDissociate(let data): value = .tokenDissociate([data])
+        case .tokenFeeScheduleUpdate(let data): value = .tokenFeeScheduleUpdate([data])
+        case .tokenPause(let data): value = .tokenPause([data])
+        case .tokenUnpause(let data): value = .tokenUnpause([data])
+        case .scheduleCreate(let data): value = .scheduleCreate([data])
+        case .scheduleDelete(let data): value = .scheduleDelete([data])
+        case .scheduleSign(let data): value = .scheduleSign([data])
+
+        case .cryptoAddLiveHash: throw HError.fromProtobuf("Unsupported transaction `AddLiveHashTransaction`")
+        case .cryptoDeleteLiveHash: throw HError.fromProtobuf("Unsupported transaction `DeleteLiveHashTransaction`")
+        case .uncheckedSubmit: throw HError.fromProtobuf("Unsupported transaction `UncheckedSubmitTransaction`")
+        case .nodeStakeUpdate: throw HError.fromProtobuf("Unsupported transaction `NodeStakeUpdateTransaction`")
+        case .utilPrng: throw HError.fromProtobuf("Unimplemented transaction `PrngTransaction`")
+        }
+
+        for transaction in iter {
+            try value.append(transaction)
+        }
+
+        self = value
     }
 }

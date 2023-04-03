@@ -20,7 +20,7 @@
 
 import Foundation
 
-public struct Checksum: LosslessStringConvertible, Hashable {
+public struct Checksum: Sendable, LosslessStringConvertible, Hashable {
     internal let data: String
 
     public init?<S: StringProtocol>(_ description: S) {

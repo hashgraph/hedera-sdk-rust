@@ -51,13 +51,7 @@ use crate::{
 pub type FreezeTransaction = Transaction<FreezeTransactionData>;
 
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(default, rename_all = "camelCase"))]
 pub struct FreezeTransactionData {
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::TimestampNanoSeconds>>")
-    )]
     start_time: Option<OffsetDateTime>,
     file_id: Option<FileId>,
     file_hash: Option<Vec<u8>>,

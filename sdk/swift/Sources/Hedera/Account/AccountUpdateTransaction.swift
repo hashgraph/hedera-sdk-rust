@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+import SwiftProtobuf
 
 /// Change properties for the given account.
 ///
@@ -63,25 +66,49 @@ public final class AccountUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoUpdateTransactionBody) throws {
+        let stakedAccountId: AccountId?
+        let stakedNodeId: UInt64?
 
-        accountId = try container.decodeIfPresent(.accountId)
-        key = try container.decodeIfPresent(.key)
-        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        proxyAccountIdInner = try container.decodeIfPresent(.proxyAccountId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        accountMemo = try container.decodeIfPresent(.accountMemo)
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward)
-        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired)
-        proxyAccountIdInner = try container.decodeIfPresent(.proxyAccountId)
+        switch data.stakedID {
+        case .stakedAccountID(let value):
+            stakedAccountId = try .fromProtobuf(value)
+            stakedNodeId = nil
+        case .stakedNodeID(let value):
+            stakedNodeId = UInt64(value)
+            stakedAccountId = nil
+        case nil:
+            stakedAccountId = nil
+            stakedNodeId = nil
+        }
 
-        try super.init(from: decoder)
+        let receiverSignatureRequired: Bool?
+        switch data.receiverSigRequiredField {
+        case .receiverSigRequired(let value):
+            receiverSignatureRequired = value
+        case .receiverSigRequiredWrapper(let value):
+            receiverSignatureRequired = value.value
+        case nil:
+            receiverSignatureRequired = nil
+        }
+
+        self.accountId = data.hasAccountIdtoUpdate ? try .fromProtobuf(data.accountIdtoUpdate) : nil
+        self.key = data.hasKey ? try .fromProtobuf(data.key) : nil
+        self.receiverSignatureRequired = receiverSignatureRequired
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        // self.autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
+        self.autoRenewAccountId = nil
+        self.proxyAccountIdInner = data.hasProxyAccountID ? try .fromProtobuf(data.proxyAccountID) : nil
+        self.expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+        self.accountMemo = data.hasMemo ? data.memo.value : nil
+        self.maxAutomaticTokenAssociations =
+            data.hasMaxAutomaticTokenAssociations
+            ? UInt32(data.maxAutomaticTokenAssociations.value) : nil
+        self.stakedAccountId = stakedAccountId
+        self.stakedNodeId = stakedNodeId
+        self.declineStakingReward = data.hasDeclineReward ? data.declineReward.value : nil
+
+        try super.init(protobuf: proto)
     }
 
     /// The account ID which is being updated in this transaction.
@@ -289,45 +316,66 @@ public final class AccountUpdateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case accountId
-        case key
-        case accountMemo
-        case autoRenewPeriod
-        case expirationTime
-        case maxAutomaticTokenAssociations
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-        case autoRenewAccountId
-        case receiverSignatureRequired
-        case proxyAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(accountId, forKey: .accountId)
-        try container.encodeIfPresent(key, forKey: .key)
-        try container.encodeIfPresent(accountMemo, forKey: .accountMemo)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encodeIfPresent(declineStakingReward, forKey: .declineStakingReward)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-        try container.encodeIfPresent(receiverSignatureRequired, forKey: .receiverSignatureRequired)
-        try container.encodeIfPresent(proxyAccountIdInner, forKey: .proxyAccountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try accountId?.validateChecksums(on: ledgerId)
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try proxyAccountIdInner?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).updateAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoUpdateAccount(
+            toProtobuf())
+    }
+}
+
+extension AccountUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            accountId?.toProtobufInto(&proto.accountIdtoUpdate)
+            key?.toProtobufInto(&proto.key)
+            if let receiverSignatureRequired = receiverSignatureRequired {
+                proto.receiverSigRequiredWrapper = Google_Protobuf_BoolValue(receiverSignatureRequired)
+            }
+
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            proxyAccountIdInner?.toProtobufInto(&proto.proxyAccountID)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+
+            if let accountMemo = accountMemo {
+                proto.memo = Google_Protobuf_StringValue(accountMemo)
+            }
+
+            if let maxAutomaticTokenAssociations = maxAutomaticTokenAssociations {
+                proto.maxAutomaticTokenAssociations = Google_Protobuf_Int32Value(
+                    Int32(maxAutomaticTokenAssociations))
+            }
+
+            if let stakedAccountId = stakedAccountId {
+                proto.stakedAccountID = stakedAccountId.toProtobuf()
+            }
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+        }
+    }
+}
+
+extension AccountUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoUpdateAccount(toProtobuf())
     }
 }

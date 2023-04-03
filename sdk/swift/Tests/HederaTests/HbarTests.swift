@@ -116,8 +116,7 @@ public final class HbarTests: XCTestCase {
             XCTAssertEqual(hbar.description, expected)
         }
 
-        for amount in -20000...20_000 {
-            guard !innerRange.contains(amount) else { continue }
+        for amount in -20000...20_000 where !innerRange.contains(amount) {
             let hbar = Hbar.fromTinybars(Int64(amount))
 
             let expected = "\(hbar.to(.hbar)) ℏ"
@@ -136,11 +135,5 @@ public final class HbarTests: XCTestCase {
         XCTAssertEqual(fifty.toString(.kilobar), "0.05 kℏ")
         XCTAssertEqual(fifty.toString(.megabar), "0.00005 Mℏ")
         XCTAssertEqual(fifty.toString(.gigabar), "0.00000005 Gℏ")
-    }
-
-    public func testEncodingHasNoUnit() throws {
-        let encoded = String(data: try JSONEncoder().encode(Hbar(21)), encoding: .utf8)!
-
-        XCTAssertEqual(encoded, "2100000000")
     }
 }

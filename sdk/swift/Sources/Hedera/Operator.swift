@@ -18,12 +18,7 @@
  * ‍
  */
 
-internal struct Operator: Codable {
-    internal init(accountId: AccountId, signer: PrivateKey) {
-        self.accountId = accountId
-        self.signer = signer
-    }
-
+internal struct Operator {
     internal let accountId: AccountId
     internal let signer: PrivateKey
 
@@ -32,18 +27,7 @@ internal struct Operator: Codable {
         case signer
     }
 
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        accountId = try container.decode(AccountId.self, forKey: .accountId)
-        let signer = try container.decode(String.self, forKey: .signer)
-        self.signer = try .fromStringDer(signer)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(accountId, forKey: .accountId)
-        try container.encode(signer.toStringDer(), forKey: .signer)
+    internal func generateTransactionId() -> TransactionId {
+        .generateFrom(accountId)
     }
 }

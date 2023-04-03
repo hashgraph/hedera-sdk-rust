@@ -42,8 +42,6 @@ use crate::{
 pub type FileInfoQuery = Query<FileInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct FileInfoQueryData {
     file_id: Option<FileId>,
 }
@@ -97,59 +95,5 @@ impl QueryExecute for FileInfoQueryData {
 impl ValidateChecksums for FileInfoQueryData {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.file_id.validate_checksums(ledger_id)
-    }
-}
-
-// hack(sr): these tests currently don't compile due to `payer_account_id`
-#[cfg(feature = "false")]
-mod tests {
-    use assert_matches::assert_matches;
-
-    use crate::query::AnyQueryData;
-    use crate::{
-        AccountId,
-        AnyQuery,
-        FileId,
-        FileInfoQuery,
-    };
-
-    // language=JSON
-    const FILE_INFO: &str = r#"{
-  "$type": "fileInfo",
-  "fileId": "0.0.1001",
-  "payment": {
-    "amount": 50,
-    "transactionMemo": "query payment",
-    "payerAccountId": "0.0.6189"
-  }
-}"#;
-
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut query = FileInfoQuery::new();
-        query
-            .file_id(FileId::from(1001))
-            .payer_account_id(AccountId::from(6189))
-            .payment_amount(50)
-            .payment_transaction_memo("query payment");
-
-        let s = serde_json::to_string_pretty(&query)?;
-        assert_eq!(s, FILE_INFO);
-
-        Ok(())
-    }
-
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let query: AnyQuery = serde_json::from_str(FILE_INFO)?;
-
-        let data = assert_matches!(query.data, AnyQueryData::FileInfo(query) => query);
-
-        assert_eq!(data.file_id, Some(FileId { shard: 0, realm: 0, num: 1001 }));
-        assert_eq!(query.payment.body.data.amount, Some(50));
-        assert_eq!(query.payment.body.transaction_memo, "query payment");
-        assert_eq!(query.payment.body.payer_account_id, Some(AccountId::from(6189)));
-
-        Ok(())
     }
 }

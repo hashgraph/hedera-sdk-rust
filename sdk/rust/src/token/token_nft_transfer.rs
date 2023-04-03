@@ -8,8 +8,6 @@ use crate::{
 
 /// Represents a transfer of an NFT from one account to another.
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenNftTransfer {
     /// The ID of the NFT's token.
     pub token_id: TokenId,

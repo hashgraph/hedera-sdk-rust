@@ -34,8 +34,6 @@ use crate::{
 /// Response from [`TokenNftInfoQuery`][crate::TokenNftInfoQuery].
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TokenNftInfo {
     /// The ID of the NFT.
     pub nft_id: NftId,
@@ -44,14 +42,9 @@ pub struct TokenNftInfo {
     pub account_id: AccountId,
 
     /// Effective consensus timestamp at which the NFT was minted.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<serde_with::TimestampNanoSeconds>")
-    )]
     pub creation_time: OffsetDateTime,
 
     /// The unique metadata of the NFT.
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub metadata: Vec<u8>,
 
     /// If an allowance is granted for the NFT, its corresponding spender account.

@@ -23,7 +23,7 @@ import Foundation
 import HederaProtobufs
 
 /// Response from `ScheduleInfoQuery`.
-public final class ScheduleInfo: Codable {
+public struct ScheduleInfo {
     /// The ID of the schedule for which information is requested.
     public let scheduleId: ScheduleId
 
@@ -44,7 +44,7 @@ public final class ScheduleInfo: Codable {
     /// it executes).
     public let scheduledTransactionId: TransactionId
 
-    private let scheduledTransaction: AnySchedulableTransaction
+    private let scheduledTransaction: Proto_SchedulableTransactionBody
 
     /// When set to true, the transaction will be evaluated for execution at `expiration_time`
     /// instead of when all required signatures are received.
@@ -72,21 +72,137 @@ public final class ScheduleInfo: Codable {
     ///
     /// This function name is not final.
     public func getScheduledTransaction() throws -> Transaction {
-        self.scheduledTransaction.transaction
+        let transactionBody = Proto_TransactionBody.with { proto in
+            switch scheduledTransaction.data {
+            case .contractCall(let data): proto.data = .contractCall(data)
+            case .contractCreateInstance(let data): proto.data = .contractCreateInstance(data)
+            case .contractUpdateInstance(let data): proto.data = .contractUpdateInstance(data)
+            case .contractDeleteInstance(let data): proto.data = .contractDeleteInstance(data)
+            case .cryptoApproveAllowance(let data): proto.data = .cryptoApproveAllowance(data)
+            case .cryptoDeleteAllowance(let data): proto.data = .cryptoDeleteAllowance(data)
+            case .cryptoCreateAccount(let data): proto.data = .cryptoCreateAccount(data)
+            case .cryptoDelete(let data): proto.data = .cryptoDelete(data)
+            case .cryptoTransfer(let data): proto.data = .cryptoTransfer(data)
+            case .cryptoUpdateAccount(let data): proto.data = .cryptoUpdateAccount(data)
+            case .fileAppend(let data): proto.data = .fileAppend(data)
+            case .fileCreate(let data): proto.data = .fileCreate(data)
+            case .fileDelete(let data): proto.data = .fileDelete(data)
+            case .fileUpdate(let data): proto.data = .fileUpdate(data)
+            case .systemDelete(let data): proto.data = .systemDelete(data)
+            case .systemUndelete(let data): proto.data = .systemUndelete(data)
+            case .freeze(let data): proto.data = .freeze(data)
+            case .consensusCreateTopic(let data): proto.data = .consensusCreateTopic(data)
+            case .consensusUpdateTopic(let data): proto.data = .consensusUpdateTopic(data)
+            case .consensusDeleteTopic(let data): proto.data = .consensusDeleteTopic(data)
+            case .consensusSubmitMessage(let data): proto.data = .consensusSubmitMessage(data)
+            case .tokenCreation(let data): proto.data = .tokenCreation(data)
+            case .tokenFreeze(let data): proto.data = .tokenFreeze(data)
+            case .tokenUnfreeze(let data): proto.data = .tokenUnfreeze(data)
+            case .tokenGrantKyc(let data): proto.data = .tokenGrantKyc(data)
+            case .tokenRevokeKyc(let data): proto.data = .tokenRevokeKyc(data)
+            case .tokenDeletion(let data): proto.data = .tokenDeletion(data)
+            case .tokenUpdate(let data): proto.data = .tokenUpdate(data)
+            case .tokenMint(let data): proto.data = .tokenMint(data)
+            case .tokenBurn(let data): proto.data = .tokenBurn(data)
+            case .tokenWipe(let data): proto.data = .tokenWipe(data)
+            case .tokenAssociate(let data): proto.data = .tokenAssociate(data)
+            case .tokenDissociate(let data): proto.data = .tokenDissociate(data)
+            case .tokenFeeScheduleUpdate(let data): proto.data = .tokenFeeScheduleUpdate(data)
+            case .tokenPause(let data): proto.data = .tokenPause(data)
+            case .tokenUnpause(let data): proto.data = .tokenUnpause(data)
+            case .scheduleDelete(let data): proto.data = .scheduleDelete(data)
+            case .utilPrng(let data): proto.data = .utilPrng(data)
+            case nil: break
+            }
+
+            proto.memo = scheduledTransaction.memo
+            proto.transactionFee = scheduledTransaction.transactionFee
+        }
+
+        return try AnyTransaction.fromProtobuf(transactionBody, [transactionBody.data!]).transaction
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
-        try .fromJsonBytes(bytes)
+        try Self(protobufBytes: bytes)
     }
 
     public func toBytes() -> Data {
-        // can't have `throws` because that's the wrong function signature.
-        // swiftlint:disable force_try
-        try! toJsonBytes()
+        toProtobufBytes()
     }
 }
 
-extension ScheduleInfo: ToFromJsonBytes {
-    internal static var cFromBytes: FromJsonBytesFunc { hedera_schedule_info_from_bytes }
-    internal static var cToBytes: ToJsonBytesFunc { hedera_schedule_info_to_bytes }
+extension ScheduleInfo: TryProtobufCodable {
+    internal typealias Protobuf = Proto_ScheduleInfo
+
+    internal init(protobuf proto: Protobuf) throws {
+        let deletedAt: Timestamp?
+        let executedAt: Timestamp?
+
+        switch proto.data {
+        case .deletionTime(let data):
+            deletedAt = .fromProtobuf(data)
+            executedAt = nil
+        case .executionTime(let data):
+            deletedAt = nil
+            executedAt = .fromProtobuf(data)
+        case nil:
+            executedAt = nil
+            deletedAt = nil
+        }
+
+        self.init(
+            scheduleId: .fromProtobuf(proto.scheduleID),
+            creatorAccountId: try .fromProtobuf(proto.creatorAccountID),
+            payerAccountId: proto.hasPayerAccountID ? try .fromProtobuf(proto.payerAccountID) : nil,
+            signatories: try .fromProtobuf(proto.signers),
+            adminKey: proto.hasAdminKey ? try .fromProtobuf(proto.adminKey) : nil,
+            scheduledTransactionId: try .fromProtobuf(proto.scheduledTransactionID),
+            scheduledTransaction: proto.scheduledTransactionBody,
+            waitForExpiry: proto.waitForExpiry,
+            memo: proto.memo,
+            expirationTime: proto.hasExpirationTime ? .fromProtobuf(proto.expirationTime) : nil,
+            executedAt: executedAt,
+            deletedAt: deletedAt,
+            ledgerId: .fromBytes(proto.ledgerID)
+        )
+    }
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.scheduleID = scheduleId.toProtobuf()
+            if let expirationTime = expirationTime?.toProtobuf() {
+                proto.expirationTime = expirationTime
+            }
+
+            proto.memo = memo
+            if let adminKey = adminKey?.toProtobuf() {
+                proto.adminKey = adminKey
+            }
+
+            if !signatories.isEmpty {
+                proto.signers = signatories.toProtobuf()
+            }
+
+            proto.creatorAccountID = creatorAccountId.toProtobuf()
+
+            if let payerAccountId = payerAccountId?.toProtobuf() {
+                proto.payerAccountID = payerAccountId
+            }
+
+            proto.scheduledTransactionID = scheduledTransactionId.toProtobuf()
+
+            proto.ledgerID = self.ledgerId.bytes
+            proto.waitForExpiry = self.waitForExpiry
+
+            if let executedAt = self.executedAt {
+                proto.executionTime = executedAt.toProtobuf()
+            }
+
+            if let deletedAt = self.deletedAt {
+                proto.deletionTime = deletedAt.toProtobuf()
+            }
+
+            proto.scheduledTransactionBody = scheduledTransaction
+        }
+    }
 }

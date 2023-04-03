@@ -15,16 +15,3 @@ extension Status: LosslessStringConvertible, CustomStringConvertible, Expressibl
         Self.nameMap[rawValue] ?? "UNRECOGNIZED \(rawValue)"
     }
 }
-
-extension Status: Codable {
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let description = try container.decode(String.self)
-        self.init(description)!
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encode(self.description)
-    }
-}

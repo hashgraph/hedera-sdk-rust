@@ -19,11 +19,12 @@
  */
 
 import Foundation
+import HederaProtobufs
 
 // TODO: assessed_custom_fees
 /// The complete record for a transaction on Hedera that has reached consensus.
 /// Response from `TransactionRecordQuery`.
-public struct TransactionRecord: Decodable {
+public struct TransactionRecord {
     /// The status (reach consensus, or failed, or is unknown) and the ID of
     /// any new account/file/instance created.
     public let receipt: TransactionReceipt
@@ -90,65 +91,80 @@ public struct TransactionRecord: Decodable {
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     public let evmAddress: EvmAddress?
+}
 
-    private enum CodingKeys: CodingKey {
-        case receipt
-        case transactionHash
-        case consensusTimestamp
-        case contractFunctionResult
-        case transfers
-        case tokenTransfers
-        case tokenNftTransfers
-        case transactionId
-        case transactionMemo
-        case transactionFee
-        case scheduleRef
-        case assessedCustomFees
-        case automaticTokenAssociations
-        case evmAddress
-        case parentConsensusTimestamp
-        case aliasKey
-        case children
-        case duplicates
-        case ethereumHash
+extension TransactionRecord {
+    internal static func fromProtobuf(_ proto: Proto_TransactionGetRecordResponse) throws -> Self {
+        return try Self(
+            protobuf: proto.transactionRecord,
+            duplicates: .fromProtobuf(proto.duplicateTransactionRecords),
+            children: .fromProtobuf(proto.childTransactionRecords)
+        )
     }
 
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    fileprivate init(protobuf proto: Protobuf, duplicates: [Self], children: [Self]) throws {
+        let contractFunctionResult = try proto.body.map { body -> ContractFunctionResult in
+            switch body {
+            case .contractCallResult(let result), .contractCreateResult(let result):
+                return try ContractFunctionResult.fromProtobuf(result)
+            }
+        }
 
-        receipt = try container.decode(.receipt)
-        transactionHash = try container.decodeIfPresent(.transactionHash).map(Data.base64Encoded) ?? Data()
-        consensusTimestamp = try container.decode(.consensusTimestamp)
-        contractFunctionResult = try container.decodeIfPresent(.contractFunctionResult)
-        transfers = try container.decode(.transfers)
+        var tokenTransfers: [TokenId: [AccountId: Int64]] = [:]
+        var tokenNftTransfers: [TokenId: [TokenNftTransfer]] = [:]
 
-        let tokenTransfersWrapper = try container.decode(
-            DictionaryWrapper<TokenId, DictionaryWrapper<AccountId, Int64>>.self,
-            forKey: .tokenTransfers
+        for transfer in proto.tokenTransferLists {
+            let tokenId = TokenId.fromProtobuf(transfer.token)
+
+            var innerTokenTransfers = tokenTransfers[tokenId] ?? [:]
+
+            for accountAmount in transfer.transfers {
+                let accountId = try AccountId.fromProtobuf(accountAmount.accountID)
+                innerTokenTransfers[accountId] = accountAmount.amount
+            }
+
+            var nftTransfers = tokenNftTransfers[tokenId] ?? []
+
+            nftTransfers.append(
+                contentsOf: try transfer.nftTransfers.map { try TokenNftTransfer.fromProtobuf($0, tokenId: tokenId) }
+            )
+
+            tokenNftTransfers[tokenId] = nftTransfers
+
+            tokenTransfers[tokenId] = innerTokenTransfers
+        }
+
+        let evmAddress = !proto.evmAddress.isEmpty ? try EvmAddress(proto.evmAddress) : nil
+
+        self.init(
+            receipt: try .fromProtobuf(proto.receipt),
+            transactionHash: proto.transactionHash,
+            consensusTimestamp: .fromProtobuf(proto.consensusTimestamp),
+            contractFunctionResult: contractFunctionResult,
+            transfers: try .fromProtobuf(proto.transferList.accountAmounts),
+            tokenTransfers: tokenTransfers,
+            tokenNftTransfers: tokenNftTransfers,
+            transactionId: try .fromProtobuf(proto.transactionID),
+            transactionMemo: proto.memo,
+            transactionFee: .fromTinybars(Int64(proto.transactionFee)),
+            scheduleRef: proto.hasScheduleRef ? .fromProtobuf(proto.scheduleRef) : nil,
+            assessedCustomFees: try .fromProtobuf(proto.assessedCustomFees),
+            automaticTokenAssociations: try .fromProtobuf(proto.automaticTokenAssociations),
+            parentConsensusTimestamp: .fromProtobuf(proto.parentConsensusTimestamp),
+            aliasKey: try .fromAliasBytes(proto.alias),
+            children: children,
+            duplicates: duplicates,
+            ethereumHash: proto.ethereumHash,
+            evmAddress: evmAddress
         )
+    }
+}
 
-        tokenTransfers = tokenTransfersWrapper.value.mapValues { $0.value }
-        tokenNftTransfers =
-            try
-            container.decodeIfPresent(
-                DictionaryWrapper<TokenId, [TokenNftTransfer]>.self,
-                forKey: .tokenNftTransfers
-            )?.value ?? [:]
+extension TransactionRecord: TryFromProtobuf {
+    internal typealias Protobuf = Proto_TransactionRecord
 
-        transactionId = try container.decode(.transactionId)
-        transactionMemo = try container.decode(.transactionMemo)
-        transactionFee = try container.decode(.transactionFee)
-        scheduleRef = try container.decodeIfPresent(.scheduleRef)
-        assessedCustomFees = try container.decode(.assessedCustomFees)
-        automaticTokenAssociations = try container.decode(.automaticTokenAssociations)
-        evmAddress = try container.decodeIfPresent(.evmAddress)
-
-        parentConsensusTimestamp = try container.decodeIfPresent(.parentConsensusTimestamp)
-
-        aliasKey = try container.decodeIfPresent(.aliasKey)
-        children = try container.decodeIfPresent(.children) ?? []
-        duplicates = try container.decodeIfPresent(.duplicates) ?? []
-        ethereumHash = try container.decodeIfPresent(.ethereumHash).map(Data.base64Encoded) ?? Data()
+    internal init(protobuf proto: Protobuf) throws {
+        try self.init(protobuf: proto, duplicates: [], children: [])
     }
 }
 
