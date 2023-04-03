@@ -177,7 +177,7 @@ public class Query<Response>: ValidateChecksums {
 
         // hack: this is a TransactionRecordQuery, which means we need to run the receipt first.
         if let relatedTransactionId = self.relatedTransactionId, self.requiresPayment {
-            try await TransactionReceiptQuery().transactionId(relatedTransactionId).execute(client, timeout)
+            _ = try? await TransactionReceiptQuery().transactionId(relatedTransactionId).execute(client, timeout)
         }
 
         return try await executeAny(client, self, timeout)
