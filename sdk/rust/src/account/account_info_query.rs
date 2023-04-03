@@ -45,8 +45,6 @@ use crate::{
 pub type AccountInfoQuery = Query<AccountInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct AccountInfoQueryData {
     account_id: Option<AccountId>,
 }
@@ -100,59 +98,5 @@ impl QueryExecute for AccountInfoQueryData {
 impl ValidateChecksums for AccountInfoQueryData {
     fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
         self.account_id.validate_checksums(ledger_id)
-    }
-}
-
-// hack(sr): these tests currently don't compile due to `payer_account_id`
-#[cfg(feature = "false")]
-mod tests {
-    use assert_matches::assert_matches;
-
-    use crate::query::AnyQueryData;
-    use crate::{
-        AccountId,
-        AccountInfoQuery,
-        AnyQuery,
-    };
-
-    // language=JSON
-    const ACCOUNT_INFO: &str = r#"{
-  "$type": "accountInfo",
-  "accountId": "0.0.1001",
-  "payment": {
-    "amount": 50,
-    "transactionMemo": "query payment",
-    "payerAccountId": "0.0.6189"
-  }
-}"#;
-
-    #[test]
-    fn it_should_serialize() -> anyhow::Result<()> {
-        let mut query = AccountInfoQuery::new();
-        query
-            .account_id(AccountId::from(1001))
-            .payer_account_id(AccountId::from(6189))
-            .payment_amount(50)
-            .payment_transaction_memo("query payment");
-
-        let s = serde_json::to_string_pretty(&query)?;
-        assert_eq!(s, ACCOUNT_INFO);
-
-        Ok(())
-    }
-
-    #[test]
-    fn it_should_deserialize() -> anyhow::Result<()> {
-        let query: AnyQuery = serde_json::from_str(ACCOUNT_INFO)?;
-
-        let data = assert_matches!(query.data, AnyQueryData::AccountInfo(query) => query);
-        let account_id = assert_matches!(data.account_id, Some(id) => id);
-
-        assert_eq!(account_id.num, 1001);
-        assert_eq!(query.payment.body.data.amount, Some(50));
-        assert_eq!(query.payment.body.transaction_memo, "query payment");
-        assert_eq!(query.payment.body.payer_account_id, Some(AccountId::from(6189)));
-
-        Ok(())
     }
 }

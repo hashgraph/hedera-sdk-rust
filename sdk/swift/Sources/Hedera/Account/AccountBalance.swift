@@ -22,7 +22,7 @@ import CHedera
 import Foundation
 import HederaProtobufs
 
-private struct TokenBalance: Codable {
+private struct TokenBalance {
     fileprivate let id: TokenId
     fileprivate let balance: UInt64
     fileprivate let decimals: UInt32
@@ -47,21 +47,6 @@ extension TokenBalance: ProtobufCodable {
             proto.balance = balance
             proto.decimals = decimals
         }
-    }
-}
-
-extension Array where Element == TokenBalance {
-    fileprivate static func from(balances: [TokenId: UInt64], decimals: [TokenId: UInt32]) -> Self {
-        precondition(balances.count == decimals.count)
-
-        var list: Self = []
-
-        for (id, balance) in balances {
-            let decimals = decimals[id]!
-            list.append(TokenBalance(id: id, balance: balance, decimals: decimals))
-        }
-
-        return list
     }
 }
 
@@ -107,59 +92,6 @@ public struct AccountBalance {
 
     public func toString() -> String {
         String(describing: self)
-    }
-}
-
-extension AccountBalance: Codable {
-    public enum CodingKeys: CodingKey {
-        case accountId
-        case hbars
-        case tokens
-        case tokenDecimals
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        let accountId = try container.decode(AccountId.self, forKey: .accountId)
-        let hbars = try container.decode(Hbar.self, forKey: .hbars)
-        // hack around SE0320
-        let tokenBalances: [TokenId: UInt64]
-        do {
-            let tokenBalancesStrings = try container.decodeIfPresent([String: UInt64].self, forKey: .tokens) ?? [:]
-            tokenBalances = Dictionary(
-                uniqueKeysWithValues: try tokenBalancesStrings.map { key, value in
-                    (try TokenId.fromString(key), value)
-                }
-            )
-        }
-
-        let tokenDecimals: [TokenId: UInt32]
-
-        do {
-            let tokenDecimalStrings =
-                try (container.decodeIfPresent([String: UInt32].self, forKey: .tokenDecimals) ?? [:])
-            tokenDecimals = Dictionary(
-                uniqueKeysWithValues: try tokenDecimalStrings.map { key, value in
-                    (try TokenId.fromString(key), value)
-                }
-            )
-        }
-
-        self.init(
-            accountId: accountId,
-            hbars: hbars,
-            tokensInner: [TokenBalance].from(balances: tokenBalances, decimals: tokenDecimals)
-        )
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(accountId, forKey: .accountId)
-        try container.encode(hbars, forKey: .hbars)
-        try container.encode(tokenBalancesInner, forKey: .tokens)
-        try container.encode(tokenDecimalsInner, forKey: .tokenDecimals)
     }
 }
 

@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Submit a message for consensus.
 ///
@@ -43,12 +45,22 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: [Proto_ConsensusSubmitMessageTransactionBody]) throws {
+        var iter = data.makeIterator()
+        let first = iter.next()!
 
-        topicId = try container.decodeIfPresent(.topicId)
+        self.topicId = first.hasTopicID ? .fromProtobuf(first.topicID) : nil
+        let chunks = data.count
+        var message: Data = first.message
+        var largestChunkSize = max(first.message.count, 1)
 
-        try super.init(from: decoder)
+        // note: no other SDK checks for correctness here... so let's not do it here either?
+        for item in iter {
+            largestChunkSize = max(largestChunkSize, item.message.count)
+            message.append(item.message)
+        }
+
+        try super.init(protobuf: proto, data: message, chunks: chunks, largestChunkSize: largestChunkSize)
     }
 
     /// The topic ID to submit this message to.
@@ -84,20 +96,42 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case topicId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(topicId, forKey: .topicId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try topicId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).submitMessage(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        .consensusSubmitMessage(
+            .with { proto in
+                self.topicId?.toProtobufInto(&proto.topicID)
+                proto.message = self.messageChunk(chunkInfo)
+                if chunkInfo.total > 1 {
+                    proto.chunkInfo = .with { protoChunkInfo in
+                        protoChunkInfo.initialTransactionID = chunkInfo.initialTransactionId.toProtobuf()
+                        protoChunkInfo.number = Int32(chunkInfo.current + 1)
+                        protoChunkInfo.total = Int32(chunkInfo.total)
+                    }
+                }
+            })
+    }
+}
+
+extension TopicMessageSubmitTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        precondition(usedChunks == 1)
+
+        return .consensusSubmitMessage(
+            .with { proto in
+                topicId?.toProtobufInto(&proto.topicID)
+                proto.message = self.message
+            }
+        )
     }
 }

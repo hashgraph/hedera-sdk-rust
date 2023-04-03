@@ -75,8 +75,6 @@ use crate::{
 pub type AnyQuery = Query<AnyQueryData>;
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyQueryData {
     AccountBalance(AccountBalanceQueryData),
     AccountInfo(AccountInfoQueryData),
@@ -99,8 +97,6 @@ pub enum AnyQueryData {
 // todo: strategically box fields of variants, rather than the entire structs.
 /// Common response type for *all* queries.
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", tag = "$type"))]
 pub enum AnyQueryResponse {
     /// Response from [`AccountBalanceQuery`](crate::AccountBalanceQuery).
     AccountBalance(AccountBalance),
@@ -438,55 +434,6 @@ impl FromProtobuf<services::response::Response> for AnyQueryResponse {
             | ContractGetRecordsResponse(_)
             | AccountDetails(_)
             | GetByKey(_) => unreachable!(),
-        })
-    }
-}
-
-// NOTE: as we cannot derive serde on Query<T> directly as `T`,
-//  we create a proxy type that has the same layout but is only for AnyQueryData and does
-//  derive(Deserialize).
-
-#[cfg(feature = "ffi")]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-struct AnyQueryProxy {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    data: AnyQueryData,
-    #[cfg_attr(feature = "ffi", serde(default))]
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
-    payment: Option<
-        crate::transaction::AnyTransactionBody<super::payment_transaction::PaymentTransactionData>,
-    >,
-}
-
-#[cfg(feature = "ffi")]
-impl<D> serde::Serialize for Query<D>
-where
-    D: QueryExecute,
-{
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        // TODO: remove the clones, should be possible with Cows
-
-        let payment = self.data.is_payment_required().then(|| self.payment.body().clone().into());
-
-        AnyQueryProxy { payment, data: self.data.clone().into() }.serialize(serializer)
-    }
-}
-
-#[cfg(feature = "ffi")]
-impl<'de> serde::Deserialize<'de> for AnyQuery {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        <AnyQueryProxy as serde::Deserialize>::deserialize(deserializer).map(|query| Self {
-            data: query.data,
-            payment: crate::Transaction::from_parts(
-                query.payment.map(Into::into).unwrap_or_default(),
-                Vec::new(),
-            ),
         })
     }
 }

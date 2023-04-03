@@ -940,7 +940,7 @@ public enum Status: Equatable {
     case UNRECOGNIZED(Int32)
 
     // minimal edit from protoc generated: (changed from `init?`)
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    // swiftlint:disable:next function_body_length
     public init(rawValue: Int32) {
         switch rawValue {
         case 0: self = .ok
@@ -2131,3 +2131,5 @@ extension Status {
             332: "ALIAS_ALREADY_ASSIGNED",
         ]
 }
+
+extension Status: Sendable {}

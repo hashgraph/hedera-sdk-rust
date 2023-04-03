@@ -24,6 +24,7 @@ import Foundation
 extension Crypto {
     internal enum Sha2 {
         case sha256
+        case sha384
         case sha512
 
         internal static func digest(_ kind: Sha2, _ data: Data) -> Data {
@@ -36,6 +37,12 @@ extension Crypto {
                 return data.withUnsafeTypedBytes { buffer in
                     var output: UnsafeMutablePointer<UInt8>?
                     let count = hedera_crypto_sha2_sha256_digest(buffer.baseAddress, buffer.count, &output)
+                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
+                }
+            case .sha384:
+                return data.withUnsafeTypedBytes { buffer in
+                    var output: UnsafeMutablePointer<UInt8>?
+                    let count = hedera_crypto_sha2_sha384_digest(buffer.baseAddress, buffer.count, &output)
                     return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
                 }
             case .sha512:
@@ -54,6 +61,15 @@ extension Crypto {
         /// - Returns: the hash of `data`.
         internal static func sha256(_ data: Data) -> Data {
             digest(.sha256, data)
+        }
+
+        /// Hash data using the `sha384` algorithm.
+        ///
+        /// - Parameter data: the data to be hashed.
+        ///
+        /// - Returns: the hash of `data`.
+        internal static func sha384(_ data: Data) -> Data {
+            digest(.sha384, data)
         }
     }
 }

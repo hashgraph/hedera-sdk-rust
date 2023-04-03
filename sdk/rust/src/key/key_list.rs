@@ -10,15 +10,11 @@ use crate::Key;
 // todo: Copy over the _entire_ `Vec` API?.
 /// A list of keys with an optional threshold.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct KeyList {
     // todo: better doc comment?
     /// The list of keys.
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Vec::is_empty", default))]
     pub keys: Vec<Key>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none", default))]
     /// If [`Some`]: The minimum number of keys that must sign.
     pub threshold: Option<u32>,
 }

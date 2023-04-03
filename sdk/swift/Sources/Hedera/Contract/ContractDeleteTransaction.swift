@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Marks a contract as deleted and transfers its remaining hBars, if any, to
 /// a designated receiver.
 public final class ContractDeleteTransaction: Transaction {
@@ -28,14 +31,20 @@ public final class ContractDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ContractDeleteTransactionBody) throws {
+        contractId = data.hasContractID ? try .fromProtobuf(data.contractID) : nil
 
-        contractId = try container.decodeIfPresent(.contractId)
-        transferAccountId = try container.decodeIfPresent(.transferAccountId)
-        transferContractId = try container.decodeIfPresent(.transferContractId)
+        switch data.obtainers {
+        case .transferAccountID(let account):
+            self.transferAccountId = try .fromProtobuf(account)
+        case .transferContractID(let contract):
+            self.transferContractId = try .fromProtobuf(contract)
+        case nil:
+            break
 
-        try super.init(from: decoder)
+        }
+
+        try super.init(protobuf: proto)
     }
 
     /// The contract to be deleted.
@@ -83,26 +92,51 @@ public final class ContractDeleteTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case contractId
-        case transferAccountId
-        case transferContractId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-        try container.encodeIfPresent(transferAccountId, forKey: .transferAccountId)
-        try container.encodeIfPresent(transferContractId, forKey: .transferContractId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try contractId?.validateChecksums(on: ledgerId)
         try transferAccountId?.validateChecksums(on: ledgerId)
         try transferContractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).deleteContract(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .contractDeleteInstance(toProtobuf())
+    }
+}
+
+extension ContractDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ContractDeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+
+        .with { proto in
+            switch (transferAccountId, transferContractId) {
+            case (.some, .some):
+                // fixme: do what rust does
+                fatalError("unreachable: transferAccount & transferContract")
+            case (.some(let id), nil):
+                proto.transferAccountID = id.toProtobuf()
+            case (nil, .some(let id)):
+                proto.transferContractID = id.toProtobuf()
+            case (nil, nil):
+                break
+            }
+
+            contractId?.toProtobufInto(&proto.contractID)
+        }
+    }
+}
+
+extension ContractDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .contractDeleteInstance(toProtobuf())
     }
 }

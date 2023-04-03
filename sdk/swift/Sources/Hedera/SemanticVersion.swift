@@ -24,7 +24,7 @@ import HederaProtobufs
 
 /// Hedera follows semantic versioning for both the HAPI protobufs and
 /// the Services software.
-public struct SemanticVersion: Codable, ExpressibleByStringLiteral, LosslessStringConvertible {
+public struct SemanticVersion: ExpressibleByStringLiteral, LosslessStringConvertible {
     /// Increases with incompatible API changes
     public let major: UInt32
 

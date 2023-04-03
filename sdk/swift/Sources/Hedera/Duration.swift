@@ -1,7 +1,7 @@
 import Foundation
 import HederaProtobufs
 
-public struct Duration: Codable {
+public struct Duration: Sendable {
     public let seconds: UInt64
 
     public init(seconds: UInt64) {
@@ -22,18 +22,6 @@ public struct Duration: Codable {
 
     public static func seconds(_ seconds: UInt64) -> Self {
         Self(seconds: seconds)
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-
-        seconds = try container.decode(UInt64.self)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(seconds)
     }
 }
 

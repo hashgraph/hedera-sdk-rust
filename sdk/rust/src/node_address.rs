@@ -47,14 +47,11 @@ fn parse_socket_addr_v4(ip: Vec<u8>, port: i32) -> crate::Result<SocketAddrV4> {
 /// The data about a node, including its service endpoints and the Hedera account to be paid for
 /// services provided by the node (that is, queries answered and transactions submitted.).
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct NodeAddress {
     /// A non-sequential, unique, static identifier for the node
     pub node_id: u64,
 
     /// The node's X509 RSA public key used to sign stream files.
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub rsa_public_key: Vec<u8>,
 
     /// The account to be paid for queries and transactions sent to this node.
@@ -67,7 +64,6 @@ pub struct NodeAddress {
     /// the UTF-8 NFKD encoding of the node's TLS cert in PEM format.
     ///
     /// Its value can be used to verify the node's certificate it presents during TLS negotiations.
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub tls_certificate_hash: Vec<u8>,
 
     /// A node's service IP addresses and ports.

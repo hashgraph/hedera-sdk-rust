@@ -131,6 +131,7 @@ mod exchange_rates;
 mod execute;
 mod fee_schedules;
 mod file;
+mod hbar;
 mod key;
 mod ledger_id;
 mod mirror_query;
@@ -160,12 +161,8 @@ mod transaction_receipt_query;
 mod transaction_record;
 mod transaction_record_query;
 mod transaction_response;
-mod transfer_transaction;
-
-#[cfg(feature = "ffi")]
-mod ffi;
-mod hbar;
 mod transfer;
+mod transfer_transaction;
 
 pub use account::{
     AccountAllowanceApproveTransaction,

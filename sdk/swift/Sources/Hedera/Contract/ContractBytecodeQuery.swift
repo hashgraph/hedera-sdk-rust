@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Get the runtime bytecode for a smart contract instance.
 public final class ContractBytecodeQuery: Query<Data> {
@@ -40,23 +42,26 @@ public final class ContractBytecodeQuery: Query<Data> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case contractId
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.contractGetBytecode = .with { proto in
+                proto.header = header
+                contractId?.toProtobufInto(&proto.contractID)
+            }
+        }
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-
-        try super.encode(to: encoder)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_SmartContractServiceAsyncClient(channel: channel).contractGetBytecode(request)
     }
 
-    public func decodeResponse(_ responseBytes: Data) throws -> Response {
-        let bytecodeBase64 = try JSONDecoder().decode(String.self, from: responseBytes)
-        let bytecode = Data(base64Encoded: bytecodeBase64)!
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .contractGetBytecodeResponse(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `contractGetBytecodeResponse`")
+        }
 
-        return bytecode
+        return proto.bytecode
+
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

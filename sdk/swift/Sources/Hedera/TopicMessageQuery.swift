@@ -1,8 +1,14 @@
+import AnyAsyncSequence
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Query a stream of Hedera Consensus Service (HCS)
 /// messages for an HCS Topic via a specific (possibly open-ended) time range.
-public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
+public final class TopicMessageQuery: ValidateChecksums, MirrorQuery {
+    public typealias Item = TopicMessage
+    public typealias Response = [TopicMessage]
+
     /// Create a new `TopicMessageQuery`.
     public init(
         topicId: TopicId? = nil,
@@ -70,23 +76,49 @@ public final class TopicMessageQuery: MirrorQuery<[TopicMessage]> {
         case limit
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container: KeyedEncodingContainer<TopicMessageQuery.CodingKeys> = encoder.container(
-            keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(topicId, forKey: .topicId)
-        try container.encodeIfPresent(startTime, forKey: .startTime)
-        try container.encodeIfPresent(endTime, forKey: .endTime)
-
-        if limit != 0 {
-            try container.encode(limit, forKey: .limit)
-        }
-
-        try super.encode(to: encoder)
+    internal func validateChecksums(on ledgerId: LedgerId) throws {
+        try topicId?.validateChecksums(on: ledgerId)
     }
 
-    internal override func validateChecksums(on ledgerId: LedgerId) throws {
-        try topicId?.validateChecksums(on: ledgerId)
-        try super.validateChecksums(on: ledgerId)
+    public func subscribe(_ client: Client, _ timeout: TimeInterval? = nil) -> AnyAsyncSequence<TopicMessage> {
+        subscribeInner(client, timeout)
+    }
+
+    public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> [TopicMessage] {
+        try await executeInner(client, timeout)
+    }
+}
+
+extension TopicMessageQuery: ToProtobuf {
+    internal typealias Protobuf = Com_Hedera_Mirror_Api_Proto_ConsensusTopicQuery
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            topicId?.toProtobufInto(&proto.topicID)
+            startTime?.toProtobufInto(&proto.consensusStartTime)
+            endTime?.toProtobufInto(&proto.consensusEndTime)
+            proto.limit = limit
+        }
+    }
+}
+
+extension TopicMessageQuery: MirrorRequest {
+    internal typealias GrpcItem = TopicMessage.Protobuf
+
+    internal static func collect<S>(_ stream: S) async throws -> Response
+    where S: AsyncSequence, Item.Protobuf == S.Element {
+        var items: [Item] = []
+        for try await proto in stream {
+            items.append(try Item.fromProtobuf(proto))
+        }
+
+        return items
+    }
+
+    internal func connect(channel: GRPCChannel) -> ConnectStream {
+        let request = self.toProtobuf()
+
+        return HederaProtobufs.Com_Hedera_Mirror_Api_Proto_ConsensusServiceAsyncClient(channel: channel)
+            .subscribeTopic(request)
     }
 }

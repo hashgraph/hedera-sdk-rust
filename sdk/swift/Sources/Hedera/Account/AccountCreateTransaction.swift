@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a new Hedera™ account.
 public final class AccountCreateTransaction: Transaction {
@@ -27,7 +29,7 @@ public final class AccountCreateTransaction: Transaction {
         key: Key? = nil,
         initialBalance: Hbar = 0,
         receiverSignatureRequired: Bool = false,
-        autoRenewPeriod: Duration? = nil,
+        autoRenewPeriod: Duration? = .days(90),
         autoRenewAccountId: AccountId? = nil,
         accountMemo: String = "",
         maxAutomaticTokenAssociations: UInt32 = 0,
@@ -50,23 +52,28 @@ public final class AccountCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoCreateTransactionBody) throws {
+        self.key = data.hasKey ? try .fromProtobuf(data.key) : nil
+        self.initialBalance = .fromTinybars(Int64(data.initialBalance))
+        self.receiverSignatureRequired = data.receiverSigRequired
+        self.autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        self.accountMemo = data.memo
+        self.maxAutomaticTokenAssociations = UInt32(data.maxAutomaticTokenAssociations)
 
-        key = try container.decodeIfPresent(.key)
-        initialBalance = try container.decodeIfPresent(.initialBalance) ?? 0
-        receiverSignatureRequired = try container.decodeIfPresent(.receiverSignatureRequired) ?? false
-        accountMemo = try container.decodeIfPresent(.accountMemo) ?? ""
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        maxAutomaticTokenAssociations = try container.decodeIfPresent(.maxAutomaticTokenAssociations) ?? 0
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-        declineStakingReward = try container.decodeIfPresent(.declineStakingReward) ?? false
-        alias = try container.decodeIfPresent(.alias)
-        evmAddress = try container.decodeIfPresent(.evmAddress)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
+        if let id = data.stakedID {
+            switch id {
+            case .stakedAccountID(let value):
+                stakedAccountId = try .fromProtobuf(value)
+                stakedNodeId = 0
+            case .stakedNodeID(let value):
+                stakedNodeId = UInt64(value)
+                stakedAccountId = nil
+            }
+        }
 
-        try super.init(from: decoder)
+        self.declineStakingReward = data.declineReward
+
+        try super.init(protobuf: proto)
     }
 
     /// The key that must sign each transfer out of the account.
@@ -267,42 +274,62 @@ public final class AccountCreateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case key
-        case initialBalance
-        case receiverSignatureRequired
-        case accountMemo
-        case autoRenewPeriod
-        case maxAutomaticTokenAssociations
-        case stakedAccountId
-        case stakedNodeId
-        case declineStakingReward
-        case alias
-        case evmAddress
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(key, forKey: .key)
-        try container.encode(initialBalance, forKey: .initialBalance)
-        try container.encode(accountMemo, forKey: .accountMemo)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encode(maxAutomaticTokenAssociations, forKey: .maxAutomaticTokenAssociations)
-        try container.encodeIfPresent(stakedAccountId, forKey: .stakedAccountId)
-        try container.encodeIfPresent(stakedNodeId, forKey: .stakedNodeId)
-        try container.encode(declineStakingReward, forKey: .declineStakingReward)
-        try container.encodeIfPresent(alias, forKey: .alias)
-        try container.encodeIfPresent(evmAddress, forKey: .evmAddress)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try stakedAccountId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).createAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoCreateAccount(toProtobuf())
+
+    }
+}
+
+extension AccountCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoCreateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            key?.toProtobufInto(&proto.key)
+            proto.initialBalance = UInt64(initialBalance.toTinybars())
+            proto.receiverSigRequired = receiverSignatureRequired
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            // autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+            proto.memo = accountMemo
+            proto.maxAutomaticTokenAssociations = Int32(maxAutomaticTokenAssociations)
+
+            if let alias = alias?.toProtobufBytes() {
+                proto.alias = alias
+            }
+
+            // if let evmAddress = evmAddress {
+            //     proto.evmAddress = evmAddress.data
+            // }
+
+            if let stakedNodeId = stakedNodeId {
+                proto.stakedNodeID = Int64(stakedNodeId)
+            }
+
+            if let stakedAccountId = stakedAccountId {
+                proto.stakedAccountID = stakedAccountId.toProtobuf()
+            }
+
+            proto.declineReward = declineStakingReward
+        }
+    }
+}
+
+extension AccountCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoCreateAccount(toProtobuf())
     }
 }

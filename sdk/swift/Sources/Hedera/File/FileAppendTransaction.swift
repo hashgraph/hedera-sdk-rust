@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Append the given contents to the end of the specified file.
 public final class FileAppendTransaction: ChunkedTransaction {
@@ -27,12 +29,21 @@ public final class FileAppendTransaction: ChunkedTransaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: [Proto_FileAppendTransactionBody]) throws {
+        var iter = data.makeIterator()
+        let first = iter.next()!
 
-        fileId = try container.decodeIfPresent(.fileId)
+        self.fileId = first.hasFileID ? .fromProtobuf(first.fileID) : nil
+        let chunks = data.count
+        var contents: Data = first.contents
+        var largestChunkSize = max(first.contents.count, 1)
 
-        try super.init(from: decoder)
+        for item in iter {
+            largestChunkSize = max(largestChunkSize, item.contents.count)
+            contents.append(item.contents)
+        }
+
+        try super.init(protobuf: proto, data: contents, chunks: chunks, largestChunkSize: largestChunkSize)
     }
 
     /// The file to which the bytes will be appended.
@@ -75,20 +86,38 @@ public final class FileAppendTransaction: ChunkedTransaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-
-        try super.encode(to: encoder)
-    }
+    internal override var waitForReceipt: Bool { true }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).appendContent(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        .fileAppend(
+            .with { proto in
+                self.fileId?.toProtobufInto(&proto.fileID)
+                proto.contents = self.messageChunk(chunkInfo)
+            }
+        )
+    }
+}
+
+extension FileAppendTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        precondition(self.usedChunks == 1)
+
+        return .fileAppend(
+            .with { proto in
+                self.fileId?.toProtobufInto(&proto.fileID)
+                proto.contents = contents
+            }
+        )
     }
 }

@@ -13,8 +13,6 @@ use crate::{
 ///
 /// Returned as part of a [`TransactionRecord`](crate::TransactionRecord)
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct Transfer {
     /// The account ID that this transfer is to/from.
     pub account_id: AccountId,

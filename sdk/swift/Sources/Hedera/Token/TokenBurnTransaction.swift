@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Burns tokens from the token's treasury account.
 public final class TokenBurnTransaction: Transaction {
     /// Create a new `TokenBurnTransaction`.
@@ -33,14 +36,13 @@ public final class TokenBurnTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenBurnTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.amount = data.amount
+        self.serials = data.serialNumbers.map(UInt64.init)
 
-        tokenId = try container.decodeIfPresent(.tokenId)
-        amount = try container.decodeIfPresent(.amount) ?? 0
-        serials = try container.decodeIfPresent(.serials) ?? []
+        try super.init(protobuf: proto)
 
-        try super.init(from: decoder)
     }
 
     /// The token for which to burn tokens.
@@ -96,25 +98,39 @@ public final class TokenBurnTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case tokenId
-        case amount
-        case serials
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(tokenId, forKey: .tokenId)
-        try container.encode(amount, forKey: .amount)
-        try container.encode(serials, forKey: .serials)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
 
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).burnToken(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenBurn(toProtobuf())
+    }
+}
+
+extension TokenBurnTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenBurnTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            proto.amount = amount
+            proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+        }
+    }
+}
+
+extension TokenBurnTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenBurn(toProtobuf())
     }
 }

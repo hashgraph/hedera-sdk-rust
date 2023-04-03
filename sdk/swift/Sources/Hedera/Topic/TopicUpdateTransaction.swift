@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+import SwiftProtobuf
 
 /// Change properties for the given topic.
 ///
@@ -50,18 +53,16 @@ public final class TopicUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ConsensusUpdateTopicTransactionBody) throws {
+        topicId = data.hasTopicID ? .fromProtobuf(data.topicID) : nil
+        expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
+        topicMemo = data.hasMemo ? data.memo.value : ""
+        adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        submitKey = data.hasSubmitKey ? try .fromProtobuf(data.submitKey) : nil
+        autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
 
-        topicId = try container.decodeIfPresent(.topicId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
-        topicMemo = try container.decodeIfPresent(.topicMemo) ?? ""
-        adminKey = try container.decodeIfPresent(.adminKey)
-        submitKey = try container.decodeIfPresent(.submitKey)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The topic ID which is being updated in this transaction.
@@ -172,33 +173,43 @@ public final class TopicUpdateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case topicId
-        case expirationTime
-        case topicMemo
-        case adminKey
-        case submitKey
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(topicId, forKey: .topicId)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(topicMemo, forKey: .topicMemo)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(submitKey, forKey: .submitKey)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try topicId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).updateTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusUpdateTopic(toProtobuf())
+    }
+}
+
+extension TopicUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ConsensusUpdateTopicTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            topicId?.toProtobufInto(&proto.topicID)
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+            proto.memo = Google_Protobuf_StringValue(topicMemo)
+            adminKey?.toProtobufInto(&proto.adminKey)
+            submitKey?.toProtobufInto(&proto.submitKey)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+        }
+    }
+}
+
+extension TopicUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .consensusUpdateTopic(toProtobuf())
     }
 }

@@ -18,9 +18,6 @@
  * ‍
  */
 
-// serde appears to insert the bound twice.
-#![cfg_attr(feature = "ffi", allow(clippy::type_repetition_in_bounds))]
-
 use std::borrow::Cow;
 use std::fmt;
 use std::fmt::{
@@ -58,16 +55,12 @@ mod source;
 mod tests;
 
 pub use any::AnyTransaction;
-#[cfg(feature = "ffi")]
-pub(crate) use any::AnyTransactionBody;
 pub(crate) use any::AnyTransactionData;
 pub(crate) use chunked::{
     ChunkData,
     ChunkInfo,
     ChunkedTransactionData,
 };
-#[cfg(feature = "ffi")]
-pub(crate) use execute::SourceTransaction;
 pub(crate) use execute::{
     TransactionData,
     TransactionExecute,
@@ -82,59 +75,30 @@ pub(crate) use source::TransactionSources;
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 /// A transaction that can be executed on the Hedera network.
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct Transaction<D> {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    #[cfg_attr(feature = "ffi", serde(bound = "D: Into<AnyTransactionData> + Clone"))]
     body: TransactionBody<D>,
 
-    #[cfg_attr(feature = "ffi", serde(skip))]
     signers: Vec<AnySigner>,
 
-    #[cfg_attr(feature = "ffi", serde(skip))]
     sources: Option<TransactionSources>,
 }
 
 #[derive(Debug, Default, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub(crate) struct TransactionBody<D> {
-    #[cfg_attr(feature = "ffi", serde(flatten))]
-    #[cfg_attr(
-        feature = "ffi",
-        serde(
-            with = "serde_with::As::<serde_with::FromInto<AnyTransactionData>>",
-            bound = "D: Into<AnyTransactionData> + Clone"
-        )
-    )]
     pub(crate) data: D,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
-    #[cfg_attr(
-        feature = "ffi",
-        serde(
-            with = "serde_with::As::<Option<serde_with::DurationSeconds<i64>>>",
-            skip_serializing_if = "Option::is_none"
-        )
-    )]
     pub(crate) transaction_valid_duration: Option<Duration>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) max_transaction_fee: Option<Hbar>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "String::is_empty"))]
     pub(crate) transaction_memo: String,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) transaction_id: Option<TransactionId>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "Option::is_none"))]
     pub(crate) operator: Option<Operator>,
 
-    #[cfg_attr(feature = "ffi", serde(skip_serializing_if = "std::ops::Not::not"))]
     pub(crate) is_frozen: bool,
 }
 
@@ -208,11 +172,6 @@ impl<D> Transaction<D> {
             !self.is_frozen(),
             "transaction is immutable; it has at least one signature or has been explicitly frozen"
         );
-    }
-
-    #[cfg(feature = "ffi")]
-    pub(crate) fn body(&self) -> &TransactionBody<D> {
-        &self.body
     }
 
     /// # Panics
@@ -454,41 +413,37 @@ impl<D: TransactionExecute> Transaction<D> {
                 .generate_transaction_id(),
         };
 
-        let transaction_list = {
-            let used_chunks = self.data().maybe_chunk_data().map_or(1, ChunkData::used_chunks);
-            let node_account_ids = self.body.node_account_ids.as_deref().unwrap();
+        let used_chunks = self.data().maybe_chunk_data().map_or(1, ChunkData::used_chunks);
+        let node_account_ids = self.body.node_account_ids.as_deref().unwrap();
 
-            let mut transaction_list = Vec::with_capacity(used_chunks * node_account_ids.len());
+        let mut transaction_list = Vec::with_capacity(used_chunks * node_account_ids.len());
 
-            // Note: This ordering is *important*,
-            // there's no documentation for it but `TransactionList` is sorted by chunk number,
-            // then `node_id` (in the order they were added to the transaction)
-            for chunk in 0..used_chunks {
-                let current_transaction_id = match chunk {
-                    0 => initial_transaction_id,
-                    _ => self
-                        .body
-                        .operator
-                        .as_ref()
-                        .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
-                        .generate_transaction_id(),
+        // Note: This ordering is *important*,
+        // there's no documentation for it but `TransactionList` is sorted by chunk number,
+        // then `node_id` (in the order they were added to the transaction)
+        for chunk in 0..used_chunks {
+            let current_transaction_id = match chunk {
+                0 => initial_transaction_id,
+                _ => self
+                    .body
+                    .operator
+                    .as_ref()
+                    .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
+                    .generate_transaction_id(),
+            };
+
+            for node_account_id in node_account_ids.iter().copied() {
+                let chunk_info = ChunkInfo {
+                    current: chunk,
+                    total: used_chunks,
+                    initial_transaction_id,
+                    current_transaction_id,
+                    node_account_id,
                 };
 
-                for node_account_id in node_account_ids.iter().copied() {
-                    let chunk_info = ChunkInfo {
-                        current: chunk,
-                        total: used_chunks,
-                        initial_transaction_id,
-                        current_transaction_id,
-                        node_account_id,
-                    };
-
-                    transaction_list.push(self.make_request_inner(&chunk_info).0);
-                }
+                transaction_list.push(self.make_request_inner(&chunk_info).0);
             }
-
-            transaction_list
-        };
+        }
 
         Ok(transaction_list)
     }

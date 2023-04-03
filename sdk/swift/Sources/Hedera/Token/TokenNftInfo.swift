@@ -22,7 +22,7 @@ import Foundation
 import HederaProtobufs
 
 /// Response from `TokenNftInfoQuery`.
-public final class TokenNftInfo: Codable {
+public final class TokenNftInfo {
     /// The ID of the NFT.
     public let nftId: NftId
 

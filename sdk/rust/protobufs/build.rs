@@ -87,15 +87,6 @@ fn main() -> anyhow::Result<()> {
      "]"#,
     );
 
-    if cfg!(feature = "serde") {
-        cfg = cfg
-            .type_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]")
-            .type_attribute(
-                "proto.ResponseCodeEnum",
-                "#[serde(rename_all = \"SCREAMING_SNAKE_CASE\")]",
-            );
-    }
-
     cfg.compile(&services, &["./protobufs/services/"])?;
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line

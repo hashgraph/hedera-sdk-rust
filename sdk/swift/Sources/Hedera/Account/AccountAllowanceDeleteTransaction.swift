@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Deletes one or more non-fungible approved allowances from an owner's account. This operation
 /// will remove the allowances granted to one or more specific non-fungible token serial numbers. Each owner account
 /// listed as wiping an allowance must sign the transaction. Hbar and fungible token allowances
@@ -35,12 +38,10 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoDeleteAllowanceTransactionBody) throws {
+        nftAllowances = try .fromProtobuf(data.nftAllowances)
 
-        self.nftAllowances = try container.decodeIfPresent(.nftAllowances) ?? []
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// Remove all nft token allowances.
@@ -63,20 +64,36 @@ public final class AccountAllowanceDeleteTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case nftAllowances
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(nftAllowances, forKey: .nftAllowances)
-
-        try super.encode(to: encoder)
-    }
-
     public override func validateChecksums(on ledgerId: LedgerId) throws {
         try nftAllowances.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).deleteAllowances(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoDeleteAllowance(toProtobuf())
+    }
+}
+
+extension AccountAllowanceDeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoDeleteAllowanceTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.nftAllowances = nftAllowances.toProtobuf()
+        }
+    }
+}
+
+extension AccountAllowanceDeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoDeleteAllowance(toProtobuf())
     }
 }

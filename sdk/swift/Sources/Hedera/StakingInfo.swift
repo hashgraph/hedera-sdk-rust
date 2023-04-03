@@ -22,23 +22,7 @@ import CHedera
 import Foundation
 import HederaProtobufs
 
-public struct StakingInfo: Codable {
-    internal init(
-        declineStakingReward: Bool,
-        stakePeriodStart: Timestamp?,
-        pendingReward: Hbar,
-        stakedToMe: Hbar,
-        stakedAccountId: AccountId?,
-        stakedNodeId: UInt64?
-    ) {
-        self.declineStakingReward = declineStakingReward
-        self.stakePeriodStart = stakePeriodStart
-        self.pendingReward = pendingReward
-        self.stakedToMe = stakedToMe
-        self.stakedAccountId = stakedAccountId
-        self.stakedNodeId = stakedNodeId
-    }
-
+public struct StakingInfo {
     /// If true, the contract declines receiving a staking reward. The default value is false.
     public let declineStakingReward: Bool
 
@@ -59,17 +43,6 @@ public struct StakingInfo: Codable {
 
     /// The ID of the node this account or contract is staked to.
     public let stakedNodeId: UInt64?
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        declineStakingReward = try container.decode(.declineStakingReward)
-        stakePeriodStart = try container.decodeIfPresent(.stakePeriodStart)
-        pendingReward = try container.decode(.pendingReward)
-        stakedToMe = try container.decode(.stakedToMe)
-        stakedAccountId = try container.decodeIfPresent(.stakedAccountId)
-        stakedNodeId = try container.decodeIfPresent(.stakedNodeId)
-    }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try Self(protobufBytes: bytes)

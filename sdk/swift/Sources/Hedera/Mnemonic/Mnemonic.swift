@@ -35,6 +35,7 @@ public struct Mnemonic: Equatable {
     }
 
     private enum Kind: Equatable {
+        // swiftlint:disable:next identifier_name
         case v1(MnemonicV1Data)
         case v2v3(MnemonicV2V3Data)
     }
@@ -132,6 +133,8 @@ public struct Mnemonic: Equatable {
             throw HError.mnemonicEntropy(.legacyWithPassphrase)
         case .v1(let mnemonic):
             let entropy = try mnemonic.toEntropy()
+            // failure here is `unreachable`
+            // swiftlint:disable:next force_try
             return try! PrivateKey.fromBytes(entropy)
 
         // known unfixable bug: `PrivateKey.fromMnemonic` can be called with a legacy private key.
@@ -174,6 +177,8 @@ extension Mnemonic: ExpressibleByStringLiteral {
     public typealias StringLiteralType = String
 
     public init(stringLiteral value: String) {
+        // we do want to fatalError here.
+        // swiftlint:disable:next force_try
         try! self.init(parsing: value)
     }
 }
@@ -196,10 +201,10 @@ private struct MnemonicV1Data: Equatable {
 
         let toRadix = BigInt(toRadix)
 
-        for i in (0..<out.count).reversed() {
+        for index in (0..<out.count).reversed() {
             let remainder: BigInt
             (buf, remainder) = buf.quotientAndRemainder(dividingBy: toRadix)
-            out[i] = Int32(remainder.intValue!)
+            out[index] = Int32(remainder.intValue!)
         }
 
         return out
@@ -222,9 +227,10 @@ private struct MnemonicV1Data: Equatable {
             legacyWordList.indexOf(word: word).map(Int32.init) ?? -1
         }
 
-        var data = Self.convertRadix(indecies, from: 4096, to: 256, outputLength: 33).map {
-            UInt8(truncatingIfNeeded: $0)
-        }
+        var data = Self.convertRadix(indecies, from: 4096, to: 256, outputLength: 33).map(
+            UInt8.init(truncatingIfNeeded:)
+        )
+
         precondition(data.count == 33)
 
         let crc = data.popLast()!
@@ -242,6 +248,8 @@ private struct MnemonicV1Data: Equatable {
         return Data(data)
     }
 }
+
+extension Mnemonic: Sendable {}
 
 private struct MnemonicV2V3Data: Equatable {
     let words: [String]

@@ -54,10 +54,7 @@ use crate::{
 ///
 pub type ContractExecuteTransaction = Transaction<ContractExecuteTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Default, Debug, Clone)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct ContractExecuteTransactionData {
     /// The contract instance to call.
     contract_id: Option<ContractId>,
@@ -192,80 +189,6 @@ impl ToProtobuf for ContractExecuteTransactionData {
             amount: self.payable_amount.to_tinybars(),
             contract_id: self.contract_id.to_protobuf(),
             function_parameters: self.function_parameters.clone(),
-        }
-    }
-}
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            ContractExecuteTransaction,
-            ContractId,
-            Hbar,
-        };
-
-        // language=JSON
-        const CONTRACT_EXECUTE_TRANSACTION_JSON: &str = r#"{
-  "$type": "contractExecute",
-  "contractId": "0.0.1001",
-  "gas": 1000,
-  "payableAmount": 10,
-  "functionParameters": [
-    72,
-    101,
-    108,
-    108,
-    111,
-    44,
-    32,
-    119,
-    111,
-    114,
-    108,
-    100,
-    33
-  ]
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = ContractExecuteTransaction::new();
-
-            transaction
-                .contract_id(ContractId::from(1001))
-                .gas(1000)
-                .payable_amount(Hbar::from_tinybars(10))
-                .function_parameters("Hello, world!".into());
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, CONTRACT_EXECUTE_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(CONTRACT_EXECUTE_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::ContractExecute(transaction) => transaction);
-
-            assert_eq!(data.contract_id.unwrap(), ContractId::from(1001));
-            assert_eq!(data.gas, 1000);
-            assert_eq!(data.payable_amount.to_tinybars(), 10);
-
-            let bytes: Vec<u8> = "Hello, world!".into();
-            assert_eq!(data.function_parameters, bytes);
-
-            Ok(())
         }
     }
 }

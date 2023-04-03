@@ -21,7 +21,7 @@
 import Foundation
 import HederaProtobufs
 
-public struct NetworkVersionInfo: Codable {
+public struct NetworkVersionInfo {
     /// Version of the protobuf schema in use by the network.
     public let protobufVersion: SemanticVersion
 

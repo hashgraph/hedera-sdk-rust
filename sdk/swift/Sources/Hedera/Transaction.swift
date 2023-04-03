@@ -20,56 +20,46 @@
 
 import CHedera
 import Foundation
-
-internal final class TransactionSources {
-    fileprivate init(unsafeFromPtr ptr: OpaquePointer) {
-        self.ptr = ptr
-    }
-
-    internal let ptr: OpaquePointer
-
-    internal func signedWithSingle(_ signer: Signer) -> Self {
-        let sourcesOut = hedera_transaction_sources_sign_single(ptr, signer.unsafeIntoHederaSigner())
-
-        return Self(unsafeFromPtr: sourcesOut!)
-    }
-
-    internal func signedWith(_ signers: [Signer]) -> Self {
-        let sourcesOut = hedera_transaction_sources_sign(ptr, makeHederaSignersFromArray(signers: signers))
-
-        return Self(unsafeFromPtr: sourcesOut!)
-    }
-
-    deinit {
-        hedera_transaction_sources_free(ptr)
-    }
-}
+import GRPC
+import HederaProtobufs
 
 /// A transaction that can be executed on the Hedera network.
-public class Transaction: Request, ValidateChecksums, Decodable {
+public class Transaction: ValidateChecksums {
+    public typealias Response = TransactionResponse
+
     public init() {}
+
+    internal init(protobuf proto: Proto_TransactionBody) throws {
+        transactionValidDuration = .fromProtobuf(proto.transactionValidDuration)
+        maxTransactionFee = .fromTinybars(Int64(proto.transactionFee))
+        transactionMemo = proto.memo
+        transactionId = try .fromProtobuf(proto.transactionID)
+    }
 
     internal private(set) final var signers: [Signer] = []
     internal private(set) final var sources: TransactionSources?
     public private(set) final var isFrozen: Bool = false
 
-    public typealias Response = TransactionResponse
-
-    private enum CodingKeys: String, CodingKey {
-        case maxTransactionFee
-        case `operator`
-        case isFrozen
-        case nodeAccountIds
-        case type = "$type"
-        case transactionId
-    }
-
     private final var `operator`: Operator?
 
-    private final var nodeAccountIds: [AccountId]? {
+    internal final var nodeAccountIds: [AccountId]? {
         willSet {
             ensureNotFrozen(fieldName: "nodeAccountIds")
         }
+    }
+
+    internal var defaultMaxTransactionFee: Hbar {
+        2
+    }
+
+    internal func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        fatalError("Method `Transaction.toTransactionDataProtobuf` must be overridden by `\(type(of: self))`")
+    }
+
+    internal func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        fatalError("Method `Transaction.transactionExecute` must be overridden by `\(type(of: self))`")
     }
 
     /// Explicit transaction ID for this transaction.
@@ -94,6 +84,32 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         return self
     }
 
+    public final var transactionValidDuration: Duration? {
+        willSet {
+            ensureNotFrozen(fieldName: "transactionValidDuration")
+        }
+    }
+
+    @discardableResult
+    public final func transactionValidDuration(_ transactionValidDuration: Duration) -> Self {
+        self.transactionValidDuration = transactionValidDuration
+
+        return self
+    }
+
+    public final var transactionMemo: String = "" {
+        willSet {
+            ensureNotFrozen(fieldName: "transactionMemo")
+        }
+    }
+
+    @discardableResult
+    public final func transactionMemo(_ transactionMemo: String) -> Self {
+        self.transactionMemo = transactionMemo
+
+        return self
+    }
+
     /// Sets the explicit transaction ID for this transaction.
     @discardableResult
     public final func transactionId(_ transactionId: TransactionId) -> Self {
@@ -102,7 +118,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         return self
     }
 
-    internal final func addSignatureSigner(_ signer: Signer) {
+    internal func addSignatureSigner(_ signer: Signer) {
         precondition(isFrozen)
 
         precondition(nodeAccountIds?.count == 1, "cannot manually add a signature to a transaction with multiple nodes")
@@ -110,7 +126,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
         // swiftlint:disable:next force_try
         let sources = try! makeSources()
 
-        self.sources = sources.signedWithSingle(signer)
+        self.sources = sources.signWithSigners([signer])
     }
 
     @discardableResult
@@ -162,175 +178,101 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     internal final func makeSources() throws -> TransactionSources {
         precondition(isFrozen)
         if let sources = sources {
-            return sources.signedWith(self.signers)
+            return sources.signWithSigners(self.signers)
         }
 
-        var out: OpaquePointer?
+        let transactions = try self.makeTransactionList()
 
-        let requestBytes = try JSONEncoder().encode(self)
-
-        let request = String(data: requestBytes, encoding: .utf8)!
-
-        try HError.throwing(
-            error: hedera_transaction_make_sources(request, makeHederaSignersFromArray(signers: signers), &out))
-
-        return TransactionSources(unsafeFromPtr: out!)
+        // swiftlint:disable:next force_try
+        return try! TransactionSources(transactions: transactions)
     }
 
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
-        try await executeInternal(client, timeout)
-    }
-
-    internal final func executeInternal(_ client: Client, _ timeout: TimeInterval? = nil) async throws
-        -> TransactionResponse
-    {
         try freezeWith(client)
 
-        // encode self as a JSON request to pass to Rust
-        let requestBytes = try JSONEncoder().encode(self)
-
-        let request = String(data: requestBytes, encoding: .utf8)!
-
-        return try await executeEncoded(client, request: request, timeout: timeout)
-    }
-
-    private final func executeEncoded(_ client: Client, request: String, timeout: TimeInterval?)
-        async throws -> Response
-    {
-        if client.isAutoValidateChecksumsEnabled() {
-            try self.validateChecksums(on: client)
-        }
-
-        // start an unmanaged continuation to bridge a C callback with Swift async
-        let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
-            let signers = makeHederaSignersFromArray(signers: signers)
-            // invoke `hedera_execute`, callback will be invoked on request completion
-            let err = hedera_transaction_execute(
-                client.ptr, request, continuation, signers, timeout != nil,
-                timeout ?? 0.0, sources?.ptr
-            ) { continuation, err, responsePtr in
-                if let err = HError(err) {
-                    // an error has occurred, consume from the TLS storage for the error
-                    // and throw it up back to the async task
-                    resumeUnmanagedContinuation(continuation, throwing: err)
-                } else {
-                    // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
-                    let responseText = String(validatingUTF8: responsePtr!)!
-                    let responseBytes = responseText.data(using: .utf8)!
-
-                    // resumes the continuation which bridges us back into Swift async
-                    resumeUnmanagedContinuation(continuation, returning: responseBytes)
-                }
-            }
-
-            if let err = HError(err) {
-                resumeUnmanagedContinuation(continuation, throwing: err)
-            }
-        }
-
-        return try Self.decodeResponse(responseBytes)
-    }
-
-    // hack: this should totally be on ChunkedTransaction
-    internal final func executeAllEncoded(_ client: Client, request: String, timeoutPerChunk: TimeInterval?)
-        async throws -> [Response]
-    {
-        if client.isAutoValidateChecksumsEnabled() {
-            try self.validateChecksums(on: client)
-        }
-
-        // start an unmanaged continuation to bridge a C callback with Swift async
-        let responseBytes: Data = try await withUnmanagedThrowingContinuation { continuation in
-            let signers = makeHederaSignersFromArray(signers: signers)
-            // invoke `hedera_execute`, callback will be invoked on request completion
-            let err = hedera_transaction_execute_all(
-                client.ptr, request, continuation, signers, timeoutPerChunk != nil,
-                timeoutPerChunk ?? 0.0, sources?.ptr
-            ) { continuation, err, responsePtr in
-                if let err = HError(err) {
-                    // an error has occurred, consume from the TLS storage for the error
-                    // and throw it up back to the async task
-                    resumeUnmanagedContinuation(continuation, throwing: err)
-                } else {
-                    // NOTE: we are guaranteed to receive valid UTF-8 on a successful response
-                    let responseText = String(validatingUTF8: responsePtr!)!
-                    let responseBytes = responseText.data(using: .utf8)!
-
-                    // resumes the continuation which bridges us back into Swift async
-                    resumeUnmanagedContinuation(continuation, returning: responseBytes)
-                }
-            }
-
-            if let err = HError(err) {
-                resumeUnmanagedContinuation(continuation, throwing: err)
-            }
-        }
-
-        return try JSONDecoder().decode([Response].self, from: responseBytes)
-    }
-
-    public required init(from decoder: Decoder) throws {
-        // note: `AnyTransaction` is responsible for checking `$type`
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        transactionId = try container.decodeIfPresent(.transactionId)
-        nodeAccountIds = try container.decodeIfPresent(.nodeAccountIds)
-        isFrozen = try container.decodeIfPresent(.isFrozen) ?? false
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        let typeName = String(describing: type(of: self))
-        let requestName = typeName.prefix(1).lowercased() + typeName.dropFirst().dropLast(11)
-
-        try container.encode(requestName, forKey: .type)
-        try container.encodeIfPresent(maxTransactionFee, forKey: .maxTransactionFee)
-        try container.encode(`operator`, forKey: .operator)
-        try container.encodeIfPresent(isFrozen ? isFrozen : nil, forKey: .isFrozen)
-        try container.encodeIfPresent(transactionId, forKey: .transactionId)
-
-        try container.encodeIfPresent(nodeAccountIds, forKey: .nodeAccountIds)
+        return try await executeAny(client, self, timeout)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Transaction {
-        try bytes.withUnsafeTypedBytes { buffer in
-            var sourcesPointer: OpaquePointer?
-            var transactionData: UnsafeMutablePointer<CChar>?
+        let list: [Proto_Transaction]
+        do {
+            let tmp = try Proto_TransactionList(contiguousBytes: bytes)
 
-            try HError.throwing(
-                error: hedera_transaction_from_bytes(
-                    buffer.baseAddress,
-                    buffer.count,
-                    &sourcesPointer,
-                    &transactionData
-                )
-            )
-
-            let transactionString = String(hString: transactionData!)
-            let responseBytes = transactionString.data(using: .utf8)!
-            // decode the response as the generic output type of this query types
-            let transaction = try JSONDecoder().decode(AnyTransaction.self, from: responseBytes).transaction
-
-            transaction.sources = TransactionSources(unsafeFromPtr: sourcesPointer!)
-
-            return transaction
+            if tmp.transactionList.isEmpty {
+                list = [try Proto_Transaction(contiguousBytes: bytes)]
+            } else {
+                list = tmp.transactionList
+            }
+        } catch {
+            throw HError.fromProtobuf(String(describing: error))
         }
+
+        let sources = try TransactionSources(transactions: list)
+
+        let transactionBodies = try sources.signedTransactions.map { signed -> Proto_TransactionBody in
+            do {
+                return try Proto_TransactionBody(contiguousBytes: signed.bodyBytes)
+            } catch {
+                throw HError.fromProtobuf(String(describing: error))
+            }
+        }
+
+        do {
+            let (first, rest) = (transactionBodies[0], transactionBodies[1...])
+
+            for body in rest {
+                guard protoTransactionBodyEqual(body, first) else {
+                    throw HError.fromProtobuf("transaction parts unexpectedly unequal")
+                }
+            }
+
+        }
+
+        let transactionData =
+            try sources
+            .chunks
+            .compactMap { $0.signedTransactions.first }
+            .lazy
+            .map { signed -> Proto_TransactionBody in
+                do {
+                    return try Proto_TransactionBody(contiguousBytes: signed.bodyBytes)
+                } catch {
+                    throw HError.fromProtobuf(String(describing: error))
+                }
+
+            }
+            .map { body -> Proto_TransactionBody.OneOf_Data in
+                guard let data = body.data else {
+                    throw HError.fromProtobuf("Unexpected missing `data`")
+                }
+
+                return data
+            }
+
+        // note: this creates the transaction in a unfrozen state by pure need.
+        let transaction = try AnyTransaction.fromProtobuf(transactionBodies[0], transactionData).transaction
+
+        transaction.nodeAccountIds = sources.nodeAccountIds
+        transaction.sources = sources
+        // explicitly avoid `freeze`.
+        transaction.isFrozen = true
+
+        return transaction
     }
 
     public final func toBytes() throws -> Data {
-        // encode self as a JSON request to pass to Rust
-        let requestBytes = try JSONEncoder().encode(self)
+        precondition(isFrozen, "Transaction must be frozen to call `toBytes`")
 
-        let request = String(data: requestBytes, encoding: .utf8)!
+        if let sources = self.sources {
+            return sources.toBytes()
+        }
 
-        var buf: UnsafeMutablePointer<UInt8>?
-        var size = 0
+        let transactionList = try Proto_TransactionList.with { proto in
+            proto.transactionList = try self.makeTransactionList()
+        }
 
-        try HError.throwing(
-            error: hedera_transaction_to_bytes(request, makeHederaSignersFromArray(signers: signers), &buf, &size))
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        // swiftlint:disable:next force_try
+        return try! transactionList.serializedData()
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {
@@ -339,6 +281,7 @@ public class Transaction: Request, ValidateChecksums, Decodable {
     }
 
     internal final func ensureNotFrozen(fieldName: String? = nil) {
+
         if let fieldName = fieldName {
             precondition(!isFrozen, "\(fieldName) cannot be set while `\(type(of: self))` is frozen")
         } else {
@@ -347,4 +290,244 @@ public class Transaction: Request, ValidateChecksums, Decodable {
                 "`\(type(of: self))` is immutable; it has at least one signature or has been explicitly frozen")
         }
     }
+}
+
+extension Transaction {
+    internal final func makeResponse(
+        _: Proto_TransactionResponse, _ context: TransactionHash, _ nodeAccountId: AccountId,
+        _ transactionId: TransactionId?
+    ) -> Response {
+        TransactionResponse(nodeAccountId: nodeAccountId, transactionId: transactionId!, transactionHash: context)
+    }
+
+    internal final func makeErrorPrecheck(_ status: Status, _ transactionId: TransactionId?) -> HError {
+        guard let transactionId = transactionId else {
+            return HError(
+                kind: .transactionNoIdPreCheckStatus(status: status),
+                description: "transaction without transaction id failed pre-check with status `\(status)`"
+            )
+        }
+        return HError(
+            kind: .transactionPreCheckStatus(status: status, transactionId: transactionId),
+            description: "transaction `\(transactionId)` failed pre-check with status `\(status)"
+        )
+    }
+
+    internal static func responsePrecheckStatus(_ response: Proto_TransactionResponse) -> Int32 {
+        Int32(response.nodeTransactionPrecheckCode.rawValue)
+    }
+}
+
+extension Transaction {
+    fileprivate func makeTransactionList() throws -> [Proto_Transaction] {
+        assert(self.isFrozen)
+
+        // todo: fix this with chunked transactions.
+        guard let initialTransactionId = self.transactionId ?? self.operator?.generateTransactionId() else {
+            throw HError.noPayerAccountOrTransactionId
+        }
+
+        let usedChunks = (self as? ChunkedTransaction)?.usedChunks ?? 1
+        let nodeAccountIds = nodeAccountIds!
+
+        var transactionList: [Proto_Transaction] = []
+
+        // Note: This ordering is *important*,
+        // there's no documentation for it but `TransactionList` is sorted by chunk number,
+        // then `node_id` (in the order they were added to the transaction)
+        for chunk in 0..<usedChunks {
+            let currentTransactionId: TransactionId
+            switch chunk {
+            case 0:
+                currentTransactionId = initialTransactionId
+            default:
+                guard let `operator` = self.operator else {
+                    throw HError.noPayerAccountOrTransactionId
+                }
+
+                currentTransactionId = `operator`.generateTransactionId()
+            }
+
+            for nodeAccountId in nodeAccountIds {
+                let chunkInfo = ChunkInfo(
+                    current: chunk,
+                    total: usedChunks,
+                    initialTransactionId: initialTransactionId,
+                    currentTransactionId: currentTransactionId,
+                    nodeAccountId: nodeAccountId
+                )
+
+                transactionList.append(self.makeRequestInner(chunkInfo: chunkInfo).0)
+            }
+        }
+
+        return transactionList
+    }
+
+    internal func makeRequestInner(chunkInfo: ChunkInfo) -> (Proto_Transaction, TransactionHash) {
+        assert(self.isFrozen)
+
+        let body: Proto_TransactionBody = self.toTransactionBodyProtobuf(chunkInfo)
+
+        // swiftlint:disable:next force_try
+        let bodyBytes = try! body.serializedData()
+
+        var signatures: [SignaturePair] = []
+
+        if let `operator` = self.operator {
+            // todo: avoid the `.map(xyz).collect()`
+            let operatorSignature = `operator`.signer.sign(bodyBytes)
+
+            signatures.append(SignaturePair((`operator`.signer.publicKey, operatorSignature)))
+        }
+
+        for signer in self.signers where signatures.allSatisfy({ $0.publicKey != signer.publicKey }) {
+            let signature = signer(bodyBytes)
+            signatures.append(SignaturePair(signature))
+        }
+
+        let signedTransaction = Proto_SignedTransaction.with { proto in
+            proto.bodyBytes = bodyBytes
+            proto.sigMap.sigPair = signatures.toProtobuf()
+        }
+
+        // swiftlint:disable:next force_try
+        let signedTransactionBytes = try! signedTransaction.serializedData()
+
+        let transactionHash = TransactionHash(hashing: signedTransactionBytes)
+
+        let transaction = Proto_Transaction.with { $0.signedTransactionBytes = signedTransactionBytes }
+
+        return (transaction, transactionHash)
+    }
+
+    private func toTransactionBodyProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody {
+        assert(isFrozen)
+        let data = toTransactionDataProtobuf(chunkInfo)
+
+        let maxTransactionFee = self.maxTransactionFee ?? self.defaultMaxTransactionFee
+
+        return .with { proto in
+            proto.data = data
+            proto.transactionID = chunkInfo.currentTransactionId.toProtobuf()
+            proto.transactionValidDuration = (self.transactionValidDuration ?? .minutes(2)).toProtobuf()
+            proto.memo = self.transactionMemo
+            proto.nodeAccountID = chunkInfo.nodeAccountId.toProtobuf()
+            proto.generateRecord = false
+            proto.transactionFee = UInt64(maxTransactionFee.toTinybars())
+        }
+    }
+}
+
+extension Transaction: Execute {
+    internal typealias GrpcRequest = Proto_Transaction
+    internal typealias GrpcResponse = Proto_TransactionResponse
+    internal typealias Context = TransactionHash
+
+    internal var explicitTransactionId: TransactionId? {
+        transactionId
+    }
+
+    internal var requiresTransactionId: Bool { true }
+
+    internal func makeRequest(_ transactionId: TransactionId?, _ nodeAccountId: AccountId) throws -> (
+        GrpcRequest, TransactionHash
+    ) {
+        assert(isFrozen)
+
+        guard let transactionId = transactionId else {
+            throw HError.noPayerAccountOrTransactionId
+        }
+
+        return self.makeRequestInner(chunkInfo: .single(transactionId: transactionId, nodeAccountId: nodeAccountId))
+    }
+
+    internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
+        try await transactionExecute(channel, request)
+    }
+}
+
+/// Returns true if `lhs == rhs`` other than `transactionId` and `nodeAccountId`, false otherwise.
+private func protoTransactionBodyEqual(_ lhs: Proto_TransactionBody, _ rhs: Proto_TransactionBody) -> Bool {
+    guard lhs.transactionFee == rhs.transactionFee else {
+        return false
+    }
+
+    guard lhs.transactionValidDuration == rhs.transactionValidDuration else {
+        return false
+    }
+
+    guard lhs.generateRecord == rhs.generateRecord else {
+        return false
+    }
+
+    guard lhs.memo == rhs.memo else {
+        return false
+    }
+
+    let lhsData: Proto_TransactionBody.OneOf_Data
+    let rhsData: Proto_TransactionBody.OneOf_Data
+
+    switch (lhs.data, rhs.data) {
+    case (nil, nil):
+        return true
+
+    case (.some, nil), (nil, .some):
+        return false
+
+    case (.some(let lhs), .some(let rhs)):
+        lhsData = lhs
+        rhsData = rhs
+    }
+
+    switch (lhsData, rhsData) {
+    case (.consensusSubmitMessage(let lhs), .consensusSubmitMessage(let rhs)):
+        guard lhs.hasTopicID == rhs.hasTopicID else {
+            return false
+        }
+
+        guard lhs.topicID == rhs.topicID else {
+            return false
+        }
+
+        guard lhs.hasChunkInfo == rhs.hasChunkInfo else {
+            return false
+        }
+
+        if lhs.hasChunkInfo /* && rhs.hasChunkInfo */ {
+            guard lhs.chunkInfo.initialTransactionID == rhs.chunkInfo.initialTransactionID else {
+                return false
+            }
+
+            guard lhs.chunkInfo.total == rhs.chunkInfo.total else {
+                return false
+            }
+
+            guard lhs.unknownFields == rhs.unknownFields else {
+                return false
+            }
+
+            // allow lhs.chunkInfo.number != rhs.chunkInfo.number
+        }
+
+    // allow lhs.message != rhs.message
+
+    case (.fileAppend(let lhs), .fileAppend(let rhs)):
+        guard lhs.fileID == rhs.fileID else {
+            return false
+        }
+
+        // allow lhs.contents != rhs.contents
+
+        guard lhs.unknownFields == rhs.unknownFields else {
+            return false
+        }
+
+    default:
+        guard lhsData == rhsData else {
+            return false
+        }
+    }
+
+    return true
 }

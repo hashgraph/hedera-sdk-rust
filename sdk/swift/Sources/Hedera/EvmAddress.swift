@@ -1,6 +1,8 @@
 import Foundation
 
-public struct EvmAddress: CustomStringConvertible, LosslessStringConvertible, ExpressibleByStringLiteral, Hashable {
+public struct EvmAddress:
+    CustomStringConvertible, LosslessStringConvertible, ExpressibleByStringLiteral, Hashable
+{
     internal let data: Data
 
     internal init(_ data: Data) throws {
@@ -54,14 +56,9 @@ public struct EvmAddress: CustomStringConvertible, LosslessStringConvertible, Ex
     }
 }
 
-extension EvmAddress: Codable {
-    public init(from decoder: Decoder) throws {
-        try self.init(parsing: decoder.singleValueContainer().decode(String.self))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
-    }
-}
+#if compiler(<5.7)
+    // for some reason this wasn't `Sendable` before `5.7`
+    extension EvmAddress: @unchecked Sendable {}
+#else
+    extension EvmAddress: Sendable {}
+#endif

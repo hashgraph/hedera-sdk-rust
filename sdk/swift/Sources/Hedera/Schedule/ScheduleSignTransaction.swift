@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Adds zero or more signing keys to a schedule.
 public final class ScheduleSignTransaction: Transaction {
     /// Create a new `ScheduleSignTransaction`.
@@ -28,12 +31,10 @@ public final class ScheduleSignTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ScheduleSignTransactionBody) throws {
+        scheduleId = data.hasScheduleID ? .fromProtobuf(data.scheduleID) : nil
 
-        scheduleId = try container.decodeIfPresent(.scheduleId)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The schedule to add signing keys to.
@@ -58,20 +59,30 @@ public final class ScheduleSignTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case scheduleId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(scheduleId, forKey: .scheduleId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try scheduleId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ScheduleServiceAsyncClient(channel: channel).signSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .scheduleSign(toProtobuf())
+    }
+}
+
+extension ScheduleSignTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ScheduleSignTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            scheduleId?.toProtobufInto(&proto.scheduleID)
+        }
     }
 }

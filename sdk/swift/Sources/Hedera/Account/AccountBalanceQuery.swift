@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get the balance of a cryptocurrency account.
 ///
 /// This returns only the balance, so it is a smaller reply
@@ -61,18 +64,33 @@ public final class AccountBalanceQuery: Query<AccountBalance> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case accountId
-        case contractId
+    internal override var requiresPayment: Bool { false }
+
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptogetAccountBalance = .with { proto in
+                proto.header = header
+                if let accountId = self.accountId {
+                    proto.accountID = accountId.toProtobuf()
+                }
+
+                if let contractId = self.contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+            }
+        }
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoGetBalance(request)
+    }
 
-        try container.encodeIfPresent(accountId, forKey: .accountId)
-        try container.encodeIfPresent(contractId, forKey: .contractId)
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .cryptogetAccountBalance(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `cryptogetAccountBalance`")
+        }
 
-        try super.encode(to: encoder)
+        return try .fromProtobuf(proto)
     }
 
     public override func validateChecksums(on ledgerId: LedgerId) throws {

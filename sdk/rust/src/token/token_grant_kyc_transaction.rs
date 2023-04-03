@@ -57,10 +57,7 @@ use crate::{
 /// - If no KYC Key is defined, the transaction will resolve to `TOKEN_HAS_NO_KYC_KEY`.
 pub type TokenGrantKycTransaction = Transaction<TokenGrantKycTransactionData>;
 
-#[cfg_attr(feature = "ffi", serde_with::skip_serializing_none)]
 #[derive(Debug, Clone, Default)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase", default))]
 pub struct TokenGrantKycTransactionData {
     /// The account to be granted KYC.
     account_id: Option<AccountId>,
@@ -157,57 +154,6 @@ impl ToProtobuf for TokenGrantKycTransactionData {
         services::TokenGrantKycTransactionBody {
             token: self.token_id.to_protobuf(),
             account: self.account_id.to_protobuf(),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[cfg(feature = "ffi")]
-    mod ffi {
-        use assert_matches::assert_matches;
-
-        use crate::transaction::{
-            AnyTransaction,
-            AnyTransactionData,
-        };
-        use crate::{
-            AccountId,
-            TokenGrantKycTransaction,
-            TokenId,
-        };
-
-        //language=JSON
-        const TOKEN_GRANT_KYC_TRANSACTION_JSON: &str = r#"{
-  "$type": "tokenGrantKyc",
-  "accountId": "0.0.1001",
-  "tokenId": "0.0.1002"
-}"#;
-
-        #[test]
-        fn it_should_serialize() -> anyhow::Result<()> {
-            let mut transaction = TokenGrantKycTransaction::new();
-
-            transaction.account_id(AccountId::from(1001)).token_id(TokenId::from(1002));
-
-            let transaction_json = serde_json::to_string_pretty(&transaction)?;
-
-            assert_eq!(transaction_json, TOKEN_GRANT_KYC_TRANSACTION_JSON);
-
-            Ok(())
-        }
-
-        #[test]
-        fn it_should_deserialize() -> anyhow::Result<()> {
-            let transaction: AnyTransaction =
-                serde_json::from_str(TOKEN_GRANT_KYC_TRANSACTION_JSON)?;
-
-            let data = assert_matches!(transaction.data(), AnyTransactionData::TokenGrantKyc(transaction) => transaction);
-
-            assert_eq!(data.token_id.unwrap(), TokenId::from(1002));
-            assert_eq!(data.account_id, Some(AccountId::from(1001)));
-
-            Ok(())
         }
     }
 }

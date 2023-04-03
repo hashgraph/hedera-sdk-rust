@@ -2,7 +2,7 @@ import CHedera
 import Foundation
 import HederaProtobufs
 
-public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, LosslessStringConvertible,
+public struct TransactionId: Sendable, Equatable, ExpressibleByStringLiteral, LosslessStringConvertible,
     ValidateChecksums
 {
     /// The Account ID that paid for this transaction.
@@ -23,11 +23,13 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
         self.nonce = nonce
     }
 
-    internal init(unsafeFromCHedera hedera: HederaTransactionId) {
-        accountId = AccountId(unsafeFromCHedera: hedera.account_id)
-        validStart = Timestamp(fromCHedera: hedera.valid_start)
-        nonce = hedera.nonce != 0 ? hedera.nonce : nil
-        scheduled = hedera.scheduled
+    /// Generates a new transaction ID for the given account ID.
+    internal static func generateFrom(_ accountId: AccountId) -> Self {
+        let random = UInt64.random(in: 5_000_000_000..<8_000_000_000)
+
+        let validStart = Timestamp.now.subtracting(nanos: random)
+
+        return Self(accountId: accountId, validStart: validStart, scheduled: false)
     }
 
     private init<S: StringProtocol>(parsing description: S) throws {
@@ -103,16 +105,6 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
 
     public func toString() -> String {
         String(describing: self)
-    }
-
-    public init(from decoder: Decoder) throws {
-        try self.init(parsing: try decoder.singleValueContainer().decode(String.self))
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
     }
 
     internal func validateChecksums(on ledgerId: LedgerId) throws {

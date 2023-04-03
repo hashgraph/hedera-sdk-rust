@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Get all the records for an account for any transfers into it and out of it,
 /// that were above the threshold, during the last 25 hours.
 public final class AccountRecordsQuery: Query<[TransactionRecord]> {
@@ -39,16 +42,27 @@ public final class AccountRecordsQuery: Query<[TransactionRecord]> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case accountId
+    internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
+        .with { proto in
+            proto.cryptoGetInfo = .with { proto in
+                proto.header = header
+                if let accountId = self.accountId {
+                    proto.accountID = accountId.toProtobuf()
+                }
+            }
+        }
     }
 
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
+    internal override func queryExecute(_ channel: GRPCChannel, _ request: Proto_Query) async throws -> Proto_Response {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).getAccountRecords(request)
+    }
 
-        try container.encodeIfPresent(accountId, forKey: .accountId)
+    internal override func makeQueryResponse(_ response: Proto_Response.OneOf_Response) throws -> Response {
+        guard case .cryptoGetAccountRecords(let proto) = response else {
+            throw HError.fromProtobuf("unexpected \(response) received, expected `cryptoGetAccountRecords`")
+        }
 
-        try super.encode(to: encoder)
+        return try .fromProtobuf(proto.records)
     }
 
     internal override func validateChecksums(on ledgerId: LedgerId) throws {

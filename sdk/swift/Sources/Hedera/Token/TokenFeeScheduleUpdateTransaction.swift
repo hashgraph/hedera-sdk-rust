@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
 public final class TokenFeeScheduleUpdateTransaction: Transaction {
     /// Create a new `TokenFeeScheduleUpdateTransaction`.
@@ -31,13 +34,12 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenFeeScheduleUpdateTransactionBody) throws {
+        self.tokenId = data.hasTokenID ? .fromProtobuf(data.tokenID) : nil
+        self.customFees = try .fromProtobuf(data.customFees)
 
-        tokenId = try container.decodeIfPresent(.tokenId)
-        customFees = try container.decodeIfPresent(.customFees) ?? []
+        try super.init(protobuf: proto)
 
-        try super.init(from: decoder)
     }
 
     /// The token whose fee schedule is to be updated.
@@ -70,24 +72,38 @@ public final class TokenFeeScheduleUpdateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case tokenId
-        case customFees
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(tokenId, forKey: .tokenId)
-        try container.encode(customFees, forKey: .customFees)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try customFees.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
     }
 
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).updateTokenFeeSchedule(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenFeeScheduleUpdate(toProtobuf())
+    }
+}
+
+extension TokenFeeScheduleUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenFeeScheduleUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.tokenID)
+            proto.customFees = customFees.toProtobuf()
+        }
+    }
+}
+
+extension TokenFeeScheduleUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenFeeScheduleUpdate(toProtobuf())
+    }
 }

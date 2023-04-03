@@ -1,3 +1,25 @@
+/*
+ * ‌
+ * Hedera Swift SDK
+ * ​
+ * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
+ * ​
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ‍
+ */
+
+import HederaProtobufs
+
 internal enum AnySchedulableTransaction {
     case accountCreate(AccountCreateTransaction)
     case accountUpdate(AccountUpdateTransaction)
@@ -42,7 +64,7 @@ internal enum AnySchedulableTransaction {
     }
 
     // There's unfortunately very little that can be done about this.
-    // swiftlint:disable:next cyclomatic_complexity function_body_length
+    // swiftlint:disable:next function_body_length
     fileprivate init(_ anyTransaction: AnyTransaction) {
         switch anyTransaction {
         case .accountCreate(let transaction):
@@ -130,7 +152,7 @@ internal enum AnySchedulableTransaction {
 }
 
 extension AnySchedulableTransaction {
-    internal enum Kind: String, Codable {
+    internal enum Kind: String {
         case accountCreate
         case accountUpdate
         case accountDelete
@@ -250,12 +272,47 @@ extension AnySchedulableTransaction {
     }
 }
 
-extension AnySchedulableTransaction: Codable {
-    internal init(from decoder: Decoder) throws {
-        self.init(try AnyTransaction(from: decoder))
+extension AnySchedulableTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        switch self {
+        case .accountCreate(let transaction): return transaction.toSchedulableTransactionData()
+        case .accountUpdate(let transaction): return transaction.toSchedulableTransactionData()
+        case .accountDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .accountAllowanceApprove(let transaction): return transaction.toSchedulableTransactionData()
+        case .accountAllowanceDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .contractCreate(let transaction): return transaction.toSchedulableTransactionData()
+        case .contractUpdate(let transaction): return transaction.toSchedulableTransactionData()
+        case .contractDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .contractExecute(let transaction): return transaction.toSchedulableTransactionData()
+        case .transfer(let transaction): return transaction.toSchedulableTransactionData()
+        case .topicCreate(let transaction): return transaction.toSchedulableTransactionData()
+        case .topicUpdate(let transaction): return transaction.toSchedulableTransactionData()
+        case .topicDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .topicMessageSubmit(let transaction): return transaction.toSchedulableTransactionData()
+        case .fileAppend(let transaction): return transaction.toSchedulableTransactionData()
+        case .fileCreate(let transaction): return transaction.toSchedulableTransactionData()
+        case .fileUpdate(let transaction): return transaction.toSchedulableTransactionData()
+        case .fileDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenAssociate(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenBurn(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenCreate(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenDissociate(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenFeeScheduleUpdate(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenFreeze(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenGrantKyc(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenMint(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenPause(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenRevokeKyc(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenUnfreeze(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenUnpause(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenUpdate(let transaction): return transaction.toSchedulableTransactionData()
+        case .tokenWipe(let transaction): return transaction.toSchedulableTransactionData()
+        case .systemDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .systemUndelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .freeze(let transaction): return transaction.toSchedulableTransactionData()
+        case .scheduleDelete(let transaction): return transaction.toSchedulableTransactionData()
+        }
     }
 
-    internal func encode(to encoder: Encoder) throws {
-        try transaction.encode(to: encoder)
-    }
 }

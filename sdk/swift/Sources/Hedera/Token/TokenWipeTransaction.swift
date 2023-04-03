@@ -18,6 +18,9 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+
 /// Wipes the provided amount of tokens from the specified account.
 public final class TokenWipeTransaction: Transaction {
     /// Create a new `TokenWipeTransaction`.
@@ -33,15 +36,13 @@ public final class TokenWipeTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_TokenWipeAccountTransactionBody) throws {
+        self.tokenId = data.hasToken ? .fromProtobuf(data.token) : nil
+        self.accountId = data.hasAccount ? try .fromProtobuf(data.account) : nil
+        self.amount = data.amount
+        self.serials = data.serialNumbers.map(UInt64.init)
 
-        accountId = try container.decodeIfPresent(.accountId)
-        tokenId = try container.decodeIfPresent(.tokenId)
-        amount = try container.decodeIfPresent(.amount) ?? 0
-        serials = try container.decodeIfPresent(.serials) ?? []
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The token for which to wipe tokens.
@@ -75,7 +76,7 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The amount of a fungible token to wipe from the specified account.
-    public var amount: UInt64 {
+    public var amount: UInt64 = 0 {
         willSet {
             ensureNotFrozen()
         }
@@ -90,7 +91,7 @@ public final class TokenWipeTransaction: Transaction {
     }
 
     /// The serial numbers of a non-fungible token to wipe from the specified account.
-    public var serials: [UInt64] {
+    public var serials: [UInt64] = [] {
         willSet {
             ensureNotFrozen()
         }
@@ -112,26 +113,40 @@ public final class TokenWipeTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case accountId
-        case tokenId
-        case amount
-        case serials
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(accountId, forKey: .accountId)
-        try container.encode(tokenId, forKey: .tokenId)
-        try container.encode(amount, forKey: .amount)
-        try container.encode(serials, forKey: .serials)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try tokenId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_TokenServiceAsyncClient(channel: channel).wipeTokenAccount(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .tokenWipe(toProtobuf())
+    }
+}
+
+extension TokenWipeTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_TokenWipeAccountTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            tokenId?.toProtobufInto(&proto.token)
+            accountId?.toProtobufInto(&proto.account)
+            proto.amount = amount
+            proto.serialNumbers = serials.map(Int64.init(bitPattern:))
+
+        }
+    }
+}
+
+extension TokenWipeTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .tokenWipe(toProtobuf())
     }
 }

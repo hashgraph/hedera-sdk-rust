@@ -43,7 +43,6 @@ use crate::{
 
 /// The unique identifier for a topic on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 #[repr(C)]
 pub struct TopicId {
     /// A non-negative number identifying the shard containing this topic.

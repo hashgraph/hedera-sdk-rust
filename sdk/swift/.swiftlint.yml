@@ -14,6 +14,8 @@ disabled_rules:
   - trailing_comma
   # coverered by swift-format.
   - line_length
+  # not a very useful lint honestly.
+  - cyclomatic_complexity
 
 opt_in_rules:
   # deprecated & will be removed

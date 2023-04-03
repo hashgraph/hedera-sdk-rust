@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Create a topic to be used for consensus.
 ///
@@ -49,16 +51,14 @@ public final class TopicCreateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_ConsensusCreateTopicTransactionBody) throws {
+        topicMemo = data.memo
+        adminKey = data.hasAdminKey ? try .fromProtobuf(data.adminKey) : nil
+        submitKey = data.hasSubmitKey ? try .fromProtobuf(data.submitKey) : nil
+        autoRenewPeriod = data.hasAutoRenewPeriod ? .fromProtobuf(data.autoRenewPeriod) : nil
+        autoRenewAccountId = data.hasAutoRenewAccount ? try .fromProtobuf(data.autoRenewAccount) : nil
 
-        topicMemo = try container.decodeIfPresent(.topicMemo) ?? ""
-        adminKey = try container.decodeIfPresent(.adminKey)
-        submitKey = try container.decodeIfPresent(.submitKey)
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// Short publicly visible memo about the topic. No guarantee of uniqueness.
@@ -139,28 +139,40 @@ public final class TopicCreateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case topicMemo
-        case adminKey
-        case submitKey
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(topicMemo, forKey: .topicMemo)
-        try container.encodeIfPresent(adminKey, forKey: .adminKey)
-        try container.encodeIfPresent(submitKey, forKey: .submitKey)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_ConsensusServiceAsyncClient(channel: channel).createTopic(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .consensusCreateTopic(toProtobuf())
+    }
+}
+
+extension TopicCreateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_ConsensusCreateTopicTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.memo = topicMemo
+            adminKey?.toProtobufInto(&proto.adminKey)
+            submitKey?.toProtobufInto(&proto.submitKey)
+            autoRenewPeriod?.toProtobufInto(&proto.autoRenewPeriod)
+            autoRenewAccountId?.toProtobufInto(&proto.autoRenewAccount)
+        }
+    }
+}
+
+extension TopicCreateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .consensusCreateTopic(toProtobuf())
     }
 }

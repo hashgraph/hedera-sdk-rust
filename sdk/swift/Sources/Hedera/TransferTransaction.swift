@@ -18,6 +18,10 @@
  * ‍
  */
 
+import GRPC
+import HederaProtobufs
+import SwiftProtobuf
+
 /// Transfers cryptocurrency among two or more accounts by making the desired adjustments to their
 /// balances.
 ///
@@ -27,7 +31,7 @@
 ///
 public final class TransferTransaction: Transaction {
     // avoid scope collisions by nesting :/
-    private struct Transfer: Codable, ValidateChecksums {
+    fileprivate struct Transfer: ValidateChecksums {
         let accountId: AccountId
         let amount: Int64
         let isApproval: Bool
@@ -37,7 +41,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private struct TokenTransfer: Codable, ValidateChecksums {
+    fileprivate struct TokenTransfer: ValidateChecksums {
         let tokenId: TokenId
         var transfers: [TransferTransaction.Transfer]
         var nftTransfers: [TransferTransaction.NftTransfer]
@@ -50,7 +54,7 @@ public final class TransferTransaction: Transaction {
         }
     }
 
-    private struct NftTransfer: Codable, ValidateChecksums {
+    fileprivate struct NftTransfer: ValidateChecksums {
         let senderAccountId: AccountId
         let receiverAccountId: AccountId
         let serial: UInt64
@@ -79,13 +83,12 @@ public final class TransferTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_CryptoTransferTransactionBody) throws {
+        // init fields
+        transfers = try .fromProtobuf(data.transfers.accountAmounts)
+        tokenTransfers = try .fromProtobuf(data.tokenTransfers)
 
-        transfers = try container.decodeIfPresent(.transfers) ?? []
-        tokenTransfers = try container.decodeIfPresent(.tokenTransfers) ?? []
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// Add a non-approved hbar transfer to the transaction.
@@ -207,23 +210,106 @@ public final class TransferTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case transfers
-        case tokenTransfers
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(transfers, forKey: .transfers)
-        try container.encode(tokenTransfers, forKey: .tokenTransfers)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try transfers.validateChecksums(on: ledgerId)
         try tokenTransfers.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_CryptoServiceAsyncClient(channel: channel).cryptoTransfer(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .cryptoTransfer(toProtobuf())
+    }
+}
+
+extension TransferTransaction.Transfer: TryProtobufCodable {
+    fileprivate typealias Protobuf = Proto_AccountAmount
+
+    fileprivate init(protobuf proto: Protobuf) throws {
+        self.init(
+            accountId: try .fromProtobuf(proto.accountID),
+            amount: proto.amount,
+            isApproval: proto.isApproval
+        )
+    }
+
+    fileprivate func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.accountID = accountId.toProtobuf()
+            proto.amount = amount
+            proto.isApproval = isApproval
+        }
+    }
+}
+
+extension TransferTransaction.TokenTransfer: TryProtobufCodable {
+    fileprivate typealias Protobuf = Proto_TokenTransferList
+
+    fileprivate init(protobuf proto: Protobuf) throws {
+        self.init(
+            tokenId: .fromProtobuf(proto.token),
+            transfers: try .fromProtobuf(proto.transfers),
+            nftTransfers: try .fromProtobuf(proto.nftTransfers),
+            expectedDecimals: proto.hasExpectedDecimals ? proto.expectedDecimals.value : nil
+        )
+        transfers = try .fromProtobuf(proto.transfers)
+
+    }
+
+    fileprivate func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.token = tokenId.toProtobuf()
+            proto.transfers = transfers.toProtobuf()
+            proto.nftTransfers = nftTransfers.toProtobuf()
+            if let expectedDecimals = expectedDecimals {
+                proto.expectedDecimals = Google_Protobuf_UInt32Value(expectedDecimals)
+            }
+        }
+    }
+}
+
+extension TransferTransaction.NftTransfer: TryProtobufCodable {
+    fileprivate typealias Protobuf = Proto_NftTransfer
+
+    fileprivate init(protobuf proto: Protobuf) throws {
+        self.init(
+            senderAccountId: try .fromProtobuf(proto.senderAccountID),
+            receiverAccountId: try .fromProtobuf(proto.receiverAccountID),
+            serial: UInt64(proto.serialNumber),
+            isApproval: proto.isApproval
+        )
+    }
+
+    fileprivate func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.senderAccountID = senderAccountId.toProtobuf()
+            proto.receiverAccountID = receiverAccountId.toProtobuf()
+            proto.serialNumber = Int64(proto.serialNumber)
+            proto.isApproval = isApproval
+        }
+    }
+}
+
+extension TransferTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_CryptoTransferTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            proto.transfers = .with { $0.accountAmounts = transfers.toProtobuf() }
+            proto.tokenTransfers = tokenTransfers.toProtobuf()
+        }
+    }
+}
+
+extension TransferTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .cryptoTransfer(toProtobuf())
     }
 }

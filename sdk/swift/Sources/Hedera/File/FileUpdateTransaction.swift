@@ -19,6 +19,9 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
+import SwiftProtobuf
 
 /// Modify the metadata and/or the contents of a file.
 ///
@@ -51,18 +54,19 @@ public final class FileUpdateTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_FileUpdateTransactionBody) throws {
+        fileId = data.hasFileID ? .fromProtobuf(data.fileID) : nil
+        fileMemo = data.hasMemo ? data.memo.value : nil ?? ""
+        keys = data.hasKeys ? try .fromProtobuf(data.keys) : nil
+        contents = data.contents
+        expirationTime = data.hasExpirationTime ? .fromProtobuf(data.expirationTime) : nil
 
-        fileId = try container.decodeIfPresent(.fileId)
-        fileMemo = try container.decodeIfPresent(.fileMemo) ?? ""
-        keys = try container.decodeIfPresent(.keys)
-        contents = try container.decodeIfPresent(.contents).map(Data.base64Encoded) ?? Data()
-        autoRenewPeriod = try container.decodeIfPresent(.autoRenewPeriod)
-        autoRenewAccountId = try container.decodeIfPresent(.autoRenewAccountId)
-        expirationTime = try container.decodeIfPresent(.expirationTime)
+        // hedera doesn't have these currently.
+        autoRenewPeriod = nil
+        autoRenewAccountId = nil
 
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
+
     }
 
     /// The file ID which is being updated in this transaction.
@@ -185,33 +189,41 @@ public final class FileUpdateTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-        case fileMemo
-        case keys
-        case contents
-        case expirationTime
-        case autoRenewPeriod
-        case autoRenewAccountId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encode(fileId, forKey: .fileId)
-        try container.encode(fileMemo, forKey: .fileMemo)
-        try container.encodeIfPresent(keys, forKey: .keys)
-        try container.encode(contents.base64EncodedString(), forKey: .contents)
-        try container.encodeIfPresent(expirationTime, forKey: .expirationTime)
-        try container.encodeIfPresent(autoRenewPeriod, forKey: .autoRenewPeriod)
-        try container.encodeIfPresent(autoRenewAccountId, forKey: .autoRenewAccountId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try autoRenewAccountId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        try await Proto_FileServiceAsyncClient(channel: channel).updateFile(request)
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .fileUpdate(toProtobuf())
+    }
+}
+
+extension FileUpdateTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_FileUpdateTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            fileId?.toProtobufInto(&proto.fileID)
+            proto.memo = Google_Protobuf_StringValue(fileMemo)
+            keys?.toProtobufInto(&proto.keys)
+            proto.contents = contents
+            expirationTime?.toProtobufInto(&proto.expirationTime)
+        }
+    }
+}
+
+extension FileUpdateTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .fileUpdate(toProtobuf())
     }
 }

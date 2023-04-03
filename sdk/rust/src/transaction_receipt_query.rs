@@ -48,8 +48,6 @@ use crate::{
 pub type TransactionReceiptQuery = Query<TransactionReceiptQueryData>;
 
 #[derive(Default, Clone, Debug)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
-#[cfg_attr(feature = "ffi", serde(rename_all = "camelCase"))]
 pub struct TransactionReceiptQueryData {
     transaction_id: Option<TransactionId>,
     include_children: bool,

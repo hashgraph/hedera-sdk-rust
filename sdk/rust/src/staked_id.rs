@@ -7,11 +7,8 @@ use crate::{
 // can't do boxing because `Copy`.
 #[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
-#[cfg_attr(feature = "ffi", derive(serde::Serialize, serde::Deserialize))]
 pub(crate) enum StakedId {
-    #[cfg_attr(feature = "ffi", serde(rename = "stakedAccountId"))]
     AccountId(AccountId),
-    #[cfg_attr(feature = "ffi", serde(rename = "stakedNodeId"))]
     NodeId(u64),
 }
 

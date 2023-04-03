@@ -21,6 +21,8 @@
 import Foundation
 import HederaProtobufs
 
+// swiftlint:disable file_length
+
 /// The functionality provided by Hedera.
 public enum RequestType {
     /// UNSPECIFIED - Need to keep first value as unspecified because first element is ignored and not parsed (0 is ignored by parser)
@@ -247,7 +249,7 @@ extension RequestType: TryProtobufCodable {
     internal typealias Protobuf = Proto_HederaFunctionality
 
     // this literally can't be smaller.
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    // swiftlint:disable:next function_body_length
     internal init(protobuf proto: Protobuf) throws {
         switch proto {
         case .none: self = .none
@@ -329,7 +331,7 @@ extension RequestType: TryProtobufCodable {
     }
 
     // this literally can't be smaller.
-    // swiftlint:disable:next function_body_length cyclomatic_complexity
+    // swiftlint:disable:next function_body_length
     internal func toProtobuf() -> Protobuf {
         switch self {
         case .none: return .none

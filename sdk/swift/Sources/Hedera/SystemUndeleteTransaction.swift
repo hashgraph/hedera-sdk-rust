@@ -19,6 +19,8 @@
  */
 
 import Foundation
+import GRPC
+import HederaProtobufs
 
 /// Undelete a file or smart contract that was deleted by SystemDelete.
 public final class SystemUndeleteTransaction: Transaction {
@@ -33,13 +35,17 @@ public final class SystemUndeleteTransaction: Transaction {
         super.init()
     }
 
-    public required init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_SystemUndeleteTransactionBody) throws {
+        switch data.id {
+        case .contractID(let contractId):
+            self.contractId = try .fromProtobuf(contractId)
+        case .fileID(let fileId):
+            self.fileId = .fromProtobuf(fileId)
+        case nil:
+            break
+        }
 
-        fileId = try container.decodeIfPresent(.fileId)
-        contractId = try container.decodeIfPresent(.contractId)
-
-        try super.init(from: decoder)
+        try super.init(protobuf: proto)
     }
 
     /// The file ID to undelete.
@@ -72,23 +78,61 @@ public final class SystemUndeleteTransaction: Transaction {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-        case contractId
-    }
-
-    public override func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        try container.encodeIfPresent(fileId, forKey: .fileId)
-        try container.encodeIfPresent(contractId, forKey: .contractId)
-
-        try super.encode(to: encoder)
-    }
-
     internal override func validateChecksums(on ledgerId: LedgerId) throws {
         try fileId?.validateChecksums(on: ledgerId)
         try contractId?.validateChecksums(on: ledgerId)
         try super.validateChecksums(on: ledgerId)
+    }
+
+    internal override func transactionExecute(_ channel: GRPCChannel, _ request: Proto_Transaction) async throws
+        -> Proto_TransactionResponse
+    {
+        if fileId != nil {
+            return try await Proto_FileServiceAsyncClient(channel: channel).systemUndelete(request)
+        }
+
+        if contractId != nil {
+            return try await Proto_SmartContractServiceAsyncClient(channel: channel).systemUndelete(request)
+        }
+
+        fatalError("\(type(of: self)) has no `fileId`/`contractId`")
+    }
+
+    internal override func toTransactionDataProtobuf(_ chunkInfo: ChunkInfo) -> Proto_TransactionBody.OneOf_Data {
+        _ = chunkInfo.assertSingleTransaction()
+
+        return .systemUndelete(
+            .with { proto in
+                if let fileId = fileId {
+                    proto.fileID = fileId.toProtobuf()
+                }
+
+                if let contractId = contractId {
+                    proto.contractID = contractId.toProtobuf()
+                }
+            }
+        )
+    }
+}
+
+extension SystemUndeleteTransaction: ToProtobuf {
+    internal typealias Protobuf = Proto_SystemUndeleteTransactionBody
+
+    internal func toProtobuf() -> Protobuf {
+        .with { proto in
+            if let fileId = fileId {
+                proto.fileID = fileId.toProtobuf()
+            }
+
+            if let contractId = contractId {
+                proto.contractID = contractId.toProtobuf()
+            }
+        }
+    }
+}
+
+extension SystemUndeleteTransaction: ToSchedulableTransactionData {
+    internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
+        .systemUndelete(toProtobuf())
     }
 }

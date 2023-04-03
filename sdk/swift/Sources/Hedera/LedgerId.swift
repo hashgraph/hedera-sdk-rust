@@ -20,7 +20,7 @@
 
 import Foundation
 
-public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Codable,
+public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable,
     CustomStringConvertible
 {
     public static let mainnet = LedgerId(Data([0]))
@@ -39,10 +39,6 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
 
     public init(_ bytes: Data) {
         self.bytes = bytes
-    }
-
-    public init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
     }
 
     public init(stringLiteral value: StringLiteralType) {
@@ -87,12 +83,6 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         lhs.bytes == rhs.bytes
     }
 
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-
-        try container.encode(String(describing: self))
-    }
-
     public var description: String {
         if isMainnet() {
             return "mainnet"
@@ -113,3 +103,10 @@ public struct LedgerId: LosslessStringConvertible, ExpressibleByStringLiteral, E
         description
     }
 }
+
+#if compiler(<5.7)
+    // Swift 5.7 added the conformance to data, despite to the best of my knowledge, not changing anything in the underlying type.
+    extension LedgerId: @unchecked Sendable {}
+#else
+    extension LedgerId: Sendable {}
+#endif

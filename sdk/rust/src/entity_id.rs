@@ -42,11 +42,6 @@ impl Checksum {
     fn from_bytes(bytes: [u8; 5]) -> Checksum {
         Checksum(TinyAsciiStr::from_bytes(&bytes).unwrap())
     }
-
-    #[cfg(feature = "ffi")]
-    pub(crate) const fn to_bytes(self) -> [u8; 5] {
-        *self.0.all_bytes()
-    }
 }
 
 impl FromStr for Checksum {
@@ -90,7 +85,6 @@ impl<T: ValidateChecksums> ValidateChecksums for Option<T> {
 
 /// The ID of an entity on the Hedera network.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
-#[cfg_attr(feature = "ffi", derive(serde_with::SerializeDisplay, serde_with::DeserializeFromStr))]
 pub struct EntityId {
     /// A non-negative number identifying the shard containing this entity.
     pub shard: u64,
