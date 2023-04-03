@@ -106,7 +106,7 @@ public struct TransactionId: Codable, Equatable, ExpressibleByStringLiteral, Los
     }
 
     public init(from decoder: Decoder) throws {
-        self.init(try decoder.singleValueContainer().decode(String.self))!
+        try self.init(parsing: try decoder.singleValueContainer().decode(String.self))
     }
 
     public func encode(to encoder: Encoder) throws {
