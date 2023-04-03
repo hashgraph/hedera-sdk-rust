@@ -18,6 +18,7 @@
  * ‍
  */
 
+use futures_core::future::BoxFuture;
 use time::Duration;
 
 use crate::execute::execute;
@@ -29,6 +30,7 @@ use crate::{
     Error,
     Hbar,
     TransactionId,
+    TransactionReceiptQuery,
 };
 
 mod any;
@@ -237,6 +239,28 @@ where
         client: &Client,
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<D::Response> {
+        fn recurse_receipt(
+            transaction_id: TransactionId,
+            client: Client,
+            timeout: Option<std::time::Duration>,
+        ) -> BoxFuture<'static, ()> {
+            Box::pin(async move {
+                let _ = TransactionReceiptQuery::new()
+                    .transaction_id(transaction_id)
+                    .execute_with_optional_timeout(&client, timeout)
+                    .await;
+            })
+        }
+
+        // hack: this is a TransactionRecordQuery, which means we need to run the receipt first.
+        if let Some(transaction_id) = self.data.transaction_id() {
+            if self.data.is_payment_required() {
+                let client = client.clone();
+                let timeout = timeout.clone();
+                recurse_receipt(transaction_id, client, timeout).await;
+            }
+        }
+
         if self.payment.get_amount().is_none() && self.data.is_payment_required() {
             // should this inherit the timeout?
             // payment is required but none was specified, query the cost
