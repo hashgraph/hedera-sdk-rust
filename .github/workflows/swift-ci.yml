@@ -82,8 +82,9 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: sdk/swift/.build
-          key: ${{ runner.os }}-spm-${{ github.job }}-${{ matrix.swift }}-${{ hashFiles('**/Package.resolved') }}
-
+          key: ${{ runner.os }}-${{ matrix.swift }}-spm-${{ github.job }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.swift }}-spm-
       - name: Download CHedera artifacts
         uses: actions/download-artifact@v3
         with:
@@ -115,7 +116,9 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: sdk/swift/.build
-          key: ${{ runner.os }}-spm-${{ github.job }}-${{ matrix.swift }}-${{ hashFiles('**/Package.resolved') }}
+          key: ${{ runner.os }}-${{ matrix.swift }}-spm-${{ github.job }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.swift }}-spm-
 
       - name: Download CHedera `x86_64-apple-darwin`
         uses: actions/download-artifact@v3
