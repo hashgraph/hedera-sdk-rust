@@ -39,6 +39,7 @@ internal enum AnyTransaction {
     case fileCreate(FileCreateTransaction)
     case fileUpdate(FileUpdateTransaction)
     case fileDelete(FileDeleteTransaction)
+    case prng(PrngTransaction)
     case tokenAssociate(TokenAssociateTransaction)
     case tokenBurn(TokenBurnTransaction)
     case tokenCreate(TokenCreateTransaction)
@@ -108,48 +109,48 @@ internal enum AnyTransaction {
         }
     }
 
-    internal enum Kind: String {
-        case accountCreate
-        case accountUpdate
-        case accountDelete
-        case accountAllowanceApprove
-        case accountAllowanceDelete
-        case contractCreate
-        case contractUpdate
-        case contractDelete
-        case contractExecute
-        case transfer
-        case topicCreate
-        case topicUpdate
-        case topicDelete
-        case topicMessageSubmit
-        case fileAppend
-        case fileCreate
-        case fileUpdate
-        case fileDelete
-        case tokenAssociate
-        case tokenBurn
-        case tokenCreate
-        case tokenDelete
-        case tokenDissociate
-        case tokenFeeScheduleUpdate
-        case tokenFreeze
-        case tokenGrantKyc
-        case tokenMint
-        case tokenPause
-        case tokenRevokeKyc
-        case tokenUnfreeze
-        case tokenUnpause
-        case tokenUpdate
-        case tokenWipe
-        case systemDelete
-        case systemUndelete
-        case freeze
-        case scheduleCreate
-        case scheduleSign
-        case scheduleDelete
-        case ethereum
-    }
+    // internal enum Kind: String {
+    //     case accountCreate
+    //     case accountUpdate
+    //     case accountDelete
+    //     case accountAllowanceApprove
+    //     case accountAllowanceDelete
+    //     case contractCreate
+    //     case contractUpdate
+    //     case contractDelete
+    //     case contractExecute
+    //     case transfer
+    //     case topicCreate
+    //     case topicUpdate
+    //     case topicDelete
+    //     case topicMessageSubmit
+    //     case fileAppend
+    //     case fileCreate
+    //     case fileUpdate
+    //     case fileDelete
+    //     case tokenAssociate
+    //     case tokenBurn
+    //     case tokenCreate
+    //     case tokenDelete
+    //     case tokenDissociate
+    //     case tokenFeeScheduleUpdate
+    //     case tokenFreeze
+    //     case tokenGrantKyc
+    //     case tokenMint
+    //     case tokenPause
+    //     case tokenRevokeKyc
+    //     case tokenUnfreeze
+    //     case tokenUnpause
+    //     case tokenUpdate
+    //     case tokenWipe
+    //     case systemDelete
+    //     case systemUndelete
+    //     case freeze
+    //     case scheduleCreate
+    //     case scheduleSign
+    //     case scheduleDelete
+    //     case ethereum
+    // }
 
     internal var transaction: Transaction {
         switch self {
@@ -193,6 +194,7 @@ internal enum AnyTransaction {
         case .scheduleSign(let transaction): return transaction
         case .scheduleDelete(let transaction): return transaction
         case .ethereum(let transaction): return transaction
+        case .prng(let transaction): return transaction
         }
     }
 }
@@ -371,6 +373,9 @@ extension AnyTransaction {
             let value = try intoOnlyValue(value)
             return Self(upcasting: try EthereumTransaction(protobuf: firstBody, value))
 
+        case .prng(let value):
+            let value = try intoOnlyValue(value)
+            return Self(upcasting: try PrngTransaction(protobuf: firstBody, value))
         }
     }
 }
@@ -417,6 +422,7 @@ internal enum ServicesTransactionDataList {
     case scheduleSign([Proto_ScheduleSignTransactionBody])
     case scheduleDelete([Proto_ScheduleDeleteTransactionBody])
     case ethereum([Proto_EthereumTransactionBody])
+    case prng([Proto_UtilPrngTransactionBody])
 
     internal mutating func append(_ transaction: Proto_TransactionBody.OneOf_Data) throws {
         switch (self, transaction) {
@@ -580,6 +586,10 @@ internal enum ServicesTransactionDataList {
             array.append(data)
             self = .ethereum(array)
 
+        case (.prng(var array), .utilPrng(let data)):
+            array.append(data)
+            self = .prng(array)
+
         default:
             throw HError.fromProtobuf("mismatched transaction types")
         }
@@ -637,12 +647,12 @@ extension ServicesTransactionDataList: TryFromProtobuf {
         case .scheduleCreate(let data): value = .scheduleCreate([data])
         case .scheduleDelete(let data): value = .scheduleDelete([data])
         case .scheduleSign(let data): value = .scheduleSign([data])
+        case .utilPrng(let data): value = .prng([data])
 
         case .cryptoAddLiveHash: throw HError.fromProtobuf("Unsupported transaction `AddLiveHashTransaction`")
         case .cryptoDeleteLiveHash: throw HError.fromProtobuf("Unsupported transaction `DeleteLiveHashTransaction`")
         case .uncheckedSubmit: throw HError.fromProtobuf("Unsupported transaction `UncheckedSubmitTransaction`")
         case .nodeStakeUpdate: throw HError.fromProtobuf("Unsupported transaction `NodeStakeUpdateTransaction`")
-        case .utilPrng: throw HError.fromProtobuf("Unimplemented transaction `PrngTransaction`")
         }
 
         for transaction in iter {

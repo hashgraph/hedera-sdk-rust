@@ -58,6 +58,7 @@ internal enum AnySchedulableTransaction {
     case systemUndelete(SystemUndeleteTransaction)
     case freeze(FreezeTransaction)
     case scheduleDelete(ScheduleDeleteTransaction)
+    case prng(PrngTransaction)
 
     internal init(upcasting transaction: Transaction) {
         self.init(AnyTransaction(upcasting: transaction))
@@ -141,6 +142,8 @@ internal enum AnySchedulableTransaction {
             self = .freeze(transaction)
         case .scheduleDelete(let transaction):
             self = .scheduleDelete(transaction)
+        case .prng(let transaction):
+            self = .prng(transaction)
         case .ethereum:
             fatalError("Cannot schedule `EthereumTransaction`")
         case .scheduleCreate:
@@ -152,45 +155,45 @@ internal enum AnySchedulableTransaction {
 }
 
 extension AnySchedulableTransaction {
-    internal enum Kind: String {
-        case accountCreate
-        case accountUpdate
-        case accountDelete
-        case accountAllowanceApprove
-        case accountAllowanceDelete
-        case contractCreate
-        case contractUpdate
-        case contractDelete
-        case contractExecute
-        case transfer
-        case topicCreate
-        case topicUpdate
-        case topicDelete
-        case topicMessageSubmit
-        case fileAppend
-        case fileCreate
-        case fileUpdate
-        case fileDelete
-        case tokenAssociate
-        case tokenBurn
-        case tokenCreate
-        case tokenDelete
-        case tokenDissociate
-        case tokenFeeScheduleUpdate
-        case tokenFreeze
-        case tokenGrantKyc
-        case tokenMint
-        case tokenPause
-        case tokenRevokeKyc
-        case tokenUnfreeze
-        case tokenUnpause
-        case tokenUpdate
-        case tokenWipe
-        case systemDelete
-        case systemUndelete
-        case freeze
-        case scheduleDelete
-    }
+    // internal enum Kind: String {
+    //     case accountCreate
+    //     case accountUpdate
+    //     case accountDelete
+    //     case accountAllowanceApprove
+    //     case accountAllowanceDelete
+    //     case contractCreate
+    //     case contractUpdate
+    //     case contractDelete
+    //     case contractExecute
+    //     case transfer
+    //     case topicCreate
+    //     case topicUpdate
+    //     case topicDelete
+    //     case topicMessageSubmit
+    //     case fileAppend
+    //     case fileCreate
+    //     case fileUpdate
+    //     case fileDelete
+    //     case tokenAssociate
+    //     case tokenBurn
+    //     case tokenCreate
+    //     case tokenDelete
+    //     case tokenDissociate
+    //     case tokenFeeScheduleUpdate
+    //     case tokenFreeze
+    //     case tokenGrantKyc
+    //     case tokenMint
+    //     case tokenPause
+    //     case tokenRevokeKyc
+    //     case tokenUnfreeze
+    //     case tokenUnpause
+    //     case tokenUpdate
+    //     case tokenWipe
+    //     case systemDelete
+    //     case systemUndelete
+    //     case freeze
+    //     case scheduleDelete
+    // }
 
     internal var transaction: Transaction {
         switch self {
@@ -268,6 +271,8 @@ extension AnySchedulableTransaction {
             return transaction
         case .scheduleDelete(let transaction):
             return transaction
+        case .prng(let transaction):
+            return transaction
         }
     }
 }
@@ -312,6 +317,7 @@ extension AnySchedulableTransaction: ToSchedulableTransactionData {
         case .systemUndelete(let transaction): return transaction.toSchedulableTransactionData()
         case .freeze(let transaction): return transaction.toSchedulableTransactionData()
         case .scheduleDelete(let transaction): return transaction.toSchedulableTransactionData()
+        case .prng(let transaction): return transaction.toSchedulableTransactionData()
         }
     }
 

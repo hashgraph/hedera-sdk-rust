@@ -70,8 +70,6 @@ public final class TransactionRecordQuery: Query<TransactionRecord> {
         return self
     }
 
-    internal override var requiresPayment: Bool { false }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.transactionGetRecord = .with { proto in

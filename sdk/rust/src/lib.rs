@@ -143,6 +143,7 @@ mod node_address;
 mod node_address_book;
 mod node_address_book_query;
 mod ping_query;
+mod prng_transaction;
 mod query;
 mod retry;
 mod schedule;
@@ -259,6 +260,7 @@ pub use node_address::NodeAddress;
 pub use node_address_book::NodeAddressBook;
 pub use node_address_book_query::NodeAddressBookQuery;
 pub(crate) use node_address_book_query::NodeAddressBookQueryData;
+pub use prng_transaction::PrngTransaction;
 pub(crate) use protobuf::{
     FromProtobuf,
     ToProtobuf,
