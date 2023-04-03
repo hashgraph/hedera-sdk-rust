@@ -23,7 +23,7 @@ import Foundation
 // TODO: assessed_custom_fees
 /// The complete record for a transaction on Hedera that has reached consensus.
 /// Response from `TransactionRecordQuery`.
-public struct TransactionRecord: Codable {
+public struct TransactionRecord: Decodable {
     /// The status (reach consensus, or failed, or is unknown) and the ID of
     /// any new account/file/instance created.
     public let receipt: TransactionReceipt
@@ -91,6 +91,28 @@ public struct TransactionRecord: Codable {
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     public let evmAddress: EvmAddress?
 
+    private enum CodingKeys: CodingKey {
+        case receipt
+        case transactionHash
+        case consensusTimestamp
+        case contractFunctionResult
+        case transfers
+        case tokenTransfers
+        case tokenNftTransfers
+        case transactionId
+        case transactionMemo
+        case transactionFee
+        case scheduleRef
+        case assessedCustomFees
+        case automaticTokenAssociations
+        case evmAddress
+        case parentConsensusTimestamp
+        case aliasKey
+        case children
+        case duplicates
+        case ethereumHash
+    }
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
@@ -99,15 +121,27 @@ public struct TransactionRecord: Codable {
         consensusTimestamp = try container.decode(.consensusTimestamp)
         contractFunctionResult = try container.decodeIfPresent(.contractFunctionResult)
         transfers = try container.decode(.transfers)
-        tokenTransfers = try container.decode(.tokenTransfers)
-        tokenNftTransfers = try container.decode(.tokenNftTransfers)
+
+        let tokenTransfersWrapper = try container.decode(
+            DictionaryWrapper<TokenId, DictionaryWrapper<AccountId, Int64>>.self,
+            forKey: .tokenTransfers
+        )
+
+        tokenTransfers = tokenTransfersWrapper.value.mapValues { $0.value }
+        tokenNftTransfers =
+            try
+            container.decodeIfPresent(
+                DictionaryWrapper<TokenId, [TokenNftTransfer]>.self,
+                forKey: .tokenNftTransfers
+            )?.value ?? [:]
+
         transactionId = try container.decode(.transactionId)
         transactionMemo = try container.decode(.transactionMemo)
         transactionFee = try container.decode(.transactionFee)
         scheduleRef = try container.decodeIfPresent(.scheduleRef)
         assessedCustomFees = try container.decode(.assessedCustomFees)
         automaticTokenAssociations = try container.decode(.automaticTokenAssociations)
-        evmAddress = try container.decode(.evmAddress)
+        evmAddress = try container.decodeIfPresent(.evmAddress)
 
         parentConsensusTimestamp = try container.decodeIfPresent(.parentConsensusTimestamp)
 
@@ -115,5 +149,51 @@ public struct TransactionRecord: Codable {
         children = try container.decodeIfPresent(.children) ?? []
         duplicates = try container.decodeIfPresent(.duplicates) ?? []
         ethereumHash = try container.decodeIfPresent(.ethereumHash).map(Data.base64Encoded) ?? Data()
+    }
+}
+
+/// Hacky struct to work around the lack of CodingKeyRepresentable before swift 5.6 and macos 12.3
+private struct DictionaryWrapper<Key, Value: Codable> where Key: LosslessStringConvertible & Hashable {
+    let value: [Key: Value]
+}
+
+extension DictionaryWrapper: Codable {
+    struct CodingKeys: CodingKey {
+        let stringValue: String
+
+        init(stringValue: String) {
+            self.stringValue = stringValue
+        }
+
+        var intValue: Int? { nil }
+
+        init?(intValue: Int) {
+            nil
+        }
+    }
+
+    init(from decoder: Decoder) throws {
+        var dict: [Key: Value] = [:]
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        for key in container.allKeys {
+            let value = try container.decode(Value.self, forKey: key)
+
+            guard let key = Key(key.stringValue) else {
+                throw DecodingError.typeMismatch(
+                    Key.self, .init(codingPath: container.codingPath, debugDescription: "Invalid key"))
+            }
+
+            dict[key] = value
+        }
+
+        self.value = dict
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        for (key, value) in self.value {
+            try container.encode(value, forKey: CodingKeys(stringValue: String(describing: key)))
+        }
     }
 }
