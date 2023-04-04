@@ -143,11 +143,11 @@ tasks:
             - mkdir -p ../c/lib/ios-arm64-sim/
             - mkdir -p ../c/lib/{linux,windows}-x86_64/
 
-            - cp target/x86_64-apple-darwin/release/libhedera.a ../c/lib/macos-x86_64/
-            - cp target/x86_64-apple-ios/release/libhedera.a ../c/lib/ios-x86_64/
-            - cp target/aarch64-apple-darwin/release/libhedera.a ../c/lib/macos-arm64/
-            - cp target/aarch64-apple-ios/release/libhedera.a ../c/lib/ios-arm64/
-            - cp target/aarch64-apple-ios-sim/release/libhedera.a ../c/lib/ios-arm64-sim/
+            - cp target/x86_64-apple-darwin/release/libhedera_crypto.a ../c/lib/macos-x86_64/
+            - cp target/x86_64-apple-ios/release/libhedera_crypto.a ../c/lib/ios-x86_64/
+            - cp target/aarch64-apple-darwin/release/libhedera_crypto.a ../c/lib/macos-arm64/
+            - cp target/aarch64-apple-ios/release/libhedera_crypto.a ../c/lib/ios-arm64/
+            - cp target/aarch64-apple-ios-sim/release/libhedera_crypto.a ../c/lib/ios-arm64-sim/
 
             #
             # Package for Swift
