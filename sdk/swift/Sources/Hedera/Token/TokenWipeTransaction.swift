@@ -145,7 +145,7 @@ extension TokenWipeTransaction: ToProtobuf {
     }
 }
 
-extension TokenWipeTransaction: ToSchedulableTransactionData {
+extension TokenWipeTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenWipe(toProtobuf())
     }

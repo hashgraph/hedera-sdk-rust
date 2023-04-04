@@ -129,7 +129,7 @@ extension TokenBurnTransaction: ToProtobuf {
     }
 }
 
-extension TokenBurnTransaction: ToSchedulableTransactionData {
+extension TokenBurnTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenBurn(toProtobuf())
     }

@@ -109,7 +109,7 @@ public final class FileAppendTransaction: ChunkedTransaction {
     }
 }
 
-extension FileAppendTransaction: ToSchedulableTransactionData {
+extension FileAppendTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         precondition(self.usedChunks == 1)
 

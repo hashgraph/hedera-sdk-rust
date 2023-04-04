@@ -104,7 +104,7 @@ extension TokenDissociateTransaction: ToProtobuf {
     }
 }
 
-extension TokenDissociateTransaction: ToSchedulableTransactionData {
+extension TokenDissociateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenDissociate(toProtobuf())
     }

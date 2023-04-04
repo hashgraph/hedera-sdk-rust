@@ -80,7 +80,7 @@ extension ScheduleDeleteTransaction: ToProtobuf {
     }
 }
 
-extension ScheduleDeleteTransaction: ToSchedulableTransactionData {
+extension ScheduleDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .scheduleDelete(toProtobuf())
     }

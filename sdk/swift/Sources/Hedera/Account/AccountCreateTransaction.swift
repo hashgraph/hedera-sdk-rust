@@ -42,9 +42,12 @@ public final class AccountCreateTransaction: Transaction {
         self.key = key
         self.initialBalance = initialBalance
         self.receiverSignatureRequired = receiverSignatureRequired
+        self.autoRenewAccountId = autoRenewAccountId
         self.autoRenewPeriod = autoRenewPeriod
         self.accountMemo = accountMemo
         self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
+        self.alias = alias
+        self.evmAddress = evmAddress
         self.stakedAccountId = stakedAccountId
         self.stakedNodeId = stakedNodeId
         self.declineStakingReward = declineStakingReward
@@ -328,7 +331,7 @@ extension AccountCreateTransaction: ToProtobuf {
     }
 }
 
-extension AccountCreateTransaction: ToSchedulableTransactionData {
+extension AccountCreateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .cryptoCreateAccount(toProtobuf())
     }

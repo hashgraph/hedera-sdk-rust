@@ -102,7 +102,7 @@ extension TokenFeeScheduleUpdateTransaction: ToProtobuf {
     }
 }
 
-extension TokenFeeScheduleUpdateTransaction: ToSchedulableTransactionData {
+extension TokenFeeScheduleUpdateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenFeeScheduleUpdate(toProtobuf())
     }

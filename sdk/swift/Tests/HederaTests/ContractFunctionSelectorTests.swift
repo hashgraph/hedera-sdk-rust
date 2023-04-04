@@ -22,7 +22,7 @@ import XCTest
 
 @testable import Hedera
 
-public final class ContractFunctionSelectorTests: XCTestCase {
+internal final class ContractFunctionSelectorTests: XCTestCase {
     internal func testMiscParams() {
         let result = ContractFunctionSelector("foo")
             .addUint8()

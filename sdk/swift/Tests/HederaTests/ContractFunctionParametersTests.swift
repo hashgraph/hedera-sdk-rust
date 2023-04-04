@@ -23,7 +23,7 @@ import XCTest
 
 @testable import Hedera
 
-public final class ContractFunctionParametersTests: XCTestCase {
+internal final class ContractFunctionParametersTests: XCTestCase {
     // swiftlint:disable:next function_body_length
     internal func testMiscArgs() {
         let result = ContractFunctionParameters()

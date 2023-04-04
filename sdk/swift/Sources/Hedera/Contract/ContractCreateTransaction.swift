@@ -378,7 +378,7 @@ extension ContractCreateTransaction: ToProtobuf {
     }
 }
 
-extension ContractCreateTransaction: ToSchedulableTransactionData {
+extension ContractCreateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .contractCreateInstance(toProtobuf())
     }

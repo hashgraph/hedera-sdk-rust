@@ -29,26 +29,6 @@ import SwiftProtobuf
 /// corresponding file attribute will be unchanged.
 ///
 public final class FileUpdateTransaction: Transaction {
-    internal init(
-        fileId: FileId? = nil,
-        fileMemo: String = "",
-        keys: KeyList? = nil,
-        contents: Data = Data(),
-        autoRenewPeriod: Duration? = nil,
-        autoRenewAccountId: AccountId? = nil,
-        expirationTime: Timestamp? = nil
-    ) {
-        self.fileId = fileId
-        self.fileMemo = fileMemo
-        self.keys = keys
-        self.contents = contents
-        self.autoRenewPeriod = autoRenewPeriod
-        self.autoRenewAccountId = autoRenewAccountId
-        self.expirationTime = expirationTime
-
-        super.init()
-    }
-
     /// Create a new `FileUpdateTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -222,7 +202,7 @@ extension FileUpdateTransaction: ToProtobuf {
     }
 }
 
-extension FileUpdateTransaction: ToSchedulableTransactionData {
+extension FileUpdateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .fileUpdate(toProtobuf())
     }

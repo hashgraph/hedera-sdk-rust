@@ -100,7 +100,7 @@ extension AccountDeleteTransaction: ToProtobuf {
     }
 }
 
-extension AccountDeleteTransaction: ToSchedulableTransactionData {
+extension AccountDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .cryptoDelete(toProtobuf())
     }

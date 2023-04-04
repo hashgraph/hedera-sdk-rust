@@ -67,20 +67,20 @@ private let stringArrayResult2 = Data(
         """
 )!
 
-public final class ContractFunctionResultTests: XCTestCase {
-    public func testGetUInt8() {
+internal final class ContractFunctionResultTests: XCTestCase {
+    internal func testGetUInt8() {
         let result = ContractFunctionResult.sampleWithBytes(bytes: numToBytes32(value: UInt8(0xdc)))
 
         XCTAssertEqual(result.getUInt8(0), 0xdc)
     }
 
-    public func testGetUInt32() {
+    internal func testGetUInt32() {
         let result = ContractFunctionResult.sampleWithBytes(bytes: numToBytes32(value: UInt32(0x10de_caff)))
 
         XCTAssertEqual(result.getUInt32(0), 0x10de_caff)
     }
 
-    public func testGetBytes() {
+    internal func testGetBytes() {
         let offset = numToBytes32(value: UInt32(32))
         let len = numToBytes32(value: UInt32(3))
         let data = Data([0xde, 0xca, 0xff])
@@ -91,7 +91,7 @@ public final class ContractFunctionResultTests: XCTestCase {
         XCTAssertEqual(result.getBytes(0)?.hexStringEncoded(), "decaff")
     }
 
-    public func testProvidesResults() {
+    internal func testProvidesResults() {
         let result = ContractFunctionResult.sampleWithBytes(bytes: callResult)
 
         XCTAssertEqual(result.getBool(0), true)
@@ -110,7 +110,7 @@ public final class ContractFunctionResultTests: XCTestCase {
         XCTAssertEqual(result.getString(5), "Hello, world, again!")
     }
 
-    public func testStringArrayResults() {
+    internal func testStringArrayResults() {
         let result = ContractFunctionResult.sampleWithBytes(bytes: stringArrayResult)
 
         guard let strings = result.getStringArray(0) else {
@@ -123,7 +123,7 @@ public final class ContractFunctionResultTests: XCTestCase {
         XCTAssertEqual(strings.count, 2)
     }
 
-    public func testStringArrayResults2() {
+    internal func testStringArrayResults2() {
         let result = ContractFunctionResult.sampleWithBytes(bytes: stringArrayResult2)
 
         guard let strings = result.getStringArray(1) else {
@@ -136,7 +136,7 @@ public final class ContractFunctionResultTests: XCTestCase {
         XCTAssertEqual(strings.count, 2)
     }
 
-    public func testIndexOOBNoCrash() {
+    internal func testIndexOOBNoCrash() {
         let result = ContractFunctionResult.sampleWithBytes(bytes: Data())
 
         XCTAssertNil(result.getString((0)))

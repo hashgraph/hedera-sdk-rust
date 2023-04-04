@@ -101,7 +101,7 @@ extension TokenRevokeKycTransaction: ToProtobuf {
     }
 }
 
-extension TokenRevokeKycTransaction: ToSchedulableTransactionData {
+extension TokenRevokeKycTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenRevokeKyc(toProtobuf())
     }

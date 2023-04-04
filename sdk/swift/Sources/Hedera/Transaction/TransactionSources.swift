@@ -139,8 +139,6 @@ internal struct TransactionSources: Sendable {
     internal var chunks: LazyMapSequence<Range<Int>, SourceChunk> {
         (0..<chunksCount).lazy.map { SourceChunk(map: self.guts, index: $0) }
     }
-
-    internal var transactionHashes: [TransactionHash] { guts.hashes }
 }
 
 extension TransactionSources {
@@ -313,10 +311,6 @@ extension TransactionSources {
                 hashes: guts.lazyHashes
             )
         )
-    }
-
-    internal static func fromBytes(_ bytes: Data) throws -> Self {
-        try Self(protobufBytes: bytes)
     }
 
     internal func toBytes() -> Data {
