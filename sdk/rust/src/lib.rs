@@ -165,6 +165,10 @@ mod transaction_response;
 mod transfer;
 mod transfer_transaction;
 
+// note(sr): there's absolutely no way I'm going to write an enum or struct for namespacing here.
+/// Flow for verifying signatures via account info.
+pub mod account_info_flow;
+
 pub use account::{
     AccountAllowanceApproveTransaction,
     AccountAllowanceDeleteTransaction,
