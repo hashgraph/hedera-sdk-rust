@@ -154,9 +154,6 @@ impl AccountInfo {
             // unimplemented fields
             live_hashes: Vec::default(),
             token_relationships: Vec::default(),
-
-            // unimplemented deprecated fields
-            ..Default::default()
         }
         .encode_to_vec()
     }

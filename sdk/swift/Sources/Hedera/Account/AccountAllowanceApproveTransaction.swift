@@ -191,7 +191,7 @@ extension AccountAllowanceApproveTransaction: ToProtobuf {
     }
 }
 
-extension AccountAllowanceApproveTransaction: ToSchedulableTransactionData {
+extension AccountAllowanceApproveTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .cryptoApproveAllowance(toProtobuf())
     }

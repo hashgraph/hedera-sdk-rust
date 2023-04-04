@@ -2,8 +2,8 @@ import XCTest
 
 @testable import Hedera
 
-public final class PublicKeyTests: XCTestCase {
-    public func testParseEd25519() throws {
+internal final class PublicKeyTests: XCTestCase {
+    internal func testParseEd25519() throws {
         let publicKey: PublicKey =
             "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
 
@@ -12,7 +12,7 @@ public final class PublicKeyTests: XCTestCase {
             "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7")
     }
 
-    public func testParseEcdsa() throws {
+    internal func testParseEcdsa() throws {
         let publicKey: PublicKey =
             "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
 
@@ -33,13 +33,13 @@ public final class PublicKeyTests: XCTestCase {
         }
     }
 
-    public func testEd25519ParseVariants() throws {
+    internal func testEd25519ParseVariants() throws {
         try publicKeyParseVariants(
             key: "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7"
         )
     }
 
-    public func testEcdsaParseVariants() throws {
+    internal func testEcdsaParseVariants() throws {
         try publicKeyParseVariants(
             key: "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
         )

@@ -256,7 +256,7 @@ where
         if let Some(transaction_id) = self.data.transaction_id() {
             if self.data.is_payment_required() {
                 let client = client.clone();
-                let timeout = timeout.clone();
+                let timeout = timeout;
                 recurse_receipt(transaction_id, client, timeout).await;
             }
         }

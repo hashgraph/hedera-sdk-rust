@@ -57,7 +57,7 @@ impl PrngTransaction {
     pub fn range(&mut self, range: u32) -> &mut Self {
         self.data_mut().range = Some(range);
 
-        return self;
+        self
     }
 }
 

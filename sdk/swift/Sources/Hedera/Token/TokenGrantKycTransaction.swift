@@ -101,7 +101,7 @@ extension TokenGrantKycTransaction: ToProtobuf {
     }
 }
 
-extension TokenGrantKycTransaction: ToSchedulableTransactionData {
+extension TokenGrantKycTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenGrantKyc(toProtobuf())
     }

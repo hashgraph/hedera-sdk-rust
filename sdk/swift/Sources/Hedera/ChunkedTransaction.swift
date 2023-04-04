@@ -109,6 +109,11 @@ public class ChunkedTransaction: Transaction {
     {
         try freezeWith(client)
 
+        if let sources = sources {
+            return try await SourceTransaction(inner: self, sources: sources)
+                .executeAll(client, timeoutPerChunk: timeoutPerChunk)
+        }
+
         precondition(self.data.count < self.maxMessageSize, "todo: throw an actual error here")
 
         var responses: [Response] = []

@@ -105,7 +105,7 @@ extension TokenAssociateTransaction: ToProtobuf {
     }
 }
 
-extension TokenAssociateTransaction: ToSchedulableTransactionData {
+extension TokenAssociateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenAssociate(toProtobuf())
     }

@@ -120,7 +120,7 @@ extension TokenMintTransaction: ToProtobuf {
     }
 }
 
-extension TokenMintTransaction: ToSchedulableTransactionData {
+extension TokenMintTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenMint(toProtobuf())
     }

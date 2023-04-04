@@ -161,7 +161,7 @@ extension SystemDeleteTransaction: ToProtobuf {
     }
 }
 
-extension SystemDeleteTransaction: ToSchedulableTransactionData {
+extension SystemDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .systemDelete(toProtobuf())
     }

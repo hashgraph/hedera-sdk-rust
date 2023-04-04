@@ -135,7 +135,7 @@ extension ContractDeleteTransaction: ToProtobuf {
     }
 }
 
-extension ContractDeleteTransaction: ToSchedulableTransactionData {
+extension ContractDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .contractDeleteInstance(toProtobuf())
     }

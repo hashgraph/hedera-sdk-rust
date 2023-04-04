@@ -32,14 +32,6 @@ import HederaProtobufs
 /// On success, the resulting `TransactionReceipt` contains the topic's updated `topicSequenceNumber` and
 /// `topicRunningHash`.
 public final class TopicMessageSubmitTransaction: ChunkedTransaction {
-    internal init(
-        topicId: TopicId? = nil,
-        message: Data = Data()
-    ) {
-        self.topicId = topicId
-        super.init(data: message)
-    }
-
     /// Create a new `TopicMessageSubmitTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -123,7 +115,7 @@ public final class TopicMessageSubmitTransaction: ChunkedTransaction {
     }
 }
 
-extension TopicMessageSubmitTransaction: ToSchedulableTransactionData {
+extension TopicMessageSubmitTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         precondition(usedChunks == 1)
 

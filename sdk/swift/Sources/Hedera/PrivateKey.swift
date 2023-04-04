@@ -38,11 +38,6 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return bytes
     }
 
-    // sadly, we can't avoid a leaky abstraction here.
-    internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
-        Self(ptr)
-    }
-
     private init(_ ptr: OpaquePointer) {
         self.ptr = ptr
     }

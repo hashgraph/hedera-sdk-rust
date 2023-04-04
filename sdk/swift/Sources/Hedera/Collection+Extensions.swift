@@ -1,3 +1,5 @@
+import Foundation
+
 extension RandomAccessCollection {
     internal subscript(safe index: Index) -> Element? {
         indices.contains(index) ? self[index] : nil
@@ -20,5 +22,41 @@ extension RandomAccessCollection {
 
     internal func splitLast() -> (last: Element, rest: SubSequence)? {
         last.map { ($0, dropLast(1)) }
+    }
+}
+
+internal enum Ordering: Comparable {
+    case less
+    case equal
+    case greater
+}
+
+extension RandomAccessCollection where Element: Comparable {
+    /// Searches for an element equal to the given element.
+    ///
+    /// If a match is found, the index of that match is returned.
+    /// If multiple matches are found, the index of any matches may be returned.
+    ///
+    /// > Note: time complexity: O(log n)
+    ///
+    /// > Important: The collection must be sorted.
+    internal func binarySearch(by predicate: (Element) throws -> Ordering) rethrows -> Index? {
+        var size = count
+        var left = startIndex
+        var right = endIndex
+
+        while left < right {
+            let mid = index(left, offsetBy: size / 2)
+
+            switch try predicate(self[mid]) {
+            case .less: left = index(after: mid)
+            case .equal: return mid
+            case .greater: right = mid
+            }
+
+            size = distance(from: left, to: right)
+        }
+
+        return nil
     }
 }

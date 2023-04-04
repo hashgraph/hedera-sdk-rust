@@ -277,7 +277,7 @@ extension AnySchedulableTransaction {
     }
 }
 
-extension AnySchedulableTransaction: ToSchedulableTransactionData {
+extension AnySchedulableTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         switch self {
         case .accountCreate(let transaction): return transaction.toSchedulableTransactionData()

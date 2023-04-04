@@ -599,6 +599,7 @@ internal enum ServicesTransactionDataList {
 extension ServicesTransactionDataList: TryFromProtobuf {
     internal typealias Protobuf = [Proto_TransactionBody.OneOf_Data]
 
+    // swiftlint:disable:next function_body_length
     internal init(protobuf proto: Protobuf) throws {
         var iter = proto.makeIterator()
 

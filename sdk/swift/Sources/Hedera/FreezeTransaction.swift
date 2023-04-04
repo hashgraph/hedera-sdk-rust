@@ -149,7 +149,7 @@ extension FreezeTransaction: ToProtobuf {
     }
 }
 
-extension FreezeTransaction: ToSchedulableTransactionData {
+extension FreezeTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .freeze(toProtobuf())
     }

@@ -86,14 +86,12 @@ internal final class Network: Sendable {
     private init(
         map: [AccountId: Int],
         nodes: [AccountId],
-        addresses: [[String]],
         channels: [GRPCChannel],
         healthy: [ManagedAtomicWrapper<Int64>],
         lastPinged: [ManagedAtomicWrapper<Int64>]
     ) {
         self.map = map
         self.nodes = nodes
-        self.addresses = addresses
         self.channels = channels
         self.healthy = healthy
         self.lastPinged = lastPinged
@@ -101,7 +99,6 @@ internal final class Network: Sendable {
 
     internal let map: [AccountId: Int]
     internal let nodes: [AccountId]
-    internal let addresses: [[String]]
     fileprivate let channels: [GRPCChannel]
     fileprivate let healthy: [ManagedAtomicWrapper<Int64>]
     fileprivate let lastPinged: [ManagedAtomicWrapper<Int64>]
@@ -119,7 +116,6 @@ internal final class Network: Sendable {
         self.init(
             map: config.map,
             nodes: config.nodes,
-            addresses: config.addresses,
             channels: channels,
             healthy: healthy,
             lastPinged: lastPinged
