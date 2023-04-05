@@ -8,7 +8,7 @@ use num_bigint::{
 };
 
 use crate::contract::contract_function_selector::ContractFunctionSelector;
-use crate::evm_address::IdEvmAddress;
+use crate::ethereum::IdEvmAddress;
 
 /// Builder for encoding parameters for a Solidity contract constructor/function call.
 #[derive(Debug, Clone, Default)]

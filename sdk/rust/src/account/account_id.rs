@@ -33,11 +33,11 @@ use crate::entity_id::{
     PartialEntityId,
     ValidateChecksums,
 };
-use crate::evm_address::EvmAddress;
 use crate::{
     Client,
     EntityId,
     Error,
+    EvmAddress,
     FromProtobuf,
     LedgerId,
     PublicKey,
