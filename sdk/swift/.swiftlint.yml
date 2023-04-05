@@ -5,6 +5,7 @@ included:
 
 excluded:
   - .build/
+  - Sources/Hedera/Status.swift
 
 disabled_rules:
   # TODO: re-enable once the project is deemed complete
