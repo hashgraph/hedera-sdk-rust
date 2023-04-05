@@ -18,6 +18,8 @@
  * ‍
  */
 
+use std::fmt;
+
 use crate::{
     PrivateKey,
     PublicKey,
@@ -32,6 +34,17 @@ pub(crate) enum AnySigner {
     PrivateKey(PrivateKey),
     // public key is 216 bytes.
     Arbitrary(Box<PublicKey>, Signer),
+}
+
+impl fmt::Debug for AnySigner {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::PrivateKey(_) => f.debug_tuple("PrivateKey").field(&"[redacted]").finish(),
+            Self::Arbitrary(arg0, _) => {
+                f.debug_tuple("Arbitrary").field(arg0).field(&"Fn").finish()
+            }
+        }
+    }
 }
 
 impl AnySigner {

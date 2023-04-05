@@ -187,6 +187,7 @@ pub(crate) use client::Operator;
 pub use contract::{
     ContractBytecodeQuery,
     ContractCallQuery,
+    ContractCreateFlow,
     ContractCreateTransaction,
     ContractExecuteTransaction,
     ContractFunctionParameters,
