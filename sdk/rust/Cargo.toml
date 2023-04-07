@@ -48,6 +48,7 @@ tonic = "0.8.0"
 tinystr = "0.7.0"
 arc-swap = "1.6.0"
 rlp = "0.5.2"
+bytes = "1.2.1"
 
 [dependencies.rust_decimal]
 version = "1.26.1"
