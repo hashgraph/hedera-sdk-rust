@@ -76,7 +76,7 @@ public final class EthereumFlow {
         let fileAppendDefaultChunkSize: Int = 4096
 
         if let data = callData.splitAt(fileAppendDefaultChunkSize) {
-            return data
+            return (Data(data.0), Data(data.1))
         }
 
         return (callData, nil)
