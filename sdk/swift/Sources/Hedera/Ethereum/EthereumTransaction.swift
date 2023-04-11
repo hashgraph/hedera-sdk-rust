@@ -27,7 +27,7 @@ public final class EthereumTransaction: Transaction {
     public init(
         ethereumData: Data? = nil,
         callDataFileId: FileId? = nil,
-        maxGasAllowanceHbar: UInt64 = 0
+        maxGasAllowanceHbar: Hbar = 0
     ) {
         self.ethereumData = ethereumData
         self.callDataFileId = callDataFileId
@@ -39,7 +39,7 @@ public final class EthereumTransaction: Transaction {
     internal init(protobuf proto: Proto_TransactionBody, _ data: Proto_EthereumTransactionBody) throws {
         self.ethereumData = !data.ethereumData.isEmpty ? data.ethereumData : nil
         self.callDataFileId = data.hasCallData ? .fromProtobuf(data.callData) : nil
-        self.maxGasAllowanceHbar = UInt64(data.maxGasAllowance)
+        self.maxGasAllowanceHbar = .fromTinybars(data.maxGasAllowance)
 
         try super.init(protobuf: proto)
     }
@@ -89,7 +89,7 @@ public final class EthereumTransaction: Transaction {
 
     /// The maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
-    public var maxGasAllowanceHbar: UInt64 {
+    public var maxGasAllowanceHbar: Hbar {
         willSet {
             ensureNotFrozen()
         }
@@ -98,7 +98,7 @@ public final class EthereumTransaction: Transaction {
     /// Sets the maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
     @discardableResult
-    public func maxGasAllowanceHbar(_ maxGasAllowanceHbar: UInt64) -> Self {
+    public func maxGasAllowanceHbar(_ maxGasAllowanceHbar: Hbar) -> Self {
         self.maxGasAllowanceHbar = maxGasAllowanceHbar
 
         return self
@@ -129,7 +129,7 @@ extension EthereumTransaction: ToProtobuf {
         .with { proto in
             proto.ethereumData = ethereumData ?? Data()
             callDataFileId?.toProtobufInto(&proto.callData)
-            proto.maxGasAllowance = Int64(maxGasAllowanceHbar)
+            proto.maxGasAllowance = maxGasAllowanceHbar.toTinybars()
         }
     }
 }
