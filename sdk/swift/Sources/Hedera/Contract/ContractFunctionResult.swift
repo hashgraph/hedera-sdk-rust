@@ -127,7 +127,7 @@ public struct ContractFunctionResult {
         let size = Int(MemoryLayout<UInt32>.size)
         let offset = Int(offset + 28)
 
-        return bytes[slicing: offset...]?[slicing:  ..<size].map { UInt32(bigEndianBytes: $0)! }
+        return bytes[slicing: offset...]?[slicing: ..<size].map { UInt32(bigEndianBytes: $0)! }
     }
 
     private func getUIntAt(offset: UInt) -> UInt? {
