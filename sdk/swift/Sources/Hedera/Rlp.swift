@@ -475,7 +475,7 @@ extension Rlp.Encoder {
         let listByteCount = raw.distance(from: list.offset, to: raw.endIndex) - 1
         switch listByteCount {
         case 0...Rlp.Tag.shortMaxByteCount:
-            raw[list.offset] = Rlp.Tag.list(.short(byteCount: 0)).rawValue
+            raw[list.offset] = Rlp.Tag.list(.short(byteCount: UInt8(listByteCount))).rawValue
         default:
             // we need to encode the tag and insert the length right after, unfortunately it's impossible to actually predict the label size.
             precondition(Int.bitWidth <= 64)
