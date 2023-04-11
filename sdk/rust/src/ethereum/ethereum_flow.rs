@@ -98,7 +98,7 @@ impl EthereumFlow {
         let mut ethereum_transaction = EthereumTransaction::new();
 
         if let Some(allowance) = self.max_gas_allowance {
-            ethereum_transaction.max_gas_allowance_hbar(allowance.to_tinybars() as u64);
+            ethereum_transaction.max_gas_allowance_hbar(allowance);
         }
 
         if ethereum_data_bytes.len() <= Self::MAX_ETHEREUM_DATA_SIZE {
