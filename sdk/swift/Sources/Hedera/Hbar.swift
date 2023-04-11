@@ -120,17 +120,17 @@ public struct Hbar: LosslessStringConvertible, ExpressibleByIntegerLiteral,
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        // swiftlint:disable force_try
+        // swiftlint:disable:next force_try
         try! self.init(parsing: value)
     }
 
     public init(integerLiteral value: IntegerLiteralType) {
-        // swiftlint:disable force_try
+        // swiftlint:disable:next force_try
         try! self.init(Decimal(value))
     }
 
     public init(floatLiteral value: FloatLiteralType) {
-        // swiftlint:disable force_try
+        // swiftlint:disable:next force_try
         try! self.init(Decimal(value))
     }
 
