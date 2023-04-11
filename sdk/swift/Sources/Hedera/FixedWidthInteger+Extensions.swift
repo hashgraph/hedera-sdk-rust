@@ -4,7 +4,9 @@ extension FixedWidthInteger {
     internal init?(littleEndianBytes bytes: Data) {
         let size = MemoryLayout<Self>.size
 
-        guard bytes.contains(range: 0..<size) else { return nil }
+        guard bytes.count == size else {
+            return nil
+        }
 
         self = 0
 
@@ -17,7 +19,9 @@ extension FixedWidthInteger {
     internal init?(nativeEndianBytes bytes: Data) {
         let size = MemoryLayout<Self>.size
 
-        guard bytes.contains(range: 0..<size) else { return nil }
+        guard bytes.count == size else {
+            return nil
+        }
 
         self = 0
 
@@ -27,7 +31,9 @@ extension FixedWidthInteger {
     internal init?(bigEndianBytes bytes: Data) {
         let size = MemoryLayout<Self>.size
 
-        guard bytes.contains(range: 0..<size) else { return nil }
+        guard bytes.count == size else {
+            return nil
+        }
 
         self = 0
 
@@ -56,7 +62,7 @@ extension FixedWidthInteger {
 extension FixedWidthInteger {
     internal init<S: StringProtocol>(parsing description: S) throws {
         guard let value = Self(description) else {
-            throw HError(kind: .basicParse, description: "Invalid numeric string `\(description)`")
+            throw HError.basicParse("Invalid numeric string `\(description)`")
         }
 
         self = value

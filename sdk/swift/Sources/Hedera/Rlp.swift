@@ -350,7 +350,7 @@ extension AnyRlp {
     }
 
     // Decode the number of bytes in a list/value, this if for `.long` tags.
-    private static func decodeIntCount<C: RandomAccessCollection<UInt8>>(bytes: C) throws -> Int {
+    private static func decodeIntCount(bytes: Data) throws -> Int {
         do {
             // we're decoding a `.long`, an empty count would be canonically expressed via `.short(byteCount: 0)`
             // likewise a 0 count would be expressed as an empty count.
@@ -493,64 +493,5 @@ extension Rlp.Encoder {
         precondition(self.lists.isEmpty, "Cannot provide output with unfinished lists")
 
         return Data(raw)
-    }
-}
-
-extension Data {
-    fileprivate func split(at index: Index) -> (SubSequence, SubSequence)? {
-        guard let index = self.index(startIndex, offsetBy: index, limitedBy: endIndex) else {
-            return nil
-        }
-
-        // note: neither of these operations can cause issues because `startIndex <= index <= endIndex`
-        return (self[..<index], self[index...])
-    }
-
-    /// Slice this data using *sane* ranges
-    ///
-    /// Example:
-    /// ```swift
-    /// // gives the equivalent of Data([2, 3])
-    /// let tmp = Data([1, 2, 3])[slicing: 1..<3]!
-    /// // gives the equivalent of Data([2])
-    /// let tmp2 = tmp[slicing: 0..<1]!
-    /// precondition(tmp2[slicing: 1..<2] == nil)
-    /// ```
-    fileprivate subscript(slicing range: Range<Index>) -> SubSequence? {
-        guard let startIndex = index(startIndex, offsetBy: range.lowerBound, limitedBy: endIndex) else {
-            return nil
-        }
-
-        guard let endIndex = index(startIndex, offsetBy: range.count, limitedBy: endIndex) else {
-            return nil
-        }
-
-        return self[startIndex..<endIndex]
-    }
-
-    /// Slice this data using *sane* ranges
-    fileprivate subscript(slicing range: PartialRangeFrom<Index>) -> SubSequence? {
-        guard let startIndex = index(startIndex, offsetBy: range.lowerBound, limitedBy: endIndex) else {
-            return nil
-        }
-
-        return self[startIndex...]
-    }
-
-    /// Slice this data using *sane* ranges
-    fileprivate subscript(slicing range: PartialRangeUpTo<Index>) -> SubSequence? {
-        guard let endIndex = index(startIndex, offsetBy: range.upperBound, limitedBy: endIndex) else {
-            return nil
-        }
-
-        return self[..<endIndex]
-    }
-
-    fileprivate subscript(at index: Index) -> Element? {
-        guard let index = self.index(startIndex, offsetBy: index, limitedBy: endIndex) else {
-            return nil
-        }
-
-        return self[index]
     }
 }
