@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::sync::atomic::AtomicBool;
 
 use anyhow::Context;
 use hedera::{
@@ -20,13 +21,24 @@ mod keys {
 
 static CONFIG: Lazy<Config> = Lazy::new(Config::parse_env);
 
-static CLIENT: Lazy<Client> = Lazy::new(|| {
+/// Generates a client using the active config.
+///
+/// This is a function rather than a `Lazy` because every executor (IE, [`#[tokio::test]`](tokio::test)) needs its own client.
+fn client() -> Client {
     let config = &*CONFIG;
 
     let client = match Client::for_name(&config.network_name) {
         Ok(client) => client,
         Err(e) => {
-            log::error!("Error creating client: {e}; creating one using `testnet`");
+            // to ensure we don't spam the logs with `Error creating client: ...`,
+            // we just let an arbitrary thread win and log the "error".
+            static LOGS_ONCE: AtomicBool = AtomicBool::new(false);
+
+            // note: Relaxed is probably fine, AcqRel is *definitely* fine.
+            if !LOGS_ONCE.swap(true, std::sync::atomic::Ordering::AcqRel) {
+                log::error!("Error creating client: {e}; creating one using `testnet`");
+            }
+
             Client::for_testnet()
         }
     };
@@ -36,7 +48,7 @@ static CLIENT: Lazy<Client> = Lazy::new(|| {
     }
 
     client
-});
+}
 
 #[derive(Clone)]
 pub(crate) struct Operator {
@@ -139,5 +151,5 @@ pub(crate) fn setup_global() -> TestEnvironment {
 
     let _ = env_logger::builder().parse_default_env().is_test(true).try_init();
 
-    TestEnvironment { config: &CONFIG, client: CLIENT.clone() }
+    TestEnvironment { config: &CONFIG, client: client() }
 }
