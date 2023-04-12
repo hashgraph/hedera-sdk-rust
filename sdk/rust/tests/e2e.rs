@@ -79,7 +79,7 @@ async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
 
     for _ in 0..MINT_COUNT {
         // give the tasks a bit of time between spawning to avoid hammering the network.
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
         tasks.spawn({
             let client = client.clone();
             async move { create_nft(&client, token_id).await }
@@ -99,7 +99,7 @@ async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
 
     for response in responses {
         // give the tasks a bit of time between spawning to avoid hammering the network.
-        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
 
         let client = client.clone();
         tasks.spawn(async move { response.get_receipt(&client).await });
