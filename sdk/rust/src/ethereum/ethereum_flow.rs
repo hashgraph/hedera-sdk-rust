@@ -89,9 +89,10 @@ impl EthereumFlow {
         client: &Client,
         timeout_per_transaction: Option<std::time::Duration>,
     ) -> crate::Result<TransactionResponse> {
-        let Some(mut ethereum_data) = self.ethereum_data.clone() else {
-            todo!();
-        };
+        let mut ethereum_data = self
+            .ethereum_data
+            .clone()
+            .expect("Must set ethereum data before calling execute on ethereum flow");
 
         let ethereum_data_bytes = ethereum_data.to_bytes();
 
@@ -147,11 +148,8 @@ async fn create_file(
         .get_receipt_query()
         .execute_with_optional_timeout(client, timeout_per_transaction)
         .await?
-        .file_id;
-
-    let Some(file_id) = file_id else {
-        todo!("what error here?")
-    };
+        .file_id
+        .expect("Creating a file means there's a file ID");
 
     if let Some(file_append_data) = file_append_data {
         FileAppendTransaction::new()

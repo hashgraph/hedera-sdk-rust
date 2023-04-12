@@ -406,8 +406,8 @@ public final class ContractCreateFlow {
         -> TransactionResponse
     {
         guard let operatorPublicKey = client.operator?.signer.publicKey else {
-            // throw HError
-            fatalError("todo: what error here?")
+            // todo: throw a proper error here
+            fatalError("must call Client.setOperator before calling ContractCreateFlow.execute")
         }
 
         let bytecode = Self.splitBytecode(self.bytecode)
@@ -418,11 +418,7 @@ public final class ContractCreateFlow {
         )
         .execute(client, timeoutPerTransaction)
         .getReceipt(client, timeoutPerTransaction)
-        .fileId
-
-        guard let fileId = fileId else {
-            fatalError("todo: what error here?")
-        }
+        .fileId!
 
         if let fileAppendBytecode = bytecode.fileAppend {
             // note: FileAppendTransaction already waits for receipts, so we don't need to wait for one before executing the ContractCreateTransaction.

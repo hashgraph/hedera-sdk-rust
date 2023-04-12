@@ -45,7 +45,8 @@ public final class EthereumFlow {
         -> TransactionResponse
     {
         guard var ethereumData = ethereumData else {
-            fatalError("todo")
+            // todo: replace this with a real error?
+            fatalError("ethereumData must be set before calling `EthereumFlow.execute`")
         }
 
         var ethereumDataBytes = ethereumData.toBytes()
@@ -92,11 +93,7 @@ public final class EthereumFlow {
             .execute(client, timeoutPerTansaction)
             .getReceiptQuery()
             .execute(client, timeoutPerTansaction)
-            .fileId
-
-        guard let fileId = fileId else {
-            fatalError("todo: what error here?")
-        }
+            .fileId!
 
         if let fileAppendData = data.fileAppend {
             // note: file append waits for receipts so we don't need to ourself
