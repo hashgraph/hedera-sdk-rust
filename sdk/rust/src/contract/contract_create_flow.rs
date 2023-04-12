@@ -313,10 +313,12 @@ impl ContractCreateFlow {
         client: &Client,
         timeout_per_transaction: Option<std::time::Duration>,
     ) -> crate::Result<TransactionResponse> {
-        let Some(operator_public_key) = client.operator_internal().as_deref().map(|it| it.signer.public_key()) else {
-            // throw HError
-            todo!("what error here?")
-        };
+        // todo: proper error
+        let operator_public_key = client
+            .operator_internal()
+            .as_deref()
+            .map(|it| it.signer.public_key())
+            .expect("Must call `Client.set_operator` to use contract create flow");
 
         let bytecode = split_bytecode(&self.bytecode);
         let file_id = make_file_create_transaction(
@@ -329,11 +331,8 @@ impl ContractCreateFlow {
         .get_receipt_query()
         .execute_with_optional_timeout(client, timeout_per_transaction)
         .await?
-        .file_id;
-
-        let Some(file_id) = file_id else {
-            todo!("what error here?")
-        };
+        .file_id
+        .expect("Creating a file means there's a file ID");
 
         if let Some(file_append_bytecode) = bytecode.1 {
             // note: FileAppendTransaction already waits for receipts, so we don't need to wait for one before executing the ContractCreateTransaction.
