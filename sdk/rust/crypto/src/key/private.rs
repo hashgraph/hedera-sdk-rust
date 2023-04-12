@@ -164,7 +164,7 @@ impl PrivateKey {
     }
 
     pub(crate) fn from_encrypted_info(der: &[u8], password: &[u8]) -> crate::Result<Self> {
-        let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
+        let info = pkcs8::EncryptedPrivateKeyInfo::from_der(der)
             .map_err(|e| Error::key_parse(e.to_string()))?;
 
         let decrypted = info.decrypt(password).map_err(|e| Error::key_parse(e.to_string()))?;

@@ -56,11 +56,13 @@ pub struct ContractCreateFlow {
 
 impl ContractCreateFlow {
     /// Create a new `ContractCreateFlow`.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Returns bytes of the smart contract.
+    #[must_use]
     pub fn get_bytecode(&self) -> &[u8] {
         &self.bytecode
     }
@@ -69,7 +71,7 @@ impl ContractCreateFlow {
     pub fn bytecode(&mut self, bytecode: Vec<u8>) -> &mut Self {
         self.bytecode = bytecode;
 
-        return self;
+        self
     }
 
     // /// Sets the bytecode of the smart contract in hex.
@@ -79,10 +81,10 @@ impl ContractCreateFlow {
     // pub fn bytecode<S: StringProtocol>(_ bytecode: S) -> &mut Self {
     //     self.bytecode = Data(hexEncoded: bytecode)!
 
-    //     return self
-    // }
+    //     self    // }
 
     /// Returns the account IDs of the nodes the transactions may be submitted to.
+    #[must_use]
     pub fn get_node_account_ids(&self) -> Option<&[AccountId]> {
         self.node_account_ids.as_deref()
     }
@@ -96,12 +98,13 @@ impl ContractCreateFlow {
     ) -> &mut Self {
         self.node_account_ids = Some(node_account_ids.into_iter().collect());
 
-        return self;
+        self
     }
 
-    /// Returns maximum number of chunks the FileAppendTransaction can be split into.
+    /// Returns maximum number of chunks the `FileAppendTransaction` can be split into.
     ///
     /// If null, the default value for a [`FileAppendTransaction`] will be used.
+    #[must_use]
     pub fn get_max_chunks(&self) -> Option<usize> {
         self.file_append_max_chunks
     }
@@ -110,10 +113,11 @@ impl ContractCreateFlow {
     pub fn max_chunks(&mut self, max_chunks: usize) -> &mut Self {
         self.file_append_max_chunks = Some(max_chunks);
 
-        return self;
+        self
     }
 
     /// Returns the parameters to pass to the constructor.
+    #[must_use]
     pub fn get_constructor_parameters(&self) -> &[u8] {
         &self.contract_data.constructor_parameters
     }
@@ -125,7 +129,7 @@ impl ContractCreateFlow {
     ) -> &mut Self {
         self.contract_data.constructor_parameters = constructor_parameters.into();
 
-        return self;
+        self
     }
 
     // /// Sets the parameters to pass to the constructor.
@@ -134,10 +138,10 @@ impl ContractCreateFlow {
     // pub fn constructorParameters(&mut self , constructorParameters: ContractFunctionParameters) -> &mut Self {
     //     self.constructorParameters = constructorParameters.toBytes()
 
-    //     return self
-    // }
+    //     self    // }
 
     /// Returns the gas limit to deploy the smart contract.
+    #[must_use]
     pub fn get_gas(&self) -> u64 {
         self.contract_data.gas
     }
@@ -146,11 +150,12 @@ impl ContractCreateFlow {
     pub fn gas(&mut self, gas: u64) -> &mut Self {
         self.contract_data.gas = gas;
 
-        return self;
+        self
     }
 
     /// Returns the initial balance to put into the cryptocurrency account associated with the new
     /// smart contract.
+    #[must_use]
     pub fn get_initial_balance(&self) -> Hbar {
         self.contract_data.initial_balance
     }
@@ -160,10 +165,11 @@ impl ContractCreateFlow {
     pub fn initial_balance(&mut self, initial_balance: Hbar) -> &mut Self {
         self.contract_data.initial_balance = initial_balance;
 
-        return self;
+        self
     }
 
     /// Retunrs the maximum number of tokens that the contract can be automatically associated with.
+    #[must_use]
     pub fn get_max_automatic_token_associations(&self) -> u32 {
         self.contract_data.max_automatic_token_associations
     }
@@ -175,12 +181,13 @@ impl ContractCreateFlow {
     ) -> &mut Self {
         self.contract_data.max_automatic_token_associations = max_automatic_token_associations;
 
-        return self;
+        self
     }
 
     /// If `true`, the contract will decline receiving a staking reward.
     ///
     /// The default value is false.
+    #[must_use]
     pub fn get_decline_staking_reward(&self) -> bool {
         self.contract_data.decline_staking_reward
     }
@@ -189,10 +196,11 @@ impl ContractCreateFlow {
     pub fn decline_staking_reward(&mut self, decline_staking_reward: bool) -> &mut Self {
         self.contract_data.decline_staking_reward = decline_staking_reward;
 
-        return self;
+        self
     }
 
     /// Reutrns the admin key for the new contract.
+    #[must_use]
     pub fn get_admin_key(&self) -> Option<&Key> {
         self.contract_data.admin_key.as_ref()
     }
@@ -201,10 +209,11 @@ impl ContractCreateFlow {
     pub fn admin_key(&mut self, admin_key: impl Into<Key>) -> &mut Self {
         self.contract_data.admin_key = Some(admin_key.into());
 
-        return self;
+        self
     }
 
     /// Returns the account to be used at the contract's expiration time to extend the life of the contract.
+    #[must_use]
     pub fn get_auto_renew_account_id(&self) -> Option<AccountId> {
         self.contract_data.auto_renew_account_id
     }
@@ -213,10 +222,11 @@ impl ContractCreateFlow {
     pub fn auto_renew_account_id(&mut self, auto_renew_account_id: AccountId) -> &mut Self {
         self.contract_data.auto_renew_account_id = Some(auto_renew_account_id);
 
-        return self;
+        self
     }
 
     /// Returns the auto renew period for the smart contract.
+    #[must_use]
     pub fn get_auto_renew_period(&self) -> Option<Duration> {
         self.contract_data.auto_renew_period
     }
@@ -225,10 +235,11 @@ impl ContractCreateFlow {
     pub fn auto_renew_period(&mut self, auto_renew_period: Duration) -> &mut Self {
         self.contract_data.auto_renew_period = Some(auto_renew_period);
 
-        return self;
+        self
     }
 
     /// Returns the memo for the new smart contract.
+    #[must_use]
     pub fn get_contract_memo(&self) -> Option<&str> {
         self.contract_data.contract_memo.as_deref()
     }
@@ -237,7 +248,7 @@ impl ContractCreateFlow {
     pub fn contract_memo(&mut self, contract_memo: String) -> &mut Self {
         self.contract_data.contract_memo = Some(contract_memo);
 
-        return self;
+        self
     }
 
     /// Returns the ID of the account to which the contract is staking.
@@ -249,7 +260,7 @@ impl ContractCreateFlow {
     pub fn staked_account_id(&mut self, staked_account_id: AccountId) -> &mut Self {
         self.contract_data.staked_id = Some(StakedId::AccountId(staked_account_id));
 
-        return self;
+        self
     }
 
     /// Returns ID of the node to which the contract is staking.
@@ -261,7 +272,7 @@ impl ContractCreateFlow {
     pub fn staked_node_id(&mut self, staked_node_id: u64) -> &mut Self {
         self.contract_data.staked_id = Some(StakedId::NodeId(staked_node_id));
 
-        return self;
+        self
     }
 
     /// Sets the client to use for freezing the generated *``ContractCreateTransaction``*.
@@ -272,7 +283,7 @@ impl ContractCreateFlow {
     pub fn freeze_with(&mut self, client: Client) -> &mut Self {
         self.contract_data.freeze_with_client = Some(client);
 
-        return self;
+        self
     }
 
     /// Sets the signer for use in the ``ContractCreateTransaction``
@@ -281,7 +292,7 @@ impl ContractCreateFlow {
     pub fn sign(&mut self, key: PrivateKey) -> &mut Self {
         self.contract_data.signer = Some(Arc::new(AnySigner::PrivateKey(key)));
 
-        return self;
+        self
     }
 
     /// Sets the signer for use in the ``ContractCreateTransaction``
@@ -291,7 +302,7 @@ impl ContractCreateFlow {
         self.contract_data.signer =
             Some(Arc::new(AnySigner::Arbitrary(Box::new(public_key), signer)));
 
-        return self;
+        self
     }
 
     /// Generates the required transactions and executes them all.
@@ -394,7 +405,7 @@ fn split_bytecode(bytecode: &[u8]) -> (Vec<u8>, Option<Vec<u8>>) {
 
     let bytecode = hex::encode(bytecode).into_bytes();
 
-    if !(bytecode.len() > MAX_FILE_CREATE_DATA_BYTES) {
+    if bytecode.len() <= MAX_FILE_CREATE_DATA_BYTES {
         return (bytecode, None);
     }
 
@@ -404,7 +415,7 @@ fn split_bytecode(bytecode: &[u8]) -> (Vec<u8>, Option<Vec<u8>>) {
     // note: this uses `subdata` because `Data` is it's own subsequence...
     // It's weirdly written such that the `fileAppendData` wouldn't start at index 0
     // even though that's literally what you'd expect.
-    return (file_create_bytecode, Some(file_append_bytecode));
+    (file_create_bytecode, Some(file_append_bytecode))
 }
 
 fn make_file_create_transaction(
@@ -524,5 +535,5 @@ fn make_file_delete_transaction(
         tmp.node_account_ids(node_account_ids);
     }
 
-    return tmp;
+    tmp
 }
