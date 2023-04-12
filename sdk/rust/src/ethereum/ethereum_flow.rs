@@ -41,24 +41,27 @@ pub struct EthereumFlow {
 impl EthereumFlow {
     const MAX_ETHEREUM_DATA_SIZE: usize = 5120;
 
-    /// Create a new EthereumFlow ready for configuartion.
+    /// Create a new `EthereumFlow` ready for configuartion.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Returns the raw Ethereum transaction (RLP encoded type 0, 1, and 2).
+    #[must_use]
     pub fn get_ethereum_data(&self) -> Option<&EthereumData> {
         self.ethereum_data.as_ref()
     }
 
     /// Sets the raw Ethereum transaction data (RLP encoded type 0, 1, and 2).
     pub fn ethereum_data(&mut self, data: &[u8]) -> crate::Result<&mut Self> {
-        self.ethereum_data = Some(EthereumData::from_bytes(&data)?);
+        self.ethereum_data = Some(EthereumData::from_bytes(data)?);
 
         Ok(self)
     }
 
     /// Returns the maximum amount that the payer of the hedera transaction is willing to pay to complete the transaction.
+    #[must_use]
     pub fn get_max_gas_allowance(&self) -> Option<Hbar> {
         self.max_gas_allowance
     }
@@ -121,7 +124,7 @@ impl EthereumFlow {
 fn split_call_data(call_data: Vec<u8>) -> (Vec<u8>, Option<Vec<u8>>) {
     const FILE_APPEND_DEFAULT_CHUNK_SIZE: usize = 4096;
 
-    if !(call_data.len() > FILE_APPEND_DEFAULT_CHUNK_SIZE) {
+    if call_data.len() <= FILE_APPEND_DEFAULT_CHUNK_SIZE {
         return (call_data, None);
     }
 
@@ -131,7 +134,7 @@ fn split_call_data(call_data: Vec<u8>) -> (Vec<u8>, Option<Vec<u8>>) {
     // note: this uses `subdata` because `Data` is it's own subsequence...
     // It's weirdly written such that the `fileAppendData` wouldn't start at index 0
     // even though that's literally what you'd expect.
-    return (file_create_call_data, Some(file_append_call_data));
+    (file_create_call_data, Some(file_append_call_data))
 }
 
 async fn create_file(
