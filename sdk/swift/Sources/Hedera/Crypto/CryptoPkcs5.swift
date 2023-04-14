@@ -19,6 +19,8 @@
  */
 
 import CHedera
+import CommonCrypto
+import CryptoKit
 import Foundation
 import SwiftASN1
 
@@ -33,34 +35,37 @@ extension Pkcs5 {
         keySize: Int
     ) -> Data {
 
-        let hmac: CHedera.HederaHmacVariant
-
+        let prf: CCPBKDFAlgorithm
         switch variant {
-        case .sha2(.sha256): hmac = HEDERA_HMAC_VARIANT_SHA2_SHA256
-        case .sha2(.sha384): hmac = HEDERA_HMAC_VARIANT_SHA2_SHA384
-        case .sha2(.sha512): hmac = HEDERA_HMAC_VARIANT_SHA2_SHA512
+        case .sha2(.sha256): prf = CCPBKDFAlgorithm(kCCPRFHmacAlgSHA256)
+        case .sha2(.sha384): prf = CCPBKDFAlgorithm(kCCPRFHmacAlgSHA384)
+        case .sha2(.sha512): prf = CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512)
         }
 
-        return password.withUnsafeTypedBytes { password in
-            salt.withUnsafeTypedBytes { salt in
-                var output = Data(repeating: 0, count: keySize)
+        var derivedKey = Data(repeating: 0, count: keySize)
 
-                output.withUnsafeMutableTypedBytes { key in
-                    hedera_crypto_pbkdf2_hmac(
-                        hmac,
+        let status = derivedKey.withUnsafeMutableTypedBytes { derivedKey in
+            password.withUnsafeTypedBytes { password in
+                salt.withUnsafeTypedBytes { salt in
+                    CCKeyDerivationPBKDF(
+                        CCPBKDFAlgorithm(kCCPBKDF2),
                         password.baseAddress,
                         password.count,
                         salt.baseAddress,
                         salt.count,
+                        prf,
                         rounds,
-                        key.baseAddress,
-                        key.count
+                        derivedKey.baseAddress,
+                        derivedKey.count
                     )
                 }
-
-                return output
             }
         }
+
+        // an error here should be unreachable when it comes to hmac.
+        precondition(status == 0, "pbkdf2 hmac failed with status: \(status)")
+
+        return derivedKey
     }
 }
 
