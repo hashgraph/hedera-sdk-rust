@@ -128,26 +128,6 @@ pub unsafe extern "C" fn hedera_private_key_from_bytes_ecdsa(
     unsafe { parse_bytes(bytes, bytes_size, key, PrivateKey::from_bytes_ecdsa) }
 }
 
-/// Parse a `PrivateKey` from a sequence of bytes.
-///
-/// # Safety
-/// - `bytes` must be valid for reads of up to `bytes_size` bytes.
-/// - `key` must be a valid for writes according to [*Rust* pointer rules].
-///
-/// # Errors
-/// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PrivateKey`.
-///
-/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
-#[no_mangle]
-pub unsafe extern "C" fn hedera_private_key_from_bytes_der(
-    bytes: *const u8,
-    bytes_size: size_t,
-    key: *mut *mut PrivateKey,
-) -> Error {
-    // safety: invariants are passed through from the caller.
-    unsafe { parse_bytes(bytes, bytes_size, key, PrivateKey::from_bytes_der) }
-}
-
 /// Parse a Hedera private key from the passed der bytes with the given password.
 ///
 /// # Safety
@@ -183,26 +163,6 @@ pub unsafe extern "C" fn hedera_private_key_from_encrypted_info(
     unsafe { ptr::write(key, parsed) }
 
     Error::Ok
-}
-
-/// Return `key`, serialized as der encoded bytes.
-///
-/// Note: the returned `buf` must be freed via `hedera_bytes_free` in order to prevent a memory leak.
-///
-/// # Safety
-/// - `key` must be valid for reads according to [*Rust* pointer rules]
-/// - `buf` must be valid for writes according to [*Rust* pointer rules]
-/// - the length of the returned buffer must not be modified.
-/// - the returned pointer must NOT be freed with `free`.
-///
-/// [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
-#[no_mangle]
-pub unsafe extern "C" fn hedera_private_key_to_bytes_der(
-    key: *mut PrivateKey,
-    buf: *mut *mut u8,
-) -> size_t {
-    // safety: invariants are passed through from the caller.
-    unsafe { to_bytes(key, buf, PrivateKey::to_bytes_der) }
 }
 
 /// Return `key`, serialized as bytes.

@@ -152,7 +152,7 @@ public struct Mnemonic: Equatable {
         salt += passphrase
 
         return
-            Crypto.Pkcs5.pbkdf2(
+            Pkcs5.pbkdf2(
                 variant: .sha2(.sha512),
                 password: String(describing: self).data(using: .utf8)!,
                 salt: salt.data(using: .utf8)!,

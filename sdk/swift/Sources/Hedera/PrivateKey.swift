@@ -20,6 +20,7 @@
 
 import CHedera
 import Foundation
+import SwiftASN1
 
 private typealias UnsafeFromBytesFunc = @convention(c) (
     UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
@@ -70,6 +71,18 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         PublicKey.unsafeFromPtr(hedera_private_key_get_public_key(ptr))
     }
 
+    private var algorithm: Pkcs5.AlgorithmIdentifier {
+        let oid: ASN1ObjectIdentifier
+
+        // todo: `self.kind`
+        switch self.isEd25519() {
+        case true: oid = .NamedCurves.ed25519
+        case false: oid = .NamedCurves.secp256k1
+        }
+
+        return .init(oid: oid)
+    }
+
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try Self(bytes: bytes)
     }
@@ -83,7 +96,24 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
-        try Self(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes_der)
+        let info: Pkcs8.PrivateKeyInfo
+        let inner: ASN1OctetString
+        do {
+            info = try .init(derEncoded: Array(bytes))
+
+            // PrivateKey is an `OctetString`, and the `PrivateKey`s we all support are `OctetStrings`.
+            // So, we, awkwardly, have an `OctetString` containing an `OctetString` containing our key material.
+            inner = try .init(derEncoded: info.privateKey.bytes)
+        } catch {
+            throw HError.keyParse(String(describing: error))
+        }
+
+        switch info.algorithm.oid {
+        case .NamedCurves.ed25519: return try .fromBytesEd25519(Data(inner.bytes))
+        case .NamedCurves.secp256k1: return try .fromBytesEcdsa(Data(inner.bytes))
+        case let oid:
+            throw HError.keyParse("unsupported key algorithm: \(oid)")
+        }
     }
 
     private convenience init<S: StringProtocol>(parsing description: S) throws {
@@ -146,10 +176,24 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public func toBytesDer() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_private_key_to_bytes_der(ptr, &buf)
+        let rawBytes = Array(toBytesRaw())
+        let inner: [UInt8]
+        do {
+            var serializer = DER.Serializer()
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+            // swiftlint:disable:next force_try
+            try! serializer.serialize(ASN1OctetString(contentBytes: rawBytes[...]))
+
+            inner = serializer.serializedBytes
+        }
+
+        let info = Pkcs8.PrivateKeyInfo(algorithm: algorithm, privateKey: .init(contentBytes: inner[...]))
+
+        var serializer = DER.Serializer()
+
+        // swiftlint:disable:next force_try
+        try! serializer.serialize(info)
+        return Data(serializer.serializedBytes)
     }
 
     public func toBytes() -> Data {

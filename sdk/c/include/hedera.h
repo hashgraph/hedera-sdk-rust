@@ -22,7 +22,6 @@ typedef enum HederaHmacVariant {
   HEDERA_HMAC_VARIANT_SHA2_SHA256,
   HEDERA_HMAC_VARIANT_SHA2_SHA384,
   HEDERA_HMAC_VARIANT_SHA2_SHA512,
-  HEDERA_HMAC_VARIANT_SHA3_KECCAK256,
 } HederaHmacVariant;
 
 /**
@@ -78,18 +77,6 @@ void hedera_bytes_free(uint8_t *buf, size_t size);
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,
                                            uint8_t **result_out);
-
-size_t hedera_crypto_sha2_sha256_digest(const uint8_t *bytes,
-                                        size_t bytes_size,
-                                        uint8_t **result_out);
-
-size_t hedera_crypto_sha2_sha384_digest(const uint8_t *bytes,
-                                        size_t bytes_size,
-                                        uint8_t **result_out);
-
-size_t hedera_crypto_sha2_sha512_digest(const uint8_t *bytes,
-                                        size_t bytes_size,
-                                        uint8_t **result_out);
 
 /**
  * # Safety
@@ -173,22 +160,6 @@ enum HederaError hedera_private_key_from_bytes_ecdsa(const uint8_t *bytes,
                                                      struct HederaPrivateKey **key);
 
 /**
- * Parse a `PrivateKey` from a sequence of bytes.
- *
- * # Safety
- * - `bytes` must be valid for reads of up to `bytes_size` bytes.
- * - `key` must be a valid for writes according to [*Rust* pointer rules].
- *
- * # Errors
- * - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PrivateKey`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-enum HederaError hedera_private_key_from_bytes_der(const uint8_t *bytes,
-                                                   size_t bytes_size,
-                                                   struct HederaPrivateKey **key);
-
-/**
  * Parse a Hedera private key from the passed der bytes with the given password.
  *
  * # Safety
@@ -206,21 +177,6 @@ enum HederaError hedera_private_key_from_encrypted_info(const uint8_t *der,
                                                         size_t der_size,
                                                         const char *password,
                                                         struct HederaPrivateKey **key);
-
-/**
- * Return `key`, serialized as der encoded bytes.
- *
- * Note: the returned `buf` must be freed via `hedera_bytes_free` in order to prevent a memory leak.
- *
- * # Safety
- * - `key` must be valid for reads according to [*Rust* pointer rules]
- * - `buf` must be valid for writes according to [*Rust* pointer rules]
- * - the length of the returned buffer must not be modified.
- * - the returned pointer must NOT be freed with `free`.
- *
- * [*Rust* pointer rules]: https://doc.rust-lang.org/std/ptr/index.html#safety
- */
-size_t hedera_private_key_to_bytes_der(struct HederaPrivateKey *key, uint8_t **buf);
 
 /**
  * Return `key`, serialized as bytes.
