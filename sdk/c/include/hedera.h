@@ -18,12 +18,6 @@ typedef enum HederaError {
   HEDERA_ERROR_SIGNATURE_VERIFY,
 } HederaError;
 
-typedef enum HederaHmacVariant {
-  HEDERA_HMAC_VARIANT_SHA2_SHA256,
-  HEDERA_HMAC_VARIANT_SHA2_SHA384,
-  HEDERA_HMAC_VARIANT_SHA2_SHA512,
-} HederaHmacVariant;
-
 /**
  * A private key on the Hedera network.
  */
@@ -77,19 +71,6 @@ void hedera_bytes_free(uint8_t *buf, size_t size);
 size_t hedera_crypto_sha3_keccak256_digest(const uint8_t *bytes,
                                            size_t bytes_size,
                                            uint8_t **result_out);
-
-/**
- * # Safety
- * - `variant` must be one of the recognized values, it _must not_ be anything else.
- */
-void hedera_crypto_pbkdf2_hmac(enum HederaHmacVariant variant,
-                               const uint8_t *password,
-                               size_t password_size,
-                               const uint8_t *salt,
-                               size_t salt_size,
-                               uint32_t rounds,
-                               uint8_t *key_buffer,
-                               size_t key_size);
 
 /**
  * Generates a new Ed25519 private key.

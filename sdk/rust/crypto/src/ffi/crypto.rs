@@ -18,13 +18,8 @@
  * ‍
  */
 
-use core::slice;
-
-use hmac::Hmac;
 use libc::size_t;
 use sha3::Digest;
-
-use crate::ffi::util;
 
 unsafe fn digest<H: Digest>(
     bytes: *const u8,
@@ -50,47 +45,4 @@ pub unsafe extern "C" fn hedera_crypto_sha3_keccak256_digest(
 ) -> size_t {
     // safety: we pass the safety requirements up to the caller.
     unsafe { digest::<sha3::Keccak256>(bytes, bytes_size, result_out) }
-}
-
-// it's weird that I have to allow this,
-// since a no-mangle function kinda implies that this is
-// usable from elsewhere, but like...
-#[allow(dead_code)]
-#[repr(C)]
-pub enum HmacVariant {
-    Sha2Sha256,
-    Sha2Sha384,
-    Sha2Sha512,
-}
-
-/// # Safety
-/// - `variant` must be one of the recognized values, it _must not_ be anything else.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_crypto_pbkdf2_hmac(
-    variant: HmacVariant,
-    password: *const u8,
-    password_size: size_t,
-    salt: *const u8,
-    salt_size: size_t,
-    rounds: u32,
-    key_buffer: *mut u8,
-    key_size: size_t,
-) {
-    assert!(!key_buffer.is_null());
-
-    let password = unsafe { util::slice_from_buffer(password, password_size) };
-    let salt = unsafe { util::slice_from_buffer(salt, salt_size) };
-    let key_buffer = unsafe { slice::from_raw_parts_mut(key_buffer, key_size) };
-
-    match variant {
-        HmacVariant::Sha2Sha256 => {
-            pbkdf2::pbkdf2::<Hmac<sha2::Sha256>>(password, salt, rounds, key_buffer)
-        }
-        HmacVariant::Sha2Sha384 => {
-            pbkdf2::pbkdf2::<Hmac<sha2::Sha384>>(password, salt, rounds, key_buffer)
-        }
-        HmacVariant::Sha2Sha512 => {
-            pbkdf2::pbkdf2::<Hmac<sha2::Sha512>>(password, salt, rounds, key_buffer)
-        }
-    }
 }
