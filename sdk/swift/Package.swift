@@ -67,6 +67,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
         .package(url: "https://github.com/vsanthanam/AnyAsyncSequence.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-asn1.git", "0.3.0"..<"0.4.0"),
     ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
@@ -82,6 +83,7 @@ let package = Package(
                 "HederaProtobufs",
                 "CHedera",
                 "AnyAsyncSequence",
+                .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
                 .product(name: "NumberKit", package: "swift-numberkit"),
                 .product(name: "GRPC", package: "grpc-swift"),
