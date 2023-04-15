@@ -39,6 +39,9 @@ internal enum Pkcs8 {
     /// ```
     internal typealias PublicKey = ASN1BitString
 
+    /// EncryptedData ::= OCTET STRING
+    internal typealias EncryptedData = ASN1OctetString
+
     /// ```text
     ///  Version ::= Integer { { v1(0), v2(1) } (v1, ..., v2) }
     /// ```
@@ -94,6 +97,18 @@ internal enum Pkcs8 {
             publicKey != nil ? .v2 : .v1
         }
     }
+
+    /// ```text
+    /// EncryptedPrivateKeyInfo ::= SEQUENCE {
+    ///   encryptionAlgorithm  EncryptionAlgorithmIdentifier,
+    ///   encryptedData        EncryptedData }
+    ///
+    /// EncryptionAlgorithmIdentifier ::= AlgorithmIdentifier
+    /// ```
+    internal struct EncryptedPrivateKeyInfo {
+        internal let encryptionAlgorithm: Pkcs5.EncryptionScheme
+        internal let encryptedData: ASN1OctetString
+    }
 }
 
 extension Pkcs8.Version: DERImplicitlyTaggable {
@@ -117,10 +132,6 @@ extension Pkcs8.Version: DERImplicitlyTaggable {
     {
         try coder.serialize(self.rawValue)
     }
-}
-
-extension Pkcs8.PrivateKeyAlgorithmIdentifier {
-
 }
 
 extension Pkcs8.PrivateKeyInfo: DERImplicitlyTaggable {
@@ -169,4 +180,14 @@ extension Pkcs8.PrivateKeyInfo: DERImplicitlyTaggable {
             }
         }
     }
+}
+
+extension Pkcs8.EncryptedPrivateKeyInfo {
+    internal func decrypt(password: Data) throws -> Data {
+        self.encryptionAlgorithm.decrypt(password: password, document: self.encryptedData)
+    }
+}
+
+extension Pkcs8.EncryptedPrivateKeyInfo: DERImplicitlyTaggable {
+
 }

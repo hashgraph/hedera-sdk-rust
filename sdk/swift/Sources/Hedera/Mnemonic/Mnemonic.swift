@@ -345,9 +345,3 @@ private func inceciesToEntropyAndChecksum(_ indecies: [UInt16]) -> (entropy: Dat
 
     return (output, checksum)
 }
-
-extension Data {
-    fileprivate static func randomData(withLength length: Int) -> Self {
-        Self((0..<length).map { _ in UInt8.random(in: 0...0xff) })
-    }
-}

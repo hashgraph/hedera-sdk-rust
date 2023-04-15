@@ -68,6 +68,7 @@ let package = Package(
         .package(url: "https://github.com/vsanthanam/AnyAsyncSequence.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-asn1.git", "0.3.0"..<"0.4.0"),
+        .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", .upToNextMajor(from: "0.10.0")),
     ],
     targets: [
         .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
@@ -88,6 +89,7 @@ let package = Package(
                 .product(name: "NumberKit", package: "swift-numberkit"),
                 .product(name: "GRPC", package: "grpc-swift"),
                 .product(name: "Atomics", package: "swift-atomics"),
+                .product(name: "secp256k1", package: "secp256k1.swift"),
             ]
             // todo: find some way to enable these locally.
             // swiftSettings: [
