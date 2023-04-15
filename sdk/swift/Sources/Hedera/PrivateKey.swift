@@ -19,16 +19,47 @@
  */
 
 import CHedera
+import CommonCrypto
+import CryptoKit
 import Foundation
 import SwiftASN1
+import secp256k1
+
+internal struct Keccak256Digest: Crypto.SecpDigest {
+    internal init?(_ bytes: Data) {
+        guard bytes.count == Self.byteCount else {
+            return nil
+        }
+
+        self.inner = bytes
+    }
+
+    fileprivate let inner: Data
+    internal static let byteCount: Int = 32
+
+    func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
+        try inner.withUnsafeBytes(body)
+    }
+}
 
 private typealias UnsafeFromBytesFunc = @convention(c) (
     UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
 ) -> HederaError
 
 /// A private key on the Hedera network.
-public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
-    internal let ptr: OpaquePointer
+public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
+    private enum Kind {
+        case ed25519(CryptoKit.Curve25519.Signing.PrivateKey)
+        case ecdsa(secp256k1.Signing.PrivateKey)
+    }
+
+    private init(kind: Kind, chainCode: Data? = nil) {
+        self.kind = kind
+        self.chainCode = chainCode
+    }
+
+    private let kind: Kind
+    private let chainCode: Data?
 
     private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
         let description = description.stripPrefix("0x") ?? description[...]
@@ -39,45 +70,87 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         return bytes
     }
 
-    private init(_ ptr: OpaquePointer) {
-        self.ptr = ptr
+    private init(bytes: Data) throws {
+        try self.init(ed25519Bytes: bytes)
     }
 
-    private init(bytes: Data, unsafeCallback chederaCallback: UnsafeFromBytesFunc) throws {
-        self.ptr = try bytes.withUnsafeTypedBytes { pointer -> OpaquePointer in
-            var key: OpaquePointer?
-            try HError.throwing(error: chederaCallback(pointer.baseAddress, pointer.count, &key))
-
-            return key!
+    private init(ed25519Bytes bytes: Data) throws {
+        if bytes.count == 32 || bytes.count == 64 {
+            self.init(kind: .ed25519(try! .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
         }
+
+        try self.init(derBytes: bytes)
+
     }
 
-    private convenience init(bytes: Data) throws {
-        try self.init(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes)
+    private init(ecdsaBytes bytes: Data) throws {
+        if bytes.count == 32 {
+            do {
+                self.init(kind: .ecdsa(try .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+            } catch {
+                throw HError.keyParse(String(describing: error))
+            }
+        }
+
+        try self.init(derBytes: bytes)
+    }
+
+    private init(derBytes bytes: Data) throws {
+        let info: Pkcs8.PrivateKeyInfo
+        let inner: ASN1OctetString
+        do {
+            info = try .init(derEncoded: Array(bytes))
+
+            // PrivateKey is an `OctetString`, and the `PrivateKey`s we all support are `OctetStrings`.
+            // So, we, awkwardly, have an `OctetString` containing an `OctetString` containing our key material.
+            inner = try .init(derEncoded: info.privateKey.bytes)
+        } catch {
+            throw HError.keyParse(String(describing: error))
+        }
+
+        switch info.algorithm.oid {
+        case .NamedCurves.ed25519: try self.init(ed25519Bytes: Data(inner.bytes))
+        case .NamedCurves.secp256k1: try self.init(ecdsaBytes: Data(inner.bytes))
+        case let oid:
+            throw HError.keyParse("unsupported key algorithm: \(oid)")
+        }
+
     }
 
     /// Generates a new Ed25519 private key.
     public static func generateEd25519() -> Self {
-        self.init(hedera_private_key_generate_ed25519())
+        Self(kind: .ed25519(.init()), chainCode: .randomData(withLength: 32))
     }
 
     /// Generates a new ECDSA(secp256k1) private key.
     public static func generateEcdsa() -> Self {
-        self.init(hedera_private_key_generate_ecdsa())
+        .ecdsa(try! .init())
+    }
+
+    internal static func ed25519(_ key: Curve25519.Signing.PrivateKey) -> Self {
+        Self(kind: .ed25519(key))
+    }
+
+    internal static func ecdsa(_ key: secp256k1.Signing.PrivateKey) -> Self {
+        Self(kind: .ecdsa(key))
     }
 
     /// The ``PublicKey`` which corresponds to this private key.
     public var publicKey: PublicKey {
-        PublicKey.unsafeFromPtr(hedera_private_key_get_public_key(ptr))
+        switch kind {
+        case .ed25519(let key): return .ed25519(key.publicKey)
+        case .ecdsa(let key): return .ecdsa(key.publicKey)
+
+        }
     }
 
     private var algorithm: Pkcs5.AlgorithmIdentifier {
         let oid: ASN1ObjectIdentifier
 
         // todo: `self.kind`
-        switch self.isEd25519() {
-        case true: oid = .NamedCurves.ed25519
-        case false: oid = .NamedCurves.secp256k1
+        switch self.kind {
+        case .ed25519: oid = .NamedCurves.ed25519
+        case .ecdsa: oid = .NamedCurves.secp256k1
         }
 
         return .init(oid: oid)
@@ -88,11 +161,23 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public static func fromBytesEd25519(_ bytes: Data) throws -> Self {
-        try Self(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes_ed25519)
+        if bytes.count == 32 || bytes.count == 64 {
+            return Self(kind: .ed25519(try! .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+        }
+
+        return try .fromBytesDer(bytes)
     }
 
     public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
-        try Self(bytes: bytes, unsafeCallback: hedera_private_key_from_bytes_ecdsa)
+        if bytes.count == 32 {
+            do {
+                return Self(kind: .ecdsa(try .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+            } catch {
+                throw HError.keyParse(String(describing: error))
+            }
+        }
+
+        return try .fromBytesDer(bytes)
     }
 
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
@@ -116,7 +201,7 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         }
     }
 
-    private convenience init<S: StringProtocol>(parsing description: S) throws {
+    private init<S: StringProtocol>(parsing description: S) throws {
         try self.init(bytes: Self.decodeBytes(description))
     }
 
@@ -124,11 +209,11 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
         try Self(parsing: description)
     }
 
-    public convenience init?(_ description: String) {
+    public init?(_ description: String) {
         try? self.init(parsing: description)
     }
 
-    public required convenience init(stringLiteral value: StringLiteralType) {
+    public init(stringLiteral value: StringLiteralType) {
         // swiftlint:disable:next force_try
         try! self.init(parsing: value)
     }
@@ -172,7 +257,9 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
                 error: hedera_private_key_from_encrypted_info(buffer.baseAddress, buffer.count, password, &key))
         }
 
-        return Self(key!)
+        fatalError("todo")
+
+        // return Self(key!)
     }
 
     public func toBytesDer() -> Data {
@@ -197,17 +284,17 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_private_key_to_bytes(ptr, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        switch kind {
+        case .ed25519: return toBytesRaw()
+        case .ecdsa: return toBytesDer()
+        }
     }
 
     public func toBytesRaw() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_private_key_to_bytes_raw(ptr, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        switch kind {
+        case .ecdsa(let ecdsa): return ecdsa.rawRepresentation
+        case .ed25519(let ed25519): return ed25519.rawRepresentation
+        }
     }
 
     public var description: String {
@@ -231,44 +318,114 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
     }
 
     public func isEd25519() -> Bool {
-        hedera_private_key_is_ed25519(ptr)
+        if case .ed25519 = kind {
+            return true
+        }
+
+        return false
     }
 
     public func isEcdsa() -> Bool {
-        hedera_private_key_is_ecdsa(ptr)
+        if case .ecdsa = kind {
+            return true
+        }
+
+        return false
     }
 
     public func sign(_ message: Data) -> Data {
-        message.withUnsafeTypedBytes { pointer in
-            var buf: UnsafeMutablePointer<UInt8>?
-            let size = hedera_private_key_sign(ptr, pointer.baseAddress, pointer.count, &buf)
-            return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        switch kind {
+        case .ecdsa(let key):
+            return try! key.ecdsa.signature(for: Keccak256Digest(Crypto.Sha3.keccak256(message))!).compactRepresentation
+        case .ed25519(let key):
+            return try! key.signature(for: message)
         }
     }
 
     public func isDerivable() -> Bool {
-        hedera_private_key_is_derivable(ptr)
+        isEd25519() && chainCode != nil
     }
 
     public func derive(_ index: Int32) throws -> Self {
-        var derived: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_derive(ptr, index, &derived))
+        let hardenedMask: UInt32 = 1 << 31
+        let index = UInt32(bitPattern: index)
 
-        return Self(derived!)
+        guard let chainCode = chainCode else {
+            throw HError(kind: .keyDerive, description: "key is underivable")
+        }
+
+        switch kind {
+        case .ecdsa: throw HError(kind: .keyDerive, description: "ecdsa keys are currently underivable")
+        case .ed25519(let key):
+            let index = index | hardenedMask
+
+            var hmac = CryptoKit.HMAC<CryptoKit.SHA512>(key: .init(data: chainCode))
+
+            hmac.update(data: [0])
+            hmac.update(data: key.rawRepresentation)
+            hmac.update(data: index.bigEndianBytes)
+            let output = hmac.finalize().bytes
+
+            let (data, chainCode) = (output[..<32], output[32...])
+
+            return Self(
+                kind: .ed25519(try! .init(rawRepresentation: data)),
+                chainCode: Data(chainCode)
+            )
+        }
     }
 
     public func legacyDerive(_ index: Int64) throws -> Self {
-        var derived: OpaquePointer?
-        try HError.throwing(error: hedera_private_key_legacy_derive(ptr, index, &derived))
+        switch kind {
+        case .ecdsa: throw HError(kind: .keyDerive, description: "ecdsa keys are currently underivable")
 
-        return Self(derived!)
+        case .ed25519(let key):
+            var seed = key.rawRepresentation
+
+            let i1: Int32
+            switch index {
+            case 0x00ff_ffff_ffff: i1 = 0xff
+            case 0...: i1 = 0
+            default: i1 = -1
+            }
+
+            let i2 = UInt8(truncatingIfNeeded: index)
+
+            seed.append(i1.bigEndianBytes)
+            seed.append(Data([i2, i2, i2, i2]))
+
+            let salt = Data([0xff])
+
+            let key = Pkcs5.pbkdf2(variant: .sha2(.sha512), password: seed, salt: salt, rounds: 2048, keySize: 32)
+
+            // note: this shouldn't fail, but there isn't an infaliable conversion.
+            return try .fromBytesEd25519(key)
+        }
     }
 
     public static func fromMnemonic(_ mnemonic: Mnemonic, _ passphrase: String) -> Self {
         let seed = mnemonic.toSeed(passphrase: passphrase)
-        return seed.withUnsafeTypedBytes { buffer in
-            Self(hedera_private_key_from_mnemonic_seed(buffer.baseAddress, buffer.count))
+
+        var hmac = HMAC<SHA512>(key: .init(data: "ed25519 seed".data(using: .utf8)!))
+
+        hmac.update(data: seed)
+
+        let output = hmac.finalize().bytes
+
+        let (data, chainCode) = (output[..<32], output[32...])
+
+        var key = Self(
+            kind: .ed25519(try! .init(rawRepresentation: data)),
+            chainCode: Data(chainCode)
+        )
+
+        for index: Int32 in [44, 3030, 0, 0] {
+            // an error here would be... Really weird because we just set chainCode.
+            // swiftlint:disable:next force_try
+            key = try! key.derive(index)
         }
+
+        return key
     }
 
     public static func fromMnemonic(_ mnemonic: Mnemonic) -> Self {
@@ -280,10 +437,6 @@ public final class PrivateKey: LosslessStringConvertible, ExpressibleByStringLit
 
         transaction.addSignatureSigner(.privateKey(self))
     }
-
-    deinit {
-        hedera_private_key_free(ptr)
-    }
 }
 
-extension PrivateKey: Sendable {}
+// extension PrivateKey: Sendable {}

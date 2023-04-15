@@ -99,6 +99,12 @@ extension Data {
     }
 }
 
+extension Data {
+    internal static func randomData(withLength length: Int) -> Self {
+        Self((0..<length).map { _ in UInt8.random(in: 0...0xff) })
+    }
+}
+
 extension Data.Deallocator {
     // safety: `hedera_bytes_free` needs to be called so...
     // perf: might as well enable use of the no copy constructor.

@@ -18,12 +18,8 @@
  * ‍
  */
 
-// used as a namespace
-internal enum Crypto {}
+import secp256k1
 
 extension Crypto {
-    internal enum Hmac {
-        // case sha1
-        case sha2(Crypto.Sha2)
-    }
+    internal typealias SecpDigest = Digest
 }

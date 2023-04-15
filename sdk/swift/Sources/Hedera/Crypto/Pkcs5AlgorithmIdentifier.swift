@@ -18,56 +18,7 @@
  * ‍
  */
 
-import CHedera
-import CommonCrypto
-import CryptoKit
-import Foundation
 import SwiftASN1
-
-internal enum Pkcs5 {}
-
-extension Pkcs5 {
-    internal static func pbkdf2(
-        variant: Crypto.Hmac,
-        password: Data,
-        salt: Data,
-        rounds: UInt32,
-        keySize: Int
-    ) -> Data {
-
-        let prf: CCPBKDFAlgorithm
-        switch variant {
-        case .sha2(.sha256): prf = CCPBKDFAlgorithm(kCCPRFHmacAlgSHA256)
-        case .sha2(.sha384): prf = CCPBKDFAlgorithm(kCCPRFHmacAlgSHA384)
-        case .sha2(.sha512): prf = CCPBKDFAlgorithm(kCCPRFHmacAlgSHA512)
-        }
-
-        var derivedKey = Data(repeating: 0, count: keySize)
-
-        let status = derivedKey.withUnsafeMutableTypedBytes { derivedKey in
-            password.withUnsafeTypedBytes { password in
-                salt.withUnsafeTypedBytes { salt in
-                    CCKeyDerivationPBKDF(
-                        CCPBKDFAlgorithm(kCCPBKDF2),
-                        password.baseAddress,
-                        password.count,
-                        salt.baseAddress,
-                        salt.count,
-                        prf,
-                        rounds,
-                        derivedKey.baseAddress,
-                        derivedKey.count
-                    )
-                }
-            }
-        }
-
-        // an error here should be unreachable when it comes to hmac.
-        precondition(status == 0, "pbkdf2 hmac failed with status: \(status)")
-
-        return derivedKey
-    }
-}
 
 extension Pkcs5 {
     /// RFC 5280 algorithm identifier.
@@ -111,9 +62,4 @@ extension Pkcs5.AlgorithmIdentifier: SwiftASN1.DERImplicitlyTaggable {
             }
         }
     }
-}
-
-extension ASN1ObjectIdentifier.NamedCurves {
-    internal static let secp256k1: ASN1ObjectIdentifier = [1, 3, 132, 0, 10]
-    internal static let ed25519: ASN1ObjectIdentifier = [1, 3, 101, 112]
 }
