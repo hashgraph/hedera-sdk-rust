@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import CryptoKit
 import Foundation
 import HederaProtobufs

@@ -7,7 +7,6 @@ includes:
 
 tasks:
     build:
-        deps: [":rust:swift-build"]
         cmds:
             - swift build
 
@@ -22,11 +21,9 @@ tasks:
             - swift format lint --configuration .swift-format.json --recursive --parallel Sources/ Tests/ Examples/ Package.swift
 
     package:
-        deps: [":rust:package"]
         cmds:
             - swift build -c release
 
     example:
-        deps: [":rust:build"]
         cmds:
             - swift run {{.CLI_ARGS}}Example

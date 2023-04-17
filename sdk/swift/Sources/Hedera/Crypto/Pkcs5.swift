@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import CommonCrypto
 import CryptoKit
 import Foundation
