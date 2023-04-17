@@ -18,10 +18,7 @@
  * ‍
  */
 
-use std::{
-    ptr,
-    slice,
-};
+use std::ptr;
 
 /// Convert something bytes-like into a format C understands
 ///
@@ -42,20 +39,4 @@ where
     }
 
     len
-}
-
-/// This function is like `slice::from_raw_parts` but allows for buf to be `null` if `buf_size` is zero.
-///
-/// This function assumes that the actual pointer for `buf` is unimportant,
-/// if the actual data pointer for `buf` *is* important then this function is *not* what you're looking for.
-///
-/// # Safety
-/// - see [`slice::from_raw_parts`] for most rules, however, the requirement for `buf` to be non-null even if `buf_size` is zero is relaxed.
-pub(crate) unsafe fn slice_from_buffer<'a, T>(buf: *const T, buf_size: usize) -> &'a [T] {
-    match (buf.is_null(), buf_size) {
-        // empty slice is valid for `&'static`, and, as such, is valid for any `'a`
-        (true, 0) => &[],
-        (true, _) => panic!("fatal error: null buffer with non-zero size"),
-        (false, _) => unsafe { slice::from_raw_parts(buf, buf_size) },
-    }
 }

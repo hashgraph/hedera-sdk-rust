@@ -42,10 +42,6 @@ internal struct Keccak256Digest: Crypto.SecpDigest {
     }
 }
 
-private typealias UnsafeFromBytesFunc = @convention(c) (
-    UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
-) -> HederaError
-
 /// A private key on the Hedera network.
 public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     private enum Kind {

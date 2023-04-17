@@ -21,14 +21,6 @@
 import CHedera
 import Foundation
 
-private func lastErrorMessage() -> String? {
-    guard let descriptionBytes = hedera_error_message() else {
-        return nil
-    }
-
-    return String(hString: descriptionBytes)
-}
-
 /// Represents any possible error from a fallible function in the Hedera SDK.
 public struct HError: Error, CustomStringConvertible {
     // https://developer.apple.com/documentation/swift/error#2845903
@@ -66,41 +58,8 @@ public struct HError: Error, CustomStringConvertible {
         self.description = description
     }
 
-    internal init?(_ error: HederaError) {
-        // this consumes the error, so we have to get the message first if it exists
-        let message = lastErrorMessage()
-
-        switch error {
-        case HEDERA_ERROR_KEY_PARSE:
-            kind = .keyParse
-
-        case HEDERA_ERROR_KEY_DERIVE:
-            kind = .keyDerive
-
-        case HEDERA_ERROR_SIGNATURE_VERIFY:
-            kind = .signatureVerify
-
-        case HEDERA_ERROR_OK:
-            return nil
-
-        default:
-            let message = String(describing: message)
-            fatalError("unknown error code `\(error)`, message: `\(message)`")
-
-            return nil
-        }
-
-        description = message!
-    }
-
     internal static func fromProtobuf(_ description: String) -> Self {
         Self(kind: .fromProtobuf, description: description)
-    }
-
-    internal static func throwing(error: HederaError) throws {
-        if let err = Self(error) {
-            throw err
-        }
     }
 
     internal static func mnemonicParse(_ error: MnemonicParse, _ mnemonic: Mnemonic) -> Self {

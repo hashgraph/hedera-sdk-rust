@@ -24,12 +24,6 @@ import Foundation
 import HederaProtobufs
 import secp256k1
 
-// todo: deduplicate these with `PrivateKey.swift`
-
-private typealias UnsafeFromBytesFunc = @convention(c) (
-    UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
-) -> HederaError
-
 /// A public key on the Hedera network.
 public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
     private let kind: Kind

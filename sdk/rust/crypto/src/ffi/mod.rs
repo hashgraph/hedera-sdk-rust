@@ -18,9 +18,6 @@
  * ‍
  */
 
-#[macro_use]
-mod error;
 mod c_util;
 mod crypto;
-mod key;
 mod util;
