@@ -99,6 +99,16 @@ internal enum Pkcs8 {
     }
 
     /// ```text
+    /// SubjectPublicKeyInfo  ::=  SEQUENCE  {
+    ///    algorithm            AlgorithmIdentifier,
+    ///    subjectPublicKey     BIT STRING  }
+    /// ```
+    internal struct SubjectPublicKeyInfo {
+        internal let algorithm: Pkcs5.AlgorithmIdentifier
+        internal let subjectPublicKey: ASN1BitString
+    }
+
+    /// ```text
     /// EncryptedPrivateKeyInfo ::= SEQUENCE {
     ///   encryptionAlgorithm  EncryptionAlgorithmIdentifier,
     ///   encryptedData        EncryptedData }
@@ -178,6 +188,28 @@ extension Pkcs8.PrivateKeyInfo: DERImplicitlyTaggable {
                     tagClass: .contextSpecific
                 )
             }
+        }
+    }
+}
+
+extension Pkcs8.SubjectPublicKeyInfo: DERImplicitlyTaggable {
+    internal static var defaultIdentifier: SwiftASN1.ASN1Identifier {
+        .sequence
+    }
+
+    internal init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
+            let algId = try Pkcs5.AlgorithmIdentifier(derEncoded: &nodes)
+            let subjectPublicKey = try ASN1BitString(derEncoded: &nodes)
+
+            return Self(algorithm: algId, subjectPublicKey: subjectPublicKey)
+        }
+    }
+
+    internal func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+        try coder.appendConstructedNode(identifier: identifier) { coder in
+            try coder.serialize(algorithm)
+            try coder.serialize(subjectPublicKey)
         }
     }
 }

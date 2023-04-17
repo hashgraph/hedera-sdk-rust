@@ -43,17 +43,46 @@ internal struct Keccak256Digest: Crypto.SecpDigest {
 
 /// A private key on the Hedera network.
 public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
+    // we need to be sendable, so...
+    // The idea being that we initialize the key whenever we need it, which is absolutely not free, but it is `Sendable`.
+    private enum Repr: Sendable {
+        case ed25519(Data)
+        case ecdsa(Data)
+
+        fileprivate init(kind: PrivateKey.Kind) {
+            switch kind {
+            case .ecdsa(let key): self = .ecdsa(key.rawRepresentation)
+            case .ed25519(let key): self = .ed25519(key.rawRepresentation)
+            }
+        }
+
+        fileprivate var kind: PrivateKey.Kind {
+            // swiftlint:disable force_try
+            switch self {
+            case .ecdsa(let key): return .ecdsa(try! .init(rawRepresentation: key))
+            case .ed25519(let key): return .ed25519(try! .init(rawRepresentation: key))
+            }
+
+            // swiftlint:enable force_try
+        }
+    }
+
     private enum Kind {
         case ed25519(CryptoKit.Curve25519.Signing.PrivateKey)
         case ecdsa(secp256k1.Signing.PrivateKey)
     }
 
     private init(kind: Kind, chainCode: Data? = nil) {
-        self.kind = kind
+        self.guts = .init(kind: kind)
         self.chainCode = chainCode
     }
 
-    private let kind: Kind
+    private let guts: Repr
+
+    private var kind: Kind {
+        guts.kind
+    }
+
     private let chainCode: Data?
 
     private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
@@ -70,26 +99,26 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
     }
 
     private init(ed25519Bytes bytes: Data) throws {
-        if bytes.count == 32 || bytes.count == 64 {
-            self.init(kind: .ed25519(try! .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+        guard bytes.count == 32 || bytes.count == 64 else {
+            try self.init(derBytes: bytes)
             return
         }
 
-        try self.init(derBytes: bytes)
-
+        self.init(kind: .ed25519(try! .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
     }
 
     private init(ecdsaBytes bytes: Data) throws {
-        if bytes.count == 32 {
-            do {
-                self.init(kind: .ecdsa(try .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
-                return
-            } catch {
-                throw HError.keyParse(String(describing: error))
-            }
+        guard bytes.count == 32 else {
+            try self.init(derBytes: bytes)
+            return
         }
 
-        try self.init(derBytes: bytes)
+        do {
+            self.init(kind: .ecdsa(try .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+            return
+        } catch {
+            throw HError.keyParse(String(describing: error))
+        }
     }
 
     private init(derBytes bytes: Data) throws {
@@ -110,7 +139,6 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         case let oid:
             throw HError.keyParse("unsupported key algorithm: \(oid)")
         }
-
     }
 
     /// Generates a new Ed25519 private key.
@@ -157,23 +185,11 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
     }
 
     public static func fromBytesEd25519(_ bytes: Data) throws -> Self {
-        if bytes.count == 32 || bytes.count == 64 {
-            return Self(kind: .ed25519(try! .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
-        }
-
-        return try .fromBytesDer(bytes)
+        try Self(ed25519Bytes: bytes)
     }
 
     public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
-        if bytes.count == 32 {
-            do {
-                return Self(kind: .ecdsa(try .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
-            } catch {
-                throw HError.keyParse(String(describing: error))
-            }
-        }
-
-        return try .fromBytesDer(bytes)
+        try Self(ecdsaBytes: bytes)
     }
 
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
@@ -436,4 +452,4 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
     }
 }
 
-// extension PrivateKey: Sendable {}
+extension PrivateKey: Sendable {}
