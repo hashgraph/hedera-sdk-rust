@@ -47,10 +47,10 @@ extension MirrorRequest {
 ///
 /// This protocol is semantically *sealed* and is not to be implemented by downstream consumers.
 public protocol MirrorQuery {
-    /// Type of element returned by ``subscribe``.
+    /// Type of element returned by ``subscribe(_:_:)``.
     associatedtype Item
 
-    /// Type of response from ``execute``
+    /// Type of response from ``execute(_:_:)``
     associatedtype Response
 
     /// Execute this mirror query in a streaming fashion.
