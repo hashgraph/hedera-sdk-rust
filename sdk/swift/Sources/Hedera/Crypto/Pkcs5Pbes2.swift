@@ -143,11 +143,7 @@ extension Pkcs5.Pbes2EncryptionScheme {
         switch self {
         // note: the 128 in *this* is referring to the key size.
         case .aes128Cbc(let iv):
-            CommonCrypto.CCCrypt(
-                a, alg: CCAlgorithm(kcc), options: CCOptions(kCCOptionPKCS7Padding), key: UnsafeRawPointer!,
-                keyLength: Int, iv: UnsafeRawPointer!,
-                dataIn: UnsafeRawPointer!, dataInLength: Int, dataOut: UnsafeMutableRawPointer!, dataOutAvailable: Int,
-                dataOutMoved: UnsafeMutablePointer<Int>!)
+            return try Crypto.Aes.aes128CbcPadDecrypt(key: key, iv: iv, message: document)
         }
     }
 }
@@ -177,6 +173,7 @@ extension Pkcs5.Pbes2Parameters: DERImplicitlyTaggable {
 extension Pkcs5.Pbes2Parameters {
     internal func decrypt(password: Data, document: Data) throws -> Data {
         let derivedKey = try kdf.derive(password: password, keySize: encryptionScheme.keySize)
+        return try encryptionScheme.decrypt(key: derivedKey, document: document)
 
     }
 }

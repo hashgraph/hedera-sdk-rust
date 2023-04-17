@@ -77,6 +77,7 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
     private init(ed25519Bytes bytes: Data) throws {
         if bytes.count == 32 || bytes.count == 64 {
             self.init(kind: .ed25519(try! .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+            return
         }
 
         try self.init(derBytes: bytes)
@@ -87,6 +88,7 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         if bytes.count == 32 {
             do {
                 self.init(kind: .ecdsa(try .init(rawRepresentation: bytes.safeSubdata(in: 0..<32)!)))
+                return
             } catch {
                 throw HError.keyParse(String(describing: error))
             }
@@ -100,7 +102,6 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         let inner: ASN1OctetString
         do {
             info = try .init(derEncoded: Array(bytes))
-
             // PrivateKey is an `OctetString`, and the `PrivateKey`s we all support are `OctetStrings`.
             // So, we, awkwardly, have an `OctetString` containing an `OctetString` containing our key material.
             inner = try .init(derEncoded: info.privateKey.bytes)
@@ -250,16 +251,17 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
                 "incorrect PEM type label: expected: `ENCRYPTED PRIVATE KEY`, got: `\(document.typeLabel)`")
         }
 
-        var key: OpaquePointer?
+        let decrypted: Data
 
-        try document.der.withUnsafeTypedBytes { buffer in
-            try HError.throwing(
-                error: hedera_private_key_from_encrypted_info(buffer.baseAddress, buffer.count, password, &key))
+        do {
+            let document = try Pkcs8.EncryptedPrivateKeyInfo(derEncoded: Array(document.der))
+            decrypted = try document.decrypt(password: password.data(using: .utf8)!)
+        } catch {
+            throw HError.keyParse(String(describing: error))
         }
 
-        fatalError("todo")
+        return try .fromBytesDer(decrypted)
 
-        // return Self(key!)
     }
 
     public func toBytesDer() -> Data {

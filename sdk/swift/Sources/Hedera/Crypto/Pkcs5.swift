@@ -51,3 +51,35 @@ extension Pkcs5.EncryptionScheme {
         }
     }
 }
+
+extension Pkcs5.EncryptionScheme: DERImplicitlyTaggable {
+    internal static var defaultIdentifier: ASN1Identifier {
+        Pkcs5.AlgorithmIdentifier.defaultIdentifier
+    }
+
+    internal init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        let algId = try Pkcs5.AlgorithmIdentifier(derEncoded: derEncoded, withIdentifier: identifier)
+
+        guard let parameters = algId.parameters else {
+            throw ASN1Error.invalidASN1Object
+        }
+
+        switch algId.oid {
+        case .AlgorithmIdentifier.pbes2:
+            self = .pbes2(try Pkcs5.Pbes2Parameters(asn1Any: parameters))
+        default:
+            throw ASN1Error.invalidASN1Object
+        }
+    }
+
+    internal func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+        let params: ASN1Any
+        switch self {
+        case .pbes2(let pbes2):
+            params = try .init(erasing: pbes2)
+        }
+
+        return try Pkcs5.AlgorithmIdentifier(oid: .AlgorithmIdentifier.pbes2, parameters: params)
+            .serialize(into: &coder, withIdentifier: identifier)
+    }
+}
