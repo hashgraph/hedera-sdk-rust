@@ -42,7 +42,7 @@ fn ed25519_from_str() {
 
 #[test]
 fn ecdsa_from_str() {
-    const PK: &str = "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588";
+    const PK: &str = "302d300706052b8104000a03220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588";
 
     let pk = PublicKey::from_str(PK).unwrap();
 
@@ -74,7 +74,7 @@ fn ed25519_from_str_variants() {
 
 #[test]
 fn ecdsa_from_str_variants() {
-    pk_from_str_variants("302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
+    pk_from_str_variants("302d300706052b8104000a03220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
 }
 
 // copied from Java SDK to ensure conformance.
@@ -120,7 +120,7 @@ fn ed25519_verify() {
 #[test]
 fn ecdsa_verify() {
     let pk = PublicKey::from_str(
-  "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
+  "302d300706052b8104000a03220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
   )
   .unwrap();
 

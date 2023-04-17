@@ -420,7 +420,7 @@ impl PrivateKey {
     /// let key: PrivateKey = "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048".parse().unwrap();
     ///
     /// let account_id = key.to_account_id(0, 0);
-    /// assert_eq!(account_id.to_string(), "0.0.302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
+    /// assert_eq!(account_id.to_string(), "0.0.302d300706052b8104000a03220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588");
     /// ```
     #[inline(always)]
     #[must_use]
