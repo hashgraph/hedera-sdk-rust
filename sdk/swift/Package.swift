@@ -67,11 +67,13 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-protobuf.git", from: "1.6.0"),
         .package(url: "https://github.com/vsanthanam/AnyAsyncSequence.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-atomics.git", from: "1.0.0"),
+        // swift-asn1 wants swift 5.7+ past 0.4
         .package(url: "https://github.com/apple/swift-asn1.git", "0.3.0"..<"0.4.0"),
         .package(url: "https://github.com/GigaBitcoin/secp256k1.swift.git", .upToNextMajor(from: "0.10.0")),
+        // we use this entirely for sha3-keccak256, yes, I'm serious.
+        .package(url: "https://github.com/krzyzanowskim/CryptoSwift.git", from: "1.0.0"),
     ],
     targets: [
-        .binaryTarget(name: "CHedera", path: "CHedera.xcframework"),
         .target(
             name: "HederaProtobufs",
             dependencies: [
@@ -82,7 +84,6 @@ let package = Package(
             name: "Hedera",
             dependencies: [
                 "HederaProtobufs",
-                "CHedera",
                 "AnyAsyncSequence",
                 .product(name: "SwiftASN1", package: "swift-asn1"),
                 .product(name: "SwiftProtobuf", package: "swift-protobuf"),
@@ -90,6 +91,7 @@ let package = Package(
                 .product(name: "GRPC", package: "grpc-swift"),
                 .product(name: "Atomics", package: "swift-atomics"),
                 .product(name: "secp256k1", package: "secp256k1.swift"),
+                "CryptoSwift",
             ]
             // todo: find some way to enable these locally.
             // swiftSettings: [

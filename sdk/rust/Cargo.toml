@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "protobufs", "crypto"]
+members = [".", "protobufs"]
 
 [package]
 description = "The SDK for interacting with Hedera Hashgraph."
@@ -12,7 +12,6 @@ version = "0.13.0"
 
 [lib]
 bench = false
-crate-type = ["lib", "staticlib"]
 
 [features]
 default = ["mnemonic"]
@@ -74,12 +73,3 @@ env_logger = "0.10.0"
 expect-test = "1.4.0"
 hex-literal = "0.3.4"
 tokio = { version = "1.24.2", features = ["full"] }
-
-[profile.release]
-codegen-units = 1
-debug = 0
-lto = "fat"
-opt-level = "z"
-overflow-checks = false
-panic = "abort"
-strip = true

@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 
 internal protocol ValidateChecksums {

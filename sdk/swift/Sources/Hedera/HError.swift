@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 
 /// Represents any possible error from a fallible function in the Hedera SDK.

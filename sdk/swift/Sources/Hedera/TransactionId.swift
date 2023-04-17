@@ -1,4 +1,3 @@
-import CHedera
 import Foundation
 import HederaProtobufs
 
