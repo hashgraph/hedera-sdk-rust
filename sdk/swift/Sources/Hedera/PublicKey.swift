@@ -114,7 +114,7 @@ public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, 
         // todo: `self.kind`
         switch self.kind {
         case .ed25519: oid = .NamedCurves.ed25519
-        case .ecdsa: oid = .AlgorithmIdentifier.idEcPublicKey
+        case .ecdsa: oid = .NamedCurves.secp256k1
         }
 
         return .init(oid: oid)
