@@ -97,7 +97,7 @@ extension Pkcs5 {
                 return nil
             }
 
-            if let keyLength = self.keyLength {
+            if let keyLength = keyLength {
                 guard (1...).contains(keyLength) else {
                     return nil
                 }
@@ -182,9 +182,12 @@ extension Pkcs5.Pbkdf2Prf: DERImplicitlyTaggable {
     internal init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
         let algId = try Pkcs5.AlgorithmIdentifier(derEncoded: derEncoded, withIdentifier: identifier)
 
-        guard algId.parameters == nil else {
+        // these specifically want `null` as in, not missing.
+        guard let params = algId.parameters else {
             throw ASN1Error.invalidASN1Object
         }
+
+        _ = try ASN1Null(asn1Any: params)
 
         switch algId.oid {
         case .DigestAlgorithm.hmacWithSha1: self = .hmacWithSha1

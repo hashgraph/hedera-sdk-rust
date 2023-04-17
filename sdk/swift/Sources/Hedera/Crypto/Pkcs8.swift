@@ -184,10 +184,28 @@ extension Pkcs8.PrivateKeyInfo: DERImplicitlyTaggable {
 
 extension Pkcs8.EncryptedPrivateKeyInfo {
     internal func decrypt(password: Data) throws -> Data {
-        self.encryptionAlgorithm.decrypt(password: password, document: self.encryptedData)
+        try encryptionAlgorithm.decrypt(password: password, document: Data(encryptedData.bytes))
     }
 }
 
 extension Pkcs8.EncryptedPrivateKeyInfo: DERImplicitlyTaggable {
+    internal static var defaultIdentifier: SwiftASN1.ASN1Identifier {
+        .sequence
+    }
 
+    internal init(derEncoded: ASN1Node, withIdentifier identifier: ASN1Identifier) throws {
+        self = try DER.sequence(derEncoded, identifier: identifier) { nodes in
+            let encryptionAlgorithm = try Pkcs5.EncryptionScheme(derEncoded: &nodes)
+            let encryptedData = try ASN1OctetString(derEncoded: &nodes)
+
+            return Self(encryptionAlgorithm: encryptionAlgorithm, encryptedData: encryptedData)
+        }
+    }
+
+    internal func serialize(into coder: inout DER.Serializer, withIdentifier identifier: ASN1Identifier) throws {
+        try coder.appendConstructedNode(identifier: identifier) { coder in
+            try coder.serialize(encryptionAlgorithm)
+            try coder.serialize(encryptedData)
+        }
+    }
 }
