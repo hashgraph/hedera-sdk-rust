@@ -181,7 +181,7 @@ extension Pkcs8.PrivateKeyInfo: DERImplicitlyTaggable {
             try coder.serialize(algorithm)
             try coder.serialize(privateKey)
 
-            if let publicKey {
+            if let publicKey = publicKey {
                 try coder.serialize(
                     publicKey,
                     explicitlyTaggedWithTagNumber: Self.publicKeyTagNumber,
