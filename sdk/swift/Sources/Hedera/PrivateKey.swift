@@ -52,10 +52,28 @@ private struct ChainCode {
 #endif
 
 /// A private key on the Hedera network.
-public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
+public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral, CustomStringConvertible,
+    CustomDebugStringConvertible
+{
+    /// Debug description for `PrivateKey`
+    ///
+    /// Please note that debugDescriptions of any kind should not be considered a stable format.
+    public var debugDescription: String {
+        "PrivateKey(kind: \(String(reflecting: guts)), chainCode: \(String(describing: chainCode?.data))"
+    }
+
     // we need to be sendable, so...
     // The idea being that we initialize the key whenever we need it, which is absolutely not free, but it is `Sendable`.
-    fileprivate enum Repr {
+    fileprivate enum Repr: CustomDebugStringConvertible {
+        fileprivate var debugDescription: String {
+            switch self {
+            case .ed25519:
+                return "ed25519([redacted])"
+            case .ecdsa:
+                return "ecdsa([redacted])"
+            }
+        }
+
         case ed25519(Data)
         case ecdsa(Data)
 
@@ -459,6 +477,35 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         try transaction.freeze()
 
         transaction.addSignatureSigner(.privateKey(self))
+    }
+}
+
+// for testing purposes :/
+extension PrivateKey {
+    internal func withChainCode(chainCode: Data) -> Self {
+        precondition(chainCode.count == 32)
+        return Self(kind: kind, chainCode: chainCode)
+    }
+
+    internal func prettyPrint() -> String {
+        let data = toStringRaw()
+        let chainCode = String(describing: chainCode?.data.hexStringEncoded())
+
+        let start: String
+
+        switch guts {
+        case .ecdsa:
+            start = "PrivateKey.ecdsa"
+        case .ed25519:
+            start = "PrivateKey.ed25519"
+        }
+
+        return """
+            \(start)(
+                key: \(data),
+                chainCode: \(chainCode)
+            )
+            """
     }
 }
 

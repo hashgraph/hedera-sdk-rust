@@ -23,6 +23,7 @@ import Foundation
 import HederaProtobufs
 import SwiftASN1
 import secp256k1
+import secp256k1_bindings
 
 /// A public key on the Hedera network.
 public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
@@ -279,7 +280,7 @@ public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, 
             let isValid: Bool
             do {
                 isValid = try key.ecdsa.isValidSignature(
-                    .init(rawRepresentation: signature), for: Keccak256Digest(Crypto.Sha3.keccak256(message))!)
+                    .init(compactRepresentation: signature), for: Keccak256Digest(Crypto.Sha3.keccak256(message))!)
             } catch {
                 throw HError(kind: .signatureVerify, description: "invalid signature")
             }
@@ -323,8 +324,38 @@ public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, 
             return nil
         }
 
+        // when the bindings aren't enough :/
+        var pubkey = secp256k1_pubkey()
+
+        key.rawRepresentation.withUnsafeTypedBytes { bytes in
+            let result = secp256k1_bindings.secp256k1_ec_pubkey_parse(
+                secp256k1.Context.raw,
+                &pubkey,
+                bytes.baseAddress!,
+                bytes.count
+            )
+
+            precondition(result == 1)
+        }
+
+        var output = Data(repeating: 0, count: 65)
+
+        output.withUnsafeMutableTypedBytes { output in
+            var outputLen = output.count
+
+            let result = secp256k1_ec_pubkey_serialize(
+                secp256k1.Context.raw, output.baseAddress!,
+                &outputLen,
+                &pubkey,
+                secp256k1.Format.uncompressed.rawValue
+            )
+
+            precondition(result == 1)
+            precondition(outputLen == output.count)
+        }
+
         // fixme(important): sec1 uncompressed point
-        let hash = Crypto.Sha3.keccak256(key.rawRepresentation)
+        let hash = Crypto.Sha3.keccak256(output[1...])
 
         return try! EvmAddress(Data(hash.dropFirst(12)))
 
