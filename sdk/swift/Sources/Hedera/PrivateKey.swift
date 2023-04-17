@@ -45,13 +45,11 @@ private struct ChainCode {
     let data: Data
 }
 
-
 #if compiler(>=5.7)
-extension ChainCode: Sendable {}
+    extension ChainCode: Sendable {}
 #else
-extension ChainCode: @unchecked Sendable {}
+    extension ChainCode: @unchecked Sendable {}
 #endif
-
 
 /// A private key on the Hedera network.
 public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
@@ -464,11 +462,10 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
     }
 }
 
-
 #if compiler(>=5.7)
-extension PrivateKey.Repr: Sendable {}
+    extension PrivateKey.Repr: Sendable {}
 #else
-extension PrivateKey.Repr: @unchecked Sendable {}
+    extension PrivateKey.Repr: @unchecked Sendable {}
 #endif
 
 extension PrivateKey: Sendable {}
