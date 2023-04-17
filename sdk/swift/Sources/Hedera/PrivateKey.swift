@@ -41,11 +41,23 @@ internal struct Keccak256Digest: Crypto.SecpDigest {
     }
 }
 
+private struct ChainCode {
+    let data: Data
+}
+
+
+#if compiler(>=5.7)
+extension ChainCode: Sendable {}
+#else
+extension ChainCode: @unchecked Sendable {}
+#endif
+
+
 /// A private key on the Hedera network.
 public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral {
     // we need to be sendable, so...
     // The idea being that we initialize the key whenever we need it, which is absolutely not free, but it is `Sendable`.
-    private enum Repr: Sendable {
+    fileprivate enum Repr {
         case ed25519(Data)
         case ecdsa(Data)
 
@@ -67,14 +79,14 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         }
     }
 
-    private enum Kind {
+    fileprivate enum Kind {
         case ed25519(CryptoKit.Curve25519.Signing.PrivateKey)
         case ecdsa(secp256k1.Signing.PrivateKey)
     }
 
     private init(kind: Kind, chainCode: Data? = nil) {
         self.guts = .init(kind: kind)
-        self.chainCode = chainCode
+        self.chainCode = chainCode.map(ChainCode.init(data:))
     }
 
     private let guts: Repr
@@ -83,7 +95,7 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         guts.kind
     }
 
-    private let chainCode: Data?
+    private let chainCode: ChainCode?
 
     private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
         let description = description.stripPrefix("0x") ?? description[...]
@@ -372,7 +384,7 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         case .ed25519(let key):
             let index = index | hardenedMask
 
-            var hmac = CryptoKit.HMAC<CryptoKit.SHA512>(key: .init(data: chainCode))
+            var hmac = CryptoKit.HMAC<CryptoKit.SHA512>(key: .init(data: chainCode.data))
 
             hmac.update(data: [0])
             hmac.update(data: key.rawRepresentation)
@@ -451,5 +463,12 @@ public struct PrivateKey: LosslessStringConvertible, ExpressibleByStringLiteral 
         transaction.addSignatureSigner(.privateKey(self))
     }
 }
+
+
+#if compiler(>=5.7)
+extension PrivateKey.Repr: Sendable {}
+#else
+extension PrivateKey.Repr: @unchecked Sendable {}
+#endif
 
 extension PrivateKey: Sendable {}

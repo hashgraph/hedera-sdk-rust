@@ -28,7 +28,7 @@ import secp256k1
 public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
     // we need to be sendable, so...
     // The idea being that we initialize the key whenever we need it, which is absolutely not free, but it is `Sendable`.
-    private enum Repr: Sendable {
+    fileprivate enum Repr {
         case ed25519(Data)
         case ecdsa(Data, compressed: Bool)
 
@@ -51,7 +51,7 @@ public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, 
         }
     }
 
-    private enum Kind {
+    fileprivate enum Kind {
         case ed25519(CryptoKit.Curve25519.Signing.PublicKey)
         case ecdsa(secp256k1.Signing.PublicKey)
     }
@@ -418,5 +418,11 @@ extension PublicKey: TryProtobufCodable {
         }
     }
 }
+
+#if compiler(>=5.7)
+extension PublicKey.Repr: Sendable {}
+#else
+extension PublicKey.Repr: @unchecked Sendable {}
+#endif
 
 extension PublicKey: Sendable {}
