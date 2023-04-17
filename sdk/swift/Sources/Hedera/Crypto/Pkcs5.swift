@@ -32,8 +32,12 @@ extension Pkcs5 {
 }
 
 extension ASN1ObjectIdentifier.NamedCurves {
+    /// OID for the secp256k1 named curve.
+    ///
+    /// `iso(1) identified-organization(3) certicom(132) curve(0) 10`
     internal static let secp256k1: ASN1ObjectIdentifier = [1, 3, 132, 0, 10]
     // fixme: is this supposed to be *here*? It doesn't reaaally matter but...
+    /// OID
     internal static let ed25519: ASN1ObjectIdentifier = [1, 3, 101, 112]
 }
 
