@@ -1,26 +1,6 @@
-use std::ffi::{
-    c_char,
-    CString,
-};
 use std::slice;
 
 use libc::size_t;
-
-/// Free a string returned from a hedera API.
-///
-/// A function will tell you if the string needs to be freed with this method.
-///
-/// # Safety:   
-/// - `s` must have been allocated by this hedera sdk.
-/// - `s` must be valid for reads and writes.
-/// - `s` must not be used after this call.
-#[no_mangle]
-pub unsafe extern "C" fn hedera_string_free(s: *mut c_char) {
-    assert!(!s.is_null());
-
-    // safety: function contract promises that we own this.
-    drop(unsafe { CString::from_raw(s) });
-}
 
 /// Free byte buffer returned from a hedera API.
 ///

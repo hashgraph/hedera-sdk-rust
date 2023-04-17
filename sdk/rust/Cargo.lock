@@ -697,16 +697,8 @@ name = "hedera-crypto"
 version = "0.0.0"
 dependencies = [
  "cbindgen",
- "ed25519-dalek",
- "hmac",
- "k256",
  "libc",
- "pbkdf2",
- "pkcs8",
- "rand",
- "sha2",
  "sha3",
- "thiserror",
 ]
 
 [[package]]
