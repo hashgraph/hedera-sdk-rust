@@ -15,7 +15,7 @@ tasks:
 
     format:
         cmds:
-            - cargo fmt
+            - cargo +nightly fmt
 
     lint:
         cmds:

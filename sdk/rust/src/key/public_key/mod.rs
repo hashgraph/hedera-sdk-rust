@@ -18,8 +18,16 @@
  * ‍
  */
 
-use std::fmt::{self, Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
+use std::hash::{
+    Hash,
+    Hasher,
+};
 use std::str::FromStr;
 
 use ed25519_dalek::Verifier as _;
@@ -28,7 +36,10 @@ use hmac::digest::generic_array::sequence::Split;
 use hmac::digest::generic_array::GenericArray;
 use k256::ecdsa;
 use k256::ecdsa::signature::DigestVerifier as _;
-use pkcs8::der::{Decode, Encode};
+use pkcs8::der::{
+    Decode,
+    Encode,
+};
 use pkcs8::AssociatedOid;
 use prost::Message;
 use sha2::Digest;
@@ -37,7 +48,13 @@ use crate::key::private_key::ED25519_OID;
 use crate::protobuf::ToProtobuf;
 use crate::signer::AnySigner;
 use crate::transaction::TransactionSources;
-use crate::{AccountId, Error, EvmAddress, FromProtobuf, Transaction};
+use crate::{
+    AccountId,
+    Error,
+    EvmAddress,
+    FromProtobuf,
+    Transaction,
+};
 
 #[cfg(test)]
 mod tests;
@@ -157,7 +174,9 @@ impl PublicKey {
             .map_err(|err| Error::key_parse(err.to_string()))?;
 
         // hack (keep for 1 release) the `elliptic_curve` OID is not the correct one.
-        if info.algorithm.oid == k256::elliptic_curve::ALGORITHM_OID || info.algorithm.oid == k256::Secp256k1::OID {
+        if info.algorithm.oid == k256::elliptic_curve::ALGORITHM_OID
+            || info.algorithm.oid == k256::Secp256k1::OID
+        {
             return Self::from_bytes_ecdsa(info.subject_public_key);
         }
 
