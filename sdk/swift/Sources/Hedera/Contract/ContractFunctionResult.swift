@@ -92,14 +92,11 @@ public struct ContractFunctionResult {
     }
 
     private func getFixedBytesAt(slot: UInt, size: UInt) -> Data? {
-        return self.bytes[safe: rangeFromSlot(slot: slot, size: size)]
+        self.bytes[slicing: rangeFromSlot(slot: slot, size: size)]
     }
 
     private func getAt<T: FixedWidthInteger>(slot: UInt) -> T? {
-        let size = UInt(MemoryLayout<T>.size)
-        let range = rangeFromSlot(slot: slot, size: size)
-
-        return bytes.safeSubdata(in: range).flatMap { T(bigEndianBytes: $0) }
+        getFixedBytesAt(slot: slot, size: UInt(MemoryLayout<T>.size)).flatMap(T.init(bigEndianBytes:))
     }
 
     public func asBytes() -> Data {
@@ -127,11 +124,10 @@ public struct ContractFunctionResult {
     }
 
     private func getUInt32At(offset: UInt) -> UInt32? {
-        let size = UInt(MemoryLayout<UInt32>.size)
-        let offset = offset + 28
-        let range = Int(offset)..<Int(offset + size)
+        let size = Int(MemoryLayout<UInt32>.size)
+        let offset = Int(offset + 28)
 
-        return bytes.safeSubdata(in: range).map { UInt32(bigEndianBytes: $0)! }
+        return bytes[slicing: offset...]?[slicing: ..<size].map { UInt32(bigEndianBytes: $0)! }
     }
 
     private func getUIntAt(offset: UInt) -> UInt? {
@@ -151,7 +147,7 @@ public struct ContractFunctionResult {
     }
 
     public func getBytes32(_ index: UInt) -> Data? {
-        self.getFixedBytesAt(slot: index, size: 32)
+        self.getFixedBytesAt(slot: index, size: 32).map(Data.init(_:))
     }
 
     public func getAddress(_ index: UInt) -> String? {
@@ -180,7 +176,7 @@ public struct ContractFunctionResult {
             guard let len = getUIntAt(offset: offset + strOffset + slotSize) else { return nil }
             let range = Int(offset + strOffset + slotSize * 2)..<Int(offset + strOffset + slotSize * 2 + len)
 
-            guard let bytes = bytes.safeSubdata(in: range) else { return nil }
+            guard let bytes = bytes[slicing: range] else { return nil }
 
             array.append(String(decoding: bytes, as: UTF8.self))
         }

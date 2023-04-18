@@ -472,3 +472,5 @@ extension TokenCreateTransaction {
         .tokenCreation(toProtobuf())
     }
 }
+
+// swiftlint:enable file_length type_body_length

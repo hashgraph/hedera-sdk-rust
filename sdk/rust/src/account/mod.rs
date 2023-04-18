@@ -26,6 +26,9 @@ mod account_create_transaction;
 mod account_delete_transaction;
 mod account_id;
 mod account_info;
+// note(sr): there's absolutely no way I'm going to write an enum or struct for namespacing here.
+/// Flow for verifying signatures via account info.
+pub mod account_info_flow;
 mod account_info_query;
 mod account_records_query;
 mod account_stakers_query;

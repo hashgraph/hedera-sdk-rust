@@ -13,9 +13,6 @@
 // For information on using the generated types, please see the documentation:
 //   https://github.com/apple/swift-protobuf/
 
-// this is generated code, certain warnings are... unavoidable, and will be ignored.
-// swiftlint:disable identifier_name inclusive_language file_length
-
 import Foundation
 
 // swiftlint:disable:next type_body_length

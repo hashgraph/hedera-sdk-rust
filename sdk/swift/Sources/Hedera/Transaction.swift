@@ -138,14 +138,20 @@ public class Transaction: ValidateChecksums {
 
     @discardableResult
     public final func sign(_ privateKey: PrivateKey) -> Self {
-        self.signWith(privateKey.publicKey) { privateKey.sign($0) }
+        self.signWithSigner(.privateKey(privateKey))
+
+        return self
     }
 
     @discardableResult
     public final func signWith(_ publicKey: PublicKey, _ signer: @escaping (Data) -> (Data)) -> Self {
-        self.signers.append(Signer(publicKey, signer))
+        self.signWithSigner(Signer(publicKey, signer))
 
         return self
+    }
+
+    internal final func signWithSigner(_ signer: Signer) {
+        self.signers.append(signer)
     }
 
     @discardableResult

@@ -125,8 +125,7 @@ mod client;
 mod contract;
 mod entity_id;
 mod error;
-mod ethereum_transaction;
-mod evm_address;
+mod ethereum;
 mod exchange_rates;
 mod execute;
 mod fee_schedules;
@@ -166,6 +165,7 @@ mod transfer;
 mod transfer_transaction;
 
 pub use account::{
+    account_info_flow,
     AccountAllowanceApproveTransaction,
     AccountAllowanceDeleteTransaction,
     AccountBalance,
@@ -186,6 +186,7 @@ pub(crate) use client::Operator;
 pub use contract::{
     ContractBytecodeQuery,
     ContractCallQuery,
+    ContractCreateFlow,
     ContractCreateTransaction,
     ContractExecuteTransaction,
     ContractFunctionParameters,
@@ -207,8 +208,15 @@ pub use error::{
     MnemonicEntropyError,
     MnemonicParseError,
 };
-pub use ethereum_transaction::EthereumTransaction;
-pub use evm_address::EvmAddress;
+pub use ethereum::{
+    // we probably *do* want to expose these, just, code review first?
+    // EthereumData,
+    // LegacyEthereumData,
+    // Eip1559EthereumData,
+    EthereumFlow,
+    EthereumTransaction,
+    EvmAddress,
+};
 pub use exchange_rates::{
     ExchangeRate,
     ExchangeRates,
