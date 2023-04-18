@@ -22,11 +22,6 @@ internal struct Operator {
     internal let accountId: AccountId
     internal let signer: PrivateKey
 
-    internal enum CodingKeys: CodingKey {
-        case accountId
-        case signer
-    }
-
     internal func generateTransactionId() -> TransactionId {
         .generateFrom(accountId)
     }

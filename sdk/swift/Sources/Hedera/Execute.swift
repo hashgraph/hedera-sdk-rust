@@ -101,6 +101,10 @@ internal func executeAny<E: Execute & ValidateChecksums>(_ client: Client, _ exe
             let (request, context) = try executable.makeRequest(transactionId, nodeAccountId)
             let response: E.GrpcResponse
 
+            defer {
+                client.network.markNodeUsed(nodeIndex, now: .now)
+            }
+
             do {
                 response = try await executable.execute(channel, request)
             } catch let error as GRPCStatus {

@@ -75,7 +75,7 @@ extension PrngTransaction: ToProtobuf {
     }
 }
 
-extension PrngTransaction: ToSchedulableTransactionData {
+extension PrngTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .utilPrng(toProtobuf())
     }

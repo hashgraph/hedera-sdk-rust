@@ -208,7 +208,7 @@ extension TopicUpdateTransaction: ToProtobuf {
     }
 }
 
-extension TopicUpdateTransaction: ToSchedulableTransactionData {
+extension TopicUpdateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .consensusUpdateTopic(toProtobuf())
     }

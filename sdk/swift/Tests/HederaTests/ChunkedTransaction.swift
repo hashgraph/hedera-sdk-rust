@@ -2,7 +2,7 @@ import XCTest
 
 @testable import Hedera
 
-public final class ChunkedTransactionTests: XCTestCase {
+internal final class ChunkedTransactionTests: XCTestCase {
     internal func testToFromBytes() throws {
         let client = Client.forTestnet()
         client.setOperator(0, .generateEd25519())

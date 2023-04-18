@@ -22,8 +22,8 @@ import XCTest
 
 @testable import Hedera
 
-public final class PrivateKeyTests: XCTestCase {
-    public func testParseEd25519() throws {
+internal final class PrivateKeyTests: XCTestCase {
+    internal func testParseEd25519() throws {
         let privateKey: PrivateKey =
             "302e020100300506032b65700422042098aa82d6125b5efa04bf8372be7931d05cd77f5ef3330b97d6ee7c006eaaf312"
 
@@ -32,7 +32,7 @@ public final class PrivateKeyTests: XCTestCase {
             "302e020100300506032b65700422042098aa82d6125b5efa04bf8372be7931d05cd77f5ef3330b97d6ee7c006eaaf312")
     }
 
-    public func testParseEcdsa() throws {
+    internal func testParseEcdsa() throws {
         let privateKey: PrivateKey =
             "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048"
 
@@ -41,7 +41,7 @@ public final class PrivateKeyTests: XCTestCase {
             "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
     }
 
-    public func testEd25519LegacyDerive() throws {
+    internal func testEd25519LegacyDerive() throws {
         let privateKey: PrivateKey =
             "302e020100300506032b65700422042098aa82d6125b5efa04bf8372be7931d05cd77f5ef3330b97d6ee7c006eaaf312"
 
@@ -58,7 +58,7 @@ public final class PrivateKeyTests: XCTestCase {
             "302e020100300506032b657004220420caffc03fdb9853e6a91a5b3c57a5c0031d164ce1c464dea88f3114786b5199e5")
     }
 
-    public func testEd25519LegacyDerive2() throws {
+    internal func testEd25519LegacyDerive2() throws {
         let privateKey: PrivateKey =
             "302e020100300506032b65700422042000c2f59212cb3417f0ee0d38e7bd876810d04f2dd2cb5c2d8f26ff406573f2bd"
 
@@ -69,7 +69,7 @@ public final class PrivateKeyTests: XCTestCase {
             "302e020100300506032b6570042204206890dc311754ce9d3fc36bdf83301aa1c8f2556e035a6d0d13c2cccdbbab1242")
     }
 
-    public func testEd25519FromPem() throws {
+    internal func testEd25519FromPem() throws {
         let pemString = """
             -----BEGIN PRIVATE KEY-----
             MC4CAQAwBQYDK2VwBCIEINtIS4KOZLLY8SzjwKDpOguMznrxu485yXcyOUSCU44Q
@@ -82,7 +82,7 @@ public final class PrivateKeyTests: XCTestCase {
             "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10")
     }
 
-    public func testEd25519FromPemWithPassword() throws {
+    internal func testEd25519FromPemWithPassword() throws {
         let pemString =
             """
             -----BEGIN ENCRYPTED PRIVATE KEY-----
@@ -101,7 +101,7 @@ public final class PrivateKeyTests: XCTestCase {
         )
     }
 
-    public func testEcdsaFromPem() throws {
+    internal func testEcdsaFromPem() throws {
         let pemString = """
             -----BEGIN PRIVATE KEY-----
             MDACAQAwBwYFK4EEAAoEIgQgh3bGuDGhthrBDawDBKKEPeRxb1SxkZu5GiaF0P4/
@@ -116,7 +116,7 @@ public final class PrivateKeyTests: XCTestCase {
             "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048")
     }
 
-    public func testEd25519FromPemInvalidTypeLabel() {
+    internal func testEd25519FromPemInvalidTypeLabel() {
         // extra `S` in the type label
         let pemString = """
             -----BEGIN PRIVATE KEYS-----

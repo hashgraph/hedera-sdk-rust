@@ -360,7 +360,7 @@ extension TokenUpdateTransaction: ToProtobuf {
     }
 }
 
-extension TokenUpdateTransaction: ToSchedulableTransactionData {
+extension TokenUpdateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenUpdate(toProtobuf())
     }

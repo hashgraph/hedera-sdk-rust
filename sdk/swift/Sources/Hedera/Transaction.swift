@@ -190,6 +190,10 @@ public class Transaction: ValidateChecksums {
     public func execute(_ client: Client, _ timeout: TimeInterval? = nil) async throws -> Response {
         try freezeWith(client)
 
+        if let sources = sources {
+            return try await SourceTransaction(inner: self, sources: sources).execute(client, timeout: timeout)
+        }
+
         return try await executeAny(client, self, timeout)
     }
 
@@ -281,7 +285,6 @@ public class Transaction: ValidateChecksums {
     }
 
     internal final func ensureNotFrozen(fieldName: String? = nil) {
-
         if let fieldName = fieldName {
             precondition(!isFrozen, "\(fieldName) cannot be set while `\(type(of: self))` is frozen")
         } else {
@@ -442,7 +445,7 @@ extension Transaction: Execute {
         return self.makeRequestInner(chunkInfo: .single(transactionId: transactionId, nodeAccountId: nodeAccountId))
     }
 
-    internal func execute(_ channel: GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
+    internal func execute(_ channel: any GRPCChannel, _ request: GrpcRequest) async throws -> GrpcResponse {
         try await transactionExecute(channel, request)
     }
 }

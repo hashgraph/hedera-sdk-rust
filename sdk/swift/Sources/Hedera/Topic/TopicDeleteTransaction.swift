@@ -84,7 +84,7 @@ extension TopicDeleteTransaction: ToProtobuf {
     }
 }
 
-extension TopicDeleteTransaction: ToSchedulableTransactionData {
+extension TopicDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .consensusDeleteTopic(toProtobuf())
     }

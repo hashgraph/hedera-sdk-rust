@@ -24,15 +24,15 @@ import XCTest
 
 private let parsedNftId = NftId(tokenId: TokenId(shard: 1415, realm: 314, num: 123), serial: 456)
 
-public final class NftIdTests: XCTestCase {
-    public func testParseSlashFormat() {
+internal final class NftIdTests: XCTestCase {
+    internal func testParseSlashFormat() {
 
         let actualNftId: NftId = "1415.314.123/456"
 
         XCTAssertEqual(parsedNftId, actualNftId)
     }
 
-    public func testParseAtFormat() {
+    internal func testParseAtFormat() {
         let actualNftId: NftId = "1415.314.123@456"
 
         XCTAssertEqual(parsedNftId, actualNftId)

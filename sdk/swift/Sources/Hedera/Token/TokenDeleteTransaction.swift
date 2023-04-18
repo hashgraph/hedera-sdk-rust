@@ -81,7 +81,7 @@ extension TokenDeleteTransaction: ToProtobuf {
     }
 }
 
-extension TokenDeleteTransaction: ToSchedulableTransactionData {
+extension TokenDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenDeletion(toProtobuf())
     }
