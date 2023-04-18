@@ -84,10 +84,11 @@ let package = Package(
                 .product(name: "NumberKit", package: "swift-numberkit"),
                 .product(name: "GRPC", package: "grpc-swift"),
                 .product(name: "Atomics", package: "swift-atomics"),
-            ],
-            swiftSettings: [
-                .unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
             ]
+            // todo: find some way to enable these locally.
+            // swiftSettings: [
+            //     .unsafeFlags(["-Xfrontend", "-warn-concurrency", "-Xfrontend", "-enable-actor-data-race-checks"])
+            // ]
         ),
         .testTarget(name: "HederaTests", dependencies: ["Hedera"]),
     ] + exampleTargets
