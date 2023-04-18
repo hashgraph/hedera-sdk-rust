@@ -44,12 +44,12 @@ async fn query_pk(client: &Client, account_id: AccountId) -> crate::Result<Publi
 pub async fn verify_signature(
     client: &Client,
     account_id: AccountId,
-    msg: impl AsRef<[u8]>,
-    signature: impl AsRef<[u8]>,
+    msg: &[u8],
+    signature: &[u8],
 ) -> crate::Result<()> {
     let key = query_pk(client, account_id).await?;
 
-    key.verify(msg.as_ref(), signature.as_ref())
+    key.verify(msg, signature)
 }
 
 /// Returns `Ok(())` if the given account's public key has signed the given transaction.
