@@ -24,24 +24,6 @@ import HederaProtobufs
 
 /// Create a new file, containing the given contents.
 public final class FileCreateTransaction: Transaction {
-    internal init(
-        fileMemo: String = "",
-        keys: KeyList = [],
-        contents: Data = Data(),
-        autoRenewPeriod: Duration? = nil,
-        autoRenewAccountId: AccountId? = nil,
-        expirationTime: Timestamp? = .now + .days(90)
-    ) {
-        self.fileMemo = fileMemo
-        self.keys = keys
-        self.contents = contents
-        self.autoRenewPeriod = autoRenewPeriod
-        self.autoRenewAccountId = autoRenewAccountId
-        self.expirationTime = expirationTime
-
-        super.init()
-    }
-
     /// Create a new `FileCreateTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -195,7 +177,7 @@ extension FileCreateTransaction: ToProtobuf {
     }
 }
 
-extension FileCreateTransaction: ToSchedulableTransactionData {
+extension FileCreateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .fileCreate(toProtobuf())
     }

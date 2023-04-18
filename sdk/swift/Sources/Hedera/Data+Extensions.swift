@@ -81,14 +81,6 @@ extension Data {
     }
 
     private static let hexAlphabet = Array("0123456789abcdef".unicodeScalars)
-
-    internal static func base64Encoded(_ description: String) throws -> Self {
-        guard let tmp = Self(base64Encoded: description) else {
-            throw HError(kind: .basicParse, description: "Invalid base64 Data")
-        }
-
-        return tmp
-    }
 }
 
 extension Data {

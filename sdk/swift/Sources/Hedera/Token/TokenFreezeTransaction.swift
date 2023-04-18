@@ -101,7 +101,7 @@ extension TokenFreezeTransaction: ToProtobuf {
     }
 }
 
-extension TokenFreezeTransaction: ToSchedulableTransactionData {
+extension TokenFreezeTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenFreeze(toProtobuf())
     }

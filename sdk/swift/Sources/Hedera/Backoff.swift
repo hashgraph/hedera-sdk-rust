@@ -45,15 +45,6 @@ internal struct LegacyExponentialBackoff {
     internal enum Limit<T> {
         case unlimited
         case limited(T)
-
-        internal static func optional(_ value: T?) -> Self {
-            switch value {
-            case .some(let value):
-                return .limited(value)
-            case .none:
-                return .unlimited
-            }
-        }
     }
 
     internal var currentInterval: TimeInterval
@@ -69,10 +60,6 @@ internal struct LegacyExponentialBackoff {
     /// This will return a different value every time it's called.
     internal var elapsedTime: TimeInterval {
         startTime.distance(to: Date())
-    }
-
-    internal var randomRange: Range<Double> {
-        (1 - randomizationFactor)..<(1 + randomizationFactor)
     }
 
     internal mutating func reset() {

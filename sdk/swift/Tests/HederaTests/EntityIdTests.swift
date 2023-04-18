@@ -2,7 +2,7 @@ import XCTest
 
 @testable import Hedera
 
-public final class EntityIdTests: XCTestCase {
+internal final class EntityIdTests: XCTestCase {
     internal func testChecksumOnMainnet() {
         let expected: [String] = [
             "uvnqa", "dfkxr", "lpifi", "tzfmz", "cjcuq", "ktach", "tcxjy", "bmurp",

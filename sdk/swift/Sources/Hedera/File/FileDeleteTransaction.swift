@@ -87,7 +87,7 @@ extension FileDeleteTransaction: ToProtobuf {
     }
 }
 
-extension FileDeleteTransaction: ToSchedulableTransactionData {
+extension FileDeleteTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .fileDelete(toProtobuf())
     }

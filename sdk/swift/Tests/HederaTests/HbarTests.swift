@@ -23,8 +23,8 @@ import XCTest
 
 @testable import Hedera
 
-public final class HbarTests: XCTestCase {
-    public func testInit() throws {
+internal final class HbarTests: XCTestCase {
+    internal func testInit() throws {
         let fifty: Hbar = 50
 
         XCTAssertEqual(fifty, Hbar(50))
@@ -43,17 +43,17 @@ public final class HbarTests: XCTestCase {
         XCTAssertEqual(fifty, Hbar.fromTinybars(5_000_000_000))
     }
 
-    public func testFractionalTinybarThrowsError() {
+    internal func testFractionalTinybarThrowsError() {
         // todo: test the exact error.
         XCTAssertThrowsError(try Hbar(0.1, .tinybar))
     }
 
-    public func testNanHbarThrowsError() {
+    internal func testNanHbarThrowsError() {
         // todo: test the exact error.
         XCTAssertThrowsError(try Hbar(.quietNaN))
     }
 
-    public func testInitUnit() throws {
+    internal func testInitUnit() throws {
         let fiftyTinybar: Hbar = 0.0000005
 
         XCTAssertEqual(fiftyTinybar, try Hbar(50, .tinybar))
@@ -87,7 +87,7 @@ public final class HbarTests: XCTestCase {
         XCTAssertEqual(fiftyTinybar, try Hbar.fromString("0.0000000000000005 Gℏ"))
     }
 
-    public func testTo() {
+    internal func testTo() {
         let twentyTwoKilobars: Hbar = 22_000
 
         XCTAssertEqual(twentyTwoKilobars.getValue(), 22_000)
@@ -100,14 +100,14 @@ public final class HbarTests: XCTestCase {
         XCTAssertEqual(twentyTwoKilobars.to(.gigabar), Decimal(string: "0.000022"))
     }
 
-    public func testNegated() {
+    internal func testNegated() {
         XCTAssertEqual(Hbar(2).negated(), -2)
     }
 
     // what better way to ensure the right thing gets printed than to test that for all values of <inner range>.
     // it isn't practical to test all ~2^64 values `Hbar` can hold.
     // In fact, this test test's less than 1% of 1% of 1%... of all values.
-    public func testDescription() {
+    internal func testDescription() {
         let innerRange = -9999...9999
         for amount in innerRange {
             let hbar = Hbar.fromTinybars(Int64(amount))
@@ -125,7 +125,7 @@ public final class HbarTests: XCTestCase {
         }
     }
 
-    public func testToStringWithUnit() {
+    internal func testToStringWithUnit() {
         let fifty: Hbar = 50
 
         XCTAssertEqual(fifty.toString(.tinybar), "5000000000 tℏ")

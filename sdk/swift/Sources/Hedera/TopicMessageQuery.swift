@@ -69,13 +69,6 @@ public final class TopicMessageQuery: ValidateChecksums, MirrorQuery {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case topicId
-        case startTime
-        case endTime
-        case limit
-    }
-
     internal func validateChecksums(on ledgerId: LedgerId) throws {
         try topicId?.validateChecksums(on: ledgerId)
     }
@@ -115,7 +108,7 @@ extension TopicMessageQuery: MirrorRequest {
         return items
     }
 
-    internal func connect(channel: GRPCChannel) -> ConnectStream {
+    internal func connect(channel: any GRPCChannel) -> ConnectStream {
         let request = self.toProtobuf()
 
         return HederaProtobufs.Com_Hedera_Mirror_Api_Proto_ConsensusServiceAsyncClient(channel: channel)

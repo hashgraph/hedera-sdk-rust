@@ -18,24 +18,33 @@
  * ‍
  */
 
+extension StringProtocol {
+    fileprivate func compare<S: StringProtocol>(to other: S) -> Ordering {
+        if self < other {
+            return .less
+        } else if self > other {
+            return .greater
+        } else {
+            // the two must be equal.
+            return .equal
+        }
+    }
+}
+
 internal struct MnemonicWordList: ExpressibleByStringLiteral {
     internal init(stringLiteral value: StringLiteralType) {
-        backingData = value
         words = value.split { $0.isNewline }
         isSorted = words.isSorted()
     }
 
     private let words: [Substring]
-    private let backingData: String
     private let isSorted: Bool
 
     internal func indexOf<S: StringProtocol>(word: S) -> Int? {
-        // todo: binary search if sorted
-        words.firstIndex { $0 == word }
-    }
-
-    internal func contains<S: StringProtocol>(word: S) -> Bool {
-        words.contains { $0 == word }
+        switch isSorted {
+        case false: return words.firstIndex { $0 == word }
+        case true: return words.binarySearch { $0.compare(to: word) }
+        }
     }
 
     internal subscript(index: Int) -> Substring? {

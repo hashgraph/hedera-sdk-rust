@@ -41,10 +41,6 @@ public final class FileInfoQuery: Query<FileInfo> {
         return self
     }
 
-    private enum CodingKeys: String, CodingKey {
-        case fileId
-    }
-
     internal override func toQueryProtobufWith(_ header: Proto_QueryHeader) -> Proto_Query {
         .with { proto in
             proto.fileGetInfo = .with { proto in

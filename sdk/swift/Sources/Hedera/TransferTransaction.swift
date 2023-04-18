@@ -308,7 +308,7 @@ extension TransferTransaction: ToProtobuf {
     }
 }
 
-extension TransferTransaction: ToSchedulableTransactionData {
+extension TransferTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .cryptoTransfer(toProtobuf())
     }

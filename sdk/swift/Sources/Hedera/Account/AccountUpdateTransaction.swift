@@ -31,36 +31,6 @@ import SwiftProtobuf
 /// signed by both the old key (from before the change) and the new key.
 ///
 public final class AccountUpdateTransaction: Transaction {
-    internal init(
-        accountId: AccountId? = nil,
-        key: Key? = nil,
-        receiverSignatureRequired: Bool? = nil,
-        autoRenewPeriod: Duration? = nil,
-        autoRenewAccountId: AccountId? = nil,
-        proxyAccountId: AccountId? = nil,
-        expirationTime: Timestamp? = nil,
-        accountMemo: String? = nil,
-        maxAutomaticTokenAssociations: UInt32? = nil,
-        stakedAccountId: AccountId? = nil,
-        stakedNodeId: UInt64? = nil,
-        declineStakingReward: Bool? = nil
-    ) {
-        self.accountId = accountId
-        self.key = key
-        self.receiverSignatureRequired = receiverSignatureRequired
-        self.autoRenewPeriod = autoRenewPeriod
-        self.autoRenewAccountId = autoRenewAccountId
-        proxyAccountIdInner = proxyAccountId
-        self.expirationTime = expirationTime
-        self.accountMemo = accountMemo
-        self.maxAutomaticTokenAssociations = maxAutomaticTokenAssociations
-        self.stakedAccountId = stakedAccountId
-        self.stakedNodeId = stakedNodeId
-        self.declineStakingReward = declineStakingReward
-
-        super.init()
-    }
-
     /// Create a new `AccountCreateTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -374,7 +344,7 @@ extension AccountUpdateTransaction: ToProtobuf {
     }
 }
 
-extension AccountUpdateTransaction: ToSchedulableTransactionData {
+extension AccountUpdateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .cryptoUpdateAccount(toProtobuf())
     }

@@ -32,14 +32,14 @@ private let knownGoodMnemonics: [String] = [
     "evoke rich bicycle fire promote climb zero squeeze little spoil slight damage",
 ]
 
-public final class MnemonicTests: XCTestCase {
-    public func testParse() throws {
+internal final class MnemonicTests: XCTestCase {
+    internal func testParse() throws {
         for mnemonic in knownGoodMnemonics {
             XCTAssertEqual(try Mnemonic.fromString(mnemonic).description, mnemonic)
         }
     }
 
-    public func testInvalidLengthError() {
+    internal func testInvalidLengthError() {
         // we can't test for up to `usize` length, but we can test several lengths to be modestly sure.
         // it might seem that testing many lengths would be slow.
         // we test:
@@ -71,7 +71,7 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
-    public func testUnknownWords1() {
+    internal func testUnknownWords1() {
         let mnemonic = "obvious favorite remain caution remove laptop base vacant alone fever slush dune"
 
         for index in 0..<12 {
@@ -92,7 +92,7 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
-    public func testUnknownWords2() {
+    internal func testUnknownWords2() {
         // a 24 word mnemonic containing the following typos:
         // absorb -> adsorb
         // account -> acount
@@ -113,7 +113,7 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
-    public func testChecksumMismatch1() {
+    internal func testChecksumMismatch1() {
         let mnemonic =
             "abandon ability able about above absent absorb abstract absurd abuse access accident "
             + "account accuse achieve acid acoustic acquire across act action actor actress actual"
@@ -130,7 +130,7 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
-    public func testChecksumMismatch2() {
+    internal func testChecksumMismatch2() {
         let mnemonic = "abandon ability able about above absent absorb abstract absurd abuse access accident"
 
         XCTAssertThrowsError(try Mnemonic.fromString(mnemonic)) { error in
@@ -145,7 +145,7 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
-    public func testFromEntropy() throws {
+    internal func testFromEntropy() throws {
         let entropy = [
             Data(hexEncoded: "744b201a7c399733691c2fda5c6f605ceb0c016882cb14f64ea9eb5b6d68298b")!,
             Data(hexEncoded: "e2674c8eb2fcada0c433984da6f52bac56466f914b49bd1a8087ed8b12b15248")!,
@@ -160,7 +160,7 @@ public final class MnemonicTests: XCTestCase {
         }
     }
 
-    public func testMnemonic3() throws {
+    internal func testMnemonic3() throws {
         let str =
             "obvious favorite remain caution remove laptop base vacant increase video erase pass "
             + "sniff sausage knock grid argue salt romance way alone fever slush dune"
@@ -175,7 +175,7 @@ public final class MnemonicTests: XCTestCase {
         )
     }
 
-    public func testLegacyMnemonic() throws {
+    internal func testLegacyMnemonic() throws {
         let str =
             "jolly kidnap tom lawn drunk chick optic lust mutter mole bride "
             + "galley dense member sage neural widow decide curb aboard margin manure"
@@ -191,7 +191,7 @@ public final class MnemonicTests: XCTestCase {
         )
     }
 
-    public func testToPrivateKey() throws {
+    internal func testToPrivateKey() throws {
         let str =
             "inmate flip alley wear offer often " + "piece magnet surge toddler submit right "
             + "radio absent pear floor belt raven " + "price stove replace reduce plate home"

@@ -206,7 +206,7 @@ public final class ContractUpdateTransaction: Transaction {
     /// life of the contract.
     @discardableResult
     public func autoRenewAccountId(_ autoRenewAccountId: AccountId?) -> Self {
-        self.autoRenewAccountId = 0
+        self.autoRenewAccountId = autoRenewAccountId
 
         return self
     }
@@ -361,7 +361,7 @@ extension ContractUpdateTransaction: ToProtobuf {
     }
 }
 
-extension ContractUpdateTransaction: ToSchedulableTransactionData {
+extension ContractUpdateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .contractUpdateInstance(toProtobuf())
     }

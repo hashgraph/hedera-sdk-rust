@@ -30,22 +30,6 @@ import HederaProtobufs
 ///
 /// On success, the resulting `TransactionReceipt` contains the newly created `TopicId`.
 public final class TopicCreateTransaction: Transaction {
-    internal init(
-        topicMemo: String = "",
-        adminKey: Key? = nil,
-        submitKey: Key? = nil,
-        autoRenewPeriod: Duration? = nil,
-        autoRenewAccountId: AccountId? = nil
-    ) {
-        self.topicMemo = topicMemo
-        self.adminKey = adminKey
-        self.submitKey = submitKey
-        self.autoRenewPeriod = autoRenewPeriod
-        self.autoRenewAccountId = autoRenewAccountId
-
-        super.init()
-    }
-
     /// Create a new `TopicCreateTransaction` ready for configuration.
     public override init() {
         super.init()
@@ -171,7 +155,7 @@ extension TopicCreateTransaction: ToProtobuf {
     }
 }
 
-extension TopicCreateTransaction: ToSchedulableTransactionData {
+extension TopicCreateTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .consensusCreateTopic(toProtobuf())
     }

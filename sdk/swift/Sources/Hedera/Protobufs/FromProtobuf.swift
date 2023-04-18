@@ -31,32 +31,24 @@ extension FromProtobuf {
 }
 
 extension Optional: TryFromProtobuf where Wrapped: TryFromProtobuf {
-    internal typealias Protobuf = Wrapped.Protobuf?
-
     internal init(protobuf proto: Wrapped.Protobuf?) throws {
         self = try proto.map(Wrapped.fromProtobuf)
     }
 }
 
 extension Optional: FromProtobuf where Wrapped: FromProtobuf {
-    internal typealias Protobuf = Wrapped.Protobuf?
-
     internal init(protobuf proto: Wrapped.Protobuf?) {
         self = proto.map(Wrapped.fromProtobuf)
     }
 }
 
 extension Array: TryFromProtobuf where Element: TryFromProtobuf {
-    internal typealias Protobuf = [Element.Protobuf]
-
     internal init(protobuf proto: [Element.Protobuf]) throws {
         self = try proto.map(Element.fromProtobuf)
     }
 }
 
 extension Array: FromProtobuf where Element: FromProtobuf {
-    internal typealias Protobuf = [Element.Protobuf]
-
     internal init(protobuf proto: [Element.Protobuf]) {
         self = proto.map(Element.fromProtobuf)
     }

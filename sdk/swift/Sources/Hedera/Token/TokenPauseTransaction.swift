@@ -81,7 +81,7 @@ extension TokenPauseTransaction: ToProtobuf {
     }
 }
 
-extension TokenPauseTransaction: ToSchedulableTransactionData {
+extension TokenPauseTransaction {
     internal func toSchedulableTransactionData() -> Proto_SchedulableTransactionBody.OneOf_Data {
         .tokenPause(toProtobuf())
     }
