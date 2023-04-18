@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 import NumberKit
 
@@ -152,7 +151,7 @@ public struct Mnemonic: Equatable {
         salt += passphrase
 
         return
-            Crypto.Pkcs5.pbkdf2(
+            Pkcs5.pbkdf2(
                 variant: .sha2(.sha512),
                 password: String(describing: self).data(using: .utf8)!,
                 salt: salt.data(using: .utf8)!,
@@ -344,10 +343,4 @@ private func inceciesToEntropyAndChecksum(_ indecies: [UInt16]) -> (entropy: Dat
     checksum = indecies.count == 12 ? (checksum & 0xf0) : checksum
 
     return (output, checksum)
-}
-
-extension Data {
-    fileprivate static func randomData(withLength length: Int) -> Self {
-        Self((0..<length).map { _ in UInt8.random(in: 0...0xff) })
-    }
 }

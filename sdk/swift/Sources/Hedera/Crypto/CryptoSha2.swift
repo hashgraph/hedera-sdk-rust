@@ -18,7 +18,7 @@
  * ‍
  */
 
-import CHedera
+import CryptoKit
 import Foundation
 
 extension Crypto {
@@ -34,23 +34,11 @@ extension Crypto {
         internal func digest(_ data: Data) -> Data {
             switch self {
             case .sha256:
-                return data.withUnsafeTypedBytes { buffer in
-                    var output: UnsafeMutablePointer<UInt8>?
-                    let count = hedera_crypto_sha2_sha256_digest(buffer.baseAddress, buffer.count, &output)
-                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
-                }
+                return Data(CryptoKit.SHA256.hash(data: data))
             case .sha384:
-                return data.withUnsafeTypedBytes { buffer in
-                    var output: UnsafeMutablePointer<UInt8>?
-                    let count = hedera_crypto_sha2_sha384_digest(buffer.baseAddress, buffer.count, &output)
-                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
-                }
+                return Data(CryptoKit.SHA384.hash(data: data))
             case .sha512:
-                return data.withUnsafeTypedBytes { buffer in
-                    var output: UnsafeMutablePointer<UInt8>?
-                    let count = hedera_crypto_sha2_sha512_digest(buffer.baseAddress, buffer.count, &output)
-                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
-                }
+                return Data(CryptoKit.SHA512.hash(data: data))
             }
         }
 

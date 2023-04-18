@@ -23,10 +23,7 @@ internal enum Crypto {}
 
 extension Crypto {
     internal enum Hmac {
+        // case sha1
         case sha2(Crypto.Sha2)
-        case sha3(Crypto.Sha3)
     }
-}
-
-extension Crypto.Hmac {
 }

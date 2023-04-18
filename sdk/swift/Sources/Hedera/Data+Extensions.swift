@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 
 private func hexVal(_ char: UInt8) -> UInt8? {
@@ -99,11 +98,9 @@ extension Data {
     }
 }
 
-extension Data.Deallocator {
-    // safety: `hedera_bytes_free` needs to be called so...
-    // perf: might as well enable use of the no copy constructor.
-    internal static let unsafeCHederaBytesFree: Data.Deallocator = .custom { (buf, size) in
-        hedera_bytes_free(buf.bindMemory(to: UInt8.self, capacity: size), size)
+extension Data {
+    internal static func randomData(withLength length: Int) -> Self {
+        Self((0..<length).map { _ in UInt8.random(in: 0...0xff) })
     }
 }
 

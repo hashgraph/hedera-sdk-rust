@@ -1,6 +1,6 @@
 /*
  * ‌
- * Hedera Rust SDK
+ * Hedera Swift SDK
  * ​
  * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
  * ​
@@ -18,9 +18,8 @@
  * ‍
  */
 
-#[macro_use]
-mod error;
-mod c_util;
-mod crypto;
-mod key;
-mod util;
+import secp256k1
+
+extension Crypto {
+    internal typealias SecpDigest = Digest
+}

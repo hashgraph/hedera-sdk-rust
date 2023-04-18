@@ -35,7 +35,7 @@ let client = Client.forTestnet()
 
 // query the balance of an account
 let ab = try await AccountBalanceQuery()
-    .account_id(AccountId("0.0.1001")!)
+    .accountId(AccountId("0.0.1001")!)
     .execute(client)
 
 print("balance = \(ab.balance)")
