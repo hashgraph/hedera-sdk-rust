@@ -17,9 +17,9 @@ jobs:
         with:
           submodules: 'recursive'
       - name: Add `rustfmt` to toolchain
-        run: rustup component add rustfmt
+        run: rustup +nightly component add rustfmt
       - name: Format
-        run: cargo fmt --check
+        run: cargo +nightly fmt --check
   
   check:
     runs-on: ubuntu-22.04

@@ -1,4 +1,3 @@
-import CHedera
 import Foundation
 import HederaProtobufs
 
@@ -31,9 +30,9 @@ public struct Timestamp: Sendable, Equatable, CustomStringConvertible {
         Self(from: Date())
     }
 
-    /// Convert from a ``Date`` to a `Timestamp`
+    /// Convert from a `Date` to a `Timestamp`
     ///
-    /// `Date` is stored as ``Double`` seconds, so, it may not have full precision.
+    /// `Date` is stored as `Double` seconds, so, it may not have full precision.
     public init(from date: Date) {
         let components = Calendar.current.dateComponents([.second, .nanosecond], from: unixEpoch, to: date)
 
@@ -48,7 +47,7 @@ public struct Timestamp: Sendable, Equatable, CustomStringConvertible {
 
     /// Convert from a `Timestamp` to a `Date`
     ///
-    /// ``Date`` is stored as ``Double`` seconds, so, it may not have full precision.
+    /// `Date` is stored as `Double` seconds, so, it may not have full precision.
     public func toDate() -> Date {
         let components = DateComponents(timeZone: timeZoneUTC, second: Int(seconds), nanosecond: Int(subSecondNanos))
 

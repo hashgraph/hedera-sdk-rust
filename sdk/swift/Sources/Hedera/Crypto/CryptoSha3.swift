@@ -18,7 +18,7 @@
  * ‍
  */
 
-import CHedera
+import CryptoSwift
 import Foundation
 
 extension Crypto {
@@ -32,11 +32,7 @@ extension Crypto {
         internal func digest(_ data: Data) -> Data {
             switch self {
             case .keccak256:
-                return data.withUnsafeTypedBytes { buffer in
-                    var output: UnsafeMutablePointer<UInt8>?
-                    let count = hedera_crypto_sha3_keccak256_digest(buffer.baseAddress, buffer.count, &output)
-                    return Data(bytesNoCopy: output!, count: count, deallocator: .unsafeCHederaBytesFree)
-                }
+                return Data(CryptoSwift.SHA3(variant: .keccak256).calculate(for: Array(data)))
             }
         }
 

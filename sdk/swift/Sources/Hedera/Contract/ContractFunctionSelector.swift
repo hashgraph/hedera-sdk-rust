@@ -18,7 +18,6 @@
  * ‍
  */
 
-import CHedera
 import Foundation
 
 // note: this is a class in order to enable the builder pattern.
@@ -75,7 +74,7 @@ public final class ContractFunctionSelector {
         }
     }
 
-    /// If ``finish`` has been called, this will return the selector created, otherwise, this will return `nil`.
+    /// If ``finish()`` has been called, this will return the selector created, otherwise, this will return `nil`.
     public var output: Data? {
         if case .finished(let data) = state {
             return data

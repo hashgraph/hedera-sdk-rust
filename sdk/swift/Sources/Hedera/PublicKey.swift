@@ -18,19 +18,54 @@
  * ‍
  */
 
-import CHedera
+import CryptoKit
 import Foundation
 import HederaProtobufs
-
-// todo: deduplicate these with `PrivateKey.swift`
-
-private typealias UnsafeFromBytesFunc = @convention(c) (
-    UnsafePointer<UInt8>?, Int, UnsafeMutablePointer<OpaquePointer?>?
-) -> HederaError
+import SwiftASN1
+import secp256k1
+import secp256k1_bindings
 
 /// A public key on the Hedera network.
-public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
-    internal let ptr: OpaquePointer
+public struct PublicKey: LosslessStringConvertible, ExpressibleByStringLiteral, Equatable, Hashable {
+    // we need to be sendable, so...
+    // The idea being that we initialize the key whenever we need it, which is absolutely not free, but it is `Sendable`.
+    fileprivate enum Repr {
+        case ed25519(Data)
+        case ecdsa(Data, compressed: Bool)
+
+        fileprivate init(kind: PublicKey.Kind) {
+            switch kind {
+            case .ecdsa(let key): self = .ecdsa(key.rawRepresentation, compressed: key.format == .compressed)
+            case .ed25519(let key): self = .ed25519(key.rawRepresentation)
+            }
+        }
+
+        fileprivate var kind: PublicKey.Kind {
+            // swiftlint:disable force_try
+            switch self {
+            case .ecdsa(let key, let compressed):
+                return .ecdsa(try! .init(rawRepresentation: key, format: compressed ? .compressed : .uncompressed))
+            case .ed25519(let key): return .ed25519(try! .init(rawRepresentation: key))
+            }
+
+            // swiftlint:enable force_try
+        }
+    }
+
+    fileprivate enum Kind {
+        case ed25519(CryptoKit.Curve25519.Signing.PublicKey)
+        case ecdsa(secp256k1.Signing.PublicKey)
+    }
+
+    private init(_ kind: Kind) {
+        self.guts = .init(kind: kind)
+    }
+
+    private let guts: Repr
+
+    private var kind: Kind {
+        guts.kind
+    }
 
     private static func decodeBytes<S: StringProtocol>(_ description: S) throws -> Data {
         let description = description.stripPrefix("0x") ?? description[...]
@@ -41,50 +76,106 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         return bytes
     }
 
-    // sadly, we can't avoid a leaky abstraction here.
-    internal static func unsafeFromPtr(_ ptr: OpaquePointer) -> Self {
-        Self(ptr)
+    internal static func ed25519(_ key: CryptoKit.Curve25519.Signing.PublicKey) -> Self {
+        Self(.ed25519(key))
     }
 
-    private init(_ ptr: OpaquePointer) {
-        self.ptr = ptr
+    internal static func ecdsa(_ key: secp256k1.Signing.PublicKey) -> Self {
+        Self(.ecdsa(key))
     }
 
-    private init(bytes: Data, unsafeCallback chederaCallback: UnsafeFromBytesFunc) throws {
-        self.ptr = try bytes.withUnsafeTypedBytes { pointer -> OpaquePointer in
-            var key: OpaquePointer?
-            try HError.throwing(error: chederaCallback(pointer.baseAddress, pointer.count, &key))
-
-            return key!
+    private init(bytes: Data) throws {
+        switch bytes.count {
+        case 32: try self.init(ed25519Bytes: bytes)
+        case 33: try self.init(ecdsaBytes: bytes)
+        default: try self.init(derBytes: bytes)
         }
-    }
-
-    private convenience init(bytes: Data) throws {
-        try self.init(bytes: bytes, unsafeCallback: hedera_public_key_from_bytes)
     }
 
     public static func fromBytes(_ bytes: Data) throws -> Self {
         try Self(bytes: bytes)
     }
 
-    fileprivate convenience init(ed25519Bytes bytes: Data) throws {
-        try self.init(bytes: bytes, unsafeCallback: hedera_public_key_from_bytes_ed25519)
+    fileprivate init(ed25519Bytes bytes: Data) throws {
+        guard bytes.count == 32 else {
+            try self.init(derBytes: bytes)
+            return
+        }
+
+        do {
+            self.init(.ed25519(try .init(rawRepresentation: bytes)))
+        } catch {
+            throw HError.keyParse(String(describing: error))
+        }
+    }
+
+    private var algorithm: Pkcs5.AlgorithmIdentifier {
+        let oid: ASN1ObjectIdentifier
+
+        // todo: `self.kind`
+        switch self.kind {
+        case .ed25519: oid = .NamedCurves.ed25519
+        case .ecdsa: oid = .NamedCurves.secp256k1
+        }
+
+        return .init(oid: oid)
     }
 
     public static func fromBytesEd25519(_ bytes: Data) throws -> Self {
         try Self(ed25519Bytes: bytes)
     }
 
-    fileprivate convenience init(ecdsaBytes bytes: Data) throws {
-        try self.init(bytes: bytes, unsafeCallback: hedera_public_key_from_bytes_ecdsa)
+    fileprivate init(ecdsaBytes bytes: Data) throws {
+        guard bytes.count == 33 else {
+            try self.init(derBytes: bytes)
+            return
+        }
+
+        do {
+            self.init(.ecdsa(try .init(rawRepresentation: bytes, format: .compressed)))
+        } catch {
+            throw HError.keyParse(String(describing: error))
+        }
+
     }
 
     public static func fromBytesEcdsa(_ bytes: Data) throws -> Self {
         try Self(ecdsaBytes: bytes)
     }
 
+    fileprivate init(derBytes bytes: Data) throws {
+        let info: Pkcs8.SubjectPublicKeyInfo
+
+        do {
+            info = try .init(derEncoded: Array(bytes))
+        } catch {
+            throw HError.keyParse(String(describing: error))
+        }
+
+        switch info.algorithm.oid {
+        // hack: Rust had a bug where it used the wrong OID for public keys, the only test verifying the correct behavior exists in JS,
+        // rather than Java, where the impl was ported from, the incorrect OID being `id-ecpub`.
+        case .NamedCurves.secp256k1, .AlgorithmIdentifier.idEcPublicKey:
+            guard info.subjectPublicKey.paddingBits == 0 else {
+                throw HError.keyParse("Invalid padding for secp256k1 spki")
+            }
+
+            try self.init(ecdsaBytes: Data(info.subjectPublicKey.bytes))
+
+        case .NamedCurves.ed25519:
+            guard info.subjectPublicKey.paddingBits == 0 else {
+                throw HError.keyParse("Invalid padding for ed25519 spki")
+            }
+
+            try self.init(ed25519Bytes: Data(info.subjectPublicKey.bytes))
+
+        default:
+            throw HError.keyParse("Unknown public key OID \(info.algorithm.oid)")
+        }
+    }
+
     public static func fromBytesDer(_ bytes: Data) throws -> Self {
-        try Self(bytes: bytes, unsafeCallback: hedera_public_key_from_bytes_der)
+        try Self(derBytes: bytes)
     }
 
     internal static func fromAliasBytes(_ bytes: Data) throws -> PublicKey? {
@@ -101,7 +192,7 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         }
     }
 
-    private convenience init(parsing description: String) throws {
+    private init(parsing description: String) throws {
         try self.init(bytes: Self.decodeBytes(description))
     }
 
@@ -109,11 +200,11 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
         try Self(parsing: description)
     }
 
-    public convenience init?(_ description: String) {
+    public init?(_ description: String) {
         try? self.init(parsing: description)
     }
 
-    public required convenience init(stringLiteral value: StringLiteralType) {
+    public init(stringLiteral value: StringLiteralType) {
         // swiftlint:disable:next force_try
         try! self.init(parsing: value)
     }
@@ -131,24 +222,31 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public func toBytesDer() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_public_key_to_bytes_der(ptr, &buf)
+        let spki = Pkcs8.SubjectPublicKeyInfo(
+            algorithm: algorithm,
+            subjectPublicKey: ASN1BitString(bytes: Array(toBytesRaw())[...])
+        )
 
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        var serializer = DER.Serializer()
+
+        // swiftlint:disable:next force_try
+        try! serializer.serialize(spki)
+        return Data(serializer.serializedBytes)
+
     }
 
     public func toBytes() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_public_key_to_bytes(ptr, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        switch kind {
+        case .ed25519: return toBytesRaw()
+        case .ecdsa: return toBytesDer()
+        }
     }
 
     public func toBytesRaw() -> Data {
-        var buf: UnsafeMutablePointer<UInt8>?
-        let size = hedera_public_key_to_bytes_raw(ptr, &buf)
-
-        return Data(bytesNoCopy: buf!, count: size, deallocator: .unsafeCHederaBytesFree)
+        switch kind {
+        case .ecdsa(let key): return key.rawRepresentation
+        case .ed25519(let key): return key.rawRepresentation
+        }
     }
 
     public var description: String {
@@ -172,23 +270,42 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
     }
 
     public func verify(_ message: Data, _ signature: Data) throws {
-        try message.withUnsafeTypedBytes { messagePointer in
-            try signature.withUnsafeTypedBytes { signaturePointer in
-                let err = hedera_public_key_verify(
-                    ptr, messagePointer.baseAddress, messagePointer.count, signaturePointer.baseAddress,
-                    signaturePointer.count)
+        switch self.kind {
+        case .ed25519(let key):
+            guard key.isValidSignature(signature, for: message) else {
+                throw HError(kind: .signatureVerify, description: "invalid signature")
+            }
 
-                try HError.throwing(error: err)
+        case .ecdsa(let key):
+            let isValid: Bool
+            do {
+                isValid = try key.ecdsa.isValidSignature(
+                    .init(compactRepresentation: signature), for: Keccak256Digest(Crypto.Sha3.keccak256(message))!)
+            } catch {
+                throw HError(kind: .signatureVerify, description: "invalid signature")
+            }
+
+            guard isValid
+            else {
+                throw HError(kind: .signatureVerify, description: "invalid signature")
             }
         }
     }
 
     public func isEd25519() -> Bool {
-        hedera_public_key_is_ed25519(ptr)
+        if case .ed25519 = kind {
+            return true
+        }
+
+        return false
     }
 
     public func isEcdsa() -> Bool {
-        hedera_public_key_is_ecdsa(ptr)
+        if case .ecdsa = kind {
+            return true
+        }
+
+        return false
     }
 
     public static func == (lhs: PublicKey, rhs: PublicKey) -> Bool {
@@ -203,13 +320,45 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
     /// Convert this public key into an evm address. The EVM address is This is the rightmost 20 bytes of the 32 byte Keccak-256 hash of the ECDSA public key.
     public func toEvmAddress() -> EvmAddress? {
-        let dataPtr = hedera_public_key_to_evm_address(ptr)
-
-        return dataPtr.map { dataPtr in
-            // we literally write 20 as the count, which is the only requirement for `EvmAddress`.
-            // swiftlint:disable:next force_try
-            try! EvmAddress(Data(bytesNoCopy: dataPtr, count: 20, deallocator: .unsafeCHederaBytesFree))
+        guard case .ecdsa(let key) = self.kind else {
+            return nil
         }
+
+        // when the bindings aren't enough :/
+        var pubkey = secp256k1_pubkey()
+
+        key.rawRepresentation.withUnsafeTypedBytes { bytes in
+            let result = secp256k1_bindings.secp256k1_ec_pubkey_parse(
+                secp256k1.Context.raw,
+                &pubkey,
+                bytes.baseAddress!,
+                bytes.count
+            )
+
+            precondition(result == 1)
+        }
+
+        var output = Data(repeating: 0, count: 65)
+
+        output.withUnsafeMutableTypedBytes { output in
+            var outputLen = output.count
+
+            let result = secp256k1_ec_pubkey_serialize(
+                secp256k1.Context.raw, output.baseAddress!,
+                &outputLen,
+                &pubkey,
+                secp256k1.Format.uncompressed.rawValue
+            )
+
+            precondition(result == 1)
+            precondition(outputLen == output.count)
+        }
+
+        // fixme(important): sec1 uncompressed point
+        let hash = Crypto.Sha3.keccak256(output[1...])
+
+        return try! EvmAddress(Data(hash.dropFirst(12)))
+
     }
 
     internal func verifyTransactionSources(_ sources: TransactionSources) throws {
@@ -251,16 +400,12 @@ public final class PublicKey: LosslessStringConvertible, ExpressibleByStringLite
 
         try verifyTransactionSources(sources)
     }
-
-    deinit {
-        hedera_public_key_free(ptr)
-    }
 }
 
 extension PublicKey: TryProtobufCodable {
     internal typealias Protobuf = Proto_Key
 
-    internal convenience init(protobuf proto: Proto_Key) throws {
+    internal init(protobuf proto: Proto_Key) throws {
         guard let key = proto.key else {
             throw HError.fromProtobuf("Key protobuf kind was unexpectedly `nil`")
         }
@@ -304,5 +449,11 @@ extension PublicKey: TryProtobufCodable {
         }
     }
 }
+
+#if compiler(>=5.7)
+    extension PublicKey.Repr: Sendable {}
+#else
+    extension PublicKey.Repr: @unchecked Sendable {}
+#endif
 
 extension PublicKey: Sendable {}
