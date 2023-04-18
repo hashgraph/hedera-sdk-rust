@@ -42,12 +42,6 @@ public class Transaction: ValidateChecksums {
 
     private final var `operator`: Operator?
 
-    internal final var nodeAccountIds: [AccountId]? {
-        willSet {
-            ensureNotFrozen(fieldName: "nodeAccountIds")
-        }
-    }
-
     internal var defaultMaxTransactionFee: Hbar {
         2
     }
@@ -60,6 +54,19 @@ public class Transaction: ValidateChecksums {
         -> Proto_TransactionResponse
     {
         fatalError("Method `Transaction.transactionExecute` must be overridden by `\(type(of: self))`")
+    }
+
+    public final var nodeAccountIds: [AccountId]? {
+        willSet {
+            ensureNotFrozen(fieldName: "nodeAccountIds")
+        }
+    }
+
+    @discardableResult
+    public func nodeAccountIds(_ nodeAccountIds: [AccountId]) -> Self {
+        self.nodeAccountIds = nodeAccountIds
+
+        return self
     }
 
     /// Explicit transaction ID for this transaction.
