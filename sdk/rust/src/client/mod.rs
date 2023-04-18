@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::fmt;
 use std::sync::atomic::{
     AtomicBool,
     AtomicU64,
@@ -57,6 +58,13 @@ struct ClientInner {
 /// Managed client for use on the Hedera network.
 #[derive(Clone)]
 pub struct Client(Arc<ClientInner>);
+
+impl fmt::Debug for Client {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // todo: put anything important here.
+        f.debug_tuple("Client").finish()
+    }
+}
 
 impl Client {
     fn with_network(

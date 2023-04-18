@@ -33,7 +33,7 @@ use crate::entity_id::{
     PartialEntityId,
     ValidateChecksums,
 };
-use crate::evm_address::IdEvmAddress;
+use crate::ethereum::IdEvmAddress;
 use crate::{
     Client,
     EntityId,

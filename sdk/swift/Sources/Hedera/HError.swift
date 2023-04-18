@@ -160,8 +160,6 @@ public struct HError: Error, CustomStringConvertible {
                 "Failed to complete request within the maximum time allowed; most recent attempt failed with: \(description)"
         )
     }
-
-    // swiftlint:enable function_body_length
 }
 
 extension HError: LocalizedError {

@@ -34,6 +34,7 @@ use crate::{
     BoxGrpcFuture,
     Error,
     FileId,
+    Hbar,
     LedgerId,
     ToProtobuf,
     Transaction,
@@ -58,7 +59,7 @@ pub struct EthereumTransactionData {
 
     /// The maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
-    max_gas_allowance_hbar: u64,
+    max_gas_allowance_hbar: Hbar,
 }
 
 impl EthereumTransaction {
@@ -96,13 +97,13 @@ impl EthereumTransaction {
     /// Returns the maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
     #[must_use]
-    pub fn get_max_gas_allowance_hbar(&self) -> u64 {
+    pub fn get_max_gas_allowance_hbar(&self) -> Hbar {
         self.data().max_gas_allowance_hbar
     }
 
     /// Sets the maximum amount that the payer of the hedera transaction
     /// is willing to pay to complete the transaction.
-    pub fn max_gas_allowance_hbar(&mut self, allowance: u64) -> &mut Self {
+    pub fn max_gas_allowance_hbar(&mut self, allowance: Hbar) -> &mut Self {
         self.data_mut().max_gas_allowance_hbar = allowance;
         self
     }
@@ -138,7 +139,7 @@ impl ToTransactionDataProtobuf for EthereumTransactionData {
         services::transaction_body::Data::EthereumTransaction(services::EthereumTransactionBody {
             ethereum_data: self.ethereum_data.clone(),
             call_data,
-            max_gas_allowance: self.max_gas_allowance_hbar as i64,
+            max_gas_allowance: self.max_gas_allowance_hbar.to_tinybars(),
         })
     }
 }
@@ -154,7 +155,7 @@ impl FromProtobuf<services::EthereumTransactionBody> for EthereumTransactionData
         Ok(Self {
             ethereum_data: pb.ethereum_data,
             call_data_file_id: Option::from_protobuf(pb.call_data)?,
-            max_gas_allowance_hbar: pb.max_gas_allowance as u64,
+            max_gas_allowance_hbar: Hbar::from_tinybars(pb.max_gas_allowance),
         })
     }
 }

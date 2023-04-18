@@ -23,11 +23,11 @@ use std::collections::HashMap;
 use hedera_proto::services;
 use time::OffsetDateTime;
 
-use crate::evm_address::EvmAddress;
 use crate::{
     AccountId,
     AssessedCustomFee,
     ContractFunctionResult,
+    EvmAddress,
     FromProtobuf,
     Hbar,
     PublicKey,

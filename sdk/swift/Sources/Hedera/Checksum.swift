@@ -130,6 +130,6 @@ public struct Checksum: Sendable, LosslessStringConvertible, Hashable {
         // thanks swift, for not having fixed length arrays
         return Checksum(bytes: (output[0], output[1], output[2], output[3], output[4]))
 
-        // swiftlint:endable identifier_name
+        // swiftlint:enable identifier_name
     }
 }

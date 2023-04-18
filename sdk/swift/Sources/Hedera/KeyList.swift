@@ -17,7 +17,7 @@ public struct KeyList: ExpressibleByArrayLiteral, Equatable {
 }
 
 extension KeyList: Collection, RandomAccessCollection {
-    public typealias Index = Int
+    public typealias Index = Array<Key>.Index
     public typealias Element = Key
 
     public subscript(_ position: Int) -> Key {
@@ -28,12 +28,6 @@ extension KeyList: Collection, RandomAccessCollection {
         set(value) {
             self.keys[position] = value
         }
-    }
-
-    // i is *the* identifier name to use here.
-    // swiftlint:disable:next identifier_name
-    public func index(after i: Int) -> Int {
-        self.keys.index(after: i)
     }
 
     public var startIndex: Int { keys.startIndex }

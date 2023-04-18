@@ -33,11 +33,11 @@ use crate::entity_id::{
     PartialEntityId,
     ValidateChecksums,
 };
-use crate::evm_address::EvmAddress;
 use crate::{
     Client,
     EntityId,
     Error,
+    EvmAddress,
     FromProtobuf,
     LedgerId,
     PublicKey,
@@ -274,7 +274,7 @@ mod tests {
 
     use hex_literal::hex;
 
-    use crate::evm_address::EvmAddress;
+    use crate::ethereum::EvmAddress;
     use crate::{
         AccountId,
         Client,

@@ -56,7 +56,7 @@ mod data {
         ContractExecuteTransactionData as ContractExecute,
         ContractUpdateTransactionData as ContractUpdate,
     };
-    pub(super) use crate::ethereum_transaction::EthereumTransactionData as Ethereum;
+    pub(super) use crate::ethereum::EthereumTransactionData as Ethereum;
     pub(super) use crate::file::{
         FileAppendTransactionData as FileAppend,
         FileCreateTransactionData as FileCreate,

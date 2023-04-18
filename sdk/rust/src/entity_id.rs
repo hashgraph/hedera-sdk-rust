@@ -28,7 +28,7 @@ use std::str::FromStr;
 
 use tinystr::TinyAsciiStr;
 
-use crate::evm_address::IdEvmAddress;
+use crate::ethereum::IdEvmAddress;
 use crate::{
     Client,
     Error,

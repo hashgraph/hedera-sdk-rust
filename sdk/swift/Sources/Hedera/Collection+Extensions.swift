@@ -14,6 +14,7 @@ extension RandomAccessCollection {
         // So, `0..<self.endIndex` *is* contained by `self` and should return `true` here.
         // but, `indices.contains(range.lowerBound) && indices.contains(range.upperBound)` would return false.
         return range.clamped(to: startIndex..<endIndex) == range
+
     }
 
     internal func splitFirst() -> (first: Element, rest: SubSequence)? {
@@ -22,6 +23,14 @@ extension RandomAccessCollection {
 
     internal func splitLast() -> (last: Element, rest: SubSequence)? {
         last.map { ($0, dropLast(1)) }
+    }
+
+    internal func splitAt(_ middle: Index) -> (SubSequence, SubSequence)? {
+        guard self.indices.contains(middle) else {
+            return nil
+        }
+
+        return (self[..<middle], self[middle...])
     }
 }
 

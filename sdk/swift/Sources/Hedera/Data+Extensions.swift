@@ -106,3 +106,62 @@ extension Data.Deallocator {
         hedera_bytes_free(buf.bindMemory(to: UInt8.self, capacity: size), size)
     }
 }
+
+extension Data {
+    internal func split(at middle: Index) -> (SubSequence, SubSequence)? {
+        guard let index = index(startIndex, offsetBy: middle, limitedBy: endIndex) else {
+            return nil
+        }
+
+        // note: neither of these operations can cause issues because `startIndex <= index <= endIndex`
+        return (self[..<index], self[index...])
+    }
+
+    /// Slice this data using *sane* ranges
+    ///
+    /// Example:
+    /// ```swift
+    /// // gives the equivalent of Data([2, 3])
+    /// let tmp = Data([1, 2, 3])[slicing: 1..<3]!
+    /// // gives the equivalent of Data([2])
+    /// let tmp2 = tmp[slicing: 0..<1]!
+    /// precondition(tmp2[slicing: 1..<2] == nil)
+    /// ```
+    internal subscript(slicing range: Range<Index>) -> SubSequence? {
+        guard let startIndex = index(startIndex, offsetBy: range.lowerBound, limitedBy: endIndex) else {
+            return nil
+        }
+
+        guard let endIndex = index(startIndex, offsetBy: range.count, limitedBy: endIndex) else {
+            return nil
+        }
+
+        return self[startIndex..<endIndex]
+    }
+
+    /// Slice this data using *sane* ranges
+    internal subscript(slicing range: PartialRangeFrom<Index>) -> SubSequence? {
+        guard let startIndex = index(startIndex, offsetBy: range.lowerBound, limitedBy: endIndex) else {
+            return nil
+        }
+
+        return self[startIndex...]
+    }
+
+    /// Slice this data using *sane* ranges
+    internal subscript(slicing range: PartialRangeUpTo<Index>) -> SubSequence? {
+        guard let endIndex = index(startIndex, offsetBy: range.upperBound, limitedBy: endIndex) else {
+            return nil
+        }
+
+        return self[..<endIndex]
+    }
+
+    internal subscript(at index: Index) -> Element? {
+        guard let index = self.index(startIndex, offsetBy: index, limitedBy: endIndex) else {
+            return nil
+        }
+
+        return self[index]
+    }
+}
