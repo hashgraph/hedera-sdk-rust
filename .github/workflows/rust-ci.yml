@@ -2,12 +2,7 @@ name: Rust CI
 on:
   pull_request:
   push:
-    paths: ["sdk/rust/**", "protobufs/**"]
     branches: ['main']
-
-defaults:
-  run:
-    working-directory: sdk/rust
 
 jobs:
   format:
@@ -54,7 +49,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: |
-            sdk/rust
+            .
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
