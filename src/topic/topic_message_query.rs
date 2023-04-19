@@ -18,6 +18,12 @@
  * ‍
  */
 
+use std::collections::HashMap;
+use std::{
+    mem,
+    task,
+};
+
 use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
 use futures_core::Stream;
@@ -32,6 +38,10 @@ use time::{
 use tonic::transport::Channel;
 use tonic::Response;
 
+use super::topic_message::{
+    PbTopicMessageChunk,
+    PbTopicMessageHeader,
+};
 use crate::mirror_query::{
     AnyMirrorQueryData,
     AnyMirrorQueryMessage,
@@ -44,6 +54,7 @@ use crate::{
     ToProtobuf,
     TopicId,
     TopicMessage,
+    TransactionId,
 };
 
 // TODO: test, test, and test
@@ -81,7 +92,7 @@ impl TopicMessageQueryData {
     where
         S: Stream<Item = crate::Result<mirror::ConsensusTopicResponse>> + Send + 'a,
     {
-        stream.and_then(|it| std::future::ready(TopicMessage::from_protobuf(it)))
+        MessagesMapStream { inner: stream, incomplete_messages: HashMap::new() }
     }
 }
 
@@ -218,5 +229,123 @@ impl From<TopicMessage> for AnyMirrorQueryMessage {
 impl From<Vec<TopicMessage>> for AnyMirrorQueryResponse {
     fn from(value: Vec<TopicMessage>) -> Self {
         Self::TopicMessage(value)
+    }
+}
+
+enum IncompleteMessage {
+    Partial(OffsetDateTime, Vec<PbTopicMessageChunk>),
+    Expired,
+    Complete,
+}
+
+impl IncompleteMessage {
+    fn handle_expiry(&mut self) -> &mut Self {
+        match self {
+            IncompleteMessage::Partial(expiry, _) if *expiry < OffsetDateTime::now_utc() => {
+                *self = Self::Expired
+            }
+            _ => {}
+        }
+
+        self
+    }
+}
+
+pin_project_lite::pin_project! {
+    struct MessagesMapStream<S> {
+        #[pin]
+        inner: S,
+        incomplete_messages: HashMap<TransactionId, IncompleteMessage>,
+    }
+}
+
+impl<S> Stream for MessagesMapStream<S>
+where
+    S: Stream<Item = crate::Result<mirror::ConsensusTopicResponse>> + Send,
+{
+    type Item = crate::Result<TopicMessage>;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut task::Context<'_>,
+    ) -> task::Poll<Option<Self::Item>> {
+        use task::Poll;
+
+        let mut this = self.project();
+
+        loop {
+            let item = match task::ready!(this.inner.as_mut().poll_next(cx)) {
+                Some(Ok(item)) => item,
+                Some(Err(e)) => return Poll::Ready(Some(Err(e))),
+                None => return Poll::Ready(None),
+            };
+
+            match filter_map(item, this.incomplete_messages) {
+                Ok(Some(item)) => return Poll::Ready(Some(Ok(item))),
+                Ok(None) => {}
+                Err(e) => return Poll::Ready(Some(Err(e))),
+            }
+        }
+    }
+}
+
+fn filter_map(
+    mut item: mirror::ConsensusTopicResponse,
+    incomplete_messages: &mut HashMap<TransactionId, IncompleteMessage>,
+) -> crate::Result<Option<TopicMessage>> {
+    let header = PbTopicMessageHeader {
+        consensus_timestamp: pb_getf!(item, consensus_timestamp)?.into(),
+        sequence_number: item.sequence_number,
+        running_hash: item.running_hash,
+        running_hash_version: item.running_hash_version,
+        message: item.message,
+    };
+
+    let item = match item.chunk_info.take() {
+        Some(chunk_info) if chunk_info.total > 1 => PbTopicMessageChunk {
+            header,
+            initial_transaction_id: TransactionId::from_protobuf(pb_getf!(
+                chunk_info,
+                initial_transaction_id
+            )?)?,
+            number: chunk_info.number,
+            total: chunk_info.total,
+        },
+        _ => return Ok(Some(TopicMessage::from_single(header))),
+    };
+
+    let tx_id = item.initial_transaction_id;
+
+    let entry = incomplete_messages.entry(tx_id).or_insert_with(|| {
+        IncompleteMessage::Partial(
+            // todo: configurable?
+            OffsetDateTime::now_utc() + time::Duration::minutes(15),
+            Vec::new(),
+        )
+    });
+
+    let IncompleteMessage::Partial(_, messages) = entry.handle_expiry() else  {
+        return Ok(None)
+    };
+
+    match messages.binary_search_by_key(&item.number, |it| it.number) {
+        // We have a duplicate `number`, so, we'll just ignore it (this is unspecified behavior)
+        Ok(_) => {}
+        Err(index) => messages.insert(index, item),
+    };
+
+    // find the smallest `total` so that we aren't susceptable to stuff like total changing (and getting bigger)
+    // later on there's a check that ensures that they all have the same total.
+    let total = messages.iter().map(|it| it.total).min().unwrap();
+
+    // note: because of the way we handle `total`, `total` can get *smaller*.
+    match messages.len() >= total as usize {
+        true => {
+            let messages = mem::take(messages);
+            *entry = IncompleteMessage::Complete;
+            Ok(Some(TopicMessage::from_chunks(messages)))
+        }
+
+        false => Ok(None),
     }
 }
