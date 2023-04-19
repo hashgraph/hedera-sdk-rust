@@ -1,6 +1,4 @@
 .env
 .idea/
 .task/
-sdk/c/lib/*/
-sdk/swift/CHedera.xcframework/*/
-sdk/go/native/**/*.a
+target
