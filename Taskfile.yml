@@ -1,33 +1,31 @@
 version: "3"
 
-includes:
-    rust:
-        taskfile: ./sdk/rust/Taskfile.yml
-        dir: ./sdk/rust
-
-    swift:
-        taskfile: ./sdk/swift/Taskfile.yml
-        dir: ./sdk/swift
+silent: true
 
 tasks:
     build:
-        deps:
-            - rust:build
-            - swift:build
+        run: once
+        sources:
+            - src/**/*.rs
+            - Cargo.lock
+            - Cargo.toml
+        cmds:
+            # Build the Hedera Rust SDK (in debug mode)
+            - cmd: cargo build --message-format=short
 
     format:
-        deps:
-            - rust:format
-            - swift:format
+        cmds:
+            - cargo +nightly fmt
 
     lint:
         cmds:
-            - task: rust:lint
-            - task: swift:lint
+            - cargo clippy --message-format=short
 
-    package:
-        deps:
-            - rust:package
-            - swift:package
+    test:
+        cmds:
+            - cargo test
 
-    # TODO: publish
+    example:
+        deps: ["build"]
+        cmds:
+            - cargo run --example {{.CLI_ARGS}}
