@@ -25,7 +25,10 @@ use futures_util::TryStreamExt;
 use hedera_proto::mirror;
 use hedera_proto::mirror::consensus_service_client::ConsensusServiceClient;
 use hedera_proto::mirror::ConsensusTopicQuery;
-use time::OffsetDateTime;
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 use tonic::Response;
 
@@ -47,6 +50,11 @@ use crate::{
 // TODO: investigate failure scenarios
 
 // TODO: validate checksums after PR is merged
+
+#[derive(Default)]
+pub struct TopicMessageQueryContext {
+    start_time: Option<OffsetDateTime>,
+}
 
 /// Query a stream of Hedera Consensus Service (HCS)
 /// messages for an HCS Topic via a specific (possibly open-ended) time range.
@@ -140,16 +148,30 @@ impl MirrorRequest for TopicMessageQueryData {
 
     type ConnectStream = tonic::Streaming<Self::GrpcItem>;
 
+    type Context = TopicMessageQueryContext;
+
     type Item = TopicMessage;
 
     type Response = Vec<TopicMessage>;
 
     type ItemStream<'a> = BoxStream<'a, crate::Result<TopicMessage>>;
 
-    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
+    fn connect(
+        &self,
+        context: &Self::Context,
+        channel: Channel,
+    ) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
         let topic_id = self.topic_id.to_protobuf();
+
         let consensus_end_time = self.end_time.map(Into::into);
-        let consensus_start_time = self.start_time.map(Into::into);
+
+        // If we had to reconnect, we want to start 1ns after the last message we recieved.
+        // We don't want to start *at* the last message we recieved because that'd give us that message again.
+        let consensus_start_time = context
+            .start_time
+            .map(|it| it.checked_add(Duration::nanoseconds(1)).unwrap())
+            .or(self.start_time)
+            .map(Into::into);
 
         let request = ConsensusTopicQuery {
             consensus_end_time,
@@ -179,6 +201,11 @@ impl MirrorRequest for TopicMessageQueryData {
     {
         // this doesn't reuse the work in `make_item_stream`
         Box::pin(Self::map_stream(stream).try_collect())
+    }
+
+    fn update_context(context: &mut Self::Context, item: &Self::GrpcItem) {
+        context.start_time =
+            item.consensus_timestamp.map(OffsetDateTime::from).or(context.start_time);
     }
 }
 
