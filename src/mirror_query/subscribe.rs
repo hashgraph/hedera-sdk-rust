@@ -168,10 +168,15 @@ pub trait MirrorRequest: Send {
 
     type Item;
     type Response;
+    type Context: Default + Send + Sync;
 
     type ItemStream<'a>: Stream<Item = crate::Result<Self::Item>> + 'a;
 
-    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>>;
+    fn connect(
+        &self,
+        context: &Self::Context,
+        channel: Channel,
+    ) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>>;
 
     /// Return `true` to retry establishing the stream, up to a configurable maximum timeout.
     #[allow(unused_variables)]
@@ -182,6 +187,8 @@ pub trait MirrorRequest: Send {
     fn make_item_stream<'a, S>(stream: S) -> Self::ItemStream<'a>
     where
         S: Stream<Item = crate::Result<Self::GrpcItem>> + Send + 'a;
+
+    fn update_context(context: &mut Self::Context, item: &Self::GrpcItem);
 
     fn try_collect<'a, S>(stream: S) -> BoxFuture<'a, crate::Result<Self::Response>>
     where
@@ -205,10 +212,12 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
         // remove maximum elapsed time for # of back-offs on inf.
         backoff_inf.max_elapsed_time = None;
 
+        let mut context = R::Context::default();
+
         loop {
             let status: Status = 'request: loop {
                 // attempt to establish the stream
-                let response = request.connect(channel.clone()).await;
+                let response = request.connect(&context, channel.clone()).await;
 
                 let stream = match response {
                     // success, we now have a stream and may begin waiting for messages
@@ -240,6 +249,8 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
                             break 'request status;
                         }
                     };
+
+                    R::update_context(&mut context, &message);
 
                     yield Ok(message);
                 }
