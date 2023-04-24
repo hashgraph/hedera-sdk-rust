@@ -20,7 +20,7 @@
 
 use clap::Parser;
 use hedera::{
-    AccountBalanceQuery, AccountId, AccountInfoQuery, Client, Hbar, PrivateKey, TransferTransaction,
+    AccountBalanceQuery, AccountId, AccountInfoQuery, Client, Hbar, PrivateKey, TransferTransaction
 };
 
 #[derive(Parser, Debug)]
