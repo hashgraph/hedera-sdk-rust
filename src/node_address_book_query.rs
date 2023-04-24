@@ -121,11 +121,17 @@ impl MirrorRequest for NodeAddressBookQueryData {
 
     type Item = NodeAddress;
 
+    type Context = ();
+
     type Response = NodeAddressBook;
 
     type ItemStream<'a> = BoxStream<'a, crate::Result<NodeAddress>>;
 
-    fn connect(&self, channel: Channel) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
+    fn connect(
+        &self,
+        _context: &Self::Context,
+        channel: Channel,
+    ) -> BoxFuture<'_, tonic::Result<Self::ConnectStream>> {
         Box::pin(async {
             let file_id = self.file_id.to_protobuf();
             let request =
@@ -153,6 +159,8 @@ impl MirrorRequest for NodeAddressBookQueryData {
                 .map_ok(|addresses| NodeAddressBook { node_addresses: addresses }),
         )
     }
+
+    fn update_context(_context: &mut Self::Context, _item: &Self::GrpcItem) {}
 }
 
 impl From<NodeAddress> for AnyMirrorQueryMessage {

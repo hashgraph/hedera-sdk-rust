@@ -660,6 +660,7 @@ dependencies = [
  "parking_lot",
  "pbkdf2",
  "pem-rfc7468",
+ "pin-project-lite",
  "pkcs8",
  "prost",
  "rand",
