@@ -41,7 +41,6 @@ use crate::{
     Client,
     Error,
     Hbar,
-    HbarUnit,
     LedgerId,
     PublicKey,
     ToProtobuf,
@@ -138,7 +137,7 @@ pub trait TransactionData: Clone + Into<AnyTransactionData> {
     /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
     /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
     fn default_max_transaction_fee(&self) -> Hbar {
-        Hbar::from_unit(2, HbarUnit::Hbar)
+        Hbar::new(2)
     }
 
     /// Returns the chunk data for this transaction if this is a chunked transaction.
