@@ -20,10 +20,7 @@
 
 use std::borrow::Cow;
 use std::fmt;
-use std::fmt::{
-    Debug,
-    Formatter,
-};
+use std::fmt::{Debug, Formatter};
 use std::num::NonZeroUsize;
 
 use hedera_proto::services;
@@ -33,17 +30,8 @@ use time::Duration;
 use crate::execute::execute;
 use crate::signer::AnySigner;
 use crate::{
-    AccountId,
-    Client,
-    Error,
-    Hbar,
-    Operator,
-    PrivateKey,
-    PublicKey,
-    Signer,
-    TransactionId,
-    TransactionResponse,
-    ValidateChecksums,
+    AccountId, Client, Error, Hbar, Operator, PrivateKey, PublicKey, ScheduleCreateTransaction,
+    Signer, TransactionHash, TransactionId, TransactionResponse, ValidateChecksums,
 };
 
 mod any;
@@ -56,20 +44,9 @@ mod tests;
 
 pub use any::AnyTransaction;
 pub(crate) use any::AnyTransactionData;
-pub(crate) use chunked::{
-    ChunkData,
-    ChunkInfo,
-    ChunkedTransactionData,
-};
-pub(crate) use execute::{
-    TransactionData,
-    TransactionExecute,
-    TransactionExecuteChunked,
-};
-pub(crate) use protobuf::{
-    ToSchedulableTransactionDataProtobuf,
-    ToTransactionDataProtobuf,
-};
+pub(crate) use chunked::{ChunkData, ChunkInfo, ChunkedTransactionData};
+pub(crate) use execute::{TransactionData, TransactionExecute, TransactionExecuteChunked};
+pub(crate) use protobuf::{ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf};
 pub(crate) use source::TransactionSources;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
@@ -518,6 +495,55 @@ impl<D: TransactionExecute> Transaction<D> {
         ));
 
         self
+    }
+
+    /// # Panics
+    /// panics if the transaction is not schedulable, a transaction can be non-schedulable due to:
+    /// - if `self.is_frozen`
+    /// - being a transaction kind that's non-schedulable, IE, `EthereumTransaction`, or
+    /// - being a chunked transaction with multiple chunks.
+    pub fn schedule(self) -> ScheduleCreateTransaction {
+        self.require_not_frozen();
+        if self.get_node_account_ids().is_some() {
+            panic!("The underlying transaction for a scheduled transaction cannot have node account IDs set")
+        }
+
+        let mut transaction = ScheduleCreateTransaction::new();
+
+        if let Some(transaction_id) = self.get_transaction_id() {
+            transaction.transaction_id(transaction_id);
+        }
+
+        transaction.scheduled_transaction(self);
+
+        transaction
+    }
+
+    pub fn get_transaction_hash(&self) -> crate::Result<TransactionHash> {
+        assert!(
+            self.is_frozen(),
+            "Transaction must be frozen before calling `get_transaction_hash`"
+        );
+
+        let sources = self.make_sources()?;
+
+        sources.
+    }
+}
+
+impl<D> Transaction<D>
+where
+    D: TransactionData,
+{
+    /// Returns the maximum allowed transaction fee if none is specified.
+    ///
+    /// Specifically, this default will be used in the following case:
+    /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
+    /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
+    ///
+    /// Currently this is (but not guaranteed to be) `2 ℏ` for most transaction types.
+    pub fn default_max_transaction_fee(&self) -> Hbar {
+        self.data().default_max_transaction_fee()
     }
 }
 
