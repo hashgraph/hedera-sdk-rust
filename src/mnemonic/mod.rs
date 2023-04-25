@@ -22,14 +22,26 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::str::FromStr;
 
-use fraction::{Integer, ToPrimitive};
+use fraction::{
+    Integer,
+    ToPrimitive,
+};
 use num_bigint::BigInt;
 use once_cell::sync::Lazy;
-use rand::{thread_rng, RngCore};
+use rand::{
+    thread_rng,
+    RngCore,
+};
 use sha2::Digest;
 
-use crate::error::{MnemonicEntropyError, MnemonicParseError};
-use crate::{Error, PrivateKey};
+use crate::error::{
+    MnemonicEntropyError,
+    MnemonicParseError,
+};
+use crate::{
+    Error,
+    PrivateKey,
+};
 
 const BIP39: &str = include_str!("bip39-english.txt");
 const LEGACY: &str = include_str!("legacy-english.txt");

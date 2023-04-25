@@ -18,8 +18,16 @@
  * ‍
  */
 
-use std::fmt::{self, Debug, Display, Formatter};
-use std::hash::{Hash, Hasher};
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
+use std::hash::{
+    Hash,
+    Hasher,
+};
 use std::str::FromStr;
 
 use ed25519_dalek::Verifier as _;
@@ -29,16 +37,28 @@ use hmac::digest::generic_array::GenericArray;
 use k256::ecdsa;
 use k256::ecdsa::signature::DigestVerifier as _;
 use pkcs8::der::asn1::BitStringRef;
-use pkcs8::der::{Decode, Encode};
+use pkcs8::der::{
+    Decode,
+    Encode,
+};
 use pkcs8::ObjectIdentifier;
 use prost::Message;
 use sha2::Digest;
 
-use crate::key::private_key::{ED25519_OID, K256_OID};
+use crate::key::private_key::{
+    ED25519_OID,
+    K256_OID,
+};
 use crate::protobuf::ToProtobuf;
 use crate::signer::AnySigner;
 use crate::transaction::TransactionSources;
-use crate::{AccountId, Error, EvmAddress, FromProtobuf, Transaction};
+use crate::{
+    AccountId,
+    Error,
+    EvmAddress,
+    FromProtobuf,
+    Transaction,
+};
 
 #[cfg(test)]
 mod tests;

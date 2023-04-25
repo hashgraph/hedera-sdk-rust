@@ -29,7 +29,11 @@ use tonic::transport::Channel;
 use tonic::Status;
 
 use crate::mirror_query::AnyMirrorQueryData;
-use crate::{Client, Error, MirrorQuery};
+use crate::{
+    Client,
+    Error,
+    MirrorQuery,
+};
 
 impl<D> MirrorQuery<D>
 where
