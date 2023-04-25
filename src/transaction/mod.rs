@@ -19,9 +19,14 @@
  */
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt;
-use std::fmt::{Debug, Formatter};
+use std::fmt::{
+    Debug,
+    Formatter,
+};
 use std::num::NonZeroUsize;
+use std::sync::Arc;
 
 use hedera_proto::services;
 use prost::Message;
@@ -30,8 +35,19 @@ use time::Duration;
 use crate::execute::execute;
 use crate::signer::AnySigner;
 use crate::{
-    AccountId, Client, Error, Hbar, Operator, PrivateKey, PublicKey, ScheduleCreateTransaction,
-    Signer, TransactionId, TransactionResponse, ValidateChecksums,
+    AccountId,
+    Client,
+    Error,
+    Hbar,
+    Operator,
+    PrivateKey,
+    PublicKey,
+    ScheduleCreateTransaction,
+    Signer,
+    TransactionHash,
+    TransactionId,
+    TransactionResponse,
+    ValidateChecksums,
 };
 
 mod any;
@@ -44,9 +60,20 @@ mod tests;
 
 pub use any::AnyTransaction;
 pub(crate) use any::AnyTransactionData;
-pub(crate) use chunked::{ChunkData, ChunkInfo, ChunkedTransactionData};
-pub(crate) use execute::{TransactionData, TransactionExecute, TransactionExecuteChunked};
-pub(crate) use protobuf::{ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf};
+pub(crate) use chunked::{
+    ChunkData,
+    ChunkInfo,
+    ChunkedTransactionData,
+};
+pub(crate) use execute::{
+    TransactionData,
+    TransactionExecute,
+    TransactionExecuteChunked,
+};
+pub(crate) use protobuf::{
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+};
 pub(crate) use source::TransactionSources;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
@@ -74,7 +101,7 @@ pub(crate) struct TransactionBody<D> {
 
     pub(crate) transaction_id: Option<TransactionId>,
 
-    pub(crate) operator: Option<Operator>,
+    pub(crate) operator: Option<Arc<Operator>>,
 
     pub(crate) is_frozen: bool,
 
@@ -261,6 +288,25 @@ impl<D> Transaction<D> {
         self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), signer))
     }
 
+    /// Sign the transaction with the `client`'s operator.
+    ///
+    /// Note: if `freeze_with` has been called with a client,
+    /// this will replace the operator used there, if this is the same client, this function is a no-op.
+    ///
+    /// # Panics
+    /// If `client` has no operator.
+    pub fn sign_with_operator(&mut self, client: &Client) -> &mut Self {
+        // We're _supposed_ to require frozen here, but really there's no reason I can think of to do that.
+
+        let Some(op) = client.full_load_operator() else {
+            panic!("Client had no operator")
+        };
+
+        self.body.operator = Some(op);
+
+        self
+    }
+
     pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {
         // We're _supposed_ to require frozen here, but really there's no reason I can think of to do that.
 
@@ -319,6 +365,8 @@ impl<D: ChunkedTransactionData> Transaction<D> {
     }
 
     /// Sets whether or not the transaction ID should be refreshed if a [`Status::TransactionExpired`](crate::Status::TransactionExpired) occurs.
+    ///
+    /// Various operations such as [`add_signature`](Self::add_signature) can forcibly disable transaction ID regeneration.
     pub fn regenerate_transaction_id(&mut self, regenerate_transaction_id: bool) -> &mut Self {
         self.body_mut().regenerate_transaction_id = Some(regenerate_transaction_id);
 
@@ -369,7 +417,7 @@ impl<D: ValidateChecksums> Transaction<D> {
             }
         });
 
-        let operator = client.and_then(|it| it.operator_internal().as_deref().cloned());
+        let operator = client.and_then(|it| it.full_load_operator());
 
         // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
         self.body.node_account_ids = Some(node_account_ids);
@@ -503,9 +551,13 @@ impl<D: TransactionExecute> Transaction<D> {
         }
     }
 
-    // todo: make this public... :/
     // todo: should this return `Result<&mut Self>`?
-    pub(crate) fn _add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
+    /// Adds a signature directly to `self`.
+    ///
+    /// Only use this as a last resort.
+    ///
+    /// This forcibly disables transaction ID regeneration.
+    pub fn add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
         self.add_signature_signer(&AnySigner::Arbitrary(
             Box::new(pk),
             Box::new(move |_| signature.clone()),
@@ -536,24 +588,50 @@ impl<D: TransactionExecute> Transaction<D> {
         transaction
     }
 
-    // ///
-    // ///
-    // /// Note: Calling this function _disables_ transaction ID regeneration.
-    // pub fn get_transaction_hash(&mut self) -> crate::Result<TransactionHash> {
-    //     // todo: error not frozen
-    //     assert!(
-    //         self.is_frozen(),
-    //         "Transaction must be frozen before calling `get_transaction_hash`"
-    //     );
+    /// Get the hash for this transaction.
+    ///
+    /// Note: Calling this function _disables_ transaction ID regeneration.
+    pub fn get_transaction_hash(&mut self) -> crate::Result<TransactionHash> {
+        // todo: error not frozen
+        assert!(
+            self.is_frozen(),
+            "Transaction must be frozen before calling `get_transaction_hash`"
+        );
 
-    //     let
+        let sources = self.make_sources()?;
 
-    //     let sources = self.make_sources()?;
+        let sources = match sources {
+            Cow::Borrowed(it) => it,
+            Cow::Owned(it) => &*self.sources.insert(it),
+        };
 
-    //     Ok(TransactionHash::new(&sources.transactions().first().unwrap().signed_transaction_bytes))
-    // }
+        Ok(TransactionHash::new(&sources.transactions().first().unwrap().signed_transaction_bytes))
+    }
 
-    // pub fn get_transaction_hash_per_node()
+    /// Get the hashes for this transaction.
+    ///
+    /// Note: Calling this function _disables_ transaction ID regeneration.
+    pub fn get_transaction_hash_per_node(
+        &mut self,
+    ) -> crate::Result<HashMap<AccountId, TransactionHash>> {
+        // todo: error not frozen
+        assert!(
+            self.is_frozen(),
+            "Transaction must be frozen before calling `get_transaction_hash`"
+        );
+
+        let sources = self.make_sources()?;
+
+        let chunk = sources.chunks().next().unwrap();
+
+        let iter = chunk
+            .node_ids()
+            .iter()
+            .zip(chunk.transactions())
+            .map(|(node, it)| (*node, TransactionHash::new(&it.signed_transaction_bytes)));
+
+        Ok(iter.collect())
+    }
 }
 
 impl<D> Transaction<D>

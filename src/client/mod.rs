@@ -34,6 +34,7 @@ use rand::thread_rng;
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::Network;
 use crate::ping_query::PingQuery;
+use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Error,
@@ -174,7 +175,9 @@ impl Client {
     /// The operator private key is used to sign all transactions executed by this client.
     ///
     pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
-        self.0.operator.store(Some(Arc::new(Operator { account_id: id, signer: key })));
+        self.0
+            .operator
+            .store(Some(Arc::new(Operator { account_id: id, signer: AnySigner::PrivateKey(key) })));
     }
 
     /// Generate a new transaction ID from the stored operator account ID, if present.
@@ -203,8 +206,14 @@ impl Client {
         None
     }
 
-    pub(crate) fn operator_internal(&self) -> arc_swap::Guard<Option<Arc<Operator>>> {
+    // keep this internal (repr)
+    pub(crate) fn load_operator(&self) -> arc_swap::Guard<Option<Arc<Operator>>> {
         self.0.operator.load()
+    }
+
+    // keep this internal (repr)
+    pub(crate) fn full_load_operator(&self) -> Option<Arc<Operator>> {
+        self.0.operator.load_full()
     }
 
     /// Send a ping to the given node.

@@ -326,7 +326,7 @@ impl ContractCreateFlow {
     ) -> crate::Result<TransactionResponse> {
         // todo: proper error
         let operator_public_key = client
-            .operator_internal()
+            .load_operator()
             .as_deref()
             .map(|it| it.signer.public_key())
             .expect("Must call `Client.set_operator` to use contract create flow");
