@@ -4,18 +4,18 @@ use std::sync::Arc;
 use assert_matches::assert_matches;
 use expect_test::expect;
 use hex_literal::hex;
-use pkcs8::AssociatedOid;
 
-use super::{
-    PrivateKey,
-    PrivateKeyDataWrapper,
-};
+use super::{PrivateKey, PrivateKeyDataWrapper};
+use crate::key::private_key::{ED25519_OID, K256_OID};
 use crate::Error;
 
 #[test]
 fn ed25519_from_str() {
     const S: &str = "302e020100300506032b65700422042098aa82d6125b5efa04bf8372be7931d05cd77f5ef3330b97d6ee7c006eaaf312";
     let pk = PrivateKey::from_str(S).unwrap();
+
+    assert_eq!(pk.algorithm().oid, ED25519_OID);
+
     // ensure round-tripping works.
     assert_eq!(pk.to_string(), S);
 }
@@ -25,7 +25,7 @@ fn ecdsa_from_str() {
     const S: &str = "3030020100300706052b8104000a042204208776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048";
     let pk = PrivateKey::from_str(S).unwrap();
 
-    assert_eq!(pk.algorithm().oid, k256::Secp256k1::OID);
+    assert_eq!(pk.algorithm().oid, K256_OID);
 
     assert_eq!(pk.to_string(), S);
 }
@@ -56,7 +56,7 @@ fn ecdsa_sign() {
     // see: https://github.com/bitcoin/bips/blob/43da5dec5eaf0d8194baa66ba3dd976f923f9d07/bip-0062.mediawiki
     let signature = private_key.sign(b"hello world");
     expect![[r#"
-        "7ddeeb7664f84c7f65610262a0763e1028fc8851522ba6fa0b3f28be6fe99af37fe1a3120a756d54525d1f3bb0b46feb3613c398ba6eab718fc6f0e454d2a794"
+        "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c086e3717a6502c3edff6130d34df252fb94b6f662d0cd27e2110903320563851"
     "#]]
     .assert_debug_eq(&hex::encode(signature));
 }

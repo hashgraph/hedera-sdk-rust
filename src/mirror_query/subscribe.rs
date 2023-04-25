@@ -29,11 +29,7 @@ use tonic::transport::Channel;
 use tonic::Status;
 
 use crate::mirror_query::AnyMirrorQueryData;
-use crate::{
-    Client,
-    Error,
-    MirrorQuery,
-};
+use crate::{Client, Error, MirrorQuery};
 
 impl<D> MirrorQuery<D>
 where
@@ -228,7 +224,7 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
                     }
                 };
 
-                futures_util::pin_mut!(stream);
+                let mut stream = std::pin::pin!(stream);
 
                 backoff.reset();
                 backoff_inf.reset();

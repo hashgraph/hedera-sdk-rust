@@ -22,27 +22,14 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::str::FromStr;
 
-use fraction::{
-    Integer,
-    ToPrimitive,
-};
-use hmac::Hmac;
+use fraction::{Integer, ToPrimitive};
 use num_bigint::BigInt;
 use once_cell::sync::Lazy;
-use rand::{
-    thread_rng,
-    RngCore,
-};
+use rand::{thread_rng, RngCore};
 use sha2::Digest;
 
-use crate::error::{
-    MnemonicEntropyError,
-    MnemonicParseError,
-};
-use crate::{
-    Error,
-    PrivateKey,
-};
+use crate::error::{MnemonicEntropyError, MnemonicParseError};
+use crate::{Error, PrivateKey};
 
 const BIP39: &str = include_str!("bip39-english.txt");
 const LEGACY: &str = include_str!("legacy-english.txt");
@@ -208,16 +195,11 @@ impl Mnemonic {
         let mut salt = String::from("mnemonic");
         salt.push_str(phrase);
 
-        let mut mat = [0; 64];
-
-        pbkdf2::pbkdf2::<Hmac<sha2::Sha512>>(
+        pbkdf2::pbkdf2_hmac_array::<sha2::Sha512, 64>(
             self.to_string().as_bytes(),
             salt.as_bytes(),
             2048,
-            &mut mat,
-        );
-
-        mat
+        )
     }
 }
 
