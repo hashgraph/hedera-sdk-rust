@@ -31,7 +31,7 @@ use crate::execute::execute;
 use crate::signer::AnySigner;
 use crate::{
     AccountId, Client, Error, Hbar, Operator, PrivateKey, PublicKey, ScheduleCreateTransaction,
-    Signer, TransactionHash, TransactionId, TransactionResponse, ValidateChecksums,
+    Signer, TransactionId, TransactionResponse, ValidateChecksums,
 };
 
 mod any;
@@ -77,6 +77,8 @@ pub(crate) struct TransactionBody<D> {
     pub(crate) operator: Option<Operator>,
 
     pub(crate) is_frozen: bool,
+
+    pub(crate) regenerate_transaction_id: Option<bool>,
 }
 
 impl<D> Default for Transaction<D>
@@ -94,6 +96,7 @@ where
                 transaction_id: None,
                 operator: None,
                 is_frozen: false,
+                regenerate_transaction_id: None,
             },
             signers: Vec::new(),
             sources: None,
@@ -305,6 +308,22 @@ impl<D: ChunkedTransactionData> Transaction<D> {
 
         self
     }
+
+    /// Returns whether or not the transaction ID should be refreshed if a [`Status::TransactionExpired`](crate::Status::TransactionExpired) occurs.
+    ///
+    /// By default, the value on Client will be used.
+    ///
+    /// Note: Some operations forcibly disable transaction ID regeneration, such as setting the transaction ID explicitly.
+    pub fn get_regenerate_transaction_id(&self) -> Option<bool> {
+        self.body.regenerate_transaction_id
+    }
+
+    /// Sets whether or not the transaction ID should be refreshed if a [`Status::TransactionExpired`](crate::Status::TransactionExpired) occurs.
+    pub fn regenerate_transaction_id(&mut self, regenerate_transaction_id: bool) -> &mut Self {
+        self.body_mut().regenerate_transaction_id = Some(regenerate_transaction_id);
+
+        self
+    }
 }
 
 impl<D: ValidateChecksums> Transaction<D> {
@@ -320,8 +339,6 @@ impl<D: ValidateChecksums> Transaction<D> {
     ///
     /// # Errors
     /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set and `client.is_none()`.
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if [`auto_validate_checksums`](Client::auto_validate_checksums)
-    ///    is enabled on the client and the client has no ledger id.
     pub fn freeze_with<'a>(
         &mut self,
         client: impl Into<Option<&'a Client>>,
@@ -519,16 +536,24 @@ impl<D: TransactionExecute> Transaction<D> {
         transaction
     }
 
-    pub fn get_transaction_hash(&self) -> crate::Result<TransactionHash> {
-        assert!(
-            self.is_frozen(),
-            "Transaction must be frozen before calling `get_transaction_hash`"
-        );
+    // ///
+    // ///
+    // /// Note: Calling this function _disables_ transaction ID regeneration.
+    // pub fn get_transaction_hash(&mut self) -> crate::Result<TransactionHash> {
+    //     // todo: error not frozen
+    //     assert!(
+    //         self.is_frozen(),
+    //         "Transaction must be frozen before calling `get_transaction_hash`"
+    //     );
 
-        let sources = self.make_sources()?;
+    //     let
 
-        sources.
-    }
+    //     let sources = self.make_sources()?;
+
+    //     Ok(TransactionHash::new(&sources.transactions().first().unwrap().signed_transaction_bytes))
+    // }
+
+    // pub fn get_transaction_hash_per_node()
 }
 
 impl<D> Transaction<D>

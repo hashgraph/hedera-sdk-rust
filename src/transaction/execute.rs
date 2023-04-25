@@ -27,28 +27,14 @@ use tonic::transport::Channel;
 
 use super::chunked::ChunkInfo;
 use super::source::SourceChunk;
-use super::{
-    ChunkData,
-    TransactionSources,
-};
+use super::{ChunkData, TransactionSources};
 use crate::execute::Execute;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
 use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    Client,
-    Error,
-    Hbar,
-    LedgerId,
-    PublicKey,
-    ToProtobuf,
-    Transaction,
-    TransactionHash,
-    TransactionId,
-    TransactionResponse,
-    ValidateChecksums,
+    AccountId, BoxGrpcFuture, Client, Error, Hbar, LedgerId, PublicKey, ToProtobuf, Transaction,
+    TransactionHash, TransactionId, TransactionResponse, ValidateChecksums,
 };
 
 #[derive(Debug)]
@@ -183,6 +169,10 @@ where
 
     fn requires_transaction_id(&self) -> bool {
         true
+    }
+
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        self.body.regenerate_transaction_id
     }
 
     fn make_request(
@@ -380,6 +370,10 @@ impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> 
 
     fn requires_transaction_id(&self) -> bool {
         true
+    }
+
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        Some(false)
     }
 
     fn make_request(
