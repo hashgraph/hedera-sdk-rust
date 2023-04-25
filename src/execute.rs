@@ -180,7 +180,7 @@ where
                 )
             };
 
-            futures_util::pin_mut!(random_node_indexes);
+            let mut random_node_indexes = std::pin::pin!(random_node_indexes);
 
             while let Some(node_index) = random_node_indexes.next().await {
                 let tmp = execute_single(

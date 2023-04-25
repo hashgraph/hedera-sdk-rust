@@ -90,7 +90,7 @@ impl TopicMessage {
     }
 
     pub(crate) fn from_chunks(pb: Vec<PbTopicMessageChunk>) -> Self {
-        assert!(pb.len() >= 1, "no chunks provided to `TopicMessage::from_chunks`");
+        assert!(!pb.is_empty(), "no chunks provided to `TopicMessage::from_chunks`");
 
         if log::log_enabled!(log::Level::Warn) {
             let (first, rest) = pb.split_first().unwrap();

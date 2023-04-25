@@ -19,11 +19,7 @@
  */
 
 use std::fmt;
-use std::sync::atomic::{
-    AtomicBool,
-    AtomicU64,
-    Ordering,
-};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -34,13 +30,7 @@ use rand::thread_rng;
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::Network;
 use crate::ping_query::PingQuery;
-use crate::{
-    AccountId,
-    Error,
-    LedgerId,
-    PrivateKey,
-    TransactionId,
-};
+use crate::{AccountId, Error, LedgerId, PrivateKey, TransactionId};
 
 mod mirror_network;
 mod network;

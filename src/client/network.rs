@@ -20,23 +20,14 @@
 
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::atomic::{
-    AtomicI64,
-    Ordering,
-};
+use std::sync::atomic::{AtomicI64, Ordering};
 use std::time::Duration;
 
-use parking_lot::RwLock;
+use once_cell::sync::OnceCell;
 use time::OffsetDateTime;
-use tonic::transport::{
-    Channel,
-    Endpoint,
-};
+use tonic::transport::{Channel, Endpoint};
 
-use crate::{
-    AccountId,
-    Error,
-};
+use crate::{AccountId, Error};
 
 pub(crate) const MAINNET: &[(u64, &[&str])] = &[
     (
@@ -141,7 +132,7 @@ pub(crate) struct Network {
     map: HashMap<AccountId, usize>,
     nodes: Vec<AccountId>,
     addresses: Vec<Vec<Cow<'static, str>>>,
-    channels: Vec<RwLock<Option<Channel>>>,
+    channels: Vec<OnceCell<Channel>>,
     healthy: Vec<AtomicI64>,
     last_pinged: Vec<AtomicI64>,
 }
@@ -173,7 +164,7 @@ impl Network {
             map.insert(node_account_id, i);
             nodes.push(node_account_id);
             addresses.push(address.iter().map(|address| Cow::Borrowed(*address)).collect());
-            channels.push(RwLock::new(None));
+            channels.push(OnceCell::new());
             healthy.push(AtomicI64::new(0));
             last_pinged.push(AtomicI64::new(0));
         }
@@ -236,39 +227,23 @@ impl Network {
     pub(crate) fn channel(&self, index: usize) -> (AccountId, Channel) {
         let id = self.nodes[index];
 
-        // Double lock check: We'd really rather not take a write lock if possible.
-        // (paired with the below comment)
-        if let Some(channel) = &*self.channels[index].read_recursive() {
-            return (id, channel.clone());
-        }
+        let channel = self.channels[index]
+            .get_or_init(|| {
+                let addresses = &self.addresses[index];
 
-        let mut slot = self.channels[index].write();
+                let endpoints = addresses.iter().map(|address| {
+                    let uri = format!("tcp://{address}:50211");
+                    Endpoint::from_shared(uri)
+                        .unwrap()
+                        .keep_alive_timeout(Duration::from_secs(10))
+                        .keep_alive_while_idle(true)
+                        .tcp_keepalive(Some(Duration::from_secs(10)))
+                        .connect_timeout(Duration::from_secs(10))
+                });
 
-        // Double lock check: We'd rather not replace the channel if one exists already, they aren't free.
-        // (paired with the above comment)
-        // Between returning `None` in the above `read` and getting
-        // the `WriteGuard` some *other* write to this channel could've happened
-        // causing the channel to be `Some` here, despite this thread not
-        // changing it.
-        if let Some(channel) = &*slot {
-            return (id, channel.clone());
-        }
-
-        let addresses = &self.addresses[index];
-
-        let endpoints = addresses.iter().map(|address| {
-            let uri = format!("tcp://{address}:50211");
-            Endpoint::from_shared(uri)
-                .unwrap()
-                .keep_alive_timeout(Duration::from_secs(10))
-                .keep_alive_while_idle(true)
-                .tcp_keepalive(Some(Duration::from_secs(10)))
-                .connect_timeout(Duration::from_secs(10))
-        });
-
-        let channel = Channel::balance_list(endpoints);
-
-        *slot = Some(channel.clone());
+                Channel::balance_list(endpoints)
+            })
+            .clone();
 
         (id, channel)
     }
