@@ -22,20 +22,35 @@
 mod tests;
 
 use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{
+    Debug,
+    Display,
+    Formatter,
+};
 use std::str::FromStr;
 use std::sync::Arc;
 
 use ed25519_dalek::Signer;
-use hmac::{Hmac, Mac};
+use hmac::{
+    Hmac,
+    Mac,
+};
 use k256::ecdsa::signature::DigestSigner;
 use pkcs8::der::oid::ObjectIdentifier;
-use pkcs8::der::{Decode, Encode};
+use pkcs8::der::{
+    Decode,
+    Encode,
+};
 use sha2::Sha512;
 use sha3::Digest;
 
 use crate::signer::AnySigner;
-use crate::{AccountId, Error, PublicKey, Transaction};
+use crate::{
+    AccountId,
+    Error,
+    PublicKey,
+    Transaction,
+};
 
 // replace with `array::split_array_ref` when that's stable.
 fn split_key_array(arr: &[u8; 64]) -> (&[u8; 32], &[u8; 32]) {

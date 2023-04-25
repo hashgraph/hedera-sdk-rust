@@ -5,8 +5,14 @@ use assert_matches::assert_matches;
 use expect_test::expect;
 use hex_literal::hex;
 
-use super::{PrivateKey, PrivateKeyDataWrapper};
-use crate::key::private_key::{ED25519_OID, K256_OID};
+use super::{
+    PrivateKey,
+    PrivateKeyDataWrapper,
+};
+use crate::key::private_key::{
+    ED25519_OID,
+    K256_OID,
+};
 use crate::Error;
 
 #[test]

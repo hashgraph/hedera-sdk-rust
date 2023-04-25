@@ -20,14 +20,23 @@
 
 use std::borrow::Cow;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{
+    AtomicI64,
+    Ordering,
+};
 use std::time::Duration;
 
 use once_cell::sync::OnceCell;
 use time::OffsetDateTime;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::{
+    Channel,
+    Endpoint,
+};
 
-use crate::{AccountId, Error};
+use crate::{
+    AccountId,
+    Error,
+};
 
 pub(crate) const MAINNET: &[(u64, &[&str])] = &[
     (

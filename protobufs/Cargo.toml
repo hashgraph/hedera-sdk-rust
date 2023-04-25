@@ -10,9 +10,13 @@ version = "0.6.0"
 
 [dependencies]
 fraction = { version = "0.13.0", default-features = false, optional = true }
-prost = "0.11.0"
 prost-types = "0.11.0"
 time_0_3 = { version = "0.3.9", optional = true, package = "time" }
+
+[dependencies.prost]
+version = "0.11"
+default-features = false
+features = ["std", "prost-derive"]
 
 # todo: get the tonic devs to actually make `channel` usable without `transport` (it *should*, it's *documented* as such, but it just doesn't work).
 [dependencies.tonic]

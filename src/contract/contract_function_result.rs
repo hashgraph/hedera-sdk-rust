@@ -22,9 +22,17 @@ use std::borrow::Cow;
 use std::str;
 
 use hedera_proto::services;
-use num_bigint::{BigInt, BigUint};
+use num_bigint::{
+    BigInt,
+    BigUint,
+};
 
-use crate::{AccountId, ContractId, ContractLogInfo, FromProtobuf};
+use crate::{
+    AccountId,
+    ContractId,
+    ContractLogInfo,
+    FromProtobuf,
+};
 
 /// The result returned by a call to a smart contract function.
 #[derive(Debug, Clone)]
@@ -272,10 +280,20 @@ impl FromProtobuf<services::response::Response> for ContractFunctionResult {
 mod tests {
     use hedera_proto::services;
     use hex_literal::hex;
-    use num_bigint::{BigInt, BigUint};
+    use num_bigint::{
+        BigInt,
+        BigUint,
+    };
 
-    use crate::protobuf::{FromProtobuf, ToProtobuf};
-    use crate::{AccountId, ContractFunctionResult, ContractId};
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::{
+        AccountId,
+        ContractFunctionResult,
+        ContractId,
+    };
 
     const CALL_RESULT: [u8; 320] = hex!(
         "00000000000000000000000000000000000000000000000000000000ffffffff"
