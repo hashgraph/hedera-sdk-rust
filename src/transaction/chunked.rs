@@ -4,19 +4,11 @@ use std::num::NonZeroUsize;
 use hedera_proto::services;
 use tonic::transport::Channel;
 
-use super::{
-    TransactionData,
-    TransactionExecute,
-};
+use super::{TransactionData, TransactionExecute};
 use crate::entity_id::ValidateChecksums;
 use crate::execute::Execute;
 use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    Error,
-    Transaction,
-    TransactionHash,
-    TransactionId,
+    AccountId, BoxGrpcFuture, Error, Transaction, TransactionHash, TransactionId,
     TransactionResponse,
 };
 
@@ -149,6 +141,10 @@ where
         true
     }
 
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        self.transaction.regenerate_transaction_id()
+    }
+
     fn make_request(
         &self,
         transaction_id: Option<&TransactionId>,
@@ -241,6 +237,10 @@ where
 
     fn requires_transaction_id(&self) -> bool {
         true
+    }
+
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        self.transaction.regenerate_transaction_id()
     }
 
     fn make_request(

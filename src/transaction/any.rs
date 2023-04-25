@@ -763,6 +763,7 @@ impl AnyTransaction {
                 )?)?),
                 operator: None,
                 is_frozen: true,
+                regenerate_transaction_id: Some(false),
             },
             signers: Vec::new(),
             sources: None,

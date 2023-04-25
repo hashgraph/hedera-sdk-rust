@@ -62,6 +62,13 @@ pub(crate) trait Execute: ValidateChecksums {
     /// Get whether to generate transaction IDs for request creation.
     fn requires_transaction_id(&self) -> bool;
 
+    /// Returns whether to regenerate transaction IDs for request creation.
+    ///
+    /// Transaction ID regeneration only can happen when `transaction_id` is None and `requires_transaction_id` is true.
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        None
+    }
+
     /// Check whether to retry an pre-check status.
     fn should_retry_pre_check(&self, _status: Status) -> bool {
         false
@@ -280,6 +287,10 @@ async fn execute_single<E: Execute + Sync>(
         })
         .map_err(retry::Error::Permanent)?;
 
+    let regenerate = executable
+        .regenerate_transaction_id()
+        .unwrap_or_else(|| client.default_regenerate_transaction_id());
+
     match status {
         Status::Ok if executable.should_retry(&response) => Err(retry::Error::Transient(
             executable.make_error_pre_check(status, transaction_id.as_ref()),
@@ -298,7 +309,7 @@ async fn execute_single<E: Execute + Sync>(
             ))
         }
 
-        Status::TransactionExpired if !has_explicit_transaction_id => {
+        Status::TransactionExpired if regenerate && !has_explicit_transaction_id => {
             // the transaction that was generated has since expired
             // re-generate the transaction ID and try again, immediately
             let _ = transaction_id.insert(client.generate_transaction_id().unwrap());
