@@ -288,7 +288,6 @@ pub use schedule::{
     ScheduleSignTransaction,
 };
 pub use semantic_version::SemanticVersion;
-pub use signer::Signer;
 pub use staking_info::StakingInfo;
 pub use system::{
     FreezeTransaction,

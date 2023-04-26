@@ -19,21 +19,25 @@
  */
 
 use std::fmt;
+use std::sync::Arc;
 
 use crate::{
     PrivateKey,
     PublicKey,
 };
 
-/// Singing function for `sign_with`.
-///
-/// You probably won't ever have to explicitly mention this.
-pub type Signer = Box<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>;
-
+#[derive(Clone)]
 pub(crate) enum AnySigner {
     PrivateKey(PrivateKey),
     // public key is 216 bytes.
-    Arbitrary(Box<PublicKey>, Signer),
+    // Here be a story of dragons.
+    // Once an engineer attempted to downgrade this `Arc` to a mere `Box`, alas it was not meant to be.
+    // For the Fn must be cloned, and `dyn Fn` must not.
+    // The plan to not pay the price of Arc was doomed from the very beginning.
+    // Attempts to avoid the arc, the cloning of the `Fn`, all end in misery,
+    // for the `Client` must have `AnySigner`, not a `PrivateKey`, and the `ContractCreateFlow`...
+    // Well, it must be executable multiple times, for ownership reasons.
+    Arbitrary(Box<PublicKey>, Arc<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
 }
 
 impl fmt::Debug for AnySigner {
@@ -61,6 +65,7 @@ impl AnySigner {
             AnySigner::PrivateKey(it) => (it.public_key(), it.sign(message)),
             AnySigner::Arbitrary(public, signer) => {
                 let bytes = signer(message);
+
                 (**public, bytes)
             }
         }
