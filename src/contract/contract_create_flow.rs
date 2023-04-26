@@ -36,7 +36,6 @@ use crate::{
     Key,
     PrivateKey,
     PublicKey,
-    Signer,
     TransactionResponse,
 };
 
@@ -290,7 +289,7 @@ impl ContractCreateFlow {
     ///
     /// Important: Only *one* signer is allowed.
     pub fn sign(&mut self, key: PrivateKey) -> &mut Self {
-        self.contract_data.signer = Some(Arc::new(AnySigner::PrivateKey(key)));
+        self.contract_data.signer = Some(AnySigner::PrivateKey(key));
 
         self
     }
@@ -298,9 +297,13 @@ impl ContractCreateFlow {
     /// Sets the signer for use in the ``ContractCreateTransaction``
     ///
     /// Important: Only *one* signer is allowed.
-    pub fn sign_with(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
+    pub fn sign_with<F: Fn(&[u8]) -> Vec<u8> + Send + Sync + 'static>(
+        &mut self,
+        public_key: PublicKey,
+        signer: F,
+    ) -> &mut Self {
         self.contract_data.signer =
-            Some(Arc::new(AnySigner::Arbitrary(Box::new(public_key), signer)));
+            Some(AnySigner::Arbitrary(Box::new(public_key), Arc::new(signer)));
 
         self
     }
@@ -397,7 +400,7 @@ struct ContractData {
     contract_memo: Option<String>,
     staked_id: Option<StakedId>,
     freeze_with_client: Option<Client>,
-    signer: Option<Arc<AnySigner>>,
+    signer: Option<AnySigner>,
 }
 
 fn split_bytecode(bytecode: &[u8]) -> (Vec<u8>, Option<Vec<u8>>) {
@@ -508,16 +511,7 @@ fn make_contract_create_transaction(
     }
 
     if let Some(signer) = &data.signer {
-        // we'd really rather avoid cloning an arc, so.
-        match &**signer {
-            AnySigner::PrivateKey(it) => {
-                tmp.sign(it.clone());
-            }
-            _ => {
-                let signer = Arc::clone(signer);
-                tmp.sign_with(signer.public_key(), Box::new(move |message| signer.sign(message).1));
-            }
-        }
+        tmp.sign_signer(signer.clone());
     }
 
     Ok(tmp)

@@ -43,7 +43,6 @@ use crate::{
     PrivateKey,
     PublicKey,
     ScheduleCreateTransaction,
-    Signer,
     TransactionHash,
     TransactionId,
     TransactionResponse,
@@ -284,27 +283,12 @@ impl<D> Transaction<D> {
     }
 
     /// Sign the transaction.
-    pub fn sign_with(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
-        self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), signer))
-    }
-
-    /// Sign the transaction with the `client`'s operator.
-    ///
-    /// Note: if `freeze_with` has been called with a client,
-    /// this will replace the operator used there, if this is the same client, this function is a no-op.
-    ///
-    /// # Panics
-    /// If `client` has no operator.
-    pub fn sign_with_operator(&mut self, client: &Client) -> &mut Self {
-        // We're _supposed_ to require frozen here, but really there's no reason I can think of to do that.
-
-        let Some(op) = client.full_load_operator() else {
-            panic!("Client had no operator")
-        };
-
-        self.body.operator = Some(op);
-
-        self
+    pub fn sign_with<F: Fn(&[u8]) -> Vec<u8> + Send + Sync + 'static>(
+        &mut self,
+        public_key: PublicKey,
+        signer: F,
+    ) -> &mut Self {
+        self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), Arc::new(signer)))
     }
 
     pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {
@@ -438,6 +422,27 @@ impl<D: ValidateChecksums> Transaction<D> {
 
         Ok(self)
     }
+
+    /// Sign the transaction with the `client`'s operator.
+    ///
+    /// # Errors
+    /// - If [`freeze_with`](Self::freeze_with) would error for this transaction.
+    ///
+    /// # Panics
+    /// If `client` has no operator.
+    pub fn sign_with_operator(&mut self, client: &Client) -> crate::Result<&mut Self> {
+        let Some(op) = client.full_load_operator() else {
+            panic!("Client had no operator")
+        };
+
+        self.freeze_with(client)?;
+
+        self.sign_signer(op.signer.clone());
+
+        self.body.operator = Some(op);
+
+        Ok(self)
+    }
 }
 
 impl<D: TransactionExecute> Transaction<D> {
@@ -560,7 +565,7 @@ impl<D: TransactionExecute> Transaction<D> {
     pub fn add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
         self.add_signature_signer(&AnySigner::Arbitrary(
             Box::new(pk),
-            Box::new(move |_| signature.clone()),
+            Arc::new(move |_| signature.clone()),
         ));
 
         self
