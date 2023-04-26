@@ -123,6 +123,7 @@ mod protobuf;
 mod account;
 mod client;
 mod contract;
+mod downcast;
 mod entity_id;
 mod error;
 mod ethereum;
