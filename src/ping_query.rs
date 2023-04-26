@@ -63,6 +63,10 @@ impl Execute for PingQuery {
         None
     }
 
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        None
+    }
+
     fn requires_transaction_id(&self) -> bool {
         false
     }

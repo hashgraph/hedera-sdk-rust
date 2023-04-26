@@ -53,6 +53,11 @@ pub(crate) trait Execute: ValidateChecksums {
 
     type Response;
 
+    /// Account ID to be used for generating transaction IDs.
+    ///
+    /// THis is only used `self.requires_transaction` and `self.transaction_id.is_none()`.
+    fn operator_account_id(&self) -> Option<&AccountId>;
+
     /// Get the _explicit_ nodes that this request will be submitted to.
     fn node_account_ids(&self) -> Option<&[AccountId]>;
 
@@ -154,8 +159,10 @@ where
     let explicit_transaction_id = executable.transaction_id();
     let mut transaction_id = executable
         .requires_transaction_id()
-        .then(|| explicit_transaction_id.or_else(|| client.generate_transaction_id()))
-        .flatten();
+        .then(|| explicit_transaction_id)
+        .flatten()
+        .or_else(|| executable.operator_account_id().copied().map(TransactionId::generate))
+        .or_else(|| client.generate_transaction_id());
 
     // if we were explicitly given a list of nodes to use, we iterate through each
     // of the given nodes (in a random order)
@@ -312,7 +319,15 @@ async fn execute_single<E: Execute + Sync>(
         Status::TransactionExpired if regenerate && !has_explicit_transaction_id => {
             // the transaction that was generated has since expired
             // re-generate the transaction ID and try again, immediately
-            let _ = transaction_id.insert(client.generate_transaction_id().unwrap());
+
+            let new = executable
+                .operator_account_id()
+                .copied()
+                .map(TransactionId::generate)
+                .or_else(|| client.generate_transaction_id())
+                .unwrap();
+
+            *transaction_id = Some(new);
 
             Ok(ControlFlow::Continue(
                 executable.make_error_pre_check(status, transaction_id.as_ref()),
