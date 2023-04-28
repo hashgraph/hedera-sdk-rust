@@ -79,6 +79,10 @@ where
         false
     }
 
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        None
+    }
+
     fn make_request(
         &self,
         _transaction_id: Option<&TransactionId>,

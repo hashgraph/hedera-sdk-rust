@@ -68,7 +68,7 @@ pub struct FileInfo {
     /// Memo associated with the file.
     pub file_memo: String,
 
-    /// The ledger ID the response was returned from
+    /// Ledger ID for the network the response was returned from.
     pub ledger_id: LedgerId,
 }
 

@@ -41,7 +41,6 @@ use crate::{
     Client,
     Error,
     Hbar,
-    HbarUnit,
     LedgerId,
     PublicKey,
     ToProtobuf,
@@ -138,7 +137,7 @@ pub trait TransactionData: Clone + Into<AnyTransactionData> {
     /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
     /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
     fn default_max_transaction_fee(&self) -> Hbar {
-        Hbar::from_unit(2, HbarUnit::Hbar)
+        Hbar::new(2)
     }
 
     /// Returns the chunk data for this transaction if this is a chunked transaction.
@@ -184,6 +183,14 @@ where
 
     fn requires_transaction_id(&self) -> bool {
         true
+    }
+
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        self.body.operator.as_deref().map(|it| &it.account_id)
+    }
+
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        self.body.regenerate_transaction_id
     }
 
     fn make_request(
@@ -381,6 +388,14 @@ impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> 
 
     fn requires_transaction_id(&self) -> bool {
         true
+    }
+
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        None
+    }
+
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        Some(false)
     }
 
     fn make_request(
