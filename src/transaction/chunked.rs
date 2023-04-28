@@ -149,6 +149,14 @@ where
         true
     }
 
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        self.transaction.regenerate_transaction_id()
+    }
+
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        self.transaction.operator_account_id()
+    }
+
     fn make_request(
         &self,
         transaction_id: Option<&TransactionId>,
@@ -239,8 +247,16 @@ where
         None
     }
 
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        self.transaction.operator_account_id()
+    }
+
     fn requires_transaction_id(&self) -> bool {
         true
+    }
+
+    fn regenerate_transaction_id(&self) -> Option<bool> {
+        self.transaction.regenerate_transaction_id()
     }
 
     fn make_request(

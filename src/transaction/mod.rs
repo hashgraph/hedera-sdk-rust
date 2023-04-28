@@ -19,12 +19,14 @@
  */
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{
     Debug,
     Formatter,
 };
 use std::num::NonZeroUsize;
+use std::sync::Arc;
 
 use hedera_proto::services;
 use prost::Message;
@@ -40,7 +42,8 @@ use crate::{
     Operator,
     PrivateKey,
     PublicKey,
-    Signer,
+    ScheduleCreateTransaction,
+    TransactionHash,
     TransactionId,
     TransactionResponse,
     ValidateChecksums,
@@ -97,9 +100,11 @@ pub(crate) struct TransactionBody<D> {
 
     pub(crate) transaction_id: Option<TransactionId>,
 
-    pub(crate) operator: Option<Operator>,
+    pub(crate) operator: Option<Arc<Operator>>,
 
     pub(crate) is_frozen: bool,
+
+    pub(crate) regenerate_transaction_id: Option<bool>,
 }
 
 impl<D> Default for Transaction<D>
@@ -117,6 +122,7 @@ where
                 transaction_id: None,
                 operator: None,
                 is_frozen: false,
+                regenerate_transaction_id: None,
             },
             signers: Vec::new(),
             sources: None,
@@ -277,8 +283,12 @@ impl<D> Transaction<D> {
     }
 
     /// Sign the transaction.
-    pub fn sign_with(&mut self, public_key: PublicKey, signer: Signer) -> &mut Self {
-        self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), signer))
+    pub fn sign_with<F: Fn(&[u8]) -> Vec<u8> + Send + Sync + 'static>(
+        &mut self,
+        public_key: PublicKey,
+        signer: F,
+    ) -> &mut Self {
+        self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), Arc::new(signer)))
     }
 
     pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {
@@ -328,6 +338,24 @@ impl<D: ChunkedTransactionData> Transaction<D> {
 
         self
     }
+
+    /// Returns whether or not the transaction ID should be refreshed if a [`Status::TransactionExpired`](crate::Status::TransactionExpired) occurs.
+    ///
+    /// By default, the value on Client will be used.
+    ///
+    /// Note: Some operations forcibly disable transaction ID regeneration, such as setting the transaction ID explicitly.
+    pub fn get_regenerate_transaction_id(&self) -> Option<bool> {
+        self.body.regenerate_transaction_id
+    }
+
+    /// Sets whether or not the transaction ID should be refreshed if a [`Status::TransactionExpired`](crate::Status::TransactionExpired) occurs.
+    ///
+    /// Various operations such as [`add_signature`](Self::add_signature) can forcibly disable transaction ID regeneration.
+    pub fn regenerate_transaction_id(&mut self, regenerate_transaction_id: bool) -> &mut Self {
+        self.body_mut().regenerate_transaction_id = Some(regenerate_transaction_id);
+
+        self
+    }
 }
 
 impl<D: ValidateChecksums> Transaction<D> {
@@ -343,8 +371,6 @@ impl<D: ValidateChecksums> Transaction<D> {
     ///
     /// # Errors
     /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set and `client.is_none()`.
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if [`auto_validate_checksums`](Client::auto_validate_checksums)
-    ///    is enabled on the client and the client has no ledger id.
     pub fn freeze_with<'a>(
         &mut self,
         client: impl Into<Option<&'a Client>>,
@@ -375,7 +401,7 @@ impl<D: ValidateChecksums> Transaction<D> {
             }
         });
 
-        let operator = client.and_then(|it| it.operator_internal().as_deref().cloned());
+        let operator = client.and_then(|it| it.full_load_operator());
 
         // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
         self.body.node_account_ids = Some(node_account_ids);
@@ -393,6 +419,27 @@ impl<D: ValidateChecksums> Transaction<D> {
                 self.validate_checksums(ledger_id)?;
             }
         }
+
+        Ok(self)
+    }
+
+    /// Sign the transaction with the `client`'s operator.
+    ///
+    /// # Errors
+    /// - If [`freeze_with`](Self::freeze_with) would error for this transaction.
+    ///
+    /// # Panics
+    /// If `client` has no operator.
+    pub fn sign_with_operator(&mut self, client: &Client) -> crate::Result<&mut Self> {
+        let Some(op) = client.full_load_operator() else {
+            panic!("Client had no operator")
+        };
+
+        self.freeze_with(client)?;
+
+        self.sign_signer(op.signer.clone());
+
+        self.body.operator = Some(op);
 
         Ok(self)
     }
@@ -509,15 +556,102 @@ impl<D: TransactionExecute> Transaction<D> {
         }
     }
 
-    // todo: make this public... :/
     // todo: should this return `Result<&mut Self>`?
-    pub(crate) fn _add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
+    /// Adds a signature directly to `self`.
+    ///
+    /// Only use this as a last resort.
+    ///
+    /// This forcibly disables transaction ID regeneration.
+    pub fn add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
         self.add_signature_signer(&AnySigner::Arbitrary(
             Box::new(pk),
-            Box::new(move |_| signature.clone()),
+            Arc::new(move |_| signature.clone()),
         ));
 
         self
+    }
+
+    /// # Panics
+    /// panics if the transaction is not schedulable, a transaction can be non-schedulable due to:
+    /// - if `self.is_frozen`
+    /// - being a transaction kind that's non-schedulable, IE, `EthereumTransaction`, or
+    /// - being a chunked transaction with multiple chunks.
+    pub fn schedule(self) -> ScheduleCreateTransaction {
+        self.require_not_frozen();
+        if self.get_node_account_ids().is_some() {
+            panic!("The underlying transaction for a scheduled transaction cannot have node account IDs set")
+        }
+
+        let mut transaction = ScheduleCreateTransaction::new();
+
+        if let Some(transaction_id) = self.get_transaction_id() {
+            transaction.transaction_id(transaction_id);
+        }
+
+        transaction.scheduled_transaction(self);
+
+        transaction
+    }
+
+    /// Get the hash for this transaction.
+    ///
+    /// Note: Calling this function _disables_ transaction ID regeneration.
+    pub fn get_transaction_hash(&mut self) -> crate::Result<TransactionHash> {
+        // todo: error not frozen
+        assert!(
+            self.is_frozen(),
+            "Transaction must be frozen before calling `get_transaction_hash`"
+        );
+
+        let sources = self.make_sources()?;
+
+        let sources = match sources {
+            Cow::Borrowed(it) => it,
+            Cow::Owned(it) => &*self.sources.insert(it),
+        };
+
+        Ok(TransactionHash::new(&sources.transactions().first().unwrap().signed_transaction_bytes))
+    }
+
+    /// Get the hashes for this transaction.
+    ///
+    /// Note: Calling this function _disables_ transaction ID regeneration.
+    pub fn get_transaction_hash_per_node(
+        &mut self,
+    ) -> crate::Result<HashMap<AccountId, TransactionHash>> {
+        // todo: error not frozen
+        assert!(
+            self.is_frozen(),
+            "Transaction must be frozen before calling `get_transaction_hash`"
+        );
+
+        let sources = self.make_sources()?;
+
+        let chunk = sources.chunks().next().unwrap();
+
+        let iter = chunk
+            .node_ids()
+            .iter()
+            .zip(chunk.transactions())
+            .map(|(node, it)| (*node, TransactionHash::new(&it.signed_transaction_bytes)));
+
+        Ok(iter.collect())
+    }
+}
+
+impl<D> Transaction<D>
+where
+    D: TransactionData,
+{
+    /// Returns the maximum allowed transaction fee if none is specified.
+    ///
+    /// Specifically, this default will be used in the following case:
+    /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
+    /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
+    ///
+    /// Currently this is (but not guaranteed to be) `2 ℏ` for most transaction types.
+    pub fn default_max_transaction_fee(&self) -> Hbar {
+        self.data().default_max_transaction_fee()
     }
 }
 

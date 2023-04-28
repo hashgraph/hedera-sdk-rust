@@ -113,6 +113,10 @@ where
         self.data.is_payment_required()
     }
 
+    fn operator_account_id(&self) -> Option<&AccountId> {
+        self.payment.operator_account_id()
+    }
+
     fn should_retry_pre_check(&self, status: Status) -> bool {
         self.data.should_retry_pre_check(status)
     }

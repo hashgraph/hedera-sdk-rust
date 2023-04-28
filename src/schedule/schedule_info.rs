@@ -108,6 +108,7 @@ impl ScheduleInfo {
                 transaction_id: Some(self.scheduled_transaction_id),
                 operator: None,
                 is_frozen: true,
+                regenerate_transaction_id: Some(false),
             },
             Vec::new(),
         ))

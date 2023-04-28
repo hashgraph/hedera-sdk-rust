@@ -34,6 +34,7 @@ use rand::thread_rng;
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::Network;
 use crate::ping_query::PingQuery;
+use crate::signer::AnySigner;
 use crate::{
     AccountId,
     Error,
@@ -53,6 +54,7 @@ struct ClientInner {
     max_transaction_fee_tinybar: AtomicU64,
     ledger_id: ArcSwapOption<LedgerId>,
     auto_validate_checksums: AtomicBool,
+    regenerate_transaction_ids: AtomicBool,
 }
 
 /// Managed client for use on the Hedera network.
@@ -79,6 +81,7 @@ impl Client {
             max_transaction_fee_tinybar: AtomicU64::new(0),
             ledger_id: ArcSwapOption::new(ledger_id.into().map(Arc::new)),
             auto_validate_checksums: AtomicBool::new(false),
+            regenerate_transaction_ids: AtomicBool::new(true),
         }))
     }
 
@@ -141,13 +144,26 @@ impl Client {
         node_id_indecies.into_iter().map(|index| node_ids[index]).collect()
     }
 
-    pub(crate) fn auto_validate_checksums(&self) -> bool {
+    /// Returns true if checksums should be automatically validated.
+    pub fn auto_validate_checksums(&self) -> bool {
         self.0.auto_validate_checksums.load(Ordering::Relaxed)
     }
 
     /// Enable or disable automatic entity ID checksum validation.
     pub fn set_auto_validate_checksums(&self, value: bool) {
         self.0.auto_validate_checksums.store(value, Ordering::Relaxed);
+    }
+
+    /// Returns true if transaction IDs should be automatically regenerated.
+    ///
+    /// This is `true` by default.
+    pub fn default_regenerate_transaction_id(&self) -> bool {
+        self.0.regenerate_transaction_ids.load(Ordering::Relaxed)
+    }
+
+    /// Enable or disable transaction ID regeneration.
+    pub fn set_default_regenerate_transaction_id(&self, value: bool) {
+        self.0.regenerate_transaction_ids.store(value, Ordering::Relaxed);
     }
 
     /// Sets the account that will, by default, be paying for transactions and queries built with
@@ -159,7 +175,9 @@ impl Client {
     /// The operator private key is used to sign all transactions executed by this client.
     ///
     pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
-        self.0.operator.store(Some(Arc::new(Operator { account_id: id, signer: key })));
+        self.0
+            .operator
+            .store(Some(Arc::new(Operator { account_id: id, signer: AnySigner::PrivateKey(key) })));
     }
 
     /// Generate a new transaction ID from the stored operator account ID, if present.
@@ -188,8 +206,14 @@ impl Client {
         None
     }
 
-    pub(crate) fn operator_internal(&self) -> arc_swap::Guard<Option<Arc<Operator>>> {
+    // keep this internal (repr)
+    pub(crate) fn load_operator(&self) -> arc_swap::Guard<Option<Arc<Operator>>> {
         self.0.operator.load()
+    }
+
+    // keep this internal (repr)
+    pub(crate) fn full_load_operator(&self) -> Option<Arc<Operator>> {
+        self.0.operator.load_full()
     }
 
     /// Send a ping to the given node.
