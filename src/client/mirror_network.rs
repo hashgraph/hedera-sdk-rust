@@ -21,7 +21,7 @@
 use std::borrow::Cow;
 use std::time::Duration;
 
-use parking_lot::RwLock;
+use once_cell::sync::OnceCell;
 use tonic::transport::{
     Channel,
     Endpoint,
@@ -35,7 +35,7 @@ pub(crate) const PREVIEWNET: &str = "hcs.previewnet.mirrornode.hedera.com:5600";
 
 pub(crate) struct MirrorNetwork {
     addresses: Vec<Cow<'static, str>>,
-    channel: RwLock<Option<Channel>>,
+    channel: OnceCell<Channel>,
 }
 
 impl MirrorNetwork {
@@ -58,30 +58,24 @@ impl MirrorNetwork {
             addresses.push(Cow::Borrowed(*address));
         }
 
-        Self { addresses, channel: RwLock::new(None) }
+        Self { addresses, channel: OnceCell::new() }
     }
 
     pub(crate) fn channel(&self) -> Channel {
-        if let Some(channel) = &*self.channel.read_recursive() {
-            return channel.clone();
-        }
+        self.channel
+            .get_or_init(|| {
+                let endpoints = self.addresses.iter().map(|address| {
+                    let uri = format!("tcp://{address}");
+                    Endpoint::from_shared(uri)
+                        .unwrap()
+                        .keep_alive_timeout(Duration::from_secs(10))
+                        .keep_alive_while_idle(true)
+                        .tcp_keepalive(Some(Duration::from_secs(10)))
+                        .connect_timeout(Duration::from_secs(10))
+                });
 
-        let mut slot = self.channel.write();
-
-        let endpoints = self.addresses.iter().map(|address| {
-            let uri = format!("tcp://{address}");
-            Endpoint::from_shared(uri)
-                .unwrap()
-                .keep_alive_timeout(Duration::from_secs(10))
-                .keep_alive_while_idle(true)
-                .tcp_keepalive(Some(Duration::from_secs(10)))
-                .connect_timeout(Duration::from_secs(10))
-        });
-
-        let channel = Channel::balance_list(endpoints);
-
-        *slot = Some(channel.clone());
-
-        channel
+                Channel::balance_list(endpoints)
+            })
+            .clone()
     }
 }

@@ -228,7 +228,7 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
                     }
                 };
 
-                futures_util::pin_mut!(stream);
+                let mut stream = std::pin::pin!(stream);
 
                 backoff.reset();
                 backoff_inf.reset();

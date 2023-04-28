@@ -242,7 +242,7 @@ impl IncompleteMessage {
     fn handle_expiry(&mut self) -> &mut Self {
         match self {
             IncompleteMessage::Partial(expiry, _) if *expiry < OffsetDateTime::now_utc() => {
-                *self = Self::Expired
+                *self = Self::Expired;
             }
             _ => {}
         }

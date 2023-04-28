@@ -278,12 +278,12 @@ impl FromProtobuf<services::response::Response> for ContractFunctionResult {
 
 #[cfg(test)]
 mod tests {
-    use fraction::{
+    use hedera_proto::services;
+    use hex_literal::hex;
+    use num_bigint::{
         BigInt,
         BigUint,
     };
-    use hedera_proto::services;
-    use hex_literal::hex;
 
     use crate::protobuf::{
         FromProtobuf,
