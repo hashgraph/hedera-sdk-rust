@@ -26,6 +26,7 @@ use super::{
     TransactionData,
     TransactionExecuteChunked,
 };
+use crate::downcast::DowncastOwned;
 use crate::entity_id::ValidateChecksums;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
@@ -959,4 +960,93 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
 
         Ok(value)
     }
+}
+
+impl AnyTransaction {
+    /// Attempt to downcast from any transaction to the given transaction kind.
+    ///
+    /// # Errors
+    /// - If self doesn't match the given transaction type, the transaction is returned as-is.
+    pub fn downcast<D>(self) -> Result<D, Self>
+    where
+        Self: DowncastOwned<D>,
+    {
+        self.downcast_owned()
+    }
+}
+
+// this is macro worthy (there's like 40 transactions that all do this the exact same way)
+/// Impl `DowncastOwned` for `AnyTransactionData`.
+///
+/// This macro will ensure you get all variants via a pattern match, if something changes (say, another transaction type is added), you'll get a `Missing match arm` compiler error.
+macro_rules! impl_downcast_any {
+    ($($id:ident),+$(,)?) => {
+        $(
+            impl $crate::downcast::DowncastOwned<data::$id> for AnyTransactionData {
+                fn downcast_owned(self) -> Result<data::$id, Self> {
+                    let Self::$id(data) = self else {
+                        return Err(self)
+                    };
+
+                    Ok(data)
+                }
+            }
+        )*
+
+        #[allow(non_snake_case)]
+        mod ___private_impl_downcast_any {
+            use super::AnyTransactionData;
+            // ensure the what we were given is actually everything.
+            fn _assert_exhaustive(d: AnyTransactionData)
+            {
+                match d {
+                    $(AnyTransactionData::$id(_) => {},)+
+                }
+            }
+        }
+    };
+}
+
+impl_downcast_any! {
+    AccountCreate,
+    AccountUpdate,
+    AccountDelete,
+    AccountAllowanceApprove,
+    AccountAllowanceDelete,
+    ContractCreate,
+    ContractUpdate,
+    ContractDelete,
+    ContractExecute,
+    Transfer,
+    TopicCreate,
+    TopicUpdate,
+    TopicDelete,
+    TopicMessageSubmit,
+    FileAppend,
+    FileCreate,
+    FileUpdate,
+    FileDelete,
+    Prng,
+    ScheduleCreate,
+    ScheduleSign,
+    ScheduleDelete,
+    TokenAssociate,
+    TokenBurn,
+    TokenCreate,
+    TokenDelete,
+    TokenDissociate,
+    TokenFeeScheduleUpdate,
+    TokenFreeze,
+    TokenGrantKyc,
+    TokenMint,
+    TokenPause,
+    TokenRevokeKyc,
+    TokenUnfreeze,
+    TokenUnpause,
+    TokenUpdate,
+    TokenWipe,
+    SystemDelete,
+    SystemUndelete,
+    Freeze,
+    Ethereum,
 }

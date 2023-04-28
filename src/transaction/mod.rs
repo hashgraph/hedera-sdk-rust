@@ -32,6 +32,7 @@ use hedera_proto::services;
 use prost::Message;
 use time::Duration;
 
+use crate::downcast::DowncastOwned;
 use crate::execute::execute;
 use crate::signer::AnySigner;
 use crate::{
@@ -974,4 +975,57 @@ fn pb_transaction_body_eq(
     }
 
     true
+}
+
+// note: This impl is why this has to be a trait (overlapping impls if `D == U` with TryFrom).
+impl<D, U> DowncastOwned<Transaction<U>> for Transaction<D>
+where
+    D: DowncastOwned<U>,
+{
+    fn downcast_owned(self) -> Result<Transaction<U>, Self> {
+        let Self { body, signers, sources } = self;
+        let TransactionBody {
+            data,
+            node_account_ids,
+            transaction_valid_duration,
+            max_transaction_fee,
+            transaction_memo,
+            transaction_id,
+            operator,
+            is_frozen,
+        } = body;
+
+        // not a `map().map_err()` because ownership.
+        match data.downcast_owned() {
+            Ok(data) => Ok(Transaction {
+                body: TransactionBody {
+                    data,
+                    node_account_ids,
+                    transaction_valid_duration,
+                    max_transaction_fee,
+                    transaction_memo,
+                    transaction_id,
+                    operator,
+                    is_frozen,
+                },
+                signers,
+                sources,
+            }),
+
+            Err(data) => Err(Self {
+                body: TransactionBody {
+                    data,
+                    node_account_ids,
+                    transaction_valid_duration,
+                    max_transaction_fee,
+                    transaction_memo,
+                    transaction_id,
+                    operator,
+                    is_frozen,
+                },
+                signers,
+                sources,
+            }),
+        }
+    }
 }
