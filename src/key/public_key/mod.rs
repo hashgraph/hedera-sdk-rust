@@ -36,15 +36,19 @@ use hmac::digest::generic_array::sequence::Split;
 use hmac::digest::generic_array::GenericArray;
 use k256::ecdsa;
 use k256::ecdsa::signature::DigestVerifier as _;
+use pkcs8::der::asn1::BitStringRef;
 use pkcs8::der::{
     Decode,
     Encode,
 };
-use pkcs8::AssociatedOid;
+use pkcs8::ObjectIdentifier;
 use prost::Message;
 use sha2::Digest;
 
-use crate::key::private_key::ED25519_OID;
+use crate::key::private_key::{
+    ED25519_OID,
+    K256_OID,
+};
 use crate::protobuf::ToProtobuf;
 use crate::signer::AnySigner;
 use crate::transaction::TransactionSources;
@@ -58,6 +62,9 @@ use crate::{
 
 #[cfg(test)]
 mod tests;
+
+pub(super) const EC_ALGORITM_OID: ObjectIdentifier =
+    ObjectIdentifier::new_unwrap("1.2.840.10045.2.1");
 
 /// A public key on the Hedera network.
 #[derive(Clone, Eq, Copy, Hash, PartialEq)]
@@ -170,21 +177,20 @@ impl PublicKey {
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PublicKey`.
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
-        let info = pkcs8::SubjectPublicKeyInfo::from_der(bytes)
+        let info = pkcs8::SubjectPublicKeyInfoRef::from_der(bytes)
             .map_err(|err| Error::key_parse(err.to_string()))?;
 
-        // hack (keep for 1 release) the `elliptic_curve` OID is not the correct one.
-        if info.algorithm.oid == k256::elliptic_curve::ALGORITHM_OID
-            || info.algorithm.oid == k256::Secp256k1::OID
-        {
-            return Self::from_bytes_ecdsa(info.subject_public_key);
-        }
+        let bytes = info
+            .subject_public_key
+            .as_bytes()
+            .ok_or_else(|| Error::key_parse("Unexpected bitstring len"))?;
 
-        if info.algorithm.oid == ED25519_OID {
-            return Self::from_bytes_ed25519(info.subject_public_key);
+        match info.algorithm.oid {
+            // hack (keep for 1 release) the `elliptic_curve` OID is not the correct one.
+            K256_OID | EC_ALGORITM_OID => Self::from_bytes_ecdsa(bytes),
+            ED25519_OID => Self::from_bytes_ed25519(bytes),
+            oid => Err(Error::key_parse(format!("unsupported key algorithm: {oid}"))),
         }
-
-        Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
     /// Decodes `self` from a der encoded `str`
@@ -246,9 +252,9 @@ impl PublicKey {
         match &self.0 {
             PublicKeyData::Ed25519(key) => {
                 let key = key.to_bytes();
-                let info = pkcs8::SubjectPublicKeyInfo {
+                let info = pkcs8::SubjectPublicKeyInfoRef {
                     algorithm: self.algorithm(),
-                    subject_public_key: &key,
+                    subject_public_key: BitStringRef::from_bytes(&key).unwrap(),
                 };
 
                 info.encode_to_vec(&mut buf).unwrap();
@@ -256,9 +262,9 @@ impl PublicKey {
 
             PublicKeyData::Ecdsa(key) => {
                 let key = key.to_encoded_point(true);
-                let info = pkcs8::SubjectPublicKeyInfo {
+                let info = pkcs8::SubjectPublicKeyInfoRef {
                     algorithm: self.algorithm(),
-                    subject_public_key: key.as_bytes(),
+                    subject_public_key: BitStringRef::from_bytes(key.as_bytes()).unwrap(),
                 };
 
                 info.encode_to_vec(&mut buf).unwrap();
@@ -268,12 +274,12 @@ impl PublicKey {
         buf
     }
 
-    fn algorithm(&self) -> pkcs8::AlgorithmIdentifier<'_> {
-        pkcs8::AlgorithmIdentifier {
+    fn algorithm(&self) -> pkcs8::AlgorithmIdentifierRef<'_> {
+        pkcs8::AlgorithmIdentifierRef {
             parameters: None,
             oid: match self.0 {
                 PublicKeyData::Ed25519(_) => ED25519_OID,
-                PublicKeyData::Ecdsa(_) => k256::Secp256k1::OID,
+                PublicKeyData::Ecdsa(_) => K256_OID,
             },
         }
     }

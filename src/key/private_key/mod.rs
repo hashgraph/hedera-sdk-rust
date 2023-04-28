@@ -21,6 +21,7 @@
 #[cfg(test)]
 mod tests;
 
+use std::fmt;
 use std::fmt::{
     Debug,
     Display,
@@ -28,10 +29,6 @@ use std::fmt::{
 };
 use std::str::FromStr;
 use std::sync::Arc;
-use std::{
-    fmt,
-    iter,
-};
 
 use ed25519_dalek::Signer;
 use hmac::{
@@ -39,11 +36,10 @@ use hmac::{
     Mac,
 };
 use k256::ecdsa::signature::DigestSigner;
-use k256::pkcs8::der::Encode;
-use pkcs8::der::Decode;
-use pkcs8::{
-    AssociatedOid,
-    ObjectIdentifier,
+use pkcs8::der::oid::ObjectIdentifier;
+use pkcs8::der::{
+    Decode,
+    Encode,
 };
 use sha2::Sha512;
 use sha3::Digest;
@@ -69,6 +65,24 @@ fn split_key_array(arr: &[u8; 64]) -> (&[u8; 32], &[u8; 32]) {
 }
 
 pub(super) const ED25519_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.101.112");
+pub(super) const K256_OID: ObjectIdentifier = ObjectIdentifier::new_unwrap("1.3.132.0.10");
+
+enum PrivateKeyData {
+    Ed25519(ed25519_dalek::SigningKey),
+    Ecdsa(k256::ecdsa::SigningKey),
+}
+
+impl From<ed25519_dalek::SigningKey> for PrivateKeyData {
+    fn from(value: ed25519_dalek::SigningKey) -> Self {
+        Self::Ed25519(value)
+    }
+}
+
+impl From<k256::ecdsa::SigningKey> for PrivateKeyData {
+    fn from(value: k256::ecdsa::SigningKey) -> Self {
+        Self::Ecdsa(value)
+    }
+}
 
 /// A private key on the Hedera network.
 #[derive(Clone)]
@@ -87,6 +101,18 @@ impl PrivateKeyDataWrapper {
 
     fn new_derivable(inner: PrivateKeyData, chain_code: [u8; 32]) -> Self {
         Self { data: inner, chain_code: Some(chain_code) }
+    }
+}
+
+impl From<ed25519_dalek::SigningKey> for PrivateKeyDataWrapper {
+    fn from(value: ed25519_dalek::SigningKey) -> Self {
+        Self::new(value.into())
+    }
+}
+
+impl From<k256::ecdsa::SigningKey> for PrivateKeyDataWrapper {
+    fn from(value: k256::ecdsa::SigningKey) -> Self {
+        Self::new(value.into())
     }
 }
 
@@ -112,15 +138,26 @@ impl Debug for PrivateKeyDataWrapper {
     }
 }
 
-enum PrivateKeyData {
-    Ed25519(ed25519_dalek::SigningKey),
-    Ecdsa(k256::ecdsa::SigningKey),
-}
-
 impl PrivateKey {
     #[cfg(test)]
     pub(crate) fn debug_pretty(&self) -> &impl Debug {
         &*self.0
+    }
+
+    fn new(data: PrivateKeyDataWrapper) -> Self {
+        Self(Arc::new(data))
+    }
+
+    fn new_derivable(key: PrivateKeyData, chain_code: [u8; 32]) -> Self {
+        Self::new(PrivateKeyDataWrapper::new_derivable(key, chain_code))
+    }
+
+    fn ed25519(key: ed25519_dalek::SigningKey) -> Self {
+        Self::new(key.into())
+    }
+
+    fn ecdsa(key: k256::ecdsa::SigningKey) -> Self {
+        Self::new(key.into())
     }
 
     /// Generates a new Ed25519 `PrivateKey`.
@@ -131,21 +168,16 @@ impl PrivateKey {
         let mut csprng = rand::thread_rng();
 
         let data = ed25519_dalek::SigningKey::generate(&mut csprng);
-        let data = PrivateKeyData::Ed25519(data);
 
-        let mut chain_code = [0u8; 32];
-        csprng.fill(&mut chain_code);
-
-        Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, chain_code)))
+        Self::new_derivable(data.into(), csprng.gen())
     }
 
     /// Generates a new ECDSA(secp256k1) `PrivateKey`.
     #[must_use]
     pub fn generate_ecdsa() -> Self {
         let data = k256::ecdsa::SigningKey::random(&mut rand::thread_rng());
-        let data = PrivateKeyData::Ecdsa(data);
 
-        Self(Arc::new(PrivateKeyDataWrapper::new(data)))
+        Self::ecdsa(data)
     }
 
     /// Gets the [`PublicKey`] which corresponds to this `PrivateKey`.
@@ -176,13 +208,12 @@ impl PrivateKey {
     // panic is unreachable.
     #[allow(clippy::missing_panics_doc)]
     pub fn from_bytes_ed25519(bytes: &[u8]) -> crate::Result<Self> {
-        let data = if bytes.len() == 32 || bytes.len() == 64 {
-            ed25519_dalek::SigningKey::from_bytes(&bytes[..32].try_into().unwrap())
-        } else {
-            return Self::from_bytes_der(bytes);
-        };
-
-        Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::Ed25519(data)))))
+        match bytes.len() {
+            32 | 64 => Ok(Self::ed25519(ed25519_dalek::SigningKey::from_bytes(
+                &bytes[..32].try_into().unwrap(),
+            ))),
+            _ => Self::from_bytes_der(bytes),
+        }
     }
 
     /// Parse a ECDSA(secp256k1) `PrivateKey` from a sequence of bytes.
@@ -190,14 +221,14 @@ impl PrivateKey {
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ECDSA(secp256k1) `PrivateKey`.
     pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
-        let data = if bytes.len() == 32 {
+        let data = if let Ok(bytes) = bytes.try_into() {
             // not DER encoded, raw bytes for key
             k256::ecdsa::SigningKey::from_bytes(bytes).map_err(Error::key_parse)?
         } else {
             return Self::from_bytes_der(bytes);
         };
 
-        Ok(Self(Arc::new(PrivateKeyDataWrapper::new(PrivateKeyData::Ecdsa(data)))))
+        Ok(Self::ecdsa(data))
     }
 
     /// Parse a `PrivateKey` from a sequence of der encoded bytes.
@@ -215,15 +246,11 @@ impl PrivateKey {
 
         let inner = inner.as_bytes();
 
-        if info.algorithm.oid == k256::Secp256k1::OID {
-            return Self::from_bytes_ecdsa(inner);
+        match info.algorithm.oid {
+            K256_OID => Self::from_bytes_ecdsa(inner),
+            ED25519_OID => Self::from_bytes_ed25519(inner),
+            id => Err(Error::key_parse(format!("unsupported key algorithm: {id}"))),
         }
-
-        if info.algorithm.oid == ED25519_OID {
-            return Self::from_bytes_ed25519(inner);
-        }
-
-        Err(Error::key_parse(format!("unsupported key algorithm: {}", info.algorithm.oid)))
     }
 
     /// Parse a `PrivateKey` from a der encoded string.
@@ -428,12 +455,12 @@ impl PrivateKey {
         self.public_key().to_account_id(shard, realm)
     }
 
-    fn algorithm(&self) -> pkcs8::AlgorithmIdentifier<'_> {
-        pkcs8::AlgorithmIdentifier {
+    fn algorithm(&self) -> pkcs8::AlgorithmIdentifierRef<'_> {
+        pkcs8::AlgorithmIdentifierRef {
             parameters: None,
             oid: match &self.0.data {
                 PrivateKeyData::Ed25519(_) => ED25519_OID,
-                PrivateKeyData::Ecdsa(_) => k256::Secp256k1::OID,
+                PrivateKeyData::Ecdsa(_) => K256_OID,
             },
         }
     }
@@ -548,9 +575,8 @@ impl PrivateKey {
                 let (data, chain_code) = split_key_array(&output);
 
                 let data = ed25519_dalek::SigningKey::from_bytes(data);
-                let data = PrivateKeyData::Ed25519(data);
 
-                Ok(Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, *chain_code))))
+                Ok(Self::new_derivable(data.into(), *chain_code))
             }
             PrivateKeyData::Ecdsa(_) => {
                 Err(Error::key_derive("Ecdsa private keys don't currently support derivation"))
@@ -583,16 +609,11 @@ impl PrivateKey {
 
                 seed.extend_from_slice(&i1.to_be_bytes());
                 // any better way to do this?
-                seed.extend(iter::repeat(i2).take(4));
+                seed.extend_from_slice(&[i2; 4]);
 
-                let salt: Vec<u8> = vec![0xff];
+                let mat = pbkdf2::pbkdf2_hmac_array::<Sha512, 32>(&seed, &[0xff], 2048);
 
-                let mut mat = [0; 32];
-
-                pbkdf2::pbkdf2::<Hmac<Sha512>>(&seed, &salt, 2048, &mut mat);
-
-                // note: this shouldn't fail, but there isn't an infaliable conversion.
-                Self::from_bytes_ed25519(&mat)
+                Ok(Self::ed25519(ed25519_dalek::SigningKey::from_bytes(&mat)))
             }
 
             PrivateKeyData::Ecdsa(_) => {
@@ -619,9 +640,8 @@ impl PrivateKey {
         };
 
         let data = ed25519_dalek::SigningKey::from_bytes(&left);
-        let data = PrivateKeyData::Ed25519(data);
 
-        let mut key = Self(Arc::new(PrivateKeyDataWrapper::new_derivable(data, right)));
+        let mut key = Self::new_derivable(data.into(), right);
 
         for index in [44, 3030, 0, 0] {
             key = key.derive(index).expect("BUG: we set the chain code earlier in this function");

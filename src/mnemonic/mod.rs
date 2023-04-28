@@ -26,7 +26,6 @@ use fraction::{
     Integer,
     ToPrimitive,
 };
-use hmac::Hmac;
 use num_bigint::BigInt;
 use once_cell::sync::Lazy;
 use rand::{
@@ -208,16 +207,11 @@ impl Mnemonic {
         let mut salt = String::from("mnemonic");
         salt.push_str(phrase);
 
-        let mut mat = [0; 64];
-
-        pbkdf2::pbkdf2::<Hmac<sha2::Sha512>>(
+        pbkdf2::pbkdf2_hmac_array::<sha2::Sha512, 64>(
             self.to_string().as_bytes(),
             salt.as_bytes(),
             2048,
-            &mut mat,
-        );
-
-        mat
+        )
     }
 }
 

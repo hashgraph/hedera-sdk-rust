@@ -20,10 +20,9 @@ mnemonic = []
 [dependencies]
 async-stream = "0.3.3"
 backoff = "0.4.0"
-ed25519-dalek = { version = "2.0.0-pre.0", features = ["rand_core"] }
-fraction = { version = "0.11.0", default-features = false }
+ed25519-dalek = { version = "2.0.0-rc.2", features = ["rand_core"] }
+fraction = { version = "0.13.0", default-features = false }
 futures-core = "0.3.21"
-futures-util = "0.3.21"
 hedera-proto = { path = "./protobufs", version = "0.6.0", features = [
   "time_0_3",
   "fraction",
@@ -33,22 +32,29 @@ hmac = "0.12.1"
 log = "0.4.17"
 num-bigint = "0.4.3"
 once_cell = "1.10.0"
-parking_lot = "0.12.0"
-pbkdf2 = { version = "0.11.0", default-features = false }
-pem-rfc7468 = { version = "0.6.0", features = ["std"] }
-prost = "0.11.0"
+pbkdf2 = { version = "0.12.0", default-features = false }
+pem-rfc7468 = { version = "0.7.0", features = ["std"] }
 rand = "0.8.5"
 sha2 = "0.10.2"
 sha3 = "0.10.2"
 thiserror = "1.0.31"
 time = "0.3.9"
-tokio = { version = "1.24.2", features = ["rt-multi-thread"] }
-tonic = "0.8.0"
-tinystr = "0.7.0"
+tokio = { version = "1.24.2", features = ["time"] }
+tonic = "0.9.0"
+tinystr = { version = "0.7.0", default-features = false }
 arc-swap = "1.6.0"
 rlp = "0.5.2"
-bytes = "1.2.1"
+bytes = { version = "1.2.1", default-features = false }
 pin-project-lite = "0.2.9"
+
+[dependencies.futures-util]
+version = "0.3.21"
+default-features = false
+
+[dependencies.prost]
+version = "0.11"
+default-features = false
+features = ["std"]
 
 [dependencies.rust_decimal]
 version = "1.26.1"
@@ -56,12 +62,12 @@ default-features = false
 features = ["std"]
 
 [dependencies.k256]
-version = "0.12.0"
+version = "0.13.0"
 default-features = false
-features = ["arithmetic", "ecdsa", "pkcs8", "precomputed-tables", "std"]
+features = ["ecdsa", "precomputed-tables", "std"]
 
 [dependencies.pkcs8]
-version = "0.9.0"
+version = "0.10.0"
 default_features = false
 features = ["encryption"]
 
@@ -70,7 +76,15 @@ anyhow = "1.0.57"
 assert_matches = "1.5.0"
 clap = { version = "4.0.0", features = ["derive", "env"] }
 dotenvy = "0.15.5"
-env_logger = "0.10.0"
 expect-test = "1.4.0"
-hex-literal = "0.3.4"
-tokio = { version = "1.24.2", features = ["full"] }
+hex-literal = "0.4.0"
+parking_lot = "0.12.0"
+
+[dev-dependencies.tokio]
+version = "1.24.2"
+features = ["rt-multi-thread", "macros"]
+
+[dev-dependencies.env_logger]
+version = "0.10.0"
+default-features = false
+features = ["auto-color", "color", "humantime"]
