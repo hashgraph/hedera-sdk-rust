@@ -993,6 +993,7 @@ where
             transaction_id,
             operator,
             is_frozen,
+            regenerate_transaction_id,
         } = body;
 
         // not a `map().map_err()` because ownership.
@@ -1007,6 +1008,7 @@ where
                     transaction_id,
                     operator,
                     is_frozen,
+                    regenerate_transaction_id,
                 },
                 signers,
                 sources,
@@ -1022,6 +1024,7 @@ where
                     transaction_id,
                     operator,
                     is_frozen,
+                    regenerate_transaction_id,
                 },
                 signers,
                 sources,
