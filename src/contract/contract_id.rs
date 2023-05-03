@@ -134,7 +134,7 @@ impl ContractId {
     /// Convert `self` to a string with a valid checksum.
     ///
     /// # Errors
-    /// - [`Error::CannotPerformTaskWithoutLedgerId`] if the client has no ledger ID. This may become a panic in a future (breaking) release.
+    /// - [`Error::CannotCreateChecksum`] if self has an `evm_address`.
     pub fn to_string_with_checksum(&self, client: &Client) -> Result<String, Error> {
         if self.evm_address.is_some() {
             Err(Error::CannotCreateChecksum)

@@ -197,6 +197,7 @@ pub use contract::{
     ContractInfoQuery,
     ContractLogInfo,
     ContractUpdateTransaction,
+    DelegateContractId,
 };
 pub use entity_id::EntityId;
 pub(crate) use entity_id::ValidateChecksums;
