@@ -54,6 +54,7 @@ mod any;
 mod chunked;
 mod execute;
 mod protobuf;
+mod services_data;
 mod source;
 #[cfg(test)]
 mod tests;
