@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::collections::HashMap;
 use std::ops::Not;
 
 use hedera_proto::services;
@@ -65,10 +66,13 @@ pub struct TransferTransactionData {
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 struct Transfer {
+    /// The account involved in the transfer.
     account_id: AccountId,
 
+    /// The value of the transfer.
     amount: i64,
 
+    /// If this is an approved transfer.
     is_approval: bool,
 }
 
@@ -229,6 +233,15 @@ impl TransferTransaction {
     /// Add an approved hbar transfer to the transaction.
     pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
         self._hbar_transfer(account_id, amount, true)
+    }
+
+    /// Returns the transfers that will be executed.
+    pub fn get_hbar_transfers(&self) -> HashMap<AccountId, Hbar> {
+        self.data()
+            .transfers
+            .iter()
+            .map(|it| (it.account_id, Hbar::from_tinybars(it.amount)))
+            .collect()
     }
 }
 
