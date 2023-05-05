@@ -751,9 +751,6 @@ impl AnyTransaction {
     ) -> crate::Result<Self> {
         Ok(Transaction {
             body: TransactionBody {
-                data: AnyTransactionData::from_protobuf(
-                    ServicesTransactionDataList::from_protobuf(data_chunks)?,
-                )?,
                 node_account_ids: None,
                 transaction_valid_duration: first_body.transaction_valid_duration.map(Into::into),
                 max_transaction_fee: Some(Hbar::from_tinybars(first_body.transaction_fee as i64)),
@@ -766,6 +763,9 @@ impl AnyTransaction {
                 is_frozen: true,
                 regenerate_transaction_id: Some(false),
             },
+            data: AnyTransactionData::from_protobuf(ServicesTransactionDataList::from_protobuf(
+                data_chunks,
+            )?)?,
             signers: Vec::new(),
             sources: None,
         })

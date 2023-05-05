@@ -211,7 +211,7 @@ where
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
-        self.body.data.execute(channel, request)
+        self.data.execute(channel, request)
     }
 
     fn make_response(
@@ -260,7 +260,7 @@ impl<D: ValidateChecksums> ValidateChecksums for Transaction<D> {
             }
         }
         self.body.transaction_id.validate_checksums(ledger_id)?;
-        self.body.data.validate_checksums(ledger_id)
+        self.data.validate_checksums(ledger_id)
     }
 }
 
@@ -271,12 +271,12 @@ where
     #[allow(deprecated)]
     fn to_transaction_body_protobuf(&self, chunk_info: &ChunkInfo) -> services::TransactionBody {
         assert!(self.is_frozen());
-        let data = self.body.data.to_transaction_data_protobuf(chunk_info);
+        let data = self.data.to_transaction_data_protobuf(chunk_info);
 
         let max_transaction_fee = self
             .body
             .max_transaction_fee
-            .unwrap_or_else(|| self.body.data.default_max_transaction_fee());
+            .unwrap_or_else(|| self.data.default_max_transaction_fee());
 
         services::TransactionBody {
             data: Some(data),

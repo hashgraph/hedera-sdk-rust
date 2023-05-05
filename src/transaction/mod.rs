@@ -80,7 +80,9 @@ const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 /// A transaction that can be executed on the Hedera network.
 pub struct Transaction<D> {
-    body: TransactionBody<D>,
+    body: TransactionBody,
+
+    data: D,
 
     signers: Vec<AnySigner>,
 
@@ -88,9 +90,7 @@ pub struct Transaction<D> {
 }
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct TransactionBody<D> {
-    pub(crate) data: D,
-
+pub(crate) struct TransactionBody {
     pub(crate) node_account_ids: Option<Vec<AccountId>>,
 
     pub(crate) transaction_valid_duration: Option<Duration>,
@@ -108,6 +108,55 @@ pub(crate) struct TransactionBody<D> {
     pub(crate) regenerate_transaction_id: Option<bool>,
 }
 
+impl TransactionBody {
+    /// # Panics
+    /// If `self.is_frozen`.
+    #[track_caller]
+    fn require_not_frozen(&self) {
+        assert!(
+            !self.is_frozen,
+            "transaction is immutable; it has at least one signature or has been explicitly frozen"
+        );
+    }
+
+    fn freeze(&mut self, client: Option<&Client>) -> crate::Result<()> {
+        if self.is_frozen {
+            return Ok(());
+        }
+
+        let node_account_ids = match &self.node_account_ids {
+            // the clone here is the lesser of two evils.
+            Some(it) => it.clone(),
+            None => client.ok_or(Error::FreezeUnsetNodeAccountIds)?.random_node_ids(),
+        };
+
+        // note to reviewer: this is intentionally still an option, fallback is used later, swift doesn't *have* default max transaction fee and fixing it is a massive PITA.
+        let max_transaction_fee = self.max_transaction_fee.or_else(|| {
+            // no max has been set on the *transaction*
+            // check if there is a global max set on the client
+            let client_max_transaction_fee = client
+                .map(|it| it.max_transaction_fee().load(std::sync::atomic::Ordering::Relaxed));
+
+            match client_max_transaction_fee {
+                Some(max) if max > 1 => Some(Hbar::from_tinybars(max as i64)),
+                // no max has been set on the client either
+                // fallback to the hard-coded default for this transaction type
+                _ => None,
+            }
+        });
+
+        let operator = client.and_then(|it| it.full_load_operator());
+
+        // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
+        self.node_account_ids = Some(node_account_ids);
+        self.max_transaction_fee = max_transaction_fee;
+        self.operator = operator;
+        self.is_frozen = true;
+
+        Ok(())
+    }
+}
+
 impl<D> Default for Transaction<D>
 where
     D: Default,
@@ -115,7 +164,6 @@ where
     fn default() -> Self {
         Self {
             body: TransactionBody {
-                data: D::default(),
                 node_account_ids: None,
                 transaction_valid_duration: None,
                 max_transaction_fee: None,
@@ -125,6 +173,7 @@ where
                 is_frozen: false,
                 regenerate_transaction_id: None,
             },
+            data: D::default(),
             signers: Vec::new(),
             sources: None,
         }
@@ -136,7 +185,7 @@ where
     D: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Transaction").field("body", &self.body).finish()
+        f.debug_struct("Transaction").field("body", &self.body).field("data", &self.data).finish()
     }
 }
 
@@ -155,8 +204,8 @@ where
 }
 
 impl<D> Transaction<D> {
-    pub(crate) fn from_parts(body: TransactionBody<D>, signers: Vec<AnySigner>) -> Self {
-        Self { body, signers, sources: None }
+    pub(crate) fn from_parts(body: TransactionBody, data: D, signers: Vec<AnySigner>) -> Self {
+        Self { body, data, signers, sources: None }
     }
 
     pub(crate) fn is_frozen(&self) -> bool {
@@ -173,34 +222,24 @@ impl<D> Transaction<D> {
 
     /// # Panics
     /// If `self.is_frozen()`.
-    #[track_caller]
-    pub(crate) fn require_not_frozen(&self) {
-        assert!(
-            !self.is_frozen(),
-            "transaction is immutable; it has at least one signature or has been explicitly frozen"
-        );
-    }
-
-    /// # Panics
-    /// If `self.is_frozen()`.
-    fn body_mut(&mut self) -> &mut TransactionBody<D> {
-        self.require_not_frozen();
+    fn body_mut(&mut self) -> &mut TransactionBody {
+        self.body.require_not_frozen();
         &mut self.body
     }
 
-    pub(crate) fn into_body(self) -> TransactionBody<D> {
-        self.body
+    pub(crate) fn into_parts(self) -> (TransactionBody, D) {
+        (self.body, self.data)
     }
 
     pub(crate) fn data(&self) -> &D {
-        &self.body.data
+        &self.data
     }
 
     /// # Panics
     /// If `self.is_frozen()`.
     pub(crate) fn data_mut(&mut self) -> &mut D {
-        self.require_not_frozen();
-        &mut self.body.data
+        self.body.require_not_frozen();
+        &mut self.data
     }
 
     /// Returns the account IDs of the nodes that this transaction may be submitted to.
@@ -365,7 +404,11 @@ impl<D: ValidateChecksums> Transaction<D> {
     /// # Errors
     /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set.
     pub fn freeze(&mut self) -> crate::Result<&mut Self> {
-        self.freeze_with(None)
+        // note: this directly calls `TransactionBody::freeze` rather than freeze with to save the compiler some work
+        // since it's approximately as difficult to write both variations.
+        self.body.freeze(None)?;
+
+        Ok(self)
     }
 
     /// Freeze the transaction so that no further modifications can be made.
@@ -376,39 +419,9 @@ impl<D: ValidateChecksums> Transaction<D> {
         &mut self,
         client: impl Into<Option<&'a Client>>,
     ) -> crate::Result<&mut Self> {
-        if self.is_frozen() {
-            return Ok(self);
-        }
         let client: Option<&Client> = client.into();
 
-        let node_account_ids = match &self.body.node_account_ids {
-            // the clone here is the lesser of two evils.
-            Some(it) => it.clone(),
-            None => client.ok_or(Error::FreezeUnsetNodeAccountIds)?.random_node_ids(),
-        };
-
-        // note to reviewer: this is intentionally still an option, fallback is used later, swift doesn't *have* default max transaction fee and fixing it is a massive PITA.
-        let max_transaction_fee = self.body.max_transaction_fee.or_else(|| {
-            // no max has been set on the *transaction*
-            // check if there is a global max set on the client
-            let client_max_transaction_fee = client
-                .map(|it| it.max_transaction_fee().load(std::sync::atomic::Ordering::Relaxed));
-
-            match client_max_transaction_fee {
-                Some(max) if max > 1 => Some(Hbar::from_tinybars(max as i64)),
-                // no max has been set on the client either
-                // fallback to the hard-coded default for this transaction type
-                _ => None,
-            }
-        });
-
-        let operator = client.and_then(|it| it.full_load_operator());
-
-        // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
-        self.body.node_account_ids = Some(node_account_ids);
-        self.body.max_transaction_fee = max_transaction_fee;
-        self.body.operator = operator;
-        self.body.is_frozen = true;
+        self.body.freeze(client)?;
 
         if let Some(client) = client {
             if client.auto_validate_checksums() {
@@ -578,7 +591,7 @@ impl<D: TransactionExecute> Transaction<D> {
     /// - being a transaction kind that's non-schedulable, IE, `EthereumTransaction`, or
     /// - being a chunked transaction with multiple chunks.
     pub fn schedule(self) -> ScheduleCreateTransaction {
-        self.require_not_frozen();
+        self.body.require_not_frozen();
         if self.get_node_account_ids().is_some() {
             panic!("The underlying transaction for a scheduled transaction cannot have node account IDs set")
         }
@@ -620,6 +633,18 @@ impl<D: TransactionExecute> Transaction<D> {
     pub fn get_transaction_hash_per_node(
         &mut self,
     ) -> crate::Result<HashMap<AccountId, TransactionHash>> {
+        fn inner(sources: &TransactionSources) -> HashMap<AccountId, TransactionHash> {
+            let chunk = sources.chunks().next().unwrap();
+
+            let iter = chunk
+                .node_ids()
+                .iter()
+                .zip(chunk.transactions())
+                .map(|(node, it)| (*node, TransactionHash::new(&it.signed_transaction_bytes)));
+
+            iter.collect()
+        }
+
         // todo: error not frozen
         assert!(
             self.is_frozen(),
@@ -628,15 +653,7 @@ impl<D: TransactionExecute> Transaction<D> {
 
         let sources = self.make_sources()?;
 
-        let chunk = sources.chunks().next().unwrap();
-
-        let iter = chunk
-            .node_ids()
-            .iter()
-            .zip(chunk.transactions())
-            .map(|(node, it)| (*node, TransactionHash::new(&it.signed_transaction_bytes)));
-
-        Ok(iter.collect())
+        Ok(inner(&sources))
     }
 }
 
@@ -983,52 +1000,11 @@ where
     D: DowncastOwned<U>,
 {
     fn downcast_owned(self) -> Result<Transaction<U>, Self> {
-        let Self { body, signers, sources } = self;
-        let TransactionBody {
-            data,
-            node_account_ids,
-            transaction_valid_duration,
-            max_transaction_fee,
-            transaction_memo,
-            transaction_id,
-            operator,
-            is_frozen,
-            regenerate_transaction_id,
-        } = body;
-
+        let Self { body, data, signers, sources } = self;
         // not a `map().map_err()` because ownership.
         match data.downcast_owned() {
-            Ok(data) => Ok(Transaction {
-                body: TransactionBody {
-                    data,
-                    node_account_ids,
-                    transaction_valid_duration,
-                    max_transaction_fee,
-                    transaction_memo,
-                    transaction_id,
-                    operator,
-                    is_frozen,
-                    regenerate_transaction_id,
-                },
-                signers,
-                sources,
-            }),
-
-            Err(data) => Err(Self {
-                body: TransactionBody {
-                    data,
-                    node_account_ids,
-                    transaction_valid_duration,
-                    max_transaction_fee,
-                    transaction_memo,
-                    transaction_id,
-                    operator,
-                    is_frozen,
-                    regenerate_transaction_id,
-                },
-                signers,
-                sources,
-            }),
+            Ok(data) => Ok(Transaction { body, data, signers, sources }),
+            Err(data) => Err(Self { body, data, signers, sources }),
         }
     }
 }

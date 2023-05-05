@@ -100,7 +100,6 @@ impl ScheduleInfo {
         // note: this can't error *right now* but the API *will* be faliable eventually, and as such, returns a result to make the change non-breaking.
         Ok(Transaction::from_parts(
             TransactionBody {
-                data: (*self.scheduled_transaction.data).clone().into(),
                 node_account_ids: None,
                 transaction_valid_duration: None,
                 max_transaction_fee: None,
@@ -110,6 +109,7 @@ impl ScheduleInfo {
                 is_frozen: true,
                 regenerate_transaction_id: Some(false),
             },
+            (*self.scheduled_transaction.data).clone().into(),
             Vec::new(),
         ))
     }

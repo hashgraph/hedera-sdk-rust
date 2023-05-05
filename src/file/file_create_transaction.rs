@@ -172,7 +172,6 @@ impl FileCreateTransaction {
 
     /// Sets the time at which this file should expire.
     pub fn expiration_time(&mut self, at: OffsetDateTime) -> &mut Self {
-        self.require_not_frozen();
         self.data_mut().expiration_time = Some(at);
         self
     }

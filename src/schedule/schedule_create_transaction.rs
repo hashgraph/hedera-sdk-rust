@@ -33,6 +33,7 @@ use crate::transaction::{
     ChunkInfo,
     ToSchedulableTransactionDataProtobuf,
     ToTransactionDataProtobuf,
+    TransactionBody,
     TransactionData,
     TransactionExecute,
 };
@@ -87,16 +88,25 @@ impl ScheduleCreateTransaction {
     where
         D: TransactionExecute,
     {
-        let body = transaction.into_body();
+        // non-generic inner function to dodge instantiations.
+        fn inner(
+            tx: &mut ScheduleCreateTransaction,
+            body: TransactionBody,
+            data: AnyTransactionData,
+        ) {
+            tx.data_mut().scheduled_transaction = Some(SchedulableTransactionBody {
+                max_transaction_fee: body.max_transaction_fee,
+                transaction_memo: body.transaction_memo,
+                data: Box::new(data.try_into().unwrap()),
+            });
+        }
+
+        let (body, data) = transaction.into_parts();
 
         // this gets infered right but `foo.into().try_into()` looks really really weird.
-        let data: AnyTransactionData = body.data.into();
+        let data: AnyTransactionData = data.into();
 
-        self.data_mut().scheduled_transaction = Some(SchedulableTransactionBody {
-            max_transaction_fee: body.max_transaction_fee,
-            transaction_memo: body.transaction_memo,
-            data: Box::new(data.try_into().unwrap()),
-        });
+        inner(self, body, data);
 
         self
     }

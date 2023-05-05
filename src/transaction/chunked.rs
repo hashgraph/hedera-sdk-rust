@@ -176,7 +176,7 @@ where
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
-        self.transaction.body.data.execute(channel, request)
+        self.transaction.data.execute(channel, request)
     }
 
     fn make_response(
@@ -280,7 +280,7 @@ where
         channel: Channel,
         request: Self::GrpcRequest,
     ) -> BoxGrpcFuture<'_, Self::GrpcResponse> {
-        self.transaction.body.data.execute(channel, request)
+        self.transaction.data.execute(channel, request)
     }
 
     fn make_response(
