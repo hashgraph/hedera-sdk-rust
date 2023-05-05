@@ -31,7 +31,9 @@ use super::{
     ChunkData,
     TransactionSources,
 };
+use crate::client::Operator;
 use crate::execute::Execute;
+use crate::signer::AnySigner;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
@@ -89,43 +91,53 @@ where
         &self,
         chunk_info: &ChunkInfo,
     ) -> (services::Transaction, TransactionHash) {
+        fn inner(
+            transaction_body: services::TransactionBody,
+            signers: &[AnySigner],
+            operator: Option<&Operator>,
+        ) -> (services::Transaction, TransactionHash) {
+            let body_bytes = transaction_body.encode_to_vec();
+
+            let mut signatures = Vec::with_capacity(1 + signers.len());
+
+            if let Some(operator) = operator {
+                let operator_signature = operator.sign(&body_bytes);
+
+                // todo: avoid the `.map(xyz).collect()`
+                signatures.push(SignaturePair::from(operator_signature));
+            }
+
+            for signer in signers {
+                if signatures.iter().all(|it| it.public != signer.public_key()) {
+                    let signature = signer.sign(&body_bytes);
+                    signatures.push(SignaturePair::from(signature));
+                }
+            }
+
+            let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
+
+            let signed_transaction = services::SignedTransaction {
+                body_bytes,
+                sig_map: Some(services::SignatureMap { sig_pair: signatures }),
+            };
+
+            let signed_transaction_bytes = signed_transaction.encode_to_vec();
+
+            let transaction_hash = TransactionHash::new(&signed_transaction_bytes);
+
+            let transaction = services::Transaction {
+                signed_transaction_bytes,
+                ..services::Transaction::default()
+            };
+
+            (transaction, transaction_hash)
+        }
+
         assert!(self.is_frozen());
 
         let transaction_body = self.to_transaction_body_protobuf(chunk_info);
 
-        let body_bytes = transaction_body.encode_to_vec();
-
-        let mut signatures = Vec::with_capacity(1 + self.signers.len());
-
-        if let Some(operator) = &self.body.operator {
-            let operator_signature = operator.sign(&body_bytes);
-
-            // todo: avoid the `.map(xyz).collect()`
-            signatures.push(SignaturePair::from(operator_signature));
-        }
-
-        for signer in &self.signers {
-            if signatures.iter().all(|it| it.public != signer.public_key()) {
-                let signature = signer.sign(&body_bytes);
-                signatures.push(SignaturePair::from(signature));
-            }
-        }
-
-        let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
-
-        let signed_transaction = services::SignedTransaction {
-            body_bytes,
-            sig_map: Some(services::SignatureMap { sig_pair: signatures }),
-        };
-
-        let signed_transaction_bytes = signed_transaction.encode_to_vec();
-
-        let transaction_hash = TransactionHash::new(&signed_transaction_bytes);
-
-        let transaction =
-            services::Transaction { signed_transaction_bytes, ..services::Transaction::default() };
-
-        (transaction, transaction_hash)
+        inner(transaction_body, &self.signers, self.body.operator.as_deref())
     }
 }
 
