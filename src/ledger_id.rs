@@ -9,6 +9,12 @@ use std::str::FromStr;
 
 use crate::Error;
 
+enum KnownKind {
+    Mainnet,
+    Testnet,
+    Previewnet,
+}
+
 /// DST that's semantically a [`LedgerId`].
 ///
 /// `&Self` saves a pointer indirection vs `&LedgerId` because `LedgerId` is a `Box<[u8]>`, so `&LedgerId` is a `&Box<[u8]>`.
@@ -35,6 +41,18 @@ impl RefLedgerId {
         unsafe { Box::from_raw(Box::into_raw(data) as *mut RefLedgerId) }
     }
 
+    const fn kind(&self) -> Option<KnownKind> {
+        const MAINNET_BYTES: &[u8] = RefLedgerId::MAINNET.as_bytes();
+        const TESTNET_BYTES: &[u8] = RefLedgerId::TESTNET.as_bytes();
+        const PREVIEWNET_BYTES: &[u8] = RefLedgerId::PREVIEWNET.as_bytes();
+        match self.as_bytes() {
+            MAINNET_BYTES => Some(KnownKind::Mainnet),
+            TESTNET_BYTES => Some(KnownKind::Testnet),
+            PREVIEWNET_BYTES => Some(KnownKind::Previewnet),
+            _ => None,
+        }
+    }
+
     pub const fn as_bytes(&self) -> &[u8] {
         &self.0
     }
@@ -59,6 +77,11 @@ impl ToOwned for RefLedgerId {
 pub struct LedgerId(Box<RefLedgerId>);
 
 impl LedgerId {
+    #[must_use]
+    const fn kind(&self) -> Option<KnownKind> {
+        self.0.kind()
+    }
+
     /// ID for the `mainnet` ledger.
     #[must_use]
     pub fn mainnet() -> Self {
@@ -86,25 +109,25 @@ impl LedgerId {
     /// Returns `true` if `self` is `mainnet`.
     #[must_use]
     pub fn is_mainnet(&self) -> bool {
-        self.as_ref() == RefLedgerId::MAINNET
+        matches!(self.kind(), Some(KnownKind::Mainnet))
     }
 
     /// Returns `true` if `self` is `testnet`.
     #[must_use]
     pub fn is_testnet(&self) -> bool {
-        self.as_ref() == RefLedgerId::TESTNET
+        matches!(self.kind(), Some(KnownKind::Testnet))
     }
 
     /// Returns `true` if `self` is `previewnet`.
     #[must_use]
     pub fn is_previewnet(&self) -> bool {
-        self.as_ref() == RefLedgerId::PREVIEWNET
+        matches!(self.kind(), Some(KnownKind::Previewnet))
     }
 
     /// Returns `true` if `self` is `mainnet`, `testnet`, or `previewnet`.
     #[must_use]
     pub fn is_known_network(&self) -> bool {
-        self.is_mainnet() || self.is_previewnet() || self.is_testnet()
+        matches!(self.kind(), Some(_))
     }
 
     #[must_use]
@@ -153,14 +176,14 @@ impl Debug for LedgerId {
 
 impl Display for LedgerId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        if self.is_mainnet() {
-            f.write_str("mainnet")
-        } else if self.is_testnet() {
-            f.write_str("testnet")
-        } else if self.is_previewnet() {
-            f.write_str("previewnet")
-        } else {
-            f.write_str(&hex::encode(self.as_bytes()))
+        match self.kind() {
+            Some(it) => f.write_str(match it {
+                KnownKind::Mainnet => "mainnet",
+                KnownKind::Testnet => "testnet",
+                KnownKind::Previewnet => "previewnet",
+            }),
+
+            None => f.write_str(&hex::encode(self.as_bytes())),
         }
     }
 }
