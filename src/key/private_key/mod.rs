@@ -28,7 +28,7 @@ use std::fmt::{
     Formatter,
 };
 use std::str::FromStr;
-use std::sync::Arc;
+use triomphe::Arc;
 
 use ed25519_dalek::Signer;
 use hmac::{

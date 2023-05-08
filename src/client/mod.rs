@@ -24,12 +24,11 @@ use std::sync::atomic::{
     AtomicU64,
     Ordering,
 };
-use std::sync::Arc;
 use std::time::Duration;
 
-use arc_swap::ArcSwapOption;
 pub(crate) use operator::Operator;
 use rand::thread_rng;
+use triomphe::Arc;
 
 use self::mirror_network::MirrorNetwork;
 use crate::client::network::Network;
@@ -37,6 +36,7 @@ use crate::ping_query::PingQuery;
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
+    ArcSwapOption,
     Error,
     LedgerId,
     PrivateKey,
@@ -145,6 +145,7 @@ impl Client {
     }
 
     /// Returns true if checksums should be automatically validated.
+    #[must_use]
     pub fn auto_validate_checksums(&self) -> bool {
         self.0.auto_validate_checksums.load(Ordering::Relaxed)
     }
@@ -157,6 +158,7 @@ impl Client {
     /// Returns true if transaction IDs should be automatically regenerated.
     ///
     /// This is `true` by default.
+    #[must_use]
     pub fn default_regenerate_transaction_id(&self) -> bool {
         self.0.regenerate_transaction_ids.load(Ordering::Relaxed)
     }

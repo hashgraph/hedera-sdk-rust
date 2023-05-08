@@ -19,7 +19,12 @@
  */
 
 use std::fmt;
-use std::sync::Arc;
+
+use triomphe::Arc;
+use unsize::{
+    CoerceUnsize,
+    Coercion,
+};
 
 use crate::{
     PrivateKey,
@@ -38,6 +43,18 @@ pub(crate) enum AnySigner {
     // for the `Client` must have `AnySigner`, not a `PrivateKey`, and the `ContractCreateFlow`...
     // Well, it must be executable multiple times, for ownership reasons.
     Arbitrary(Box<PublicKey>, Arc<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
+}
+
+impl AnySigner {
+    pub(crate) fn arbitrary<F: Fn(&[u8]) -> Vec<u8> + Send + Sync + 'static>(
+        public_key: Box<PublicKey>,
+        signer: F,
+    ) -> Self {
+        Self::Arbitrary(
+            public_key,
+            Arc::new(signer).unsize(Coercion!(to dyn Fn(&[u8]) -> Vec<u8> + Send + Sync)),
+        )
+    }
 }
 
 impl fmt::Debug for AnySigner {

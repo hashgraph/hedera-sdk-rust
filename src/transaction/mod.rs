@@ -26,11 +26,11 @@ use std::fmt::{
     Formatter,
 };
 use std::num::NonZeroUsize;
-use std::sync::Arc;
 
 use hedera_proto::services;
 use prost::Message;
 use time::Duration;
+use triomphe::Arc;
 
 use crate::downcast::DowncastOwned;
 use crate::execute::execute;
@@ -289,7 +289,7 @@ impl<D> Transaction<D> {
         public_key: PublicKey,
         signer: F,
     ) -> &mut Self {
-        self.sign_signer(AnySigner::Arbitrary(Box::new(public_key), Arc::new(signer)))
+        self.sign_signer(AnySigner::arbitrary(Box::new(public_key), signer))
     }
 
     pub(crate) fn sign_signer(&mut self, signer: AnySigner) -> &mut Self {
@@ -402,7 +402,7 @@ impl<D: ValidateChecksums> Transaction<D> {
             }
         });
 
-        let operator = client.and_then(|it| it.full_load_operator());
+        let operator = client.and_then(Client::full_load_operator);
 
         // note: yes, there's an `Some(opt.unwrap())`, this is INTENTIONAL.
         self.body.node_account_ids = Some(node_account_ids);
@@ -564,10 +564,7 @@ impl<D: TransactionExecute> Transaction<D> {
     ///
     /// This forcibly disables transaction ID regeneration.
     pub fn add_signature(&mut self, pk: PublicKey, signature: Vec<u8>) -> &mut Self {
-        self.add_signature_signer(&AnySigner::Arbitrary(
-            Box::new(pk),
-            Arc::new(move |_| signature.clone()),
-        ));
+        self.add_signature_signer(&AnySigner::arbitrary(Box::new(pk), move |_| signature.clone()));
 
         self
     }

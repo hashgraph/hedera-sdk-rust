@@ -55,7 +55,7 @@ pub(crate) trait Execute: ValidateChecksums {
 
     /// Account ID to be used for generating transaction IDs.
     ///
-    /// THis is only used `self.requires_transaction` and `self.transaction_id.is_none()`.
+    /// This is only used `self.requires_transaction` and `self.transaction_id.is_none()`.
     fn operator_account_id(&self) -> Option<&AccountId>;
 
     /// Get the _explicit_ nodes that this request will be submitted to.
@@ -159,7 +159,7 @@ where
     let explicit_transaction_id = executable.transaction_id();
     let mut transaction_id = executable
         .requires_transaction_id()
-        .then(|| explicit_transaction_id)
+        .then_some(explicit_transaction_id)
         .flatten()
         .or_else(|| executable.operator_account_id().copied().map(TransactionId::generate))
         .or_else(|| client.generate_transaction_id());
