@@ -32,6 +32,7 @@ use super::{
     TransactionSources,
 };
 use crate::execute::Execute;
+use crate::ledger_id::RefLedgerId;
 use crate::transaction::any::AnyTransactionData;
 use crate::transaction::protobuf::ToTransactionDataProtobuf;
 use crate::transaction::DEFAULT_TRANSACTION_VALID_DURATION;
@@ -41,7 +42,6 @@ use crate::{
     Client,
     Error,
     Hbar,
-    LedgerId,
     PublicKey,
     ToProtobuf,
     Transaction,
@@ -100,18 +100,16 @@ where
         if let Some(operator) = &self.body.operator {
             let operator_signature = operator.sign(&body_bytes);
 
-            // todo: avoid the `.map(xyz).collect()`
-            signatures.push(SignaturePair::from(operator_signature));
+            signatures.push(SignaturePair::from(operator_signature).into_protobuf());
         }
 
         for signer in &self.signers {
-            if signatures.iter().all(|it| it.public != signer.public_key()) {
+            let public_key = signer.public_key().to_bytes();
+            if !signatures.iter().any(|it| public_key.starts_with(&it.pub_key_prefix)) {
                 let signature = signer.sign(&body_bytes);
-                signatures.push(SignaturePair::from(signature));
+                signatures.push(SignaturePair::from(signature).into_protobuf());
             }
         }
-
-        let signatures = signatures.into_iter().map(SignaturePair::into_protobuf).collect();
 
         let signed_transaction = services::SignedTransaction {
             body_bytes,
@@ -253,7 +251,7 @@ where
 pub trait TransactionExecuteChunked: TransactionExecute {}
 
 impl<D: ValidateChecksums> ValidateChecksums for Transaction<D> {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         if let Some(node_account_ids) = &self.body.node_account_ids {
             for node_account_id in node_account_ids {
                 node_account_id.validate_checksums(ledger_id)?;
@@ -364,7 +362,7 @@ impl<'a, D> SourceTransactionExecuteView<'a, D> {
 }
 
 impl<'a, D: ValidateChecksums> ValidateChecksums for SourceTransactionExecuteView<'a, D> {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.transaction.validate_checksums(ledger_id)
     }
 }

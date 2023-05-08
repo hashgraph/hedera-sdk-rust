@@ -23,6 +23,7 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use time::Duration;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
@@ -40,7 +41,6 @@ use crate::{
     FileId,
     Hbar,
     Key,
-    LedgerId,
     ToProtobuf,
     Transaction,
     ValidateChecksums,
@@ -273,7 +273,7 @@ impl TransactionExecute for ContractCreateTransactionData {
 }
 
 impl ValidateChecksums for ContractCreateTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.bytecode_file_id.validate_checksums(ledger_id)?;
         self.auto_renew_account_id.validate_checksums(ledger_id)?;
         self.staked_id.validate_checksums(ledger_id)

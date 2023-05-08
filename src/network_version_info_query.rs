@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::marker::PhantomData;
-
 use hedera_proto::services;
 use hedera_proto::services::network_service_client::NetworkServiceClient;
 use tonic::transport::Channel;
@@ -33,7 +31,6 @@ use crate::query::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     NetworkVersionInfo,
     Query,
 };
@@ -42,10 +39,8 @@ use crate::{
 pub type NetworkVersionInfoQuery = Query<NetworkVersionInfoQueryData>;
 
 #[derive(Default, Clone, Debug)]
-pub struct NetworkVersionInfoQueryData {
-    // make this not publicly constructable.
-    _phantom: PhantomData<()>,
-}
+#[non_exhaustive]
+pub struct NetworkVersionInfoQueryData {}
 
 impl From<NetworkVersionInfoQueryData> for AnyQueryData {
     #[inline]
@@ -81,7 +76,7 @@ impl QueryExecute for NetworkVersionInfoQueryData {
 }
 
 impl ValidateChecksums for NetworkVersionInfoQueryData {
-    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, _ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         Ok(())
     }
 }

@@ -1,12 +1,15 @@
 use std::str::FromStr;
-use triomphe::Arc;
 
 use assert_matches::assert_matches;
 use expect_test::expect;
 use hex_literal::hex;
+use triomphe::Arc;
 
 use super::PrivateKey;
-use crate::key::private_key::{ED25519_OID, K256_OID};
+use crate::key::private_key::{
+    ED25519_OID,
+    K256_OID,
+};
 use crate::Error;
 
 #[test]

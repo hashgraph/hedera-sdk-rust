@@ -25,6 +25,7 @@ use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -43,7 +44,6 @@ use crate::transaction::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     TopicId,
     Transaction,
     ValidateChecksums,
@@ -127,7 +127,7 @@ impl TransactionExecute for TopicMessageSubmitTransactionData {
 impl TransactionExecuteChunked for TopicMessageSubmitTransactionData {}
 
 impl ValidateChecksums for TopicMessageSubmitTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.topic_id.validate_checksums(ledger_id)
     }
 }

@@ -29,6 +29,7 @@ use std::str::FromStr;
 use hedera_proto::services;
 
 use crate::entity_id::ValidateChecksums;
+use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
     Error,
@@ -124,7 +125,7 @@ impl From<(TokenId, u64)> for NftId {
 }
 
 impl ValidateChecksums for NftId {
-    fn validate_checksums(&self, ledger_id: &crate::LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.token_id.validate_checksums(ledger_id)
     }
 }

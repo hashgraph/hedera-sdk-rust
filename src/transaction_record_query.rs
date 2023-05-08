@@ -23,6 +23,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use hedera_proto::services::response::Response;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -32,7 +33,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     FromProtobuf,
-    LedgerId,
     Query,
     Status,
     ToProtobuf,
@@ -163,7 +163,7 @@ impl QueryExecute for TransactionRecordQueryData {
 }
 
 impl ValidateChecksums for TransactionRecordQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.transaction_id.validate_checksums(ledger_id)
     }
 }

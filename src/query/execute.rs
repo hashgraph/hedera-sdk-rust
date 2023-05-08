@@ -35,7 +35,6 @@ use crate::{
     Error,
     FromProtobuf,
     Hbar,
-    LedgerId,
     Query,
     Status,
     TransactionId,
@@ -182,7 +181,7 @@ where
 }
 
 impl<D: QueryExecute + ValidateChecksums> ValidateChecksums for Query<D> {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         self.data.validate_checksums(ledger_id)?;
         self.payment.validate_checksums(ledger_id)
     }

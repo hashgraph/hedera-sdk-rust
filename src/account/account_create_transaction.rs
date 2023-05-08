@@ -23,6 +23,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use time::Duration;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -42,7 +43,6 @@ use crate::{
     Error,
     Hbar,
     Key,
-    LedgerId,
     PublicKey,
     Transaction,
     ValidateChecksums,
@@ -310,7 +310,7 @@ impl TransactionExecute for AccountCreateTransactionData {
 }
 
 impl ValidateChecksums for AccountCreateTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.staked_id.validate_checksums(ledger_id)
     }
 }

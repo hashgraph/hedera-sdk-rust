@@ -417,7 +417,7 @@ impl<D: ValidateChecksums> Transaction<D> {
                     .as_ref()
                     .expect("Client had auto_validate_checksums enabled but no ledger ID");
 
-                self.validate_checksums(ledger_id)?;
+                self.validate_checksums(ledger_id.as_ref_ledger_id())?;
             }
         }
 
@@ -720,8 +720,9 @@ where
             .await?;
 
             if wait_for_receipts {
-                // todo `get_receipt_with_optional_timeout`.
-                resp.get_receipt(client).await?;
+                resp.get_receipt_query()
+                    .execute_with_optional_timeout(client, timeout_per_chunk)
+                    .await?;
             }
 
             let initial_transaction_id = resp.transaction_id;
@@ -744,8 +745,9 @@ where
             .await?;
 
             if wait_for_receipts {
-                // todo `get_receipt_with_optional_timeout`.
-                resp.get_receipt(client).await?;
+                resp.get_receipt_query()
+                    .execute_with_optional_timeout(client, timeout_per_chunk)
+                    .await?;
             }
 
             responses.push(resp);

@@ -37,7 +37,6 @@ use crate::transaction::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     TokenId,
     Transaction,
     ValidateChecksums,
@@ -131,7 +130,7 @@ impl TransactionExecute for TokenBurnTransactionData {
 }
 
 impl ValidateChecksums for TokenBurnTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         self.token_id.validate_checksums(ledger_id)
     }
 }

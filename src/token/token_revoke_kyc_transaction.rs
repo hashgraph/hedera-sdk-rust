@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -37,8 +38,6 @@ use crate::transaction::{
 use crate::{
     AccountId,
     BoxGrpcFuture,
-    Error,
-    LedgerId,
     TokenId,
     Transaction,
     ValidateChecksums,
@@ -108,7 +107,7 @@ impl TransactionExecute for TokenRevokeKycTransactionData {
 }
 
 impl ValidateChecksums for TokenRevokeKycTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> crate::Result<()> {
         self.token_id.validate_checksums(ledger_id)?;
         self.account_id.validate_checksums(ledger_id)
     }

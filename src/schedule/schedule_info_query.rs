@@ -30,7 +30,6 @@ use crate::query::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     Query,
     ScheduleId,
     ScheduleInfo,
@@ -93,7 +92,7 @@ impl QueryExecute for ScheduleInfoQueryData {
 }
 
 impl ValidateChecksums for ScheduleInfoQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         self.schedule_id.validate_checksums(ledger_id)
     }
 }

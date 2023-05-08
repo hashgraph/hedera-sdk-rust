@@ -15,13 +15,10 @@ use crate::Error;
 ///
 /// It also allows for const constructable `LedgerId`s.
 ///
-/// todo: actually use this everywhere
-/// (it'd be a big refactor for the middle of the current PR)
-///
 /// Internal API, don't publically expose.
 #[repr(transparent)]
 #[derive(Eq, PartialEq)]
-pub(crate) struct RefLedgerId([u8]);
+pub struct RefLedgerId([u8]);
 
 impl RefLedgerId {
     pub(crate) const MAINNET: &Self = Self::new(&[0]);
@@ -57,10 +54,6 @@ impl ToOwned for RefLedgerId {
     }
 }
 
-// todo: use `Box<[u8]>` (16 bytes on cpus with 64 bit pointers)
-// or use an enum of `Mainnet`, `Testnet`, `Previewnet`, `Other`, and `Static`, don't expose the enum though.
-// `Other` would be `Box<[u8]>`, but nothing else would have an alloc, the whole struct would be 24 bytes on x86-64,
-// wouldn't allocate 99.99% of the time, and could be const constructable in 99.999% of cases.
 /// The ID of a Hedera Ledger.
 #[derive(Eq, PartialEq)]
 pub struct LedgerId(Box<RefLedgerId>);
@@ -112,6 +105,11 @@ impl LedgerId {
     #[must_use]
     pub fn is_known_network(&self) -> bool {
         self.is_mainnet() || self.is_previewnet() || self.is_testnet()
+    }
+
+    #[must_use]
+    pub(crate) fn as_ref_ledger_id(&self) -> &RefLedgerId {
+        &self.0
     }
 
     // todo: remove so that we can have `LedgerId` be an enum internally?

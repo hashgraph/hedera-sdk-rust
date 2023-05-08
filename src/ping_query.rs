@@ -41,7 +41,10 @@ impl PingQuery {
 }
 
 impl ValidateChecksums for PingQuery {
-    fn validate_checksums(&self, ledger_id: &crate::LedgerId) -> Result<(), crate::Error> {
+    fn validate_checksums(
+        &self,
+        ledger_id: &crate::ledger_id::RefLedgerId,
+    ) -> Result<(), crate::Error> {
         self.node_account_id.validate_checksums(ledger_id)
     }
 }

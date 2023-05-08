@@ -37,7 +37,6 @@ use crate::{
     Error,
     FileId,
     FreezeType,
-    LedgerId,
     ToProtobuf,
     Transaction,
     ValidateChecksums,
@@ -121,7 +120,7 @@ impl TransactionExecute for FreezeTransactionData {
 }
 
 impl ValidateChecksums for FreezeTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         self.file_id.validate_checksums(ledger_id)
     }
 }

@@ -80,11 +80,9 @@ async fn main() -> anyhow::Result<()> {
             let mut tx = TopicMessageSubmitTransaction::new();
 
             // note: this used to set `max_chunks(15)` with a comment saying that the default is 10, but it's 20.
-            // todo: sign with operator (once that's merged)
             tx.topic_id(topic_id)
                 .message(resources::BIG_CONTENTS)
-                .freeze_with(&client)?
-                .sign(args.operator_key.clone());
+                .sign_with_operator(&client)?;
 
             // serialize to bytes so we can be signed "somewhere else" by the submit key
             let transaction_bytes = tx.to_bytes()?;

@@ -33,13 +33,13 @@ use crate::entity_id::{
     PartialEntityId,
     ValidateChecksums,
 };
+use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
     EntityId,
     Error,
     EvmAddress,
     FromProtobuf,
-    LedgerId,
     PublicKey,
     ToProtobuf,
 };
@@ -143,7 +143,7 @@ impl AccountId {
 }
 
 impl ValidateChecksums for AccountId {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         if self.alias.is_some() || self.evm_address.is_some() {
             Ok(())
         } else {
