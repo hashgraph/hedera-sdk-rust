@@ -116,7 +116,6 @@
     clippy::zero_sized_map_values
 )]
 #![allow(clippy::enum_glob_use, clippy::enum_variant_names)]
-
 #[macro_use]
 mod protobuf;
 
@@ -166,49 +165,23 @@ mod transfer;
 mod transfer_transaction;
 
 pub use account::{
-    account_info_flow,
-    AccountAllowanceApproveTransaction,
-    AccountAllowanceDeleteTransaction,
-    AccountBalance,
-    AccountBalanceQuery,
-    AccountCreateTransaction,
-    AccountDeleteTransaction,
-    AccountId,
-    AccountInfo,
-    AccountInfoQuery,
-    AccountRecordsQuery,
-    AccountStakersQuery,
-    AccountUpdateTransaction,
-    AllProxyStakers,
-    ProxyStaker,
+    account_info_flow, AccountAllowanceApproveTransaction, AccountAllowanceDeleteTransaction,
+    AccountBalance, AccountBalanceQuery, AccountCreateTransaction, AccountDeleteTransaction,
+    AccountId, AccountInfo, AccountInfoQuery, AccountRecordsQuery, AccountStakersQuery,
+    AccountUpdateTransaction, AllProxyStakers, ProxyStaker,
 };
 pub use client::Client;
 pub(crate) use client::Operator;
 pub use contract::{
-    ContractBytecodeQuery,
-    ContractCallQuery,
-    ContractCreateFlow,
-    ContractCreateTransaction,
-    ContractExecuteTransaction,
-    ContractFunctionParameters,
-    ContractFunctionResult,
-    ContractId,
-    ContractInfo,
-    ContractInfoQuery,
-    ContractLogInfo,
-    ContractUpdateTransaction,
+    ContractBytecodeQuery, ContractCallQuery, ContractCreateFlow, ContractCreateTransaction,
+    ContractExecuteTransaction, ContractFunctionParameters, ContractFunctionResult, ContractId,
+    ContractInfo, ContractInfoQuery, ContractLogInfo, ContractUpdateTransaction,
 };
 pub use entity_id::EntityId;
 pub(crate) use entity_id::ValidateChecksums;
-pub use error::{
-    Error,
-    Result,
-};
+pub use error::{Error, Result};
 #[cfg(feature = "mnemonic")]
-pub use error::{
-    MnemonicEntropyError,
-    MnemonicParseError,
-};
+pub use error::{MnemonicEntropyError, MnemonicParseError};
 pub use ethereum::{
     // we probably *do* want to expose these, just, code review first?
     // EthereumData,
@@ -218,48 +191,20 @@ pub use ethereum::{
     EthereumTransaction,
     EvmAddress,
 };
-pub use exchange_rates::{
-    ExchangeRate,
-    ExchangeRates,
-};
+pub use exchange_rates::{ExchangeRate, ExchangeRates};
 pub use fee_schedules::{
-    FeeComponents,
-    FeeData,
-    FeeDataType,
-    FeeSchedule,
-    FeeSchedules,
-    RequestType,
+    FeeComponents, FeeData, FeeDataType, FeeSchedule, FeeSchedules, RequestType,
     TransactionFeeSchedule,
 };
 pub use file::{
-    FileAppendTransaction,
-    FileContentsQuery,
-    FileContentsResponse,
-    FileCreateTransaction,
-    FileDeleteTransaction,
-    FileId,
-    FileInfo,
-    FileInfoQuery,
-    FileUpdateTransaction,
+    FileAppendTransaction, FileContentsQuery, FileContentsResponse, FileCreateTransaction,
+    FileDeleteTransaction, FileId, FileInfo, FileInfoQuery, FileUpdateTransaction,
 };
-pub use hbar::{
-    Hbar,
-    HbarUnit,
-    Tinybar,
-};
+pub use hbar::{Hbar, HbarUnit, Tinybar};
 pub use hedera_proto::services::ResponseCodeEnum as Status;
-pub use key::{
-    Key,
-    KeyList,
-    PrivateKey,
-    PublicKey,
-};
+pub use key::{Key, KeyList, PrivateKey, PublicKey};
 pub use ledger_id::LedgerId;
-pub use mirror_query::{
-    AnyMirrorQuery,
-    AnyMirrorQueryResponse,
-    MirrorQuery,
-};
+pub use mirror_query::{AnyMirrorQuery, AnyMirrorQueryResponse, MirrorQuery};
 #[cfg(feature = "mnemonic")]
 pub use mnemonic::Mnemonic;
 pub use network_version_info::NetworkVersionInfo;
@@ -270,76 +215,32 @@ pub use node_address_book::NodeAddressBook;
 pub use node_address_book_query::NodeAddressBookQuery;
 pub(crate) use node_address_book_query::NodeAddressBookQueryData;
 pub use prng_transaction::PrngTransaction;
-pub(crate) use protobuf::{
-    FromProtobuf,
-    ToProtobuf,
-};
-pub use query::{
-    AnyQuery,
-    AnyQueryResponse,
-    Query,
-};
+pub(crate) use protobuf::{FromProtobuf, ToProtobuf};
+pub use query::{AnyQuery, AnyQueryResponse, Query};
 pub(crate) use retry::retry;
 pub use schedule::{
-    ScheduleCreateTransaction,
-    ScheduleDeleteTransaction,
-    ScheduleId,
-    ScheduleInfo,
-    ScheduleInfoQuery,
-    ScheduleSignTransaction,
+    ScheduleCreateTransaction, ScheduleDeleteTransaction, ScheduleId, ScheduleInfo,
+    ScheduleInfoQuery, ScheduleSignTransaction,
 };
 pub use semantic_version::SemanticVersion;
 pub use staking_info::StakingInfo;
 pub use system::{
-    FreezeTransaction,
-    FreezeType,
-    SystemDeleteTransaction,
-    SystemUndeleteTransaction,
+    FreezeTransaction, FreezeType, SystemDeleteTransaction, SystemUndeleteTransaction,
 };
 pub use token::{
-    AssessedCustomFee,
-    FeeAssessmentMethod,
-    NftId,
-    TokenAssociateTransaction,
-    TokenAssociation,
-    TokenBurnTransaction,
-    TokenCreateTransaction,
-    TokenDeleteTransaction,
-    TokenDissociateTransaction,
-    TokenFeeScheduleUpdateTransaction,
-    TokenFreezeTransaction,
-    TokenGrantKycTransaction,
-    TokenId,
-    TokenInfo,
-    TokenInfoQuery,
-    TokenMintTransaction,
-    TokenNftInfo,
-    TokenNftInfoQuery,
-    TokenNftTransfer,
-    TokenPauseTransaction,
-    TokenRevokeKycTransaction,
-    TokenSupplyType,
-    TokenType,
-    TokenUnfreezeTransaction,
-    TokenUnpauseTransaction,
-    TokenUpdateTransaction,
-    TokenWipeTransaction,
+    AssessedCustomFee, FeeAssessmentMethod, NftId, TokenAssociateTransaction, TokenAssociation,
+    TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction,
+    TokenDissociateTransaction, TokenFeeScheduleUpdateTransaction, TokenFreezeTransaction,
+    TokenGrantKycTransaction, TokenId, TokenInfo, TokenInfoQuery, TokenMintTransaction,
+    TokenNftInfo, TokenNftInfoQuery, TokenNftTransfer, TokenPauseTransaction,
+    TokenRevokeKycTransaction, TokenSupplyType, TokenType, TokenUnfreezeTransaction,
+    TokenUnpauseTransaction, TokenUpdateTransaction, TokenWipeTransaction,
 };
 pub use topic::{
-    TopicCreateTransaction,
-    TopicDeleteTransaction,
-    TopicId,
-    TopicInfo,
-    TopicInfoQuery,
-    TopicMessage,
-    TopicMessageQuery,
-    TopicMessageSubmitTransaction,
-    TopicUpdateTransaction,
+    TopicCreateTransaction, TopicDeleteTransaction, TopicId, TopicInfo, TopicInfoQuery,
+    TopicMessage, TopicMessageQuery, TopicMessageSubmitTransaction, TopicUpdateTransaction,
 };
-pub use transaction::{
-    AnyTransaction,
-    Transaction,
-};
+pub use transaction::{AnyTransaction, Transaction};
 pub use transaction_hash::TransactionHash;
 pub use transaction_id::TransactionId;
 pub use transaction_receipt::TransactionReceipt;
@@ -350,6 +251,9 @@ pub(crate) use transaction_record_query::TransactionRecordQueryData;
 pub use transaction_response::TransactionResponse;
 pub use transfer::Transfer;
 pub use transfer_transaction::TransferTransaction;
+
+/// Like [`arc_swap::ArcSwapOption`] but with a [`triomphe::Arc`].
+pub(crate) type ArcSwapOption<T> = arc_swap::ArcSwapAny<Option<triomphe::Arc<T>>>;
 
 /// Boxed future for GRPC calls.
 pub(crate) type BoxGrpcFuture<'a, T> =
