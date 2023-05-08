@@ -1,1 +1,3 @@
-disallowed-types = ["std::sync::Arc"]
+disallowed-types = [
+    { path = "std::sync::Arc", reason = "Use `triomphe::Arc` internally" }
+]

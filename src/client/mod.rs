@@ -64,7 +64,7 @@ pub struct Client(Arc<ClientInner>);
 impl fmt::Debug for Client {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // todo: put anything important here.
-        f.debug_tuple("Client").finish()
+        f.debug_struct("Client").finish_non_exhaustive()
     }
 }
 
