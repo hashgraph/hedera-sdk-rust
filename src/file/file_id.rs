@@ -32,12 +32,12 @@ use crate::entity_id::{
     Checksum,
     ValidateChecksums,
 };
+use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
     EntityId,
     Error,
     FromProtobuf,
-    LedgerId,
     ToProtobuf,
 };
 
@@ -121,7 +121,7 @@ impl FileId {
 }
 
 impl ValidateChecksums for FileId {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         EntityId::validate_checksum_for_ledger_id(
             self.shard,
             self.realm,

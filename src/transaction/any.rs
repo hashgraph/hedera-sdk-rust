@@ -28,6 +28,7 @@ use super::{
 };
 use crate::downcast::DowncastOwned;
 use crate::entity_id::ValidateChecksums;
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     ToTransactionDataProtobuf,
@@ -38,7 +39,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     Hbar,
-    LedgerId,
     Transaction,
     TransactionId,
 };
@@ -476,7 +476,7 @@ impl TransactionExecute for AnyTransactionData {
 impl TransactionExecuteChunked for AnyTransactionData {}
 
 impl ValidateChecksums for AnyTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         match self {
             Self::AccountCreate(transaction) => transaction.validate_checksums(ledger_id),
             Self::AccountUpdate(transaction) => transaction.validate_checksums(ledger_id),

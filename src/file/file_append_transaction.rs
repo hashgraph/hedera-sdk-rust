@@ -25,6 +25,7 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -44,7 +45,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     FileId,
-    LedgerId,
     Transaction,
     ValidateChecksums,
 };
@@ -119,7 +119,7 @@ impl TransactionExecute for FileAppendTransactionData {
 impl TransactionExecuteChunked for FileAppendTransactionData {}
 
 impl ValidateChecksums for FileAppendTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.file_id.validate_checksums(ledger_id)
     }
 }

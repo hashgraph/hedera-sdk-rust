@@ -83,7 +83,7 @@ impl From<PrngTransactionData> for AnyTransactionData {
 }
 
 impl ValidateChecksums for PrngTransactionData {
-    fn validate_checksums(&self, _ledger_id: &crate::LedgerId) -> crate::Result<()> {
+    fn validate_checksums(&self, _ledger_id: &crate::ledger_id::RefLedgerId) -> crate::Result<()> {
         Ok(())
     }
 }

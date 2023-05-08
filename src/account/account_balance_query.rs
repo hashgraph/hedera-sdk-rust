@@ -23,6 +23,7 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use services::crypto_get_account_balance_query::BalanceSource;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::query::{
     AnyQueryData,
     Query,
@@ -35,7 +36,6 @@ use crate::{
     BoxGrpcFuture,
     ContractId,
     Error,
-    LedgerId,
     ToProtobuf,
     ValidateChecksums,
 };
@@ -142,7 +142,7 @@ impl QueryExecute for AccountBalanceQueryData {
 }
 
 impl ValidateChecksums for AccountBalanceQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         match self.source {
             AccountBalanceSource::AccountId(account_id) => account_id.validate_checksums(ledger_id),
             AccountBalanceSource::ContractId(contract_id) => {

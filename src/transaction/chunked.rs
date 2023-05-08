@@ -10,6 +10,7 @@ use super::{
 };
 use crate::entity_id::ValidateChecksums;
 use crate::execute::Execute;
+use crate::ledger_id::RefLedgerId;
 use crate::{
     AccountId,
     BoxGrpcFuture,
@@ -215,7 +216,7 @@ where
 }
 
 impl<'a, D: ValidateChecksums> ValidateChecksums for FirstChunkView<'a, D> {
-    fn validate_checksums(&self, ledger_id: &crate::LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.transaction.validate_checksums(ledger_id)
     }
 }
@@ -319,7 +320,7 @@ where
 }
 
 impl<'a, D: ValidateChecksums> ValidateChecksums for ChunkView<'a, D> {
-    fn validate_checksums(&self, ledger_id: &crate::LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.transaction.validate_checksums(ledger_id)?;
         self.initial_transaction_id.validate_checksums(ledger_id)?;
 

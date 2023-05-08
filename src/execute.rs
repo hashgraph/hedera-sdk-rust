@@ -149,7 +149,7 @@ where
             .as_ref()
             .expect("Client had auto_validate_checksums enabled but no ledger ID");
 
-        executable.validate_checksums(ledger_id)?;
+        executable.validate_checksums(ledger_id.as_ref_ledger_id())?;
     }
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off

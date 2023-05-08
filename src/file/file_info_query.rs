@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -32,7 +33,6 @@ use crate::{
     Error,
     FileId,
     FileInfo,
-    LedgerId,
     Query,
     ToProtobuf,
     ValidateChecksums,
@@ -93,7 +93,7 @@ impl QueryExecute for FileInfoQueryData {
 }
 
 impl ValidateChecksums for FileInfoQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.file_id.validate_checksums(ledger_id)
     }
 }

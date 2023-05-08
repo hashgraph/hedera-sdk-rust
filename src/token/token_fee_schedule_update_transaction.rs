@@ -38,7 +38,6 @@ use crate::transaction::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     TokenId,
     Transaction,
     ValidateChecksums,
@@ -108,7 +107,7 @@ impl TransactionExecute for TokenFeeScheduleUpdateTransactionData {
 }
 
 impl ValidateChecksums for TokenFeeScheduleUpdateTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         // TODO: validate custom fees (they need an impl)
         self.token_id.validate_checksums(ledger_id)
     }
