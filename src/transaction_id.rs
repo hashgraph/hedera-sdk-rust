@@ -117,6 +117,7 @@ impl Display for TransactionId {
             self.valid_start.unix_timestamp(),
             self.valid_start.nanosecond(),
             if self.scheduled { "?scheduled" } else { "" },
+            // https://github.com/rust-lang/rust/issues/92698
             self.nonce.map(|nonce| format!("/{nonce}")).as_deref().unwrap_or_default()
         )
     }

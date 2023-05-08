@@ -60,7 +60,7 @@ impl AnySigner {
 impl fmt::Debug for AnySigner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::PrivateKey(_) => f.debug_tuple("PrivateKey").field(&"[redacted]").finish(),
+            Self::PrivateKey(_) => f.debug_tuple("PrivateKey").field(&"..").finish(),
             Self::Arbitrary(arg0, _) => {
                 f.debug_tuple("Arbitrary").field(arg0).field(&"Fn").finish()
             }

@@ -56,13 +56,13 @@ impl FromStr for Checksum {
 
 impl Display for Checksum {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&self.0, f)
+        f.write_str(self.0.as_str())
     }
 }
 
 impl Debug for Checksum {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{self}\"")
+        write!(f, "\"{}\"", self.0.as_str())
     }
 }
 
