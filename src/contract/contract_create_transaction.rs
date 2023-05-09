@@ -260,7 +260,11 @@ impl ContractCreateTransaction {
     }
 }
 
-impl TransactionData for ContractCreateTransactionData {}
+impl TransactionData for ContractCreateTransactionData {
+    fn default_max_transaction_fee(&self) -> crate::Hbar {
+        crate::Hbar::new(20)
+    }
+}
 
 impl TransactionExecute for ContractCreateTransactionData {
     fn execute(
