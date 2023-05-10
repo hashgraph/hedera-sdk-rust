@@ -80,10 +80,10 @@ fn ecdsa_from_str_variants() {
 // copied from Java SDK to ensure conformance.
 #[test]
 fn to_evm_address() {
-    let key = dbg!(PrivateKey::from_str_ecdsa(
+    let key = PrivateKey::from_str_ecdsa(
         "debae3ca62ab3157110dba79c8de26540dc320ee9be73a77d70ba175643a3500",
     )
-    .unwrap())
+    .unwrap()
     .public_key();
 
     let evm_address = key.to_evm_address().unwrap();
