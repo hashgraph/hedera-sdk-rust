@@ -70,6 +70,7 @@ async fn main() -> anyhow::Result<()> {
         // step 1 creates a fungible token
         ContractStep {
             payable_amount: Some(Hbar::new(20)),
+            signers: vec![alice_private_key.clone()],
             ..Default::default()
         },
         // step 2 mints it

@@ -3,13 +3,15 @@ pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import "./ExpiryHelper.sol";
+import "./KeyHelper.sol";
 import "./PrngSystemContract.sol";
+import "./FeeHelper.sol";
 
 // To alter the behavior of the SolidityPrecompileExample, re-compile this solidity file
 // (you will also need the other files in this directory)
 // and copy the outputted json file to ./PrecompileExample.json
 
-contract PrecompileExample is ExpiryHelper, PrngSystemContract {
+contract PrecompileExample is HederaTokenService, FeeHelper, ExpiryHelper, KeyHelper, PrngSystemContract {
     address payable owner;
     address payable aliceAccount;
     address fungibleToken;
@@ -33,9 +35,13 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
     function step1() external payable returns (int responseCode) {
         require(msg.sender == owner);
 
-        IHederaTokenService.TokenKey[] memory keys = new IHederaTokenService.TokenKey[](1);
         // Set the admin key, supply key, pause key, and freeze key to the key of the account that executed function (INHERIT_ACCOUNT_KEY).
-        keys[0] = createSingleKey(ADMIN_KEY_TYPE | SUPPLY_KEY_TYPE | PAUSE_KEY_TYPE | FREEZE_KEY_TYPE, INHERIT_ACCOUNT_KEY, bytes(""));
+        IHederaTokenService.TokenKey[] memory keys = new IHederaTokenService.TokenKey[](5);
+        keys[0] = getSingleKey(KeyType.ADMIN, KeyType.PAUSE, KeyValueType.INHERIT_ACCOUNT_KEY, bytes(""));
+        keys[1] = getSingleKey(KeyType.KYC, KeyValueType.INHERIT_ACCOUNT_KEY, bytes(""));
+        keys[2] = getSingleKey(KeyType.FREEZE, KeyValueType.INHERIT_ACCOUNT_KEY, bytes(""));
+        keys[3] = getSingleKey(KeyType.WIPE, KeyValueType.INHERIT_ACCOUNT_KEY, bytes(""));
+        keys[4] = getSingleKey(KeyType.SUPPLY, KeyValueType.INHERIT_ACCOUNT_KEY, bytes(""));
 
         (responseCode, fungibleToken) = createFungibleToken(
             IHederaTokenService.HederaToken(
@@ -62,9 +68,9 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
     function step2() external returns (int responseCode) {
         require(msg.sender == owner);
 
-        uint64 newTotalSupply;
+        int64 newTotalSupply;
         int64[] memory mintedSerials; // applicable to NFT tokens only
-        (responseCode, newTotalSupply, mintedSerials) = mintToken(
+        (responseCode, newTotalSupply, mintedSerials) = HederaTokenService.mintToken(
             fungibleToken,
             100, // amount (applicable to fungible tokens only)
             new bytes[](0) // metadatas (applicable to NFT tokens only)
@@ -104,13 +110,13 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
     function step6() external returns (int responseCode) {
         require(msg.sender == owner);
 
-        responseCode = this.pauseToken(fungibleToken);
+        responseCode = HederaTokenService.pauseToken(fungibleToken);
     }
 
     function step7() external returns (int responseCode) {
         require(msg.sender == owner);
 
-        responseCode = this.unpauseToken(fungibleToken);
+        responseCode = HederaTokenService.unpauseToken(fungibleToken);
     }
 
     function step8() external returns (int responseCode) {
@@ -128,7 +134,7 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
     function step10() external returns (int responseCode) {
         require(msg.sender == owner);
 
-        uint64 totalSupplyLeftAfterBurn;
+        int64 totalSupplyLeftAfterBurn;
         (responseCode, totalSupplyLeftAfterBurn) = burnToken(
             fungibleToken,
             50, // amount to burn (applicable to fungible tokens only)
@@ -143,8 +149,8 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
 
         IHederaTokenService.TokenKey[] memory keys = new IHederaTokenService.TokenKey[](1);
         // Set the admin key and the supply key to given ED25519 public key bytes.
-        // These must be the key's raw bytes acquired via key.toBytesRaw()
-        keys[0] = createSingleKey(ADMIN_KEY_TYPE | SUPPLY_KEY_TYPE, ED25519_KEY, keyBytes);
+        // These must be the key's raw bytes acquired via key.toBytesRaw() 
+        keys[0] = getSingleKey(KeyType.ADMIN, KeyType.PAUSE, KeyValueType.ED25519, keyBytes);
 
         IHederaTokenService.FixedFee[] memory fixedFees = new IHederaTokenService.FixedFee[](1);
         // Create a fixed fee of 1 Hbar (100,000,000 tinybar) that is collected by owner
@@ -176,7 +182,7 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
         require(msg.sender == owner);
         require(metadatas.length == 3);
 
-        uint64 mintedCount;
+        int64 mintedCount;
         int64[] memory mintedSerials; // applicable to NFT tokens only
         (responseCode, mintedCount, mintedSerials) = mintToken(
             nftToken,
@@ -222,7 +228,7 @@ contract PrecompileExample is ExpiryHelper, PrngSystemContract {
         int64[] memory serialsToBurn = new int64[](1);
         serialsToBurn[0] = 3;
 
-        uint64 totalSupplyLeftAfterBurn;
+        int64 totalSupplyLeftAfterBurn;
         (responseCode, totalSupplyLeftAfterBurn) = burnToken(
             nftToken,
             0, // amount to burn (applicable to fungible tokens only)
