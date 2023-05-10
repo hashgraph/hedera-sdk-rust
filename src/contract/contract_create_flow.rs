@@ -28,6 +28,7 @@ use crate::{
     AccountId,
     Client,
     ContractCreateTransaction,
+    Error,
     FileAppendTransaction,
     FileCreateTransaction,
     FileDeleteTransaction,
@@ -73,14 +74,15 @@ impl ContractCreateFlow {
         self
     }
 
-    // /// Sets the bytecode of the smart contract in hex.
-    // ///
-    // /// - Returns: `self`
-    // @discardableResult
-    // pub fn bytecode<S: StringProtocol>(_ bytecode: S) -> &mut Self {
-    //     self.bytecode = Data(hexEncoded: bytecode)!
+    /// Sets the bytecode of the smart contract in hex.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`](Error::BasicParse) if `bytecode` is invalid hex.
+    pub fn bytecode_hex(&mut self, bytecode: &str) -> crate::Result<&mut Self> {
+        self.bytecode = hex::decode(bytecode).map_err(Error::basic_parse)?;
 
-    //     self    // }
+        Ok(self)
+    }
 
     /// Returns the account IDs of the nodes the transactions may be submitted to.
     #[must_use]

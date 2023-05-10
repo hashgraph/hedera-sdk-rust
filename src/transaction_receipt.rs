@@ -121,12 +121,12 @@ impl TransactionReceipt {
         ToProtobuf::to_bytes(self)
     }
 
-    /// Validate [`status`](Self.status) and return an `Err` if it isn't [`Status::Ok`]
+    /// Validate [`status`](Self.status) and return an `Err` if it isn't [`Status::Success`]
     ///
     /// # Errors
-    /// - [`Error::ReceiptStatus`] if `validate && self.status != Status::Ok`
+    /// - [`Error::ReceiptStatus`] if `validate && self.status != Status::Success`
     pub fn validate_status(&self, validate: bool) -> crate::Result<&Self> {
-        if validate && self.status != Status::Ok {
+        if validate && self.status != Status::Success {
             Err(Error::ReceiptStatus {
                 status: self.status,
                 transaction_id: self.transaction_id.map(Box::new),
