@@ -45,22 +45,20 @@ async fn main() -> anyhow::Result<()> {
     client.set_operator(args.operator_account_id, args.operator_key.clone());
     // Generate four new Ed25519 private, public key pairs.
 
-    let mut private_keys = Vec::with_capacity(4);
-    let mut public_keys = Vec::with_capacity(4);
+    let private_keys: [_; 4] = std::array::from_fn(|_| PrivateKey::generate_ed25519());
 
-    for i in 0..4 {
-        let key = PrivateKey::generate_ed25519();
-        public_keys.push(key.public_key());
-
+    for (i, key) in private_keys.iter().enumerate() {
         println!("public key {}: {}", i + 1, key.public_key());
         println!("private key {}, {}", i + 1, key);
-
-        private_keys.push(key);
     }
 
     // require 3 of the 4 keys we generated to sign on anything modifying this account
     let transaction_key = KeyList {
-        keys: public_keys.iter().cloned().map(Key::from).collect(),
+        keys: private_keys
+            .iter()
+            .map(PrivateKey::public_key)
+            .map(Key::from)
+            .collect(),
         threshold: Some(3),
     };
 
