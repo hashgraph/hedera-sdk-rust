@@ -53,7 +53,7 @@ use crate::{
 ///
 pub type FileAppendTransaction = Transaction<FileAppendTransactionData>;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct FileAppendTransactionData {
     /// The file to which the bytes will be appended.
     file_id: Option<FileId>,
@@ -61,6 +61,17 @@ pub struct FileAppendTransactionData {
     chunk_data: ChunkData,
 }
 
+impl Default for FileAppendTransactionData {
+    fn default() -> Self {
+        Self {
+            file_id: Default::default(),
+            chunk_data: ChunkData {
+                chunk_size: NonZeroUsize::new(4096).unwrap(),
+                ..Default::default()
+            },
+        }
+    }
+}
 impl FileAppendTransaction {
     /// Returns the file to which the bytes will be appended.
     #[must_use]
@@ -87,6 +98,10 @@ impl FileAppendTransaction {
 }
 
 impl TransactionData for FileAppendTransactionData {
+    fn default_max_transaction_fee(&self) -> crate::Hbar {
+        crate::Hbar::new(5)
+    }
+
     fn maybe_chunk_data(&self) -> Option<&ChunkData> {
         Some(self.chunk_data())
     }

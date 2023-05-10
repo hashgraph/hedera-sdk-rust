@@ -178,7 +178,11 @@ impl FileCreateTransaction {
     }
 }
 
-impl TransactionData for FileCreateTransactionData {}
+impl TransactionData for FileCreateTransactionData {
+    fn default_max_transaction_fee(&self) -> crate::Hbar {
+        crate::Hbar::new(5)
+    }
+}
 
 impl TransactionExecute for FileCreateTransactionData {
     fn execute(
