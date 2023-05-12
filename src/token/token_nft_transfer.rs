@@ -8,6 +8,7 @@ use crate::{
 
 /// Represents a transfer of an NFT from one account to another.
 #[derive(Debug, Clone, Eq, PartialEq)]
+#[non_exhaustive]
 pub struct TokenNftTransfer {
     /// The ID of the NFT's token.
     pub token_id: TokenId,
