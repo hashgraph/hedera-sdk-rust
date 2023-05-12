@@ -268,15 +268,6 @@ impl TransferTransaction {
             .map(|it| (it.token_id, it.nft_transfers.clone()))
             .collect()
     }
-
-    /// Returns the transfers that will be executed.
-    pub fn get_hbar_transfers(&self) -> HashMap<AccountId, Hbar> {
-        self.data()
-            .transfers
-            .iter()
-            .map(|it| (it.account_id, Hbar::from_tinybars(it.amount)))
-            .collect()
-    }
 }
 
 impl TransactionExecute for TransferTransactionData {
