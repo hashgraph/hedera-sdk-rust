@@ -28,21 +28,23 @@ impl From<[u8; 4]> for ContractFunctionSelector {
 
 impl ContractFunctionSelector {
     pub fn new(func_name: &str) -> Self {
-        let mut digest = <Keccak256 as Digest>::new_with_prefix(func_name.as_bytes());
+        let mut digest = Keccak256::new_with_prefix(func_name.as_bytes());
         digest.update(b"(");
         Self(Building { digest, needs_comma: false })
     }
 
     pub(crate) fn add_param_type(&mut self, param_type_name: &str) -> &mut Self {
-        if let Building { digest, needs_comma } = &mut self.0 {
-            if *needs_comma {
-                digest.update(b",");
-            }
-            digest.update(param_type_name.as_bytes());
-            *needs_comma = true;
-        } else {
+        let Building { digest, needs_comma } = &mut self.0  else {
             panic!("Cannot add param type to finished ContractFunctionSelector")
+        };
+
+        if *needs_comma {
+            digest.update(b",");
         }
+
+        digest.update(param_type_name.as_bytes());
+        *needs_comma = true;
+
         self
     }
 

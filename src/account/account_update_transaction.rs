@@ -251,6 +251,11 @@ impl AccountUpdateTransaction {
         self
     }
 
+    /// Clears the account's staked account ID.
+    pub fn clear_staked_account_id(&mut self) -> &mut Self {
+        self.staked_account_id(AccountId::from(0))
+    }
+
     /// Returns the ID of the node to which this account is staking.
     /// This is mutually exclusive with `staked_account_id`.
     #[must_use]
@@ -263,6 +268,11 @@ impl AccountUpdateTransaction {
     pub fn staked_node_id(&mut self, id: u64) -> &mut Self {
         self.data_mut().staked_id = Some(id.into());
         self
+    }
+
+    /// Clears the account's staked node ID.
+    pub fn clear_staked_node_id(&mut self) -> &mut Self {
+        self.staked_node_id(u64::MAX)
     }
 
     /// Returns `true` if this account should decline receiving a staking reward,

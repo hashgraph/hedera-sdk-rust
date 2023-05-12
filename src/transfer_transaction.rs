@@ -67,10 +67,13 @@ pub struct TransferTransactionData {
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 struct Transfer {
+    /// The account involved in the transfer.
     account_id: AccountId,
 
+    /// The value of the transfer.
     amount: i64,
 
+    /// If this is an approved transfer.
     is_approval: bool,
 }
 
@@ -263,6 +266,15 @@ impl TransferTransaction {
             .token_transfers
             .iter()
             .map(|it| (it.token_id, it.nft_transfers.clone()))
+            .collect()
+    }
+
+    /// Returns the transfers that will be executed.
+    pub fn get_hbar_transfers(&self) -> HashMap<AccountId, Hbar> {
+        self.data()
+            .transfers
+            .iter()
+            .map(|it| (it.account_id, Hbar::from_tinybars(it.amount)))
             .collect()
     }
 }

@@ -83,6 +83,12 @@ impl From<Vec<Key>> for KeyList {
     }
 }
 
+impl<T: Into<Key>, const N: usize> From<[T; N]> for KeyList {
+    fn from(value: [T; N]) -> Self {
+        value.into_iter().map(Into::into).collect()
+    }
+}
+
 impl FromProtobuf<services::KeyList> for KeyList {
     fn from_protobuf(pb: services::KeyList) -> crate::Result<Self>
     where
