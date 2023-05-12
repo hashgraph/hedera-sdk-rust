@@ -26,6 +26,7 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -45,7 +46,6 @@ use crate::{
     FileId,
     Key,
     KeyList,
-    LedgerId,
     Transaction,
     ValidateChecksums,
 };
@@ -198,7 +198,7 @@ impl TransactionExecute for FileUpdateTransactionData {
 }
 
 impl ValidateChecksums for FileUpdateTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.file_id.validate_checksums(ledger_id)
     }
 }

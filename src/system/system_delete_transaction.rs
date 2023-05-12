@@ -41,7 +41,6 @@ use crate::{
     ContractId,
     Error,
     FileId,
-    LedgerId,
     Transaction,
     ValidateChecksums,
 };
@@ -130,7 +129,7 @@ impl TransactionExecute for SystemDeleteTransactionData {
 }
 
 impl ValidateChecksums for SystemDeleteTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         self.file_id.validate_checksums(ledger_id)?;
         self.contract_id.validate_checksums(ledger_id)
     }

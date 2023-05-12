@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::schedule_service_client::ScheduleServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -37,7 +38,6 @@ use crate::transaction::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     ScheduleId,
     Transaction,
     ValidateChecksums,
@@ -79,7 +79,7 @@ impl TransactionExecute for ScheduleDeleteTransactionData {
 }
 
 impl ValidateChecksums for ScheduleDeleteTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.schedule_id.validate_checksums(ledger_id)
     }
 }

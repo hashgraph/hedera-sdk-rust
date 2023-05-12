@@ -207,10 +207,12 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
             max_elapsed_time: Some(timeout),
             ..ExponentialBackoff::default()
         };
-        let mut backoff_inf = ExponentialBackoff::default();
 
-        // remove maximum elapsed time for # of back-offs on inf.
-        backoff_inf.max_elapsed_time = None;
+        let mut backoff_inf = ExponentialBackoff {
+            max_elapsed_time: None,
+            // remove maximum elapsed time for # of back-offs on inf.
+            .. ExponentialBackoff::default()
+        };
 
         let mut context = R::Context::default();
 

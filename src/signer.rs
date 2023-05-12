@@ -19,7 +19,12 @@
  */
 
 use std::fmt;
-use std::sync::Arc;
+
+use triomphe::Arc;
+use unsize::{
+    CoerceUnsize,
+    Coercion,
+};
 
 use crate::{
     PrivateKey,
@@ -40,10 +45,22 @@ pub(crate) enum AnySigner {
     Arbitrary(Box<PublicKey>, Arc<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
 }
 
+impl AnySigner {
+    pub(crate) fn arbitrary<F: Fn(&[u8]) -> Vec<u8> + Send + Sync + 'static>(
+        public_key: Box<PublicKey>,
+        signer: F,
+    ) -> Self {
+        Self::Arbitrary(
+            public_key,
+            Arc::new(signer).unsize(Coercion!(to dyn Fn(&[u8]) -> Vec<u8> + Send + Sync)),
+        )
+    }
+}
+
 impl fmt::Debug for AnySigner {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::PrivateKey(_) => f.debug_tuple("PrivateKey").field(&"[redacted]").finish(),
+            Self::PrivateKey(_) => f.debug_tuple("PrivateKey").field(&"..").finish(),
             Self::Arbitrary(arg0, _) => {
                 f.debug_tuple("Arbitrary").field(arg0).field(&"Fn").finish()
             }

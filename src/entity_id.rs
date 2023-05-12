@@ -29,10 +29,10 @@ use std::str::FromStr;
 use tinystr::TinyAsciiStr;
 
 use crate::ethereum::IdEvmAddress;
+use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
     Error,
-    LedgerId,
 };
 
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -56,13 +56,13 @@ impl FromStr for Checksum {
 
 impl Display for Checksum {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&self.0, f)
+        f.write_str(self.0.as_str())
     }
 }
 
 impl Debug for Checksum {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "\"{self}\"")
+        write!(f, "\"{}\"", self.0.as_str())
     }
 }
 
@@ -71,11 +71,11 @@ pub trait ValidateChecksums {
     ///
     /// # Errors
     /// - [`Error::BadEntityId`] if any of the expected checksums don't match the actual checksums.
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> crate::Result<()>;
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> crate::Result<()>;
 }
 
 impl<T: ValidateChecksums> ValidateChecksums for Option<T> {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> crate::Result<()> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> crate::Result<()> {
         if let Some(id) = &self {
             id.validate_checksums(ledger_id)?;
         }
@@ -175,13 +175,13 @@ impl EntityId {
         IdEvmAddress::try_from(self).map(|it| it.to_string())
     }
 
-    pub(crate) fn generate_checksum(entity_id_string: &str, ledger_id: &LedgerId) -> Checksum {
+    pub(crate) fn generate_checksum(entity_id_string: &str, ledger_id: &RefLedgerId) -> Checksum {
         const P3: usize = 26 * 26 * 26; // 3 digits in base 26
         const P5: usize = 26 * 26 * 26 * 26 * 26; // 5 digits in base 26
         const M: usize = 1_000_003; // min prime greater than a million. Used for the final permutation.
         const W: usize = 31; // Sum s of digit values weights them by powers of W. Should be coprime to P5.
 
-        let h = [ledger_id.to_bytes(), vec![0u8; 6]].concat();
+        let h = [ledger_id.as_bytes().to_vec(), vec![0u8; 6]].concat();
 
         // Digits with 10 for ".", so if addr == "0.0.123" then d == [0, 10, 0, 10, 1, 2, 3]
         let d = entity_id_string.chars().map(|c| {
@@ -243,7 +243,13 @@ impl EntityId {
             .as_deref()
             .expect("Client had no ledger ID (help: call `client.set_ledger_id()`");
 
-        Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
+        Self::validate_checksum_internal(
+            shard,
+            realm,
+            num,
+            present_checksum,
+            ledger_id.as_ref_ledger_id(),
+        )
     }
 
     pub(crate) fn validate_checksum_for_ledger_id(
@@ -251,7 +257,7 @@ impl EntityId {
         realm: u64,
         num: u64,
         checksum: Option<Checksum>,
-        ledger_id: &LedgerId,
+        ledger_id: &RefLedgerId,
     ) -> Result<(), Error> {
         if let Some(present_checksum) = checksum {
             Self::validate_checksum_internal(shard, realm, num, present_checksum, ledger_id)
@@ -265,7 +271,7 @@ impl EntityId {
         realm: u64,
         num: u64,
         present_checksum: Checksum,
-        ledger_id: &LedgerId,
+        ledger_id: &RefLedgerId,
     ) -> Result<(), Error> {
         let expected_checksum =
             Self::generate_checksum(&format!("{shard}.{realm}.{num}"), ledger_id);
@@ -282,7 +288,7 @@ impl EntityId {
             .as_ref()
             .expect("Client had no ledger ID (help: call `client.set_ledger_id()`");
 
-        let checksum = Self::generate_checksum(&entity_id_string, ledger_id);
+        let checksum = Self::generate_checksum(&entity_id_string, ledger_id.as_ref_ledger_id());
         entity_id_string.push('-');
         entity_id_string.push_str(&checksum.0);
 
@@ -318,9 +324,9 @@ impl FromStr for EntityId {
 
 #[cfg(test)]
 mod tests {
+    use crate::ledger_id::RefLedgerId;
     use crate::{
         EntityId,
-        LedgerId,
         TopicId,
     };
 
@@ -385,7 +391,7 @@ mod tests {
         for (index, expected) in EXPECTED.iter().enumerate() {
             let actual = EntityId::generate_checksum(
                 &TopicId::from(index as u64).to_string(),
-                &LedgerId::mainnet(),
+                &RefLedgerId::MAINNET,
             )
             .to_string();
 
@@ -430,7 +436,7 @@ mod tests {
         for (index, expected) in EXPECTED.iter().enumerate() {
             let actual = EntityId::generate_checksum(
                 &TopicId::from(index as u64).to_string(),
-                &LedgerId::testnet(),
+                RefLedgerId::TESTNET,
             )
             .to_string();
 

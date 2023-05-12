@@ -38,6 +38,7 @@ use crate::file::{
     FileContentsQueryData,
     FileInfoQueryData,
 };
+use crate::ledger_id::RefLedgerId;
 use crate::query::QueryExecute;
 use crate::schedule::ScheduleInfoQueryData;
 use crate::token::{
@@ -58,7 +59,6 @@ use crate::{
     FileInfo,
     FromProtobuf,
     Hbar,
-    LedgerId,
     NetworkVersionInfo,
     NetworkVersionInfoQueryData,
     Query,
@@ -359,7 +359,7 @@ impl QueryExecute for AnyQueryData {
 }
 
 impl ValidateChecksums for AnyQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         match self {
             Self::AccountBalance(query) => query.validate_checksums(ledger_id),
             Self::AccountInfo(query) => query.validate_checksums(ledger_id),

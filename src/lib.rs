@@ -116,7 +116,6 @@
     clippy::zero_sized_map_values
 )]
 #![allow(clippy::enum_glob_use, clippy::enum_variant_names)]
-
 #[macro_use]
 mod protobuf;
 
@@ -350,6 +349,9 @@ pub(crate) use transaction_record_query::TransactionRecordQueryData;
 pub use transaction_response::TransactionResponse;
 pub use transfer::Transfer;
 pub use transfer_transaction::TransferTransaction;
+
+/// Like [`arc_swap::ArcSwapOption`] but with a [`triomphe::Arc`].
+pub(crate) type ArcSwapOption<T> = arc_swap::ArcSwapAny<Option<triomphe::Arc<T>>>;
 
 /// Boxed future for GRPC calls.
 pub(crate) type BoxGrpcFuture<'a, T> =

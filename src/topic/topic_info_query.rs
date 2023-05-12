@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::consensus_service_client::ConsensusServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -30,7 +31,6 @@ use crate::query::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     Query,
     ToProtobuf,
     TopicId,
@@ -92,7 +92,7 @@ impl QueryExecute for TopicInfoQueryData {
 }
 
 impl ValidateChecksums for TopicInfoQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.topic_id.validate_checksums(ledger_id)
     }
 }

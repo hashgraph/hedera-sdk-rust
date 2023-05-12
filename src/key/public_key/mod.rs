@@ -359,8 +359,6 @@ impl PublicKey {
                 key.verify(msg, &signature).map_err(Error::signature_verify)
             }
             PublicKeyData::Ecdsa(key) => {
-                // todo: see above comment on ed25519 signatures
-
                 let signature =
                     ecdsa::Signature::try_from(signature).map_err(Error::signature_verify)?;
 

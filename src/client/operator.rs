@@ -13,7 +13,7 @@ pub(crate) struct Operator {
 
 impl Operator {
     pub(crate) fn sign(&self, body_bytes: &[u8]) -> (PublicKey, Vec<u8>) {
-        self.signer.sign(&body_bytes)
+        self.signer.sign(body_bytes)
     }
 
     pub(crate) fn generate_transaction_id(&self) -> TransactionId {

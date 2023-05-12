@@ -34,12 +34,12 @@ use crate::entity_id::{
     ValidateChecksums,
 };
 use crate::ethereum::IdEvmAddress;
+use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
     EntityId,
     Error,
     FromProtobuf,
-    LedgerId,
     ToProtobuf,
 };
 
@@ -157,7 +157,7 @@ impl ContractId {
 }
 
 impl ValidateChecksums for ContractId {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         if self.evm_address.is_some() {
             Ok(())
         } else {

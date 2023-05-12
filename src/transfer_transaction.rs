@@ -24,6 +24,7 @@ use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -38,7 +39,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     Hbar,
-    LedgerId,
     NftId,
     ToProtobuf,
     TokenId,
@@ -246,7 +246,7 @@ impl TransactionExecute for TransferTransactionData {
 impl TransactionData for TransferTransactionData {}
 
 impl ValidateChecksums for TransferTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         for transfer in &self.transfers {
             transfer.account_id.validate_checksums(ledger_id)?;
         }

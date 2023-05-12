@@ -26,6 +26,7 @@ use time::{
 };
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -43,7 +44,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     Key,
-    LedgerId,
     TopicId,
     Transaction,
     ValidateChecksums,
@@ -184,7 +184,7 @@ impl TransactionExecute for TopicUpdateTransactionData {
 }
 
 impl ValidateChecksums for TopicUpdateTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.topic_id.validate_checksums(ledger_id)?;
         self.auto_renew_account_id.validate_checksums(ledger_id)
     }

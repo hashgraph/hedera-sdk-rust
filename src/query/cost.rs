@@ -32,9 +32,7 @@ use crate::{
     AccountId,
     BoxGrpcFuture,
     Client,
-    Error,
     Hbar,
-    LedgerId,
     Query,
     Tinybar,
     TransactionId,
@@ -139,7 +137,7 @@ where
 }
 
 impl<'a, D: QueryExecute> ValidateChecksums for QueryCost<'a, D> {
-    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, _ledger_id: &crate::ledger_id::RefLedgerId) -> crate::Result<()> {
         Ok(())
     }
 }

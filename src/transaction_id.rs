@@ -36,11 +36,11 @@ use time::{
     OffsetDateTime,
 };
 
+use crate::ledger_id::RefLedgerId;
 use crate::{
     AccountId,
     Error,
     FromProtobuf,
-    LedgerId,
     ToProtobuf,
     ValidateChecksums,
 };
@@ -97,7 +97,7 @@ impl TransactionId {
 }
 
 impl ValidateChecksums for TransactionId {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.account_id.validate_checksums(ledger_id)
     }
 }
@@ -117,6 +117,7 @@ impl Display for TransactionId {
             self.valid_start.unix_timestamp(),
             self.valid_start.nanosecond(),
             if self.scheduled { "?scheduled" } else { "" },
+            // https://github.com/rust-lang/rust/issues/92698
             self.nonce.map(|nonce| format!("/{nonce}")).as_deref().unwrap_or_default()
         )
     }
