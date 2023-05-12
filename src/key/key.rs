@@ -20,6 +20,7 @@
 
 use hedera_proto::services;
 
+use crate::contract::DelegateContractId;
 use crate::{
     ContractId,
     Error,
@@ -31,6 +32,7 @@ use crate::{
 
 /// Any method that can be used to authorize an operation on Hedera.
 #[derive(Eq, PartialEq, Debug, Clone, Hash)]
+#[non_exhaustive]
 pub enum Key {
     // todo(sr): not happy with any of these (fix before merge)
     /// A single public key.
@@ -40,7 +42,7 @@ pub enum Key {
     ContractId(ContractId),
 
     /// A delegatable contract ID.
-    DelegatableContractId(ContractId),
+    DelegateContractId(DelegateContractId),
 
     /// A key list.
     KeyList(KeyList),
@@ -72,7 +74,7 @@ impl ToProtobuf for Key {
                 }
 
                 Self::ContractId(id) => ContractId(id.to_protobuf()),
-                Self::DelegatableContractId(id) => DelegatableContractId(id.to_protobuf()),
+                Self::DelegateContractId(id) => DelegatableContractId(id.to_protobuf()),
                 // `KeyList`s are special and can be both a key list and a threshold key.
                 Self::KeyList(key) => key.to_protobuf_key(),
             }),
@@ -109,7 +111,7 @@ impl FromProtobuf<services::Key> for Key {
             Some(Ed25519(bytes)) => Ok(Self::Single(PublicKey::from_bytes_ed25519(&bytes)?)),
             Some(ContractId(id)) => Ok(Self::ContractId(crate::ContractId::from_protobuf(id)?)),
             Some(DelegatableContractId(id)) => {
-                Ok(Self::DelegatableContractId(crate::ContractId::from_protobuf(id)?))
+                Ok(Self::DelegateContractId(crate::DelegateContractId::from_protobuf(id)?))
             }
             Some(Rsa3072(_)) => {
                 Err(Error::from_protobuf("unexpected unsupported RSA-3072 key in Key"))
