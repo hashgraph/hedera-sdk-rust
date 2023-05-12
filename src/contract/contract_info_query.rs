@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::query::{
     AnyQueryData,
     QueryExecute,
@@ -32,7 +33,6 @@ use crate::{
     ContractId,
     ContractInfo,
     Error,
-    LedgerId,
     Query,
     ToProtobuf,
     ValidateChecksums,
@@ -96,7 +96,7 @@ impl QueryExecute for ContractInfoQueryData {
 }
 
 impl ValidateChecksums for ContractInfoQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.contract_id.validate_checksums(ledger_id)
     }
 }

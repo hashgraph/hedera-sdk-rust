@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
     AnyTransactionData,
@@ -35,7 +36,6 @@ use crate::{
     Error,
     FileId,
     Hbar,
-    LedgerId,
     ToProtobuf,
     Transaction,
     ValidateChecksums,
@@ -122,7 +122,7 @@ impl TransactionExecute for EthereumTransactionData {
 }
 
 impl ValidateChecksums for EthereumTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.call_data_file_id.validate_checksums(ledger_id)
     }
 }

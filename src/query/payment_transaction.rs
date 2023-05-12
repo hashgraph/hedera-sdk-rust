@@ -33,7 +33,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     Hbar,
-    LedgerId,
     ToProtobuf,
     Transaction,
     ValidateChecksums,
@@ -81,7 +80,7 @@ impl TransactionExecute for PaymentTransactionData {
 }
 
 impl ValidateChecksums for PaymentTransactionData {
-    fn validate_checksums(&self, _ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, _ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         Ok(())
     }
 }

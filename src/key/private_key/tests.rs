@@ -1,14 +1,11 @@
 use std::str::FromStr;
-use std::sync::Arc;
 
 use assert_matches::assert_matches;
 use expect_test::expect;
 use hex_literal::hex;
+use triomphe::Arc;
 
-use super::{
-    PrivateKey,
-    PrivateKeyDataWrapper,
-};
+use super::PrivateKey;
 use crate::key::private_key::{
     ED25519_OID,
     K256_OID,
@@ -101,14 +98,12 @@ fn ed25519_legacy_derive_2() {
 /// # Panics
 /// If `data` and `chain_code` don't make a valid [`PrivateKey`].
 fn key_with_chain(data: &str, chain_code: [u8; 32]) -> PrivateKey {
-    let key_without_chain = PrivateKey::from_str(data).unwrap();
+    let mut key = PrivateKey::from_str(data).unwrap();
 
-    let data = match Arc::try_unwrap(key_without_chain.0) {
-        Ok(it) => it.data,
-        Err(_) => unreachable!(),
-    };
+    // note: we create the key here, so, there shouldn't be any other references to it.
+    Arc::get_mut(&mut key.0).unwrap().chain_code = Some(chain_code);
 
-    PrivateKey(Arc::new(PrivateKeyDataWrapper::new_derivable(data, chain_code)))
+    key
 }
 
 // "iosKey"

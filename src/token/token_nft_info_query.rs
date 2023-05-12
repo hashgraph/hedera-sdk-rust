@@ -22,6 +22,7 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
+use crate::ledger_id::RefLedgerId;
 use crate::query::{
     AnyQueryData,
     Query,
@@ -31,7 +32,6 @@ use crate::query::{
 use crate::{
     BoxGrpcFuture,
     Error,
-    LedgerId,
     NftId,
     ToProtobuf,
     TokenNftInfo,
@@ -94,7 +94,7 @@ impl QueryExecute for TokenNftInfoQueryData {
 }
 
 impl ValidateChecksums for TokenNftInfoQueryData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         self.nft_id.validate_checksums(ledger_id)
     }
 }

@@ -41,7 +41,6 @@ use crate::{
     BoxGrpcFuture,
     Error,
     Key,
-    LedgerId,
     Transaction,
     ValidateChecksums,
 };
@@ -179,7 +178,7 @@ impl TransactionExecute for ScheduleCreateTransactionData {
 }
 
 impl ValidateChecksums for ScheduleCreateTransactionData {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         self.payer_account_id.validate_checksums(ledger_id)
     }
 }

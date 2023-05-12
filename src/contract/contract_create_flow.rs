@@ -18,8 +18,6 @@
  * ‍
  */
 
-use std::sync::Arc;
-
 use time::Duration;
 
 use crate::signer::AnySigner;
@@ -302,8 +300,7 @@ impl ContractCreateFlow {
         public_key: PublicKey,
         signer: F,
     ) -> &mut Self {
-        self.contract_data.signer =
-            Some(AnySigner::Arbitrary(Box::new(public_key), Arc::new(signer)));
+        self.contract_data.signer = Some(AnySigner::arbitrary(Box::new(public_key), signer));
 
         self
     }

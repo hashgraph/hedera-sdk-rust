@@ -46,6 +46,7 @@ arc-swap = "1.6.0"
 rlp = "0.5.2"
 bytes = { version = "1.2.1", default-features = false }
 pin-project-lite = "0.2.9"
+unsize = "1.1.0"
 
 [dependencies.futures-util]
 version = "0.3.21"
@@ -70,6 +71,11 @@ features = ["ecdsa", "precomputed-tables", "std"]
 version = "0.10.0"
 default_features = false
 features = ["encryption"]
+
+[dependencies.triomphe]
+version = "0.1.8"
+default-features = false
+features = ["std", "arc-swap", "unsize"]
 
 [dev-dependencies]
 anyhow = "1.0.57"

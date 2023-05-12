@@ -37,7 +37,6 @@ use crate::{
     EntityId,
     Error,
     FromProtobuf,
-    LedgerId,
     ToProtobuf,
 };
 
@@ -109,7 +108,7 @@ impl TopicId {
 }
 
 impl ValidateChecksums for TopicId {
-    fn validate_checksums(&self, ledger_id: &LedgerId) -> Result<(), Error> {
+    fn validate_checksums(&self, ledger_id: &crate::ledger_id::RefLedgerId) -> Result<(), Error> {
         EntityId::validate_checksum_for_ledger_id(
             self.shard,
             self.realm,

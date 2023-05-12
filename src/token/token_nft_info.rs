@@ -30,7 +30,6 @@ use crate::{
     NftId,
 };
 
-// TODO pub ledger_id: LedgerId, --- also shows as todo in account_info.rs
 /// Response from [`TokenNftInfoQuery`][crate::TokenNftInfoQuery].
 
 #[derive(Debug, Clone)]

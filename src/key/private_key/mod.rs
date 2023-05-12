@@ -28,7 +28,6 @@ use std::fmt::{
     Formatter,
 };
 use std::str::FromStr;
-use std::sync::Arc;
 
 use ed25519_dalek::Signer;
 use hmac::{
@@ -43,6 +42,7 @@ use pkcs8::der::{
 };
 use sha2::Sha512;
 use sha3::Digest;
+use triomphe::Arc;
 
 use crate::signer::AnySigner;
 use crate::{
