@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::collections::HashMap;
 use std::ops::Not;
 
 use hedera_proto::services;
@@ -42,6 +43,7 @@ use crate::{
     NftId,
     ToProtobuf,
     TokenId,
+    TokenNftTransfer,
     Transaction,
     ValidateChecksums,
 };
@@ -79,23 +81,41 @@ struct TokenTransfer {
 
     transfers: Vec<Transfer>,
 
-    nft_transfers: Vec<NftTransfer>,
+    nft_transfers: Vec<TokenNftTransfer>,
 
     expected_decimals: Option<u32>,
 }
 
-#[derive(Debug, Clone)]
-#[cfg_attr(test, derive(Eq, PartialEq))]
-struct NftTransfer {
-    sender_account_id: AccountId,
-    receiver_account_id: AccountId,
-
-    serial: u64,
-
-    is_approval: bool,
-}
-
 impl TransferTransaction {
+    fn _hbar_transfer(&mut self, account_id: AccountId, amount: Hbar, approved: bool) -> &mut Self {
+        self.data_mut().transfers.push(Transfer {
+            account_id,
+            amount: amount.to_tinybars(),
+            is_approval: approved,
+        });
+
+        self
+    }
+
+    /// Add a non-approved hbar transfer to the transaction.
+    pub fn hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
+        self._hbar_transfer(account_id, amount, false)
+    }
+
+    /// Add an approved hbar transfer to the transaction.
+    pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
+        self._hbar_transfer(account_id, amount, true)
+    }
+
+    /// Returns all transfers associated with this transaction.
+    pub fn get_hbar_transfers(&self) -> HashMap<AccountId, Hbar> {
+        self.data()
+            .transfers
+            .iter()
+            .map(|it| (it.account_id, Hbar::from_tinybars(it.amount)))
+            .collect()
+    }
+
     fn _token_transfer(
         &mut self,
         token_id: TokenId,
@@ -164,6 +184,27 @@ impl TransferTransaction {
         self._token_transfer(token_id, account_id, amount, true, Some(expected_decimals))
     }
 
+    /// Returns all the token transfers associated associated with this transaction.
+    pub fn get_token_transfers(&self) -> HashMap<TokenId, HashMap<AccountId, i64>> {
+        use std::collections::hash_map::Entry;
+
+        // note: using fold instead of nested collects on the off chance a token is in here twice.
+        self.data().token_transfers.iter().fold(
+            HashMap::with_capacity(self.data().token_transfers.len()),
+            |mut map, transfer| {
+                let iter = transfer.transfers.iter().map(|it| (it.account_id, it.amount));
+                match map.entry(transfer.token_id) {
+                    Entry::Occupied(mut it) => it.get_mut().extend(iter),
+                    Entry::Vacant(it) => {
+                        it.insert(iter.collect());
+                    }
+                }
+
+                map
+            },
+        )
+    }
+
     fn _nft_transfer(
         &mut self,
         nft_id: NftId,
@@ -172,8 +213,13 @@ impl TransferTransaction {
         approved: bool,
     ) -> &mut Self {
         let NftId { token_id, serial } = nft_id;
-        let transfer =
-            NftTransfer { serial, sender_account_id, receiver_account_id, is_approval: approved };
+        let transfer = TokenNftTransfer {
+            token_id,
+            serial,
+            sender: sender_account_id,
+            receiver: receiver_account_id,
+            is_approved: approved,
+        };
 
         let data = self.data_mut();
 
@@ -211,24 +257,13 @@ impl TransferTransaction {
         self._nft_transfer(nft_id.into(), sender_account_id, receiver_account_id, false)
     }
 
-    fn _hbar_transfer(&mut self, account_id: AccountId, amount: Hbar, approved: bool) -> &mut Self {
-        self.data_mut().transfers.push(Transfer {
-            account_id,
-            amount: amount.to_tinybars(),
-            is_approval: approved,
-        });
-
-        self
-    }
-
-    /// Add a non-approved hbar transfer to the transaction.
-    pub fn hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
-        self._hbar_transfer(account_id, amount, false)
-    }
-
-    /// Add an approved hbar transfer to the transaction.
-    pub fn approved_hbar_transfer(&mut self, account_id: AccountId, amount: Hbar) -> &mut Self {
-        self._hbar_transfer(account_id, amount, true)
+    /// Returns all the NFT transfers associated with this transaction.
+    pub fn get_nft_transfers(&self) -> HashMap<TokenId, Vec<TokenNftTransfer>> {
+        self.data()
+            .token_transfers
+            .iter()
+            .map(|it| (it.token_id, it.nft_transfers.clone()))
+            .collect()
     }
 }
 
@@ -256,8 +291,8 @@ impl ValidateChecksums for TransferTransactionData {
                 transfer.account_id.validate_checksums(ledger_id)?;
             }
             for nft_transfer in &token_transfer.nft_transfers {
-                nft_transfer.sender_account_id.validate_checksums(ledger_id)?;
-                nft_transfer.receiver_account_id.validate_checksums(ledger_id)?;
+                nft_transfer.sender.validate_checksums(ledger_id)?;
+                nft_transfer.receiver.validate_checksums(ledger_id)?;
             }
         }
         Ok(())
@@ -288,10 +323,16 @@ impl ToProtobuf for Transfer {
 
 impl FromProtobuf<services::TokenTransferList> for TokenTransfer {
     fn from_protobuf(pb: services::TokenTransferList) -> crate::Result<Self> {
+        let token_id = TokenId::from_protobuf(pb_getf!(pb, token)?)?;
+
         Ok(Self {
-            token_id: TokenId::from_protobuf(pb_getf!(pb, token)?)?,
+            token_id,
             transfers: Vec::from_protobuf(pb.transfers)?,
-            nft_transfers: Vec::from_protobuf(pb.nft_transfers)?,
+            nft_transfers: pb
+                .nft_transfers
+                .into_iter()
+                .map(|pb| TokenNftTransfer::from_protobuf(pb, token_id))
+                .collect::<Result<Vec<_>, _>>()?,
             expected_decimals: pb.expected_decimals,
         })
     }
@@ -313,26 +354,15 @@ impl ToProtobuf for TokenTransfer {
     }
 }
 
-impl FromProtobuf<services::NftTransfer> for NftTransfer {
-    fn from_protobuf(pb: services::NftTransfer) -> crate::Result<Self> {
-        Ok(Self {
-            sender_account_id: AccountId::from_protobuf(pb_getf!(pb, sender_account_id)?)?,
-            receiver_account_id: AccountId::from_protobuf(pb_getf!(pb, receiver_account_id)?)?,
-            serial: pb.serial_number as u64,
-            is_approval: pb.is_approval,
-        })
-    }
-}
-
-impl ToProtobuf for NftTransfer {
+impl ToProtobuf for TokenNftTransfer {
     type Protobuf = services::NftTransfer;
 
     fn to_protobuf(&self) -> Self::Protobuf {
         services::NftTransfer {
-            sender_account_id: Some(self.sender_account_id.to_protobuf()),
-            receiver_account_id: Some(self.receiver_account_id.to_protobuf()),
+            sender_account_id: Some(self.sender.to_protobuf()),
+            receiver_account_id: Some(self.receiver.to_protobuf()),
             serial_number: self.serial as i64,
-            is_approval: self.is_approval,
+            is_approval: self.is_approved,
         }
     }
 }
