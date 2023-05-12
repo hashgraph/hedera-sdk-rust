@@ -192,6 +192,7 @@ impl<D> Transaction<D> {
         self.body
     }
 
+    #[inline(always)]
     pub(crate) fn data(&self) -> &D {
         &self.body.data
     }
