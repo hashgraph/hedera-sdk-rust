@@ -385,7 +385,9 @@ impl<D: ValidateChecksums> Transaction<D> {
         let node_account_ids = match &self.body.node_account_ids {
             // the clone here is the lesser of two evils.
             Some(it) => it.clone(),
-            None => client.ok_or(Error::FreezeUnsetNodeAccountIds)?.random_node_ids(),
+            None => {
+                client.ok_or(Error::FreezeUnsetNodeAccountIds)?.network().0.load().random_node_ids()
+            }
         };
 
         // note to reviewer: this is intentionally still an option, fallback is used later, swift doesn't *have* default max transaction fee and fixing it is a massive PITA.
@@ -577,9 +579,7 @@ impl<D: TransactionExecute> Transaction<D> {
     /// - being a chunked transaction with multiple chunks.
     pub fn schedule(self) -> ScheduleCreateTransaction {
         self.require_not_frozen();
-        if self.get_node_account_ids().is_some() {
-            panic!("The underlying transaction for a scheduled transaction cannot have node account IDs set")
-        }
+        assert!(!self.get_node_account_ids().is_some(), "The underlying transaction for a scheduled transaction cannot have node account IDs set");
 
         let mut transaction = ScheduleCreateTransaction::new();
 

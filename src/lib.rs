@@ -354,6 +354,9 @@ pub use transfer_transaction::TransferTransaction;
 /// Like [`arc_swap::ArcSwapOption`] but with a [`triomphe::Arc`].
 pub(crate) type ArcSwapOption<T> = arc_swap::ArcSwapAny<Option<triomphe::Arc<T>>>;
 
+/// Like [`arc_swap::ArcSwap`] but with a [`triomphe::Arc`].
+pub(crate) type ArcSwap<T> = arc_swap::ArcSwapAny<triomphe::Arc<T>>;
+
 /// Boxed future for GRPC calls.
 pub(crate) type BoxGrpcFuture<'a, T> =
     futures_core::future::BoxFuture<'a, tonic::Result<tonic::Response<T>>>;

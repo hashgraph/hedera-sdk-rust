@@ -93,8 +93,8 @@ fn from_bytes_sign_to_bytes() -> crate::Result<()> {
     Ok(())
 }
 
-#[test]
-fn chunked_to_from_bytes() -> crate::Result<()> {
+#[tokio::test]
+async fn chunked_to_from_bytes() -> crate::Result<()> {
     let client = Client::for_testnet();
     client.set_operator(0.into(), PrivateKey::generate_ed25519());
 

@@ -33,21 +33,22 @@ pub(crate) const TESTNET: &str = "hcs.testnet.mirrornode.hedera.com:5600";
 
 pub(crate) const PREVIEWNET: &str = "hcs.previewnet.mirrornode.hedera.com:5600";
 
+#[derive(Clone)]
 pub(crate) struct MirrorNetwork {
     addresses: Vec<Cow<'static, str>>,
     channel: OnceCell<Channel>,
 }
 
 impl MirrorNetwork {
-    pub(super) fn mainnet() -> Self {
+    pub(crate) fn mainnet() -> Self {
         Self::from_static(&[MAINNET])
     }
 
-    pub(super) fn testnet() -> Self {
+    pub(crate) fn testnet() -> Self {
         Self::from_static(&[TESTNET])
     }
 
-    pub(super) fn previewnet() -> Self {
+    pub(crate) fn previewnet() -> Self {
         Self::from_static(&[PREVIEWNET])
     }
 
