@@ -84,6 +84,11 @@ impl AccountAllowanceApproveTransaction {
         self
     }
 
+    /// Returns the hbar allowances approved by the account owner.
+    pub fn hbar_approvals(&self) -> &[HbarAllowance] {
+        self.data().hbar_allowances.as_ref()
+    }
+
     /// Approves the token allowance.
     pub fn approve_token_allowance(
         &mut self,
@@ -99,6 +104,11 @@ impl AccountAllowanceApproveTransaction {
             amount,
         });
         self
+    }
+
+    /// Returns the fungible token allowances approved by the account owner
+    pub fn token_approvals(&self) -> &[TokenAllowance] {
+        self.data().token_allowances.as_ref()
     }
 
     /// Approve the NFT allowance.
@@ -150,56 +160,64 @@ impl AccountAllowanceApproveTransaction {
 
         self
     }
+
+    /// Returns the non-fungible token allowances approved by the account owner.
+    pub fn token_nft_approvals(&self) -> &[NftAllowance] {
+        self.data().nft_allowances.as_ref()
+    }
 }
 
 #[derive(Debug, Clone)]
-struct HbarAllowance {
+#[non_exhaustive]
+pub struct HbarAllowance {
     /// The account ID of the hbar owner (ie. the grantor of the allowance).
-    owner_account_id: AccountId,
+    pub owner_account_id: AccountId,
 
     /// The account ID of the spender of the hbar allowance.
-    spender_account_id: AccountId,
+    pub spender_account_id: AccountId,
 
     /// The amount of the spender's allowance.
-    amount: Hbar,
+    pub amount: Hbar,
 }
 
 #[derive(Debug, Clone)]
-struct TokenAllowance {
+#[non_exhaustive]
+pub struct TokenAllowance {
     /// The token that the allowance pertains to.
-    token_id: TokenId,
+    pub token_id: TokenId,
 
     /// The account ID of the token owner (ie. the grantor of the allowance).
-    owner_account_id: AccountId,
+    pub owner_account_id: AccountId,
 
     /// The account ID of the spender of the token allowance.
-    spender_account_id: AccountId,
+    pub spender_account_id: AccountId,
 
     /// The amount of the spender's token allowance.
-    amount: u64,
+    pub amount: u64,
 }
 
 #[derive(Debug, Clone)]
-struct NftAllowance {
+#[non_exhaustive]
+pub struct NftAllowance {
     /// The token that the allowance pertains to.
-    token_id: TokenId,
+    pub token_id: TokenId,
 
     /// The account ID of the token owner (ie. the grantor of the allowance).
-    owner_account_id: AccountId,
+    pub owner_account_id: AccountId,
 
     /// The account ID of the spender of the token allowance.
-    spender_account_id: AccountId,
+    pub spender_account_id: AccountId,
 
     /// The list of serial numbers that the spender is permitted to transfer.
-    serials: Vec<i64>,
+    pub serials: Vec<i64>,
 
     /// If true, the spender has access to all of the owner's NFT units of type tokenId (currently
     /// owned and any in the future).
-    approved_for_all: Option<bool>,
+    pub approved_for_all: Option<bool>,
 
     /// The account ID of the spender who is granted approvedForAll allowance and granting
     /// approval on an NFT serial to another spender.
-    delegating_spender_account_id: Option<AccountId>,
+    pub delegating_spender_account_id: Option<AccountId>,
 }
 
 impl TransactionData for AccountAllowanceApproveTransactionData {}
