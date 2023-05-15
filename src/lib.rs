@@ -297,9 +297,17 @@ pub use system::{
     SystemUndeleteTransaction,
 };
 pub use token::{
+    AnyCustomFee,
     AssessedCustomFee,
+    CustomFee,
     FeeAssessmentMethod,
+    FixedFee,
+    FixedFeeData,
+    FractionalFee,
+    FractionalFeeData,
     NftId,
+    RoyaltyFee,
+    RoyaltyFeeData,
     TokenAssociateTransaction,
     TokenAssociation,
     TokenBurnTransaction,
