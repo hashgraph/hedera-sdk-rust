@@ -1,7 +1,11 @@
 use std::cmp::max;
 use std::str::FromStr;
 
-use num_bigint::{BigInt, BigUint, Sign};
+use num_bigint::{
+    BigInt,
+    BigUint,
+    Sign,
+};
 
 use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::ethereum::IdEvmAddress;
@@ -1002,7 +1006,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use num_bigint::{BigInt, BigUint};
+    use num_bigint::{
+        BigInt,
+        BigUint,
+    };
 
     use crate::contract::contract_function_parameters::ContractFunctionParameters;
     use crate::contract::contract_function_selector::ContractFunctionSelector;

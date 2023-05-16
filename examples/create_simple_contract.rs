@@ -22,7 +22,7 @@ mod resources;
 
 use clap::Parser;
 use hedera::{
-    AccountId, Client, ContractCallQuery, ContractCreateTransaction, ContractExecuteTransaction, ContractFunctionParameters, FileCreateTransaction, PrivateKey
+    AccountId, Client, ContractCallQuery, ContractCreateTransaction, ContractDeleteTransaction, ContractFunctionParameters, FileCreateTransaction, PrivateKey
 };
 
 #[derive(Parser, Debug)]
@@ -47,7 +47,7 @@ async fn main() -> anyhow::Result<()> {
 
     client.set_operator(args.operator_account_id, args.operator_key.clone());
 
-    let bytecode = resources::stateful_bytecode();
+    let bytecode = resources::simple_bytecode();
 
     // create the contract's bytecode file
     let file_transaction_response = FileCreateTransaction::new()
@@ -65,6 +65,7 @@ async fn main() -> anyhow::Result<()> {
     let contract_transaction_response = ContractCreateTransaction::new()
         .bytecode_file_id(new_file_id)
         .gas(500000)
+        .admin_key(args.operator_key.public_key())
         .constructor_parameters(
             ContractFunctionParameters::new()
                 .add_string("hello from hedera!")
@@ -81,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
     let contract_call_result = ContractCallQuery::new()
         .contract_id(new_contract_id)
         .gas(500000)
-        .function("get_message")
+        .function("greet")
         .execute(&client)
         .await?;
 
@@ -92,35 +93,16 @@ async fn main() -> anyhow::Result<()> {
     let message = contract_call_result.get_str(0);
     println!("contract returned message: {message:?}");
 
-    let contract_exec_transaction_response = ContractExecuteTransaction::new()
+    // now delete the contract
+    let _contract_delete_result = ContractDeleteTransaction::new()
         .contract_id(new_contract_id)
-        .gas(500000)
-        .function_with_parameters(
-            "set_message",
-            ContractFunctionParameters::new().add_string("hello from hedera again!"),
-        )
+        .transfer_account_id(args.operator_account_id)
         .execute(&client)
-        .await?;
-
-    // if this doesn't throw then we know the contract executed successfully
-    contract_exec_transaction_response
+        .await?
         .get_receipt(&client)
         .await?;
 
-    // now query contract
-    let contract_update_result = ContractCallQuery::new()
-        .contract_id(new_contract_id)
-        .gas(500000)
-        .function("get_message")
-        .execute(&client)
-        .await?;
-
-    if let Some(err) = contract_update_result.error_message {
-        anyhow::bail!("error calling contract: {err}");
-    }
-
-    let message2 = contract_update_result.get_str(0);
-    println!("contract returned message: {message2:?}");
+    println!("Contract successfully deleted");
 
     Ok(())
 }
