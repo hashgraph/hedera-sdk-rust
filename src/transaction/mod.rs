@@ -171,6 +171,10 @@ impl<D> Transaction<D> {
         self.sources.as_ref()
     }
 
+    fn signed_sources(&self) -> Option<Cow<'_, TransactionSources>> {
+        self.sources().map(|it| it.sign_with(&self.signers))
+    }
+
     /// # Panics
     /// If `self.is_frozen()`.
     #[track_caller]
@@ -502,8 +506,8 @@ impl<D: TransactionExecute> Transaction<D> {
     pub(crate) fn make_sources(&self) -> crate::Result<Cow<'_, TransactionSources>> {
         assert!(self.is_frozen());
 
-        if let Some(sources) = &self.sources {
-            return Ok(sources.sign_with(&self.signers));
+        if let Some(sources) = self.signed_sources() {
+            return Ok(sources);
         }
 
         return Ok(Cow::Owned(TransactionSources::new(self.make_transaction_list()?).unwrap()));
@@ -520,8 +524,7 @@ impl<D: TransactionExecute> Transaction<D> {
         assert!(self.is_frozen(), "Transaction must be frozen to call `to_bytes`");
 
         let transaction_list = self
-            .sources
-            .as_ref()
+            .signed_sources()
             .map_or_else(|| self.make_transaction_list(), |it| Ok(it.transactions().to_vec()))?;
 
         Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec())
@@ -677,7 +680,7 @@ where
         // it's fine to call freeze while already frozen, so, let `freeze_with` handle the freeze check.
         self.freeze_with(Some(client))?;
 
-        if let Some(sources) = &self.sources {
+        if let Some(sources) = self.sources() {
             return self::execute::SourceTransaction::new(self, sources)
                 .execute(client, timeout)
                 .await;
@@ -796,7 +799,7 @@ where
         self.freeze_with(Some(client))?;
 
         // fixme: dedup this with `execute_with_optional_timeout`
-        if let Some(sources) = &self.sources {
+        if let Some(sources) = self.sources() {
             return self::execute::SourceTransaction::new(self, sources)
                 .execute_all(client, timeout_per_chunk)
                 .await;
