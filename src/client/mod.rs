@@ -44,6 +44,7 @@ use crate::{
     Error,
     LedgerId,
     PrivateKey,
+    PublicKey,
 };
 
 mod network;
@@ -258,5 +259,17 @@ impl Client {
 
             changed
         });
+    }
+
+    /// Returns the Account ID for the operator.
+    #[must_use]
+    pub fn get_operator_account_id(&self) -> Option<AccountId> {
+        self.load_operator().as_deref().map(|it| it.account_id)
+    }
+
+    /// Returns the PublicKey for the current operator.
+    #[must_use]
+    pub fn get_operator_public_key(&self) -> Option<PublicKey> {
+        self.load_operator().as_deref().map(|it| it.signer.public_key())
     }
 }
