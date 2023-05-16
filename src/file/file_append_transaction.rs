@@ -64,7 +64,7 @@ pub struct FileAppendTransactionData {
 impl Default for FileAppendTransactionData {
     fn default() -> Self {
         Self {
-            file_id: Default::default(),
+            file_id: None,
             chunk_data: ChunkData {
                 chunk_size: NonZeroUsize::new(4096).unwrap(),
                 ..Default::default()

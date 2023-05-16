@@ -18,6 +18,8 @@
  * ‍
  */
 
+use std::time::Duration;
+
 use futures_core::future::BoxFuture;
 use futures_core::stream::BoxStream;
 use futures_core::Stream;
@@ -172,5 +174,24 @@ impl From<NodeAddress> for AnyMirrorQueryMessage {
 impl From<NodeAddressBook> for AnyMirrorQueryResponse {
     fn from(value: NodeAddressBook) -> Self {
         Self::NodeAddressBook(value)
+    }
+}
+
+impl NodeAddressBookQuery {
+    pub(crate) async fn execute_mirrornet(
+        &self,
+        channel: Channel,
+        timeout: Option<Duration>,
+    ) -> crate::Result<NodeAddressBook> {
+        let timeout = timeout.unwrap_or_else(|| {
+            std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
+        });
+
+        NodeAddressBookQueryData::try_collect(crate::mirror_query::subscribe(
+            channel,
+            timeout,
+            self.data.clone(),
+        ))
+        .await
     }
 }
