@@ -23,20 +23,10 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::query::{
-    AnyQueryData,
-    QueryExecute,
-    ToQueryProtobuf,
-};
+use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
 use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    ContractFunctionResult,
-    ContractId,
-    Error,
-    Query,
-    ToProtobuf,
-    ValidateChecksums,
+    AccountId, BoxGrpcFuture, ContractFunctionResult, ContractId, Error, Query, ToProtobuf,
+    ValidateChecksums, ContractFunctionParameters,
 };
 
 /// Call a function of the given smart contract instance.
@@ -98,6 +88,20 @@ impl ContractCallQuery {
     pub fn function_parameters(&mut self, data: Vec<u8>) -> &mut Self {
         self.data.function_parameters = data;
         self
+    }
+
+    /// Sets the function with no parameters.
+    pub fn function(&mut self, name: &str) -> &mut Self {
+        self.function_with_parameters(name, &ContractFunctionParameters::new())
+    }
+
+    /// Sets the function with parameters.
+    pub fn function_with_parameters(
+        &mut self,
+        name: &str,
+        parameters: &ContractFunctionParameters,
+    ) -> &mut Self {
+        self.function_parameters(parameters.to_bytes(Some(name)))
     }
 
     /// Gets the sender for this transaction.
