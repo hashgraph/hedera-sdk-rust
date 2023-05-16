@@ -23,10 +23,21 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
 use crate::{
-    AccountId, BoxGrpcFuture, ContractFunctionResult, ContractId, Error, Query, ToProtobuf,
-    ValidateChecksums, ContractFunctionParameters,
+    AccountId,
+    BoxGrpcFuture,
+    ContractFunctionParameters,
+    ContractFunctionResult,
+    ContractId,
+    Error,
+    Query,
+    ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Call a function of the given smart contract instance.

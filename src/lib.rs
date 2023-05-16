@@ -188,6 +188,7 @@ pub use contract::{
     ContractCallQuery,
     ContractCreateFlow,
     ContractCreateTransaction,
+    ContractDeleteTransaction,
     ContractExecuteTransaction,
     ContractFunctionParameters,
     ContractFunctionResult,

@@ -2,6 +2,12 @@
 
 pub const BIG_CONTENTS: &str = include_str!("big_contents.txt");
 
+/// Bytecode for the simple contract example.
+pub fn simple_bytecode() -> String {
+    const FILE: &'static str = include_str!("hello-world.json");
+
+    bytecode(FILE)
+}
 /// Bytecode for the stateful contract example.
 pub fn stateful_bytecode() -> String {
     const FILE: &'static str = include_str!("stateful.json");
