@@ -274,9 +274,11 @@ mod tests {
     use hex_literal::hex;
 
     use crate::ethereum::EvmAddress;
+    use crate::ledger_id::RefLedgerId;
     use crate::{
         AccountId,
         Client,
+        ValidateChecksums,
     };
 
     #[test]
@@ -344,30 +346,27 @@ mod tests {
 
     #[test]
     fn good_checksum_on_mainnet() {
-        AccountId::from_str("0.0.123-vfmkw")
-            .unwrap()
-            .validate_checksum(&Client::for_mainnet())
-            .unwrap();
+        let account_id = AccountId::from_str("0.0.123-vfmkw").unwrap();
+
+        ValidateChecksums::validate_checksums(&account_id, RefLedgerId::MAINNET).unwrap();
     }
 
     #[test]
     fn good_checksum_on_testnet() {
-        AccountId::from_str("0.0.123-esxsf")
-            .unwrap()
-            .validate_checksum(&Client::for_testnet())
-            .unwrap();
+        let account_id = AccountId::from_str("0.0.123-esxsf").unwrap();
+
+        ValidateChecksums::validate_checksums(&account_id, RefLedgerId::TESTNET).unwrap();
     }
 
     #[test]
     fn good_checksum_on_previewnet() {
-        AccountId::from_str("0.0.123-ogizo")
-            .unwrap()
-            .validate_checksum(&Client::for_previewnet())
-            .unwrap();
+        let account_id = AccountId::from_str("0.0.123-ogizo").unwrap();
+
+        ValidateChecksums::validate_checksums(&account_id, RefLedgerId::PREVIEWNET).unwrap();
     }
 
-    #[test]
-    fn to_string_with_checksum() {
+    #[tokio::test]
+    async fn to_string_with_checksum() {
         assert_eq!(
             AccountId::from_str("0.0.123")
                 .unwrap()

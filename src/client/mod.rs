@@ -26,12 +26,16 @@ use std::sync::atomic::{
 };
 use std::time::Duration;
 
+pub(crate) use network::{
+    Network,
+    NetworkData,
+};
 pub(crate) use operator::Operator;
-use rand::thread_rng;
+use tokio::sync::watch;
 use triomphe::Arc;
 
-use self::mirror_network::MirrorNetwork;
-use crate::client::network::Network;
+use self::network::managed::ManagedNetwork;
+pub(crate) use self::network::mirror::MirrorNetwork;
 use crate::ping_query::PingQuery;
 use crate::signer::AnySigner;
 use crate::{
@@ -40,21 +44,20 @@ use crate::{
     Error,
     LedgerId,
     PrivateKey,
-    TransactionId,
+    PublicKey,
 };
 
-mod mirror_network;
 mod network;
 mod operator;
 
 struct ClientInner {
-    network: Network,
-    mirror_network: MirrorNetwork,
+    network: ManagedNetwork,
     operator: ArcSwapOption<Operator>,
     max_transaction_fee_tinybar: AtomicU64,
     ledger_id: ArcSwapOption<LedgerId>,
     auto_validate_checksums: AtomicBool,
     regenerate_transaction_ids: AtomicBool,
+    network_update_tx: watch::Sender<Option<Duration>>,
 }
 
 /// Managed client for use on the Hedera network.
@@ -69,42 +72,39 @@ impl fmt::Debug for Client {
 }
 
 impl Client {
-    fn with_network(
-        network: Network,
-        mirror_network: MirrorNetwork,
-        ledger_id: impl Into<Option<LedgerId>>,
-    ) -> Self {
+    fn with_network(network: ManagedNetwork, ledger_id: impl Into<Option<LedgerId>>) -> Self {
+        let network_update_tx = network::managed::spawn_network_update(
+            network.clone(),
+            Some(Duration::from_secs(24 * 60 * 60)),
+        );
+
         Self(Arc::new(ClientInner {
             network,
-            mirror_network,
             operator: ArcSwapOption::new(None),
             max_transaction_fee_tinybar: AtomicU64::new(0),
             ledger_id: ArcSwapOption::new(ledger_id.into().map(Arc::new)),
             auto_validate_checksums: AtomicBool::new(false),
             regenerate_transaction_ids: AtomicBool::new(true),
+            network_update_tx,
         }))
     }
 
     /// Construct a Hedera client pre-configured for mainnet access.
     #[must_use]
     pub fn for_mainnet() -> Self {
-        Self::with_network(Network::mainnet(), MirrorNetwork::mainnet(), LedgerId::mainnet())
+        Self::with_network(ManagedNetwork::mainnet(), LedgerId::mainnet())
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     #[must_use]
     pub fn for_testnet() -> Self {
-        Self::with_network(Network::testnet(), MirrorNetwork::testnet(), LedgerId::testnet())
+        Self::with_network(ManagedNetwork::testnet(), LedgerId::testnet())
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     #[must_use]
     pub fn for_previewnet() -> Self {
-        Self::with_network(
-            Network::previewnet(),
-            MirrorNetwork::previewnet(),
-            LedgerId::previewnet(),
-        )
+        Self::with_network(ManagedNetwork::previewnet(), LedgerId::previewnet())
     }
 
     /// Construct a hedera client pre-configured for access to the given network.
@@ -131,17 +131,6 @@ impl Client {
     /// Sets the ledger ID for the Client's network.
     pub fn set_ledger_id(&self, ledger_id: Option<LedgerId>) {
         self.0.ledger_id.store(ledger_id.map(Arc::new));
-    }
-
-    pub(crate) fn random_node_ids(&self) -> Vec<AccountId> {
-        let node_ids: Vec<_> = self.network().healthy_node_ids().collect();
-
-        let node_sample_amount = (node_ids.len() + 2) / 3;
-
-        let node_id_indecies =
-            rand::seq::index::sample(&mut thread_rng(), node_ids.len(), node_sample_amount);
-
-        node_id_indecies.into_iter().map(|index| node_ids[index]).collect()
     }
 
     /// Returns true if checksums should be automatically validated.
@@ -182,19 +171,14 @@ impl Client {
             .store(Some(Arc::new(Operator { account_id: id, signer: AnySigner::PrivateKey(key) })));
     }
 
-    /// Generate a new transaction ID from the stored operator account ID, if present.
-    pub(crate) fn generate_transaction_id(&self) -> Option<TransactionId> {
-        self.0.operator.load().as_deref().map(Operator::generate_transaction_id)
-    }
-
     /// Gets a reference to the configured network.
     pub(crate) fn network(&self) -> &Network {
-        &self.0.network
+        &self.0.network.primary
     }
 
     /// Gets a reference to the configured mirror network.
     pub(crate) fn mirror_network(&self) -> &MirrorNetwork {
-        &self.0.mirror_network
+        &self.0.network.mirror
     }
 
     /// Gets the maximum transaction fee the paying account is willing to pay.
@@ -235,7 +219,7 @@ impl Client {
     /// Send a ping to all nodes.
     pub async fn ping_all(&self) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().iter().map(|it| self.ping(*it)),
+            self.network().0.load().node_ids().iter().map(|it| self.ping(*it)),
         )
         .await?;
 
@@ -245,10 +229,47 @@ impl Client {
     /// Send a ping to all nodes, canceling the ping after `timeout` has elapsed.
     pub async fn ping_all_with_timeout(&self, timeout: Duration) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().node_ids().iter().map(|it| self.ping_with_timeout(*it, timeout)),
+            self.network()
+                .0
+                .load()
+                .node_ids()
+                .iter()
+                .map(|it| self.ping_with_timeout(*it, timeout)),
         )
         .await?;
 
         Ok(())
+    }
+
+    /// Returns the frequency at which the network will update (if it will update at all).
+    #[must_use = "this function has no side-effects"]
+    pub fn network_update_period(&self) -> Option<Duration> {
+        *self.0.network_update_tx.borrow()
+    }
+
+    /// Sets the frequency at which the network will update.
+    ///
+    /// Note that network updates will not affect any in-flight requests.
+    pub fn set_network_update_period(&self, period: Option<Duration>) {
+        self.0.network_update_tx.send_if_modified(|place| {
+            let changed = *place == period;
+            if changed {
+                *place = period;
+            }
+
+            changed
+        });
+    }
+
+    /// Returns the Account ID for the operator.
+    #[must_use]
+    pub fn get_operator_account_id(&self) -> Option<AccountId> {
+        self.load_operator().as_deref().map(|it| it.account_id)
+    }
+
+    /// Returns the PublicKey for the current operator.
+    #[must_use]
+    pub fn get_operator_public_key(&self) -> Option<PublicKey> {
+        self.load_operator().as_deref().map(|it| it.signer.public_key())
     }
 }

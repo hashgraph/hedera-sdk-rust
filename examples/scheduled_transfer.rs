@@ -38,6 +38,9 @@ struct Args {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
+
+    env_logger::init();
+
     let args = Args::parse();
 
     let client = Client::for_name(&args.hedera_network)?;

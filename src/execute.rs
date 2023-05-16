@@ -19,6 +19,7 @@
  */
 
 use std::ops::ControlFlow;
+use std::time::Duration;
 
 use backoff::ExponentialBackoff;
 use futures_core::future::BoxFuture;
@@ -29,8 +30,12 @@ use rand::thread_rng;
 use time::OffsetDateTime;
 use tonic::metadata::AsciiMetadataValue;
 use tonic::transport::Channel;
+use triomphe::Arc;
 
+use crate::client::NetworkData;
+use crate::ping_query::PingQuery;
 use crate::{
+    client,
     retry,
     AccountId,
     BoxGrpcFuture,
@@ -123,26 +128,21 @@ pub(crate) trait Execute: ValidateChecksums {
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32>;
 }
 
+struct ExecuteContext {
+    // When `Some` the `transaction_id` will be regenerated when expired.
+    operator_account_id: Option<AccountId>,
+    network: Arc<NetworkData>,
+    timeout: Duration,
+}
+
 pub(crate) async fn execute<E>(
     client: &Client,
     executable: &E,
-    timeout: Option<std::time::Duration>,
+    timeout: Option<Duration>,
 ) -> crate::Result<E::Response>
 where
     E: Execute + Sync,
 {
-    fn recurse_ping(client: &Client, node_index: usize) -> BoxFuture<'_, bool> {
-        Box::pin(async move { client.ping(client.network().node_ids()[node_index]).await.is_ok() })
-    }
-
-    let timeout = timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
-        std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
-    });
-
-    // the overall timeout for the backoff starts measuring from here
-    let backoff =
-        ExponentialBackoff { max_elapsed_time: Some(timeout), ..ExponentialBackoff::default() };
-
     if client.auto_validate_checksums() {
         let ledger_id = client.ledger_id_internal();
         let ledger_id = ledger_id
@@ -151,6 +151,55 @@ where
 
         executable.validate_checksums(ledger_id.as_ref_ledger_id())?;
     }
+
+    let operator_account_id = 'op: {
+        if executable.transaction_id().is_some()
+            || !executable
+                .regenerate_transaction_id()
+                .unwrap_or(client.default_regenerate_transaction_id())
+        {
+            break 'op None;
+        }
+
+        executable
+            .operator_account_id()
+            .copied()
+            .or_else(|| client.load_operator().as_ref().map(|it| it.account_id))
+    };
+
+    execute_inner(
+        &ExecuteContext {
+            timeout: timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
+                std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
+            }),
+            operator_account_id,
+            network: client.network().0.load_full(),
+        },
+        executable,
+    )
+    .await
+}
+
+async fn execute_inner<E>(ctx: &ExecuteContext, executable: &E) -> crate::Result<E::Response>
+where
+    E: Execute + Sync,
+{
+    fn recurse_ping(ctx: &ExecuteContext, index: usize) -> BoxFuture<'_, bool> {
+        Box::pin(async move {
+            let ctx = ExecuteContext {
+                operator_account_id: None,
+                network: Arc::clone(&ctx.network),
+                timeout: ctx.timeout,
+            };
+            let ping_query = PingQuery::new(ctx.network.node_ids()[index]);
+
+            execute_inner(&ctx, &ping_query).await.is_ok()
+        })
+    }
+
+    // the overall timeout for the backoff starts measuring from here
+    let backoff =
+        ExponentialBackoff { max_elapsed_time: Some(ctx.timeout), ..ExponentialBackoff::default() };
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
 
@@ -161,14 +210,13 @@ where
         .requires_transaction_id()
         .then_some(explicit_transaction_id)
         .flatten()
-        .or_else(|| executable.operator_account_id().copied().map(TransactionId::generate))
-        .or_else(|| client.generate_transaction_id());
+        .or_else(|| ctx.operator_account_id.map(TransactionId::generate));
 
     // if we were explicitly given a list of nodes to use, we iterate through each
     // of the given nodes (in a random order)
     let explicit_node_indexes = executable
         .node_account_ids()
-        .map(|ids| client.network().node_indexes_for_ids(ids))
+        .map(|ids| ctx.network.node_indexes_for_ids(ids))
         .transpose()?;
 
     let explicit_node_indexes = explicit_node_indexes.as_deref();
@@ -177,18 +225,18 @@ where
         loop {
             let mut last_error: Option<Error> = None;
 
-            let random_node_indexes = random_node_indexes(client, explicit_node_indexes)
+            let random_node_indexes = random_node_indexes(&ctx.network, explicit_node_indexes)
                 .ok_or(retry::Error::EmptyTransient)?;
 
             let random_node_indexes = {
                 let random_node_indexes = &random_node_indexes;
-                let client = client;
+                let client = ctx;
                 let now = OffsetDateTime::now_utc();
                 futures_util::stream::iter(random_node_indexes.iter().copied()).filter(
                     move |&node_index| async move {
                         // NOTE: For pings we're relying on the fact that they have an explict node index.
                         explicit_node_indexes.is_some()
-                            || client.network().node_recently_pinged(node_index, now)
+                            || client.network.node_recently_pinged(node_index, now)
                             || recurse_ping(client, node_index).await
                     },
                 )
@@ -197,16 +245,9 @@ where
             let mut random_node_indexes = std::pin::pin!(random_node_indexes);
 
             while let Some(node_index) = random_node_indexes.next().await {
-                let tmp = execute_single(
-                    client,
-                    executable,
-                    node_index,
-                    explicit_transaction_id.is_some(),
-                    &mut transaction_id,
-                )
-                .await;
+                let tmp = execute_single(ctx, executable, node_index, &mut transaction_id).await;
 
-                client.network().mark_node_used(node_index, OffsetDateTime::now_utc());
+                ctx.network.mark_node_used(node_index, OffsetDateTime::now_utc());
 
                 match tmp? {
                     ControlFlow::Continue(err) => last_error = Some(err),
@@ -228,14 +269,18 @@ where
     crate::retry(backoff, layer).await
 }
 
-fn map_tonic_error(status: tonic::Status, client: &Client, node_index: usize) -> retry::Error {
+fn map_tonic_error(
+    status: tonic::Status,
+    network: &client::NetworkData,
+    node_index: usize,
+) -> retry::Error {
     const MIME_HTML: &[u8] = b"text/html";
 
     match status.code() {
         // if the node says it isn't available, then we should just try again with a different node.
         tonic::Code::Unavailable | tonic::Code::ResourceExhausted => {
             // NOTE: this is an "unhealthy" node
-            client.network().mark_node_unhealthy(node_index);
+            network.mark_node_unhealthy(node_index);
 
             // try the next node in our allowed list, immediately
             retry::Error::Transient(status.into())
@@ -249,7 +294,7 @@ fn map_tonic_error(status: tonic::Status, client: &Client, node_index: usize) ->
             if status.metadata().get("content-type").map(AsciiMetadataValue::as_bytes)
                 == Some(MIME_HTML) =>
         {
-            client.network().mark_node_unhealthy(node_index);
+            network.mark_node_unhealthy(node_index);
 
             retry::Error::Permanent(status.into())
         }
@@ -260,13 +305,12 @@ fn map_tonic_error(status: tonic::Status, client: &Client, node_index: usize) ->
 }
 
 async fn execute_single<E: Execute + Sync>(
-    client: &Client,
+    ctx: &ExecuteContext,
     executable: &E,
     node_index: usize,
-    has_explicit_transaction_id: bool,
     transaction_id: &mut Option<TransactionId>,
 ) -> retry::Result<ControlFlow<E::Response, Error>> {
-    let (node_account_id, channel) = client.network().channel(node_index);
+    let (node_account_id, channel) = ctx.network.channel(node_index);
 
     let (request, context) = executable
         .make_request(transaction_id.as_ref(), node_account_id)
@@ -276,7 +320,7 @@ async fn execute_single<E: Execute + Sync>(
         .execute(channel, request)
         .await
         .map(tonic::Response::into_inner)
-        .map_err(|status| map_tonic_error(status, client, node_index));
+        .map_err(|status| map_tonic_error(status, &ctx.network, node_index));
 
     let response = match response {
         Ok(response) => response,
@@ -293,10 +337,6 @@ async fn execute_single<E: Execute + Sync>(
             Status::from_i32(status).ok_or_else(|| Error::ResponseStatusUnrecognized(status))
         })
         .map_err(retry::Error::Permanent)?;
-
-    let regenerate = executable
-        .regenerate_transaction_id()
-        .unwrap_or_else(|| client.default_regenerate_transaction_id());
 
     match status {
         Status::Ok if executable.should_retry(&response) => Err(retry::Error::Transient(
@@ -316,16 +356,12 @@ async fn execute_single<E: Execute + Sync>(
             ))
         }
 
-        Status::TransactionExpired if regenerate && !has_explicit_transaction_id => {
+        // would do an `if_let` but, not stable ._.
+        Status::TransactionExpired if ctx.operator_account_id.is_some() => {
             // the transaction that was generated has since expired
             // re-generate the transaction ID and try again, immediately
 
-            let new = executable
-                .operator_account_id()
-                .copied()
-                .map(TransactionId::generate)
-                .or_else(|| client.generate_transaction_id())
-                .unwrap();
+            let new = TransactionId::generate(ctx.operator_account_id.unwrap());
 
             *transaction_id = Some(new);
 
@@ -352,7 +388,7 @@ async fn execute_single<E: Execute + Sync>(
 
 // todo: return an iterator.
 fn random_node_indexes(
-    client: &Client,
+    network: &client::NetworkData,
     explicit_node_indexes: Option<&[usize]>,
 ) -> Option<Vec<usize>> {
     // cache the rng impl and "now" because `thread_rng` is TLS (a thread local),
@@ -361,11 +397,8 @@ fn random_node_indexes(
     let now = OffsetDateTime::now_utc();
 
     if let Some(indexes) = explicit_node_indexes {
-        let tmp: Vec<_> = indexes
-            .iter()
-            .copied()
-            .filter(|index| client.network().is_node_healthy(*index, now))
-            .collect();
+        let tmp: Vec<_> =
+            indexes.iter().copied().filter(|index| network.is_node_healthy(*index, now)).collect();
 
         let mut indexes = if tmp.is_empty() { indexes.to_vec() } else { tmp };
 
@@ -377,7 +410,7 @@ fn random_node_indexes(
     }
 
     {
-        let mut indexes: Vec<_> = client.network().healthy_node_indexes(now).collect();
+        let mut indexes: Vec<_> = network.healthy_node_indexes(now).collect();
 
         if indexes.is_empty() {
             return None;
