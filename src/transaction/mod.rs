@@ -527,7 +527,7 @@ impl<D: TransactionExecute> Transaction<D> {
         Ok(hedera_proto::sdk::TransactionList { transaction_list }.encode_to_vec())
     }
 
-    pub(crate) fn add_signature_signer(&mut self, signer: &AnySigner) {
+    pub(crate) fn add_signature_signer(&mut self, signer: &AnySigner) -> Vec<u8> {
         assert!(self.is_frozen());
 
         // note: the following pair of cheecks are for more detailed panic messages
@@ -554,10 +554,15 @@ impl<D: TransactionExecute> Transaction<D> {
 
         let sources = sources.sign_with(std::slice::from_ref(signer));
 
+        // hack: I don't care about perf here.
+        let ret = signer.sign(&sources.signed_transactions()[0].body_bytes);
+
         // if we have a `Cow::Borrowed` that'd mean there was no modification
         if let Cow::Owned(sources) = sources {
             self.sources = Some(sources);
         }
+
+        return ret.1;
     }
 
     // todo: should this return `Result<&mut Self>`?
