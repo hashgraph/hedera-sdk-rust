@@ -221,7 +221,14 @@ impl<D> Transaction<D> {
     /// Defaults to the full list of nodes configured on the client.
     #[track_caller]
     pub fn node_account_ids(&mut self, ids: impl IntoIterator<Item = AccountId>) -> &mut Self {
-        self.body_mut().node_account_ids = Some(ids.into_iter().collect());
+        let nodes: Vec<_> = ids.into_iter().collect();
+
+        if nodes.is_empty() {
+            log::warn!("Nodes list is empty, ignoring setter");
+        } else {
+            self.body_mut().node_account_ids = Some(nodes);
+        }
+
         self
     }
 
@@ -388,9 +395,20 @@ impl<D: ValidateChecksums> Transaction<D> {
 
         let node_account_ids = match &self.body.node_account_ids {
             // the clone here is the lesser of two evils.
-            Some(it) => it.clone(),
+            Some(it) => {
+                assert!(!it.is_empty());
+                it.clone()
+            }
             None => {
-                client.ok_or(Error::FreezeUnsetNodeAccountIds)?.net().0.load().random_node_ids()
+                let nodes = client
+                    .ok_or(Error::FreezeUnsetNodeAccountIds)?
+                    .net()
+                    .0
+                    .load()
+                    .random_node_ids();
+                assert!(!nodes.is_empty(), "BUG: Client didn't give any nodes (all unhealthy)");
+
+                nodes
             }
         };
 
