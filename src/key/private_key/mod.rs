@@ -528,12 +528,12 @@ impl PrivateKey {
     pub fn sign_transaction<D: crate::transaction::TransactionExecute>(
         &self,
         transaction: &mut Transaction<D>,
-    ) -> crate::Result<()> {
+    ) -> crate::Result<Vec<u8>> {
         transaction.freeze()?;
 
-        transaction.add_signature_signer(&AnySigner::PrivateKey(self.clone()));
+        let sig = transaction.add_signature_signer(&AnySigner::PrivateKey(self.clone()));
 
-        Ok(())
+        Ok(sig)
     }
 
     /// Returns true if calling [`derive`](Self::derive) on `self` would succeed.
