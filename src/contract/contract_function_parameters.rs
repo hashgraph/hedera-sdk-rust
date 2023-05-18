@@ -114,50 +114,36 @@ impl ContractFunctionParameters {
     // passing an `&Optiuon<A>` or an `Option<&A>` would just be pointlessly more restrictive,
     // since downstream code can just...
     // Call this with `Option<&A>` anyway if they want to keep ownership of it.
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn to_bytes<A>(&self, func_name: Option<A>) -> Vec<u8>
-    where
-        A: AsRef<str>,
-    {
-        // This function exists to alleviate monomorphization costs.
-        // Generic functions are instantiated once per type per code gen unit (which is at least once per crate)
-        // That can lead to a *lot* of mostly the same generic function.
-        // This isn't always worth an inner function, namely, the whole thing would get inlined,
-        // the inner function doesn't matter at all.
-        // However, this function is quite large, and might not get inlined, especially in -Copt-level=z
-        //
-        // see: https://www.possiblerust.com/pattern/non-generic-inner-functions
-        fn inner(args: &[Argument], func_name: Option<&str>) -> Vec<u8> {
-            let mut current_dynamic_offset = args.len() * 32;
-            let mut arg_bytes = Vec::new();
-            let mut dynamic_arg_bytes = Vec::new();
-            let mut function_selector = func_name.map(ContractFunctionSelector::new);
-            for arg in args {
-                if let Some(selector) = &mut function_selector {
-                    selector.add_param_type(arg.type_name);
-                }
-                if arg.is_dynamic {
-                    arg_bytes.extend_from_slice(
-                        left_pad_32_bytes(current_dynamic_offset.to_be_bytes().as_slice(), false)
-                            .as_slice(),
-                    );
-                    dynamic_arg_bytes.extend_from_slice(arg.value_bytes.as_slice());
-                    current_dynamic_offset += arg.value_bytes.len();
-                } else {
-                    arg_bytes.extend_from_slice(arg.value_bytes.as_slice());
-                }
-            }
-            arg_bytes.append(&mut dynamic_arg_bytes);
+    pub fn to_bytes(&self, func_name: Option<&str>) -> Vec<u8> {
+        let mut current_dynamic_offset = self.args.len() * 32;
+        let mut arg_bytes = Vec::new();
+        let mut dynamic_arg_bytes = Vec::new();
+        let mut function_selector = func_name.map(ContractFunctionSelector::new);
+        for arg in &self.args {
             if let Some(selector) = &mut function_selector {
-                let mut out_bytes = Vec::from(selector.finish());
-                out_bytes.append(&mut arg_bytes);
-                out_bytes
+                selector.add_param_type(arg.type_name);
+            }
+            if arg.is_dynamic {
+                arg_bytes.extend_from_slice(
+                    left_pad_32_bytes(current_dynamic_offset.to_be_bytes().as_slice(), false)
+                        .as_slice(),
+                );
+                dynamic_arg_bytes.extend_from_slice(arg.value_bytes.as_slice());
+                current_dynamic_offset += arg.value_bytes.len();
             } else {
-                arg_bytes
+                arg_bytes.extend_from_slice(arg.value_bytes.as_slice());
             }
         }
 
-        inner(&self.args, func_name.as_ref().map(A::as_ref))
+        arg_bytes.append(&mut dynamic_arg_bytes);
+
+        if let Some(selector) = &mut function_selector {
+            let mut out_bytes = Vec::from(selector.finish());
+            out_bytes.append(&mut arg_bytes);
+            out_bytes
+        } else {
+            arg_bytes
+        }
     }
 
     /// Add a `string` argument to the `ContractFunctionParameters`

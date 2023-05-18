@@ -31,6 +31,7 @@ use crate::query::{
 use crate::{
     AccountId,
     BoxGrpcFuture,
+    ContractFunctionParameters,
     ContractFunctionResult,
     ContractId,
     Error,
@@ -98,6 +99,20 @@ impl ContractCallQuery {
     pub fn function_parameters(&mut self, data: Vec<u8>) -> &mut Self {
         self.data.function_parameters = data;
         self
+    }
+
+    /// Sets the function with no parameters.
+    pub fn function(&mut self, name: &str) -> &mut Self {
+        self.function_with_parameters(name, &ContractFunctionParameters::new())
+    }
+
+    /// Sets the function with parameters.
+    pub fn function_with_parameters(
+        &mut self,
+        name: &str,
+        parameters: &ContractFunctionParameters,
+    ) -> &mut Self {
+        self.function_parameters(parameters.to_bytes(Some(name)))
     }
 
     /// Gets the sender for this transaction.
