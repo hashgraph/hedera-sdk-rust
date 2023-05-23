@@ -21,7 +21,10 @@
 use std::ops::ControlFlow;
 use std::time::Duration;
 
-use backoff::{ExponentialBackoff, ExponentialBackoffBuilder};
+use backoff::{
+    ExponentialBackoff,
+    ExponentialBackoffBuilder,
+};
 use futures_core::future::BoxFuture;
 use futures_util::StreamExt;
 use prost::Message;
@@ -35,7 +38,14 @@ use triomphe::Arc;
 use crate::client::NetworkData;
 use crate::ping_query::PingQuery;
 use crate::{
-    client, retry, AccountId, BoxGrpcFuture, Client, Error, Status, TransactionId,
+    client,
+    retry,
+    AccountId,
+    BoxGrpcFuture,
+    Client,
+    Error,
+    Status,
+    TransactionId,
     ValidateChecksums,
 };
 
