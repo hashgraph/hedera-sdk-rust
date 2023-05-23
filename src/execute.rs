@@ -21,7 +21,7 @@
 use std::ops::ControlFlow;
 use std::time::Duration;
 
-use backoff::ExponentialBackoff;
+use backoff::{ExponentialBackoff, ExponentialBackoffBuilder};
 use futures_core::future::BoxFuture;
 use futures_util::StreamExt;
 use prost::Message;
@@ -35,14 +35,7 @@ use triomphe::Arc;
 use crate::client::NetworkData;
 use crate::ping_query::PingQuery;
 use crate::{
-    client,
-    retry,
-    AccountId,
-    BoxGrpcFuture,
-    Client,
-    Error,
-    Status,
-    TransactionId,
+    client, retry, AccountId, BoxGrpcFuture, Client, Error, Status, TransactionId,
     ValidateChecksums,
 };
 
@@ -132,7 +125,10 @@ struct ExecuteContext {
     // When `Some` the `transaction_id` will be regenerated when expired.
     operator_account_id: Option<AccountId>,
     network: Arc<NetworkData>,
-    timeout: Duration,
+    backoff_config: ExponentialBackoff,
+    max_attempts: usize,
+    // timeout for a single grpc request.
+    grpc_timeout: Option<Duration>,
 }
 
 pub(crate) async fn execute<E>(
@@ -167,13 +163,24 @@ where
             .or_else(|| client.load_operator().as_ref().map(|it| it.account_id))
     };
 
+    let backoff = client.backoff();
+    let mut backoff_builder = ExponentialBackoffBuilder::new();
+
+    backoff_builder
+        .with_initial_interval(backoff.initial_backoff)
+        .with_max_interval(backoff.max_backoff);
+
+    if let Some(timeout) = timeout.or(backoff.request_timeout) {
+        backoff_builder.with_max_elapsed_time(Some(timeout));
+    }
+
     execute_inner(
         &ExecuteContext {
-            timeout: timeout.or_else(|| client.request_timeout()).unwrap_or_else(|| {
-                std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
-            }),
+            max_attempts: backoff.max_attempts,
+            backoff_config: backoff_builder.build(),
             operator_account_id,
-            network: client.network().0.load_full(),
+            network: client.net().0.load_full(),
+            grpc_timeout: backoff.grpc_timeout,
         },
         executable,
     )
@@ -189,7 +196,9 @@ where
             let ctx = ExecuteContext {
                 operator_account_id: None,
                 network: Arc::clone(&ctx.network),
-                timeout: ctx.timeout,
+                backoff_config: ctx.backoff_config.clone(),
+                max_attempts: ctx.max_attempts,
+                grpc_timeout: ctx.grpc_timeout,
             };
             let ping_query = PingQuery::new(ctx.network.node_ids()[index]);
 
@@ -198,8 +207,7 @@ where
     }
 
     // the overall timeout for the backoff starts measuring from here
-    let backoff =
-        ExponentialBackoff { max_elapsed_time: Some(ctx.timeout), ..ExponentialBackoff::default() };
+    let backoff = ctx.backoff_config.clone();
 
     // TODO: cache requests to avoid signing a new request for every node in a delayed back-off
 
@@ -266,7 +274,7 @@ where
     // the outer loop continues until we timeout or reach the maximum number of "attempts"
     // an attempt is counted when we have a successful response from a node that must either
     // be retried immediately (on a new node) or retried after a backoff.
-    crate::retry(backoff, layer).await
+    crate::retry(backoff, Some(ctx.max_attempts), layer).await
 }
 
 fn map_tonic_error(
@@ -316,9 +324,21 @@ async fn execute_single<E: Execute + Sync>(
         .make_request(transaction_id.as_ref(), node_account_id)
         .map_err(crate::retry::Error::Permanent)?;
 
-    let response = executable
-        .execute(channel, request)
-        .await
+    let fut = executable.execute(channel, request);
+
+    let response = match ctx.grpc_timeout {
+        Some(it) => match tokio::time::timeout(it, fut).await {
+            Ok(it) => it,
+            Err(_) => {
+                return Ok(ControlFlow::Continue(crate::Error::GrpcStatus(
+                    tonic::Status::deadline_exceeded("explicitly given grpc timeout was exceeded"),
+                )))
+            }
+        },
+        None => fut.await,
+    };
+
+    let response = response
         .map(tonic::Response::into_inner)
         .map_err(|status| map_tonic_error(status, &ctx.network, node_index));
 
