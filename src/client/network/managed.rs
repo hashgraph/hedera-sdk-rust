@@ -4,8 +4,8 @@ use rand::Rng;
 use tokio::sync::watch;
 use triomphe::Arc;
 
+use super::mirror::MirrorNetwork;
 use super::Network;
-use crate::client::MirrorNetwork;
 use crate::NodeAddressBookQuery;
 
 #[derive(Clone)]
@@ -73,12 +73,15 @@ async fn update_network(
     tokio::time::sleep(ManagedNetwork::NETWORK_FIRST_UPDATE_DELAY).await;
 
     'outer: loop {
-        log::debug!("updating network");
+        // log::debug!("updating network");
         let start = tokio::time::Instant::now();
 
         // note: ideally we'd have a `select!` on the channel closing, but, we can't
         // since there's no `async fn closed()`, and honestly, I'm not 100% certain these futures are cancel safe.
-        match NodeAddressBookQuery::new().execute_mirrornet(network.mirror.channel(), None).await {
+        match NodeAddressBookQuery::new()
+            .execute_mirrornet(network.mirror.load().channel(), None)
+            .await
+        {
             Ok(it) => network.primary.update_from_address_book(it),
             Err(e) => {
                 log::warn!("{e:?}");

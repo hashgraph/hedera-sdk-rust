@@ -21,10 +21,7 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
-use std::fmt::{
-    Debug,
-    Formatter,
-};
+use std::fmt::{Debug, Formatter};
 use std::num::NonZeroUsize;
 
 use hedera_proto::services;
@@ -36,18 +33,8 @@ use crate::downcast::DowncastOwned;
 use crate::execute::execute;
 use crate::signer::AnySigner;
 use crate::{
-    AccountId,
-    Client,
-    Error,
-    Hbar,
-    Operator,
-    PrivateKey,
-    PublicKey,
-    ScheduleCreateTransaction,
-    TransactionHash,
-    TransactionId,
-    TransactionResponse,
-    ValidateChecksums,
+    AccountId, Client, Error, Hbar, Operator, PrivateKey, PublicKey, ScheduleCreateTransaction,
+    TransactionHash, TransactionId, TransactionResponse, ValidateChecksums,
 };
 
 mod any;
@@ -60,20 +47,9 @@ mod tests;
 
 pub use any::AnyTransaction;
 pub(crate) use any::AnyTransactionData;
-pub(crate) use chunked::{
-    ChunkData,
-    ChunkInfo,
-    ChunkedTransactionData,
-};
-pub(crate) use execute::{
-    TransactionData,
-    TransactionExecute,
-    TransactionExecuteChunked,
-};
-pub(crate) use protobuf::{
-    ToSchedulableTransactionDataProtobuf,
-    ToTransactionDataProtobuf,
-};
+pub(crate) use chunked::{ChunkData, ChunkInfo, ChunkedTransactionData};
+pub(crate) use execute::{TransactionData, TransactionExecute, TransactionExecuteChunked};
+pub(crate) use protobuf::{ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf};
 pub(crate) use source::TransactionSources;
 
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
@@ -386,7 +362,7 @@ impl<D: ValidateChecksums> Transaction<D> {
             // the clone here is the lesser of two evils.
             Some(it) => it.clone(),
             None => {
-                client.ok_or(Error::FreezeUnsetNodeAccountIds)?.network().0.load().random_node_ids()
+                client.ok_or(Error::FreezeUnsetNodeAccountIds)?.net().0.load().random_node_ids()
             }
         };
 
