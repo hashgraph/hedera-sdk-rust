@@ -22,20 +22,34 @@ pub(super) mod managed;
 pub(super) mod mirror;
 
 use std::borrow::Cow;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{
+    BTreeSet,
+    HashMap,
+};
 use std::fmt;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
-use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::atomic::{
+    AtomicI64,
+    Ordering,
+};
 use std::time::Duration;
 
 use once_cell::sync::OnceCell;
 use rand::thread_rng;
 use time::OffsetDateTime;
-use tonic::transport::{Channel, Endpoint};
+use tonic::transport::{
+    Channel,
+    Endpoint,
+};
 use triomphe::Arc;
 
-use crate::{AccountId, ArcSwap, Error, NodeAddressBook};
+use crate::{
+    AccountId,
+    ArcSwap,
+    Error,
+    NodeAddressBook,
+};
 
 pub(crate) const MAINNET: &[(u64, &[&str])] = &[
     (
@@ -479,8 +493,7 @@ impl NodeConnection {
         let channel = self
             .channel
             .get_or_init(|| {
-                let addresses
-                 = self.addresses.iter().map(|it| {
+                let addresses = self.addresses.iter().map(|it| {
                     Endpoint::from_shared(format!("tcp://{it}"))
                         .unwrap()
                         .keep_alive_timeout(Duration::from_secs(10))

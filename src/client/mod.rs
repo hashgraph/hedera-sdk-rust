@@ -22,10 +22,17 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::num::NonZeroU64;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{
+    AtomicBool,
+    AtomicU64,
+    Ordering,
+};
 use std::time::Duration;
 
-pub(crate) use network::{Network, NetworkData};
+pub(crate) use network::{
+    Network,
+    NetworkData,
+};
 pub(crate) use operator::Operator;
 use parking_lot::RwLock;
 use tokio::sync::watch;
@@ -36,7 +43,15 @@ use self::network::mirror::MirrorNetwork;
 pub(crate) use self::network::mirror::MirrorNetworkData;
 use crate::ping_query::PingQuery;
 use crate::signer::AnySigner;
-use crate::{AccountId, ArcSwapOption, Error, LedgerId, NodeAddressBook, PrivateKey, PublicKey};
+use crate::{
+    AccountId,
+    ArcSwapOption,
+    Error,
+    LedgerId,
+    NodeAddressBook,
+    PrivateKey,
+    PublicKey,
+};
 
 mod network;
 mod operator;
@@ -351,8 +366,46 @@ impl Client {
         &self.0.max_transaction_fee_tinybar
     }
 
-    pub(crate) fn request_timeout(&self) -> Option<Duration> {
+    /// Returns the maximum amount of time that will be spent on a request.
+    pub fn request_timeout(&self) -> Option<Duration> {
         self.backoff().request_timeout
+    }
+
+    /// Sets the maximum amount of time that will be spent on a request.
+    pub fn set_request_timeout(&self, timeout: Option<Duration>) {
+        self.0.backoff.write().request_timeout = timeout;
+    }
+
+    /// Returns the maximum number of attempts for a request.
+    pub fn max_attempts(&self) -> usize {
+        self.backoff().max_attempts
+    }
+
+    /// Sets the maximum number of attempts for a request.
+    pub fn set_max_attempts(&self, max_attempts: usize) {
+        self.0.backoff.write().max_attempts = max_attempts;
+    }
+
+    /// The initial backoff for a request being executed.
+    #[doc(alias = "initial_backoff")]
+    pub fn min_backoff(&self) -> Duration {
+        self.backoff().initial_backoff
+    }
+
+    /// Sets the initial backoff for a request being executed.
+    #[doc(alias = "set_initial_backoff")]
+    pub fn set_min_backoff(&self, max_backoff: Duration) {
+        self.0.backoff.write().max_backoff = max_backoff;
+    }
+
+    /// Returns the maximum amount of time a request will wait between attempts.
+    pub fn max_backoff(&self) -> Duration {
+        self.backoff().max_backoff
+    }
+
+    /// Sets the maximum amount of time a request will wait between attempts.
+    pub fn set_max_backoff(&self, max_backoff: Duration) {
+        self.0.backoff.write().max_backoff = max_backoff;
     }
 
     pub(crate) fn backoff(&self) -> ClientBackoff {
