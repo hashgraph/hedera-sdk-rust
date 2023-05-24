@@ -394,15 +394,7 @@ impl<D: ValidateChecksums> Transaction<D> {
         let max_transaction_fee = self.body.max_transaction_fee.or_else(|| {
             // no max has been set on the *transaction*
             // check if there is a global max set on the client
-            let client_max_transaction_fee = client
-                .map(|it| it.max_transaction_fee().load(std::sync::atomic::Ordering::Relaxed));
-
-            match client_max_transaction_fee {
-                Some(max) if max > 1 => Some(Hbar::from_tinybars(max as i64)),
-                // no max has been set on the client either
-                // fallback to the hard-coded default for this transaction type
-                _ => None,
-            }
+            client.and_then(|it| it.default_max_transaction_fee())
         });
 
         let operator = client.and_then(Client::full_load_operator);

@@ -47,6 +47,7 @@ use crate::{
     AccountId,
     ArcSwapOption,
     Error,
+    Hbar,
     LedgerId,
     NodeAddressBook,
     PrivateKey,
@@ -86,6 +87,7 @@ struct ClientBuilder {
     network: ManagedNetwork,
     operator: Option<Operator>,
     max_transaction_fee: Option<NonZeroU64>,
+    max_query_payment: Option<NonZeroU64>,
     ledger_id: Option<LedgerId>,
     auto_validate_checksums: bool,
     regenerate_transaction_ids: bool,
@@ -100,6 +102,7 @@ impl ClientBuilder {
             network,
             operator: None,
             max_transaction_fee: None,
+            max_query_payment: None,
             ledger_id: None,
             auto_validate_checksums: false,
             regenerate_transaction_ids: true,
@@ -121,6 +124,7 @@ impl ClientBuilder {
             network,
             operator,
             max_transaction_fee,
+            max_query_payment,
             ledger_id,
             auto_validate_checksums,
             regenerate_transaction_ids,
@@ -143,6 +147,9 @@ impl ClientBuilder {
             max_transaction_fee_tinybar: AtomicU64::new(
                 max_transaction_fee.map(NonZeroU64::get).unwrap_or(0),
             ),
+            max_query_payment_tinybar: AtomicU64::new(
+                max_query_payment.map(NonZeroU64::get).unwrap_or(0),
+            ),
             ledger_id: ArcSwapOption::new(ledger_id.map(Arc::new)),
             auto_validate_checksums: AtomicBool::new(auto_validate_checksums),
             regenerate_transaction_ids: AtomicBool::new(regenerate_transaction_ids),
@@ -156,6 +163,7 @@ struct ClientInner {
     network: ManagedNetwork,
     operator: ArcSwapOption<Operator>,
     max_transaction_fee_tinybar: AtomicU64,
+    max_query_payment_tinybar: AtomicU64,
     ledger_id: ArcSwapOption<LedgerId>,
     auto_validate_checksums: AtomicBool,
     regenerate_transaction_ids: AtomicBool,
@@ -410,9 +418,38 @@ impl Client {
         &self.0.network.mirror
     }
 
+    /// Sets the maximum transaction fee to be used when no explicit max transaction fee is set.
+    ///
+    /// Note: Setting `amount` to zero is "unlimited"
+    /// # Panics
+    /// - if amount is negative
+    pub fn set_default_max_transaction_fee(&self, amount: Hbar) {
+        assert!(amount >= Hbar::ZERO);
+        self.0.max_transaction_fee_tinybar.store(amount.to_tinybars() as u64, Ordering::Relaxed)
+    }
+
     /// Gets the maximum transaction fee the paying account is willing to pay.
-    pub(crate) fn max_transaction_fee(&self) -> &AtomicU64 {
-        &self.0.max_transaction_fee_tinybar
+    pub fn default_max_transaction_fee(&self) -> Option<Hbar> {
+        let val = self.0.max_transaction_fee_tinybar.load(Ordering::Relaxed);
+
+        (val > 0).then(|| Hbar::from_tinybars(val as i64))
+    }
+
+    /// Gets the maximum query fee the paying account is willing to pay.
+    pub fn default_max_query_payment(&self) -> Option<Hbar> {
+        let val = self.0.max_query_payment_tinybar.load(Ordering::Relaxed);
+
+        (val > 0).then(|| Hbar::from_tinybars(val as i64))
+    }
+
+    /// Sets the maximum query payment to be used when no explicit max query payment is set.
+    ///
+    /// Note: Setting `amount` to zero is "unlimited"
+    /// # Panics
+    /// - if amount is negative
+    pub fn set_default_max_query_payment(&self, amount: Hbar) {
+        assert!(amount >= Hbar::ZERO);
+        self.0.max_query_payment_tinybar.store(amount.to_tinybars() as u64, Ordering::Relaxed);
     }
 
     /// Returns the maximum amount of time that will be spent on a request.
