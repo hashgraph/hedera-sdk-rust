@@ -60,6 +60,11 @@ impl MirrorNetwork {
     pub(crate) fn previewnet() -> Self {
         Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[PREVIEWNET]))))
     }
+
+    #[cfg(feature = "serde")]
+    pub(crate) fn from_addresses(addresses: Vec<Cow<'static, str>>) -> Self {
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_addresses(addresses))))
+    }
 }
 
 #[derive(Clone, Default)]

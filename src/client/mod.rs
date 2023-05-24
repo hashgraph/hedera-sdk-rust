@@ -53,6 +53,9 @@ use crate::{
     PublicKey,
 };
 
+#[cfg(feature = "serde")]
+mod config;
+
 mod network;
 mod operator;
 
@@ -172,6 +175,52 @@ impl fmt::Debug for Client {
 }
 
 impl Client {
+    #[cfg(feature = "serde")]
+    fn from_config_data(config: config::ClientConfig) -> crate::Result<Self> {
+        let config::ClientConfig { operator, network, mirror_network } = config;
+
+        // fixme: check to ensure net and mirror net are the same when they're a network name (no other SDK actually checks this though)
+        let client = match network {
+            config::Either::Left(network) => Client::for_network(network)?,
+            config::Either::Right(it) => match it {
+                config::NetworkName::Mainnet => Client::for_mainnet(),
+                config::NetworkName::Testnet => Client::for_testnet(),
+                config::NetworkName::Previewnet => Client::for_previewnet(),
+            },
+        };
+
+        let mirror_network = mirror_network.map(|mirror_network| match mirror_network {
+            config::Either::Left(mirror_network) => {
+                MirrorNetwork::from_addresses(mirror_network.into_iter().map(Cow::Owned).collect())
+            }
+            config::Either::Right(it) => match it {
+                config::NetworkName::Mainnet => MirrorNetwork::mainnet(),
+                config::NetworkName::Testnet => MirrorNetwork::testnet(),
+                config::NetworkName::Previewnet => MirrorNetwork::previewnet(),
+            },
+        });
+
+        if let Some(operator) = operator {
+            client.0.operator.store(Some(Arc::new(operator)));
+        }
+
+        if let Some(mirror_network) = mirror_network {
+            client.set_mirror_network(mirror_network.load().addresses());
+        }
+
+        Ok(client)
+    }
+
+    /// Create a client from the given json config.
+    #[cfg(feature = "serde")]
+    pub fn from_config(json: &str) -> crate::Result<Self> {
+        let config = serde_json::from_str::<config::ClientConfigInner>(json)
+            .map_err(crate::Error::basic_parse)?
+            .into();
+
+        Self::from_config_data(config)
+    }
+
     /// Returns the addresses for the configured mirror network.
     ///
     /// Unless _explicitly_ set, the return value isn't guaranteed to be anything in particular in order to allow future changes without breaking semver.
