@@ -74,7 +74,7 @@ impl Default for ClientBackoff {
     fn default() -> Self {
         Self {
             max_backoff: Duration::from_millis(backoff::default::MAX_INTERVAL_MILLIS),
-            initial_backoff: Duration::from_millis(backoff::default::MAX_INTERVAL_MILLIS),
+            initial_backoff: Duration::from_millis(backoff::default::INITIAL_INTERVAL_MILLIS),
             max_attempts: 10,
             request_timeout: None,
             grpc_timeout: None,
