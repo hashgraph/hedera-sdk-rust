@@ -41,9 +41,9 @@ use crate::{
     AccountId,
     BoxGrpcFuture,
     Error,
+    EvmAddress,
     Hbar,
     Key,
-    PublicKey,
     Transaction,
     ValidateChecksums,
 };
@@ -84,11 +84,9 @@ pub struct AccountCreateTransactionData {
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     max_automatic_token_associations: u16,
 
-    /// A key to be used as the account's alias.
-    alias: Option<PublicKey>,
-
-    /// A 20-byte EVM address to be used as the account's evm address.
-    evm_address: Option<[u8; 20]>,
+    // notably *not* a PublicKey.
+    /// A 20-byte EVM address to be used as the account's alias.
+    alias: Option<EvmAddress>,
 
     /// ID of the account or node to which this account is staking, if any.
     staked_id: Option<StakedId>,
@@ -108,7 +106,6 @@ impl Default for AccountCreateTransactionData {
             account_memo: String::new(),
             max_automatic_token_associations: 0,
             alias: None,
-            evm_address: None,
             staked_id: None,
             decline_staking_reward: false,
         }
@@ -214,45 +211,23 @@ impl AccountCreateTransaction {
         self
     }
 
-    /// Returns the public key to be used as the account's alias.
+    /// Returns the evm address the account will be created with as an alias.
     ///
     /// # Network Support
     /// Please note that this not currently supported on mainnet.
     #[must_use]
-    pub fn get_alias(&self) -> Option<&PublicKey> {
-        self.data().alias.as_ref()
+    pub fn get_alias(&self) -> Option<EvmAddress> {
+        self.data().alias
     }
 
-    /// The bytes to be used as the account's alias.
+    /// Sets the evm address the account will be created with as an alias.
     ///
-    /// A given alias can map to at most one account on the network at a time. This uniqueness will be enforced
-    /// relative to aliases currently on the network at alias assignment.
-    ///
-    /// If a transaction creates an account using an alias, any further crypto transfers to that alias will
-    /// simply be deposited in that account, without creating anything, and with no creation fee being charged.
-    ///
-    /// # Network Support
-    /// Please note that this not currently supported on mainnet.
-    pub fn alias(&mut self, key: PublicKey) -> &mut Self {
-        self.data_mut().alias = Some(key);
-        self
-    }
-
-    /// Returns the evm address the account will be created with.
-    ///
-    /// # Network Support
-    /// Please note that this not currently supported on mainnet.
-    #[must_use]
-    pub fn get_evm_address(&self) -> Option<[u8; 20]> {
-        self.data().evm_address
-    }
-
     /// The last 20 bytes of the keccak-256 hash of a `ECDSA_SECP256K1` primitive key.
     ///
     /// # Network Support
     /// Please note that this not currently supported on mainnet.
-    pub fn evm_address(&mut self, evm_address: [u8; 20]) -> &mut Self {
-        self.data_mut().evm_address = Some(evm_address);
+    pub fn alias(&mut self, alias: EvmAddress) -> &mut Self {
+        self.data_mut().alias = Some(alias);
         self
     }
 
@@ -342,12 +317,7 @@ impl From<AccountCreateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransactionData {
     fn from_protobuf(pb: services::CryptoCreateTransactionBody) -> crate::Result<Self> {
-        let evm_address = pb.alias.as_slice().try_into().ok();
-
-        let alias = (pb.alias.len() != 20)
-            .then(|| PublicKey::from_alias_bytes(&pb.alias).transpose())
-            .flatten()
-            .transpose()?;
+        let alias = (!pb.alias.is_empty()).then(|| EvmAddress::try_from(pb.alias)).transpose()?;
 
         Ok(Self {
             key: Option::from_protobuf(pb.key)?,
@@ -358,7 +328,6 @@ impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransa
             account_memo: pb.memo,
             max_automatic_token_associations: pb.max_automatic_token_associations as u16,
             alias,
-            evm_address,
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
         })
@@ -396,7 +365,7 @@ impl ToProtobuf for AccountCreateTransactionData {
             new_realm_admin_key: None,
             memo: self.account_memo.clone(),
             max_automatic_token_associations: i32::from(self.max_automatic_token_associations),
-            alias: self.alias.map_or(vec![], |key| key.to_bytes_raw()),
+            alias: self.alias.map_or(vec![], |it| it.to_bytes().to_vec()),
             decline_reward: self.decline_staking_reward,
             staked_id,
         }
