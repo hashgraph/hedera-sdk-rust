@@ -266,6 +266,11 @@ where
             // payment is required but none was specified, query the cost
             let cost = QueryCost::new(self).execute(client, None).await?;
 
+            if self.payment.get_max_amount().is_none() {
+                // N.B. This can still be `None`.
+                self.payment.max_amount(client.default_max_query_payment());
+            }
+
             if let Some(max_amount) = self.payment.get_max_amount() {
                 if cost > max_amount {
                     return Err(Error::MaxQueryPaymentExceeded {

@@ -139,11 +139,10 @@ where
             std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
         });
 
-        let channel = client.mirror_network().channel();
+        // note: we don't care about keeping the mirrornet around, so, we just take the channel (which is arc-like)
+        let channel = client.mirrornet().load().channel();
 
-        let self_ = self.clone();
-
-        Self::make_item_stream(crate::mirror_query::subscribe(channel, timeout, self_))
+        Self::make_item_stream(crate::mirror_query::subscribe(channel, timeout, self.clone()))
     }
 
     fn execute_with_optional_timeout<'a>(
@@ -156,7 +155,8 @@ where
             std::time::Duration::from_millis(backoff::default::MAX_ELAPSED_TIME_MILLIS)
         });
 
-        let channel = client.mirror_network().channel();
+        // note: we don't care about keeping the mirrornet around, so, we just take the channel (which is arc-like)
+        let channel = client.mirrornet().load().channel();
 
         Self::try_collect(crate::mirror_query::subscribe(channel, timeout, self.clone()))
     }

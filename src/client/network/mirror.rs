@@ -19,6 +19,7 @@
  */
 
 use std::borrow::Cow;
+use std::ops::Deref;
 use std::time::Duration;
 
 use once_cell::sync::OnceCell;
@@ -26,6 +27,9 @@ use tonic::transport::{
     Channel,
     Endpoint,
 };
+use triomphe::Arc;
+
+use crate::ArcSwap;
 
 pub(crate) const MAINNET: &str = "mainnet-public.mirrornode.hedera.com:443";
 
@@ -33,23 +37,45 @@ pub(crate) const TESTNET: &str = "hcs.testnet.mirrornode.hedera.com:5600";
 
 pub(crate) const PREVIEWNET: &str = "hcs.previewnet.mirrornode.hedera.com:5600";
 
-#[derive(Clone)]
-pub(crate) struct MirrorNetwork {
-    addresses: Vec<Cow<'static, str>>,
-    channel: OnceCell<Channel>,
+#[derive(Default)]
+pub(crate) struct MirrorNetwork(ArcSwap<MirrorNetworkData>);
+
+impl Deref for MirrorNetwork {
+    type Target = ArcSwap<MirrorNetworkData>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl MirrorNetwork {
     pub(crate) fn mainnet() -> Self {
-        Self::from_static(&[MAINNET])
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[MAINNET]))))
     }
 
     pub(crate) fn testnet() -> Self {
-        Self::from_static(&[TESTNET])
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[TESTNET]))))
     }
 
     pub(crate) fn previewnet() -> Self {
-        Self::from_static(&[PREVIEWNET])
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[PREVIEWNET]))))
+    }
+
+    #[cfg(feature = "serde")]
+    pub(crate) fn from_addresses(addresses: Vec<Cow<'static, str>>) -> Self {
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_addresses(addresses))))
+    }
+}
+
+#[derive(Clone, Default)]
+pub(crate) struct MirrorNetworkData {
+    addresses: Vec<Cow<'static, str>>,
+    channel: OnceCell<Channel>,
+}
+
+impl MirrorNetworkData {
+    pub(crate) fn from_addresses(addresses: Vec<Cow<'static, str>>) -> Self {
+        Self { addresses, channel: OnceCell::new() }
     }
 
     pub(crate) fn from_static(network: &[&'static str]) -> Self {
@@ -78,5 +104,9 @@ impl MirrorNetwork {
                 Channel::balance_list(endpoints)
             })
             .clone()
+    }
+
+    pub(crate) fn addresses(&self) -> impl Iterator<Item = String> + '_ {
+        self.addresses.iter().cloned().map(Cow::into_owned)
     }
 }
