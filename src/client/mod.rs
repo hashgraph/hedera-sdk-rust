@@ -18,7 +18,10 @@
  * ‍
  */
 
+use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt;
+use std::num::NonZeroU64;
 use std::sync::atomic::{
     AtomicBool,
     AtomicU64,
@@ -31,33 +34,141 @@ pub(crate) use network::{
     NetworkData,
 };
 pub(crate) use operator::Operator;
+use parking_lot::RwLock;
 use tokio::sync::watch;
 use triomphe::Arc;
 
 use self::network::managed::ManagedNetwork;
-pub(crate) use self::network::mirror::MirrorNetwork;
+use self::network::mirror::MirrorNetwork;
+pub(crate) use self::network::mirror::MirrorNetworkData;
 use crate::ping_query::PingQuery;
 use crate::signer::AnySigner;
 use crate::{
     AccountId,
     ArcSwapOption,
     Error,
+    Hbar,
     LedgerId,
+    NodeAddressBook,
     PrivateKey,
     PublicKey,
 };
 
+#[cfg(feature = "serde")]
+mod config;
+
 mod network;
 mod operator;
+
+#[derive(Copy, Clone)]
+pub(crate) struct ClientBackoff {
+    pub(crate) max_backoff: Duration,
+    // min backoff.
+    pub(crate) initial_backoff: Duration,
+    pub(crate) max_attempts: usize,
+    pub(crate) request_timeout: Option<Duration>,
+    pub(crate) grpc_timeout: Option<Duration>,
+}
+
+impl Default for ClientBackoff {
+    fn default() -> Self {
+        Self {
+            max_backoff: Duration::from_millis(backoff::default::MAX_INTERVAL_MILLIS),
+            initial_backoff: Duration::from_millis(backoff::default::INITIAL_INTERVAL_MILLIS),
+            max_attempts: 10,
+            request_timeout: None,
+            grpc_timeout: None,
+        }
+    }
+}
+
+// yes, client is complicated enough for this, even if it's only internal.
+struct ClientBuilder {
+    network: ManagedNetwork,
+    operator: Option<Operator>,
+    max_transaction_fee: Option<NonZeroU64>,
+    max_query_payment: Option<NonZeroU64>,
+    ledger_id: Option<LedgerId>,
+    auto_validate_checksums: bool,
+    regenerate_transaction_ids: bool,
+    update_network: bool,
+    backoff: ClientBackoff,
+}
+
+impl ClientBuilder {
+    #[must_use]
+    fn new(network: ManagedNetwork) -> Self {
+        Self {
+            network,
+            operator: None,
+            max_transaction_fee: None,
+            max_query_payment: None,
+            ledger_id: None,
+            auto_validate_checksums: false,
+            regenerate_transaction_ids: true,
+            update_network: true,
+            backoff: ClientBackoff::default(),
+        }
+    }
+
+    fn disable_network_updating(self) -> Self {
+        Self { update_network: false, ..self }
+    }
+
+    fn ledger_id(self, ledger_id: Option<LedgerId>) -> Self {
+        Self { ledger_id, ..self }
+    }
+
+    fn build(self) -> Client {
+        let Self {
+            network,
+            operator,
+            max_transaction_fee,
+            max_query_payment,
+            ledger_id,
+            auto_validate_checksums,
+            regenerate_transaction_ids,
+            update_network,
+            backoff,
+        } = self;
+
+        let network_update_tx = match update_network {
+            true => network::managed::spawn_network_update(
+                network.clone(),
+                Some(Duration::from_secs(24 * 60 * 60)),
+            ),
+            // yeah, we just drop the rx.
+            false => watch::channel(None).0,
+        };
+
+        Client(Arc::new(ClientInner {
+            network,
+            operator: ArcSwapOption::new(operator.map(Arc::new)),
+            max_transaction_fee_tinybar: AtomicU64::new(
+                max_transaction_fee.map(NonZeroU64::get).unwrap_or(0),
+            ),
+            max_query_payment_tinybar: AtomicU64::new(
+                max_query_payment.map(NonZeroU64::get).unwrap_or(0),
+            ),
+            ledger_id: ArcSwapOption::new(ledger_id.map(Arc::new)),
+            auto_validate_checksums: AtomicBool::new(auto_validate_checksums),
+            regenerate_transaction_ids: AtomicBool::new(regenerate_transaction_ids),
+            network_update_tx,
+            backoff: RwLock::new(backoff),
+        }))
+    }
+}
 
 struct ClientInner {
     network: ManagedNetwork,
     operator: ArcSwapOption<Operator>,
     max_transaction_fee_tinybar: AtomicU64,
+    max_query_payment_tinybar: AtomicU64,
     ledger_id: ArcSwapOption<LedgerId>,
     auto_validate_checksums: AtomicBool,
     regenerate_transaction_ids: AtomicBool,
     network_update_tx: watch::Sender<Option<Duration>>,
+    backoff: RwLock<ClientBackoff>,
 }
 
 /// Managed client for use on the Hedera network.
@@ -72,39 +183,147 @@ impl fmt::Debug for Client {
 }
 
 impl Client {
-    fn with_network(network: ManagedNetwork, ledger_id: impl Into<Option<LedgerId>>) -> Self {
-        let network_update_tx = network::managed::spawn_network_update(
-            network.clone(),
-            Some(Duration::from_secs(24 * 60 * 60)),
-        );
+    #[cfg(feature = "serde")]
+    fn from_config_data(config: config::ClientConfig) -> crate::Result<Self> {
+        let config::ClientConfig { operator, network, mirror_network } = config;
 
-        Self(Arc::new(ClientInner {
-            network,
-            operator: ArcSwapOption::new(None),
-            max_transaction_fee_tinybar: AtomicU64::new(0),
-            ledger_id: ArcSwapOption::new(ledger_id.into().map(Arc::new)),
-            auto_validate_checksums: AtomicBool::new(false),
-            regenerate_transaction_ids: AtomicBool::new(true),
-            network_update_tx,
-        }))
+        // fixme: check to ensure net and mirror net are the same when they're a network name (no other SDK actually checks this though)
+        let client = match network {
+            config::Either::Left(network) => Client::for_network(network)?,
+            config::Either::Right(it) => match it {
+                config::NetworkName::Mainnet => Client::for_mainnet(),
+                config::NetworkName::Testnet => Client::for_testnet(),
+                config::NetworkName::Previewnet => Client::for_previewnet(),
+            },
+        };
+
+        let mirror_network = mirror_network.map(|mirror_network| match mirror_network {
+            config::Either::Left(mirror_network) => {
+                MirrorNetwork::from_addresses(mirror_network.into_iter().map(Cow::Owned).collect())
+            }
+            config::Either::Right(it) => match it {
+                config::NetworkName::Mainnet => MirrorNetwork::mainnet(),
+                config::NetworkName::Testnet => MirrorNetwork::testnet(),
+                config::NetworkName::Previewnet => MirrorNetwork::previewnet(),
+            },
+        });
+
+        if let Some(operator) = operator {
+            client.0.operator.store(Some(Arc::new(operator)));
+        }
+
+        if let Some(mirror_network) = mirror_network {
+            client.set_mirror_network(mirror_network.load().addresses());
+        }
+
+        Ok(client)
+    }
+
+    /// Create a client from the given json config.
+    #[cfg(feature = "serde")]
+    pub fn from_config(json: &str) -> crate::Result<Self> {
+        let config = serde_json::from_str::<config::ClientConfigInner>(json)
+            .map_err(crate::Error::basic_parse)?
+            .into();
+
+        Self::from_config_data(config)
+    }
+
+    /// Returns the addresses for the configured mirror network.
+    ///
+    /// Unless _explicitly_ set, the return value isn't guaranteed to be anything in particular in order to allow future changes without breaking semver.
+    /// However, when a function such as `for_testnet` is used, _some_ valid value will be returned.
+    ///
+    /// Current return values (reminder that these are semver exempt)
+    ///
+    /// - mainnet: `["mainnet-public.mirrornode.hedera.com:443"]`
+    /// - testnet: `["hcs.testnet.mirrornode.hedera.com:5600"]`
+    /// - previewnet: `["hcs.previewnet.mirrornode.hedera.com:5600"]`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// use hedera::Client;
+    ///
+    /// let client = Client::for_testnet();
+    ///
+    /// // note: This isn't *guaranteed* in a semver sense, but this is the current result.
+    /// let expected = Vec::from(["hcs.testnet.mirrornode.hedera.com:5600".to_owned()]);
+    /// assert_eq!(expected, client.mirror_network());
+    ///
+    /// # }
+    /// ```
+    pub fn mirror_network(&self) -> Vec<String> {
+        self.mirrornet().load().addresses().collect()
+    }
+
+    /// Sets the addresses to use for the mirror network.
+    ///
+    /// This is mostly useful if you used [`Self::from_network`] and need to set a mirror network.
+    pub fn set_mirror_network<I: IntoIterator<Item = String>>(&self, addresses: I) {
+        self.mirrornet().store(
+            MirrorNetworkData::from_addresses(addresses.into_iter().map(Cow::Owned).collect())
+                .into(),
+        );
+    }
+
+    /// Construct a client with the given nodes configured.
+    ///
+    /// Note that this disables network auto-updating.
+    pub fn for_network(network: HashMap<String, AccountId>) -> crate::Result<Self> {
+        let network =
+            ManagedNetwork::new(Network::from_addresses(network)?, MirrorNetwork::default());
+
+        Ok(ClientBuilder::new(network).disable_network_updating().build())
     }
 
     /// Construct a Hedera client pre-configured for mainnet access.
     #[must_use]
     pub fn for_mainnet() -> Self {
-        Self::with_network(ManagedNetwork::mainnet(), LedgerId::mainnet())
+        ClientBuilder::new(ManagedNetwork::mainnet()).ledger_id(Some(LedgerId::mainnet())).build()
     }
 
     /// Construct a Hedera client pre-configured for testnet access.
     #[must_use]
     pub fn for_testnet() -> Self {
-        Self::with_network(ManagedNetwork::testnet(), LedgerId::testnet())
+        ClientBuilder::new(ManagedNetwork::testnet()).ledger_id(Some(LedgerId::testnet())).build()
     }
 
     /// Construct a Hedera client pre-configured for previewnet access.
     #[must_use]
     pub fn for_previewnet() -> Self {
-        Self::with_network(ManagedNetwork::previewnet(), LedgerId::previewnet())
+        ClientBuilder::new(ManagedNetwork::previewnet())
+            .ledger_id(Some(LedgerId::previewnet()))
+            .build()
+    }
+
+    /// Updates the network to use the given address book.
+    ///
+    /// Note: This is only really useful if you used `for_network`, because the network can auto-update.
+    ///
+    /// If network auto-updating is enabled this will eventually be overridden.
+    pub fn set_network_from_address_book(&self, address_book: NodeAddressBook) {
+        self.net().update_from_address_book(address_book)
+    }
+
+    /// Updates the network to use the given addresses.
+    ///
+    /// Note: This is only really useful if you used `for_network`, because the network can auto-update.
+    ///
+    /// If network auto-updating is enabled this will eventually be overridden.
+    ///
+    /// Tend to prefer [`set_network_from_address_book`](Self::set_network_from_address_book) where possible.
+    pub fn set_network(&self, network: HashMap<String, AccountId>) -> crate::Result<()> {
+        self.net().update_from_addresses(network)?;
+
+        Ok(())
+    }
+
+    /// Returns the nodes associated with this client.
+    pub fn network(&self) -> HashMap<String, AccountId> {
+        self.net().0.load().addresses()
     }
 
     /// Construct a hedera client pre-configured for access to the given network.
@@ -164,32 +383,119 @@ impl Client {
     /// executed with this client.
     ///
     /// The operator private key is used to sign all transactions executed by this client.
-    ///
     pub fn set_operator(&self, id: AccountId, key: PrivateKey) {
         self.0
             .operator
             .store(Some(Arc::new(Operator { account_id: id, signer: AnySigner::PrivateKey(key) })));
     }
 
+    /// Sets the account that will, by default, be paying for transactions and queries built with
+    /// this client.
+    ///
+    /// The operator account ID is used to generate the default transaction ID for all transactions
+    /// executed with this client.
+    ///
+    /// The operator signer is used to sign all transactions executed by this client.
+    pub fn set_operator_with<F: Fn(&[u8]) -> Vec<u8> + Send + Sync + 'static>(
+        &self,
+        id: AccountId,
+        public_key: PublicKey,
+        f: F,
+    ) {
+        self.0.operator.store(Some(Arc::new(Operator {
+            account_id: id,
+            signer: AnySigner::arbitrary(Box::new(public_key), f),
+        })))
+    }
+
     /// Gets a reference to the configured network.
-    pub(crate) fn network(&self) -> &Network {
+    pub(crate) fn net(&self) -> &Network {
         &self.0.network.primary
     }
 
     /// Gets a reference to the configured mirror network.
-    pub(crate) fn mirror_network(&self) -> &MirrorNetwork {
+    pub(crate) fn mirrornet(&self) -> &MirrorNetwork {
         &self.0.network.mirror
     }
 
-    /// Gets the maximum transaction fee the paying account is willing to pay.
-    pub(crate) fn max_transaction_fee(&self) -> &AtomicU64 {
-        &self.0.max_transaction_fee_tinybar
+    /// Sets the maximum transaction fee to be used when no explicit max transaction fee is set.
+    ///
+    /// Note: Setting `amount` to zero is "unlimited"
+    /// # Panics
+    /// - if amount is negative
+    pub fn set_default_max_transaction_fee(&self, amount: Hbar) {
+        assert!(amount >= Hbar::ZERO);
+        self.0.max_transaction_fee_tinybar.store(amount.to_tinybars() as u64, Ordering::Relaxed)
     }
 
-    #[allow(clippy::unused_self)]
-    pub(crate) fn request_timeout(&self) -> Option<Duration> {
-        // todo: implement this.
-        None
+    /// Gets the maximum transaction fee the paying account is willing to pay.
+    pub fn default_max_transaction_fee(&self) -> Option<Hbar> {
+        let val = self.0.max_transaction_fee_tinybar.load(Ordering::Relaxed);
+
+        (val > 0).then(|| Hbar::from_tinybars(val as i64))
+    }
+
+    /// Gets the maximum query fee the paying account is willing to pay.
+    pub fn default_max_query_payment(&self) -> Option<Hbar> {
+        let val = self.0.max_query_payment_tinybar.load(Ordering::Relaxed);
+
+        (val > 0).then(|| Hbar::from_tinybars(val as i64))
+    }
+
+    /// Sets the maximum query payment to be used when no explicit max query payment is set.
+    ///
+    /// Note: Setting `amount` to zero is "unlimited"
+    /// # Panics
+    /// - if amount is negative
+    pub fn set_default_max_query_payment(&self, amount: Hbar) {
+        assert!(amount >= Hbar::ZERO);
+        self.0.max_query_payment_tinybar.store(amount.to_tinybars() as u64, Ordering::Relaxed);
+    }
+
+    /// Returns the maximum amount of time that will be spent on a request.
+    pub fn request_timeout(&self) -> Option<Duration> {
+        self.backoff().request_timeout
+    }
+
+    /// Sets the maximum amount of time that will be spent on a request.
+    pub fn set_request_timeout(&self, timeout: Option<Duration>) {
+        self.0.backoff.write().request_timeout = timeout;
+    }
+
+    /// Returns the maximum number of attempts for a request.
+    pub fn max_attempts(&self) -> usize {
+        self.backoff().max_attempts
+    }
+
+    /// Sets the maximum number of attempts for a request.
+    pub fn set_max_attempts(&self, max_attempts: usize) {
+        self.0.backoff.write().max_attempts = max_attempts;
+    }
+
+    /// The initial backoff for a request being executed.
+    #[doc(alias = "initial_backoff")]
+    pub fn min_backoff(&self) -> Duration {
+        self.backoff().initial_backoff
+    }
+
+    /// Sets the initial backoff for a request being executed.
+    #[doc(alias = "set_initial_backoff")]
+    pub fn set_min_backoff(&self, max_backoff: Duration) {
+        self.0.backoff.write().max_backoff = max_backoff;
+    }
+
+    /// Returns the maximum amount of time a request will wait between attempts.
+    pub fn max_backoff(&self) -> Duration {
+        self.backoff().max_backoff
+    }
+
+    /// Sets the maximum amount of time a request will wait between attempts.
+    pub fn set_max_backoff(&self, max_backoff: Duration) {
+        self.0.backoff.write().max_backoff = max_backoff;
+    }
+
+    pub(crate) fn backoff(&self) -> ClientBackoff {
+        *self.0.backoff.read()
     }
 
     // keep this internal (repr)
@@ -219,7 +525,7 @@ impl Client {
     /// Send a ping to all nodes.
     pub async fn ping_all(&self) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network().0.load().node_ids().iter().map(|it| self.ping(*it)),
+            self.net().0.load().node_ids().iter().map(|it| self.ping(*it)),
         )
         .await?;
 
@@ -229,12 +535,7 @@ impl Client {
     /// Send a ping to all nodes, canceling the ping after `timeout` has elapsed.
     pub async fn ping_all_with_timeout(&self, timeout: Duration) -> crate::Result<()> {
         futures_util::future::try_join_all(
-            self.network()
-                .0
-                .load()
-                .node_ids()
-                .iter()
-                .map(|it| self.ping_with_timeout(*it, timeout)),
+            self.net().0.load().node_ids().iter().map(|it| self.ping_with_timeout(*it, timeout)),
         )
         .await?;
 

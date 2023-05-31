@@ -21,11 +21,14 @@
 pub(super) mod managed;
 pub(super) mod mirror;
 
+use std::borrow::Cow;
 use std::collections::{
     BTreeSet,
     HashMap,
 };
+use std::fmt;
 use std::net::Ipv4Addr;
+use std::str::FromStr;
 use std::sync::atomic::{
     AtomicI64,
     Ordering,
@@ -48,150 +51,175 @@ use crate::{
     NodeAddressBook,
 };
 
-const fn ips<const N: usize>(ips: [[u8; 4]; N]) -> [Ipv4Addr; N] {
-    let mut index: usize = 0;
-
-    // note: this will always be filled with output values.
-    let mut out_ips: [Ipv4Addr; N] = [Ipv4Addr::UNSPECIFIED; N];
-
-    while index < N {
-        let [a, b, c, d] = ips[index];
-        out_ips[index] = Ipv4Addr::new(a, b, c, d);
-        index += 1;
-    }
-
-    out_ips
-}
-
-pub(crate) const MAINNET: &[(u64, &[Ipv4Addr])] = &[
+pub(crate) const MAINNET: &[(u64, &[&str])] = &[
     (
         3,
-        &ips([
-            [35, 237, 200, 180],
-            [34, 239, 82, 6],
-            [13, 82, 40, 153],
-            [13, 124, 142, 126],
-            [15, 164, 44, 66],
-            [15, 165, 118, 251],
-        ]),
+        &[
+            "35.237.200.180",
+            "34.239.82.6",
+            "13.82.40.153",
+            "13.124.142.126",
+            "15.164.44.66",
+            "15.165.118.251",
+        ],
     ),
-    (4, &ips([[35, 186, 191, 247], [3, 130, 52, 236], [137, 116, 36, 18]])),
+    (4, &["35.186.191.247", "3.130.52.236", "137.116.36.18"]),
     (
         5,
-        &ips([
-            [35, 192, 2, 25],
-            [3, 18, 18, 254],
-            [104, 43, 194, 202],
-            [23, 111, 186, 250],
-            [74, 50, 117, 35],
-            [107, 155, 64, 98],
-        ]),
+        &[
+            "35.192.2.25",
+            "3.18.18.254",
+            "104.43.194.202",
+            "23.111.186.250",
+            "74.50.117.35",
+            "107.155.64.98",
+        ],
     ),
     (
         6,
-        &ips([
-            [35, 199, 161, 108],
-            [13, 52, 108, 243],
-            [13, 64, 151, 232],
-            [13, 235, 15, 32],
-            [104, 211, 205, 124],
-            [13, 71, 90, 154],
-        ]),
+        &[
+            "35.199.161.108",
+            "13.52.108.243",
+            "13.64.151.232",
+            "13.235.15.32",
+            "104.211.205.124",
+            "13.71.90.154",
+        ],
     ),
-    (7, &ips([[35, 203, 82, 240], [3, 114, 54, 4], [23, 102, 74, 34]])),
-    (8, &ips([[35, 236, 5, 219], [35, 183, 66, 150], [23, 96, 185, 18]])),
-    (9, &ips([[35, 197, 192, 225], [35, 181, 158, 250], [23, 97, 237, 125], [31, 214, 8, 131]])),
-    (10, &ips([[35, 242, 233, 154], [3, 248, 27, 48], [65, 52, 68, 254], [179, 190, 33, 184]])),
+    (7, &["35.203.82.240", "3.114.54.4", "23.102.74.34"]),
+    (8, &["35.236.5.219", "35.183.66.150", "23.96.185.18"]),
+    (9, &["35.197.192.225", "35.181.158.250", "23.97.237.125", "31.214.8.131"]),
+    (10, &["35.242.233.154", "3.248.27.48", "65.52.68.254", "179.190.33.184"]),
     (
         11,
-        &ips([
-            [35, 240, 118, 96],
-            [13, 53, 119, 185],
-            [23, 97, 247, 27],
-            [69, 87, 222, 61],
-            [96, 126, 72, 172],
-            [69, 87, 221, 231],
-        ]),
+        &[
+            "35.240.118.96",
+            "13.53.119.185",
+            "23.97.247.27",
+            "69.87.222.61",
+            "96.126.72.172",
+            "69.87.221.231",
+        ],
     ),
-    (12, &ips([[35, 204, 86, 32], [35, 177, 162, 180], [51, 140, 102, 228]])),
-    (13, &ips([[35, 234, 132, 107], [34, 215, 192, 104], [13, 77, 158, 252]])),
-    (14, &ips([[35, 236, 2, 27], [52, 8, 21, 141], [40, 114, 107, 85]])),
-    (15, &ips([[35, 228, 11, 53], [3, 121, 238, 26], [40, 89, 139, 247]])),
-    (16, &ips([[34, 91, 181, 183], [18, 157, 223, 230], [13, 69, 120, 73]])),
+    (12, &["35.204.86.32", "35.177.162.180", "51.140.102.228"]),
+    (13, &["35.234.132.107", "34.215.192.104", "13.77.158.252"]),
+    (14, &["35.236.2.27", "52.8.21.141", "40.114.107.85"]),
+    (15, &["35.228.11.53", "3.121.238.26", "40.89.139.247"]),
+    (16, &["34.91.181.183", "18.157.223.230", "13.69.120.73"]),
     (
         17,
-        &ips([
-            [34, 86, 212, 247],
-            [18, 232, 251, 19],
-            [40, 114, 92, 39],
-            [34, 86, 212, 247],
-            [18, 232, 251, 19],
-            [40, 114, 92, 39],
-        ]),
+        &[
+            "34.86.212.247",
+            "18.232.251.19",
+            "40.114.92.39",
+            "34.86.212.247",
+            "18.232.251.19",
+            "40.114.92.39",
+        ],
     ),
-    (18, &ips([[172, 105, 247, 67], [172, 104, 150, 132], [139, 162, 156, 222]])),
-    (
-        19,
-        &ips([
-            [34, 89, 87, 138],
-            [18, 168, 4, 59],
-            [51, 140, 43, 81],
-            [13, 246, 51, 42],
-            [13, 244, 166, 210],
-        ]),
-    ),
-    (20, &ips([[34, 82, 78, 255], [13, 77, 151, 212]])),
-    (21, &ips([[34, 76, 140, 109], [13, 36, 123, 209]])),
-    (22, &ips([[34, 64, 141, 166], [52, 78, 202, 34]])),
-    (23, &ips([[35, 232, 244, 145], [3, 18, 91, 176]])),
-    (24, &ips([[34, 89, 103, 38], [18, 135, 7, 211]])),
-    (25, &ips([[34, 93, 112, 7], [13, 232, 240, 207]])),
-    (26, &ips([[34, 87, 150, 174], [13, 228, 103, 14]])),
-    (27, &ips([[34, 125, 200, 96], [13, 56, 4, 96]])),
-    (28, &ips([[35, 198, 220, 75], [18, 139, 47, 5]])),
+    (18, &["172.105.247.67", "172.104.150.132", "139.162.156.222"]),
+    (19, &["34.89.87.138", "18.168.4.59", "51.140.43.81", "13.246.51.42", "13.244.166.210"]),
+    (20, &["34.82.78.255", "13.77.151.212"]),
+    (21, &["34.76.140.109", "13.36.123.209"]),
+    (22, &["34.64.141.166", "52.78.202.34"]),
+    (23, &["35.232.244.145", "3.18.91.176"]),
+    (24, &["34.89.103.38", "18.135.7.211"]),
+    (25, &["34.93.112.7", "13.232.240.207"]),
+    (26, &["34.87.150.174", "13.228.103.14"]),
+    (27, &["34.125.200.96", "13.56.4.96"]),
+    (28, &["35.198.220.75", "18.139.47.5"]),
 ];
 
-pub(crate) const TESTNET: &[(u64, &[Ipv4Addr])] = &[
-    (3, &ips([[34, 94, 106, 61], [50, 18, 132, 211], [138, 91, 142, 219]])),
-    (4, &ips([[35, 237, 119, 55], [3, 212, 6, 13], [52, 168, 76, 241]])),
-    (5, &ips([[35, 245, 27, 193], [52, 20, 18, 86], [40, 79, 83, 124]])),
-    (6, &ips([[34, 83, 112, 116], [54, 70, 192, 33], [52, 183, 45, 65]])),
-    (7, &ips([[34, 94, 160, 4], [54, 176, 199, 109], [13, 64, 181, 136]])),
-    (8, &ips([[34, 106, 102, 218], [35, 155, 49, 147], [13, 78, 238, 32]])),
-    (9, &ips([[34, 133, 197, 230], [52, 14, 252, 207], [52, 165, 17, 231]])),
+pub(crate) const TESTNET: &[(u64, &[&str])] = &[
+    (3, &["0.testnet.hedera.com", "34.94.106.61", "50.18.132.211", "138.91.142.219"]),
+    (4, &["1.testnet.hedera.com", "35.237.119.55", "3.212.6.13", "52.168.76.241"]),
+    (5, &["2.testnet.hedera.com", "35.245.27.193", "52.20.18.86", "40.79.83.124"]),
+    (6, &["3.testnet.hedera.com", "34.83.112.116", "54.70.192.33", "52.183.45.65"]),
+    (7, &["4.testnet.hedera.com", "34.94.160.4", "54.176.199.109", "13.64.181.136"]),
+    (8, &["5.testnet.hedera.com", "34.106.102.218", "35.155.49.147", "13.78.238.32"]),
+    (9, &["6.testnet.hedera.com", "34.133.197.230", "52.14.252.207", "52.165.17.231"]),
 ];
 
-pub(crate) const PREVIEWNET: &[(u64, &[Ipv4Addr])] = &[
-    (3, &ips([[35, 231, 208, 148], [3, 211, 248, 172], [40, 121, 64, 48]])),
-    (4, &ips([[35, 199, 15, 177], [3, 133, 213, 146], [40, 70, 11, 202]])),
-    (5, &ips([[35, 225, 201, 195], [52, 15, 105, 130], [104, 43, 248, 63]])),
-    (6, &ips([[35, 247, 109, 135], [54, 241, 38, 1], [13, 88, 22, 47]])),
-    (7, &ips([[35, 235, 65, 51], [54, 177, 51, 127], [13, 64, 170, 40]])),
-    (8, &ips([[34, 106, 247, 65], [35, 83, 89, 171], [13, 78, 232, 192]])),
-    (9, &ips([[34, 125, 23, 49], [50, 18, 17, 93], [20, 150, 136, 89]])),
+pub(crate) const PREVIEWNET: &[(u64, &[&str])] = &[
+    (3, &["0.previewnet.hedera.com", "35.231.208.148", "3.211.248.172", "40.121.64.48"]),
+    (4, &["1.previewnet.hedera.com", "35.199.15.177", "3.133.213.146", "40.70.11.202"]),
+    (5, &["2.previewnet.hedera.com", "35.225.201.195", "52.15.105.130", "104.43.248.63"]),
+    (6, &["3.previewnet.hedera.com", "35.247.109.135", "54.241.38.1", "13.88.22.47"]),
+    (7, &["4.previewnet.hedera.com", "35.235.65.51", "54.177.51.127", "13.64.170.40"]),
+    (8, &["5.previewnet.hedera.com", "34.106.247.65", "35.83.89.171", "13.78.232.192"]),
+    (9, &["6.previewnet.hedera.com", "34.125.23.49", "50.18.17.93", "20.150.136.89"]),
 ];
 
 pub(crate) struct Network(pub(crate) ArcSwap<NetworkData>);
 
 impl Network {
     pub(super) fn mainnet() -> Self {
-        Self(ArcSwap::new(Arc::new(NetworkData::from_static(MAINNET))))
+        NetworkData::from_static(MAINNET).into()
     }
 
     pub(super) fn testnet() -> Self {
-        Self(ArcSwap::new(Arc::new(NetworkData::from_static(TESTNET))))
+        NetworkData::from_static(TESTNET).into()
     }
 
     pub(super) fn previewnet() -> Self {
-        Self(ArcSwap::new(Arc::new(NetworkData::from_static(PREVIEWNET))))
+        NetworkData::from_static(PREVIEWNET).into()
+    }
+
+    pub(super) fn from_addresses(addresses: HashMap<String, AccountId>) -> crate::Result<Self> {
+        Ok(NetworkData::from_addresses(addresses)?.into())
+    }
+
+    fn try_rcu<T: Into<Arc<NetworkData>>, E, F: FnMut(&Arc<NetworkData>) -> Result<T, E>>(
+        &self,
+        mut f: F,
+    ) -> Result<Arc<NetworkData>, E> {
+        // note: we can't use the `arc_swap` rcu function because we return a result
+        let mut cur = self.0.load();
+        loop {
+            let new = f(&cur)?.into();
+            let prev = self.0.compare_and_swap(&*cur, new);
+            let swapped = Arc::ptr_eq(&*cur, &*prev);
+            if swapped {
+                return Ok(arc_swap::Guard::into_inner(cur));
+            } else {
+                cur = prev;
+            }
+        }
+    }
+
+    fn rcu<T: Into<Arc<NetworkData>>, F: FnMut(&Arc<NetworkData>) -> T>(
+        &self,
+        mut f: F,
+    ) -> Arc<NetworkData> {
+        match self.try_rcu(|it| -> Result<T, std::convert::Infallible> { Ok(f(it)) }) {
+            Ok(it) => it,
+            Err(e) => match e {},
+        }
+    }
+
+    pub(crate) fn update_from_addresses(
+        &self,
+        addresses: HashMap<String, AccountId>,
+    ) -> crate::Result<()> {
+        self.try_rcu(|old| old.with_addresses(&addresses))?;
+
+        Ok(())
     }
 
     pub(crate) fn update_from_address_book(&self, address_book: NodeAddressBook) {
         // todo: skip the updating whem `map` is the same and `connections` is the same.
-        self.0.rcu(|old| NetworkData::with_address_book(old, &address_book));
+        self.rcu(|old| NetworkData::with_address_book(old, &address_book));
     }
 }
 
+impl From<NetworkData> for Network {
+    fn from(value: NetworkData) -> Self {
+        Self(ArcSwap::new(Arc::new(value)))
+    }
+}
+
+// note: `Default` here is mostly only useful so that we don't need to implement `from_addresses` twice, notably this doesn't allocate.
+#[derive(Default)]
 pub(crate) struct NetworkData {
     map: HashMap<AccountId, usize>,
     node_ids: Box<[AccountId]>,
@@ -201,7 +229,11 @@ pub(crate) struct NetworkData {
 }
 
 impl NetworkData {
-    pub(crate) fn from_static(network: &'static [(u64, &'static [Ipv4Addr])]) -> Self {
+    pub(crate) fn from_addresses(addresses: HashMap<String, AccountId>) -> crate::Result<Self> {
+        Self::default().with_addresses(&addresses)
+    }
+
+    pub(crate) fn from_static(network: &'static [(u64, &'static [&'static str])]) -> Self {
         let mut map = HashMap::with_capacity(network.len());
         let mut node_ids = Vec::with_capacity(network.len());
         let mut connections = Vec::with_capacity(network.len());
@@ -236,7 +268,9 @@ impl NetworkData {
             let new: BTreeSet<_> = address
                 .service_endpoints
                 .iter()
-                .filter_map(|it| (it.port() == NodeConnection::PLAINTEXT_PORT).then(|| *it.ip()))
+                .filter_map(|it| {
+                    (it.port() == NodeConnection::PLAINTEXT_PORT).then(|| (*it.ip()).into())
+                })
                 .collect();
 
             // if the node is the exact same we want to reuse everything (namely the connections and `healthy`).
@@ -271,6 +305,47 @@ impl NetworkData {
             health: health.into_boxed_slice(),
             connections: connections.into_boxed_slice(),
         }
+    }
+
+    fn with_addresses(&self, addresses: &HashMap<String, AccountId>) -> crate::Result<Self> {
+        use std::collections::hash_map::Entry;
+        let mut map: HashMap<AccountId, usize> = HashMap::new();
+        let mut node_ids = Vec::new();
+        let mut connections: Vec<NodeConnection> = Vec::new();
+        let mut health = Vec::new();
+
+        for (address, node) in addresses {
+            let next_index = node_ids.len();
+
+            let address = address.parse()?;
+
+            match map.entry(*node) {
+                Entry::Occupied(entry) => {
+                    connections[*entry.get()].addresses.insert(address);
+                }
+                Entry::Vacant(entry) => {
+                    entry.insert(next_index);
+                    node_ids.push(*node);
+                    // fixme: keep the channel around more.
+                    connections.push(NodeConnection {
+                        addresses: BTreeSet::from([address]),
+                        channel: OnceCell::new(),
+                    });
+
+                    health.push(match self.map.get(node) {
+                        Some(it) => self.health[*it].clone(),
+                        None => Arc::default(),
+                    });
+                }
+            };
+        }
+
+        Ok(Self {
+            map,
+            node_ids: node_ids.into_boxed_slice(),
+            health: health.into_boxed_slice(),
+            connections: connections.into_boxed_slice(),
+        })
     }
 
     pub(crate) fn node_ids(&self) -> &[AccountId] {
@@ -344,6 +419,15 @@ impl NetworkData {
 
         (id, channel)
     }
+
+    pub(crate) fn addresses(&self) -> HashMap<String, AccountId> {
+        self.map
+            .iter()
+            .flat_map(|(&account, &index)| {
+                self.connections[index].addresses.iter().map(move |it| (it.to_string(), account))
+            })
+            .collect()
+    }
 }
 
 #[derive(Default)]
@@ -352,17 +436,57 @@ pub(crate) struct NodeHealth {
     last_pinged: AtomicI64,
 }
 
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]
+struct HostAndPort {
+    host: Cow<'static, str>,
+    port: u16,
+}
+
+impl HostAndPort {
+    const fn from_static(host: &'static str) -> Self {
+        Self { host: Cow::Borrowed(host), port: NodeConnection::PLAINTEXT_PORT }
+    }
+}
+
+impl FromStr for HostAndPort {
+    type Err = crate::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (host, port) = s.split_once(":").ok_or_else(|| Error::basic_parse("Invalid uri"))?;
+
+        Ok(Self {
+            host: Cow::Owned(host.to_owned()),
+            port: port.parse().map_err(Error::basic_parse)?,
+        })
+    }
+}
+
+impl fmt::Display for HostAndPort {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.host, self.port)
+    }
+}
+
+impl From<Ipv4Addr> for HostAndPort {
+    fn from(value: Ipv4Addr) -> Self {
+        Self { host: Cow::Owned(value.to_string()), port: NodeConnection::PLAINTEXT_PORT }
+    }
+}
+
 #[derive(Clone)]
 struct NodeConnection {
-    addresses: BTreeSet<Ipv4Addr>,
+    addresses: BTreeSet<HostAndPort>,
     channel: OnceCell<Channel>,
 }
 
 impl NodeConnection {
     const PLAINTEXT_PORT: u16 = 50211;
 
-    fn new_static(addresses: &[Ipv4Addr]) -> NodeConnection {
-        Self { addresses: addresses.iter().copied().collect(), channel: OnceCell::default() }
+    fn new_static(addresses: &[&'static str]) -> NodeConnection {
+        Self {
+            addresses: addresses.iter().copied().map(HostAndPort::from_static).collect(),
+            channel: OnceCell::default(),
+        }
     }
 
     pub(crate) fn channel(&self) -> Channel {
@@ -370,7 +494,7 @@ impl NodeConnection {
             .channel
             .get_or_init(|| {
                 let addresses = self.addresses.iter().map(|it| {
-                    Endpoint::from_shared(format!("tcp://{it}:50211"))
+                    Endpoint::from_shared(format!("tcp://{it}"))
                         .unwrap()
                         .keep_alive_timeout(Duration::from_secs(10))
                         .keep_alive_while_idle(true)
