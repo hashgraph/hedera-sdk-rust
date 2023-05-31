@@ -402,7 +402,13 @@ impl NetworkData {
     }
 
     pub(crate) fn random_node_ids(&self) -> Vec<AccountId> {
-        let node_ids: Vec<_> = self.healthy_node_ids().collect();
+        let mut node_ids: Vec<_> = self.healthy_node_ids().collect();
+
+        if node_ids.is_empty() {
+            log::warn!("No healthy nodes, randomly picking some unhealthy ones");
+            // hack, slowpath, don't care perf, fix this better later tho.
+            node_ids = self.node_ids.to_vec();
+        }
 
         let node_sample_amount = (node_ids.len() + 2) / 3;
 
