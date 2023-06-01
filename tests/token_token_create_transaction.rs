@@ -1,14 +1,14 @@
 mod common;
 use common::setup_global;
-use hedera::{ Client, TokenCreateTransaction, TokenType, TokenSupplyType, TokenId, AccountId, PublicKey, TokenInfo, TokenInfoQuery, Key, KeyList, PrivateKey, Hbar, CustomFee, FixedFee, FixedFeeData, FractionalFee, FractionalFeeData, RoyaltyFee, RoyaltyFeeData, AnyCustomFee, FeeAssessmentMethod, Fee};
+use hedera::{ Client, TokenCreateTransaction, TokenType, TokenSupplyType, TokenId, AccountId, PublicKey, TokenInfo, TokenInfoQuery, Key, KeyList, PrivateKey, Hbar, FractionalFee, FractionalFeeData, RoyaltyFee, RoyaltyFeeData, AnyCustomFee, FeeAssessmentMethod };
 use crate::common::TestEnvironment;
 use time::Duration;
-use hedera_proto::services::custom_fee::Fee as Fee;
 
 enum PublicKeyType {
     PublicKey(PublicKey),
     KeyList(KeyList),
 }
+
 struct UsedData {
     name: String,
     token_type: TokenType,
@@ -18,7 +18,7 @@ struct UsedData {
     account_id: AccountId,
     public_key: PublicKeyType,
     private_keys: Option<Vec<PrivateKey>>,
-    custom_fees: Vec<CustomFee<FixedFeeData>>,
+    custom_fees: Vec<AnyCustomFee>,
     max_supply: Option<u64>,
     token_supply_type: TokenSupplyType,
     default_freeze_status: bool,
@@ -40,23 +40,17 @@ async fn test_create_fugible_token() {
         panic!("skipping non-free test");
     }
 
-    let fixed_fee = FixedFee {
-        fee: FixedFeeData::from_hbar(Hbar::new(5)),
-        fee_collector_account_id: Some(operator.account_id.clone()),
-        all_collectors_are_exempt: false,
-    };
-
-    let fractional_fee = FractionalFee {
+    let fractional_fee = AnyCustomFee::from(FractionalFee {
         fee: FractionalFeeData{
-            denominator: 1,
-            numerator: 5,
+            numerator: 1,
+            denominator: 5,
             minimum_amount: 5,
             maximum_amount: 10,
             assessment_method: FeeAssessmentMethod::Inclusive,
         },
         fee_collector_account_id: Some(operator.account_id.clone()),
         all_collectors_are_exempt: false,
-    };
+    });
 
     let used_data: UsedData = UsedData {
         name: String::from("sdk::rust::e2e::TokenCreateTransaction::1"),
@@ -67,7 +61,7 @@ async fn test_create_fugible_token() {
         account_id: operator.account_id.clone(),
         public_key: PublicKeyType::PublicKey(operator.private_key.clone().public_key()),
         private_keys: None,
-        custom_fees: fixed_fee,
+        custom_fees: vec![fractional_fee],
         max_supply: None,
         token_supply_type: TokenSupplyType::Infinite,
         default_freeze_status: false,
@@ -95,18 +89,17 @@ async fn test_create_non_fungible_token() {
         panic!("skipping non-free test");
     }
 
-    let key_threshold = Some(2);
-    let (private_keys, public_keys) = generate_key_list(key_threshold);
+    let (private_keys, public_keys) = generate_key_list(Some(2));
 
-    let royalty_fee = RoyaltyFee {
+    let royalty_fee = AnyCustomFee::from( RoyaltyFee {
         fee: RoyaltyFeeData {
-            denominator: 1,
-            numerator: 5,
-            fallback_fee: Some(FixedFeeData::from_hbar(Hbar::new(5))),
+            numerator: 1,
+            denominator: 5,
+            fallback_fee: None,
         },
         fee_collector_account_id: Some(operator.account_id.clone()),
         all_collectors_are_exempt: false,
-    };
+    });
 
     let used_data: UsedData = UsedData {
         name: String::from("sdk::rust::e2e::TokenCreateTransaction::2"),
@@ -194,7 +187,7 @@ async fn create_new_token(client: &Client, used_data: &UsedData) -> TokenId {
                             }
                         }
                     }
-                    None => panic!("Keylist with public keys but no list with private keys to sign the transaction provided.)"),
+                    None => panic!("Keylist with public keys but no list with private keys to sign the transaction provided."),
                 }
             ();
         }
@@ -207,7 +200,7 @@ async fn create_new_token(client: &Client, used_data: &UsedData) -> TokenId {
                 token_create_tx.max_supply(max_supply);
                 ();
             }
-            None => panic!("Token Supply Type is finite but no max supply was provided.)"),
+            None => panic!("Token Supply Type is finite but no max supply was provided."),
         }
     }
 
@@ -253,6 +246,7 @@ fn check_token_info(token_info: TokenInfo, used_data: &UsedData) {
     assert_eq!(token_info.auto_renew_account.unwrap(), used_data.account_id, "On chain auto_renew_account does not match account_id from used_Data.");
     assert_eq!(token_info.auto_renew_period.unwrap(), used_data.auto_renew_period, "On chain auto_renew_period does not match auto_renew_period from used_Data.");
     assert_eq!(token_info.token_memo, used_data.memo, "On chain token_memo does not match memo from used_Data.");
+    assert_eq!(token_info.custom_fees, used_data.custom_fees, "On chain custom_fees do not match custom_fees from used_Data.");
     
     match &used_data.public_key {
         PublicKeyType::PublicKey(key) => {
@@ -278,8 +272,6 @@ fn check_token_info(token_info: TokenInfo, used_data: &UsedData) {
             ();
         }
     }
-
-    //assert_eq!(token_info.custom_fees, used_data.custom_fees, "On chain custom_fees do not match custom_fees from used_Data.");
     
     assert_eq!(token_info.supply_type, used_data.token_supply_type, "On chain token_supply_type does not match token_supply_type from used_Data.");
     if used_data.token_supply_type == TokenSupplyType::Finite  {
@@ -288,7 +280,7 @@ fn check_token_info(token_info: TokenInfo, used_data: &UsedData) {
                 assert_eq!(token_info.max_supply, max_supply, "On chain max_supply does not match max_supply from used_Data.");
                 ();
             }
-            None => panic!("Token Supply Type is finite but no max supply was provided.)"),
+            None => panic!("Token Supply Type is finite but no max supply was provided."),
         }
     }
 }
