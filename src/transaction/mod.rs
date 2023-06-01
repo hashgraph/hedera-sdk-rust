@@ -221,7 +221,14 @@ impl<D> Transaction<D> {
     /// Defaults to the full list of nodes configured on the client.
     #[track_caller]
     pub fn node_account_ids(&mut self, ids: impl IntoIterator<Item = AccountId>) -> &mut Self {
-        self.body_mut().node_account_ids = Some(ids.into_iter().collect());
+        let nodes: Vec<_> = ids.into_iter().collect();
+
+        if nodes.is_empty() {
+            log::warn!("Nodes list is empty, ignoring setter");
+        } else {
+            self.body_mut().node_account_ids = Some(nodes);
+        }
+
         self
     }
 
@@ -388,9 +395,20 @@ impl<D: ValidateChecksums> Transaction<D> {
 
         let node_account_ids = match &self.body.node_account_ids {
             // the clone here is the lesser of two evils.
-            Some(it) => it.clone(),
+            Some(it) => {
+                assert!(!it.is_empty());
+                it.clone()
+            }
             None => {
-                client.ok_or(Error::FreezeUnsetNodeAccountIds)?.network().0.load().random_node_ids()
+                let nodes = client
+                    .ok_or(Error::FreezeUnsetNodeAccountIds)?
+                    .net()
+                    .0
+                    .load()
+                    .random_node_ids();
+                assert!(!nodes.is_empty(), "BUG: Client didn't give any nodes (all unhealthy)");
+
+                nodes
             }
         };
 
@@ -398,15 +416,7 @@ impl<D: ValidateChecksums> Transaction<D> {
         let max_transaction_fee = self.body.max_transaction_fee.or_else(|| {
             // no max has been set on the *transaction*
             // check if there is a global max set on the client
-            let client_max_transaction_fee = client
-                .map(|it| it.max_transaction_fee().load(std::sync::atomic::Ordering::Relaxed));
-
-            match client_max_transaction_fee {
-                Some(max) if max > 1 => Some(Hbar::from_tinybars(max as i64)),
-                // no max has been set on the client either
-                // fallback to the hard-coded default for this transaction type
-                _ => None,
-            }
+            client.and_then(|it| it.default_max_transaction_fee())
         });
 
         let operator = client.and_then(Client::full_load_operator);
