@@ -192,13 +192,6 @@ async fn alias_from_admin_key() -> anyhow::Result<()> {
     let admin_key = PrivateKey::generate_ecdsa();
     let evm_address = admin_key.public_key().to_evm_address().unwrap();
 
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
-
     let account_id = AccountCreateTransaction::new()
         .key(admin_key.public_key())
         .alias(evm_address)
@@ -229,13 +222,6 @@ async fn alias_from_admin_key_with_receiver_sig_required() -> anyhow::Result<()>
 
     let admin_key = PrivateKey::generate_ecdsa();
     let evm_address = admin_key.public_key().to_evm_address().unwrap();
-
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
 
     let account_id = AccountCreateTransaction::new()
         .receiver_signature_required(true)
@@ -269,13 +255,6 @@ async fn alias_from_admin_key_with_receiver_sig_required_and_no_signature_errors
     let admin_key = PrivateKey::generate_ecdsa();
     let evm_address = admin_key.public_key().to_evm_address().unwrap();
 
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
-
     let res = AccountCreateTransaction::new()
         .receiver_signature_required(true)
         .key(admin_key.public_key())
@@ -306,13 +285,6 @@ async fn alias() -> anyhow::Result<()> {
     };
 
     let admin_key = PrivateKey::generate_ed25519();
-
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
 
     let key = PrivateKey::generate_ecdsa();
     let evm_address = key.public_key().to_evm_address().unwrap();
@@ -347,13 +319,6 @@ async fn alias_missing_signature_fails() -> anyhow::Result<()> {
 
     let admin_key = PrivateKey::generate_ed25519();
 
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
-
     let key = PrivateKey::generate_ecdsa();
     let evm_address = key.public_key().to_evm_address().unwrap();
 
@@ -386,13 +351,6 @@ async fn alias_with_receiver_sig_required() -> anyhow::Result<()> {
     };
 
     let admin_key = PrivateKey::generate_ed25519();
-
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
 
     let key = PrivateKey::generate_ecdsa();
     let evm_address = key.public_key().to_evm_address().unwrap();
@@ -428,13 +386,6 @@ async fn alias_with_receiver_sig_required_missing_signature_fails() -> anyhow::R
     };
 
     let admin_key = PrivateKey::generate_ed25519();
-
-    // Create the admin account
-    AccountCreateTransaction::new()
-        .key(admin_key.public_key())
-        .freeze_with(&client)?
-        .execute(&client)
-        .await?;
 
     let key = PrivateKey::generate_ecdsa();
     let evm_address = key.public_key().to_evm_address().unwrap();
