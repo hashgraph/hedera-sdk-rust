@@ -68,17 +68,6 @@ pub enum Error {
         transaction_id: Box<TransactionId>,
     },
 
-    /// A transaction failed pre-check.
-    ///
-    /// The transaction had no `transaction_id`.
-    ///
-    /// Caused by `status` being an error.
-    #[error("transaction without transaction id failed pre-check with status `{status:?}`")]
-    TransactionNoIdPreCheckStatus {
-        /// The `Status` that caused the [`Transaction`](crate::Transaction) to fail pre-check.
-        status: Status,
-    },
-
     /// A [`Query`](crate::Query) for `transaction_id` failed pre-check.
     ///
     /// Caused by `status` being an error.
