@@ -15,12 +15,7 @@ use crate::common::{
 
 #[tokio::test]
 async fn create_then_delete() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
-
-    let Some(op) = &config.operator else {
-        log::debug!("skipping test due to missing operator");
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(())
     };
 
@@ -37,7 +32,7 @@ async fn create_then_delete() -> anyhow::Result<()> {
     let account_id = receipt.account_id.unwrap();
 
     AccountDeleteTransaction::new()
-        .transfer_account_id(op.account_id)
+        .transfer_account_id(client.get_operator_account_id().unwrap())
         .account_id(account_id)
         .sign(key)
         .execute(&client)
@@ -60,17 +55,14 @@ async fn create_then_delete() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_account_id_fails() {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return;
     };
 
-    let Some(op) = &config.operator else {
-        log::debug!("skipping test due to missing operator");
-        return;
-    };
-
-    let res =
-        AccountDeleteTransaction::new().transfer_account_id(op.account_id).execute(&client).await;
+    let res = AccountDeleteTransaction::new()
+        .transfer_account_id(client.get_operator_account_id().unwrap())
+        .execute(&client)
+        .await;
 
     assert_matches!(
         res,
