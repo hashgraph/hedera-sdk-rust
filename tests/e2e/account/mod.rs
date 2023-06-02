@@ -3,6 +3,8 @@ mod create;
 mod delete;
 mod update;
 
+mod info;
+
 use hedera::{
     AccountBalanceQuery,
     AccountId,
