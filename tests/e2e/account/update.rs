@@ -1,9 +1,17 @@
 use hedera::{
-    AccountCreateTransaction, AccountInfoQuery, AccountUpdateTransaction, Hbar, Key, PrivateKey,
+    AccountCreateTransaction,
+    AccountInfoQuery,
+    AccountUpdateTransaction,
+    Hbar,
+    Key,
+    PrivateKey,
 };
 use time::Duration;
 
-use crate::common::{setup_nonfree, TestEnvironment};
+use crate::common::{
+    setup_nonfree,
+    TestEnvironment,
+};
 
 #[tokio::test]
 async fn set_key() -> anyhow::Result<()> {

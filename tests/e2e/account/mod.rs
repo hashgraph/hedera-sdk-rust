@@ -1,4 +1,5 @@
 mod create;
+mod delete;
 mod update;
 
 use hedera::AccountBalanceQuery;
