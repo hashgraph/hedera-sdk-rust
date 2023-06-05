@@ -2,6 +2,7 @@ use hedera::FileId;
 
 mod create;
 mod create_flow;
+mod delete;
 mod execute;
 
 const SMART_CONTRACT_BYTECODE: &'static str = concat!(
