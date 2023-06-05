@@ -1,5 +1,7 @@
+use hedera::FileId;
+
 mod create;
-// mod execute;
+mod execute;
 
 const SMART_CONTRACT_BYTECODE: &'static str = concat!(
     "608060405234801561001057600080fd5b506040516104d73803806104d7833981810160405260208110156100",
@@ -31,3 +33,40 @@ const SMART_CONTRACT_BYTECODE: &'static str = concat!(
     "6102ca57600081556001016102d456fea264697066735822122084964d4c3f6bc912a9d20e14e449721012d625",
     "aa3c8a12de41ae5519752fc89064736f6c63430006000033"
 );
+
+/// Creates a File for [`SMART_CONTRACT_BYTECODE`] and returns the File ID.
+///
+/// If there's already a file for it, the same file will be used.
+///
+/// *Deleting the file can cause spurious failures in tests, so, don't do that* (it'll expire in `30 days` anyway).
+///
+/// This is intended as an optimization (cost wise & network resource wise).
+async fn bytecode_file_id(
+    client: &hedera::Client,
+    op_key: hedera::PublicKey,
+) -> hedera::Result<FileId> {
+    use time::{Duration, OffsetDateTime};
+    static BYTECODE_FILE: tokio::sync::OnceCell<FileId> = tokio::sync::OnceCell::const_new();
+
+    async fn make_file(
+        client: &hedera::Client,
+        op_key: hedera::PublicKey,
+    ) -> hedera::Result<FileId> {
+        let file_id = hedera::FileCreateTransaction::new()
+            .keys([op_key])
+            .contents(SMART_CONTRACT_BYTECODE)
+            .expiration_time(OffsetDateTime::now_utc() + Duration::days(30))
+            .execute(&client)
+            .await?
+            .get_receipt(&client)
+            .await?
+            .file_id
+            .unwrap();
+
+        log::debug!("created `{file_id}@file`");
+
+        Ok(file_id)
+    }
+
+    BYTECODE_FILE.get_or_try_init(|| make_file(client, op_key)).await.copied()
+}

@@ -1,12 +1,18 @@
 use assert_matches::assert_matches;
 use hedera::{
-    ContractCreateTransaction, ContractDeleteTransaction, ContractFunctionParameters,
-    ContractInfoQuery, FileCreateTransaction, FileDeleteTransaction, Key, Status,
+    ContractCreateTransaction,
+    ContractDeleteTransaction,
+    ContractFunctionParameters,
+    ContractInfoQuery,
+    Key,
+    Status,
 };
 
-use crate::common::{setup_nonfree, TestEnvironment};
-use super::SMART_CONTRACT_BYTECODE;
-
+use super::bytecode_file_id;
+use crate::common::{
+    setup_nonfree,
+    TestEnvironment,
+};
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -19,15 +25,7 @@ async fn basic() -> anyhow::Result<()> {
         return Ok(())
     };
 
-    let file_id = FileCreateTransaction::new()
-        .keys([op.private_key.public_key()])
-        .contents(SMART_CONTRACT_BYTECODE)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .file_id
-        .unwrap();
+    let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
 
     let contract_id = ContractCreateTransaction::new()
         .admin_key(op.private_key.public_key())
@@ -60,13 +58,6 @@ async fn basic() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await?;
 
-    FileDeleteTransaction::new()
-        .file_id(file_id)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
     Ok(())
 }
 
@@ -81,15 +72,7 @@ async fn no_admin_key() -> anyhow::Result<()> {
         return Ok(())
     };
 
-    let file_id = FileCreateTransaction::new()
-        .keys([op.private_key.public_key()])
-        .contents(SMART_CONTRACT_BYTECODE)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .file_id
-        .unwrap();
+    let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
 
     let contract_id = ContractCreateTransaction::new()
         .gas(100000)
@@ -127,15 +110,7 @@ async fn unset_gas_fails() -> anyhow::Result<()> {
         return Ok(())
     };
 
-    let file_id = FileCreateTransaction::new()
-        .keys([op.private_key.public_key()])
-        .contents(SMART_CONTRACT_BYTECODE)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .file_id
-        .unwrap();
+    let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
 
     let res = ContractCreateTransaction::new()
         .constructor_parameters(
@@ -153,18 +128,11 @@ async fn unset_gas_fails() -> anyhow::Result<()> {
         Err(hedera::Error::ReceiptStatus { status: Status::InsufficientGas, transaction_id: _ })
     );
 
-    FileDeleteTransaction::new()
-        .file_id(file_id)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
     Ok(())
 }
 
 #[tokio::test]
-async fn constructor_parameters_unset_falils() -> anyhow::Result<()> {
+async fn constructor_parameters_unset_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config, client }) = setup_nonfree() else {
         return Ok(())
     };
@@ -174,15 +142,7 @@ async fn constructor_parameters_unset_falils() -> anyhow::Result<()> {
         return Ok(())
     };
 
-    let file_id = FileCreateTransaction::new()
-        .keys([op.private_key.public_key()])
-        .contents(SMART_CONTRACT_BYTECODE)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .file_id
-        .unwrap();
+    let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
 
     let res = ContractCreateTransaction::new()
         .gas(100000)
@@ -200,13 +160,6 @@ async fn constructor_parameters_unset_falils() -> anyhow::Result<()> {
             transaction_id: _
         })
     );
-
-    FileDeleteTransaction::new()
-        .file_id(file_id)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
 
     Ok(())
 }
