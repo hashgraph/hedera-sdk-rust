@@ -44,10 +44,7 @@ async fn create_then_delete() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::QueryPaymentPreCheckStatus {
-            status: Status::AccountDeleted,
-            transaction_id: _
-        })
+        Err(hedera::Error::QueryNoPaymentPreCheckStatus { status: Status::AccountDeleted })
     );
 
     Ok(())
