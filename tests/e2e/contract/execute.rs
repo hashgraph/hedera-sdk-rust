@@ -1,10 +1,16 @@
 use assert_matches::assert_matches;
 use hedera::{
-    ContractCreateTransaction, ContractDeleteTransaction, ContractExecuteTransaction,
-    ContractFunctionParameters, Status,
+    ContractCreateTransaction,
+    ContractDeleteTransaction,
+    ContractExecuteTransaction,
+    ContractFunctionParameters,
+    Status,
 };
 
-use crate::common::{setup_nonfree, TestEnvironment};
+use crate::common::{
+    setup_nonfree,
+    TestEnvironment,
+};
 use crate::contract::bytecode_file_id;
 
 #[tokio::test]
