@@ -227,8 +227,8 @@ where
     let mut transaction_id = executable
         .requires_transaction_id()
         .then_some(explicit_transaction_id)
-        .flatten()
-        .or_else(|| ctx.operator_account_id.map(TransactionId::generate));
+        .map(|it| it.or_else(|| ctx.operator_account_id.map(TransactionId::generate)))
+        .flatten();
 
     // if we were explicitly given a list of nodes to use, we iterate through each
     // of the given nodes (in a random order)
