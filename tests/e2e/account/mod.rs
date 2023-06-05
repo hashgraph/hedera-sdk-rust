@@ -6,7 +6,6 @@ mod info;
 mod update;
 
 use hedera::{
-    AccountBalanceQuery,
     AccountId,
     Hbar,
     PrivateKey,
