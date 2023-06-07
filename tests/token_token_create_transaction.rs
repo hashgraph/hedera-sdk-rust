@@ -1,8 +1,29 @@
 mod common;
 use common::setup_global;
-use hedera::{ Client, TokenCreateTransaction, TokenType, TokenSupplyType, TokenId, AccountId, PublicKey, TokenInfo, TokenInfoQuery, Key, KeyList, PrivateKey, Hbar, FractionalFee, FractionalFeeData, RoyaltyFee, RoyaltyFeeData, AnyCustomFee, FeeAssessmentMethod };
-use crate::common::TestEnvironment;
+use hedera::{
+    AccountId,
+    AnyCustomFee,
+    Client,
+    FeeAssessmentMethod,
+    FractionalFee,
+    FractionalFeeData,
+    Hbar,
+    Key,
+    KeyList,
+    PrivateKey,
+    PublicKey,
+    RoyaltyFee,
+    RoyaltyFeeData,
+    TokenCreateTransaction,
+    TokenId,
+    TokenInfo,
+    TokenInfoQuery,
+    TokenSupplyType,
+    TokenType,
+};
 use time::Duration;
+
+use crate::common::TestEnvironment;
 
 enum PublicKeyType {
     PublicKey(PublicKey),
@@ -27,21 +48,21 @@ struct UsedData {
 }
 
 #[tokio::test]
-async fn test_create_fugible_token() {
+async fn test_create_fugible_token() -> anyhow::Result<()> {
     let TestEnvironment { config, client } = setup_global();
 
     let Some(operator) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        panic!("skipping test due to lack of operator");
+        return Ok(());
     };
 
     if !config.run_nonfree_tests {
         log::debug!("skipping non-free test");
-        panic!("skipping non-free test");
+        return Ok(());
     }
 
     let fractional_fee = AnyCustomFee::from(FractionalFee {
-        fee: FractionalFeeData{
+        fee: FractionalFeeData {
             numerator: 1,
             denominator: 5,
             minimum_amount: 5,
@@ -52,13 +73,13 @@ async fn test_create_fugible_token() {
         all_collectors_are_exempt: false,
     });
 
-    let used_data: UsedData = UsedData {
+    let used_data = UsedData {
         name: String::from("sdk::rust::e2e::TokenCreateTransaction::1"),
         token_type: TokenType::FungibleCommon,
         symbol: String::from("e2e::ft"),
         decimals: 2,
         initial_supply: 10_000,
-        account_id: operator.account_id.clone(),
+        account_id: operator.account_id,
         public_key: PublicKeyType::PublicKey(operator.private_key.clone().public_key()),
         private_keys: None,
         custom_fees: vec![fractional_fee],
@@ -68,46 +89,44 @@ async fn test_create_fugible_token() {
         auto_renew_period: Duration::days(80),
         memo: String::from("sdk::rust::e2e::TokenCreateTransaction::1"),
     };
-    
-    let token_id = create_new_token(&client, &used_data).await;
-    let token_info = get_token_info(&client, token_id).await;
+
+    let token_id = create_new_token(&client, &used_data).await?;
+    let token_info = get_token_info(&client, token_id).await?;
 
     check_token_info(token_info, &used_data);
+
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_create_non_fungible_token() {
+async fn test_create_non_fungible_token() -> anyhow::Result<()> {
     let TestEnvironment { config, client } = setup_global();
 
     let Some(operator) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        panic!("skipping test due to lack of operator");
+        return Ok(());
     };
 
     if !config.run_nonfree_tests {
         log::debug!("skipping non-free test");
-        panic!("skipping non-free test");
+        return Ok(());
     }
 
     let (private_keys, public_keys) = generate_key_list(Some(2));
 
-    let royalty_fee = AnyCustomFee::from( RoyaltyFee {
-        fee: RoyaltyFeeData {
-            numerator: 1,
-            denominator: 5,
-            fallback_fee: None,
-        },
+    let royalty_fee = AnyCustomFee::from(RoyaltyFee {
+        fee: RoyaltyFeeData { numerator: 1, denominator: 5, fallback_fee: None },
         fee_collector_account_id: Some(operator.account_id.clone()),
         all_collectors_are_exempt: false,
     });
 
-    let used_data: UsedData = UsedData {
+    let used_data = UsedData {
         name: String::from("sdk::rust::e2e::TokenCreateTransaction::2"),
         token_type: TokenType::NonFungibleUnique,
         symbol: String::from("e2e::nft"),
         decimals: 0,
         initial_supply: 0,
-        account_id: operator.account_id.clone(),
+        account_id: operator.account_id,
         public_key: PublicKeyType::KeyList(public_keys),
         private_keys: Some(private_keys),
         custom_fees: vec![royalty_fee],
@@ -117,16 +136,17 @@ async fn test_create_non_fungible_token() {
         auto_renew_period: Duration::days(90),
         memo: String::from("sdk::rust::e2e::TokenCreateTransaction::2"),
     };
-    
-    let token_id = create_new_token(&client, &used_data).await;
-    let token_info = get_token_info(&client, token_id).await;
+
+    let token_id = create_new_token(&client, &used_data).await?;
+    let token_info = get_token_info(&client, token_id).await?;
 
     check_token_info(token_info, &used_data);
 
+    Ok(())
 }
 
 // Create new token according to predefined used_data
-async fn create_new_token(client: &Client, used_data: &UsedData) -> TokenId {
+async fn create_new_token(client: &Client, used_data: &UsedData) -> anyhow::Result<TokenId> {
     let mut token_create_tx = TokenCreateTransaction::new();
 
     token_create_tx
@@ -156,7 +176,7 @@ async fn create_new_token(client: &Client, used_data: &UsedData) -> TokenId {
                 .fee_schedule_key(key.clone())
                 .pause_key(key.clone());
             ();
-        },
+        }
         PublicKeyType::KeyList(keylist) => {
             token_create_tx
                 .admin_key(keylist.clone())
@@ -192,7 +212,7 @@ async fn create_new_token(client: &Client, used_data: &UsedData) -> TokenId {
             ();
         }
     }
-    
+
     // If token supply is finite a maximum supply must be set
     if used_data.token_supply_type == TokenSupplyType::Finite {
         match used_data.max_supply {
@@ -205,79 +225,74 @@ async fn create_new_token(client: &Client, used_data: &UsedData) -> TokenId {
     }
 
     // Execute transaction with max fee of 100 HBar to be sure it gets executed
-    let token_create_response = match token_create_tx.max_transaction_fee(Hbar::new(100)).execute(client).await {
-        Ok(tx_response) => tx_response,
-        Err(e) => panic!("Token Create Transaction failed with error: {}", e)
-    };
+    // Get transaction receipt and return only token id
+    let token_id = token_create_tx
+        .max_transaction_fee(Hbar::new(100))
+        .execute(client)
+        .await?
+        .get_receipt(client)
+        .await?
+        .token_id
+        .ok_or_else(|| anyhow::anyhow!("Token creation failed"))?;
 
-    // Get transaction receipt
-    let receipt = match token_create_response.get_receipt(client).await {
-        Ok(receipt) => receipt,
-        Err(e) => panic!("Transaction Receipt failed with error: {}", e)
-    };
+    log::info!("successfully created token {token_id}");
 
-    // Ectract and return only token id
-    match receipt.token_id {
-        Some(token_id) => return token_id,
-        None => panic!("Token Id retrieval failed")
-    };
+    Ok(token_id)
 }
 
 // Fetch token data on chain with TokenInfo query
-async fn get_token_info(client: &Client, token_id: TokenId) -> TokenInfo{
-    let _ = match TokenInfoQuery::new()
-        .token_id(token_id)
-        .execute(client)
-        .await {
-            Ok(token_info) => return token_info,
-            Err(e) => panic!("Token Info Query failed with error: {}", e)
-        };
+async fn get_token_info(client: &Client, token_id: TokenId) -> anyhow::Result<TokenInfo> {
+    let token_info = TokenInfoQuery::new().token_id(token_id).execute(client).await?;
+
+    log::info!("successfully fetched token info of token {token_id}");
+
+    Ok(token_info)
 }
 
 // Compare all data from the token onchain (token_info) with the previously used data (used_data)
 fn check_token_info(token_info: TokenInfo, used_data: &UsedData) {
-    assert_eq!(token_info.name, used_data.name, "On chain name does not match name from used_Data.");
-    assert_eq!(token_info.token_type, used_data.token_type, "On chain token_type does not match token_type from used_Data.");
-    assert_eq!(token_info.symbol, used_data.symbol, "On chain symbol does not match symbol from used_Data.");
-    assert_eq!(token_info.decimals, used_data.decimals, "On chain decimals do not match decimals from used_Data.");
-    assert_eq!(token_info.total_supply, used_data.initial_supply, "On chain total_supply does not match initial_supply from used_Data.");
-    assert_eq!(token_info.treasury_account_id, used_data.account_id, "On chain treasury_account_id does not match account_id from used_Data.");
-    assert_eq!(token_info.default_freeze_status.unwrap(), used_data.default_freeze_status, "On chain default_freeze_status does not match default_freeze_status from used_Data.");
-    assert_eq!(token_info.auto_renew_account.unwrap(), used_data.account_id, "On chain auto_renew_account does not match account_id from used_Data.");
-    assert_eq!(token_info.auto_renew_period.unwrap(), used_data.auto_renew_period, "On chain auto_renew_period does not match auto_renew_period from used_Data.");
-    assert_eq!(token_info.token_memo, used_data.memo, "On chain token_memo does not match memo from used_Data.");
-    assert_eq!(token_info.custom_fees, used_data.custom_fees, "On chain custom_fees do not match custom_fees from used_Data.");
-    
+    assert_eq!(token_info.name, used_data.name);
+    assert_eq!(token_info.token_type, used_data.token_type);
+    assert_eq!(token_info.symbol, used_data.symbol);
+    assert_eq!(token_info.decimals, used_data.decimals);
+    assert_eq!(token_info.total_supply, used_data.initial_supply);
+    assert_eq!(token_info.treasury_account_id, used_data.account_id);
+    assert_eq!(token_info.default_freeze_status.unwrap(), used_data.default_freeze_status);
+    assert_eq!(token_info.auto_renew_account.unwrap(), used_data.account_id);
+    assert_eq!(token_info.auto_renew_period.unwrap(), used_data.auto_renew_period);
+    assert_eq!(token_info.token_memo, used_data.memo);
+    assert_eq!(token_info.custom_fees, used_data.custom_fees);
+
     match &used_data.public_key {
         PublicKeyType::PublicKey(key) => {
             let key = Key::from(key.clone());
-            assert_eq!(token_info.admin_key.unwrap(), key, "On chain admin_key does not match public_key from used_Data.");
-            assert_eq!(token_info.kyc_key.unwrap(), key, "On chain kyc_key does not match public_key from used_Data.");
-            assert_eq!(token_info.freeze_key.unwrap(), key, "On chain freeze_key does not match public_key from used_Data.");
-            assert_eq!(token_info.wipe_key.unwrap(), key, "On chain wipe_key does not match public_key from used_Data.");
-            assert_eq!(token_info.supply_key.unwrap(), key, "On chain supply_key does not match public_key from used_Data.");
-            assert_eq!(token_info.fee_schedule_key.unwrap(), key, "On chain fee_schedule_key does not match public_key from used_Data.");
-            assert_eq!(token_info.pause_key.unwrap(), key, "On chain pause_key does not match public_key from used_Data.");
+            assert_eq!(token_info.admin_key, Some(key.clone()));
+            assert_eq!(token_info.kyc_key, Some(key.clone()));
+            assert_eq!(token_info.freeze_key, Some(key.clone()));
+            assert_eq!(token_info.wipe_key, Some(key.clone()));
+            assert_eq!(token_info.supply_key, Some(key.clone()));
+            assert_eq!(token_info.fee_schedule_key, Some(key.clone()));
+            assert_eq!(token_info.pause_key, Some(key));
             ();
-        },
+        }
         PublicKeyType::KeyList(keylist) => {
             let keylist = Key::from(keylist.clone());
-            assert_eq!(token_info.admin_key.unwrap(), keylist, "On chain admin_key does not match public_key from used_Data.");
-            assert_eq!(token_info.kyc_key.unwrap(), keylist, "On chain kyc_key does not match public_key from used_Data.");
-            assert_eq!(token_info.freeze_key.unwrap(), keylist, "On chain freeze_key does not match public_key from used_Data.");
-            assert_eq!(token_info.wipe_key.unwrap(), keylist, "On chain wipe_key does not match public_key from used_Data.");
-            assert_eq!(token_info.supply_key.unwrap(), keylist, "On chain supply_key does not match public_key from used_Data.");
-            assert_eq!(token_info.fee_schedule_key.unwrap(), keylist, "On chain fee_schedule_key does not match public_key from used_Data.");
-            assert_eq!(token_info.pause_key.unwrap(), keylist, "On chain pause_key does not match public_key from used_Data.");
+            assert_eq!(token_info.admin_key, Some(keylist.clone()));
+            assert_eq!(token_info.kyc_key, Some(keylist.clone()));
+            assert_eq!(token_info.freeze_key, Some(keylist.clone()));
+            assert_eq!(token_info.wipe_key, Some(keylist.clone()));
+            assert_eq!(token_info.supply_key, Some(keylist.clone()));
+            assert_eq!(token_info.fee_schedule_key, Some(keylist.clone()));
+            assert_eq!(token_info.pause_key, Some(keylist));
             ();
         }
     }
-    
-    assert_eq!(token_info.supply_type, used_data.token_supply_type, "On chain token_supply_type does not match token_supply_type from used_Data.");
-    if used_data.token_supply_type == TokenSupplyType::Finite  {
+
+    assert_eq!(token_info.supply_type, used_data.token_supply_type);
+    if used_data.token_supply_type == TokenSupplyType::Finite {
         match used_data.max_supply {
             Some(max_supply) => {
-                assert_eq!(token_info.max_supply, max_supply, "On chain max_supply does not match max_supply from used_Data.");
+                assert_eq!(token_info.max_supply, max_supply);
                 ();
             }
             None => panic!("Token Supply Type is finite but no max supply was provided."),
@@ -298,9 +313,6 @@ fn generate_key_list(key_threshold: Option<u32>) -> (Vec<PrivateKey>, KeyList) {
         private_keys.push(PrivateKey::from(private.clone()));
         public_keys.push(Key::from(private.public_key()));
     }
-    let keylist = KeyList {
-        keys: public_keys,
-        threshold: key_threshold,
-    };
-    return (private_keys, keylist)
+    let keylist = KeyList { keys: public_keys, threshold: key_threshold };
+    return (private_keys, keylist);
 }
