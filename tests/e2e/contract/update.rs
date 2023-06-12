@@ -1,11 +1,8 @@
 use assert_matches::assert_matches;
 use hedera::{
-    ContractCreateTransaction,
     ContractDeleteTransaction,
-    ContractFunctionParameters,
     ContractInfoQuery,
     ContractUpdateTransaction,
-    Hbar,
     Key,
     Status,
 };
@@ -15,7 +12,6 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
-use crate::contract::bytecode_file_id;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
