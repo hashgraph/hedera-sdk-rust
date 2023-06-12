@@ -4,6 +4,7 @@ mod create;
 mod create_flow;
 mod delete;
 mod execute;
+mod info;
 
 const SMART_CONTRACT_BYTECODE: &'static str = concat!(
     "608060405234801561001057600080fd5b506040516104d73803806104d7833981810160405260208110156100",
