@@ -1,8 +1,6 @@
 use assert_matches::assert_matches;
 use hedera::{
-    ContractCreateTransaction,
     ContractDeleteTransaction,
-    ContractFunctionParameters,
     ContractInfoQuery,
     Status,
 };
