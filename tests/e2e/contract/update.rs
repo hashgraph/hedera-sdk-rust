@@ -4,17 +4,21 @@ use hedera::{
     ContractDeleteTransaction,
     ContractFunctionParameters,
     ContractInfoQuery,
+    ContractUpdateTransaction,
+    Hbar,
+    Key,
     Status,
 };
 
+use super::ContractAdminKey;
 use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
-use crate::contract::ContractAdminKey;
+use crate::contract::bytecode_file_id;
 
 #[tokio::test]
-async fn admin_key() -> anyhow::Result<()> {
+async fn basic() -> anyhow::Result<()> {
     let Some(TestEnvironment { config, client }) = setup_nonfree() else {
         return Ok(())
     };
@@ -28,6 +32,22 @@ async fn admin_key() -> anyhow::Result<()> {
         super::create_contract(&client, op.private_key.public_key(), ContractAdminKey::Operator)
             .await?;
 
+    ContractUpdateTransaction::new()
+        .contract_id(contract_id)
+        .contract_memo("[e2e::ContractUpdateTransaction]")
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    let info = ContractInfoQuery::new().contract_id(contract_id).execute(&client).await?;
+
+    assert_eq!(info.contract_id, contract_id);
+    assert_eq!(info.account_id.to_string(), info.contract_id.to_string());
+    assert_eq!(info.admin_key, Some(Key::Single(op.private_key.public_key())));
+    assert_eq!(info.storage, 128);
+    assert_eq!(info.contract_memo, "[e2e::ContractUpdateTransaction]");
+
     ContractDeleteTransaction::new()
         .transfer_account_id(op.account_id)
         .contract_id(contract_id)
@@ -36,15 +56,33 @@ async fn admin_key() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await?;
 
-    let res = ContractInfoQuery::new().contract_id(contract_id).execute(&client).await?;
+    Ok(())
+}
 
-    assert!(res.is_deleted);
+#[tokio::test]
+async fn missing_contract_id_fails() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(())
+    };
+
+    let res = ContractUpdateTransaction::new()
+        .contract_memo("[e2e::ContractUpdateTransaction]")
+        .execute(&client)
+        .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InvalidContractId,
+            transaction_id: _
+        })
+    );
 
     Ok(())
 }
 
 #[tokio::test]
-async fn missing_admin_key_fails() -> anyhow::Result<()> {
+async fn immutable_contract_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config, client }) = setup_nonfree() else {
         return Ok(())
     };
@@ -56,8 +94,9 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
     let contract_id = super::create_contract(&client, op.private_key.public_key(), None).await?;
 
-    let res = ContractDeleteTransaction::new()
+    let res = ContractUpdateTransaction::new()
         .contract_id(contract_id)
+        .contract_memo("[e2e::ContractUpdateTransaction]")
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -67,25 +106,6 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::ReceiptStatus {
             status: Status::ModifyingImmutableContract,
-            transaction_id: _
-        })
-    );
-
-    Ok(())
-}
-
-#[tokio::test]
-async fn missing_contract_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
-
-    let res = ContractDeleteTransaction::new().execute(&client).await;
-
-    assert_matches!(
-        res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidContractId,
             transaction_id: _
         })
     );

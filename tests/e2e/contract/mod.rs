@@ -1,10 +1,22 @@
-use hedera::FileId;
+use hedera::{
+    ContractCreateTransaction,
+    ContractFunctionParameters,
+    ContractId,
+    FileId,
+    PublicKey,
+};
 
 mod create;
 mod create_flow;
 mod delete;
 mod execute;
 mod info;
+mod update;
+
+enum ContractAdminKey {
+    Operator,
+    // Custom(PrivateKey),
+}
 
 const SMART_CONTRACT_BYTECODE: &'static str = concat!(
     "608060405234801561001057600080fd5b506040516104d73803806104d7833981810160405260208110156100",
@@ -75,4 +87,48 @@ async fn bytecode_file_id(
     }
 
     BYTECODE_FILE.get_or_try_init(|| make_file(client, op_key)).await.copied()
+}
+
+async fn create_contract(
+    client: &hedera::Client,
+    op_key: PublicKey,
+    admin_key: impl Into<Option<ContractAdminKey>>,
+) -> hedera::Result<ContractId> {
+    async fn inner(
+        client: &hedera::Client,
+        op_key: PublicKey,
+        admin_key: Option<ContractAdminKey>,
+    ) -> hedera::Result<ContractId> {
+        let file_id = bytecode_file_id(&client, op_key).await?;
+
+        let mut tx = ContractCreateTransaction::new();
+
+        match admin_key {
+            Some(ContractAdminKey::Operator) => {
+                tx.admin_key(op_key);
+            }
+            // Some(ContractAdminKey::Custom(key)) => {
+            //     tx.admin_key(key.public_key()).sign(key);
+            // }
+            None => {}
+        }
+
+        let contract_id = tx
+            .gas(100000)
+            .constructor_parameters(
+                ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
+            )
+            .bytecode_file_id(file_id)
+            .contract_memo("[e2e::ContractCreateTransaction]")
+            .execute(&client)
+            .await?
+            .get_receipt(&client)
+            .await?
+            .contract_id
+            .unwrap();
+
+        Ok(contract_id)
+    }
+
+    inner(client, op_key, admin_key.into()).await
 }
