@@ -19,7 +19,9 @@ Execute command in root directory:
 ```bash
 task build
 ```
+## API Docs
 
+Check out the Hedera Rust SDK API reference docs [here](http://docs.rs/hedera/latest/hedera/index.html).
 
 ## Community and Support
 
