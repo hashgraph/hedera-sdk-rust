@@ -29,7 +29,7 @@ async fn basic() -> anyhow::Result<()> {
 
     let file_id = FileCreateTransaction::new()
         .keys([op.private_key.public_key()])
-        .contents("[rust::e2e::file_update::1]")
+        .contents("[rust::e2e::file_append::1]")
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -76,7 +76,7 @@ async fn large_contents() -> anyhow::Result<()> {
 
     let file_id = FileCreateTransaction::new()
         .keys([op.private_key.public_key()])
-        .contents("[rust::e2e::file_update::2]")
+        .contents("[rust::e2e::file_append::2]")
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -96,7 +96,7 @@ async fn large_contents() -> anyhow::Result<()> {
 
     assert_eq!(
         String::from_utf8(contents.contents).unwrap(),
-        format!("[rust::e2e::file_update::2]{}", resources::BIG_CONTENTS)
+        format!("[rust::e2e::file_append::2]{}", resources::BIG_CONTENTS)
     );
 
     let info = FileInfoQuery::new().file_id(file_id).execute(&client).await?;
@@ -130,7 +130,7 @@ async fn large_contents_small_valid_duration() -> anyhow::Result<()> {
 
     let file_id = FileCreateTransaction::new()
         .keys([op.private_key.public_key()])
-        .contents("[rust::e2e::file_update::3]")
+        .contents("[rust::e2e::file_append::3]")
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -152,7 +152,7 @@ async fn large_contents_small_valid_duration() -> anyhow::Result<()> {
 
     assert_eq!(
         String::from_utf8(contents.contents).unwrap(),
-        format!("[rust::e2e::file_update::3]{}", resources::BIG_CONTENTS)
+        format!("[rust::e2e::file_append::3]{}", resources::BIG_CONTENTS)
     );
 
     let info = FileInfoQuery::new().file_id(file_id).execute(&client).await?;
