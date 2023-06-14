@@ -3,3 +3,4 @@ mod contents;
 mod create;
 mod delete;
 mod info;
+mod update;
