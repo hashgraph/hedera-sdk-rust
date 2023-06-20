@@ -1,3 +1,5 @@
+mod associate;
+
 use hedera::{
     Client,
     TokenCreateTransaction,
