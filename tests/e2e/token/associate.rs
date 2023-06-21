@@ -114,6 +114,7 @@ async fn missing_signature_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(())
     };
+
     let account = Account::create(Hbar::new(0), &client).await?;
 
     let res = TokenAssociateTransaction::new()
