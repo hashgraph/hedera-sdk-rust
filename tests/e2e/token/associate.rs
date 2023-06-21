@@ -3,12 +3,6 @@ use hedera::{
     Hbar,
     Status,
     TokenAssociateTransaction,
-    TokenCreateTransaction,
-    TokenDeleteTransaction,
-};
-use time::{
-    Duration,
-    OffsetDateTime,
 };
 
 use crate::account::Account;
@@ -28,26 +22,11 @@ async fn basic() -> anyhow::Result<()> {
         Account::create(Hbar::new(1), &client)
     )?;
 
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .decimals(3)
-        .initial_supply(0)
-        .treasury_account_id(alice.id)
-        .admin_key(alice.key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_default(false)
-        .sign(alice.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let token = super::FungibleToken::create(&client, &alice, 0).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
-        .token_ids([token_id])
+        .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
         .execute(&client)
@@ -55,13 +34,7 @@ async fn basic() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await?;
 
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(alice.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
+    token.delete(&client).await?;
 
     tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
 

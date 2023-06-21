@@ -29,27 +29,11 @@ async fn basic() -> anyhow::Result<()> {
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .decimals(3)
-        .initial_supply(10)
-        .treasury_account_id(account.id)
-        .admin_key(account.key.public_key())
-        .supply_key(account.key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_default(false)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let token = super::FungibleToken::create(&client, &account, 10).await?;
 
     let receipt = TokenBurnTransaction::new()
         .amount(10_u64)
-        .token_id(token_id)
+        .token_id(token.id)
         .sign(account.key.clone())
         .execute(&client)
         .await?
@@ -58,14 +42,7 @@ async fn basic() -> anyhow::Result<()> {
 
     assert_eq!(receipt.total_supply, 0);
 
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    token.delete(&client).await?;
     account.delete(&client).await?;
 
     Ok(())
@@ -97,27 +74,10 @@ async fn burn_zero() -> anyhow::Result<()> {
         };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .decimals(3)
-        .initial_supply(0)
-        .treasury_account_id(account.id)
-        .admin_key(account.key.public_key())
-        .supply_key(account.key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_default(false)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let token = super::FungibleToken::create(&client, &account, 0).await?;
 
     let receipt = TokenBurnTransaction::new()
-        .token_id(token_id)
+        .token_id(token.id)
         .sign(account.key.clone())
         .execute(&client)
         .await?
@@ -126,14 +86,7 @@ async fn burn_zero() -> anyhow::Result<()> {
 
     assert_eq!(receipt.total_supply, 0);
 
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    token.delete(&client).await?;
     account.delete(&client).await?;
 
     Ok(())
@@ -146,27 +99,10 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
         };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .decimals(3)
-        .initial_supply(0)
-        .treasury_account_id(account.id)
-        .admin_key(account.key.public_key())
-        .supply_key(account.key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_default(false)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let token = super::FungibleToken::create(&client, &account, 0).await?;
 
     let res = TokenBurnTransaction::new()
-        .token_id(token_id)
+        .token_id(token.id)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -177,14 +113,7 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    token.delete(&client).await?;
     account.delete(&client).await?;
 
     Ok(())
