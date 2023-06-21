@@ -16,11 +16,57 @@ use time::{
 };
 use tokio::task::JoinSet;
 
+use crate::account::Account;
 use crate::common::{
     setup_global,
     Operator,
     TestEnvironment,
 };
+
+struct FungibleToken {
+    id: TokenId,
+    owner: Account,
+}
+
+impl FungibleToken {
+    async fn create(client: &Client, owner: &Account, initial_supply: u64) -> hedera::Result<Self> {
+        let owner_public_key = owner.key.public_key();
+        let token_id = TokenCreateTransaction::new()
+            .name("ffff")
+            .symbol("F")
+            .decimals(3)
+            .initial_supply(initial_supply)
+            .treasury_account_id(owner.id)
+            .admin_key(owner_public_key)
+            .freeze_key(owner_public_key)
+            .wipe_key(owner_public_key)
+            .kyc_key(owner_public_key)
+            .supply_key(owner_public_key)
+            .freeze_default(false)
+            .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
+            .sign(owner.key.clone())
+            .execute(client)
+            .await?
+            .get_receipt(client)
+            .await?
+            .token_id
+            .unwrap();
+
+        Ok(Self { id: token_id, owner: owner.clone() })
+    }
+
+    async fn delete(self, client: &Client) -> hedera::Result<()> {
+        TokenDeleteTransaction::new()
+            .token_id(self.id)
+            .sign(self.owner.key)
+            .execute(&client)
+            .await?
+            .get_receipt(&client)
+            .await?;
+
+        Ok(())
+    }
+}
 
 #[tokio::test]
 async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
