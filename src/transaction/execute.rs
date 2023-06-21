@@ -232,13 +232,11 @@ where
         status: crate::Status,
         transaction_id: Option<&TransactionId>,
     ) -> crate::Error {
-        if let Some(transaction_id) = transaction_id {
-            crate::Error::TransactionPreCheckStatus {
-                status,
-                transaction_id: Box::new(*transaction_id),
-            }
-        } else {
-            crate::Error::TransactionNoIdPreCheckStatus { status }
+        crate::Error::TransactionPreCheckStatus {
+            status,
+            transaction_id: Box::new(
+                *transaction_id.expect("transactions must have transaction IDs"),
+            ),
         }
     }
 

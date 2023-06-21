@@ -153,3 +153,15 @@ pub(crate) fn setup_global() -> TestEnvironment {
 
     TestEnvironment { config: &CONFIG, client: client() }
 }
+
+pub(crate) fn setup_nonfree() -> Option<TestEnvironment> {
+    let env = setup_global();
+
+    match env.config.run_nonfree_tests {
+        true => Some(env),
+        false => {
+            log::debug!("skipping non-free test");
+            None
+        }
+    }
+}
