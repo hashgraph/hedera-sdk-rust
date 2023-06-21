@@ -1,6 +1,7 @@
 mod associate;
 mod burn;
 mod delete;
+mod dissociate;
 
 use hedera::{
     Client,
