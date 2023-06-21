@@ -1,4 +1,5 @@
 mod associate;
+mod burn;
 
 use hedera::{
     Client,
