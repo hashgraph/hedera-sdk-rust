@@ -2,6 +2,7 @@ mod associate;
 mod burn;
 mod delete;
 mod dissociate;
+mod fee_schedule_update;
 
 use hedera::{
     Client,
@@ -43,6 +44,7 @@ impl FungibleToken {
             .wipe_key(owner_public_key)
             .kyc_key(owner_public_key)
             .supply_key(owner_public_key)
+            .fee_schedule_key(owner_public_key)
             .freeze_default(false)
             .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
             .sign(owner.key.clone())
