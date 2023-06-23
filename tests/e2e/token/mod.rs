@@ -5,6 +5,7 @@ mod dissociate;
 mod fee_schedule_update;
 mod freeze;
 mod grant_kyc;
+mod info;
 
 use hedera::{
     Client,
