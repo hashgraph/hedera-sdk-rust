@@ -3,6 +3,7 @@ mod burn;
 mod delete;
 mod dissociate;
 mod fee_schedule_update;
+mod freeze;
 
 use hedera::{
     Client,
