@@ -6,6 +6,7 @@ mod fee_schedule_update;
 mod freeze;
 mod grant_kyc;
 mod info;
+mod mint;
 
 use hedera::{
     Client,
@@ -59,6 +60,19 @@ impl FungibleToken {
             .unwrap();
 
         Ok(Self { id: token_id, owner: owner.clone() })
+    }
+
+    async fn burn(&self, client: &Client, supply: u64) -> hedera::Result<()> {
+        hedera::TokenBurnTransaction::new()
+            .token_id(self.id)
+            .amount(supply)
+            .sign(self.owner.key.clone())
+            .execute(client)
+            .await?
+            .get_receipt(&client)
+            .await?;
+
+        Ok(())
     }
 
     async fn delete(self, client: &Client) -> hedera::Result<()> {
