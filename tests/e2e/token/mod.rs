@@ -8,6 +8,7 @@ mod grant_kyc;
 mod info;
 mod mint;
 mod revoke_kyc;
+mod unfreeze;
 
 use hedera::{
     Client,
