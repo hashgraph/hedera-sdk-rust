@@ -18,8 +18,8 @@ async fn basic() -> anyhow::Result<()> {
     };
 
     let (alice, bob) = tokio::try_join!(
-        Account::create(Hbar::new(5), &client),
-        Account::create(Hbar::new(1), &client)
+        Account::create(Hbar::new(0), &client),
+        Account::create(Hbar::new(0), &client)
     )?;
 
     let token = super::FungibleToken::create(&client, &alice, 0).await?;
