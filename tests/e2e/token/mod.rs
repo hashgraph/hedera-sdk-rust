@@ -10,6 +10,7 @@ mod mint;
 mod nft_info;
 mod nft_transfer;
 mod revoke_kyc;
+mod transfer;
 mod unfreeze;
 
 use hedera::{
