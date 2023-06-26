@@ -8,6 +8,7 @@ mod grant_kyc;
 mod info;
 mod mint;
 mod nft_info;
+mod nft_transfer;
 mod revoke_kyc;
 mod unfreeze;
 
