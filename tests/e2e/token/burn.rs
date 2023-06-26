@@ -4,15 +4,7 @@ use hedera::{
     Status,
     TokenAssociateTransaction,
     TokenBurnTransaction,
-    TokenCreateTransaction,
-    TokenDeleteTransaction,
-    TokenMintTransaction,
-    TokenType,
     TransferTransaction,
-};
-use time::{
-    Duration,
-    OffsetDateTime,
 };
 
 use crate::account::Account;
@@ -20,6 +12,7 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
+use crate::token::Nft;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -126,50 +119,21 @@ async fn burn_nfts() -> anyhow::Result<()> {
     };
 
     let account = Account::create(Hbar::new(0), &client).await?;
+    let token = Nft::create(&client, &account).await?;
 
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(account.id)
-        .admin_key(account.key.public_key())
-        .supply_key(account.key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_default(false)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let mint_receipt = token.mint_incremental(&client, 10).await?;
 
-    let mint_receipt = TokenMintTransaction::new()
-        .token_id(token_id)
-        .metadata((0..10).map(|it| [it]))
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    // this is specifically what we're testing here.
     TokenBurnTransaction::new()
         .serials(mint_receipt.serials)
-        .token_id(token_id)
+        .token_id(token.id)
         .sign(account.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
         .await?;
 
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    token.delete(&client).await?;
     account.delete(&client).await?;
 
     Ok(())
@@ -186,38 +150,14 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(alice.id)
-        .admin_key(alice.key.public_key())
-        .supply_key(alice.key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_default(false)
-        .sign(alice.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let token = Nft::create(&client, &alice).await?;
+    let serials = token.mint_incremental(&client, 1).await?.serials;
 
-    let serials = TokenMintTransaction::new()
-        .token_id(token_id)
-        .metadata((0..1).map(|it| [it]))
-        .sign(alice.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .serials;
-
-    let nft = token_id.nft(serials[0] as u64);
+    let nft = token.id.nft(serials[0] as u64);
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
-        .token_ids([token_id])
+        .token_ids([token.id])
         .sign(bob.key.clone())
         .execute(&client)
         .await?
@@ -234,7 +174,7 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
 
     let res = TokenBurnTransaction::new()
         .serials([nft.serial as i64])
-        .token_id(token_id)
+        .token_id(token.id)
         .sign(alice.key.clone())
         .execute(&client)
         .await?
@@ -257,22 +197,8 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await?;
 
-    TokenBurnTransaction::new()
-        .serials([nft.serial as i64])
-        .token_id(token_id)
-        .sign(alice.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(alice.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
+    token.burn(&client, [nft.serial as i64]).await?;
+    token.delete(&client).await?;
 
     tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
 

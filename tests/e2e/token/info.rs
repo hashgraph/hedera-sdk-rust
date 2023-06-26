@@ -4,11 +4,8 @@ use hedera::{
     Key,
     PrivateKey,
     Status,
-    TokenBurnTransaction,
     TokenCreateTransaction,
-    TokenDeleteTransaction,
     TokenInfoQuery,
-    TokenMintTransaction,
     TokenSupplyType,
     TokenType,
 };
@@ -22,7 +19,10 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
-use crate::token::FungibleToken;
+use crate::token::{
+    FungibleToken,
+    Nft,
+};
 
 #[tokio::test]
 
@@ -156,14 +156,9 @@ async fn query_nft() -> anyhow::Result<()> {
         .token_id
         .unwrap();
 
-    let mint_receipt = TokenMintTransaction::new()
-        .token_id(token_id)
-        .metadata((0..10).map(|it| [it]))
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
+    let token = Nft { id: token_id, owner: account.clone() };
+
+    let mint_receipt = token.mint_incremental(&client, 10).await?;
 
     assert_eq!(mint_receipt.serials.len(), 10);
 
@@ -183,23 +178,8 @@ async fn query_nft() -> anyhow::Result<()> {
     assert_eq!(info.supply_type, TokenSupplyType::Finite);
     assert_eq!(info.max_supply, 5000);
 
-    TokenBurnTransaction::new()
-        .serials(mint_receipt.serials)
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    token.burn(&client, mint_receipt.serials).await?;
+    token.delete(&client).await?;
     account.delete(&client).await?;
 
     Ok(())
