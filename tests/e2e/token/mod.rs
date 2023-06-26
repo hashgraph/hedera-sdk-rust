@@ -12,6 +12,7 @@ mod nft_transfer;
 mod revoke_kyc;
 mod transfer;
 mod unfreeze;
+mod update;
 
 use hedera::{
     Client,
