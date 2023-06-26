@@ -2,9 +2,7 @@ use assert_matches::assert_matches;
 use hedera::{
     Hbar,
     Status,
-    TokenBurnTransaction,
     TokenCreateTransaction,
-    TokenDeleteTransaction,
     TokenMintTransaction,
     TokenSupplyType,
     TokenType,
@@ -19,7 +17,10 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
-use crate::token::FungibleToken;
+use crate::token::{
+    FungibleToken,
+    Nft,
+};
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -204,6 +205,8 @@ async fn nfts() -> anyhow::Result<()> {
         .token_id
         .unwrap();
 
+    let token = Nft { id: token_id, owner: account.clone() };
+
     let mint_receipt = TokenMintTransaction::new()
         .token_id(token_id)
         .metadata((0..10).map(|it| [it]))
@@ -215,22 +218,8 @@ async fn nfts() -> anyhow::Result<()> {
 
     assert_eq!(mint_receipt.serials.len(), 10);
 
-    TokenBurnTransaction::new()
-        .serials(mint_receipt.serials)
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
+    token.burn(&client, mint_receipt.serials).await?;
+    token.delete(&client).await?;
 
     account.delete(&client).await?;
 
@@ -264,6 +253,8 @@ async fn nft_metadata_too_long_fails() -> anyhow::Result<()> {
         .token_id
         .unwrap();
 
+    let token = Nft { id: token_id, owner: account.clone() };
+
     let res = TokenMintTransaction::new()
         .token_id(token_id)
         .metadata([[1; 101]])
@@ -279,14 +270,7 @@ async fn nft_metadata_too_long_fails() -> anyhow::Result<()> {
         })
     );
 
-    TokenDeleteTransaction::new()
-        .token_id(token_id)
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
+    token.delete(&client).await?;
     account.delete(&client).await?;
 
     Ok(())
