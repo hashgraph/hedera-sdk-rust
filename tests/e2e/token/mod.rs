@@ -13,6 +13,7 @@ mod revoke_kyc;
 mod transfer;
 mod unfreeze;
 mod update;
+mod wipe;
 
 use hedera::{
     Client,
