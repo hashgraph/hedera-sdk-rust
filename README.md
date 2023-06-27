@@ -12,13 +12,13 @@
 ## Requirements
 
 - [Rust](https://rustup.rs)
-- [Swift](https://www.swift.org/getting-started/)
-- [Task](https://taskfile.dev)
+- [protoc](https://grpc.io/docs/protoc-installation)
 
 Execute command in root directory:
 ```bash
-task build
+cargo check
 ```
+
 ## API Docs
 
 Check out the Hedera Rust SDK API reference docs [here](http://docs.rs/hedera/latest/hedera/index.html).
