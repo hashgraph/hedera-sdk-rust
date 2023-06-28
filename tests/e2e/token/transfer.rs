@@ -245,3 +245,120 @@ async fn unowned_token_fails() -> anyhow::Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn decimals() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(())
+    };
+
+    let (alice, bob) = tokio::try_join!(
+        Account::create(Hbar::new(0), &client),
+        Account::create(Hbar::new(0), &client)
+    )?;
+
+    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+
+    TokenAssociateTransaction::new()
+        .account_id(bob.id)
+        .token_ids([token.id])
+        .freeze_with(&client)?
+        .sign(bob.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TokenGrantKycTransaction::new()
+        .account_id(bob.id)
+        .token_id(token.id)
+        .sign(alice.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TransferTransaction::new()
+        .token_transfer_with_decimals(token.id, alice.id, -10, 3)
+        .token_transfer_with_decimals(token.id, bob.id, 10, 3)
+        .sign(alice.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TransferTransaction::new()
+        .token_transfer_with_decimals(token.id, bob.id, -10, 3)
+        .token_transfer_with_decimals(token.id, alice.id, 10, 3)
+        .sign(bob.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    token.burn(&client, 10).await?;
+
+    token.delete(&client).await?;
+
+    tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn incorrect_decimals_fails() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(())
+    };
+
+    let (alice, bob) = tokio::try_join!(
+        Account::create(Hbar::new(0), &client),
+        Account::create(Hbar::new(0), &client)
+    )?;
+
+    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+
+    TokenAssociateTransaction::new()
+        .account_id(bob.id)
+        .token_ids([token.id])
+        .freeze_with(&client)?
+        .sign(bob.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TokenGrantKycTransaction::new()
+        .account_id(bob.id)
+        .token_id(token.id)
+        .sign(alice.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    let res = TransferTransaction::new()
+        .token_transfer_with_decimals(token.id, alice.id, -10, 2)
+        .token_transfer_with_decimals(token.id, bob.id, 10, 2)
+        .sign(alice.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::ReceiptStatus {
+            status: Status::UnexpectedTokenDecimals,
+            transaction_id: _
+        })
+    );
+
+    token.burn(&client, 10).await?;
+
+    token.delete(&client).await?;
+
+    tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
+
+    Ok(())
+}
