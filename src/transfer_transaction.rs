@@ -55,6 +55,9 @@ use crate::{
 /// from the corresponding account (a sender), and each positive one is added to the corresponding
 /// account (a receiver). The amounts list must sum to zero.
 ///
+/// All transfers are in the lowest denomination, for `Hbar` that is tinybars (although `Hbar` handles this itself).
+///
+/// As an example: for a fungible token with `3` decimals (and let's say the symbol is `ƒ`), transferring `1` _always_ transfers `0.001 ƒ`.
 pub type TransferTransaction = Transaction<TransferTransactionData>;
 
 #[derive(Debug, Clone, Default)]
@@ -146,6 +149,8 @@ impl TransferTransaction {
     }
 
     /// Add a non-approved token transfer to the transaction.
+    ///
+    /// `amount` is in the lowest denomination for the token (if the token has `2` decimals this would be `0.01` tokens).
     pub fn token_transfer(
         &mut self,
         token_id: TokenId,
@@ -156,6 +161,8 @@ impl TransferTransaction {
     }
 
     /// Add an approved token transfer to the transaction.
+    ///
+    /// `amount` is in the lowest denomination for the token (if the token has `2` decimals this would be `0.01` tokens).
     pub fn approved_token_transfer(
         &mut self,
         token_id: TokenId,
@@ -165,7 +172,11 @@ impl TransferTransaction {
         self._token_transfer(token_id, account_id, amount, true, None)
     }
 
-    /// Add a non-approved token transfer with decimals to the transaction.
+    // todo: make the examples into code, just not sure how to do that.
+    /// Add a non-approved token transfer to the transaction, ensuring that the token has `expected_decimals` decimals.
+    ///
+    /// `amount` is _still_ in the lowest denomination, however,
+    /// you will get an error if the token has a different amount of decimals than `expected_decimals`.
     pub fn token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
@@ -176,7 +187,10 @@ impl TransferTransaction {
         self._token_transfer(token_id, account_id, amount, false, Some(expected_decimals))
     }
 
-    /// Add an approved token transfer with decimals to the transaction.
+    /// Add an approved token transfer, ensuring that the token has `expected_decimals` decimals.
+    ///
+    /// `amount` is _still_ in the lowest denomination, however,
+    /// you will get an error if the token has a different amount of decimals than `expected_decimals`.
     pub fn approved_token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
