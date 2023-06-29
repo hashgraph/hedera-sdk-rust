@@ -23,9 +23,9 @@ async fn basic() -> anyhow::Result<()> {
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = Nft::create(&client, &account).await?;
 
-    let mint_receipt = token.mint(&client, [[50_u8]]).await?;
+    let serials = token.mint(&client, [[50_u8]]).await?;
 
-    let nft_id = token.id.nft(mint_receipt.serials[0] as u64);
+    let nft_id = token.id.nft(serials[0] as u64);
 
     let nft_info = TokenNftInfoQuery::new().nft_id(nft_id).execute(&client).await?;
 
@@ -33,7 +33,7 @@ async fn basic() -> anyhow::Result<()> {
     assert_eq!(nft_info.account_id, account.id);
     assert_eq!(nft_info.metadata, vec![50]);
 
-    token.burn(&client, mint_receipt.serials).await?;
+    token.burn(&client, serials).await?;
     token.delete(&client).await?;
     account.delete(&client).await?;
 

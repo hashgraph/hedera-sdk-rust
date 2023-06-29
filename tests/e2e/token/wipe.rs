@@ -97,11 +97,11 @@ async fn nft() -> anyhow::Result<()> {
         Ok(())
     };
 
-    let (mint_receipt, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
+    let (serials, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
 
     let mut transfer_tx = TransferTransaction::new();
 
-    let (serials_to_transfer, serials) = mint_receipt.serials.split_at(4);
+    let (serials_to_transfer, serials) = serials.split_at(4);
 
     for &serial in serials_to_transfer {
         transfer_tx.nft_transfer(token.id.nft(serial as u64), alice.id, bob.id);
@@ -155,13 +155,13 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
         Ok(())
     };
 
-    let (mint_receipt, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
+    let (serials, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
 
     // don't transfer them
     let res = TokenWipeTransaction::new()
         .token_id(token.id)
         .account_id(bob.id)
-        .serials(mint_receipt.serials[0..4].iter().map(|it| *it as u64))
+        .serials(serials[0..4].iter().map(|it| *it as u64))
         .sign(alice.key.clone())
         .execute(&client)
         .await?
@@ -176,7 +176,7 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
         })
     );
 
-    token.burn(&client, mint_receipt.serials).await?;
+    token.burn(&client, serials).await?;
     token.delete(&client).await?;
     tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
 

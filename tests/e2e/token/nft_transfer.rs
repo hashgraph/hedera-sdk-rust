@@ -39,11 +39,11 @@ async fn basic() -> anyhow::Result<()> {
         Ok(())
     };
 
-    let (mint_receipt, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
+    let (serials, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
 
     let mut transfer_tx = TransferTransaction::new();
 
-    let serials_to_transfer = &mint_receipt.serials[..4];
+    let serials_to_transfer = &serials[..4];
 
     for &serial in serials_to_transfer {
         transfer_tx.nft_transfer(token.id.nft(serial as u64), alice.id, bob.id);
@@ -59,7 +59,7 @@ async fn basic() -> anyhow::Result<()> {
 
     transfer_tx.sign(bob.key.clone()).execute(&client).await?.get_receipt(&client).await?;
 
-    token.burn(&client, mint_receipt.serials).await?;
+    token.burn(&client, serials).await?;
     token.delete(&client).await?;
 
     tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
@@ -94,11 +94,11 @@ async fn unowned_nfts_fails() -> anyhow::Result<()> {
         Ok(())
     };
 
-    let (mint_receipt, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
+    let (serials, _) = tokio::try_join!(token.mint_incremental(&client, 10), associate_fut)?;
 
     let mut transfer_tx = TransferTransaction::new();
 
-    let serials_to_transfer = &mint_receipt.serials[..4];
+    let serials_to_transfer = &serials[..4];
 
     // try to transfer in the wrong direction
     for &serial in serials_to_transfer {
@@ -115,7 +115,7 @@ async fn unowned_nfts_fails() -> anyhow::Result<()> {
         })
     );
 
-    token.burn(&client, mint_receipt.serials).await?;
+    token.burn(&client, serials).await?;
     token.delete(&client).await?;
 
     tokio::try_join!(alice.delete(&client), bob.delete(&client))?;

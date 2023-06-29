@@ -22,7 +22,6 @@ use hedera::{
     TokenDeleteTransaction,
     TokenId,
     TokenMintTransaction,
-    TransactionReceipt,
     TransactionResponse,
 };
 use time::{
@@ -133,7 +132,7 @@ impl Nft {
         &self,
         client: &Client,
         nfts_to_mint: u8,
-    ) -> hedera::Result<TransactionReceipt> {
+    ) -> hedera::Result<Vec<i64>> {
         self.mint(&client, (0..nfts_to_mint).map(|it| [it])).await
     }
 
@@ -141,18 +140,22 @@ impl Nft {
         &self,
         client: &Client,
         metadata: impl IntoIterator<Item = Bytes>,
-    ) -> hedera::Result<TransactionReceipt> {
+    ) -> hedera::Result<Vec<i64>> {
         async fn inner(
             nft: &Nft,
             client: &Client,
             mut tx: TokenMintTransaction,
-        ) -> hedera::Result<TransactionReceipt> {
-            tx.token_id(nft.id)
+        ) -> hedera::Result<Vec<i64>> {
+            let serials = tx
+                .token_id(nft.id)
                 .sign(nft.owner.key.clone())
                 .execute(client)
                 .await?
                 .get_receipt(client)
-                .await
+                .await?
+                .serials;
+
+            Ok(serials)
         }
 
         let mut tx = TokenMintTransaction::new();
