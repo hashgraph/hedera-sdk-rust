@@ -158,9 +158,9 @@ async fn query_nft() -> anyhow::Result<()> {
 
     let token = Nft { id: token_id, owner: account.clone() };
 
-    let mint_receipt = token.mint_incremental(&client, 10).await?;
+    let serials = token.mint_incremental(&client, 10).await?;
 
-    assert_eq!(mint_receipt.serials.len(), 10);
+    assert_eq!(serials.len(), 10);
 
     let info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
 
@@ -178,7 +178,7 @@ async fn query_nft() -> anyhow::Result<()> {
     assert_eq!(info.supply_type, TokenSupplyType::Finite);
     assert_eq!(info.max_supply, 5000);
 
-    token.burn(&client, mint_receipt.serials).await?;
+    token.burn(&client, serials).await?;
     token.delete(&client).await?;
     account.delete(&client).await?;
 

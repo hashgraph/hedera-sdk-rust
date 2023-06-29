@@ -121,11 +121,11 @@ async fn burn_nfts() -> anyhow::Result<()> {
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = Nft::create(&client, &account).await?;
 
-    let mint_receipt = token.mint_incremental(&client, 10).await?;
+    let serials = token.mint_incremental(&client, 10).await?;
 
     // this is specifically what we're testing here.
     TokenBurnTransaction::new()
-        .serials(mint_receipt.serials)
+        .serials(serials)
         .token_id(token.id)
         .sign(account.key.clone())
         .execute(&client)
@@ -151,7 +151,7 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
     )?;
 
     let token = Nft::create(&client, &alice).await?;
-    let serials = token.mint_incremental(&client, 1).await?.serials;
+    let serials = token.mint_incremental(&client, 1).await?;
 
     let nft = token.id.nft(serials[0] as u64);
 
