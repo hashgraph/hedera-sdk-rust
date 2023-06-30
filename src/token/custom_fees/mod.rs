@@ -63,14 +63,22 @@ pub struct CustomFee<Fee> {
     /// The account to receive the custom fee.
     pub fee_collector_account_id: Option<AccountId>,
 
+    /// If true, fee fcollectors are not charged this fee for transfers.
     pub all_collectors_are_exempt: bool,
 }
 
 impl AnyCustomFee {
+    /// Create `AnyCustomFee` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         FromProtobuf::from_bytes(bytes)
     }
 
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         ToProtobuf::to_bytes(self)
     }
@@ -206,22 +214,18 @@ pub struct FixedFeeData {
 
     /// The denomination of the fee; taken as hbar if left unset and, in a TokenCreate, taken as the id
     /// of the newly created token if set to the sentinel value of 0.0.0
-    pub denominating_token_id: TokenId,
+    pub denominating_token_id: Option<TokenId>,
 }
 
 impl FixedFeeData {
     #[must_use]
     pub fn from_hbar(amount: Hbar) -> Self {
-        Self {
-            amount: amount.to_tinybars(),
-            denominating_token_id: TokenId { shard: 0, realm: 0, num: 0, checksum: None },
-        }
+        Self { amount: amount.to_tinybars(), denominating_token_id: None }
     }
 
     #[must_use]
     pub fn get_hbar(&self) -> Option<Hbar> {
-        (self.denominating_token_id == TokenId { shard: 0, realm: 0, num: 0, checksum: None })
-            .then(|| Hbar::from_tinybars(self.amount))
+        self.denominating_token_id.is_none().then(|| Hbar::from_tinybars(self.amount))
     }
 }
 
@@ -229,7 +233,7 @@ impl FromProtobuf<services::FixedFee> for FixedFeeData {
     fn from_protobuf(pb: services::FixedFee) -> crate::Result<Self> {
         Ok(Self {
             amount: pb.amount,
-            denominating_token_id: TokenId::from_protobuf(pb_getf!(pb, denominating_token_id)?)?,
+            denominating_token_id: Option::from_protobuf(pb.denominating_token_id)?,
         })
     }
 }
@@ -240,7 +244,7 @@ impl ToProtobuf for FixedFeeData {
     fn to_protobuf(&self) -> Self::Protobuf {
         Self::Protobuf {
             amount: self.amount,
-            denominating_token_id: Some(self.denominating_token_id.to_protobuf()),
+            denominating_token_id: self.denominating_token_id.to_protobuf(),
         }
     }
 }
