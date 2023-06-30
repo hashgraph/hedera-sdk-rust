@@ -11,6 +11,7 @@ use hedera::{
     PrivateKey,
 };
 
+#[derive(Clone)]
 pub struct Account {
     pub key: PrivateKey,
     pub id: AccountId,

@@ -269,3 +269,89 @@ impl From<EntityId> for ContractId {
         Self { shard, realm, num, evm_address: None, checksum }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::ContractId;
+
+    #[test]
+    fn parse() {
+        expect_test::expect!["0.0.5005"]
+            .assert_eq(&ContractId::from_str("0.0.5005").unwrap().to_string());
+    }
+
+    #[test]
+    fn from_solidity_address() {
+        expect_test::expect!["0.0.5005"].assert_eq(
+            &ContractId::from_solidity_address("000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string(),
+        );
+    }
+
+    #[test]
+    fn from_solidity_address_0x() {
+        expect_test::expect!["0.0.5005"].assert_eq(
+            &ContractId::from_solidity_address("0x000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string(),
+        );
+    }
+
+    #[test]
+    fn from_evm_address() {
+        expect_test::expect!["1.2.98329e006610472e6b372c080833f6d79ed833cf"].assert_eq(
+            &ContractId::from_evm_address(1, 2, "98329e006610472e6B372C080833f6D79ED833cf")
+                .unwrap()
+                .to_string(),
+        )
+    }
+
+    #[test]
+    fn from_evm_address_0x() {
+        expect_test::expect!["1.2.98329e006610472e6b372c080833f6d79ed833cf"].assert_eq(
+            &ContractId::from_evm_address(1, 2, "0x98329e006610472e6B372C080833f6D79ED833cf")
+                .unwrap()
+                .to_string(),
+        )
+    }
+
+    #[test]
+    fn parse_evm_address() {
+        expect_test::expect!["1.2.98329e006610472e6b372c080833f6d79ed833cf"].assert_eq(
+            &ContractId::from_str("1.2.0x98329e006610472e6B372C080833f6D79ED833cf")
+                .unwrap()
+                .to_string(),
+        )
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let a = ContractId::from_str("1.2.3").unwrap();
+        assert_eq!(ContractId::from_bytes(&a.to_bytes()).unwrap(), a);
+        let b = ContractId::from_evm_address(1, 2, "0x98329e006610472e6B372C080833f6D79ED833cf")
+            .unwrap();
+        assert_eq!(ContractId::from_bytes(&b.to_bytes()).unwrap(), b);
+    }
+
+    #[test]
+    fn to_solidity_address() {
+        expect_test::expect!["000000000000000000000000000000000000138d"].assert_eq(
+            &ContractId { shard: 0, realm: 0, num: 5005, checksum: None, evm_address: None }
+                .to_solidity_address()
+                .unwrap(),
+        )
+    }
+
+    #[test]
+    fn to_solidity_address_2() {
+        expect_test::expect!["98329e006610472e6b372c080833f6d79ed833cf"].assert_eq(
+            &ContractId::from_evm_address(1, 2, "0x98329e006610472e6B372C080833f6D79ED833cf")
+                .unwrap()
+                .to_solidity_address()
+                .unwrap(),
+        )
+    }
+}
