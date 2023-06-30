@@ -48,9 +48,15 @@ impl FromStr for Checksum {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse()
-            .map(Checksum)
-            .map_err(|_| Error::basic_parse("Expected checksum to be exactly 5 characters"))
+        let ascii_str: TinyAsciiStr<5> = s
+            .parse()
+            .map_err(|e| Error::basic_parse(format!("Expected checksum to be valid ascii: {e}")))?;
+
+        if ascii_str.len() != 5 || !ascii_str.is_ascii_alphabetic_lowercase() {
+            return Err(Error::basic_parse("Expected checksum to be exactly 5 lowercase letters"));
+        }
+
+        Ok(Self(ascii_str))
     }
 }
 
@@ -129,6 +135,10 @@ impl<'a> PartialEntityId<'a> {
         match s.split_once('.') {
             Some((shard, rest)) => {
                 let (realm, last) = rest.split_once('.').ok_or_else(expecting)?;
+
+                if last.is_empty() {
+                    return Err(expecting());
+                }
 
                 let shard = shard.parse().map_err(|_| expecting())?;
                 let realm = realm.parse().map_err(|_| expecting())?;
