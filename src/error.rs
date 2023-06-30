@@ -43,7 +43,7 @@ pub enum Error {
     TimedOut(#[source] Box<Error>),
 
     /// GRPC status code was an error.
-    #[error("grpc: {0}")]
+    #[error("grpc: {0:?}")]
     GrpcStatus(#[from] tonic::Status),
 
     /// Failed to parse an SDK type from a protobuf response.
