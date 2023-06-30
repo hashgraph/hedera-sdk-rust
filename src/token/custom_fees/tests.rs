@@ -20,7 +20,7 @@ use crate::{
 fn custom_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let custom_fee = AnyCustomFee {
         fee_collector_account_id: Some(AccountId::from(1)),
-        fee: FixedFeeData { denominating_token_id: TokenId::from(2), amount: 1000 }.into(),
+        fee: FixedFeeData { denominating_token_id: Some(TokenId::from(2)), amount: 1000 }.into(),
         all_collectors_are_exempt: true,
     };
 
@@ -61,7 +61,7 @@ fn custom_fixed_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 #[test]
 fn fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let amount = 1000;
-    let fee = Fee::Fixed(FixedFeeData { amount, denominating_token_id: TokenId::from(1) });
+    let fee = Fee::Fixed(FixedFeeData { amount, denominating_token_id: Some(TokenId::from(1)) });
 
     let fee_proto = fee.to_protobuf();
 
@@ -98,7 +98,7 @@ fn fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 #[test]
 fn fixed_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
     let amount = 1000;
-    let fixed_fee = FixedFeeData { amount, denominating_token_id: TokenId::from(2) };
+    let fixed_fee = FixedFeeData { amount, denominating_token_id: Some(TokenId::from(2)) };
 
     let fixed_fee_proto = fixed_fee.to_protobuf();
 
@@ -169,7 +169,7 @@ fn fractional_fee_can_be_created_from_protobuf() -> anyhow::Result<()> {
 
 #[test]
 fn royalty_fee_can_convert_to_protobuf() -> anyhow::Result<()> {
-    let fallback_fee = FixedFeeData { denominating_token_id: TokenId::from(1), amount: 1000 };
+    let fallback_fee = FixedFeeData { denominating_token_id: Some(TokenId::from(1)), amount: 1000 };
     let exchange_value_fraction: Fraction = (1, 2).into();
 
     let royalty_fee =

@@ -271,6 +271,7 @@ impl From<EntityId> for AccountId {
 mod tests {
     use std::str::FromStr;
 
+    use assert_matches::assert_matches;
     use hex_literal::hex;
 
     use crate::ethereum::EvmAddress;
@@ -374,5 +375,138 @@ mod tests {
                 .unwrap(),
             "0.0.123-esxsf"
         );
+    }
+
+    #[tokio::test]
+    async fn bad_checksum_on_previewnet() {
+        let client = Client::for_previewnet();
+        let id = AccountId::from_str("0.0.123-ntjli").unwrap();
+
+        assert_matches!(
+            id.validate_checksum(&client),
+            Err(crate::Error::BadEntityId {
+                shard: 0,
+                realm: 0,
+                num: 123,
+                present_checksum: _,
+                expected_checksum: _
+            })
+        );
+    }
+
+    #[test]
+    fn malformed_id_fails() {
+        assert_matches!(AccountId::from_str("0.0."), Err(crate::Error::BasicParse(_)));
+    }
+
+    #[test]
+    fn malformed_checksum() {
+        assert_matches!(AccountId::from_str("0.0.123-ntjl"), Err(crate::Error::BasicParse(_)));
+    }
+
+    #[test]
+    fn malformed_checksum_2() {
+        assert_matches!(AccountId::from_str("0.0.123-ntjl1"), Err(crate::Error::BasicParse(_)));
+    }
+
+    #[test]
+    fn malformed_alias() {
+        assert_matches!(AccountId::from_str("0.0.302a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf777"), Err(crate::Error::KeyParse(_)));
+    }
+    #[test]
+    fn malformed_alias_2() {
+        assert_matches!(AccountId::from_str("0.0.302a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf777g"), Err(crate::Error::KeyParse(_)));
+    }
+    #[test]
+    fn malformed_alias_key_3() {
+        assert_matches!(AccountId::from_str("0.0.303a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf7777"), Err(crate::Error::KeyParse(_)));
+    }
+
+    #[test]
+    fn from_string_alias_key() {
+        expect_test::expect!["0.0.302a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf7777"]
+        .assert_eq(&AccountId::from_str("0.0.302a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf7777").unwrap().to_string())
+    }
+
+    #[test]
+    fn from_string_evm_address() {
+        expect_test::expect!["0x302a300506032b6570032100114e6abc371b82da"].assert_eq(
+            &AccountId::from_str("0x302a300506032b6570032100114e6abc371b82da").unwrap().to_string(),
+        );
+    }
+
+    #[test]
+    fn from_solidity_address() {
+        expect_test::expect!["0.0.5005"].assert_eq(
+            &AccountId::from_solidity_address("000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string(),
+        );
+    }
+
+    #[test]
+    fn from_solidity_address_0x() {
+        expect_test::expect!["0.0.5005"].assert_eq(
+            &AccountId::from_solidity_address("0x000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string(),
+        );
+    }
+
+    #[test]
+    fn from_bytes() {
+        let bytes = AccountId {
+            shard: 0,
+            realm: 0,
+            num: 5005,
+            alias: None,
+            evm_address: None,
+            checksum: None,
+        }
+        .to_bytes();
+
+        expect_test::expect!["0.0.5005"]
+            .assert_eq(&AccountId::from_bytes(&bytes).unwrap().to_string());
+    }
+
+    #[test]
+    fn from_bytes_alias() {
+        let bytes = AccountId::from_str("0.0.302a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf7777").unwrap().to_bytes();
+
+        expect_test::expect!["0.0.302a300506032b6570032100114e6abc371b82dab5c15ea149f02d34a012087b163516dd70f44acafabf7777"].assert_eq(&AccountId::from_bytes(&bytes).unwrap().to_string());
+    }
+
+    #[test]
+    fn from_bytes_evm_address() {
+        let bytes =
+            AccountId::from_str("0x302a300506032b6570032100114e6abc371b82da").unwrap().to_bytes();
+        expect_test::expect!["0.0.0"]
+            .assert_eq(&AccountId::from_bytes(&bytes).unwrap().to_string());
+    }
+
+    #[test]
+    fn to_solidity_address() {
+        let id = AccountId {
+            shard: 0,
+            realm: 0,
+            num: 5005,
+            alias: None,
+            evm_address: None,
+            checksum: None,
+        };
+
+        expect_test::expect!["000000000000000000000000000000000000138d"]
+            .assert_eq(&id.to_solidity_address().unwrap());
+    }
+
+    #[test]
+    fn from_evm_address() {
+        let evm_address =
+            EvmAddress::from_str("0x302a300506032b6570032100114e6abc371b82da").unwrap();
+
+        let id = AccountId::from_evm_address(&evm_address);
+
+        expect_test::expect!["0x302a300506032b6570032100114e6abc371b82da"]
+            .assert_eq(&id.to_string());
     }
 }
