@@ -169,6 +169,18 @@ impl TopicUpdateTransaction {
         self.data_mut().auto_renew_account_id = Some(id);
         self
     }
+
+    /// Clear the auto renew account ID for this topic.
+    pub fn clear_auto_renew_account_id(&mut self) -> &mut Self {
+        self.auto_renew_account_id(AccountId {
+            shard: 0,
+            realm: 0,
+            num: 0,
+            alias: None,
+            evm_address: None,
+            checksum: None,
+        })
+    }
 }
 
 impl TransactionData for TopicUpdateTransactionData {}

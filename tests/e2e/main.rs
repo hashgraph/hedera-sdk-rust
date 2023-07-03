@@ -7,3 +7,4 @@ mod file;
 /// todo: somehow deduplicate this with the version in `examples/`.
 mod resources;
 mod token;
+mod topic;
