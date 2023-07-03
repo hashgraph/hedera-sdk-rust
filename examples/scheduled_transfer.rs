@@ -161,8 +161,8 @@ async fn main() -> anyhow::Result<()> {
 
     // We happen to know that this transaction is (or certainly ought to be) a TransferTransaction
     let Ok(scheduled_transfer) = scheduled_transaction.downcast::<TransferTransaction>() else {
-            anyhow::bail!("scheduled transaction was not a transfer transaction");
-        };
+        anyhow::bail!("scheduled transaction was not a transfer transaction");
+    };
 
     println!("The scheduled transfer transaction from Bob's POV:");
     println!("{scheduled_transfer:?}");

@@ -15,13 +15,11 @@ use crate::contract::ContractAdminKey;
 
 #[tokio::test]
 async fn query() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let contract_id =
@@ -52,13 +50,11 @@ async fn query() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_no_admin_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let contract_id = super::create_contract(&client, op.private_key.public_key(), None).await?;
@@ -78,9 +74,7 @@ async fn query_no_admin_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_contract_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let res = ContractInfoQuery::new().execute(&client).await;
 
@@ -94,13 +88,11 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_big_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let contract_id =
@@ -128,13 +120,11 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_small_max_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let contract_id =
@@ -174,13 +164,11 @@ async fn query_cost_small_max_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let contract_id =

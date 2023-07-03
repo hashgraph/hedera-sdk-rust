@@ -19,9 +19,7 @@ use crate::common::{
 
 #[tokio::test]
 async fn initial_balance_and_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let key = PrivateKey::generate_ed25519();
 
@@ -54,9 +52,7 @@ async fn initial_balance_and_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn no_initial_balance() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-            return Ok(())
-        };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let key = PrivateKey::generate_ed25519();
 
@@ -89,8 +85,8 @@ async fn no_initial_balance() -> anyhow::Result<()> {
 #[tokio::test]
 async fn missing_key_error() {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-            return;
-        };
+        return;
+    };
 
     let res = AccountCreateTransaction::new().initial_balance(Hbar::new(1)).execute(&client).await;
 
@@ -105,13 +101,11 @@ async fn missing_key_error() {
 
 #[tokio::test]
 async fn alias_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let key = PrivateKey::generate_ed25519();
@@ -136,13 +130,11 @@ async fn alias_key() -> anyhow::Result<()> {
 #[tokio::test]
 #[ignore = "Explicit disagreement between Java and Rust SDKs"]
 async fn manages_expiration() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let key = PrivateKey::generate_ed25519();
@@ -185,9 +177,7 @@ async fn manages_expiration() -> anyhow::Result<()> {
 async fn alias_from_admin_key() -> anyhow::Result<()> {
     // Tests the third row of this table
     // https://github.com/hashgraph/hedera-improvement-proposal/blob/d39f740021d7da592524cffeaf1d749803798e9a/HIP/hip-583.md#signatures
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ecdsa();
     let evm_address = admin_key.public_key().to_evm_address().unwrap();
@@ -216,9 +206,7 @@ async fn alias_from_admin_key() -> anyhow::Result<()> {
 async fn alias_from_admin_key_with_receiver_sig_required() -> anyhow::Result<()> {
     // Tests the fourth row of this table
     // https://github.com/hashgraph/hedera-improvement-proposal/blob/d39f740021d7da592524cffeaf1d749803798e9a/HIP/hip-583.md#signatures
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ecdsa();
     let evm_address = admin_key.public_key().to_evm_address().unwrap();
@@ -248,9 +236,7 @@ async fn alias_from_admin_key_with_receiver_sig_required() -> anyhow::Result<()>
 #[tokio::test]
 async fn alias_from_admin_key_with_receiver_sig_required_and_no_signature_errors(
 ) -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ecdsa();
     let evm_address = admin_key.public_key().to_evm_address().unwrap();
@@ -280,9 +266,7 @@ async fn alias_from_admin_key_with_receiver_sig_required_and_no_signature_errors
 async fn alias() -> anyhow::Result<()> {
     // Tests the fifth row of this table
     // https://github.com/hashgraph/hedera-improvement-proposal/blob/d39f740021d7da592524cffeaf1d749803798e9a/HIP/hip-583.md#signatures
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ed25519();
 
@@ -313,9 +297,7 @@ async fn alias() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn alias_missing_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ed25519();
 
@@ -346,9 +328,7 @@ async fn alias_missing_signature_fails() -> anyhow::Result<()> {
 async fn alias_with_receiver_sig_required() -> anyhow::Result<()> {
     // Tests the sixth row of this table
     // https://github.com/hashgraph/hedera-improvement-proposal/blob/d39f740021d7da592524cffeaf1d749803798e9a/HIP/hip-583.md#signatures
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ed25519();
 
@@ -381,9 +361,7 @@ async fn alias_with_receiver_sig_required() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn alias_with_receiver_sig_required_missing_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ed25519();
 

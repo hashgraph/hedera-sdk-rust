@@ -324,9 +324,7 @@ fn filter_map(
         )
     });
 
-    let IncompleteMessage::Partial(_, messages) = entry.handle_expiry() else  {
-        return Ok(None)
-    };
+    let IncompleteMessage::Partial(_, messages) = entry.handle_expiry() else { return Ok(None) };
 
     match messages.binary_search_by_key(&item.number, |it| it.number) {
         // We have a duplicate `number`, so, we'll just ignore it (this is unspecified behavior)

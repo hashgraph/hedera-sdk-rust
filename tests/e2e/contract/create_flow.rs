@@ -17,13 +17,11 @@ use crate::contract::SMART_CONTRACT_BYTECODE;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let contract_id = ContractCreateFlow::new()
@@ -62,9 +60,7 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn admin_key_missing_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config:  _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let admin_key = PrivateKey::generate_ed25519();
 
@@ -89,13 +85,11 @@ async fn admin_key_missing_signature_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn admin_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let admin_key = PrivateKey::generate_ed25519();
@@ -137,13 +131,11 @@ async fn admin_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn admin_key_sign_with() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let admin_key = PrivateKey::generate_ed25519();

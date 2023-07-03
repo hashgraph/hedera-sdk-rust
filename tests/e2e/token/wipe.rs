@@ -16,9 +16,7 @@ use crate::common::{
 
 #[tokio::test]
 async fn fungible() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -73,9 +71,7 @@ async fn fungible() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn nft() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-            return Ok(())
-        };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -131,9 +127,7 @@ async fn nft() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn unowned_nft_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -185,9 +179,7 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_account_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -210,9 +202,7 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_token_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -234,9 +224,7 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn missing_amount() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),

@@ -34,7 +34,7 @@ impl ContractFunctionSelector {
     }
 
     pub(crate) fn add_param_type(&mut self, param_type_name: &str) -> &mut Self {
-        let Building { digest, needs_comma } = &mut self.0  else {
+        let Building { digest, needs_comma } = &mut self.0 else {
             panic!("Cannot add param type to finished ContractFunctionSelector")
         };
 
