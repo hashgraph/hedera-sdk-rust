@@ -13,9 +13,7 @@ use crate::common::{
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -43,13 +41,11 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_token_id() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        return Ok(())
+        return Ok(());
     };
 
     TokenAssociateTransaction::new()
@@ -65,9 +61,7 @@ async fn missing_token_id() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_account_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let res = TokenAssociateTransaction::new().execute(&client).await;
 
@@ -84,9 +78,7 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 

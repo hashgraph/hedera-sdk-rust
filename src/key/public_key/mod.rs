@@ -385,11 +385,11 @@ impl PublicKey {
                 }
 
                 found = true;
-                let Some(Signature::EcdsaSecp256k1(sig) | Signature::Ed25519(sig)) = &sig_pair.signature else {
-                        return Err(Error::signature_verify(
-                            "Unsupported transaction signature type",
-                        ))
-                    };
+                let Some(Signature::EcdsaSecp256k1(sig) | Signature::Ed25519(sig)) =
+                    &sig_pair.signature
+                else {
+                    return Err(Error::signature_verify("Unsupported transaction signature type"));
+                };
 
                 self.verify(&signed_transaction.body_bytes, sig)?;
             }
@@ -418,7 +418,7 @@ impl PublicKey {
         transaction.freeze()?;
 
         let Some(sources) = transaction.sources() else {
-            return Err(Error::signature_verify("signer not in transaction"))
+            return Err(Error::signature_verify("signer not in transaction"));
         };
 
         self.verify_transaction_sources(sources)
