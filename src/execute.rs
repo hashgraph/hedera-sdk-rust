@@ -18,6 +18,7 @@
  * ‍
  */
 
+use std::error::Error as StdError;
 use std::ops::ControlFlow;
 use std::time::Duration;
 
@@ -292,6 +293,16 @@ fn map_tonic_error(
     network: &client::NetworkData,
     node_index: usize,
 ) -> retry::Error {
+    /// punches through all the layers of `tonic::Status` sources to check if this is a `hyper::Error` that is canceled.
+    fn is_hyper_canceled(status: &tonic::Status) -> bool {
+        status
+            .source()
+            .and_then(|it| it.downcast_ref::<tonic::transport::Error>())
+            .and_then(StdError::source)
+            .and_then(|it| it.downcast_ref::<hyper::Error>())
+            .is_some_and(hyper::Error::is_canceled)
+    }
+
     const MIME_HTML: &[u8] = b"text/html";
 
     match status.code() {
@@ -301,6 +312,13 @@ fn map_tonic_error(
             network.mark_node_unhealthy(node_index);
 
             // try the next node in our allowed list, immediately
+            retry::Error::Transient(status.into())
+        }
+
+        // if the proxy cancels the request (IE it's `Unavailable`/`ResourceExausted`) treat it like a transient error.
+        tonic::Code::Unknown if is_hyper_canceled(&status) => {
+            network.mark_node_unhealthy(node_index);
+
             retry::Error::Transient(status.into())
         }
 

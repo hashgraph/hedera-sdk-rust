@@ -682,6 +682,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "hmac",
+ "hyper",
  "k256",
  "log",
  "miniserde",
