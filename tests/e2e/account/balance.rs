@@ -33,7 +33,7 @@ async fn query() -> anyhow::Result<()> {
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
 
-        return Ok(())
+        return Ok(());
     };
 
     let balance = AccountBalanceQuery::new().account_id(op.account_id).execute(&client).await?;
@@ -52,7 +52,7 @@ async fn query_cost() -> anyhow::Result<()> {
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        return Ok(())
+        return Ok(());
     };
 
     let mut query = AccountBalanceQuery::new();
@@ -77,7 +77,7 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        return Ok(())
+        return Ok(());
     };
 
     let mut query = AccountBalanceQuery::new();
@@ -102,7 +102,7 @@ async fn query_cost_small_max() -> anyhow::Result<()> {
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        return Ok(())
+        return Ok(());
     };
 
     let mut query = AccountBalanceQuery::new();
@@ -147,9 +147,7 @@ async fn invalid_account_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_token_balances() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(10), &client).await?;
 

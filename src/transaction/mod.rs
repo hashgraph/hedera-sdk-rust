@@ -343,9 +343,7 @@ impl<D: ChunkedTransactionData> Transaction<D> {
     /// # Panics
     /// If `size` == 0
     pub fn chunk_size(&mut self, size: usize) -> &mut Self {
-        let Some(size) = NonZeroUsize::new(size) else {
-            panic!("Cannot set chunk-size to zero")
-        };
+        let Some(size) = NonZeroUsize::new(size) else { panic!("Cannot set chunk-size to zero") };
 
         self.data_mut().chunk_data_mut().chunk_size = size;
 
@@ -449,9 +447,7 @@ impl<D: ValidateChecksums> Transaction<D> {
     /// # Panics
     /// If `client` has no operator.
     pub fn sign_with_operator(&mut self, client: &Client) -> crate::Result<&mut Self> {
-        let Some(op) = client.full_load_operator() else {
-            panic!("Client had no operator")
-        };
+        let Some(op) = client.full_load_operator() else { panic!("Client had no operator") };
 
         self.freeze_with(client)?;
 
@@ -818,7 +814,9 @@ where
         // sorry for the mess: this can technically infinite loop
         // (it won't, the loop condition would be dependent on chunk_data somehow being `Some` and `None` at the same time).
         let Some(chunk_data) = self.data().maybe_chunk_data() else {
-            return Ok(Vec::from([self.execute_with_optional_timeout(client, timeout_per_chunk).await?]))
+            return Ok(Vec::from([self
+                .execute_with_optional_timeout(client, timeout_per_chunk)
+                .await?]));
         };
 
         self.execute_all_inner(chunk_data, client, timeout_per_chunk).await

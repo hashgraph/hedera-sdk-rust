@@ -14,9 +14,7 @@ use crate::common::{
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -52,9 +50,7 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_token_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -79,9 +75,7 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_account_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, 0).await?;
@@ -108,9 +102,7 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn non_associated_token_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
