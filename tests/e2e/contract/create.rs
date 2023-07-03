@@ -16,13 +16,11 @@ use crate::common::{
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
@@ -63,13 +61,11 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn no_admin_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
@@ -101,13 +97,11 @@ async fn no_admin_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn unset_gas_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
@@ -133,13 +127,11 @@ async fn unset_gas_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn constructor_parameters_unset_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
-        return Ok(())
+        return Ok(());
     };
 
     let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
@@ -166,9 +158,7 @@ async fn constructor_parameters_unset_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn bytecode_file_id_unset_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return Ok(())
-    };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let res = ContractCreateTransaction::new()
         .gas(100000)

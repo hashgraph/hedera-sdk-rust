@@ -161,7 +161,10 @@ impl QueryExecute for TransactionReceiptQueryData {
         // without altering or freeing the memory from the response
 
         let receipt_status = {
-            let Some(services::response::Response::TransactionGetReceipt(r)) = &response.response else { return false };
+            let Some(services::response::Response::TransactionGetReceipt(r)) = &response.response
+            else {
+                return false;
+            };
 
             match r.receipt.as_ref().and_then(|it| Status::from_i32(it.status)) {
                 Some(receipt_status) => receipt_status,

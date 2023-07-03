@@ -243,7 +243,7 @@ async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to lack of operator");
-        return Ok(())
+        return Ok(());
     };
 
     if !config.run_nonfree_tests {
