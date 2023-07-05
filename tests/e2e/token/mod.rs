@@ -38,13 +38,17 @@ use crate::common::{
     TestEnvironment,
 };
 
-struct FungibleToken {
-    id: TokenId,
-    owner: Account,
+pub(crate) struct FungibleToken {
+    pub(crate) id: TokenId,
+    pub(crate) owner: Account,
 }
 
 impl FungibleToken {
-    async fn create(client: &Client, owner: &Account, initial_supply: u64) -> hedera::Result<Self> {
+    pub(crate) async fn create(
+        client: &Client,
+        owner: &Account,
+        initial_supply: u64,
+    ) -> hedera::Result<Self> {
         let owner_public_key = owner.key.public_key();
         let token_id = TokenCreateTransaction::new()
             .name("ffff")
