@@ -6,5 +6,6 @@ mod file;
 ///
 /// todo: somehow deduplicate this with the version in `examples/`.
 mod resources;
+mod schedule;
 mod token;
 mod topic;
