@@ -1048,3 +1048,37 @@ where
         }
     }
 }
+
+#[cfg(test)]
+pub(crate) mod test_helpers {
+    use hedera_proto::services;
+    use prost::Message;
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
+
+    use super::TransactionExecute;
+    use crate::{
+        PrivateKey,
+        Transaction,
+    };
+
+    #[track_caller]
+    pub(crate) fn transaction_body<D: TransactionExecute>(
+        tx: Transaction<D>,
+    ) -> services::TransactionBody {
+        // if you're thinking "ghee, that sure is a silly way to get a transaction body" you aren't wrong.
+        services::TransactionBody::decode(
+            &*tx.make_sources().unwrap().signed_transactions()[0].body_bytes,
+        )
+        .unwrap()
+    }
+
+    pub(crate) fn unused_private_key() -> PrivateKey {
+        "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10".parse().unwrap()
+    }
+
+    pub(crate) const VALID_START: OffsetDateTime =
+        OffsetDateTime::UNIX_EPOCH.saturating_add(Duration::seconds(1554158542));
+}
