@@ -129,7 +129,7 @@ where
         transaction_id: Option<&TransactionId>,
         node_account_id: AccountId,
     ) -> crate::Result<(Self::GrpcRequest, Self::Context)> {
-        let payment = if self.data.is_payment_required() {
+        let payment = if dbg!(self.data.is_payment_required()) {
             Some(self.payment.make_request(transaction_id, node_account_id)?.0)
         } else {
             None
