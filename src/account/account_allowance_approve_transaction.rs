@@ -390,40 +390,20 @@ impl ToProtobuf for NftAllowance {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
-    use hedera_proto::services;
-    use prost::Message;
-    use time::{
-        Duration,
-        OffsetDateTime,
-    };
 
-    use crate::transaction::TransactionExecute;
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
     use crate::{
         AccountAllowanceApproveTransaction,
         AccountId,
         AnyTransaction,
         Hbar,
-        PrivateKey,
         TokenId,
-        Transaction,
         TransactionId,
     };
-
-    #[track_caller]
-    fn transaction_body<D: TransactionExecute>(tx: Transaction<D>) -> services::TransactionBody {
-        // if you're thinking "ghee, that sure is a silly way to get a transaction body" you aren't wrong.
-        services::TransactionBody::decode(
-            &*tx.make_sources().unwrap().signed_transactions()[0].body_bytes,
-        )
-        .unwrap()
-    }
-
-    fn unused_private_key() -> PrivateKey {
-        "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10".parse().unwrap()
-    }
-
-    const VALID_START: OffsetDateTime =
-        OffsetDateTime::UNIX_EPOCH.saturating_add(Duration::seconds(1554158542));
 
     fn make_transaction() -> AccountAllowanceApproveTransaction {
         let owner_id: AccountId = "5.6.7".parse().unwrap();
