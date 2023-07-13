@@ -82,7 +82,7 @@ async fn update_network(
             .execute_mirrornet(network.mirror.load().channel(), None)
             .await
         {
-            Ok(it) => network.primary.update_from_address_book(it),
+            Ok(it) => network.primary.update_from_address_book(&it),
             Err(e) => {
                 log::warn!("{e:?}");
             }

@@ -127,7 +127,7 @@ impl LedgerId {
     /// Returns `true` if `self` is `mainnet`, `testnet`, or `previewnet`.
     #[must_use]
     pub fn is_known_network(&self) -> bool {
-        matches!(self.kind(), Some(_))
+        self.kind().is_some()
     }
 
     #[must_use]

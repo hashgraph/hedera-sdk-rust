@@ -27,7 +27,7 @@ async fn basic() -> anyhow::Result<()> {
 
     let _ = ContractExecuteTransaction::new()
         .contract_id(contract_id)
-        .gas(100000)
+        .gas(100_000)
         .function_with_parameters(
             "setMessage",
             ContractFunctionParameters::new().add_string("new message"),
@@ -53,7 +53,7 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let res = ContractExecuteTransaction::new()
-        .gas(100000)
+        .gas(100_000)
         .function_with_parameters(
             "setMessage",
             ContractFunctionParameters::new().add_string("new message"),
@@ -86,7 +86,7 @@ async fn missing_function_parameters_fails() -> anyhow::Result<()> {
 
     let res = ContractExecuteTransaction::new()
         .contract_id(contract_id)
-        .gas(100000)
+        .gas(100_000)
         .execute(&client)
         .await?
         .get_receipt(&client)

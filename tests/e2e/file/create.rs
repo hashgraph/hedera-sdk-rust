@@ -34,7 +34,7 @@ async fn basic() -> anyhow::Result<()> {
 
     assert_eq!(info.file_id, file_id);
     assert_eq!(info.size, 24);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(
         info.keys,
         KeyList { keys: Vec::from([Key::Single(op.private_key.public_key())]), threshold: None }
@@ -72,7 +72,7 @@ async fn empty_file() -> anyhow::Result<()> {
 
     assert_eq!(info.file_id, file_id);
     assert_eq!(info.size, 0);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(
         info.keys,
         KeyList { keys: Vec::from([Key::Single(op.private_key.public_key())]), threshold: None }
@@ -104,7 +104,7 @@ async fn no_keys() -> anyhow::Result<()> {
 
     assert_eq!(info.file_id, file_id);
     assert_eq!(info.size, 0);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(info.keys, KeyList { keys: Vec::new(), threshold: None });
 
     Ok(())

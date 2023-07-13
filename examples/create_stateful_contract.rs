@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
 
     let contract_transaction_response = ContractCreateTransaction::new()
         .bytecode_file_id(new_file_id)
-        .gas(500000)
+        .gas(500_000)
         .constructor_parameters(
             ContractFunctionParameters::new()
                 .add_string("hello from hedera!")
@@ -80,7 +80,7 @@ async fn main() -> anyhow::Result<()> {
 
     let contract_call_result = ContractCallQuery::new()
         .contract_id(new_contract_id)
-        .gas(500000)
+        .gas(500_000)
         .function("get_message")
         .execute(&client)
         .await?;
@@ -94,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
 
     let contract_exec_transaction_response = ContractExecuteTransaction::new()
         .contract_id(new_contract_id)
-        .gas(500000)
+        .gas(500_000)
         .function_with_parameters(
             "set_message",
             ContractFunctionParameters::new().add_string("hello from hedera again!"),
@@ -110,7 +110,7 @@ async fn main() -> anyhow::Result<()> {
     // now query contract
     let contract_update_result = ContractCallQuery::new()
         .contract_id(new_contract_id)
-        .gas(500000)
+        .gas(500_000)
         .function("get_message")
         .execute(&client)
         .await?;

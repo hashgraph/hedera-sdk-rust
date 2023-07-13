@@ -163,7 +163,7 @@ async fn demonstrate_allowances(client: &Client, accounts: &[Account; 3]) -> any
         }
 
         Err(e) => {
-            println!("The transfer failed as expected: {e:?}")
+            println!("The transfer failed as expected: {e:?}");
         }
     }
 
@@ -259,7 +259,7 @@ async fn print_balances(client: &Client, accounts: &[Account; 3]) -> hedera::Res
     for account in accounts {
         let balance = AccountBalanceQuery::new()
             .account_id(account.id)
-            .execute(&client)
+            .execute(client)
             .await?
             .hbars;
 

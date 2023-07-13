@@ -39,7 +39,7 @@ async fn basic() -> anyhow::Result<()> {
 
     let info = FileInfoQuery::new().file_id(file_id).execute(&client).await?;
 
-    assert_eq!(info.is_deleted, true);
+    assert!(info.is_deleted);
 
     Ok(())
 }

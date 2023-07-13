@@ -36,7 +36,7 @@ async fn initial_balance_and_key() -> anyhow::Result<()> {
     let info = AccountInfoQuery::new().account_id(account_id).execute(&client).await?;
 
     assert_eq!(info.account_id, account_id);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(info.key, Key::Single(key.public_key()));
     assert_eq!(info.balance, Hbar::new(1));
     assert_eq!(info.auto_renew_period, Some(Duration::days(90)));
@@ -68,7 +68,7 @@ async fn no_initial_balance() -> anyhow::Result<()> {
     let info = AccountInfoQuery::new().account_id(account_id).execute(&client).await?;
 
     assert_eq!(info.account_id, account_id);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(info.key, Key::Single(key.public_key()));
     assert_eq!(info.balance, Hbar::ZERO);
     assert_eq!(info.auto_renew_period, Some(Duration::days(90)));
@@ -159,7 +159,7 @@ async fn manages_expiration() -> anyhow::Result<()> {
     let info = AccountInfoQuery::new().account_id(account_id).execute(&client).await?;
 
     assert_eq!(info.account_id, account_id);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(info.key, Key::Single(key.public_key()));
     assert_eq!(info.balance, Hbar::ZERO);
     assert_eq!(info.auto_renew_period, Some(Duration::days(90)));

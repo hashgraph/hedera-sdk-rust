@@ -45,7 +45,7 @@ async fn basic() -> anyhow::Result<()> {
 
     assert_eq!(info.file_id, file_id);
     assert_eq!(info.size, 12);
-    assert_eq!(info.is_deleted, false);
+    assert!(!info.is_deleted);
     assert_eq!(
         info.keys,
         KeyList { keys: Vec::from([Key::Single(op.private_key.public_key())]), threshold: None }

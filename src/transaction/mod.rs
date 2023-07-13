@@ -397,6 +397,7 @@ impl<D: ValidateChecksums> Transaction<D> {
                 assert!(!it.is_empty());
                 it.clone()
             }
+            #[allow(clippy::missing_panics_doc)]
             None => {
                 let nodes = client
                     .ok_or(Error::FreezeUnsetNodeAccountIds)?
@@ -414,7 +415,7 @@ impl<D: ValidateChecksums> Transaction<D> {
         let max_transaction_fee = self.body.max_transaction_fee.or_else(|| {
             // no max has been set on the *transaction*
             // check if there is a global max set on the client
-            client.and_then(|it| it.default_max_transaction_fee())
+            client.and_then(Client::default_max_transaction_fee)
         });
 
         let operator = client.and_then(Client::full_load_operator);
@@ -460,18 +461,21 @@ impl<D: ValidateChecksums> Transaction<D> {
 }
 
 impl<D: TransactionExecute> Transaction<D> {
+    /// # Errors
+    /// - If the transaction needs multiple chunks, or has no explicit transaction ID *and* `self.operator` is not set.
+    ///
+    /// # Panics
+    /// - If `!self.is_frozen()`
     fn make_transaction_list(&self) -> crate::Result<Vec<services::Transaction>> {
         assert!(self.is_frozen());
+
+        let operator =
+            || self.body.operator.as_ref().ok_or(crate::Error::NoPayerAccountOrTransactionId);
 
         // todo: fix this with chunked transactions.
         let initial_transaction_id = match self.get_transaction_id() {
             Some(id) => id,
-            None => self
-                .body
-                .operator
-                .as_ref()
-                .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
-                .generate_transaction_id(),
+            None => operator()?.generate_transaction_id(),
         };
 
         let used_chunks = self.data().maybe_chunk_data().map_or(1, ChunkData::used_chunks);
@@ -485,12 +489,7 @@ impl<D: TransactionExecute> Transaction<D> {
         for chunk in 0..used_chunks {
             let current_transaction_id = match chunk {
                 0 => initial_transaction_id,
-                _ => self
-                    .body
-                    .operator
-                    .as_ref()
-                    .ok_or(crate::Error::NoPayerAccountOrTransactionId)?
-                    .generate_transaction_id(),
+                _ => operator()?.generate_transaction_id(),
             };
 
             for node_account_id in node_account_ids.iter().copied() {
@@ -571,7 +570,7 @@ impl<D: TransactionExecute> Transaction<D> {
             self.sources = Some(sources);
         }
 
-        return ret.1;
+        ret.1
     }
 
     // todo: should this return `Result<&mut Self>`?
@@ -593,7 +592,7 @@ impl<D: TransactionExecute> Transaction<D> {
     /// - being a chunked transaction with multiple chunks.
     pub fn schedule(self) -> ScheduleCreateTransaction {
         self.require_not_frozen();
-        assert!(!self.get_node_account_ids().is_some(), "The underlying transaction for a scheduled transaction cannot have node account IDs set");
+        assert!(self.get_node_account_ids().is_none(), "The underlying transaction for a scheduled transaction cannot have node account IDs set");
 
         let mut transaction = ScheduleCreateTransaction::new();
 
@@ -871,7 +870,7 @@ impl AnyTransaction {
                 .split_first()
                 .ok_or_else(|| Error::from_protobuf("no transactions found"))?;
 
-            for it in transaction_bodies.iter() {
+            for it in transaction_bodies {
                 if !pb_transaction_body_eq(first, it) {
                     return Err(Error::from_protobuf("transaction parts unexpectedly unequal"));
                 }

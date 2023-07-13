@@ -165,7 +165,7 @@ impl Network {
         NetworkData::from_static(PREVIEWNET).into()
     }
 
-    pub(super) fn from_addresses(addresses: HashMap<String, AccountId>) -> crate::Result<Self> {
+    pub(super) fn from_addresses(addresses: &HashMap<String, AccountId>) -> crate::Result<Self> {
         Ok(NetworkData::from_addresses(addresses)?.into())
     }
 
@@ -181,9 +181,9 @@ impl Network {
             let swapped = Arc::ptr_eq(&*cur, &*prev);
             if swapped {
                 return Ok(arc_swap::Guard::into_inner(cur));
-            } else {
-                cur = prev;
             }
+
+            cur = prev;
         }
     }
 
@@ -199,16 +199,16 @@ impl Network {
 
     pub(crate) fn update_from_addresses(
         &self,
-        addresses: HashMap<String, AccountId>,
+        addresses: &HashMap<String, AccountId>,
     ) -> crate::Result<()> {
-        self.try_rcu(|old| old.with_addresses(&addresses))?;
+        self.try_rcu(|old| old.with_addresses(addresses))?;
 
         Ok(())
     }
 
-    pub(crate) fn update_from_address_book(&self, address_book: NodeAddressBook) {
+    pub(crate) fn update_from_address_book(&self, address_book: &NodeAddressBook) {
         // todo: skip the updating whem `map` is the same and `connections` is the same.
-        self.rcu(|old| NetworkData::with_address_book(old, &address_book));
+        self.rcu(|old| NetworkData::with_address_book(old, address_book));
     }
 }
 
@@ -229,8 +229,8 @@ pub(crate) struct NetworkData {
 }
 
 impl NetworkData {
-    pub(crate) fn from_addresses(addresses: HashMap<String, AccountId>) -> crate::Result<Self> {
-        Self::default().with_addresses(&addresses)
+    pub(crate) fn from_addresses(addresses: &HashMap<String, AccountId>) -> crate::Result<Self> {
+        Self::default().with_addresses(addresses)
     }
 
     pub(crate) fn from_static(network: &'static [(u64, &'static [&'static str])]) -> Self {
@@ -458,7 +458,7 @@ impl FromStr for HostAndPort {
     type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (host, port) = s.split_once(":").ok_or_else(|| Error::basic_parse("Invalid uri"))?;
+        let (host, port) = s.split_once(':').ok_or_else(|| Error::basic_parse("Invalid uri"))?;
 
         Ok(Self {
             host: Cow::Owned(host.to_owned()),
