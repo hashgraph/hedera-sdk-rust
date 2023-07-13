@@ -61,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
         println!("public key: {public_key}");
 
         let receipt = AccountCreateTransaction::new()
-            .key(public_key.clone())
+            .key(public_key)
             .initial_balance(Hbar::new(1))
             .execute(&client)
             .await?
@@ -82,7 +82,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let key_list = KeyList {
-        keys: public_keys.iter().cloned().map(Key::from).collect(),
+        keys: public_keys.iter().copied().map(Key::from).collect(),
         threshold: Some(2),
     };
 
@@ -120,12 +120,12 @@ async fn main() -> anyhow::Result<()> {
 
         scheduled_tx.payer_account_id(threshold_account);
 
-        let response = scheduled_tx.execute(&loop_client).await?;
+        let response = scheduled_tx.execute(loop_client).await?;
 
         let loop_receipt = TransactionReceiptQuery::new()
             .transaction_id(response.transaction_id)
             .node_account_ids([response.node_account_id])
-            .execute(&loop_client)
+            .execute(loop_client)
             .await?;
 
         println!(
@@ -148,7 +148,7 @@ async fn main() -> anyhow::Result<()> {
             let sign_response = ScheduleSignTransaction::new()
                 .schedule_id(*schedule_id)
                 .node_account_ids([response.node_account_id])
-                .execute(&loop_client)
+                .execute(loop_client)
                 .await?;
 
             let sign_receipt = TransactionReceiptQuery::new()

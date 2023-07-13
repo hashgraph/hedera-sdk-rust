@@ -218,11 +218,13 @@ pub struct FixedFeeData {
 }
 
 impl FixedFeeData {
+    /// Create a fixed fee of `amount` hbar.
     #[must_use]
     pub fn from_hbar(amount: Hbar) -> Self {
         Self { amount: amount.to_tinybars(), denominating_token_id: None }
     }
 
+    /// Returns the cost of the fee, if the fee is in denominated in hbar.
     #[must_use]
     pub fn get_hbar(&self) -> Option<Hbar> {
         self.denominating_token_id.is_none().then(|| Hbar::from_tinybars(self.amount))

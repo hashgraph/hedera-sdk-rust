@@ -82,7 +82,7 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
     let mut query = AccountBalanceQuery::new();
 
-    query.account_id(op.account_id).max_payment_amount(Hbar::new(1000000));
+    query.account_id(op.account_id).max_payment_amount(Hbar::new(1_000_000));
 
     let cost = query.get_cost(&client).await?;
 

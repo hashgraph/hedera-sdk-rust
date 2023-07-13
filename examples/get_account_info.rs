@@ -39,7 +39,7 @@ async fn main() -> anyhow::Result<()> {
 
     client.set_operator(args.operator_account_id, args.operator_key);
 
-    let id = AccountId::from(34938045);
+    let id = AccountId::from(34_938_045);
 
     let info = AccountInfoQuery::new()
         .account_id(id)
