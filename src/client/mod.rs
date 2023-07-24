@@ -22,10 +22,17 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
 use std::num::NonZeroU64;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{
+    AtomicBool,
+    AtomicU64,
+    Ordering,
+};
 use std::time::Duration;
 
-pub(crate) use network::{Network, NetworkData};
+pub(crate) use network::{
+    Network,
+    NetworkData,
+};
 pub(crate) use operator::Operator;
 use parking_lot::RwLock;
 use tokio::sync::watch;
@@ -37,7 +44,14 @@ pub(crate) use self::network::mirror::MirrorNetworkData;
 use crate::ping_query::PingQuery;
 use crate::signer::AnySigner;
 use crate::{
-    AccountId, ArcSwapOption, Error, Hbar, LedgerId, NodeAddressBook, PrivateKey, PublicKey,
+    AccountId,
+    ArcSwapOption,
+    Error,
+    Hbar,
+    LedgerId,
+    NodeAddressBook,
+    PrivateKey,
+    PublicKey,
 };
 
 #[cfg(feature = "serde")]

@@ -54,7 +54,7 @@ impl EthereumFlow {
     }
 
     /// Sets the raw Ethereum transaction data (RLP encoded type 0, 1, and 2).
-    /// 
+    ///
     /// # Errors
     /// - [`Error::BasicParse`](crate::Error::BasicParse) if the given `data` cannot be parsed as [`EthereumData`].
     pub fn ethereum_data(&mut self, data: &[u8]) -> crate::Result<&mut Self> {

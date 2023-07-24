@@ -1,5 +1,9 @@
 use hedera::{
-    ContractCreateTransaction, ContractFunctionParameters, ContractId, FileId, PublicKey,
+    ContractCreateTransaction,
+    ContractFunctionParameters,
+    ContractId,
+    FileId,
+    PublicKey,
 };
 
 mod create;
@@ -56,7 +60,10 @@ async fn bytecode_file_id(
     client: &hedera::Client,
     op_key: hedera::PublicKey,
 ) -> hedera::Result<FileId> {
-    use time::{Duration, OffsetDateTime};
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
     static BYTECODE_FILE: tokio::sync::OnceCell<FileId> = tokio::sync::OnceCell::const_new();
 
     async fn make_file(
