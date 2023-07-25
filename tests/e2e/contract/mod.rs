@@ -11,6 +11,7 @@ mod create_flow;
 mod delete;
 mod execute;
 mod info;
+mod nonce_info;
 mod update;
 
 enum ContractAdminKey {
