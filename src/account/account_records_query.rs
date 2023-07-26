@@ -23,9 +23,19 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
 use crate::{
-    AccountId, BoxGrpcFuture, Error, FromProtobuf, Query, ToProtobuf, TransactionRecord,
+    AccountId,
+    BoxGrpcFuture,
+    Error,
+    FromProtobuf,
+    Query,
+    ToProtobuf,
+    TransactionRecord,
     ValidateChecksums,
 };
 
@@ -105,7 +115,10 @@ mod tests {
     use expect_test::expect;
 
     use crate::query::ToQueryProtobuf;
-    use crate::{AccountRecordsQuery, Hbar};
+    use crate::{
+        AccountRecordsQuery,
+        Hbar,
+    };
 
     #[test]
     fn serialize() {
@@ -135,7 +148,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(
+        "#]]
+        .assert_debug_eq(
             &AccountRecordsQuery::new()
                 .account_id(crate::AccountId {
                     shard: 0,

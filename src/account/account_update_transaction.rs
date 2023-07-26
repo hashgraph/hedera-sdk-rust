@@ -20,17 +20,34 @@
 
 use hedera_proto::services;
 use hedera_proto::services::crypto_service_client::CryptoServiceClient;
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{FromProtobuf, ToProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::staked_id::StakedId;
 use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
 };
-use crate::{AccountId, BoxGrpcFuture, Error, Key, Transaction, ValidateChecksums};
+use crate::{
+    AccountId,
+    BoxGrpcFuture,
+    Error,
+    Key,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Change properties for the given account.
 ///
@@ -391,10 +408,22 @@ impl ToProtobuf for AccountUpdateTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
-    use time::{Duration, OffsetDateTime};
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
 
-    use crate::transaction::test_helpers::{transaction_body, unused_private_key, VALID_START};
-    use crate::{AccountUpdateTransaction, AnyTransaction, Hbar, TransactionId};
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AccountUpdateTransaction,
+        AnyTransaction,
+        Hbar,
+        TransactionId,
+    };
 
     #[allow(deprecated)]
     fn make_transaction() -> AccountUpdateTransaction {
@@ -781,7 +810,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]

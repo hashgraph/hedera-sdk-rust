@@ -24,8 +24,19 @@ use tonic::transport::Channel;
 
 use crate::account::AccountInfo;
 use crate::ledger_id::RefLedgerId;
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
-use crate::{AccountId, BoxGrpcFuture, Error, Query, ToProtobuf, ValidateChecksums};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
+use crate::{
+    AccountId,
+    BoxGrpcFuture,
+    Error,
+    Query,
+    ToProtobuf,
+    ValidateChecksums,
+};
 
 /// Get all the information about an account, including the balance.
 ///
@@ -95,7 +106,10 @@ mod tests {
     use expect_test::expect;
 
     use crate::query::ToQueryProtobuf;
-    use crate::{AccountInfoQuery, Hbar};
+    use crate::{
+        AccountInfoQuery,
+        Hbar,
+    };
 
     #[test]
     fn serialize() {
@@ -125,7 +139,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(
+        "#]]
+        .assert_debug_eq(
             &AccountInfoQuery::new()
                 .account_id(crate::AccountId {
                     shard: 0,
