@@ -180,3 +180,53 @@ impl ContractFunctionSelector {
         self.add_param_type("function")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ContractFunctionSelector;
+
+    #[test]
+    fn selector() {
+        let signature = ContractFunctionSelector::new("testFunction")
+            .add_address()
+            .add_address_array()
+            .add_bool()
+            .add_bytes()
+            .add_bytes32()
+            .add_bytes32_array()
+            .add_bytes_array()
+            .add_function()
+            .add_int8()
+            .add_int8_array()
+            .add_int32()
+            .add_int32_array()
+            .add_int64()
+            .add_int64_array()
+            .add_int256()
+            .add_int256_array()
+            .add_uint8()
+            .add_uint8_array()
+            .add_uint32()
+            .add_uint32_array()
+            .add_uint64()
+            .add_uint64_array()
+            .add_uint256()
+            .add_uint256_array()
+            .add_string()
+            .add_string_array()
+            .finish();
+
+        assert_eq!(hex::encode(signature), "4438e4ce");
+    }
+
+    #[test]
+    #[should_panic]
+    fn selector_error() {
+        let mut signature = ContractFunctionSelector::new("testFunction");
+        signature.add_address();
+
+        signature.finish();
+
+        signature.add_string_array();
+    }
+}
