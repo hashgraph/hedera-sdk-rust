@@ -727,12 +727,14 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 name = "hedera"
 version = "0.19.1"
 dependencies = [
+ "aes",
  "anyhow",
  "arc-swap",
  "assert_matches",
  "async-stream",
  "backoff",
  "bytes",
+ "cbc",
  "clap",
  "dotenvy",
  "ed25519-dalek",
@@ -748,18 +750,20 @@ dependencies = [
  "hyper",
  "k256",
  "log",
+ "md5",
  "miniserde",
  "num-bigint",
  "once_cell",
  "parking_lot",
  "pbkdf2",
- "pem-rfc7468",
+ "pem",
  "pin-project-lite",
  "pkcs8",
  "prost",
  "rand",
  "rlp",
  "rust_decimal",
+ "sec1",
  "serde",
  "serde_derive",
  "serde_json",
@@ -1025,6 +1029,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b87248edafb776e59e6ee64a79086f65890d3510f2c656c000bf2a7e8a0aea40"
 
 [[package]]
+name = "md5"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "490cc448043f947bae3cbee9c203358d62dbee0db12107a74be5c30ccfd09771"
+
+[[package]]
 name = "memchr"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1217,12 +1227,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "pem-rfc7468"
-version = "0.7.0"
+name = "pem"
+version = "3.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88b39c9bfcfc231068454382784bb460aae594343fb030d46e9f50a645418412"
+checksum = "ed3127afbfc30b4cad60c34aeb741fb562a808642b81142bcf4afb73142da960"
 dependencies = [
- "base64ct",
+ "base64",
+ "serde",
 ]
 
 [[package]]
@@ -1580,9 +1591,9 @@ dependencies = [
 
 [[package]]
 name = "sec1"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0aec48e813d6b90b15f0b8948af3c63483992dee44c03e9930b3eebdabe046e"
+checksum = "d3e97a565f76233a6003f9f5c54be1d9c5bdfa3eccfb189469f11ec4901c47dc"
 dependencies = [
  "base16ct",
  "der",

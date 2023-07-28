@@ -142,6 +142,8 @@ fn ed25519_verify_bad_signature() {
     )
     .unwrap();
 
+    // panic!("key: {}", pk.to_string_der());
+
     let signature = hex!(
         "9d04bfed7baa97c80d29a6ae48c0d896ce8463a7ea0c16197d55a563c73996ef"
         "062b2adf507f416c108422c0310fc6fb21886e11ce3de3e951d7a56049743f00"
@@ -158,9 +160,9 @@ fn ed25519_verify_bad_signature() {
 #[test]
 fn ecdsa_verify_bad_signature() {
     let pk = PublicKey::from_str(
-  "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
-  )
-  .unwrap();
+        "302d300706052b8104000a03220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588",
+    )
+    .unwrap();
 
     let signature = hex!(
         "f3a13a555f1f8cd6532716b8f388bd4e9d8ed0b252743e923114c0c6cbfe414c"
@@ -193,7 +195,7 @@ fn ed25519_verify_error_ecdsa() {
 #[test]
 fn ecdsa_verify_error_ed25519() {
     let pk = PublicKey::from_str(
-  "302f300906072a8648ce3d020103220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
+  "302d300706052b8104000a03220002703a9370b0443be6ae7c507b0aec81a55e94e4a863b9655360bd65358caa6588"
   )
   .unwrap();
 
@@ -205,4 +207,24 @@ fn ecdsa_verify_error_ed25519() {
     let err = assert_matches!(pk.verify(b"hello world", &signature), Err(e) => e);
 
     expect!["failed to verify a signature: signature error"].assert_eq(&err.to_string());
+}
+
+#[test]
+fn k256_compressed_pkcs8_ec_spki_der() {
+    let pk = PublicKey::from_str("3036301006072a8648ce3d020106052b8104000a032200036843f5cb338bbb4cdb21b0da4ea739d910951d6e8a5f703d313efe31afe788f4").unwrap();
+
+    assert_eq!(
+        pk.to_string_raw(),
+        "036843f5cb338bbb4cdb21b0da4ea739d910951d6e8a5f703d313efe31afe788f4"
+    )
+}
+
+#[test]
+fn k256_uncompressed_pkcs8_ec_spki_der() {
+    let pk = PublicKey::from_str("3056301006072a8648ce3d020106052b8104000a03420004aaac1c3ac1bea0245b8e00ce1e2018f9eab61b6331fbef7266f2287750a6597795f855ddcad2377e22259d1fcb4e0f1d35e8f2056300c15070bcbfce3759cc9d").unwrap();
+
+    assert_eq!(
+        pk.to_string_raw(),
+        "03aaac1c3ac1bea0245b8e00ce1e2018f9eab61b6331fbef7266f2287750a65977"
+    )
 }
