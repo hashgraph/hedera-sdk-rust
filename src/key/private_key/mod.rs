@@ -397,7 +397,7 @@ impl PrivateKey {
                         return Err(Error::key_parse(format!("Expected no headers for `ENCRYPTED PRIVATE KEY` but found: `{}: {}`", header.0, header.1)));
                     }
 
-                    let info = dbg!(pkcs8::EncryptedPrivateKeyInfo::from_der(&der))
+                    let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
                         .map_err(|e| Error::key_parse(e.to_string()))?;
 
                     let decrypted =

@@ -67,8 +67,7 @@ impl QueryExecute for NetworkVersionInfoQueryData {
         channel: Channel,
         request: services::Query,
     ) -> BoxGrpcFuture<'_, services::Response> {
-        dbg!(&request);
-        Box::pin(async { dbg!(NetworkServiceClient::new(channel).get_version_info(request).await) })
+        Box::pin(async { NetworkServiceClient::new(channel).get_version_info(request).await })
     }
 }
 
