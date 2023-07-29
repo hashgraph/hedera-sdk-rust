@@ -191,10 +191,7 @@ impl PublicKey {
                 Self::from_bytes_ecdsa(bytes)
             }
             ED25519_OID => Self::from_bytes_ed25519(bytes),
-            oid => {
-                dbg!(info.algorithm);
-                Err(Error::key_parse(format!("unsupported key algorithm: {oid}")))
-            }
+            oid => Err(Error::key_parse(format!("unsupported key algorithm: {oid}"))),
         }
     }
 
