@@ -31,6 +31,7 @@ use crate::{
     AccountId,
     ContractId,
     ContractLogInfo,
+    ContractNonceInfo,
     FromProtobuf,
 };
 
@@ -69,6 +70,10 @@ pub struct ContractFunctionResult {
 
     /// Logs that this call and any called functions produced.
     pub logs: Vec<ContractLogInfo>,
+
+    /// A list of updated contract account nonces containing the new nonce value for each contract account.
+    /// This is always empty in a ContractLocalCallQuery response, since no internal creations can happen in a static EVM call.
+    pub contract_nonces: Vec<ContractNonceInfo>,
 }
 
 impl ContractFunctionResult {
@@ -258,6 +263,7 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
             sender_account_id,
             evm_address,
             logs: Vec::from_protobuf(pb.log_info)?,
+            contract_nonces: Vec::from_protobuf(pb.contract_nonces)?,
         })
     }
 }
@@ -293,6 +299,7 @@ mod tests {
         AccountId,
         ContractFunctionResult,
         ContractId,
+        ContractNonceInfo,
     };
 
     const CALL_RESULT: [u8; 320] = hex!(
@@ -379,6 +386,14 @@ mod tests {
                 }
                 .to_protobuf(),
             ),
+            contract_nonces: vec![services::ContractNonceInfo {
+                contract_id: Some(services::ContractId {
+                    shard_num: 1,
+                    realm_num: 2,
+                    contract: Some(services::contract_id::Contract::ContractNum(3)),
+                }),
+                nonce: 10,
+            }],
             ..Default::default()
         };
 
@@ -409,6 +424,20 @@ mod tests {
                 checksum: None,
             })
         );
+
+        assert_eq!(
+            result.contract_nonces,
+            [ContractNonceInfo {
+                contract_id: ContractId {
+                    shard: 1,
+                    realm: 2,
+                    num: 3,
+                    checksum: None,
+                    evm_address: None
+                },
+                nonce: 10
+            }]
+        )
     }
 
     #[test]
