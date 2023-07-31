@@ -67,7 +67,7 @@ async fn main() -> anyhow::Result<()> {
                     .get_receipt(&client)
                     .await?;
 
-                tokio::time::sleep(Duration::from_secs(2)).await
+                tokio::time::sleep(Duration::from_secs(2)).await;
             }
 
             println!(

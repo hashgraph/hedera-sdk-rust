@@ -580,7 +580,7 @@ async fn royalty_fee() -> anyhow::Result<()> {
         .token_id
         .unwrap();
 
-    let token = Nft { id: token_id, owner: account.to_owned() };
+    let token = Nft { id: token_id, owner: account.clone() };
 
     token.delete(&client).await?;
     account.delete(&client).await?;

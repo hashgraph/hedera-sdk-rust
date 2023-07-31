@@ -220,7 +220,7 @@ impl fmt::Display for Mnemonic {
         if let Some((first, rest)) = self.words().split_first() {
             f.write_str(first)?;
 
-            for word in rest.iter() {
+            for word in rest {
                 write!(f, " {word}")?;
             }
         }

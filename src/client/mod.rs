@@ -145,11 +145,9 @@ impl ClientBuilder {
             network,
             operator: ArcSwapOption::new(operator.map(Arc::new)),
             max_transaction_fee_tinybar: AtomicU64::new(
-                max_transaction_fee.map(NonZeroU64::get).unwrap_or(0),
+                max_transaction_fee.map_or(0, NonZeroU64::get),
             ),
-            max_query_payment_tinybar: AtomicU64::new(
-                max_query_payment.map(NonZeroU64::get).unwrap_or(0),
-            ),
+            max_query_payment_tinybar: AtomicU64::new(max_query_payment.map_or(0, NonZeroU64::get)),
             ledger_id: ArcSwapOption::new(ledger_id.map(Arc::new)),
             auto_validate_checksums: AtomicBool::new(auto_validate_checksums),
             regenerate_transaction_ids: AtomicBool::new(regenerate_transaction_ids),
@@ -220,6 +218,9 @@ impl Client {
     }
 
     /// Create a client from the given json config.
+    ///
+    /// # Errors
+    /// - `Error::BasicParse` if an error occurs parsing the configuration.
     #[cfg(feature = "serde")]
     pub fn from_config(json: &str) -> crate::Result<Self> {
         let config = serde_json::from_str::<config::ClientConfigInner>(json)
@@ -255,6 +256,7 @@ impl Client {
     ///
     /// # }
     /// ```
+    #[must_use]
     pub fn mirror_network(&self) -> Vec<String> {
         self.mirrornet().load().addresses().collect()
     }
@@ -272,9 +274,11 @@ impl Client {
     /// Construct a client with the given nodes configured.
     ///
     /// Note that this disables network auto-updating.
+    // allowed for API compatibility.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn for_network(network: HashMap<String, AccountId>) -> crate::Result<Self> {
         let network =
-            ManagedNetwork::new(Network::from_addresses(network)?, MirrorNetwork::default());
+            ManagedNetwork::new(Network::from_addresses(&network)?, MirrorNetwork::default());
 
         Ok(ClientBuilder::new(network).disable_network_updating().build())
     }
@@ -304,8 +308,10 @@ impl Client {
     /// Note: This is only really useful if you used `for_network`, because the network can auto-update.
     ///
     /// If network auto-updating is enabled this will eventually be overridden.
+    // allowed for API compatibility.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn set_network_from_address_book(&self, address_book: NodeAddressBook) {
-        self.net().update_from_address_book(address_book)
+        self.net().update_from_address_book(&address_book);
     }
 
     /// Updates the network to use the given addresses.
@@ -315,13 +321,16 @@ impl Client {
     /// If network auto-updating is enabled this will eventually be overridden.
     ///
     /// Tend to prefer [`set_network_from_address_book`](Self::set_network_from_address_book) where possible.
+    // allowed for API compatibility.
+    #[allow(clippy::needless_pass_by_value)]
     pub fn set_network(&self, network: HashMap<String, AccountId>) -> crate::Result<()> {
-        self.net().update_from_addresses(network)?;
+        self.net().update_from_addresses(&network)?;
 
         Ok(())
     }
 
     /// Returns the nodes associated with this client.
+    #[must_use]
     pub fn network(&self) -> HashMap<String, AccountId> {
         self.net().0.load().addresses()
     }
@@ -405,7 +414,7 @@ impl Client {
         self.0.operator.store(Some(Arc::new(Operator {
             account_id: id,
             signer: AnySigner::arbitrary(Box::new(public_key), f),
-        })))
+        })));
     }
 
     /// Gets a reference to the configured network.
@@ -425,10 +434,11 @@ impl Client {
     /// - if amount is negative
     pub fn set_default_max_transaction_fee(&self, amount: Hbar) {
         assert!(amount >= Hbar::ZERO);
-        self.0.max_transaction_fee_tinybar.store(amount.to_tinybars() as u64, Ordering::Relaxed)
+        self.0.max_transaction_fee_tinybar.store(amount.to_tinybars() as u64, Ordering::Relaxed);
     }
 
     /// Gets the maximum transaction fee the paying account is willing to pay.
+    #[must_use]
     pub fn default_max_transaction_fee(&self) -> Option<Hbar> {
         let val = self.0.max_transaction_fee_tinybar.load(Ordering::Relaxed);
 
@@ -436,6 +446,7 @@ impl Client {
     }
 
     /// Gets the maximum query fee the paying account is willing to pay.
+    #[must_use]
     pub fn default_max_query_payment(&self) -> Option<Hbar> {
         let val = self.0.max_query_payment_tinybar.load(Ordering::Relaxed);
 
@@ -453,6 +464,7 @@ impl Client {
     }
 
     /// Returns the maximum amount of time that will be spent on a request.
+    #[must_use]
     pub fn request_timeout(&self) -> Option<Duration> {
         self.backoff().request_timeout
     }
@@ -463,6 +475,7 @@ impl Client {
     }
 
     /// Returns the maximum number of attempts for a request.
+    #[must_use]
     pub fn max_attempts(&self) -> usize {
         self.backoff().max_attempts
     }
@@ -474,6 +487,7 @@ impl Client {
 
     /// The initial backoff for a request being executed.
     #[doc(alias = "initial_backoff")]
+    #[must_use]
     pub fn min_backoff(&self) -> Duration {
         self.backoff().initial_backoff
     }
@@ -485,6 +499,7 @@ impl Client {
     }
 
     /// Returns the maximum amount of time a request will wait between attempts.
+    #[must_use]
     pub fn max_backoff(&self) -> Duration {
         self.backoff().max_backoff
     }
@@ -494,6 +509,7 @@ impl Client {
         self.0.backoff.write().max_backoff = max_backoff;
     }
 
+    #[must_use]
     pub(crate) fn backoff(&self) -> ClientBackoff {
         *self.0.backoff.read()
     }
@@ -568,7 +584,7 @@ impl Client {
         self.load_operator().as_deref().map(|it| it.account_id)
     }
 
-    /// Returns the PublicKey for the current operator.
+    /// Returns the `PublicKey` for the current operator.
     #[must_use]
     pub fn get_operator_public_key(&self) -> Option<PublicKey> {
         self.load_operator().as_deref().map(|it| it.signer.public_key())

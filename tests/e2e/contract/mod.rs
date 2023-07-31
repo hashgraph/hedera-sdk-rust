@@ -18,7 +18,7 @@ enum ContractAdminKey {
     // Custom(PrivateKey),
 }
 
-const SMART_CONTRACT_BYTECODE: &'static str = concat!(
+const SMART_CONTRACT_BYTECODE: &str = concat!(
     "608060405234801561001057600080fd5b506040516104d73803806104d7833981810160405260208110156100",
     "3357600080fd5b810190808051604051939291908464010000000082111561005357600080fd5b908301906020",
     "82018581111561006857600080fd5b825164010000000081118282018810171561008257600080fd5b82525081",
@@ -74,9 +74,9 @@ async fn bytecode_file_id(
             .keys([op_key])
             .contents(SMART_CONTRACT_BYTECODE)
             .expiration_time(OffsetDateTime::now_utc() + Duration::days(30))
-            .execute(&client)
+            .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?
             .file_id
             .unwrap();
@@ -99,30 +99,24 @@ async fn create_contract(
         op_key: PublicKey,
         admin_key: Option<ContractAdminKey>,
     ) -> hedera::Result<ContractId> {
-        let file_id = bytecode_file_id(&client, op_key).await?;
+        let file_id = bytecode_file_id(client, op_key).await?;
 
         let mut tx = ContractCreateTransaction::new();
 
-        match admin_key {
-            Some(ContractAdminKey::Operator) => {
-                tx.admin_key(op_key);
-            }
-            // Some(ContractAdminKey::Custom(key)) => {
-            //     tx.admin_key(key.public_key()).sign(key);
-            // }
-            None => {}
+        if let Some(ContractAdminKey::Operator) = admin_key {
+            tx.admin_key(op_key);
         }
 
         let contract_id = tx
-            .gas(100000)
+            .gas(100_000)
             .constructor_parameters(
                 ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
             )
             .bytecode_file_id(file_id)
             .contract_memo("[e2e::ContractCreateTransaction]")
-            .execute(&client)
+            .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?
             .contract_id
             .unwrap();

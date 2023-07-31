@@ -337,6 +337,7 @@ fn filter_map(
     let total = messages.iter().map(|it| it.total).min().unwrap();
 
     // note: because of the way we handle `total`, `total` can get *smaller*.
+
     match messages.len() >= total as usize {
         true => {
             let messages = mem::take(messages);
