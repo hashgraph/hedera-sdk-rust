@@ -190,3 +190,171 @@ impl ToProtobuf for NftRemoveAllowance {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AccountAllowanceDeleteTransaction,
+        AccountId,
+        AnyTransaction,
+        Hbar,
+        TokenId,
+        TransactionId,
+    };
+
+    fn make_transaction() -> AccountAllowanceDeleteTransaction {
+        let owner_id: AccountId = "5.6.7".parse().unwrap();
+        let mut tx = AccountAllowanceDeleteTransaction::new();
+
+        let invalid_token_ids: [TokenId; 2] = ["4.4.4".parse().unwrap(), "8.8.8".parse().unwrap()];
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .delete_all_token_nft_allowances(invalid_token_ids[0].nft(123), owner_id)
+            .delete_all_token_nft_allowances(invalid_token_ids[0].nft(456), owner_id)
+            .delete_all_token_nft_allowances(invalid_token_ids[1].nft(456), owner_id)
+            .delete_all_token_nft_allowances(invalid_token_ids[0].nft(789), owner_id)
+            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    CryptoDeleteAllowance(
+                        CryptoDeleteAllowanceTransactionBody {
+                            nft_allowances: [
+                                NftRemoveAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 4,
+                                            realm_num: 4,
+                                            token_num: 4,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    serial_numbers: [
+                                        123,
+                                        456,
+                                        789,
+                                    ],
+                                },
+                                NftRemoveAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 8,
+                                            realm_num: 8,
+                                            token_num: 8,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    serial_numbers: [
+                                        456,
+                                    ],
+                                },
+                            ],
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+}

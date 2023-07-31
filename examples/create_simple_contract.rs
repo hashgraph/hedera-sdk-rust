@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
 
     let contract_transaction_response = ContractCreateTransaction::new()
         .bytecode_file_id(new_file_id)
-        .gas(500000)
+        .gas(500_000)
         .admin_key(args.operator_key.public_key())
         .constructor_parameters(
             ContractFunctionParameters::new()
@@ -81,7 +81,7 @@ async fn main() -> anyhow::Result<()> {
 
     let contract_call_result = ContractCallQuery::new()
         .contract_id(new_contract_id)
-        .gas(500000)
+        .gas(500_000)
         .function("greet")
         .execute(&client)
         .await?;

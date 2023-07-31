@@ -19,7 +19,7 @@
  */
 
 use hedera_proto::services;
-use hedera_proto::services::crypto_service_client::CryptoServiceClient;
+use services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
@@ -384,5 +384,376 @@ impl ToProtobuf for NftAllowance {
             approved_for_all: self.approved_for_all,
             delegating_spender: self.delegating_spender_account_id.to_protobuf(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AccountAllowanceApproveTransaction,
+        AccountId,
+        AnyTransaction,
+        Hbar,
+        TokenId,
+        TransactionId,
+    };
+
+    fn make_transaction() -> AccountAllowanceApproveTransaction {
+        let owner_id: AccountId = "5.6.7".parse().unwrap();
+        let mut tx = AccountAllowanceApproveTransaction::new();
+
+        let invalid_token_ids: [TokenId; 4] = [
+            "2.2.2".parse().unwrap(),
+            "4.4.4".parse().unwrap(),
+            "6.6.6".parse().unwrap(),
+            "8.8.8".parse().unwrap(),
+        ];
+
+        let invalid_account_ids: [AccountId; 5] = [
+            "1.1.1".parse().unwrap(),
+            "3.3.3".parse().unwrap(),
+            "5.5.5".parse().unwrap(),
+            "7.7.7".parse().unwrap(),
+            "9.9.9".parse().unwrap(),
+        ];
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .approve_hbar_allowance(owner_id, invalid_account_ids[0], Hbar::new(3))
+            .approve_token_allowance(invalid_token_ids[0], owner_id, invalid_account_ids[1], 6)
+            .approve_token_nft_allowance(
+                invalid_token_ids[1].nft(123),
+                owner_id,
+                invalid_account_ids[2],
+            )
+            .approve_token_nft_allowance(
+                invalid_token_ids[1].nft(456),
+                owner_id,
+                invalid_account_ids[2],
+            )
+            .approve_token_nft_allowance(
+                invalid_token_ids[3].nft(456),
+                owner_id,
+                invalid_account_ids[2],
+            )
+            .approve_token_nft_allowance(
+                invalid_token_ids[1].nft(789),
+                owner_id,
+                invalid_account_ids[4],
+            )
+            .approve_token_nft_allowance_all_serials(
+                invalid_token_ids[2],
+                owner_id,
+                invalid_account_ids[3],
+            )
+            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    CryptoApproveAllowance(
+                        CryptoApproveAllowanceTransactionBody {
+                            crypto_allowances: [
+                                CryptoAllowance {
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    spender: Some(
+                                        AccountId {
+                                            shard_num: 1,
+                                            realm_num: 1,
+                                            account: Some(
+                                                AccountNum(
+                                                    1,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    amount: 300000000,
+                                },
+                            ],
+                            nft_allowances: [
+                                NftAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 4,
+                                            realm_num: 4,
+                                            token_num: 4,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    spender: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 5,
+                                            account: Some(
+                                                AccountNum(
+                                                    5,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    serial_numbers: [
+                                        123,
+                                        456,
+                                    ],
+                                    approved_for_all: None,
+                                    delegating_spender: None,
+                                },
+                                NftAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 8,
+                                            realm_num: 8,
+                                            token_num: 8,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    spender: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 5,
+                                            account: Some(
+                                                AccountNum(
+                                                    5,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    serial_numbers: [
+                                        456,
+                                    ],
+                                    approved_for_all: None,
+                                    delegating_spender: None,
+                                },
+                                NftAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 4,
+                                            realm_num: 4,
+                                            token_num: 4,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    spender: Some(
+                                        AccountId {
+                                            shard_num: 9,
+                                            realm_num: 9,
+                                            account: Some(
+                                                AccountNum(
+                                                    9,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    serial_numbers: [
+                                        789,
+                                    ],
+                                    approved_for_all: None,
+                                    delegating_spender: None,
+                                },
+                                NftAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 6,
+                                            realm_num: 6,
+                                            token_num: 6,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    spender: Some(
+                                        AccountId {
+                                            shard_num: 7,
+                                            realm_num: 7,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    serial_numbers: [],
+                                    approved_for_all: Some(
+                                        true,
+                                    ),
+                                    delegating_spender: None,
+                                },
+                            ],
+                            token_allowances: [
+                                TokenAllowance {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 2,
+                                            realm_num: 2,
+                                            token_num: 2,
+                                        },
+                                    ),
+                                    owner: Some(
+                                        AccountId {
+                                            shard_num: 5,
+                                            realm_num: 6,
+                                            account: Some(
+                                                AccountNum(
+                                                    7,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    spender: Some(
+                                        AccountId {
+                                            shard_num: 3,
+                                            realm_num: 3,
+                                            account: Some(
+                                                AccountNum(
+                                                    3,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    amount: 6,
+                                },
+                            ],
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn check_properties() {
+        let tx = make_transaction();
+
+        assert!(!tx.hbar_approvals().is_empty());
+        assert!(!tx.token_approvals().is_empty());
+        assert!(!tx.token_approvals().is_empty());
     }
 }

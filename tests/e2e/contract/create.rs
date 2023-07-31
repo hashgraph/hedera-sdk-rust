@@ -27,7 +27,7 @@ async fn basic() -> anyhow::Result<()> {
 
     let contract_id = ContractCreateTransaction::new()
         .admin_key(op.private_key.public_key())
-        .gas(100000)
+        .gas(100_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )
@@ -71,7 +71,7 @@ async fn no_admin_key() -> anyhow::Result<()> {
     let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
 
     let contract_id = ContractCreateTransaction::new()
-        .gas(100000)
+        .gas(100_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )
@@ -137,7 +137,7 @@ async fn constructor_parameters_unset_fails() -> anyhow::Result<()> {
     let file_id = bytecode_file_id(&client, op.private_key.public_key()).await?;
 
     let res = ContractCreateTransaction::new()
-        .gas(100000)
+        .gas(100_000)
         .bytecode_file_id(file_id)
         .contract_memo("[e2e::ContractCreateTransaction]")
         .execute(&client)
@@ -161,7 +161,7 @@ async fn bytecode_file_id_unset_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let res = ContractCreateTransaction::new()
-        .gas(100000)
+        .gas(100_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )

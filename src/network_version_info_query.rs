@@ -62,16 +62,13 @@ impl ToQueryProtobuf for NetworkVersionInfoQueryData {
 impl QueryExecute for NetworkVersionInfoQueryData {
     type Response = NetworkVersionInfo;
 
-    fn is_payment_required(&self) -> bool {
-        false
-    }
-
     fn execute(
         &self,
         channel: Channel,
         request: services::Query,
     ) -> BoxGrpcFuture<'_, services::Response> {
-        Box::pin(async { NetworkServiceClient::new(channel).get_version_info(request).await })
+        dbg!(&request);
+        Box::pin(async { dbg!(NetworkServiceClient::new(channel).get_version_info(request).await) })
     }
 }
 

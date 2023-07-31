@@ -47,5 +47,5 @@ where
     }
 
     let last_error = last_error.expect("timeout while network had no healthy nodes");
-    return Err(crate::Error::TimedOut(last_error.into()));
+    Err(crate::Error::TimedOut(last_error.into()))
 }

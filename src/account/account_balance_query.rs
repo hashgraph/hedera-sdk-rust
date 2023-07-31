@@ -151,3 +151,102 @@ impl ValidateChecksums for AccountBalanceQueryData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::AccountBalanceQuery;
+
+    #[test]
+    fn serialize_with_account_id() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    CryptogetAccountBalance(
+                        CryptoGetAccountBalanceQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            balance_source: Some(
+                                AccountId(
+                                    AccountId {
+                                        shard_num: 0,
+                                        realm_num: 0,
+                                        account: Some(
+                                            AccountNum(
+                                                5005,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &AccountBalanceQuery::new()
+                .account_id(crate::AccountId {
+                    shard: 0,
+                    realm: 0,
+                    num: 5005,
+                    alias: None,
+                    evm_address: None,
+                    checksum: None,
+                })
+                .data
+                .to_query_protobuf(Default::default()),
+        );
+    }
+
+    #[test]
+    fn serialize_with_contract_id() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    CryptogetAccountBalance(
+                        CryptoGetAccountBalanceQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            balance_source: Some(
+                                ContractId(
+                                    ContractId {
+                                        shard_num: 0,
+                                        realm_num: 0,
+                                        contract: Some(
+                                            ContractNum(
+                                                5005,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &AccountBalanceQuery::new()
+                .contract_id(crate::ContractId {
+                    shard: 0,
+                    realm: 0,
+                    num: 5005,
+                    evm_address: None,
+                    checksum: None,
+                })
+                .data
+                .to_query_protobuf(Default::default()),
+        );
+    }
+}

@@ -38,13 +38,17 @@ use crate::common::{
     TestEnvironment,
 };
 
-struct FungibleToken {
-    id: TokenId,
-    owner: Account,
+pub(crate) struct FungibleToken {
+    pub(crate) id: TokenId,
+    pub(crate) owner: Account,
 }
 
 impl FungibleToken {
-    async fn create(client: &Client, owner: &Account, initial_supply: u64) -> hedera::Result<Self> {
+    pub(crate) async fn create(
+        client: &Client,
+        owner: &Account,
+        initial_supply: u64,
+    ) -> hedera::Result<Self> {
         let owner_public_key = owner.key.public_key();
         let token_id = TokenCreateTransaction::new()
             .name("ffff")
@@ -78,7 +82,7 @@ impl FungibleToken {
             .sign(self.owner.key.clone())
             .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?;
 
         Ok(())
@@ -88,9 +92,9 @@ impl FungibleToken {
         TokenDeleteTransaction::new()
             .token_id(self.id)
             .sign(self.owner.key)
-            .execute(&client)
+            .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?;
 
         Ok(())
@@ -134,7 +138,7 @@ impl Nft {
         client: &Client,
         nfts_to_mint: u8,
     ) -> hedera::Result<Vec<i64>> {
-        self.mint(&client, (0..nfts_to_mint).map(|it| [it])).await
+        self.mint(client, (0..nfts_to_mint).map(|it| [it])).await
     }
 
     async fn mint<Bytes: AsRef<[u8]>>(
@@ -191,9 +195,9 @@ impl Nft {
         TokenDeleteTransaction::new()
             .token_id(self.id)
             .sign(self.owner.key)
-            .execute(&client)
+            .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?;
 
         Ok(())
@@ -212,9 +216,9 @@ async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
             .supply_key(op.private_key.clone().public_key())
             .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
             .freeze_default(false)
-            .execute(&client)
+            .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?
             .token_id
             .ok_or_else(|| anyhow::anyhow!("Token creation failed"))?;
@@ -227,9 +231,9 @@ async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
     async fn teardown(client: &Client, token_id: TokenId) -> anyhow::Result<()> {
         TokenDeleteTransaction::new()
             .token_id(token_id)
-            .execute(&client)
+            .execute(client)
             .await?
-            .get_receipt(&client)
+            .get_receipt(client)
             .await?;
 
         Ok(())
@@ -251,7 +255,7 @@ async fn mint_several_nfts_at_once() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    let token_id = setup(&op, &client).await?;
+    let token_id = setup(op, &client).await?;
 
     let mut tasks = JoinSet::new();
 

@@ -95,7 +95,7 @@ async fn insufficient_balance_for_fee_fails() -> anyhow::Result<()> {
         fee_collector_account_id: Some(alice.id),
         fee: FixedFeeData {
             denominating_token_id: Some(TokenId::new(0, 0, 0)),
-            amount: 5000_000_000,
+            amount: 5_000_000_000,
         },
     };
 
