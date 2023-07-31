@@ -33,8 +33,12 @@ fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
     // in the beginning, there was only services and it was named "protos"
 
-    let services: Vec<_> =
-        read_dir("./protobufs/services")?.filter_map(|entry| Some(entry.ok()?.path())).collect();
+    let services: Vec<_> = read_dir("./protobufs/services")?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            entry.file_type().ok()?.is_file().then(|| entry.path())
+        })
+        .collect();
 
     let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
 

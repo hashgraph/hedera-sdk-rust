@@ -195,6 +195,7 @@ pub use contract::{
     ContractInfo,
     ContractInfoQuery,
     ContractLogInfo,
+    ContractNonceInfo,
     ContractUpdateTransaction,
     DelegateContractId,
 };
