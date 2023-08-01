@@ -109,3 +109,59 @@ impl FromProtobuf<services::response::Response> for Vec<TransactionRecord> {
         Vec::<TransactionRecord>::from_protobuf(response.records)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::{
+        AccountRecordsQuery,
+        Hbar,
+    };
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    CryptoGetAccountRecords(
+                        CryptoGetAccountRecordsQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            account_id: Some(
+                                AccountId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    account: Some(
+                                        AccountNum(
+                                            5005,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &AccountRecordsQuery::new()
+                .account_id(crate::AccountId {
+                    shard: 0,
+                    realm: 0,
+                    num: 5005,
+                    alias: None,
+                    evm_address: None,
+                    checksum: None,
+                })
+                .max_payment_amount(Hbar::from_tinybars(100_000))
+                .data
+                .to_query_protobuf(Default::default()),
+        );
+    }
+}
