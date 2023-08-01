@@ -163,7 +163,7 @@ impl PublicKey {
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ECDSA(secp256k1) `PublicKey`.
     pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
-        let data = if bytes.len() == 33 {
+        let data = if bytes.len() == 32 + 1 || bytes.len() == 32 * 2 + 1 {
             k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes).map_err(Error::key_parse)?
         } else {
             return Self::from_bytes_der(bytes);
@@ -186,8 +186,10 @@ impl PublicKey {
             .ok_or_else(|| Error::key_parse("Unexpected bitstring len"))?;
 
         match info.algorithm.oid {
-            // hack (keep for 1 release) the `elliptic_curve` OID is not the correct one.
-            K256_OID | EC_ALGORITM_OID => Self::from_bytes_ecdsa(bytes),
+            K256_OID => Self::from_bytes_ecdsa(bytes),
+            EC_ALGORITM_OID if info.algorithm.parameters_oid().ok() == Some(K256_OID) => {
+                Self::from_bytes_ecdsa(bytes)
+            }
             ED25519_OID => Self::from_bytes_ed25519(bytes),
             oid => Err(Error::key_parse(format!("unsupported key algorithm: {oid}"))),
         }
