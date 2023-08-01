@@ -21,14 +21,22 @@
 #[cfg(test)]
 mod tests;
 
-use std::fmt;
 use std::fmt::{
     Debug,
     Display,
     Formatter,
 };
 use std::str::FromStr;
+use std::{
+    fmt,
+    mem,
+};
 
+use aes::cipher::generic_array::GenericArray;
+use aes::cipher::{
+    BlockDecryptMut,
+    KeyIvInit,
+};
 use ed25519_dalek::Signer;
 use hmac::{
     Hmac,
@@ -40,6 +48,7 @@ use pkcs8::der::{
     Decode,
     Encode,
 };
+use sec1::EcPrivateKey;
 use sha2::Sha512;
 use sha3::Digest;
 use triomphe::Arc;
@@ -221,7 +230,9 @@ impl PrivateKey {
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a ECDSA(secp256k1) `PrivateKey`.
     pub fn from_bytes_ecdsa(bytes: &[u8]) -> crate::Result<Self> {
-        let data = if let Ok(bytes) = bytes.try_into() {
+        let data = (bytes.len() == 32).then(|| GenericArray::from_slice(bytes));
+
+        let data = if let Some(bytes) = data {
             // not DER encoded, raw bytes for key
             k256::ecdsa::SigningKey::from_bytes(bytes).map_err(Error::key_parse)?
         } else {
@@ -236,8 +247,13 @@ impl PrivateKey {
     /// # Errors
     /// - [`Error::KeyParse`] if `bytes` cannot be parsed into a `PrivateKey`.
     pub fn from_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
-        let info = pkcs8::PrivateKeyInfo::from_der(bytes)
-            .map_err(|err| Error::key_parse(err.to_string()))?;
+        let info =
+            pkcs8::PrivateKeyInfo::from_der(bytes).map_err(|err| Error::key_parse(err.to_string()));
+
+        let info = match info {
+            Ok(info) => info,
+            Err(e) => return Self::from_sec1_bytes_der(bytes).ok().ok_or(e),
+        };
 
         // PrivateKey is an `OctetString`, and the `PrivateKey`s we all support are `OctetStrings`.
         // So, we, awkwardly, have an `OctetString` containing an `OctetString` containing our key material.
@@ -250,6 +266,16 @@ impl PrivateKey {
             K256_OID => Self::from_bytes_ecdsa(inner),
             ED25519_OID => Self::from_bytes_ed25519(inner),
             id => Err(Error::key_parse(format!("unsupported key algorithm: {id}"))),
+        }
+    }
+
+    fn from_sec1_bytes_der(bytes: &[u8]) -> crate::Result<Self> {
+        let sec1 = EcPrivateKey::try_from(bytes).map_err(Error::key_parse)?;
+
+        match sec1.parameters.and_then(|it| it.named_curve()) {
+            Some(K256_OID) => Self::from_bytes_ecdsa(sec1.private_key),
+            Some(oid) => Err(Error::key_parse(format!("unsupported curve OID: {oid}"))),
+            None => Err(Error::key_parse("missing curve parameters")),
         }
     }
 
@@ -300,15 +326,18 @@ impl PrivateKey {
     /// - [`Error::KeyParse`] if the data contained inside the PEM is not a valid `PrivateKey`.
     pub fn from_pem(pem: impl AsRef<[u8]>) -> crate::Result<Self> {
         fn inner(pem: &[u8]) -> crate::Result<PrivateKey> {
-            let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
+            let pem = ::pem::parse(pem).map_err(Error::key_parse)?;
 
-            if type_label != "PRIVATE KEY" {
-                return Err(Error::key_parse(format!(
+            let type_label = pem.tag();
+            let der = pem.contents();
+
+            match type_label {
+                "PRIVATE KEY" => PrivateKey::from_bytes_der(der),
+                "EC PRIVATE KEY" => PrivateKey::from_sec1_bytes_der(der),
+                _ => Err(Error::key_parse(format!(
                     "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
-                )));
+                ))),
             }
-
-            PrivateKey::from_bytes_der(&der)
         }
 
         inner(pem.as_ref())
@@ -356,20 +385,80 @@ impl PrivateKey {
         password: impl AsRef<[u8]>,
     ) -> crate::Result<Self> {
         fn inner(pem: &[u8], password: &[u8]) -> crate::Result<PrivateKey> {
-            let (type_label, der) = pem_rfc7468::decode_vec(pem).map_err(Error::key_parse)?;
+            let pem = ::pem::parse(pem).map_err(Error::key_parse)?;
 
-            if type_label != "ENCRYPTED PRIVATE KEY" {
-                return Err(Error::key_parse(format!(
-                    "incorrect PEM type label: expected: `PRIVATE KEY`, got: `{type_label}`"
-                )));
+            let type_label = pem.tag();
+            let der = pem.contents();
+
+            match type_label {
+                "ENCRYPTED PRIVATE KEY" => {
+                    // thanks library for not providing a way to check `is_empty`.
+                    if let Some(header) = pem.headers().iter().next() {
+                        return Err(Error::key_parse(format!("Expected no headers for `ENCRYPTED PRIVATE KEY` but found: `{}: {}`", header.0, header.1)));
+                    }
+
+                    let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
+                        .map_err(|e| Error::key_parse(e.to_string()))?;
+
+                    let decrypted =
+                        info.decrypt(password).map_err(|e| Error::key_parse(e.to_string()))?;
+
+                    PrivateKey::from_bytes_der(decrypted.as_bytes())
+                }
+
+                "EC PRIVATE KEY" => {
+                    let (headers, mut der) = {
+                        let mut pem = pem;
+                        let headers = mem::take(pem.headers_mut());
+                        let  der = pem.into_contents();
+
+                        (headers, der)
+                    };
+
+                    let proc_type = headers.get("Proc-Type");
+                    let dek_info = headers.get("DEK-Info");
+
+                    if proc_type != Some("4,ENCRYPTED") {
+                        return Err(Error::key_parse("Encrypted EC Private Key missing or invalid `Proc-Type` header"));
+                    }
+
+                    let Some(dek_info) = dek_info else {
+                        return Err(Error::key_parse("Encrypted EC Private Key missing `DEK-Info` header"));
+                    };
+
+                    let Some((alg, iv)) = dek_info.split_once(',') else {
+                        return Err(Error::key_parse("Invalid `DEK-Info`"));
+                    };
+
+                    let iv = hex::decode(iv).map_err(|e| Error::key_parse(format!("invalid IV: {e}")))?;
+
+                    let decrypted = match alg {
+                        "AES-128-CBC" => {
+                            let iv: [u8; 16] = iv.try_into().map_err(|_| Error::key_parse("invalid IV"))?;
+
+
+                            let mut md5_sum = md5::Context::new();
+
+                            md5_sum.consume(password);
+                            md5_sum.consume(&iv[..8]);
+
+                            let passphrase = md5_sum.compute().0;
+
+                            cbc::Decryptor::<aes::Aes128>::new(&passphrase.into(), &iv.into())
+                            .decrypt_padded_mut::<aes::cipher::block_padding::Pkcs7>(&mut der).map_err(|e| Error::key_parse(format!("error decrypting key: {e}")))?
+                        }
+                        _ => return Err(Error::key_parse(format!("unexpected decryption alg: {alg}")))
+                    };
+
+
+
+                    PrivateKey::from_sec1_bytes_der(decrypted)
+                }
+
+                _ => return Err(Error::key_parse(format!(
+                    "incorrect PEM type label: expected: `ENCRYPTED PRIVATE KEY`, got: `{type_label}`"
+                )))
             }
-
-            let info = pkcs8::EncryptedPrivateKeyInfo::from_der(&der)
-                .map_err(|e| Error::key_parse(e.to_string()))?;
-
-            let decrypted = info.decrypt(password).map_err(|e| Error::key_parse(e.to_string()))?;
-
-            PrivateKey::from_bytes_der(decrypted.as_bytes())
         }
 
         inner(pem.as_ref(), password.as_ref())
@@ -693,4 +782,3 @@ impl FromStr for PrivateKey {
 
 // TODO: derive (!) - secp256k1
 // TODO: legacy_derive (!) - secp256k1
-// TODO: sign_transaction
