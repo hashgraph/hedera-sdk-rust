@@ -100,3 +100,58 @@ impl ValidateChecksums for ContractInfoQueryData {
         self.contract_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::{
+        ContractInfoQuery,
+        Hbar,
+    };
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    ContractGetInfo(
+                        ContractGetInfoQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            contract_id: Some(
+                                ContractId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    contract: Some(
+                                        ContractNum(
+                                            5005,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &ContractInfoQuery::new()
+                .contract_id(crate::ContractId {
+                    shard: 0,
+                    realm: 0,
+                    num: 5005,
+                    evm_address: None,
+                    checksum: None,
+                })
+                .max_payment_amount(Hbar::from_tinybars(100_000))
+                .data
+                .to_query_protobuf(Default::default()),
+        );
+    }
+}

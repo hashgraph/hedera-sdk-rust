@@ -19,7 +19,6 @@
  */
 
 use hedera_proto::services;
-use prost::Message;
 use time::{
     Duration,
     OffsetDateTime,
@@ -96,27 +95,7 @@ impl ContractInfo {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
-        #[allow(deprecated)]
-        services::contract_get_info_response::ContractInfo {
-            contract_id: Some(self.contract_id.to_protobuf()),
-            account_id: Some(self.account_id.to_protobuf()),
-            contract_account_id: self.contract_account_id.clone(),
-            admin_key: self.admin_key.to_protobuf(),
-            expiration_time: self.expiration_time.to_protobuf(),
-            auto_renew_period: self.auto_renew_period.to_protobuf(),
-            storage: self.storage as i64,
-            memo: self.contract_memo.clone(),
-            balance: self.balance,
-            deleted: self.is_deleted,
-            ledger_id: self.ledger_id.to_bytes(),
-            auto_renew_account_id: self.auto_renew_account_id.to_protobuf(),
-            max_automatic_token_associations: self.max_automatic_token_associations as i32,
-            staking_info: self.staking_info.to_protobuf(),
-
-            // unimplemented fields
-            token_relationships: Vec::new(),
-        }
-        .encode_to_vec()
+        ToProtobuf::to_bytes(self)
     }
 }
 
@@ -163,5 +142,187 @@ impl FromProtobuf<services::contract_get_info_response::ContractInfo> for Contra
             ledger_id,
             staking_info,
         })
+    }
+}
+
+impl ToProtobuf for ContractInfo {
+    type Protobuf = services::contract_get_info_response::ContractInfo;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        #[allow(deprecated)]
+        services::contract_get_info_response::ContractInfo {
+            contract_id: Some(self.contract_id.to_protobuf()),
+            account_id: Some(self.account_id.to_protobuf()),
+            contract_account_id: self.contract_account_id.clone(),
+            admin_key: self.admin_key.to_protobuf(),
+            expiration_time: self.expiration_time.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+            storage: self.storage as i64,
+            memo: self.contract_memo.clone(),
+            balance: self.balance,
+            deleted: self.is_deleted,
+            ledger_id: self.ledger_id.to_bytes(),
+            auto_renew_account_id: self.auto_renew_account_id.to_protobuf(),
+            max_automatic_token_associations: self.max_automatic_token_associations as i32,
+            staking_info: self.staking_info.to_protobuf(),
+
+            // unimplemented fields
+            token_relationships: Vec::new(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services::{self,};
+    use prost::Message;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::{
+        ContractInfo,
+        LedgerId,
+    };
+
+    fn make_info() -> services::contract_get_info_response::ContractInfo {
+        services::contract_get_info_response::ContractInfo {
+            contract_id: Some(services::ContractId {
+                shard_num: 0,
+                realm_num: 0,
+                contract: Some(services::contract_id::Contract::ContractNum(1)),
+            }),
+            account_id: Some(services::AccountId {
+                shard_num: 0,
+                realm_num: 0,
+                account: Some(services::account_id::Account::AccountNum(2)),
+            }),
+            contract_account_id: "0.0.3".to_owned(),
+            expiration_time: Some(services::Timestamp { seconds: 0, nanos: 4_000 }),
+            auto_renew_period: Some(services::Duration { seconds: 24 * 60 * 60 }),
+            storage: 6,
+            memo: "7".to_owned(),
+            balance: 8,
+            ledger_id: LedgerId::testnet().to_bytes(),
+
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn from_protobuf() {
+        expect![[r#"
+            ContractInfo {
+                contract_id: "0.0.1",
+                account_id: "0.0.2",
+                contract_account_id: "0.0.3",
+                admin_key: None,
+                expiration_time: Some(
+                    1970-01-01 0:00:00.000004 +00:00:00,
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 86400,
+                        nanoseconds: 0,
+                    },
+                ),
+                storage: 6,
+                contract_memo: "7",
+                balance: 8,
+                is_deleted: false,
+                auto_renew_account_id: None,
+                max_automatic_token_associations: 0,
+                ledger_id: "testnet",
+                staking_info: None,
+            }
+        "#]]
+        .assert_debug_eq(&ContractInfo::from_protobuf(make_info()).unwrap());
+    }
+
+    #[test]
+    fn to_protobuf() {
+        expect![[r#"
+            ContractInfo {
+                contract_id: Some(
+                    ContractId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        contract: Some(
+                            ContractNum(
+                                1,
+                            ),
+                        ),
+                    },
+                ),
+                account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                2,
+                            ),
+                        ),
+                    },
+                ),
+                contract_account_id: "0.0.3",
+                admin_key: None,
+                expiration_time: Some(
+                    Timestamp {
+                        seconds: 0,
+                        nanos: 4000,
+                    },
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 86400,
+                    },
+                ),
+                storage: 6,
+                memo: "7",
+                balance: 8,
+                deleted: false,
+                token_relationships: [],
+                ledger_id: [
+                    1,
+                ],
+                auto_renew_account_id: None,
+                max_automatic_token_associations: 0,
+                staking_info: None,
+            }
+        "#]]
+        .assert_debug_eq(&ContractInfo::from_protobuf(make_info()).unwrap().to_protobuf())
+    }
+
+    #[test]
+    fn from_bytes() {
+        expect![[r#"
+            ContractInfo {
+                contract_id: "0.0.1",
+                account_id: "0.0.2",
+                contract_account_id: "0.0.3",
+                admin_key: None,
+                expiration_time: Some(
+                    1970-01-01 0:00:00.000004 +00:00:00,
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 86400,
+                        nanoseconds: 0,
+                    },
+                ),
+                storage: 6,
+                contract_memo: "7",
+                balance: 8,
+                is_deleted: false,
+                auto_renew_account_id: None,
+                max_automatic_token_associations: 0,
+                ledger_id: "testnet",
+                staking_info: None,
+            }
+        "#]]
+        .assert_debug_eq(&ContractInfo::from_bytes(&make_info().encode_to_vec()).unwrap());
     }
 }
