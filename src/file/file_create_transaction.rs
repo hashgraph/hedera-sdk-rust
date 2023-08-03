@@ -20,33 +20,17 @@
 
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use time::{
-    Duration,
-    OffsetDateTime,
-};
+use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
 
 use crate::entity_id::ValidateChecksums;
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{
-    FromProtobuf,
-    ToProtobuf,
-};
+use crate::protobuf::{FromProtobuf, ToProtobuf};
 use crate::transaction::{
-    AnyTransactionData,
-    ChunkInfo,
-    ToSchedulableTransactionDataProtobuf,
-    ToTransactionDataProtobuf,
-    TransactionData,
-    TransactionExecute,
+    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
+    TransactionData, TransactionExecute,
 };
-use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    Key,
-    KeyList,
-    Transaction,
-};
+use crate::{AccountId, BoxGrpcFuture, Key, KeyList, Transaction};
 
 /// Create a new file, containing the given contents.
 pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;
@@ -253,5 +237,171 @@ impl ToProtobuf for FileCreateTransactionData {
             new_realm_admin_key: None,
             memo: self.file_memo.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use time::OffsetDateTime;
+
+    use crate::transaction::test_helpers::{transaction_body, unused_private_key, VALID_START};
+    use crate::{AnyTransaction, FileCreateTransaction, Hbar, TransactionId};
+
+    fn make_transaction() -> FileCreateTransaction {
+        let mut tx = FileCreateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .contents(Vec::from([0xde, 0xad, 0xbe, 0xef]))
+            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158728).unwrap())
+            .keys([unused_private_key().public_key()])
+            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .file_memo("Hello memo")
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    FileCreate(
+                        FileCreateTransactionBody {
+                            expiration_time: Some(
+                                Timestamp {
+                                    seconds: 1554158728,
+                                    nanos: 0,
+                                },
+                            ),
+                            keys: Some(
+                                KeyList {
+                                    keys: [
+                                        Key {
+                                            key: Some(
+                                                Ed25519(
+                                                    [
+                                                        224,
+                                                        200,
+                                                        236,
+                                                        39,
+                                                        88,
+                                                        165,
+                                                        135,
+                                                        159,
+                                                        250,
+                                                        194,
+                                                        38,
+                                                        161,
+                                                        60,
+                                                        12,
+                                                        81,
+                                                        107,
+                                                        121,
+                                                        158,
+                                                        114,
+                                                        227,
+                                                        81,
+                                                        65,
+                                                        160,
+                                                        221,
+                                                        130,
+                                                        143,
+                                                        148,
+                                                        211,
+                                                        121,
+                                                        136,
+                                                        164,
+                                                        183,
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ],
+                                },
+                            ),
+                            contents: [
+                                222,
+                                173,
+                                190,
+                                239,
+                            ],
+                            shard_id: None,
+                            realm_id: None,
+                            new_realm_admin_key: None,
+                            memo: "Hello memo",
+                        },
+                    ),
+                ),
+            }
+        "#]].assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
     }
 }

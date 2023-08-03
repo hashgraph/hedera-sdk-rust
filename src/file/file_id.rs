@@ -118,6 +118,7 @@ impl FileId {
     pub fn validate_checksum(&self, client: &Client) -> Result<(), Error> {
         EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)
     }
+
 }
 
 impl ValidateChecksums for FileId {
