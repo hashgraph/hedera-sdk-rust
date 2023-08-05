@@ -255,3 +255,185 @@ impl ToProtobuf for FileUpdateTransactionData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use time::OffsetDateTime;
+
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        FileId,
+        FileUpdateTransaction,
+        Hbar,
+        TransactionId,
+    };
+
+    fn make_transaction() -> FileUpdateTransaction {
+        let mut tx = FileUpdateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .file_id("0.0.6006".parse::<FileId>().unwrap())
+            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158728).unwrap())
+            .contents(Vec::from([1, 2, 3, 4, 5]))
+            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .keys([unused_private_key().public_key()])
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    FileUpdate(
+                        FileUpdateTransactionBody {
+                            file_id: Some(
+                                FileId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    file_num: 6006,
+                                },
+                            ),
+                            expiration_time: Some(
+                                Timestamp {
+                                    seconds: 1554158728,
+                                    nanos: 0,
+                                },
+                            ),
+                            keys: Some(
+                                KeyList {
+                                    keys: [
+                                        Key {
+                                            key: Some(
+                                                Ed25519(
+                                                    [
+                                                        224,
+                                                        200,
+                                                        236,
+                                                        39,
+                                                        88,
+                                                        165,
+                                                        135,
+                                                        159,
+                                                        250,
+                                                        194,
+                                                        38,
+                                                        161,
+                                                        60,
+                                                        12,
+                                                        81,
+                                                        107,
+                                                        121,
+                                                        158,
+                                                        114,
+                                                        227,
+                                                        81,
+                                                        65,
+                                                        160,
+                                                        221,
+                                                        130,
+                                                        143,
+                                                        148,
+                                                        211,
+                                                        121,
+                                                        136,
+                                                        164,
+                                                        183,
+                                                    ],
+                                                ),
+                                            ),
+                                        },
+                                    ],
+                                },
+                            ),
+                            contents: [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5,
+                            ],
+                            memo: None,
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+}

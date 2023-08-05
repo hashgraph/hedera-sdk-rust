@@ -19,7 +19,6 @@
  */
 
 use hedera_proto::services;
-use prost::Message;
 use time::{
     Duration,
     OffsetDateTime,
@@ -85,16 +84,7 @@ impl FileInfo {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
-        services::file_get_info_response::FileInfo {
-            file_id: Some(self.file_id.to_protobuf()),
-            size: self.size as i64,
-            expiration_time: self.expiration_time.to_protobuf(),
-            deleted: self.is_deleted,
-            memo: self.file_memo.clone(),
-            ledger_id: self.ledger_id.to_bytes(),
-            keys: Some(self.keys.to_protobuf()),
-        }
-        .encode_to_vec()
+        ToProtobuf::to_bytes(self)
     }
 }
 
@@ -130,5 +120,180 @@ impl FromProtobuf<services::file_get_info_response::FileInfo> for FileInfo {
             ledger_id,
             keys: KeyList::from_protobuf(pb.keys.unwrap_or_default())?,
         })
+    }
+}
+
+impl ToProtobuf for FileInfo {
+    type Protobuf = services::file_get_info_response::FileInfo;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::file_get_info_response::FileInfo {
+            file_id: Some(self.file_id.to_protobuf()),
+            size: self.size as i64,
+            expiration_time: self.expiration_time.to_protobuf(),
+            deleted: self.is_deleted,
+            memo: self.file_memo.clone(),
+            ledger_id: self.ledger_id.to_bytes(),
+            keys: Some(self.keys.to_protobuf()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+    use prost::Message;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::unused_private_key;
+    use crate::{
+        FileInfo,
+        Key,
+        LedgerId,
+    };
+
+    fn make_info() -> services::file_get_info_response::FileInfo {
+        services::file_get_info_response::FileInfo {
+            file_id: Some(services::FileId { shard_num: 0, realm_num: 0, file_num: 1 }),
+            size: 2,
+            expiration_time: Some(services::Timestamp { seconds: 0, nanos: 3_000 }),
+            deleted: true,
+            keys: Some(services::KeyList {
+                keys: Vec::from([Key::from(unused_private_key().public_key()).to_protobuf()]),
+            }),
+            ledger_id: LedgerId::mainnet().to_bytes(),
+
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn from_protobuf() {
+        expect![[r#"
+            FileInfo {
+                file_id: "0.0.1",
+                size: 2,
+                expiration_time: Some(
+                    1970-01-01 0:00:00.000003 +00:00:00,
+                ),
+                auto_renew_period: None,
+                auto_renew_account_id: None,
+                is_deleted: true,
+                keys: KeyList {
+                    keys: [
+                        Single(
+                            "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
+                        ),
+                    ],
+                    threshold: None,
+                },
+                file_memo: "",
+                ledger_id: "mainnet",
+            }
+        "#]].assert_debug_eq(&FileInfo::from_protobuf(make_info()).unwrap());
+    }
+
+    #[test]
+    fn to_protobuf() {
+        expect![[r#"
+            FileInfo {
+                file_id: Some(
+                    FileId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        file_num: 1,
+                    },
+                ),
+                size: 2,
+                expiration_time: Some(
+                    Timestamp {
+                        seconds: 0,
+                        nanos: 3000,
+                    },
+                ),
+                deleted: true,
+                keys: Some(
+                    KeyList {
+                        keys: [
+                            Key {
+                                key: Some(
+                                    Ed25519(
+                                        [
+                                            224,
+                                            200,
+                                            236,
+                                            39,
+                                            88,
+                                            165,
+                                            135,
+                                            159,
+                                            250,
+                                            194,
+                                            38,
+                                            161,
+                                            60,
+                                            12,
+                                            81,
+                                            107,
+                                            121,
+                                            158,
+                                            114,
+                                            227,
+                                            81,
+                                            65,
+                                            160,
+                                            221,
+                                            130,
+                                            143,
+                                            148,
+                                            211,
+                                            121,
+                                            136,
+                                            164,
+                                            183,
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ],
+                    },
+                ),
+                memo: "",
+                ledger_id: [
+                    0,
+                ],
+            }
+        "#]]
+        .assert_debug_eq(&FileInfo::from_protobuf(make_info()).unwrap().to_protobuf());
+    }
+
+    #[test]
+    fn from_bytes() {
+        expect![[r#"
+            FileInfo {
+                file_id: "0.0.1",
+                size: 2,
+                expiration_time: Some(
+                    1970-01-01 0:00:00.000003 +00:00:00,
+                ),
+                auto_renew_period: None,
+                auto_renew_account_id: None,
+                is_deleted: true,
+                keys: KeyList {
+                    keys: [
+                        Single(
+                            "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
+                        ),
+                    ],
+                    threshold: None,
+                },
+                file_memo: "",
+                ledger_id: "mainnet",
+            }
+        "#]].assert_debug_eq(&FileInfo::from_bytes(&make_info().encode_to_vec()).unwrap());
     }
 }

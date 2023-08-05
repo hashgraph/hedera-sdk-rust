@@ -23,12 +23,25 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{FromProtobuf, ToProtobuf};
-use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
 };
-use crate::{BoxGrpcFuture, Error, FileId, Transaction, ValidateChecksums};
+use crate::transaction::{
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
+};
+use crate::{
+    BoxGrpcFuture,
+    Error,
+    FileId,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Delete the given file.
 ///
@@ -119,8 +132,18 @@ impl ToProtobuf for FileDeleteTransactionData {
 mod tests {
     use expect_test::expect;
 
-    use crate::transaction::test_helpers::{transaction_body, unused_private_key, VALID_START};
-    use crate::{AnyTransaction, FileDeleteTransaction, FileId, Hbar, TransactionId};
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        FileDeleteTransaction,
+        FileId,
+        Hbar,
+        TransactionId,
+    };
 
     fn make_transaction() -> FileDeleteTransaction {
         let mut tx = FileDeleteTransaction::new();
@@ -205,7 +228,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]

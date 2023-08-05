@@ -26,13 +26,28 @@ use hedera_proto::services::file_service_client::FileServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{FromProtobuf, ToProtobuf};
-use crate::transaction::{
-    AnyTransactionData, ChunkData, ChunkInfo, ChunkedTransactionData,
-    ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf, TransactionData,
-    TransactionExecute, TransactionExecuteChunked,
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
 };
-use crate::{BoxGrpcFuture, Error, FileId, Transaction, ValidateChecksums};
+use crate::transaction::{
+    AnyTransactionData,
+    ChunkData,
+    ChunkInfo,
+    ChunkedTransactionData,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
+    TransactionExecuteChunked,
+};
+use crate::{
+    BoxGrpcFuture,
+    Error,
+    FileId,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Append the given contents to the end of the specified file.
 ///
@@ -193,4 +208,3 @@ impl FromProtobuf<Vec<services::FileAppendTransactionBody>> for FileAppendTransa
         })
     }
 }
-

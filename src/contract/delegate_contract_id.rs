@@ -23,10 +23,19 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
-use crate::entity_id::{Checksum, PartialEntityId};
+use crate::entity_id::{
+    Checksum,
+    PartialEntityId,
+};
 use crate::ethereum::IdEvmAddress;
-use crate::protobuf::{FromProtobuf, ToProtobuf};
-use crate::{EntityId, Error};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
+use crate::{
+    EntityId,
+    Error,
+};
 
 /// A unique identifier for a smart contract on Hedera.
 #[derive(Hash, PartialEq, Eq, Clone, Copy)]
@@ -173,7 +182,10 @@ mod tests {
 
     use expect_test::expect;
 
-    use crate::protobuf::{FromProtobuf, ToProtobuf};
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::DelegateContractId;
 
     #[test]

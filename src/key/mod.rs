@@ -29,7 +29,7 @@ pub use key_list::KeyList;
 pub use private_key::PrivateKey;
 pub use public_key::PublicKey;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub(crate) enum KeyKind {
     Ed25519,
     Ecdsa,

@@ -25,9 +25,21 @@ use tonic::transport::Channel;
 use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToTransactionDataProtobuf, TransactionData, TransactionExecute,
+    AnyTransactionData,
+    ChunkInfo,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
 };
-use crate::{BoxGrpcFuture, Error, FileId, Hbar, ToProtobuf, Transaction, ValidateChecksums};
+use crate::{
+    BoxGrpcFuture,
+    Error,
+    FileId,
+    Hbar,
+    ToProtobuf,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Submit an Ethereum transaction.
 pub type EthereumTransaction = Transaction<EthereumTransactionData>;
@@ -152,8 +164,17 @@ impl FromProtobuf<services::EthereumTransactionBody> for EthereumTransactionData
 mod tests {
     use expect_test::expect;
 
-    use crate::transaction::test_helpers::{transaction_body, unused_private_key, VALID_START};
-    use crate::{AnyTransaction, EthereumTransaction, Hbar, TransactionId};
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        EthereumTransaction,
+        Hbar,
+        TransactionId,
+    };
 
     fn make_transaction() -> EthereumTransaction {
         let mut tx = EthereumTransaction::new();
@@ -247,7 +268,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]
