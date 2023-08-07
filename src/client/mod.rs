@@ -238,8 +238,8 @@ impl Client {
     /// Current return values (reminder that these are semver exempt)
     ///
     /// - mainnet: `["mainnet-public.mirrornode.hedera.com:443"]`
-    /// - testnet: `["hcs.testnet.mirrornode.hedera.com:5600"]`
-    /// - previewnet: `["hcs.previewnet.mirrornode.hedera.com:5600"]`
+    /// - testnet: `["testnet.mirrornode.hedera.com:443"]`
+    /// - previewnet: `["previewnet.mirrornode.hedera.com:443"]`
     ///
     /// # Examples
     ///
@@ -251,7 +251,7 @@ impl Client {
     /// let client = Client::for_testnet();
     ///
     /// // note: This isn't *guaranteed* in a semver sense, but this is the current result.
-    /// let expected = Vec::from(["hcs.testnet.mirrornode.hedera.com:5600".to_owned()]);
+    /// let expected = Vec::from(["testnet.mirrornode.hedera.com:443".to_owned()]);
     /// assert_eq!(expected, client.mirror_network());
     ///
     /// # }
