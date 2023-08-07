@@ -3,6 +3,7 @@ mod common;
 mod contract;
 mod file;
 mod network_version_info;
+mod node_address_book;
 mod prng;
 /// Resources for various tests.
 ///
