@@ -34,9 +34,9 @@ use crate::ArcSwap;
 
 pub(crate) const MAINNET: &str = "mainnet-public.mirrornode.hedera.com:443";
 
-pub(crate) const TESTNET: &str = "hcs.testnet.mirrornode.hedera.com:5600";
+pub(crate) const TESTNET: &str = "testnet.mirrornode.hedera.com:443";
 
-pub(crate) const PREVIEWNET: &str = "hcs.previewnet.mirrornode.hedera.com:5600";
+pub(crate) const PREVIEWNET: &str = "previewnet.mirrornode.hedera.com:443";
 
 #[derive(Default)]
 pub(crate) struct MirrorNetwork(ArcSwap<MirrorNetworkData>);
@@ -51,18 +51,21 @@ impl Deref for MirrorNetwork {
 
 impl MirrorNetwork {
     pub(crate) fn mainnet() -> Self {
-        let tls_config =
-            Some(ClientTlsConfig::new().domain_name(MAINNET.split_once(':').unwrap().0));
-
-        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[MAINNET], tls_config))))
+        Self::network(MAINNET)
     }
 
     pub(crate) fn testnet() -> Self {
-        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[TESTNET], None))))
+        Self::network(TESTNET)
     }
 
     pub(crate) fn previewnet() -> Self {
-        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[PREVIEWNET], None))))
+        Self::network(PREVIEWNET)
+    }
+
+    fn network(address: &'static str) -> Self {
+        let tls_config = ClientTlsConfig::new().domain_name(address.split_once(':').unwrap().0);
+
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[address], tls_config))))
     }
 
     #[cfg(feature = "serde")]
@@ -75,18 +78,15 @@ impl MirrorNetwork {
 pub(crate) struct MirrorNetworkData {
     addresses: Vec<Cow<'static, str>>,
     channel: OnceCell<Channel>,
-    tls_config: Option<ClientTlsConfig>,
+    tls_config: ClientTlsConfig,
 }
 
 impl MirrorNetworkData {
     pub(crate) fn from_addresses(addresses: Vec<Cow<'static, str>>) -> Self {
-        Self { addresses, channel: OnceCell::new(), tls_config: None }
+        Self { addresses, channel: OnceCell::new(), tls_config: ClientTlsConfig::new() }
     }
 
-    pub(crate) fn from_static(
-        network: &[&'static str],
-        tls_config: Option<ClientTlsConfig>,
-    ) -> Self {
+    pub(crate) fn from_static(network: &[&'static str], tls_config: ClientTlsConfig) -> Self {
         let mut addresses = Vec::with_capacity(network.len());
 
         for address in network {
@@ -101,17 +101,11 @@ impl MirrorNetworkData {
             .get_or_init(|| {
                 let endpoints = self.addresses.iter().map(|address| {
                     let uri = format!("tcp://{address}");
-                    let endpoint = Endpoint::from_shared(uri)
+                    Endpoint::from_shared(uri)
                         .unwrap()
-                        .keep_alive_timeout(Duration::from_secs(10));
-
-                    let endpoint = if let Some(tls_config) = self.tls_config.clone() {
-                        endpoint.tls_config(tls_config).unwrap()
-                    } else {
-                        endpoint
-                    };
-
-                    endpoint
+                        .keep_alive_timeout(Duration::from_secs(10))
+                        .tls_config(self.tls_config.clone())
+                        .unwrap()
                         .keep_alive_while_idle(true)
                         .tcp_keepalive(Some(Duration::from_secs(10)))
                         .connect_timeout(Duration::from_secs(10))
