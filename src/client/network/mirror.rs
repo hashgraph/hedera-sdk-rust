@@ -25,6 +25,7 @@ use std::time::Duration;
 use once_cell::sync::OnceCell;
 use tonic::transport::{
     Channel,
+    ClientTlsConfig,
     Endpoint,
 };
 use triomphe::Arc;
@@ -50,15 +51,18 @@ impl Deref for MirrorNetwork {
 
 impl MirrorNetwork {
     pub(crate) fn mainnet() -> Self {
-        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[MAINNET]))))
+        let tls_config =
+            Some(ClientTlsConfig::new().domain_name(MAINNET.split_once(':').unwrap().0));
+
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[MAINNET], tls_config))))
     }
 
     pub(crate) fn testnet() -> Self {
-        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[TESTNET]))))
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[TESTNET], None))))
     }
 
     pub(crate) fn previewnet() -> Self {
-        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[PREVIEWNET]))))
+        Self(ArcSwap::new(Arc::new(MirrorNetworkData::from_static(&[PREVIEWNET], None))))
     }
 
     #[cfg(feature = "serde")]
@@ -71,21 +75,25 @@ impl MirrorNetwork {
 pub(crate) struct MirrorNetworkData {
     addresses: Vec<Cow<'static, str>>,
     channel: OnceCell<Channel>,
+    tls_config: Option<ClientTlsConfig>,
 }
 
 impl MirrorNetworkData {
     pub(crate) fn from_addresses(addresses: Vec<Cow<'static, str>>) -> Self {
-        Self { addresses, channel: OnceCell::new() }
+        Self { addresses, channel: OnceCell::new(), tls_config: None }
     }
 
-    pub(crate) fn from_static(network: &[&'static str]) -> Self {
+    pub(crate) fn from_static(
+        network: &[&'static str],
+        tls_config: Option<ClientTlsConfig>,
+    ) -> Self {
         let mut addresses = Vec::with_capacity(network.len());
 
         for address in network {
             addresses.push(Cow::Borrowed(*address));
         }
 
-        Self { addresses, channel: OnceCell::new() }
+        Self { addresses, channel: OnceCell::new(), tls_config }
     }
 
     pub(crate) fn channel(&self) -> Channel {
@@ -93,9 +101,17 @@ impl MirrorNetworkData {
             .get_or_init(|| {
                 let endpoints = self.addresses.iter().map(|address| {
                     let uri = format!("tcp://{address}");
-                    Endpoint::from_shared(uri)
+                    let endpoint = Endpoint::from_shared(uri)
                         .unwrap()
-                        .keep_alive_timeout(Duration::from_secs(10))
+                        .keep_alive_timeout(Duration::from_secs(10));
+
+                    let endpoint = if let Some(tls_config) = self.tls_config.clone() {
+                        endpoint.tls_config(tls_config).unwrap()
+                    } else {
+                        endpoint
+                    };
+
+                    endpoint
                         .keep_alive_while_idle(true)
                         .tcp_keepalive(Some(Duration::from_secs(10)))
                         .connect_timeout(Duration::from_secs(10))
