@@ -137,7 +137,6 @@ mod tests {
         Hbar,
         ScheduleDeleteTransaction,
         TransactionId,
-        TransferTransaction,
     };
 
     fn make_transaction() -> ScheduleDeleteTransaction {
