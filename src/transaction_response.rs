@@ -69,10 +69,7 @@ impl TransactionResponse {
     pub fn get_receipt_query(&self) -> TransactionReceiptQuery {
         let mut query = TransactionReceiptQuery::new();
 
-        query
-            .transaction_id(self.transaction_id)
-            .node_account_ids([self.node_account_id])
-            .validate_status(self.validate_status);
+        query.transaction_id(self.transaction_id).validate_status(self.validate_status);
 
         query
     }
@@ -82,10 +79,7 @@ impl TransactionResponse {
     pub fn get_record_query(&self) -> TransactionRecordQuery {
         let mut query = TransactionRecordQuery::new();
 
-        query
-            .transaction_id(self.transaction_id)
-            .node_account_ids([self.node_account_id])
-            .validate_status(self.validate_status);
+        query.transaction_id(self.transaction_id).validate_status(self.validate_status);
 
         query
     }
