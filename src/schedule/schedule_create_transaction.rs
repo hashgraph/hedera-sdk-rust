@@ -452,7 +452,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]
