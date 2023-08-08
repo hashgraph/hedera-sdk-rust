@@ -451,7 +451,8 @@ mod tests {
                 wait_for_expiry: true,
                 data: None,
             }
-        "#]].assert_debug_eq(&make_info().to_protobuf());
+        "#]]
+        .assert_debug_eq(&make_info().to_protobuf());
     }
 
     #[test]
@@ -635,6 +636,7 @@ mod tests {
                 wait_for_expiry: true,
                 data: None,
             }
-        "#]].assert_debug_eq(&make_deleted_info().to_protobuf());
+        "#]]
+        .assert_debug_eq(&make_deleted_info().to_protobuf());
     }
 }

@@ -100,7 +100,6 @@ impl ValidateChecksums for FileInfoQueryData {
 
 #[cfg(test)]
 mod tests {
-
     use expect_test::expect;
 
     use crate::query::ToQueryProtobuf;
