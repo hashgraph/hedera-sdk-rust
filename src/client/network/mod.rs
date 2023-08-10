@@ -326,7 +326,7 @@ impl NetworkData {
         let now = OffsetDateTime::now_utc();
         self.health[node_index]
             .healthy
-            .store((now + time::Duration::minutes(30)).unix_timestamp(), Ordering::Relaxed);
+            .store((now + time::Duration::seconds(1)).unix_timestamp(), Ordering::Relaxed);
     }
 
     pub(crate) fn is_node_healthy(&self, node_index: usize, now: OffsetDateTime) -> bool {
@@ -347,6 +347,12 @@ impl NetworkData {
         time: OffsetDateTime,
     ) -> impl Iterator<Item = usize> + '_ {
         (0..self.node_ids.len()).filter(move |index| self.is_node_healthy(*index, time))
+    }
+
+    pub(crate) fn node_indexes(
+        &self,
+    ) -> impl Iterator<Item = usize> + '_ {
+        0..self.node_ids.len()
     }
 
     pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {

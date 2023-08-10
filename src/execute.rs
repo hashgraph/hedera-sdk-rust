@@ -459,9 +459,11 @@ fn random_node_indexes(
 
     {
         let mut indexes: Vec<_> = network.healthy_node_indexes(now).collect();
-
+        
         if indexes.is_empty() {
-            return None;
+            log::warn!("No healthy nodes, randomly picking some unhealthy ones");
+            // hack, slowpath, don't care perf, fix this better later tho.
+            indexes = network.node_indexes().collect();
         }
 
         // would put this inline, but borrowck wouldn't allow that.
