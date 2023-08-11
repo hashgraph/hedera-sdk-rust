@@ -79,6 +79,7 @@ pub(crate) use source::TransactionSources;
 const DEFAULT_TRANSACTION_VALID_DURATION: Duration = Duration::seconds(120);
 
 /// A transaction that can be executed on the Hedera network.
+#[derive(Clone)]
 pub struct Transaction<D> {
     body: TransactionBody<D>,
 
