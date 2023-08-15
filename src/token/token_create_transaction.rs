@@ -20,36 +20,19 @@
 
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-use time::{
-    Duration,
-    OffsetDateTime,
-};
+use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{
-    FromProtobuf,
-    ToProtobuf,
-};
+use crate::protobuf::{FromProtobuf, ToProtobuf};
 use crate::token::custom_fees::AnyCustomFee;
 use crate::token::token_supply_type::TokenSupplyType;
 use crate::token::token_type::TokenType;
 use crate::transaction::{
-    AnyTransactionData,
-    ChunkInfo,
-    ToSchedulableTransactionDataProtobuf,
-    ToTransactionDataProtobuf,
-    TransactionData,
-    TransactionExecute,
+    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
+    TransactionData, TransactionExecute,
 };
-use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    Error,
-    Key,
-    Transaction,
-    ValidateChecksums,
-};
+use crate::{AccountId, BoxGrpcFuture, Error, Key, Transaction, ValidateChecksums};
 
 /// Create a new token.
 ///
@@ -573,5 +556,150 @@ impl ToProtobuf for TokenCreateTransactionData {
             custom_fees: self.custom_fees.to_protobuf(),
             pause_key: self.pause_key.to_protobuf(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use crate::transaction::test_helpers::{transaction_body, unused_private_key, VALID_START};
+    use crate::{
+        AccountId, AnyTransaction, FixedFee, FixedFeeData, Hbar, Key, TokenCreateTransaction,
+        TokenId, TokenSupplyType, TokenType, TransactionId,
+    };
+    use expect_test::expect_file;
+
+    fn make_transaction() -> TokenCreateTransaction {
+        let mut tx = TokenCreateTransaction::new();
+
+        let fee = FixedFee {
+            fee: FixedFeeData {
+                amount: 3,
+                denominating_token_id: Some(TokenId::from_str("0.0.543").unwrap()),
+            },
+            fee_collector_account_id: Some(AccountId::from_str("4.3.2").unwrap()),
+            all_collectors_are_exempt: false,
+        };
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .initial_supply(30)
+            .fee_schedule_key(unused_private_key().public_key())
+            .supply_key(unused_private_key().public_key())
+            .admin_key(unused_private_key().public_key())
+            .auto_renew_account_id(AccountId::from_str("0.0.123").unwrap())
+            .auto_renew_period(time::Duration::seconds(100))
+            .decimals(3)
+            .freeze_default(true)
+            .freeze_key(unused_private_key().public_key())
+            .wipe_key(unused_private_key().public_key())
+            .symbol("K")
+            .kyc_key(unused_private_key().public_key())
+            .pause_key(unused_private_key().public_key())
+            .expiration_time(VALID_START)
+            .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
+            .name("Flook")
+            .token_memo("Flook memo")
+            .custom_fees([fee.into()])
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    fn make_transaction_nft() -> TokenCreateTransaction {
+        let mut tx = TokenCreateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .fee_schedule_key(unused_private_key().public_key())
+            .supply_key(unused_private_key().public_key())
+            .max_supply(500)
+            .admin_key(unused_private_key().public_key())
+            .auto_renew_account_id(AccountId::from_str("0.0.123").unwrap())
+            .auto_renew_period(time::Duration::seconds(100))
+            .token_type(TokenType::NonFungibleUnique)
+            .token_supply_type(TokenSupplyType::Finite)
+            .freeze_key(unused_private_key().public_key())
+            .wipe_key(unused_private_key().public_key())
+            .symbol("K")
+            .kyc_key(unused_private_key().public_key())
+            .pause_key(unused_private_key().public_key())
+            .expiration_time(VALID_START)
+            .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
+            .name("Flook")
+            .token_memo("Flook memo")
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize_fungible() {
+        let tx = make_transaction();
+        let tx = transaction_body(tx);
+
+        expect_file!["./snapshots/token_create_transaction/serialize_fungible.txt"]
+            .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn serialize_nft() {
+        let tx = make_transaction_nft();
+        let tx = transaction_body(tx);
+
+        expect_file!["./snapshots/token_create_transaction/serialize_nft.txt"].assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes_nft() {
+        let tx = make_transaction_nft();
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn properties() {
+        let tx = make_transaction();
+        let key = &Key::Single(unused_private_key().public_key());
+
+        assert_eq!(tx.get_name(), "Flook");
+        assert_eq!(tx.get_symbol(), "K");
+        assert_eq!(tx.get_token_memo(), "Flook memo");
+        assert_eq!(tx.get_decimals(), 3);
+        assert_eq!(tx.get_initial_supply(), 30);
+        assert_eq!(tx.get_treasury_account_id(), Some(AccountId::from_str("0.0.456").unwrap()));
+        assert_eq!(tx.get_admin_key(), Some(key));
+        assert_eq!(tx.get_kyc_key(), Some(key));
+        assert_eq!(tx.get_freeze_key(), Some(key));
+        assert_eq!(tx.get_wipe_key(), Some(key));
+        assert_eq!(tx.get_supply_key(), Some(key));
+        assert_eq!(tx.get_fee_schedule_key(), Some(key));
+        assert_eq!(tx.get_pause_key(), Some(key));
+        assert_eq!(tx.get_freeze_default(), true);
+        assert_eq!(tx.get_expiration_time(), Some(VALID_START));
+        assert_eq!(tx.get_auto_renew_account_id(), Some(AccountId::from_str("0.0.123").unwrap()));
+        assert_eq!(tx.get_auto_renew_period(), None);
+        assert_eq!(tx.get_token_type(), TokenType::FungibleCommon);
+        assert_eq!(tx.get_token_supply_type(), TokenSupplyType::Infinite);
+        assert_eq!(tx.get_max_supply(), 0);
     }
 }
