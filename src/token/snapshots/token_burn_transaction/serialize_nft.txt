@@ -1,0 +1,63 @@
+TransactionBody {
+    transaction_id: Some(
+        TransactionId {
+            transaction_valid_start: Some(
+                Timestamp {
+                    seconds: 1554158542,
+                    nanos: 0,
+                },
+            ),
+            account_id: Some(
+                AccountId {
+                    shard_num: 0,
+                    realm_num: 0,
+                    account: Some(
+                        AccountNum(
+                            5006,
+                        ),
+                    ),
+                },
+            ),
+            scheduled: false,
+            nonce: 0,
+        },
+    ),
+    node_account_id: Some(
+        AccountId {
+            shard_num: 0,
+            realm_num: 0,
+            account: Some(
+                AccountNum(
+                    5005,
+                ),
+            ),
+        },
+    ),
+    transaction_fee: 200000000,
+    transaction_valid_duration: Some(
+        Duration {
+            seconds: 120,
+        },
+    ),
+    generate_record: false,
+    memo: "",
+    data: Some(
+        TokenBurn(
+            TokenBurnTransactionBody {
+                token: Some(
+                    TokenId {
+                        shard_num: 1,
+                        realm_num: 2,
+                        token_num: 3,
+                    },
+                ),
+                amount: 0,
+                serial_numbers: [
+                    1,
+                    2,
+                    64,
+                ],
+            },
+        ),
+    ),
+}
