@@ -21,7 +21,11 @@
 use hedera_proto::services;
 
 use crate::protobuf::ToProtobuf;
-use crate::{AccountId, FromProtobuf, TokenId};
+use crate::{
+    AccountId,
+    FromProtobuf,
+    TokenId,
+};
 
 /// A token <-> account association.
 #[derive(Debug, Clone)]
@@ -80,10 +84,20 @@ impl ToProtobuf for TokenAssociation {
 mod tests {
     use std::str::FromStr;
 
-    use crate::protobuf::{FromProtobuf, ToProtobuf};
-    use crate::transaction::test_helpers::{test_account_id, test_token_id};
-    use crate::{AccountId, TokenAssociation};
     use expect_test::expect;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        test_account_id,
+        test_token_id,
+    };
+    use crate::{
+        AccountId,
+        TokenAssociation,
+    };
 
     fn make_association() -> TokenAssociation {
         TokenAssociation {

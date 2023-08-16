@@ -23,12 +23,25 @@ use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{FromProtobuf, ToProtobuf};
-use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
 };
-use crate::{BoxGrpcFuture, Error, TokenId, Transaction, ValidateChecksums};
+use crate::transaction::{
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
+};
+use crate::{
+    BoxGrpcFuture,
+    Error,
+    TokenId,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Marks a token as deleted, though it will remain in the ledger.
 ///
@@ -121,11 +134,20 @@ impl ToProtobuf for TokenDeleteTransactionData {
 #[cfg(test)]
 mod tests {
 
-    use crate::transaction::test_helpers::{
-        test_token_id, transaction_body, unused_private_key, VALID_START,
-    };
-    use crate::{AnyTransaction, Hbar, TokenDeleteTransaction, TransactionId};
     use expect_test::expect_file;
+
+    use crate::transaction::test_helpers::{
+        test_token_id,
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        Hbar,
+        TokenDeleteTransaction,
+        TransactionId,
+    };
 
     fn make_transaction() -> TokenDeleteTransaction {
         let mut tx = TokenDeleteTransaction::new();
