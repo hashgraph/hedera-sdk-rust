@@ -25,10 +25,22 @@ use tonic::transport::Channel;
 use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
 };
-use crate::{AccountId, BoxGrpcFuture, Error, ToProtobuf, TokenId, Transaction, ValidateChecksums};
+use crate::{
+    AccountId,
+    BoxGrpcFuture,
+    Error,
+    ToProtobuf,
+    TokenId,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
 ///
@@ -149,11 +161,21 @@ impl ToProtobuf for TokenAssociateTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use crate::transaction::test_helpers::{
-        test_account_id, test_token_id, transaction_body, unused_private_key, VALID_START,
-    };
-    use crate::{AnyTransaction, Hbar, TokenAssociateTransaction, TransactionId};
     use expect_test::expect_file;
+
+    use crate::transaction::test_helpers::{
+        test_account_id,
+        test_token_id,
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        Hbar,
+        TokenAssociateTransaction,
+        TransactionId,
+    };
 
     fn make_transaction() -> TokenAssociateTransaction {
         let mut tx = TokenAssociateTransaction::new();

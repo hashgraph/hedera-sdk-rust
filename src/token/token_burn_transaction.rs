@@ -22,12 +22,25 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::protobuf::{FromProtobuf, ToProtobuf};
-use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
 };
-use crate::{BoxGrpcFuture, Error, TokenId, Transaction, ValidateChecksums};
+use crate::transaction::{
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
+};
+use crate::{
+    BoxGrpcFuture,
+    Error,
+    TokenId,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// Burns tokens from the Token's treasury Account.
 ///
@@ -171,11 +184,19 @@ impl ToProtobuf for TokenBurnTransactionData {
 
 #[cfg(test)]
 mod tests {
-    use crate::transaction::test_helpers::{
-        test_token_id, transaction_body, unused_private_key, VALID_START,
-    };
-    use crate::{AnyTransaction, TokenBurnTransaction, TransactionId};
     use expect_test::expect_file;
+
+    use crate::transaction::test_helpers::{
+        test_token_id,
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        TokenBurnTransaction,
+        TransactionId,
+    };
 
     fn make_transaction() -> TokenBurnTransaction {
         let mut tx = TokenBurnTransaction::new();
