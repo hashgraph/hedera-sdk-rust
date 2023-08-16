@@ -25,22 +25,10 @@ use tonic::transport::Channel;
 use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::transaction::{
-    AnyTransactionData,
-    ChunkInfo,
-    ToSchedulableTransactionDataProtobuf,
-    ToTransactionDataProtobuf,
-    TransactionData,
-    TransactionExecute,
+    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
+    TransactionData, TransactionExecute,
 };
-use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    Error,
-    ToProtobuf,
-    TokenId,
-    Transaction,
-    ValidateChecksums,
-};
+use crate::{AccountId, BoxGrpcFuture, Error, ToProtobuf, TokenId, Transaction, ValidateChecksums};
 
 /// Associates the provided account with the provided tokens. Must be signed by the provided Account's key.
 ///
@@ -156,5 +144,74 @@ impl ToProtobuf for TokenAssociateTransactionData {
         let tokens = self.token_ids.to_protobuf();
 
         services::TokenAssociateTransactionBody { account, tokens }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::transaction::test_helpers::{
+        test_account_id, test_token_id, transaction_body, unused_private_key, VALID_START,
+    };
+    use crate::{AnyTransaction, Hbar, TokenAssociateTransaction, TransactionId};
+    use expect_test::expect_file;
+
+    fn make_transaction() -> TokenAssociateTransaction {
+        let mut tx = TokenAssociateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .account_id(test_account_id())
+            .token_ids(vec![test_token_id()])
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        expect_file!["./snapshots/token_associate_transaction/serialize.txt"].assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2)
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let token_ids = vec![test_token_id()];
+        let mut tx = TokenAssociateTransaction::new();
+
+        let tx2 = tx.token_ids(token_ids.to_owned());
+
+        assert_eq!(tx2.get_token_ids(), &token_ids[..]);
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let account_id = test_account_id();
+
+        let mut tx = TokenAssociateTransaction::new();
+
+        let tx2 = tx.account_id(account_id).to_owned();
+
+        assert_eq!(tx2.get_account_id(), Some(account_id));
     }
 }
