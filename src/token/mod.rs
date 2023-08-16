@@ -50,6 +50,7 @@ pub use assessed_custom_fee::AssessedCustomFee;
 pub use custom_fees::{
     AnyCustomFee,
     CustomFee,
+    Fee,
     FeeAssessmentMethod,
     FixedFee,
     FixedFeeData,

@@ -293,6 +293,7 @@ fn map_tonic_error(
     node_index: usize,
 ) -> retry::Error {
     /// punches through all the layers of `tonic::Status` sources to check if this is a `hyper::Error` that is canceled.
+
     fn is_hyper_canceled(status: &tonic::Status) -> bool {
         status
             .source()

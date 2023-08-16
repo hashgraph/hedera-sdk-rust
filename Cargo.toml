@@ -22,7 +22,7 @@ mnemonic = []
 [dependencies]
 async-stream = "0.3.3"
 backoff = "0.4.0"
-ed25519-dalek = { version = "2.0.0-rc.2", features = ["rand_core"] }
+ed25519-dalek = { version = "2.0.0", features = ["rand_core"] }
 fraction = { version = "0.13.0", default-features = false }
 futures-core = "0.3.21"
 hedera-proto = { path = "./protobufs", version = "0.8.0", features = [
@@ -69,7 +69,7 @@ default-features = false
 features = ["std"]
 
 [dependencies.rust_decimal]
-version = "=1.26.1"
+version = "1.26.1"
 default-features = false
 features = ["std"]
 

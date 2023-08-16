@@ -34,7 +34,7 @@ mod tests;
 
 /// Any `CustomFee`.
 ///
-/// See the documentation for [`CustomFee`] and [`AnyCustomFeeData`].
+/// See the documentation for [`CustomFee`] and [`Fee`].
 pub type AnyCustomFee = CustomFee<Fee>;
 
 /// A `FixedCustomFee`.
@@ -154,8 +154,13 @@ impl From<RoyaltyFee> for AnyCustomFee {
 /// Represents the possible fee types.
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum Fee {
+    /// A fee using a fixed amount.
     Fixed(FixedFeeData),
+
+    /// A fee using a fraction of the amount sent.
     Fractional(FractionalFeeData),
+
+    /// A royalty fee for NFT transfers.
     Royalty(RoyaltyFeeData),
 }
 

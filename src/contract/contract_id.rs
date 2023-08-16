@@ -33,7 +33,7 @@ use crate::entity_id::{
     PartialEntityId,
     ValidateChecksums,
 };
-use crate::ethereum::IdEvmAddress;
+use crate::ethereum::SolidityAddress;
 use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
@@ -88,7 +88,7 @@ impl ContractId {
             shard,
             realm,
             num: 0,
-            evm_address: Some(IdEvmAddress::from_str(address)?.to_bytes()),
+            evm_address: Some(SolidityAddress::from_str(address)?.to_bytes()),
             checksum: None,
         })
     }
@@ -181,7 +181,7 @@ impl Debug for ContractId {
 impl Display for ContractId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(address) = &self.evm_address {
-            write!(f, "{}.{}.{}", self.shard, self.realm, IdEvmAddress::from_ref(address))
+            write!(f, "{}.{}.{}", self.shard, self.realm, SolidityAddress::from_ref(address))
         } else {
             write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
         }
@@ -195,7 +195,7 @@ impl FromProtobuf<services::ContractId> for ContractId {
         let (num, evm_address) = match contract {
             services::contract_id::Contract::ContractNum(it) => (it as u64, None),
             services::contract_id::Contract::EvmAddress(it) => {
-                (0, Some(IdEvmAddress::try_from(it)?.to_bytes()))
+                (0, Some(SolidityAddress::try_from(it)?.to_bytes()))
             }
         };
 
@@ -254,7 +254,7 @@ impl FromStr for ContractId {
                 "expecting <shard>.<realm>.<num> or <shard>.<realm>.<evm_address>, got `{s}`"
             ))),
             PartialEntityId::LongOther { shard, realm, last } => {
-                let evm_address = Some(IdEvmAddress::from_str(last)?.to_bytes());
+                let evm_address = Some(SolidityAddress::from_str(last)?.to_bytes());
 
                 Ok(Self { shard, realm, num: 0, evm_address, checksum: None })
             }

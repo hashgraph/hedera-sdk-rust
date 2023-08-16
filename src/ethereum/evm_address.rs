@@ -50,13 +50,13 @@ impl EvmAddress {
 // potential point of confusion: This type is specifically for the `shard.realm.num` in 20 byte format.
 #[derive(Copy, Clone)]
 #[repr(transparent)]
-pub(crate) struct IdEvmAddress(pub(crate) EvmAddress);
+pub(crate) struct SolidityAddress(pub(crate) EvmAddress);
 
-impl IdEvmAddress {
+impl SolidityAddress {
     #[must_use]
     pub(crate) fn from_ref(bytes: &[u8; 20]) -> &Self {
         // safety: `self` is `#[repr(transpart)] over `EvmAddress`, which is repr transparent over `[u8; 20]`.
-        unsafe { &*(bytes.as_ptr().cast::<IdEvmAddress>()) }
+        unsafe { &*(bytes.as_ptr().cast::<SolidityAddress>()) }
     }
 
     #[must_use]
@@ -65,8 +65,8 @@ impl IdEvmAddress {
     }
 }
 
-impl From<IdEvmAddress> for EntityId {
-    fn from(value: IdEvmAddress) -> Self {
+impl From<SolidityAddress> for EntityId {
+    fn from(value: SolidityAddress) -> Self {
         let value = value.to_bytes();
         // todo: once split_array_ref is stable, all the unwraps and panics will go away.
         let (shard, value) = value.split_at(4);
@@ -81,7 +81,7 @@ impl From<IdEvmAddress> for EntityId {
     }
 }
 
-impl TryFrom<EntityId> for IdEvmAddress {
+impl TryFrom<EntityId> for SolidityAddress {
     type Error = Error;
 
     fn try_from(value: EntityId) -> Result<Self, Self::Error> {
@@ -100,35 +100,35 @@ impl TryFrom<EntityId> for IdEvmAddress {
     }
 }
 
-impl From<[u8; 20]> for IdEvmAddress {
+impl From<[u8; 20]> for SolidityAddress {
     fn from(value: [u8; 20]) -> Self {
         Self(EvmAddress(value))
     }
 }
 
-impl<'a> From<&'a [u8; 20]> for &'a IdEvmAddress {
+impl<'a> From<&'a [u8; 20]> for &'a SolidityAddress {
     fn from(value: &'a [u8; 20]) -> Self {
-        IdEvmAddress::from_ref(value)
+        SolidityAddress::from_ref(value)
     }
 }
 
-impl<'a> TryFrom<&'a [u8]> for &'a IdEvmAddress {
+impl<'a> TryFrom<&'a [u8]> for &'a SolidityAddress {
     type Error = Error;
 
     fn try_from(value: &'a [u8]) -> Result<Self, Self::Error> {
-        value.try_into().map(IdEvmAddress::from_ref).map_err(|_| error_len(value.len()))
+        value.try_into().map(SolidityAddress::from_ref).map_err(|_| error_len(value.len()))
     }
 }
 
-impl TryFrom<Vec<u8>> for IdEvmAddress {
+impl TryFrom<Vec<u8>> for SolidityAddress {
     type Error = Error;
 
     fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        <&IdEvmAddress>::try_from(value.as_slice()).copied()
+        <&SolidityAddress>::try_from(value.as_slice()).copied()
     }
 }
 
-impl FromStr for IdEvmAddress {
+impl FromStr for SolidityAddress {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -150,13 +150,13 @@ fn error_len(bytes: usize) -> crate::Error {
     Error::basic_parse(format!("expected 20 byte (40 character) evm address, got: `{bytes}` bytes"))
 }
 
-impl fmt::Debug for IdEvmAddress {
+impl fmt::Debug for SolidityAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "\"{self}\"")
     }
 }
 
-impl fmt::Display for IdEvmAddress {
+impl fmt::Display for SolidityAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:x}", self.0)
     }

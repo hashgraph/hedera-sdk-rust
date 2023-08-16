@@ -28,7 +28,7 @@ use std::str::FromStr;
 
 use tinystr::TinyAsciiStr;
 
-use crate::ethereum::IdEvmAddress;
+use crate::ethereum::SolidityAddress;
 use crate::ledger_id::RefLedgerId;
 use crate::{
     Client,
@@ -174,7 +174,7 @@ impl EntityId {
     /// # Errors
     /// - [`Error::BasicParse`] if `address` cannot be parsed as a solidity address.
     pub(crate) fn from_solidity_address(address: &str) -> crate::Result<Self> {
-        IdEvmAddress::from_str(address).map(Self::from)
+        SolidityAddress::from_str(address).map(Self::from)
     }
 
     /// Convert `self` into a solidity `address`.
@@ -182,7 +182,7 @@ impl EntityId {
     /// # Errors
     /// - [`Error::BasicParse`] if `self.shard` is larger than `u32::MAX`.
     pub(crate) fn to_solidity_address(self) -> crate::Result<String> {
-        IdEvmAddress::try_from(self).map(|it| it.to_string())
+        SolidityAddress::try_from(self).map(|it| it.to_string())
     }
 
     pub(crate) fn generate_checksum(entity_id_string: &str, ledger_id: &RefLedgerId) -> Checksum {

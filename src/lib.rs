@@ -29,8 +29,7 @@
     missing_docs,
     clippy::cargo_common_metadata,
     clippy::future_not_send,
-    clippy::missing_errors_doc,
-    clippy::multiple_crate_versions
+    clippy::missing_errors_doc
 )]
 // useful pedantic clippy lints
 // This is an opt-in list instead of opt-out because sometimes clippy has weird lints.
@@ -211,13 +210,12 @@ pub use error::{
     MnemonicParseError,
 };
 pub use ethereum::{
-    // we probably *do* want to expose these, just, code review first?
-    // EthereumData,
-    // LegacyEthereumData,
-    // Eip1559EthereumData,
+    Eip1559EthereumData,
+    EthereumData,
     EthereumFlow,
     EthereumTransaction,
     EvmAddress,
+    LegacyEthereumData,
 };
 pub use exchange_rates::{
     ExchangeRate,
@@ -301,6 +299,7 @@ pub use token::{
     AnyCustomFee,
     AssessedCustomFee,
     CustomFee,
+    Fee,
     FeeAssessmentMethod,
     FixedFee,
     FixedFeeData,

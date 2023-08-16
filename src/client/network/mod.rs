@@ -221,9 +221,8 @@ impl NetworkData {
             let new: BTreeSet<_> = address
                 .service_endpoints
                 .iter()
-                .filter_map(|it| {
-                    (it.port() == NodeConnection::PLAINTEXT_PORT).then(|| (*it.ip()).into())
-                })
+                .filter(|it| it.port() == NodeConnection::PLAINTEXT_PORT)
+                .map(|it| (*it.ip()).into())
                 .collect();
 
             // if the node is the exact same we want to reuse everything (namely the connections and `healthy`).

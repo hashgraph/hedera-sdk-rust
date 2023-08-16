@@ -240,13 +240,13 @@ where
         timeout: Option<std::time::Duration>,
     ) -> crate::Result<D::Response> {
         fn recurse_receipt(
-            transaction_id: TransactionId,
+            transaction_id: &TransactionId,
             client: Client,
             timeout: Option<std::time::Duration>,
-        ) -> BoxFuture<'static, ()> {
+        ) -> BoxFuture<'_, ()> {
             Box::pin(async move {
                 let _ = TransactionReceiptQuery::new()
-                    .transaction_id(transaction_id)
+                    .transaction_id(*transaction_id)
                     .execute_with_optional_timeout(&client, timeout)
                     .await;
             })
@@ -256,8 +256,7 @@ where
         if let Some(transaction_id) = self.data.transaction_id() {
             if self.data.is_payment_required() {
                 let client = client.clone();
-                let timeout = timeout;
-                recurse_receipt(transaction_id, client, timeout).await;
+                recurse_receipt(&transaction_id, client, timeout).await;
             }
         }
 

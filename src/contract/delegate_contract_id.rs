@@ -27,7 +27,7 @@ use crate::entity_id::{
     Checksum,
     PartialEntityId,
 };
-use crate::ethereum::IdEvmAddress;
+use crate::ethereum::SolidityAddress;
 use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
@@ -87,7 +87,7 @@ impl fmt::Debug for DelegateContractId {
 impl fmt::Display for DelegateContractId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(address) = &self.evm_address {
-            write!(f, "{}.{}.{}", self.shard, self.realm, IdEvmAddress::from_ref(address))
+            write!(f, "{}.{}.{}", self.shard, self.realm, SolidityAddress::from_ref(address))
         } else {
             write!(f, "{}.{}.{}", self.shard, self.realm, self.num)
         }
@@ -112,7 +112,7 @@ impl FromStr for DelegateContractId {
                 "expecting <shard>.<realm>.<num> or <shard>.<realm>.<evm_address>, got `{s}`"
             ))),
             PartialEntityId::LongOther { shard, realm, last } => {
-                let evm_address = Some(IdEvmAddress::from_str(last)?.to_bytes());
+                let evm_address = Some(SolidityAddress::from_str(last)?.to_bytes());
 
                 Ok(Self { shard, realm, num: 0, evm_address, checksum: None })
             }
@@ -147,7 +147,7 @@ impl FromProtobuf<services::ContractId> for DelegateContractId {
         let (num, evm_address) = match contract {
             services::contract_id::Contract::ContractNum(it) => (it as u64, None),
             services::contract_id::Contract::EvmAddress(it) => {
-                (0, Some(IdEvmAddress::try_from(it)?.to_bytes()))
+                (0, Some(SolidityAddress::try_from(it)?.to_bytes()))
             }
         };
 
