@@ -136,11 +136,13 @@ mod tests {
 
     use hedera_proto::services;
 
+    use crate::ledger_id::RefLedgerId;
     use crate::token::nft_id::NftId;
     use crate::{
         FromProtobuf,
         ToProtobuf,
         TokenId,
+        ValidateChecksums,
     };
 
     #[test]
@@ -187,6 +189,38 @@ mod tests {
         assert_eq!(nft_id_from_at_str.token_id.num, 123);
 
         Ok(())
+    }
+
+    #[test]
+    fn to_string() {
+        assert_eq!(TokenId::new(0, 0, 123).nft(456).to_string(), "0.0.123/456");
+    }
+
+    #[test]
+    fn parse_with_checksum_on_mainnet() {
+        let nft_id = NftId::from_str("0.0.123-vfmkw/7584").unwrap();
+
+        nft_id.validate_checksums(RefLedgerId::MAINNET).unwrap();
+
+        assert_eq!(nft_id.to_string(), TokenId::new(0, 0, 123).nft(7584).to_string());
+    }
+
+    #[test]
+    fn parse_with_checksum_on_testnet() {
+        let nft_id = NftId::from_str("0.0.123-esxsf@584903").unwrap();
+
+        nft_id.validate_checksums(RefLedgerId::TESTNET).unwrap();
+
+        assert_eq!(nft_id.to_string(), TokenId::new(0, 0, 123).nft(584903).to_string());
+    }
+
+    #[test]
+    fn parse_with_checksum_on_previewnet() {
+        let nft_id = NftId::from_str("0.0.123-ogizo/487302").unwrap();
+
+        nft_id.validate_checksums(RefLedgerId::PREVIEWNET).unwrap();
+
+        assert_eq!(nft_id.to_string(), TokenId::new(0, 0, 123).nft(487302).to_string());
     }
 
     #[test]
