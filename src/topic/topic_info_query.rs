@@ -96,3 +96,49 @@ impl ValidateChecksums for TopicInfoQueryData {
         self.topic_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::{
+        Hbar,
+        TopicId,
+        TopicInfoQuery,
+    };
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    ConsensusGetTopicInfo(
+                        ConsensusGetTopicInfoQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            topic_id: Some(
+                                TopicId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    topic_num: 5005,
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &TopicInfoQuery::new()
+                .topic_id(TopicId::new(0, 0, 5005))
+                .max_payment_amount(Hbar::from_tinybars(100_000))
+                .data
+                .to_query_protobuf(Default::default()),
+        )
+    }
+}

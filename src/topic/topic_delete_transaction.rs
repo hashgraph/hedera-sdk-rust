@@ -132,7 +132,6 @@ impl ToProtobuf for TopicDeleteTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
-    use time::Duration;
 
     use crate::transaction::test_helpers::{
         transaction_body,
