@@ -19,7 +19,6 @@
  */
 
 use hedera_proto::services;
-use prost::Message;
 use time::{
     Duration,
     OffsetDateTime,
@@ -83,22 +82,7 @@ impl TopicInfo {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
-        services::ConsensusGetTopicInfoResponse {
-            topic_id: Some(self.topic_id.to_protobuf()),
-            topic_info: Some(services::ConsensusTopicInfo {
-                memo: self.topic_memo.clone(),
-                running_hash: self.running_hash.clone(),
-                sequence_number: self.sequence_number,
-                expiration_time: self.expiration_time.to_protobuf(),
-                admin_key: self.admin_key.to_protobuf(),
-                submit_key: self.submit_key.to_protobuf(),
-                auto_renew_period: self.auto_renew_period.to_protobuf(),
-                auto_renew_account: self.auto_renew_account_id.to_protobuf(),
-                ledger_id: self.ledger_id.to_bytes(),
-            }),
-            header: None,
-        }
-        .encode_to_vec()
+        ToProtobuf::to_bytes(self)
     }
 }
 
@@ -138,5 +122,277 @@ impl FromProtobuf<services::ConsensusGetTopicInfoResponse> for TopicInfo {
             topic_memo: info.memo,
             ledger_id,
         })
+    }
+}
+
+impl ToProtobuf for TopicInfo {
+    type Protobuf = services::ConsensusGetTopicInfoResponse;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ConsensusGetTopicInfoResponse {
+            topic_id: Some(self.topic_id.to_protobuf()),
+            topic_info: Some(services::ConsensusTopicInfo {
+                memo: self.topic_memo.clone(),
+                running_hash: self.running_hash.clone(),
+                sequence_number: self.sequence_number,
+                expiration_time: self.expiration_time.to_protobuf(),
+                admin_key: self.admin_key.to_protobuf(),
+                submit_key: self.submit_key.to_protobuf(),
+                auto_renew_period: self.auto_renew_period.to_protobuf(),
+                auto_renew_account: self.auto_renew_account_id.to_protobuf(),
+                ledger_id: self.ledger_id.to_bytes(),
+            }),
+            header: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+    use prost::Message;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::unused_private_key;
+    use crate::{
+        LedgerId,
+        TopicInfo,
+    };
+
+    fn make_info() -> services::ConsensusGetTopicInfoResponse {
+        services::ConsensusGetTopicInfoResponse {
+            header: None,
+            topic_id: Some(services::TopicId { shard_num: 1, realm_num: 2, topic_num: 3 }),
+            topic_info: Some(services::ConsensusTopicInfo {
+                memo: "1".to_owned(),
+                running_hash: Vec::from([2]),
+                sequence_number: 3,
+                expiration_time: Some(services::Timestamp { seconds: 0, nanos: 4_000_000 }),
+                admin_key: Some(unused_private_key().public_key().to_protobuf()),
+                submit_key: Some(unused_private_key().public_key().to_protobuf()),
+                auto_renew_period: Some(services::Duration { seconds: 5 * 24 * 60 * 60 }),
+                auto_renew_account: Some(services::AccountId {
+                    shard_num: 0,
+                    realm_num: 0,
+                    account: Some(services::account_id::Account::AccountNum(4)),
+                }),
+                ledger_id: LedgerId::testnet().to_bytes(),
+            }),
+        }
+    }
+
+    #[test]
+    fn from_protobuf() {
+        expect![[r#"
+            TopicInfo {
+                topic_id: "1.2.3",
+                topic_memo: "1",
+                running_hash: [
+                    2,
+                ],
+                sequence_number: 3,
+                expiration_time: Some(
+                    1970-01-01 0:00:00.004 +00:00:00,
+                ),
+                admin_key: Some(
+                    Single(
+                        "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
+                    ),
+                ),
+                submit_key: Some(
+                    Single(
+                        "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
+                    ),
+                ),
+                auto_renew_account_id: Some(
+                    "0.0.4",
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 432000,
+                        nanoseconds: 0,
+                    },
+                ),
+                ledger_id: "testnet",
+            }
+        "#]]
+        .assert_debug_eq(&TopicInfo::from_protobuf(make_info()).unwrap())
+    }
+
+    #[test]
+    fn to_protobuf() {
+        expect![[r#"
+            ConsensusGetTopicInfoResponse {
+                header: None,
+                topic_id: Some(
+                    TopicId {
+                        shard_num: 1,
+                        realm_num: 2,
+                        topic_num: 3,
+                    },
+                ),
+                topic_info: Some(
+                    ConsensusTopicInfo {
+                        memo: "1",
+                        running_hash: [
+                            2,
+                        ],
+                        sequence_number: 3,
+                        expiration_time: Some(
+                            Timestamp {
+                                seconds: 0,
+                                nanos: 4000000,
+                            },
+                        ),
+                        admin_key: Some(
+                            Key {
+                                key: Some(
+                                    Ed25519(
+                                        [
+                                            224,
+                                            200,
+                                            236,
+                                            39,
+                                            88,
+                                            165,
+                                            135,
+                                            159,
+                                            250,
+                                            194,
+                                            38,
+                                            161,
+                                            60,
+                                            12,
+                                            81,
+                                            107,
+                                            121,
+                                            158,
+                                            114,
+                                            227,
+                                            81,
+                                            65,
+                                            160,
+                                            221,
+                                            130,
+                                            143,
+                                            148,
+                                            211,
+                                            121,
+                                            136,
+                                            164,
+                                            183,
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ),
+                        submit_key: Some(
+                            Key {
+                                key: Some(
+                                    Ed25519(
+                                        [
+                                            224,
+                                            200,
+                                            236,
+                                            39,
+                                            88,
+                                            165,
+                                            135,
+                                            159,
+                                            250,
+                                            194,
+                                            38,
+                                            161,
+                                            60,
+                                            12,
+                                            81,
+                                            107,
+                                            121,
+                                            158,
+                                            114,
+                                            227,
+                                            81,
+                                            65,
+                                            160,
+                                            221,
+                                            130,
+                                            143,
+                                            148,
+                                            211,
+                                            121,
+                                            136,
+                                            164,
+                                            183,
+                                        ],
+                                    ),
+                                ),
+                            },
+                        ),
+                        auto_renew_period: Some(
+                            Duration {
+                                seconds: 432000,
+                            },
+                        ),
+                        auto_renew_account: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        4,
+                                    ),
+                                ),
+                            },
+                        ),
+                        ledger_id: [
+                            1,
+                        ],
+                    },
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&TopicInfo::from_protobuf(make_info()).unwrap().to_protobuf())
+    }
+
+    #[test]
+    fn from_bytes() {
+        expect![[r#"
+            TopicInfo {
+                topic_id: "1.2.3",
+                topic_memo: "1",
+                running_hash: [
+                    2,
+                ],
+                sequence_number: 3,
+                expiration_time: Some(
+                    1970-01-01 0:00:00.004 +00:00:00,
+                ),
+                admin_key: Some(
+                    Single(
+                        "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
+                    ),
+                ),
+                submit_key: Some(
+                    Single(
+                        "302a300506032b6570032100e0c8ec2758a5879ffac226a13c0c516b799e72e35141a0dd828f94d37988a4b7",
+                    ),
+                ),
+                auto_renew_account_id: Some(
+                    "0.0.4",
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 432000,
+                        nanoseconds: 0,
+                    },
+                ),
+                ledger_id: "testnet",
+            }
+        "#]]
+        .assert_debug_eq(&TopicInfo::from_bytes(&make_info().encode_to_vec()).unwrap())
     }
 }
