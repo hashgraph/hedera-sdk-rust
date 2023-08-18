@@ -32,4 +32,4 @@ pub use ethereum_flow::EthereumFlow;
 pub use ethereum_transaction::EthereumTransaction;
 pub(crate) use ethereum_transaction::EthereumTransactionData;
 pub use evm_address::EvmAddress;
-pub(crate) use evm_address::IdEvmAddress;
+pub(crate) use evm_address::SolidityAddress;

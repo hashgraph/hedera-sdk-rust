@@ -59,6 +59,8 @@ impl EthereumData {
         }
     }
 
+    /// convert this data to rlp encoded bytes.
+    #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         match self {
             EthereumData::Legacy(it) => it.to_bytes(),
@@ -137,12 +139,16 @@ impl LegacyEthereumData {
     }
 
     /// Deserialize this data from rlp encoded bytes.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if decoding the bytes fails.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         // todo: test this.
         Self::decode_rlp(&Rlp::new(bytes)).map_err(Error::basic_parse)
     }
 
-    /// Encode this data to rlp encoded bytes.
+    /// Convert this data to rlp encoded bytes.
+    #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         // todo: test this.
         let mut rlp = rlp::RlpStream::new_list(9);
@@ -270,6 +276,9 @@ impl Eip1559EthereumData {
     }
 
     /// Deserialize this data from rlp encoded bytes.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if decoding the bytes fails.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         let (&first, bytes) = bytes
             .split_first()
@@ -282,7 +291,8 @@ impl Eip1559EthereumData {
         Self::decode_rlp(&Rlp::new(bytes)).map_err(Error::basic_parse)
     }
 
-    /// Encode this data to rlp encoded bytes.
+    /// Convert this data to rlp encoded bytes.
+    #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut buffer = BytesMut::new();
         buffer.put_u8(0x02);

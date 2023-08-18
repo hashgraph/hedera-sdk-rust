@@ -106,7 +106,7 @@ pub struct TransactionReceipt {
 }
 
 impl TransactionReceipt {
-    /// Create a new `FileInfo` from protobuf-encoded `bytes`.
+    /// Create a new `TransactionReceipt` from protobuf-encoded `bytes`.
     ///
     /// # Errors
     /// - [`Error::FromProtobuf`] if decoding the bytes fails to produce a valid protobuf.

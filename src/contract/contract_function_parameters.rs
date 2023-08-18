@@ -8,7 +8,7 @@ use num_bigint::{
 };
 
 use crate::contract::contract_function_selector::ContractFunctionSelector;
-use crate::ethereum::IdEvmAddress;
+use crate::ethereum::SolidityAddress;
 
 /// Builder for encoding parameters for a Solidity contract constructor/function call.
 #[derive(Debug, Clone, Default)]
@@ -920,12 +920,15 @@ impl ContractFunctionParameters {
     }
 
     /// Add a `function` argument to the `ContractFunctionParameters`
+    ///
+    /// # Panics
+    /// If the `address` isn't a valid evm address.
     pub fn add_function(
         &mut self,
         address: &str,
         mut selector: ContractFunctionSelector,
     ) -> &mut Self {
-        let mut value_bytes = IdEvmAddress::from_str(address).unwrap().to_bytes().to_vec();
+        let mut value_bytes = SolidityAddress::from_str(address).unwrap().to_bytes().to_vec();
         value_bytes.extend(selector.finish());
         self.args.push(Argument {
             type_name: "function",
@@ -961,7 +964,7 @@ fn right_pad_32_bytes(bytes: &[u8]) -> [u8; 32] {
 }
 
 fn encode_address(address: &str) -> [u8; 32] {
-    left_pad_32_bytes(IdEvmAddress::from_str(address).unwrap().0 .0.as_slice(), false)
+    left_pad_32_bytes(SolidityAddress::from_str(address).unwrap().0 .0.as_slice(), false)
 }
 
 fn encode_dynamic_bytes(bytes: &[u8]) -> Vec<u8> {

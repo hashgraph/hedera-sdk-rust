@@ -42,6 +42,9 @@ pub(crate) enum AnySigner {
     // Attempts to avoid the arc, the cloning of the `Fn`, all end in misery,
     // for the `Client` must have `AnySigner`, not a `PrivateKey`, and the `ContractCreateFlow`...
     // Well, it must be executable multiple times, for ownership reasons.
+    // lint note: can't reasonably resolve this because putting the `type` on anything but the `Fn(..)` part is useless
+    // but we can't do that because trait aliases don't exist.
+    #[allow(clippy::type_complexity)]
     Arbitrary(Box<PublicKey>, Arc<dyn Fn(&[u8]) -> Vec<u8> + Send + Sync>),
 }
 

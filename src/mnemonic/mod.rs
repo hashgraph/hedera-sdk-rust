@@ -190,6 +190,8 @@ impl Mnemonic {
     /// - [`MnemonicEntropyError::LegacyWithPassphrase`] if this is a legacy private key, and the passphrase isn't empty.
     /// - [`MnemonicEntropyError::ChecksumMismatch`] if this is a legacy private key,
     ///   and the `Mnemonic`'s checksum doesn't match up with the computed one.
+    // the only panic here should be unreachable, if it isn't, that's a library bug.
+    #[allow(clippy::missing_panics_doc)]
     pub fn to_private_key(&self, passphrase: &str) -> crate::Result<PrivateKey> {
         match &self.0 {
             MnemonicData::V1(_) if !passphrase.is_empty() => {

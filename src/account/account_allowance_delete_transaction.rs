@@ -83,7 +83,6 @@ impl AccountAllowanceDeleteTransaction {
         owner_account_id: AccountId,
     ) -> &mut Self {
         let data = self.data_mut();
-        let owner_account_id = owner_account_id;
 
         if let Some(allowance) = data.nft_allowances.iter_mut().find(|allowance| {
             allowance.token_id == nft_id.token_id && allowance.owner_account_id == owner_account_id

@@ -375,6 +375,9 @@ impl<D: ValidateChecksums> Transaction<D> {
     ///
     /// # Errors
     /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set.
+    ///
+    /// # Panics
+    /// - If `node_account_ids` is explicitly set to empty (IE: `tx.node_account_ids([]).freeze_with(None)`).
     pub fn freeze(&mut self) -> crate::Result<&mut Self> {
         self.freeze_with(None)
     }
@@ -383,6 +386,9 @@ impl<D: ValidateChecksums> Transaction<D> {
     ///
     /// # Errors
     /// - [`Error::FreezeUnsetNodeAccountIds`] if no [`node_account_ids`](Self::node_account_ids) were set and `client.is_none()`.
+    ///
+    /// # Panics
+    /// - If `node_account_ids` is explicitly set to empty (IE: `tx.node_account_ids([]).freeze_with(None)`).
     pub fn freeze_with<'a>(
         &mut self,
         client: impl Into<Option<&'a Client>>,
@@ -470,8 +476,7 @@ impl<D: TransactionExecute> Transaction<D> {
     fn make_transaction_list(&self) -> crate::Result<Vec<services::Transaction>> {
         assert!(self.is_frozen());
 
-        let operator =
-            || self.body.operator.as_ref().ok_or(crate::Error::NoPayerAccountOrTransactionId);
+        let operator = || self.body.operator.as_ref().ok_or(Error::NoPayerAccountOrTransactionId);
 
         // todo: fix this with chunked transactions.
         let initial_transaction_id = match self.get_transaction_id() {
@@ -609,6 +614,13 @@ impl<D: TransactionExecute> Transaction<D> {
     /// Get the hash for this transaction.
     ///
     /// Note: Calling this function _disables_ transaction ID regeneration.
+    ///
+    /// # Errors
+    /// - [`Error::NoPayerAccountOrTransactionId`]
+    ///     if `freeze_with` wasn't called with an operator and no transaction ID was set.
+    ///
+    /// # Panics
+    /// - If `!self.is_frozen()`.
     pub fn get_transaction_hash(&mut self) -> crate::Result<TransactionHash> {
         // todo: error not frozen
         assert!(
@@ -629,6 +641,13 @@ impl<D: TransactionExecute> Transaction<D> {
     /// Get the hashes for this transaction.
     ///
     /// Note: Calling this function _disables_ transaction ID regeneration.
+    ///
+    /// # Errors
+    /// - [`Error::NoPayerAccountOrTransactionId`]
+    ///     if `freeze_with` wasn't called with an operator and no transaction ID was set.
+    ///
+    /// # Panics
+    /// - If `!self.is_frozen()`.
     pub fn get_transaction_hash_per_node(
         &mut self,
     ) -> crate::Result<HashMap<AccountId, TransactionHash>> {
@@ -660,7 +679,7 @@ where
     ///
     /// Specifically, this default will be used in the following case:
     /// - The transaction itself (direct user input) has no `max_transaction_fee` specified, AND
-    /// - The [`Client`](crate::Client) has no `max_transaction_fee` specified.
+    /// - The [`Client`](Client) has no `max_transaction_fee` specified.
     ///
     /// Currently this is (but not guaranteed to be) `2 ℏ` for most transaction types.
     pub fn default_max_transaction_fee(&self) -> Hbar {

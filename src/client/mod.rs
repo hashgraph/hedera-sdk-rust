@@ -220,7 +220,7 @@ impl Client {
     /// Create a client from the given json config.
     ///
     /// # Errors
-    /// - `Error::BasicParse` if an error occurs parsing the configuration.
+    /// - [`Error::BasicParse`] if an error occurs parsing the configuration.
     #[cfg(feature = "serde")]
     pub fn from_config(json: &str) -> crate::Result<Self> {
         let config = serde_json::from_str::<config::ClientConfigInner>(json)
@@ -263,7 +263,7 @@ impl Client {
 
     /// Sets the addresses to use for the mirror network.
     ///
-    /// This is mostly useful if you used [`Self::from_network`] and need to set a mirror network.
+    /// This is mostly useful if you used [`Self::for_network`] and need to set a mirror network.
     pub fn set_mirror_network<I: IntoIterator<Item = String>>(&self, addresses: I) {
         self.mirrornet().store(
             MirrorNetworkData::from_addresses(addresses.into_iter().map(Cow::Owned).collect())
@@ -274,6 +274,9 @@ impl Client {
     /// Construct a client with the given nodes configured.
     ///
     /// Note that this disables network auto-updating.
+    ///
+    /// # Errors
+    /// - [`Error::BasicParse`] if an error occurs parsing the configuration.
     // allowed for API compatibility.
     #[allow(clippy::needless_pass_by_value)]
     pub fn for_network(network: HashMap<String, AccountId>) -> crate::Result<Self> {
@@ -321,6 +324,9 @@ impl Client {
     /// If network auto-updating is enabled this will eventually be overridden.
     ///
     /// Tend to prefer [`set_network_from_address_book`](Self::set_network_from_address_book) where possible.
+    ///
+    /// # Errors
+    /// [`Error::BasicParse`](crate::Error::BasicParse) If any node address is unparsable.
     // allowed for API compatibility.
     #[allow(clippy::needless_pass_by_value)]
     pub fn set_network(&self, network: HashMap<String, AccountId>) -> crate::Result<()> {
