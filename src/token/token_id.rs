@@ -187,3 +187,39 @@ impl From<EntityId> for TokenId {
         Self { shard, realm, num, checksum }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use expect_test::expect;
+
+    use crate::TokenId;
+
+    #[test]
+    fn parse() {
+        expect!["0.0.5005"].assert_eq(&TokenId::from_str("0.0.5005").unwrap().to_string());
+    }
+
+    #[test]
+    fn from_bytes() {
+        expect!["0.0.5005"].assert_eq(
+            &TokenId::from_bytes(&TokenId::new(0, 0, 5005).to_bytes()).unwrap().to_string(),
+        );
+    }
+
+    #[test]
+    fn from_solidity_address() {
+        expect!["0.0.5005"].assert_eq(
+            &TokenId::from_solidity_address("000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string(),
+        );
+    }
+
+    #[test]
+    fn to_solidity_address() {
+        expect!["000000000000000000000000000000000000138d"]
+            .assert_eq(&TokenId::new(0, 0, 5005).to_solidity_address().unwrap());
+    }
+}
