@@ -196,3 +196,240 @@ impl ToProtobuf for SystemDeleteTransactionData {
         services::SystemDeleteTransactionBody { expiration_time, id }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        ContractId,
+        FileId,
+        Hbar,
+        SystemDeleteTransaction,
+        TransactionId,
+    };
+
+    fn make_transaction_file() -> SystemDeleteTransaction {
+        let mut tx = SystemDeleteTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .file_id("0.0.444".parse::<FileId>().unwrap())
+            .expiration_time(VALID_START)
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+        tx
+    }
+
+    fn make_transaction_contract() -> SystemDeleteTransaction {
+        let mut tx = SystemDeleteTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .contract_id("0.0.444".parse::<ContractId>().unwrap())
+            .expiration_time(VALID_START)
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+        tx
+    }
+
+    #[test]
+    fn serialize_file() {
+        let tx = make_transaction_file();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    SystemDelete(
+                        SystemDeleteTransactionBody {
+                            expiration_time: Some(
+                                TimestampSeconds {
+                                    seconds: 1554158542,
+                                },
+                            ),
+                            id: Some(
+                                FileId(
+                                    FileId {
+                                        shard_num: 0,
+                                        realm_num: 0,
+                                        file_num: 444,
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn serialize_contract() {
+        let tx = make_transaction_contract();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    SystemDelete(
+                        SystemDeleteTransactionBody {
+                            expiration_time: Some(
+                                TimestampSeconds {
+                                    seconds: 1554158542,
+                                },
+                            ),
+                            id: Some(
+                                ContractId(
+                                    ContractId {
+                                        shard_num: 0,
+                                        realm_num: 0,
+                                        contract: Some(
+                                            ContractNum(
+                                                444,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes_file() {
+        let tx = make_transaction_file();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn to_from_bytes_contract() {
+        let tx = make_transaction_contract();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+}

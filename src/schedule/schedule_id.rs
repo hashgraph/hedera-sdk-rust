@@ -59,6 +59,11 @@ pub struct ScheduleId {
 }
 
 impl ScheduleId {
+    /// Create a `ScheduleId` with the given `shard.realm.num`.
+    pub const fn new(shard: u64, realm: u64, num: u64) -> Self {
+        Self { shard, realm, num, checksum: None }
+    }
+
     /// Create a new `AccountBalance` from protobuf-encoded `bytes`.
     ///
     /// # Errors
@@ -174,5 +179,41 @@ impl From<EntityId> for ScheduleId {
         let EntityId { shard, realm, num, checksum } = value;
 
         Self { shard, realm, num, checksum }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::ScheduleId;
+
+    #[test]
+    fn should_serialize_from_string() {
+        assert_eq!("0.0.5005", "0.0.5005".parse::<ScheduleId>().unwrap().to_string());
+    }
+
+    #[test]
+    fn from_bytes() {
+        assert_eq!(
+            "0.0.5005",
+            ScheduleId::from_bytes(&ScheduleId::new(0, 0, 5005).to_bytes()).unwrap().to_string()
+        );
+    }
+
+    #[test]
+    fn from_solidity_address() {
+        assert_eq!(
+            "0.0.5005",
+            ScheduleId::from_solidity_address("000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string()
+        );
+    }
+
+    #[test]
+    fn to_solidity_address() {
+        assert_eq!(
+            "000000000000000000000000000000000000138d",
+            ScheduleId::new(0, 0, 5005).to_solidity_address().unwrap()
+        );
     }
 }

@@ -58,6 +58,11 @@ pub struct TopicId {
 }
 
 impl TopicId {
+    /// Create a `TopicId` with the given `shard.realm.num`.
+    pub const fn new(shard: u64, realm: u64, num: u64) -> Self {
+        Self { shard, realm, num, checksum: None }
+    }
+
     /// Create a new `TopicId` from protobuf-encoded `bytes`.
     ///
     /// # Errors

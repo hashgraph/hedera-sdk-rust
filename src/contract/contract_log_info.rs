@@ -66,3 +66,135 @@ impl ToProtobuf for ContractLogInfo {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services::{self,};
+    use prost::Message;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::ContractLogInfo;
+
+    fn make_info() -> services::ContractLoginfo {
+        services::ContractLoginfo {
+            contract_id: Some(services::ContractId {
+                shard_num: 0,
+                realm_num: 0,
+                contract: Some(services::contract_id::Contract::ContractNum(10)),
+            }),
+            bloom: b"bloom".to_vec(),
+            topic: Vec::from([b"bloom".to_vec()]),
+            data: b"data".to_vec(),
+        }
+    }
+
+    #[test]
+    fn from_protobuf() {
+        expect![[r#"
+            ContractLogInfo {
+                contract_id: "0.0.10",
+                bloom: [
+                    98,
+                    108,
+                    111,
+                    111,
+                    109,
+                ],
+                topics: [
+                    [
+                        98,
+                        108,
+                        111,
+                        111,
+                        109,
+                    ],
+                ],
+                data: [
+                    100,
+                    97,
+                    116,
+                    97,
+                ],
+            }
+        "#]]
+        .assert_debug_eq(&ContractLogInfo::from_protobuf(make_info()).unwrap());
+    }
+
+    #[test]
+    fn to_protobuf() {
+        expect![[r#"
+            ContractLoginfo {
+                contract_id: Some(
+                    ContractId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        contract: Some(
+                            ContractNum(
+                                10,
+                            ),
+                        ),
+                    },
+                ),
+                bloom: [
+                    98,
+                    108,
+                    111,
+                    111,
+                    109,
+                ],
+                topic: [
+                    [
+                        98,
+                        108,
+                        111,
+                        111,
+                        109,
+                    ],
+                ],
+                data: [
+                    100,
+                    97,
+                    116,
+                    97,
+                ],
+            }
+        "#]]
+        .assert_debug_eq(&ContractLogInfo::from_protobuf(make_info()).unwrap().to_protobuf())
+    }
+
+    #[test]
+    fn from_bytes() {
+        expect![[r#"
+            ContractLogInfo {
+                contract_id: "0.0.10",
+                bloom: [
+                    98,
+                    108,
+                    111,
+                    111,
+                    109,
+                ],
+                topics: [
+                    [
+                        98,
+                        108,
+                        111,
+                        111,
+                        109,
+                    ],
+                ],
+                data: [
+                    100,
+                    97,
+                    116,
+                    97,
+                ],
+            }
+        "#]]
+        .assert_debug_eq(&ContractLogInfo::from_bytes(&make_info().encode_to_vec()).unwrap());
+    }
+}

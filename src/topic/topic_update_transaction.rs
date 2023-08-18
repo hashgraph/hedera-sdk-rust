@@ -120,27 +120,38 @@ impl TopicUpdateTransaction {
         self
     }
 
-    /// Returns the access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
+    /// Returns the access control for [`TopicUpdateTransaction`] and [`TopicDeleteTransaction`](crate::TopicDeleteTransaction).
     #[must_use]
     pub fn get_admin_key(&self) -> Option<&Key> {
         self.data().admin_key.as_ref()
     }
 
-    /// Sets the access control for `TopicUpdateTransaction` and `TopicDeleteTransaction`.
+    /// Sets the access control for [`TopicUpdateTransaction`] and [`TopicDeleteTransaction`](crate::TopicDeleteTransaction).
     pub fn admin_key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.data_mut().admin_key = Some(key.into());
         self
     }
 
-    /// Returns the access control for `TopicMessageSubmitTransaction`.
+    /// Clears the access control for [`TopicUpdateTransaction`] and [`TopicDeleteTransaction`](crate::TopicDeleteTransaction).
+    pub fn clear_admin_key(&mut self) -> &mut Self {
+        self.data_mut().admin_key = Some(Key::KeyList(crate::KeyList::new()));
+        self
+    }
+
+    /// Returns the access control for [`TopicMessageSubmitTransaction`](crate::TopicMessageSubmitTransaction).
     #[must_use]
     pub fn get_submit_key(&self) -> Option<&Key> {
         self.data().submit_key.as_ref()
     }
 
-    /// Sets the access control for `TopicMessageSubmitTransaction`.
+    /// Sets the access control for [`TopicMessageSubmitTransaction`](crate::TopicMessageSubmitTransaction).
     pub fn submit_key(&mut self, key: impl Into<Key>) -> &mut Self {
         self.data_mut().submit_key = Some(key.into());
+        self
+    }
+    /// Clears the access control for [`TopicUpdateTransaction`] and [`TopicDeleteTransaction`](crate::TopicDeleteTransaction).
+    pub fn clear_submit_key(&mut self) -> &mut Self {
+        self.data_mut().submit_key = Some(Key::KeyList(crate::KeyList::new()));
         self
     }
 
@@ -261,5 +272,381 @@ impl ToProtobuf for TopicUpdateTransactionData {
             submit_key,
             auto_renew_period,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use time::Duration;
+
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        Hbar,
+        TopicId,
+        TopicUpdateTransaction,
+        TransactionId,
+    };
+
+    fn make_transaction() -> TopicUpdateTransaction {
+        let mut tx = TopicUpdateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .topic_id("0.0.5007".parse::<TopicId>().unwrap())
+            .clear_admin_key()
+            .clear_auto_renew_account_id()
+            .clear_submit_key()
+            .topic_memo("")
+            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    ConsensusUpdateTopic(
+                        ConsensusUpdateTopicTransactionBody {
+                            topic_id: Some(
+                                TopicId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    topic_num: 5007,
+                                },
+                            ),
+                            memo: Some(
+                                "",
+                            ),
+                            expiration_time: None,
+                            admin_key: Some(
+                                Key {
+                                    key: Some(
+                                        KeyList(
+                                            KeyList {
+                                                keys: [],
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                            submit_key: Some(
+                                Key {
+                                    key: Some(
+                                        KeyList(
+                                            KeyList {
+                                                keys: [],
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ),
+                            auto_renew_period: None,
+                            auto_renew_account: Some(
+                                AccountId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    account: Some(
+                                        AccountNum(
+                                            0,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    fn make_transaction2() -> TopicUpdateTransaction {
+        let mut tx = TopicUpdateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .topic_id("0.0.5007".parse::<TopicId>().unwrap())
+            .admin_key(unused_private_key().public_key())
+            .auto_renew_account_id("0.0.5009".parse().unwrap())
+            .auto_renew_period(Duration::days(1))
+            .submit_key(unused_private_key().public_key())
+            .topic_memo("Hello memo")
+            .expiration_time(VALID_START)
+            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize2() {
+        let tx = make_transaction2();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    ConsensusUpdateTopic(
+                        ConsensusUpdateTopicTransactionBody {
+                            topic_id: Some(
+                                TopicId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    topic_num: 5007,
+                                },
+                            ),
+                            memo: Some(
+                                "Hello memo",
+                            ),
+                            expiration_time: Some(
+                                Timestamp {
+                                    seconds: 1554158542,
+                                    nanos: 0,
+                                },
+                            ),
+                            admin_key: Some(
+                                Key {
+                                    key: Some(
+                                        Ed25519(
+                                            [
+                                                224,
+                                                200,
+                                                236,
+                                                39,
+                                                88,
+                                                165,
+                                                135,
+                                                159,
+                                                250,
+                                                194,
+                                                38,
+                                                161,
+                                                60,
+                                                12,
+                                                81,
+                                                107,
+                                                121,
+                                                158,
+                                                114,
+                                                227,
+                                                81,
+                                                65,
+                                                160,
+                                                221,
+                                                130,
+                                                143,
+                                                148,
+                                                211,
+                                                121,
+                                                136,
+                                                164,
+                                                183,
+                                            ],
+                                        ),
+                                    ),
+                                },
+                            ),
+                            submit_key: Some(
+                                Key {
+                                    key: Some(
+                                        Ed25519(
+                                            [
+                                                224,
+                                                200,
+                                                236,
+                                                39,
+                                                88,
+                                                165,
+                                                135,
+                                                159,
+                                                250,
+                                                194,
+                                                38,
+                                                161,
+                                                60,
+                                                12,
+                                                81,
+                                                107,
+                                                121,
+                                                158,
+                                                114,
+                                                227,
+                                                81,
+                                                65,
+                                                160,
+                                                221,
+                                                130,
+                                                143,
+                                                148,
+                                                211,
+                                                121,
+                                                136,
+                                                164,
+                                                183,
+                                            ],
+                                        ),
+                                    ),
+                                },
+                            ),
+                            auto_renew_period: Some(
+                                Duration {
+                                    seconds: 86400,
+                                },
+                            ),
+                            auto_renew_account: Some(
+                                AccountId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    account: Some(
+                                        AccountNum(
+                                            5009,
+                                        ),
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes2() {
+        let tx = make_transaction2();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
     }
 }

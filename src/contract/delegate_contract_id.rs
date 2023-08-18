@@ -175,3 +175,51 @@ impl ToProtobuf for DelegateContractId {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use expect_test::expect;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::DelegateContractId;
+
+    #[test]
+    fn from_string() {
+        expect!["0.0.5005"]
+            .assert_eq(&DelegateContractId::from_str("0.0.5005").unwrap().to_string());
+    }
+
+    #[test]
+    fn from_solidity_address() {
+        expect!["0.0.5005"].assert_eq(
+            &DelegateContractId::from_solidity_address("000000000000000000000000000000000000138D")
+                .unwrap()
+                .to_string(),
+        );
+    }
+
+    #[test]
+    fn from_solidity_address_with_0x() {
+        expect!["0.0.5005"].assert_eq(
+            &DelegateContractId::from_solidity_address(
+                "0x000000000000000000000000000000000000138D",
+            )
+            .unwrap()
+            .to_string(),
+        );
+    }
+
+    #[test]
+    fn from_bytes() {
+        expect!["0.0.5005"].assert_eq(
+            &DelegateContractId::from_bytes(&DelegateContractId::new(0, 0, 5005).to_bytes())
+                .unwrap()
+                .to_string(),
+        );
+    }
+}

@@ -97,3 +97,49 @@ impl ValidateChecksums for FileInfoQueryData {
         self.file_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::{
+        FileId,
+        FileInfoQuery,
+        Hbar,
+    };
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    FileGetInfo(
+                        FileGetInfoQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            file_id: Some(
+                                FileId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    file_num: 5005,
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &FileInfoQuery::new()
+                .file_id(FileId::new(0, 0, 5005))
+                .max_payment_amount(Hbar::from_tinybars(100_000))
+                .data
+                .to_query_protobuf(Default::default()),
+        )
+    }
+}
