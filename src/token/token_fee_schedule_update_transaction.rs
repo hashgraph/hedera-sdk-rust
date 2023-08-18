@@ -22,13 +22,26 @@ use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
 use tonic::transport::Channel;
 
-use crate::protobuf::{FromProtobuf, ToProtobuf};
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
+};
 use crate::token::custom_fees::AnyCustomFee;
 use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
 };
-use crate::{BoxGrpcFuture, Error, TokenId, Transaction, ValidateChecksums};
+use crate::{
+    BoxGrpcFuture,
+    Error,
+    TokenId,
+    Transaction,
+    ValidateChecksums,
+};
 
 /// At consensus, updates a token type's fee schedule to the given list of custom fees.
 ///
@@ -151,9 +164,16 @@ impl ToProtobuf for TokenFeeScheduleUpdateTransactionData {
 mod tests {
     use expect_test::expect;
 
-    use crate::transaction::test_helpers::{transaction_body, VALID_START};
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        VALID_START,
+    };
     use crate::{
-        AnyTransaction, FixedFee, FractionalFee, TokenFeeScheduleUpdateTransaction, TokenId,
+        AnyTransaction,
+        FixedFee,
+        FractionalFee,
+        TokenFeeScheduleUpdateTransaction,
+        TokenId,
         TransactionId,
     };
 
@@ -322,7 +342,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]
