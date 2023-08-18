@@ -60,7 +60,7 @@ pub struct TokenId {
 impl TokenId {
     /// Create a `TokenId` from the given `shard`, `realm`, and `num`.
     #[must_use]
-    pub fn new(shard: u64, realm: u64, num: u64) -> Self {
+    pub const fn new(shard: u64, realm: u64, num: u64) -> Self {
         Self { shard, realm, num, checksum: None }
     }
 
