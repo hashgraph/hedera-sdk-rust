@@ -1051,6 +1051,8 @@ where
 
 #[cfg(test)]
 pub(crate) mod test_helpers {
+    use std::str::FromStr;
+
     use hedera_proto::services;
     use prost::Message;
     use time::{
@@ -1060,7 +1062,9 @@ pub(crate) mod test_helpers {
 
     use super::TransactionExecute;
     use crate::{
+        AccountId,
         PrivateKey,
+        TokenId,
         Transaction,
     };
 
@@ -1077,6 +1081,14 @@ pub(crate) mod test_helpers {
 
     pub(crate) fn unused_private_key() -> PrivateKey {
         "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10".parse().unwrap()
+    }
+
+    pub(crate) fn test_token_id() -> TokenId {
+        TokenId::from_str("1.2.3").unwrap()
+    }
+
+    pub(crate) fn test_account_id() -> AccountId {
+        AccountId::from_str("0.0.5006").unwrap()
     }
 
     pub(crate) const VALID_START: OffsetDateTime =

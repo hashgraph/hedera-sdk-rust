@@ -130,3 +130,76 @@ impl ToProtobuf for TokenDeleteTransactionData {
         services::TokenDeleteTransactionBody { token: self.token_id.to_protobuf() }
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use expect_test::expect_file;
+
+    use crate::transaction::test_helpers::{
+        test_token_id,
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        Hbar,
+        TokenDeleteTransaction,
+        TransactionId,
+    };
+
+    fn make_transaction() -> TokenDeleteTransaction {
+        let mut tx = TokenDeleteTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .token_id(test_token_id())
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn seriralize() {
+        let tx = make_transaction();
+
+        expect_file!["./snapshots/token_delete_transaction/serialize.txt"].assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_transaction() {
+        let tx = TokenDeleteTransaction::new();
+
+        assert_eq!(tx.get_token_id(), None);
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenDeleteTransaction::new();
+
+        let tx2 = tx.token_id(test_token_id());
+
+        assert_eq!(tx2.get_token_id(), Some(test_token_id()));
+    }
+}

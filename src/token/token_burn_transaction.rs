@@ -181,3 +181,126 @@ impl ToProtobuf for TokenBurnTransactionData {
         services::TokenBurnTransactionBody { token, amount, serial_numbers }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect_file;
+
+    use crate::transaction::test_helpers::{
+        test_token_id,
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        TokenBurnTransaction,
+        TransactionId,
+    };
+
+    fn make_transaction() -> TokenBurnTransaction {
+        let mut tx = TokenBurnTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .token_id(test_token_id())
+            .amount(6 as u64)
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    fn make_transaction_nft() -> TokenBurnTransaction {
+        let mut tx = TokenBurnTransaction::new();
+
+        let vec1 = vec![1, 2, 64];
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .token_id(test_token_id())
+            .serials(vec1)
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize_fungible() {
+        let tx = make_transaction();
+        let tx = transaction_body(tx);
+
+        expect_file!["./snapshots/token_burn_transaction/serialize_fungible.txt"]
+            .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn serialize_nft() {
+        let tx = make_transaction_nft();
+        let tx = transaction_body(tx);
+
+        expect_file!["./snapshots/token_burn_transaction/serialize_nft.txt"].assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn to_from_bytes_nft() {
+        let tx = make_transaction_nft();
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenBurnTransaction::new();
+
+        let tx2 = tx.token_id(test_token_id());
+
+        assert_eq!(tx2.get_token_id(), Some(test_token_id()));
+    }
+
+    #[test]
+    fn get_set_amount() {
+        let mut tx = TokenBurnTransaction::new();
+
+        let tx2 = tx.amount(23 as u64);
+
+        assert_eq!(tx2.get_amount(), 23);
+    }
+
+    #[test]
+    fn get_set_serial() {
+        let serials = vec![1, 2, 64];
+
+        let mut tx = TokenBurnTransaction::new();
+
+        let tx2 = tx.serials(serials.to_owned());
+
+        assert_eq!(tx2.get_serials(), serials);
+    }
+}

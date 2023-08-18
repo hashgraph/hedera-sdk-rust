@@ -79,3 +79,87 @@ impl ToProtobuf for TokenAssociation {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use expect_test::expect;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        test_account_id,
+        test_token_id,
+    };
+    use crate::{
+        AccountId,
+        TokenAssociation,
+    };
+
+    fn make_association() -> TokenAssociation {
+        TokenAssociation {
+            token_id: test_token_id(),
+            account_id: AccountId::from_str("1.2.3").unwrap(),
+        }
+    }
+
+    #[test]
+    fn serialize_account() {
+        let tx = make_association();
+
+        let tx_bytes = tx.to_bytes();
+
+        let tx = TokenAssociation::from_bytes(&tx_bytes).unwrap();
+
+        expect![[r#"
+            TokenAssociation {
+                token_id: "1.2.3",
+                account_id: "1.2.3",
+            }
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn from_protobuf() {
+        let token_proto =
+            TokenAssociation { token_id: test_token_id(), account_id: test_account_id() }
+                .to_protobuf();
+
+        let token = TokenAssociation::from_protobuf(token_proto).unwrap();
+
+        assert_eq!(token.account_id, test_account_id());
+        assert_eq!(token.token_id, test_token_id());
+    }
+
+    #[test]
+    fn to_protobuf() {
+        let proto = TokenAssociation { token_id: test_token_id(), account_id: test_account_id() }
+            .to_protobuf();
+
+        assert_eq!(proto.account_id, Some(test_account_id().to_protobuf()));
+        assert_eq!(proto.token_id, Some(test_token_id().to_protobuf()));
+    }
+
+    #[test]
+    fn from_bytes() {
+        let token = TokenAssociation { token_id: test_token_id(), account_id: test_account_id() };
+
+        let token = TokenAssociation::from_bytes(&token.to_bytes()).unwrap();
+
+        assert_eq!(token.account_id, test_account_id());
+        assert_eq!(token.token_id, test_token_id());
+    }
+
+    #[test]
+    fn to_bytes() {
+        let token = TokenAssociation { token_id: test_token_id(), account_id: test_account_id() };
+
+        let token_bytes = token.to_bytes();
+
+        assert_eq!(token_bytes, token.to_bytes());
+    }
+}
