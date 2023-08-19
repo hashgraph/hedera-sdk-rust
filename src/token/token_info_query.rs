@@ -98,3 +98,48 @@ impl ValidateChecksums for TokenInfoQueryData {
         self.token_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::{
+        Hbar,
+        TokenId,
+        TokenInfoQuery,
+    };
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    TokenGetInfo(
+                        TokenGetInfoQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            token: Some(
+                                TokenId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    token_num: 5005,
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]].assert_debug_eq(
+            &TokenInfoQuery::new()
+                .token_id(TokenId::new(0, 0, 5005))
+                .max_payment_amount(Hbar::from_tinybars(100_000))
+                .data
+                .to_query_protobuf(Default::default()),
+        )
+    }
+}

@@ -24,7 +24,6 @@ use hedera_proto::services::{
     TokenKycStatus,
     TokenPauseStatus,
 };
-use prost::Message;
 use time::{
     Duration,
     OffsetDateTime,
