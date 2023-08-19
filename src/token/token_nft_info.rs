@@ -110,3 +110,76 @@ impl FromProtobuf<services::TokenNftInfo> for TokenNftInfo {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hex_literal::hex;
+
+    use crate::transaction::test_helpers::VALID_START;
+    use crate::{
+        AccountId,
+        LedgerId,
+        TokenId,
+        TokenNftInfo,
+    };
+
+    fn make_info(spender_account_id: Option<AccountId>) -> TokenNftInfo {
+        TokenNftInfo {
+            nft_id: TokenId::new(1, 2, 3).nft(4),
+            account_id: "5.6.7".parse().unwrap(),
+            creation_time: VALID_START,
+            metadata: hex!("deadbeef").into(),
+            spender_id: spender_account_id,
+            ledger_id: LedgerId::mainnet(),
+        }
+    }
+
+    #[test]
+    fn serialize() {
+        let info = make_info(Some("8.9.10".parse().unwrap()));
+        expect![[r#"
+            Ok(
+                TokenNftInfo {
+                    nft_id: "1.2.3/4",
+                    account_id: "5.6.7",
+                    creation_time: 2019-04-01 22:42:22.0 +00:00:00,
+                    metadata: [
+                        222,
+                        173,
+                        190,
+                        239,
+                    ],
+                    spender_id: Some(
+                        "8.9.10",
+                    ),
+                    ledger_id: "mainnet",
+                },
+            )
+        "#]]
+        .assert_debug_eq(&TokenNftInfo::from_bytes(&info.to_bytes()));
+    }
+
+    #[test]
+    fn serialize_no_spender() {
+        let info = make_info(None);
+        expect![[r#"
+            Ok(
+                TokenNftInfo {
+                    nft_id: "1.2.3/4",
+                    account_id: "5.6.7",
+                    creation_time: 2019-04-01 22:42:22.0 +00:00:00,
+                    metadata: [
+                        222,
+                        173,
+                        190,
+                        239,
+                    ],
+                    spender_id: None,
+                    ledger_id: "mainnet",
+                },
+            )
+        "#]]
+        .assert_debug_eq(&TokenNftInfo::from_bytes(&info.to_bytes()));
+    }
+}
