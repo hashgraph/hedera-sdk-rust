@@ -138,51 +138,7 @@ impl TokenInfo {
     /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
     #[must_use]
     pub fn to_bytes(&self) -> Vec<u8> {
-        let default_freeze_status = match self.default_freeze_status {
-            Some(true) => TokenFreezeStatus::Frozen as i32,
-            Some(false) => TokenFreezeStatus::Unfrozen as i32,
-            None => TokenFreezeStatus::FreezeNotApplicable as i32,
-        };
-
-        let default_kyc_status = match self.default_kyc_status {
-            Some(true) => TokenKycStatus::Granted as i32,
-            Some(false) => TokenKycStatus::Revoked as i32,
-            None => TokenKycStatus::KycNotApplicable as i32,
-        };
-
-        services::TokenInfo {
-            token_id: Some(self.token_id.to_protobuf()),
-            name: self.name.clone(),
-            symbol: self.symbol.clone(),
-            decimals: self.decimals,
-            total_supply: self.total_supply,
-            treasury: Some(self.treasury_account_id.to_protobuf()),
-            admin_key: self.admin_key.to_protobuf(),
-            kyc_key: self.kyc_key.to_protobuf(),
-            freeze_key: self.freeze_key.to_protobuf(),
-            wipe_key: self.wipe_key.to_protobuf(),
-            supply_key: self.supply_key.to_protobuf(),
-            default_freeze_status,
-            default_kyc_status,
-            deleted: self.is_deleted,
-            auto_renew_account: self.auto_renew_account.to_protobuf(),
-            auto_renew_period: self.auto_renew_period.to_protobuf(),
-            expiry: self.expiration_time.to_protobuf(),
-            memo: self.token_memo.clone(),
-            token_type: self.token_type.to_protobuf() as i32,
-            supply_type: self.supply_type.to_protobuf() as i32,
-            max_supply: self.max_supply as i64,
-            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
-            custom_fees: self.custom_fees.to_protobuf(),
-            pause_key: self.pause_key.to_protobuf(),
-            pause_status: match self.pause_status {
-                Some(true) => TokenPauseStatus::Paused as i32,
-                Some(false) => TokenPauseStatus::Unpaused as i32,
-                None => TokenPauseStatus::PauseNotApplicable as i32,
-            },
-            ledger_id: self.ledger_id.to_bytes(),
-        }
-        .encode_to_vec()
+        ToProtobuf::to_bytes(self)
     }
 }
 
@@ -258,5 +214,468 @@ impl FromProtobuf<services::TokenInfo> for TokenInfo {
             pause_status,
             ledger_id,
         })
+    }
+}
+
+impl ToProtobuf for TokenInfo {
+    type Protobuf = services::TokenInfo;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let default_freeze_status = match self.default_freeze_status {
+            Some(true) => TokenFreezeStatus::Frozen as i32,
+            Some(false) => TokenFreezeStatus::Unfrozen as i32,
+            None => TokenFreezeStatus::FreezeNotApplicable as i32,
+        };
+
+        let default_kyc_status = match self.default_kyc_status {
+            Some(true) => TokenKycStatus::Granted as i32,
+            Some(false) => TokenKycStatus::Revoked as i32,
+            None => TokenKycStatus::KycNotApplicable as i32,
+        };
+
+        services::TokenInfo {
+            token_id: Some(self.token_id.to_protobuf()),
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+            decimals: self.decimals,
+            total_supply: self.total_supply,
+            treasury: Some(self.treasury_account_id.to_protobuf()),
+            admin_key: self.admin_key.to_protobuf(),
+            kyc_key: self.kyc_key.to_protobuf(),
+            freeze_key: self.freeze_key.to_protobuf(),
+            wipe_key: self.wipe_key.to_protobuf(),
+            supply_key: self.supply_key.to_protobuf(),
+            default_freeze_status,
+            default_kyc_status,
+            deleted: self.is_deleted,
+            auto_renew_account: self.auto_renew_account.to_protobuf(),
+            auto_renew_period: self.auto_renew_period.to_protobuf(),
+            expiry: self.expiration_time.to_protobuf(),
+            memo: self.token_memo.clone(),
+            token_type: self.token_type.to_protobuf() as i32,
+            supply_type: self.supply_type.to_protobuf() as i32,
+            max_supply: self.max_supply as i64,
+            fee_schedule_key: self.fee_schedule_key.to_protobuf(),
+            custom_fees: self.custom_fees.to_protobuf(),
+            pause_key: self.pause_key.to_protobuf(),
+            pause_status: match self.pause_status {
+                Some(true) => TokenPauseStatus::Paused as i32,
+                Some(false) => TokenPauseStatus::Unpaused as i32,
+                None => TokenPauseStatus::PauseNotApplicable as i32,
+            },
+            ledger_id: self.ledger_id.to_bytes(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use expect_test::expect;
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::{
+        FixedFee,
+        FractionalFee,
+        LedgerId,
+        PrivateKey,
+        TokenId,
+        TokenInfo,
+        TokenSupplyType,
+        TokenType,
+    };
+
+    fn make_token_info() -> TokenInfo {
+        let custom_fees = [
+            FixedFee {
+                fee_collector_account_id: Some("4322".parse().unwrap()),
+                all_collectors_are_exempt: false,
+                fee: crate::FixedFeeData {
+                    amount: 10,
+                    denominating_token_id: Some(TokenId::new(0, 0, 483902)),
+                },
+            }
+            .into(),
+            FractionalFee {
+                fee_collector_account_id: Some("389042".parse().unwrap()),
+                all_collectors_are_exempt: false,
+                fee: crate::FractionalFeeData {
+                    denominator: 7,
+                    numerator: 3,
+                    minimum_amount: 3,
+                    maximum_amount: 100,
+                    assessment_method: crate::FeeAssessmentMethod::Inclusive,
+                },
+            }
+            .into(),
+        ]
+        .into();
+
+        TokenInfo {
+        token_id: "0.6.9".parse().unwrap(),
+        name: "test token name".to_owned(),
+        symbol: "TTN".to_owned(),
+        decimals: 3,
+        total_supply: 1000,
+        treasury_account_id: "7.7.7".parse().unwrap(),
+        admin_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e11").unwrap().public_key().into()),
+        kyc_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e12").unwrap().public_key().into()),
+        freeze_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e13").unwrap().public_key().into()),
+        wipe_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e14").unwrap().public_key().into()),
+        supply_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e15").unwrap().public_key().into()),
+        fee_schedule_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e16").unwrap().public_key().into()),
+        default_freeze_status: Some(true),
+        default_kyc_status: Some(true),
+        is_deleted: false,
+        auto_renew_account: Some(("8.9.0").parse().unwrap()),
+        auto_renew_period: Some(Duration::hours(10)),
+        expiration_time: Some(OffsetDateTime::from_unix_timestamp(1554158542).unwrap()),
+        token_memo: "memo".to_owned(),
+        token_type: TokenType::FungibleCommon,
+        supply_type: TokenSupplyType::Finite,
+        max_supply: 1000000,
+        custom_fees,
+        pause_key: Some(PrivateKey::from_str("302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e17").unwrap().public_key().into()),
+        pause_status:Some(true),
+        ledger_id: LedgerId::mainnet(),
+    }
+    }
+
+    #[test]
+    fn serialize() {
+        let info = TokenInfo::from_bytes(&make_token_info().to_bytes()).unwrap();
+        expect![[r#"
+            TokenInfo {
+                token_id: "0.6.9",
+                name: "test token name",
+                symbol: "TTN",
+                decimals: 3,
+                total_supply: 1000,
+                treasury_account_id: "7.7.7",
+                admin_key: Some(
+                    Single(
+                        "302a300506032b6570032100da87701097866e73f0dd942cbb3e97063329f905588621b178d21759688d47fc",
+                    ),
+                ),
+                kyc_key: Some(
+                    Single(
+                        "302a300506032b6570032100fb88b337dfd765617be4322ae7ef8533d61e6483050e20ec4845a533bddca4b1",
+                    ),
+                ),
+                freeze_key: Some(
+                    Single(
+                        "302a300506032b65700321003ded53e32233532f3d8462324cd113abbe4f73216df06d54a11cb691c15b27cd",
+                    ),
+                ),
+                wipe_key: Some(
+                    Single(
+                        "302a300506032b6570032100525b9c155f902b912dbd81bea6d43a077d7a62dd1fefcfc77de96144d5fac3ee",
+                    ),
+                ),
+                supply_key: Some(
+                    Single(
+                        "302a300506032b65700321003b913853afa59b55abc581c2ac0d36580ac2eca4bd101c02173fef02e677ddd5",
+                    ),
+                ),
+                fee_schedule_key: Some(
+                    Single(
+                        "302a300506032b65700321004bbe95a86d24f8f96773b12826fcbe009688cb0dca88cff117a3a8af50c37113",
+                    ),
+                ),
+                default_freeze_status: Some(
+                    true,
+                ),
+                default_kyc_status: Some(
+                    true,
+                ),
+                is_deleted: false,
+                auto_renew_account: Some(
+                    "8.9.0",
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 36000,
+                        nanoseconds: 0,
+                    },
+                ),
+                expiration_time: Some(
+                    2019-04-01 22:42:22.0 +00:00:00,
+                ),
+                token_memo: "memo",
+                token_type: FungibleCommon,
+                supply_type: Finite,
+                max_supply: 1000000,
+                custom_fees: [
+                    CustomFee {
+                        fee: Fixed(
+                            FixedFeeData {
+                                amount: 10,
+                                denominating_token_id: Some(
+                                    "0.0.483902",
+                                ),
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            "0.0.4322",
+                        ),
+                        all_collectors_are_exempt: false,
+                    },
+                    CustomFee {
+                        fee: Fractional(
+                            FractionalFeeData {
+                                denominator: 7,
+                                numerator: 3,
+                                minimum_amount: 3,
+                                maximum_amount: 100,
+                                assessment_method: Inclusive,
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            "0.0.389042",
+                        ),
+                        all_collectors_are_exempt: false,
+                    },
+                ],
+                pause_key: Some(
+                    Single(
+                        "302a300506032b6570032100d16865a98cf8b0b7f8fa3776b20dafc5be04ffeb9a2497720783ce991e2b1974",
+                    ),
+                ),
+                pause_status: Some(
+                    true,
+                ),
+                ledger_id: "mainnet",
+            }
+        "#]].assert_debug_eq(&info);
+    }
+
+    #[test]
+    fn from_protobuf() {
+        let pb = make_token_info().to_protobuf();
+
+        let token_info = TokenInfo::from_protobuf(pb).unwrap();
+
+        expect![[r#"
+            TokenInfo {
+                token_id: "0.6.9",
+                name: "test token name",
+                symbol: "TTN",
+                decimals: 3,
+                total_supply: 1000,
+                treasury_account_id: "7.7.7",
+                admin_key: Some(
+                    Single(
+                        "302a300506032b6570032100da87701097866e73f0dd942cbb3e97063329f905588621b178d21759688d47fc",
+                    ),
+                ),
+                kyc_key: Some(
+                    Single(
+                        "302a300506032b6570032100fb88b337dfd765617be4322ae7ef8533d61e6483050e20ec4845a533bddca4b1",
+                    ),
+                ),
+                freeze_key: Some(
+                    Single(
+                        "302a300506032b65700321003ded53e32233532f3d8462324cd113abbe4f73216df06d54a11cb691c15b27cd",
+                    ),
+                ),
+                wipe_key: Some(
+                    Single(
+                        "302a300506032b6570032100525b9c155f902b912dbd81bea6d43a077d7a62dd1fefcfc77de96144d5fac3ee",
+                    ),
+                ),
+                supply_key: Some(
+                    Single(
+                        "302a300506032b65700321003b913853afa59b55abc581c2ac0d36580ac2eca4bd101c02173fef02e677ddd5",
+                    ),
+                ),
+                fee_schedule_key: Some(
+                    Single(
+                        "302a300506032b65700321004bbe95a86d24f8f96773b12826fcbe009688cb0dca88cff117a3a8af50c37113",
+                    ),
+                ),
+                default_freeze_status: Some(
+                    true,
+                ),
+                default_kyc_status: Some(
+                    true,
+                ),
+                is_deleted: false,
+                auto_renew_account: Some(
+                    "8.9.0",
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 36000,
+                        nanoseconds: 0,
+                    },
+                ),
+                expiration_time: Some(
+                    2019-04-01 22:42:22.0 +00:00:00,
+                ),
+                token_memo: "memo",
+                token_type: FungibleCommon,
+                supply_type: Finite,
+                max_supply: 1000000,
+                custom_fees: [
+                    CustomFee {
+                        fee: Fixed(
+                            FixedFeeData {
+                                amount: 10,
+                                denominating_token_id: Some(
+                                    "0.0.483902",
+                                ),
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            "0.0.4322",
+                        ),
+                        all_collectors_are_exempt: false,
+                    },
+                    CustomFee {
+                        fee: Fractional(
+                            FractionalFeeData {
+                                denominator: 7,
+                                numerator: 3,
+                                minimum_amount: 3,
+                                maximum_amount: 100,
+                                assessment_method: Inclusive,
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            "0.0.389042",
+                        ),
+                        all_collectors_are_exempt: false,
+                    },
+                ],
+                pause_key: Some(
+                    Single(
+                        "302a300506032b6570032100d16865a98cf8b0b7f8fa3776b20dafc5be04ffeb9a2497720783ce991e2b1974",
+                    ),
+                ),
+                pause_status: Some(
+                    true,
+                ),
+                ledger_id: "mainnet",
+            }
+        "#]].assert_debug_eq(&token_info)
+    }
+
+    #[test]
+    fn to_protobuf() {
+        let pb = make_token_info().to_protobuf();
+
+        let token_info = TokenInfo::from_protobuf(pb).unwrap();
+
+        expect![[r#"
+            TokenInfo {
+                token_id: "0.6.9",
+                name: "test token name",
+                symbol: "TTN",
+                decimals: 3,
+                total_supply: 1000,
+                treasury_account_id: "7.7.7",
+                admin_key: Some(
+                    Single(
+                        "302a300506032b6570032100da87701097866e73f0dd942cbb3e97063329f905588621b178d21759688d47fc",
+                    ),
+                ),
+                kyc_key: Some(
+                    Single(
+                        "302a300506032b6570032100fb88b337dfd765617be4322ae7ef8533d61e6483050e20ec4845a533bddca4b1",
+                    ),
+                ),
+                freeze_key: Some(
+                    Single(
+                        "302a300506032b65700321003ded53e32233532f3d8462324cd113abbe4f73216df06d54a11cb691c15b27cd",
+                    ),
+                ),
+                wipe_key: Some(
+                    Single(
+                        "302a300506032b6570032100525b9c155f902b912dbd81bea6d43a077d7a62dd1fefcfc77de96144d5fac3ee",
+                    ),
+                ),
+                supply_key: Some(
+                    Single(
+                        "302a300506032b65700321003b913853afa59b55abc581c2ac0d36580ac2eca4bd101c02173fef02e677ddd5",
+                    ),
+                ),
+                fee_schedule_key: Some(
+                    Single(
+                        "302a300506032b65700321004bbe95a86d24f8f96773b12826fcbe009688cb0dca88cff117a3a8af50c37113",
+                    ),
+                ),
+                default_freeze_status: Some(
+                    true,
+                ),
+                default_kyc_status: Some(
+                    true,
+                ),
+                is_deleted: false,
+                auto_renew_account: Some(
+                    "8.9.0",
+                ),
+                auto_renew_period: Some(
+                    Duration {
+                        seconds: 36000,
+                        nanoseconds: 0,
+                    },
+                ),
+                expiration_time: Some(
+                    2019-04-01 22:42:22.0 +00:00:00,
+                ),
+                token_memo: "memo",
+                token_type: FungibleCommon,
+                supply_type: Finite,
+                max_supply: 1000000,
+                custom_fees: [
+                    CustomFee {
+                        fee: Fixed(
+                            FixedFeeData {
+                                amount: 10,
+                                denominating_token_id: Some(
+                                    "0.0.483902",
+                                ),
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            "0.0.4322",
+                        ),
+                        all_collectors_are_exempt: false,
+                    },
+                    CustomFee {
+                        fee: Fractional(
+                            FractionalFeeData {
+                                denominator: 7,
+                                numerator: 3,
+                                minimum_amount: 3,
+                                maximum_amount: 100,
+                                assessment_method: Inclusive,
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            "0.0.389042",
+                        ),
+                        all_collectors_are_exempt: false,
+                    },
+                ],
+                pause_key: Some(
+                    Single(
+                        "302a300506032b6570032100d16865a98cf8b0b7f8fa3776b20dafc5be04ffeb9a2497720783ce991e2b1974",
+                    ),
+                ),
+                pause_status: Some(
+                    true,
+                ),
+                ledger_id: "mainnet",
+            }
+        "#]].assert_debug_eq(&token_info)
     }
 }
