@@ -98,3 +98,64 @@ impl ValidateChecksums for TokenNftInfoQueryData {
         self.nft_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::{
+        Hbar,
+        TokenId,
+        TokenNftInfoQuery,
+    };
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    TokenGetNftInfo(
+                        TokenGetNftInfoQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            nft_id: Some(
+                                NftId {
+                                    token_id: Some(
+                                        TokenId {
+                                            shard_num: 0,
+                                            realm_num: 0,
+                                            token_num: 5005,
+                                        },
+                                    ),
+                                    serial_number: 101,
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &TokenNftInfoQuery::new()
+                .nft_id(TokenId::new(0, 0, 5005).nft(101))
+                .max_payment_amount(Hbar::from_tinybars(100_000))
+                .data
+                .to_query_protobuf(Default::default()),
+        )
+    }
+
+    #[test]
+    fn properties() {
+        let mut query = TokenNftInfoQuery::new();
+        query
+            .nft_id(TokenId::new(0, 0, 5005).nft(101))
+            .max_payment_amount(Hbar::from_tinybars(100_000));
+
+        assert_eq!(query.get_nft_id().unwrap().to_string(), "0.0.5005/101");
+    }
+}
