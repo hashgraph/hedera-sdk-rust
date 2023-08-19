@@ -134,7 +134,8 @@ mod tests {
                     ),
                 ),
             }
-        "#]].assert_debug_eq(
+        "#]]
+        .assert_debug_eq(
             &TokenInfoQuery::new()
                 .token_id(TokenId::new(0, 0, 5005))
                 .max_payment_amount(Hbar::from_tinybars(100_000))
