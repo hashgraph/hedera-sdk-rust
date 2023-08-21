@@ -207,3 +207,231 @@ impl ToProtobuf for TokenWipeTransactionData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        TokenId,
+        TokenWipeTransaction,
+    };
+
+    const TEST_ACCOUNT_ID: AccountId = AccountId::new(0, 6, 9);
+    const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
+    const TEST_AMOUNT: u64 = 4;
+    const TEST_SERIALS: [u64; 3] = [8, 9, 10];
+    fn make_transaction() -> TokenWipeTransaction {
+        let mut tx = TokenWipeTransaction::new_for_tests();
+
+        tx.token_id(TEST_TOKEN_ID)
+            .account_id(TEST_ACCOUNT_ID)
+            .amount(TEST_AMOUNT)
+            .freeze()
+            .unwrap();
+
+        tx
+    }
+
+    fn make_transaction_nft() -> TokenWipeTransaction {
+        let mut tx = TokenWipeTransaction::new_for_tests();
+
+        tx.token_id(TEST_TOKEN_ID)
+            .account_id(TEST_ACCOUNT_ID)
+            .serials(TEST_SERIALS)
+            .freeze()
+            .unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn serialize_fungible() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            TokenWipe(
+                TokenWipeAccountTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
+                        },
+                    ),
+                    account: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 6,
+                            account: Some(
+                                AccountNum(
+                                    9,
+                                ),
+                            ),
+                        },
+                    ),
+                    amount: 4,
+                    serial_numbers: [],
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes_fungible() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn serialize_nft() {
+        let tx = make_transaction_nft();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            TokenWipe(
+                TokenWipeAccountTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
+                        },
+                    ),
+                    account: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 6,
+                            account: Some(
+                                AccountNum(
+                                    9,
+                                ),
+                            ),
+                        },
+                    ),
+                    amount: 0,
+                    serial_numbers: [
+                        8,
+                        9,
+                        10,
+                    ],
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes_nft() {
+        let tx = make_transaction_nft();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_token_wipe_transaction_from_transaction_body_protobuf() {
+        let tx = services::TokenWipeAccountTransactionBody {
+            token: Some(TEST_TOKEN_ID.to_protobuf()),
+            account: Some(TEST_ACCOUNT_ID.to_protobuf()),
+            amount: TEST_AMOUNT,
+            serial_numbers: TEST_SERIALS.into_iter().map(|it| it as i64).collect(),
+        };
+
+        let tx = super::TokenWipeTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.token_id, Some(TEST_TOKEN_ID));
+        assert_eq!(tx.account_id, Some(TEST_ACCOUNT_ID));
+        assert_eq!(tx.amount, Some(TEST_AMOUNT));
+        assert_eq!(tx.serials, TEST_SERIALS);
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenWipeTransaction::new();
+        tx.token_id(TEST_TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_id(TEST_TOKEN_ID);
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = TokenWipeTransaction::new();
+        tx.account_id(TEST_ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(TEST_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.account_id(TEST_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_amount() {
+        let mut tx = TokenWipeTransaction::new();
+        tx.amount(TEST_AMOUNT);
+
+        assert_eq!(tx.get_amount(), Some(TEST_AMOUNT));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_amount_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.amount(TEST_AMOUNT);
+    }
+
+    #[test]
+    fn get_set_serial_numbers() {
+        let mut tx = TokenWipeTransaction::new();
+        tx.serials(TEST_SERIALS);
+
+        assert_eq!(tx.get_serials(), TEST_SERIALS);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_serial_numbers_frozen_panic() {
+        let mut tx = make_transaction_nft();
+        tx.serials(TEST_SERIALS);
+    }
+}
