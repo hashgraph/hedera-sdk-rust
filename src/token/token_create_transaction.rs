@@ -585,6 +585,8 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
@@ -598,7 +600,6 @@ mod tests {
         TokenId,
         TokenSupplyType,
         TokenType,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenCreateTransaction {
@@ -613,13 +614,8 @@ mod tests {
             all_collectors_are_exempt: false,
         };
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .initial_supply(30)
             .fee_schedule_key(unused_private_key().public_key())
             .supply_key(unused_private_key().public_key())
@@ -649,13 +645,8 @@ mod tests {
     fn make_transaction_nft() -> TokenCreateTransaction {
         let mut tx = TokenCreateTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .fee_schedule_key(unused_private_key().public_key())
             .supply_key(unused_private_key().public_key())
             .max_supply(500)

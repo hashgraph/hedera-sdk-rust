@@ -144,14 +144,14 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         Hbar,
         TokenId,
         TokenPauseTransaction,
-        TransactionId,
     };
 
     const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
@@ -159,13 +159,8 @@ mod tests {
     fn make_transaction() -> TokenPauseTransaction {
         let mut tx = TokenPauseTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .token_id(TEST_TOKEN_ID)
             .max_transaction_fee(Hbar::new(1))
             .freeze()

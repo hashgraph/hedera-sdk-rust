@@ -176,7 +176,8 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
@@ -184,19 +185,13 @@ mod tests {
         FileId,
         Hbar,
         SystemUndeleteTransaction,
-        TransactionId,
     };
 
     fn make_transaction_file() -> SystemUndeleteTransaction {
         let mut tx = SystemUndeleteTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .file_id("0.0.444".parse::<FileId>().unwrap())
             .max_transaction_fee(Hbar::new(1))
             .freeze()
@@ -208,13 +203,8 @@ mod tests {
     fn make_transaction_contract() -> SystemUndeleteTransaction {
         let mut tx = SystemUndeleteTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .contract_id("0.0.444".parse::<ContractId>().unwrap())
             .max_transaction_fee(Hbar::new(1))
             .freeze()

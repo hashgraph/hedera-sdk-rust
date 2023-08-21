@@ -187,28 +187,23 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
-        test_token_id,
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TOKEN_ID,
+        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         TokenBurnTransaction,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenBurnTransaction {
         let mut tx = TokenBurnTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .token_id(test_token_id())
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
+            .token_id(TEST_TOKEN_ID)
             .amount(6 as u64)
             .freeze()
             .unwrap()
@@ -222,14 +217,9 @@ mod tests {
 
         let vec1 = vec![1, 2, 64];
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .token_id(test_token_id())
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
+            .token_id(TEST_TOKEN_ID)
             .serials(vec1)
             .freeze()
             .unwrap()
@@ -279,9 +269,9 @@ mod tests {
     fn get_set_token_id() {
         let mut tx = TokenBurnTransaction::new();
 
-        let tx2 = tx.token_id(test_token_id());
+        let tx2 = tx.token_id(TEST_TOKEN_ID);
 
-        assert_eq!(tx2.get_token_id(), Some(test_token_id()));
+        assert_eq!(tx2.get_token_id(), Some(TEST_TOKEN_ID));
     }
 
     #[test]

@@ -416,13 +416,14 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
+        AccountId,
         AccountUpdateTransaction,
         AnyTransaction,
         Hbar,
-        TransactionId,
     };
 
     #[allow(deprecated)]
@@ -430,22 +431,17 @@ mod tests {
         let mut tx = AccountUpdateTransaction::new();
 
         tx.key(unused_private_key().public_key())
-            .node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .account_id("0.0.2002".parse().unwrap())
-            .proxy_account_id("0.0.1001".parse().unwrap())
+            .node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
+            .account_id(AccountId::new(0, 0, 2002))
+            .proxy_account_id(AccountId::new(0, 0, 1001))
             .auto_renew_period(Duration::hours(10))
-            .expiration_time(OffsetDateTime::UNIX_EPOCH + Duration::seconds(1554158543))
+            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158543).unwrap())
             .receiver_signature_required(false)
             .max_automatic_token_associations(100)
             .account_memo("Some memo")
             .max_transaction_fee(Hbar::from_tinybars(100_000))
-            .staked_account_id("0.0.3".parse().unwrap())
+            .staked_account_id(AccountId::new(0, 0, 3))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -458,17 +454,12 @@ mod tests {
         let mut tx = AccountUpdateTransaction::new();
 
         tx.key(unused_private_key().public_key())
-            .node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .account_id("0.0.2002".parse().unwrap())
-            .proxy_account_id("0.0.1001".parse().unwrap())
+            .node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
+            .account_id(AccountId::new(0, 0, 2002))
+            .proxy_account_id(AccountId::new(0, 0, 1001))
             .auto_renew_period(Duration::hours(10))
-            .expiration_time(OffsetDateTime::UNIX_EPOCH + Duration::seconds(1554158543))
+            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158543).unwrap())
             .receiver_signature_required(false)
             .max_automatic_token_associations(100)
             .account_memo("Some memo")

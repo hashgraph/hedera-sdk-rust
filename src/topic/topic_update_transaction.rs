@@ -283,6 +283,8 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
@@ -290,19 +292,13 @@ mod tests {
         Hbar,
         TopicId,
         TopicUpdateTransaction,
-        TransactionId,
     };
 
     fn make_transaction() -> TopicUpdateTransaction {
         let mut tx = TopicUpdateTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .topic_id("0.0.5007".parse::<TopicId>().unwrap())
             .clear_admin_key()
             .clear_auto_renew_account_id()
@@ -438,13 +434,8 @@ mod tests {
     fn make_transaction2() -> TopicUpdateTransaction {
         let mut tx = TopicUpdateTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .topic_id("0.0.5007".parse::<TopicId>().unwrap())
             .admin_key(unused_private_key().public_key())
             .auto_renew_account_id("0.0.5009".parse().unwrap())

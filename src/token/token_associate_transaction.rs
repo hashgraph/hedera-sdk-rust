@@ -164,31 +164,26 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
-        test_account_id,
-        test_token_id,
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_ACCOUNT_ID,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TOKEN_ID,
+        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         Hbar,
         TokenAssociateTransaction,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenAssociateTransaction {
         let mut tx = TokenAssociateTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .account_id(test_account_id())
-            .token_ids(vec![test_token_id()])
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
+            .account_id(TEST_ACCOUNT_ID)
+            .token_ids(vec![TEST_TOKEN_ID])
             .max_transaction_fee(Hbar::new(1))
             .freeze()
             .unwrap()
@@ -218,7 +213,7 @@ mod tests {
 
     #[test]
     fn get_set_token_id() {
-        let token_ids = vec![test_token_id()];
+        let token_ids = vec![TEST_TOKEN_ID];
         let mut tx = TokenAssociateTransaction::new();
 
         let tx2 = tx.token_ids(token_ids.to_owned());
@@ -228,12 +223,10 @@ mod tests {
 
     #[test]
     fn get_set_account_id() {
-        let account_id = test_account_id();
-
         let mut tx = TokenAssociateTransaction::new();
 
-        let tx2 = tx.account_id(account_id).to_owned();
+        let tx2 = tx.account_id(TEST_ACCOUNT_ID).to_owned();
 
-        assert_eq!(tx2.get_account_id(), Some(account_id));
+        assert_eq!(tx2.get_account_id(), Some(TEST_ACCOUNT_ID));
     }
 }

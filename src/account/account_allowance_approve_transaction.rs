@@ -394,7 +394,8 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AccountAllowanceApproveTransaction,
@@ -402,35 +403,29 @@ mod tests {
         AnyTransaction,
         Hbar,
         TokenId,
-        TransactionId,
     };
 
     fn make_transaction() -> AccountAllowanceApproveTransaction {
-        let owner_id: AccountId = "5.6.7".parse().unwrap();
+        let owner_id = AccountId::new(5, 6, 7);
         let mut tx = AccountAllowanceApproveTransaction::new();
 
-        let invalid_token_ids: [TokenId; 4] = [
-            "2.2.2".parse().unwrap(),
-            "4.4.4".parse().unwrap(),
-            "6.6.6".parse().unwrap(),
-            "8.8.8".parse().unwrap(),
+        let invalid_token_ids = [
+            TokenId::new(2, 2, 2),
+            TokenId::new(4, 4, 4),
+            TokenId::new(6, 6, 6),
+            TokenId::new(8, 8, 8),
         ];
 
-        let invalid_account_ids: [AccountId; 5] = [
-            "1.1.1".parse().unwrap(),
-            "3.3.3".parse().unwrap(),
-            "5.5.5".parse().unwrap(),
-            "7.7.7".parse().unwrap(),
-            "9.9.9".parse().unwrap(),
+        let invalid_account_ids = [
+            AccountId::new(1, 1, 1),
+            AccountId::new(3, 3, 3),
+            AccountId::new(5, 5, 5),
+            AccountId::new(7, 7, 7),
+            AccountId::new(9, 9, 9),
         ];
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .approve_hbar_allowance(owner_id, invalid_account_ids[0], Hbar::new(3))
             .approve_token_allowance(invalid_token_ids[0], owner_id, invalid_account_ids[1], 6)
             .approve_token_nft_allowance(

@@ -232,25 +232,20 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         Hbar,
         TopicCreateTransaction,
-        TransactionId,
     };
 
     fn make_transaction() -> TopicCreateTransaction {
         let mut tx = TopicCreateTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .submit_key(unused_private_key().public_key())
             .admin_key(unused_private_key().public_key())
             .auto_renew_account_id("0.0.5007".parse().unwrap())

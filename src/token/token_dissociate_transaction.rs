@@ -178,7 +178,8 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AccountId,
@@ -186,7 +187,6 @@ mod tests {
         Hbar,
         TokenDissociateTransaction,
         TokenId,
-        TransactionId,
     };
 
     const TEST_ACCOUNT_ID: AccountId =
@@ -198,13 +198,8 @@ mod tests {
     fn make_transaction() -> TokenDissociateTransaction {
         let mut tx = TokenDissociateTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .account_id(TEST_ACCOUNT_ID)
             .token_ids(TEST_TOKEN_IDS)
             .max_transaction_fee(Hbar::new(1))

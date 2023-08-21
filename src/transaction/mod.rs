@@ -1070,7 +1070,6 @@ where
 
 #[cfg(test)]
 pub(crate) mod test_helpers {
-    use std::str::FromStr;
 
     use hedera_proto::services;
     use prost::Message;
@@ -1085,6 +1084,7 @@ pub(crate) mod test_helpers {
         PrivateKey,
         TokenId,
         Transaction,
+        TransactionId,
     };
 
     #[track_caller]
@@ -1102,13 +1102,19 @@ pub(crate) mod test_helpers {
         "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10".parse().unwrap()
     }
 
-    pub(crate) fn test_token_id() -> TokenId {
-        TokenId::from_str("1.2.3").unwrap()
-    }
+    pub(crate) const TEST_TOKEN_ID: TokenId = TokenId::new(1, 2, 3);
 
-    pub(crate) fn test_account_id() -> AccountId {
-        AccountId::from_str("0.0.5006").unwrap()
-    }
+    pub(crate) const TEST_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 5006);
+
+    pub(crate) const TEST_NODE_ACCOUNT_IDS: [AccountId; 2] =
+        [AccountId::new(0, 0, 5005), AccountId::new(0, 0, 5006)];
+
+    pub(crate) const TEST_TX_ID: TransactionId = TransactionId {
+        account_id: TEST_ACCOUNT_ID,
+        valid_start: VALID_START,
+        nonce: None,
+        scheduled: false,
+    };
 
     pub(crate) const VALID_START: OffsetDateTime =
         OffsetDateTime::UNIX_EPOCH.saturating_add(Duration::seconds(1554158542));

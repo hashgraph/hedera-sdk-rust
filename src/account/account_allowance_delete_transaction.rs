@@ -197,7 +197,8 @@ mod tests {
     use crate::transaction::test_helpers::{
         transaction_body,
         unused_private_key,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AccountAllowanceDeleteTransaction,
@@ -205,22 +206,16 @@ mod tests {
         AnyTransaction,
         Hbar,
         TokenId,
-        TransactionId,
     };
 
     fn make_transaction() -> AccountAllowanceDeleteTransaction {
-        let owner_id: AccountId = "5.6.7".parse().unwrap();
+        let owner_id: AccountId = AccountId::new(5, 6, 7);
         let mut tx = AccountAllowanceDeleteTransaction::new();
 
-        let invalid_token_ids: [TokenId; 2] = ["4.4.4".parse().unwrap(), "8.8.8".parse().unwrap()];
+        let invalid_token_ids: [TokenId; 2] = [TokenId::new(4, 4, 4), TokenId::new(8, 8, 8)];
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .delete_all_token_nft_allowances(invalid_token_ids[0].nft(123), owner_id)
             .delete_all_token_nft_allowances(invalid_token_ids[0].nft(456), owner_id)
             .delete_all_token_nft_allowances(invalid_token_ids[1].nft(456), owner_id)

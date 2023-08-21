@@ -166,7 +166,8 @@ mod tests {
 
     use crate::transaction::test_helpers::{
         transaction_body,
-        VALID_START,
+        TEST_NODE_ACCOUNT_IDS,
+        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
@@ -174,7 +175,6 @@ mod tests {
         FractionalFee,
         TokenFeeScheduleUpdateTransaction,
         TokenId,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenFeeScheduleUpdateTransaction {
@@ -204,13 +204,8 @@ mod tests {
             .into(),
         ];
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .token_id(TokenId::new(0, 0, 8798))
             .custom_fees(custom_fees)
             .freeze()
