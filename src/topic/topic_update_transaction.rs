@@ -281,6 +281,7 @@ mod tests {
     use time::Duration;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
@@ -304,7 +305,7 @@ mod tests {
             .clear_auto_renew_account_id()
             .clear_submit_key()
             .topic_memo("")
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -318,102 +319,58 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
+            ConsensusUpdateTopic(
+                ConsensusUpdateTopicTransactionBody {
+                    topic_id: Some(
+                        TopicId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            topic_num: 5007,
+                        },
+                    ),
+                    memo: Some(
+                        "",
+                    ),
+                    expiration_time: None,
+                    admin_key: Some(
+                        Key {
+                            key: Some(
+                                KeyList(
+                                    KeyList {
+                                        keys: [],
+                                    },
                                 ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    ConsensusUpdateTopic(
-                        ConsensusUpdateTopicTransactionBody {
-                            topic_id: Some(
-                                TopicId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    topic_num: 5007,
-                                },
-                            ),
-                            memo: Some(
-                                "",
-                            ),
-                            expiration_time: None,
-                            admin_key: Some(
-                                Key {
-                                    key: Some(
-                                        KeyList(
-                                            KeyList {
-                                                keys: [],
-                                            },
-                                        ),
-                                    ),
-                                },
-                            ),
-                            submit_key: Some(
-                                Key {
-                                    key: Some(
-                                        KeyList(
-                                            KeyList {
-                                                keys: [],
-                                            },
-                                        ),
-                                    ),
-                                },
-                            ),
-                            auto_renew_period: None,
-                            auto_renew_account: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            0,
-                                        ),
-                                    ),
-                                },
                             ),
                         },
                     ),
-                ),
-            }
+                    submit_key: Some(
+                        Key {
+                            key: Some(
+                                KeyList(
+                                    KeyList {
+                                        keys: [],
+                                    },
+                                ),
+                            ),
+                        },
+                    ),
+                    auto_renew_period: None,
+                    auto_renew_account: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    0,
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }
@@ -443,7 +400,7 @@ mod tests {
             .submit_key(unused_private_key().public_key())
             .topic_memo("Hello memo")
             .expiration_time(VALID_START)
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -457,173 +414,129 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
+            ConsensusUpdateTopic(
+                ConsensusUpdateTopicTransactionBody {
+                    topic_id: Some(
+                        TopicId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            topic_num: 5007,
+                        },
+                    ),
+                    memo: Some(
+                        "Hello memo",
+                    ),
+                    expiration_time: Some(
+                        Timestamp {
+                            seconds: 1554158542,
+                            nanos: 0,
+                        },
+                    ),
+                    admin_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
                                 ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    ConsensusUpdateTopic(
-                        ConsensusUpdateTopicTransactionBody {
-                            topic_id: Some(
-                                TopicId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    topic_num: 5007,
-                                },
-                            ),
-                            memo: Some(
-                                "Hello memo",
-                            ),
-                            expiration_time: Some(
-                                Timestamp {
-                                    seconds: 1554158542,
-                                    nanos: 0,
-                                },
-                            ),
-                            admin_key: Some(
-                                Key {
-                                    key: Some(
-                                        Ed25519(
-                                            [
-                                                224,
-                                                200,
-                                                236,
-                                                39,
-                                                88,
-                                                165,
-                                                135,
-                                                159,
-                                                250,
-                                                194,
-                                                38,
-                                                161,
-                                                60,
-                                                12,
-                                                81,
-                                                107,
-                                                121,
-                                                158,
-                                                114,
-                                                227,
-                                                81,
-                                                65,
-                                                160,
-                                                221,
-                                                130,
-                                                143,
-                                                148,
-                                                211,
-                                                121,
-                                                136,
-                                                164,
-                                                183,
-                                            ],
-                                        ),
-                                    ),
-                                },
-                            ),
-                            submit_key: Some(
-                                Key {
-                                    key: Some(
-                                        Ed25519(
-                                            [
-                                                224,
-                                                200,
-                                                236,
-                                                39,
-                                                88,
-                                                165,
-                                                135,
-                                                159,
-                                                250,
-                                                194,
-                                                38,
-                                                161,
-                                                60,
-                                                12,
-                                                81,
-                                                107,
-                                                121,
-                                                158,
-                                                114,
-                                                227,
-                                                81,
-                                                65,
-                                                160,
-                                                221,
-                                                130,
-                                                143,
-                                                148,
-                                                211,
-                                                121,
-                                                136,
-                                                164,
-                                                183,
-                                            ],
-                                        ),
-                                    ),
-                                },
-                            ),
-                            auto_renew_period: Some(
-                                Duration {
-                                    seconds: 86400,
-                                },
-                            ),
-                            auto_renew_account: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            5009,
-                                        ),
-                                    ),
-                                },
                             ),
                         },
                     ),
-                ),
-            }
+                    submit_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    auto_renew_period: Some(
+                        Duration {
+                            seconds: 86400,
+                        },
+                    ),
+                    auto_renew_account: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    5009,
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

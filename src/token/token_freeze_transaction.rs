@@ -162,6 +162,7 @@ mod tests {
     use expect_test::expect;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
@@ -181,7 +182,7 @@ mod tests {
             .transaction_id(TEST_TX_ID)
             .account_id("0.0.222".parse().unwrap())
             .token_id(TokenId::new(5, 3, 3))
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -195,75 +196,31 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    TokenFreeze(
-                        TokenFreezeAccountTransactionBody {
-                            token: Some(
-                                TokenId {
-                                    shard_num: 5,
-                                    realm_num: 3,
-                                    token_num: 3,
-                                },
-                            ),
+            TokenFreeze(
+                TokenFreezeAccountTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 5,
+                            realm_num: 3,
+                            token_num: 3,
+                        },
+                    ),
+                    account: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
                             account: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            222,
-                                        ),
-                                    ),
-                                },
+                                AccountNum(
+                                    222,
+                                ),
                             ),
                         },
                     ),
-                ),
-            }
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

@@ -194,18 +194,17 @@ mod tests {
     };
     use crate::token::TokenMintTransactionData;
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
         TEST_TX_ID,
-        VALID_START,
     };
     use crate::{
         AnyTransaction,
         Hbar,
         TokenId,
         TokenMintTransaction,
-        TransactionId,
     };
 
     const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
@@ -218,16 +217,11 @@ mod tests {
     fn make_transaction() -> TokenMintTransaction {
         let mut tx = TokenMintTransaction::new();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
+        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+            .transaction_id(TEST_TX_ID)
             .token_id(TEST_TOKEN_ID)
             .amount(TEST_AMOUNT)
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -242,7 +236,7 @@ mod tests {
             .transaction_id(TEST_TX_ID)
             .token_id(TEST_TOKEN_ID)
             .metadata(metadata())
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -256,66 +250,22 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    TokenMint(
-                        TokenMintTransactionBody {
-                            token: Some(
-                                TokenId {
-                                    shard_num: 4,
-                                    realm_num: 2,
-                                    token_num: 0,
-                                },
-                            ),
-                            amount: 10,
-                            metadata: [],
+            TokenMint(
+                TokenMintTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
                         },
                     ),
-                ),
-            }
+                    amount: 10,
+                    metadata: [],
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }
@@ -335,70 +285,34 @@ mod tests {
 
     #[test]
     fn serialize_metadata() {
-        let tx = make_transaction();
+        let tx = make_metadata_transaction();
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    TokenMint(
-                        TokenMintTransactionBody {
-                            token: Some(
-                                TokenId {
-                                    shard_num: 4,
-                                    realm_num: 2,
-                                    token_num: 0,
-                                },
-                            ),
-                            amount: 10,
-                            metadata: [],
+            TokenMint(
+                TokenMintTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
                         },
                     ),
-                ),
-            }
+                    amount: 0,
+                    metadata: [
+                        [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                        ],
+                    ],
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

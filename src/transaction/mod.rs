@@ -1079,8 +1079,10 @@ pub(crate) mod test_helpers {
     };
 
     use super::TransactionExecute;
+    use crate::protobuf::ToProtobuf;
     use crate::{
         AccountId,
+        Hbar,
         PrivateKey,
         TokenId,
         Transaction,
@@ -1096,6 +1098,32 @@ pub(crate) mod test_helpers {
             &*tx.make_sources().unwrap().signed_transactions()[0].body_bytes,
         )
         .unwrap()
+    }
+
+    /// checks the entire traknsaction body *other than* `data` and returns that.
+    ///
+    /// This is basically a boilerplate reducer.
+    #[track_caller]
+    pub(crate) fn check_body(body: services::TransactionBody) -> services::transaction_body::Data {
+        #[allow(deprecated)]
+        let services::TransactionBody {
+            transaction_id,
+            node_account_id,
+            transaction_fee,
+            transaction_valid_duration,
+            generate_record,
+            memo,
+            data,
+        } = body;
+
+        assert_eq!(transaction_id, Some(TEST_TX_ID.to_protobuf()));
+        assert_eq!(node_account_id, Some(TEST_NODE_ACCOUNT_IDS[0].to_protobuf()));
+        assert_eq!(transaction_fee, Hbar::new(2).to_tinybars() as u64);
+        assert_eq!(transaction_valid_duration, Some(services::Duration { seconds: 120 }));
+        assert_eq!(generate_record, false);
+        assert_eq!(memo, "");
+
+        data.unwrap()
     }
 
     pub(crate) fn unused_private_key() -> PrivateKey {

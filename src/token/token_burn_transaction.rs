@@ -187,6 +187,7 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
@@ -231,7 +232,10 @@ mod tests {
     #[test]
     fn serialize_fungible() {
         let tx = make_transaction();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_burn_transaction/serialize_fungible.txt"]
             .assert_debug_eq(&tx);
@@ -240,7 +244,10 @@ mod tests {
     #[test]
     fn serialize_nft() {
         let tx = make_transaction_nft();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_burn_transaction/serialize_nft.txt"].assert_debug_eq(&tx);
     }

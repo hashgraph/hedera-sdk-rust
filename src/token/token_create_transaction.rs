@@ -583,6 +583,7 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
@@ -634,7 +635,7 @@ mod tests {
             .name("Flook")
             .token_memo("Flook memo")
             .custom_fees([fee.into()])
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -664,7 +665,7 @@ mod tests {
             .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
             .name("Flook")
             .token_memo("Flook memo")
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -675,7 +676,10 @@ mod tests {
     #[test]
     fn serialize_fungible() {
         let tx = make_transaction();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_create_transaction/serialize_fungible.txt"]
             .assert_debug_eq(&tx);
@@ -684,7 +688,10 @@ mod tests {
     #[test]
     fn serialize_nft() {
         let tx = make_transaction_nft();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_create_transaction/serialize_nft.txt"].assert_debug_eq(&tx);
     }

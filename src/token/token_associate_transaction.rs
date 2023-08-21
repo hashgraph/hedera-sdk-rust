@@ -164,6 +164,7 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_ACCOUNT_ID,
@@ -184,7 +185,7 @@ mod tests {
             .transaction_id(TEST_TX_ID)
             .account_id(TEST_ACCOUNT_ID)
             .token_ids(vec![TEST_TOKEN_ID])
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -195,6 +196,10 @@ mod tests {
     #[test]
     fn serialize() {
         let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_associate_transaction/serialize.txt"].assert_debug_eq(&tx);
     }

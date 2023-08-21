@@ -128,6 +128,7 @@ mod tests {
     use expect_test::expect;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
@@ -145,7 +146,7 @@ mod tests {
         tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
             .transaction_id(TEST_TX_ID)
             .schedule_id("0.0.444".parse().unwrap())
-            .max_transaction_fee(Hbar::new(1))
+            .max_transaction_fee(Hbar::new(2))
             .freeze()
             .unwrap()
             .sign(unused_private_key());
@@ -159,64 +160,20 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    ScheduleDelete(
-                        ScheduleDeleteTransactionBody {
-                            schedule_id: Some(
-                                ScheduleId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    schedule_num: 444,
-                                },
-                            ),
+            ScheduleDelete(
+                ScheduleDeleteTransactionBody {
+                    schedule_id: Some(
+                        ScheduleId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            schedule_num: 444,
                         },
                     ),
-                ),
-            }
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

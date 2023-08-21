@@ -245,6 +245,7 @@ mod tests {
     use expect_test::expect;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         TEST_NODE_ACCOUNT_IDS,
@@ -272,7 +273,7 @@ mod tests {
         .admin_key(unused_private_key().public_key())
         .payer_account_id("0.0.222".parse().unwrap())
         .schedule_memo("hi")
-        .max_transaction_fee(Hbar::new(1))
+        .max_transaction_fee(Hbar::new(2))
         .expiration_time(VALID_START)
         .freeze()
         .unwrap()
@@ -287,167 +288,123 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    ScheduleCreate(
-                        ScheduleCreateTransactionBody {
-                            scheduled_transaction_body: Some(
-                                SchedulableTransactionBody {
-                                    transaction_fee: 200000000,
-                                    memo: "",
-                                    data: Some(
-                                        CryptoTransfer(
-                                            CryptoTransferTransactionBody {
-                                                transfers: Some(
-                                                    TransferList {
-                                                        account_amounts: [
-                                                            AccountAmount {
-                                                                account_id: Some(
-                                                                    AccountId {
-                                                                        shard_num: 0,
-                                                                        realm_num: 0,
-                                                                        account: Some(
-                                                                            AccountNum(
-                                                                                555,
-                                                                            ),
-                                                                        ),
-                                                                    },
+            ScheduleCreate(
+                ScheduleCreateTransactionBody {
+                    scheduled_transaction_body: Some(
+                        SchedulableTransactionBody {
+                            transaction_fee: 200000000,
+                            memo: "",
+                            data: Some(
+                                CryptoTransfer(
+                                    CryptoTransferTransactionBody {
+                                        transfers: Some(
+                                            TransferList {
+                                                account_amounts: [
+                                                    AccountAmount {
+                                                        account_id: Some(
+                                                            AccountId {
+                                                                shard_num: 0,
+                                                                realm_num: 0,
+                                                                account: Some(
+                                                                    AccountNum(
+                                                                        555,
+                                                                    ),
                                                                 ),
-                                                                amount: -1000000000,
-                                                                is_approval: false,
                                                             },
-                                                            AccountAmount {
-                                                                account_id: Some(
-                                                                    AccountId {
-                                                                        shard_num: 0,
-                                                                        realm_num: 0,
-                                                                        account: Some(
-                                                                            AccountNum(
-                                                                                666,
-                                                                            ),
-                                                                        ),
-                                                                    },
-                                                                ),
-                                                                amount: 1000000000,
-                                                                is_approval: false,
-                                                            },
-                                                        ],
+                                                        ),
+                                                        amount: -1000000000,
+                                                        is_approval: false,
                                                     },
-                                                ),
-                                                token_transfers: [],
+                                                    AccountAmount {
+                                                        account_id: Some(
+                                                            AccountId {
+                                                                shard_num: 0,
+                                                                realm_num: 0,
+                                                                account: Some(
+                                                                    AccountNum(
+                                                                        666,
+                                                                    ),
+                                                                ),
+                                                            },
+                                                        ),
+                                                        amount: 1000000000,
+                                                        is_approval: false,
+                                                    },
+                                                ],
                                             },
                                         ),
-                                    ),
-                                },
+                                        token_transfers: [],
+                                    },
+                                ),
                             ),
-                            memo: "hi",
-                            admin_key: Some(
-                                Key {
-                                    key: Some(
-                                        Ed25519(
-                                            [
-                                                224,
-                                                200,
-                                                236,
-                                                39,
-                                                88,
-                                                165,
-                                                135,
-                                                159,
-                                                250,
-                                                194,
-                                                38,
-                                                161,
-                                                60,
-                                                12,
-                                                81,
-                                                107,
-                                                121,
-                                                158,
-                                                114,
-                                                227,
-                                                81,
-                                                65,
-                                                160,
-                                                221,
-                                                130,
-                                                143,
-                                                148,
-                                                211,
-                                                121,
-                                                136,
-                                                164,
-                                                183,
-                                            ],
-                                        ),
-                                    ),
-                                },
-                            ),
-                            payer_account_id: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            222,
-                                        ),
-                                    ),
-                                },
-                            ),
-                            expiration_time: Some(
-                                Timestamp {
-                                    seconds: 1554158542,
-                                    nanos: 0,
-                                },
-                            ),
-                            wait_for_expiry: false,
                         },
                     ),
-                ),
-            }
+                    memo: "hi",
+                    admin_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    payer_account_id: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    222,
+                                ),
+                            ),
+                        },
+                    ),
+                    expiration_time: Some(
+                        Timestamp {
+                            seconds: 1554158542,
+                            nanos: 0,
+                        },
+                    ),
+                    wait_for_expiry: false,
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

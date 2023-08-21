@@ -1,29 +1,22 @@
-Transaction {
-    body: TransactionBody {
-        data: TokenAssociateTransactionData {
-            account_id: Some(
-                "0.0.5006",
-            ),
-            token_ids: [
-                "1.2.3",
-            ],
-        },
-        node_account_ids: Some(
-            [
-                "0.0.5005",
-                "0.0.5006",
-            ],
+TokenAssociate(
+    TokenAssociateTransactionBody {
+        account: Some(
+            AccountId {
+                shard_num: 0,
+                realm_num: 0,
+                account: Some(
+                    AccountNum(
+                        5006,
+                    ),
+                ),
+            },
         ),
-        transaction_valid_duration: None,
-        max_transaction_fee: Some(
-            "1 ℏ",
-        ),
-        transaction_memo: "",
-        transaction_id: Some(
-            "0.0.5006@1554158542.0",
-        ),
-        operator: None,
-        is_frozen: true,
-        regenerate_transaction_id: None,
+        tokens: [
+            TokenId {
+                shard_num: 1,
+                realm_num: 2,
+                token_num: 3,
+            },
+        ],
     },
-}
+)
