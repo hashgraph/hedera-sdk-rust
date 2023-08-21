@@ -155,3 +155,74 @@ impl ToProtobuf for TokenUnfreezeTransactionData {
         services::TokenUnfreezeAccountTransactionBody { token, account }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        TokenId,
+        TokenUnfreezeTransaction,
+    };
+
+    fn make_transaction() -> TokenUnfreezeTransaction {
+        let mut tx = TokenUnfreezeTransaction::new_for_tests();
+
+        tx.token_id(TokenId::new(6, 5, 4)).account_id(AccountId::new(0, 0, 222)).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn seriralize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            TokenUnfreeze(
+                TokenUnfreezeAccountTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 6,
+                            realm_num: 5,
+                            token_num: 4,
+                        },
+                    ),
+                    account: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    222,
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+}
