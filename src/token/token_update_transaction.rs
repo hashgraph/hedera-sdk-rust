@@ -427,3 +427,714 @@ impl ToProtobuf for TokenUpdateTransactionData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use expect_test::expect;
+    use hedera_proto::services;
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
+
+    use super::TokenUpdateTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+        VALID_START,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        PrivateKey,
+        PublicKey,
+        TokenId,
+        TokenUpdateTransaction,
+    };
+
+    fn test_admin_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e11").unwrap().public_key()
+    }
+
+    fn test_kyc_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e12").unwrap().public_key()
+    }
+
+    fn test_freeze_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e13").unwrap().public_key()
+    }
+
+    fn test_wipe_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e14").unwrap().public_key()
+    }
+
+    fn test_supply_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e15").unwrap().public_key()
+    }
+
+    fn test_fee_schedule_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e16").unwrap().public_key()
+    }
+
+    fn test_pause_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e17").unwrap().public_key()
+    }
+    const TEST_TREASURY_ACCOUNT_ID: AccountId = AccountId::new(7, 7, 7);
+    const TEST_AUTO_RENEW_ACCOUNT_ID: AccountId = AccountId::new(8, 8, 8);
+    const TEST_TOKEN_NAME: &str = "test name";
+    const TEST_TOKEN_SYMBOL: &str = "test symbol";
+    const TEST_TOKEN_MEMO: &str = "test memo";
+    const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
+    const TEST_AUTO_RENEW_PERIOD: Duration = Duration::hours(10);
+    const TEST_EXPIRATION_TIME: OffsetDateTime = VALID_START;
+
+    fn make_transaction() -> TokenUpdateTransaction {
+        let mut tx = TokenUpdateTransaction::new_for_tests();
+
+        tx.token_id(TEST_TOKEN_ID)
+            .fee_schedule_key(test_fee_schedule_key())
+            .supply_key(test_supply_key())
+            .admin_key(test_admin_key())
+            .auto_renew_account_id(TEST_AUTO_RENEW_ACCOUNT_ID)
+            .auto_renew_period(TEST_AUTO_RENEW_PERIOD)
+            .freeze_key(test_freeze_key())
+            .wipe_key(test_wipe_key())
+            .token_symbol(TEST_TOKEN_SYMBOL)
+            .kyc_key(test_kyc_key())
+            .pause_key(test_pause_key())
+            .expiration_time(TEST_EXPIRATION_TIME)
+            .treasury_account_id(TEST_TREASURY_ACCOUNT_ID)
+            .token_name(TEST_TOKEN_NAME)
+            .token_memo(TEST_TOKEN_MEMO)
+            .freeze()
+            .unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn seriralize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            TokenUpdate(
+                TokenUpdateTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
+                        },
+                    ),
+                    symbol: "test symbol",
+                    name: "test name",
+                    treasury: Some(
+                        AccountId {
+                            shard_num: 7,
+                            realm_num: 7,
+                            account: Some(
+                                AccountNum(
+                                    7,
+                                ),
+                            ),
+                        },
+                    ),
+                    admin_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        218,
+                                        135,
+                                        112,
+                                        16,
+                                        151,
+                                        134,
+                                        110,
+                                        115,
+                                        240,
+                                        221,
+                                        148,
+                                        44,
+                                        187,
+                                        62,
+                                        151,
+                                        6,
+                                        51,
+                                        41,
+                                        249,
+                                        5,
+                                        88,
+                                        134,
+                                        33,
+                                        177,
+                                        120,
+                                        210,
+                                        23,
+                                        89,
+                                        104,
+                                        141,
+                                        71,
+                                        252,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    kyc_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        251,
+                                        136,
+                                        179,
+                                        55,
+                                        223,
+                                        215,
+                                        101,
+                                        97,
+                                        123,
+                                        228,
+                                        50,
+                                        42,
+                                        231,
+                                        239,
+                                        133,
+                                        51,
+                                        214,
+                                        30,
+                                        100,
+                                        131,
+                                        5,
+                                        14,
+                                        32,
+                                        236,
+                                        72,
+                                        69,
+                                        165,
+                                        51,
+                                        189,
+                                        220,
+                                        164,
+                                        177,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    freeze_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        61,
+                                        237,
+                                        83,
+                                        227,
+                                        34,
+                                        51,
+                                        83,
+                                        47,
+                                        61,
+                                        132,
+                                        98,
+                                        50,
+                                        76,
+                                        209,
+                                        19,
+                                        171,
+                                        190,
+                                        79,
+                                        115,
+                                        33,
+                                        109,
+                                        240,
+                                        109,
+                                        84,
+                                        161,
+                                        28,
+                                        182,
+                                        145,
+                                        193,
+                                        91,
+                                        39,
+                                        205,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    wipe_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        82,
+                                        91,
+                                        156,
+                                        21,
+                                        95,
+                                        144,
+                                        43,
+                                        145,
+                                        45,
+                                        189,
+                                        129,
+                                        190,
+                                        166,
+                                        212,
+                                        58,
+                                        7,
+                                        125,
+                                        122,
+                                        98,
+                                        221,
+                                        31,
+                                        239,
+                                        207,
+                                        199,
+                                        125,
+                                        233,
+                                        97,
+                                        68,
+                                        213,
+                                        250,
+                                        195,
+                                        238,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    supply_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        59,
+                                        145,
+                                        56,
+                                        83,
+                                        175,
+                                        165,
+                                        155,
+                                        85,
+                                        171,
+                                        197,
+                                        129,
+                                        194,
+                                        172,
+                                        13,
+                                        54,
+                                        88,
+                                        10,
+                                        194,
+                                        236,
+                                        164,
+                                        189,
+                                        16,
+                                        28,
+                                        2,
+                                        23,
+                                        63,
+                                        239,
+                                        2,
+                                        230,
+                                        119,
+                                        221,
+                                        213,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    auto_renew_account: Some(
+                        AccountId {
+                            shard_num: 8,
+                            realm_num: 8,
+                            account: Some(
+                                AccountNum(
+                                    8,
+                                ),
+                            ),
+                        },
+                    ),
+                    auto_renew_period: None,
+                    expiry: Some(
+                        Timestamp {
+                            seconds: 1554158542,
+                            nanos: 0,
+                        },
+                    ),
+                    memo: Some(
+                        "test memo",
+                    ),
+                    fee_schedule_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        75,
+                                        190,
+                                        149,
+                                        168,
+                                        109,
+                                        36,
+                                        248,
+                                        249,
+                                        103,
+                                        115,
+                                        177,
+                                        40,
+                                        38,
+                                        252,
+                                        190,
+                                        0,
+                                        150,
+                                        136,
+                                        203,
+                                        13,
+                                        202,
+                                        136,
+                                        207,
+                                        241,
+                                        23,
+                                        163,
+                                        168,
+                                        175,
+                                        80,
+                                        195,
+                                        113,
+                                        19,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    pause_key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        209,
+                                        104,
+                                        101,
+                                        169,
+                                        140,
+                                        248,
+                                        176,
+                                        183,
+                                        248,
+                                        250,
+                                        55,
+                                        118,
+                                        178,
+                                        13,
+                                        175,
+                                        197,
+                                        190,
+                                        4,
+                                        255,
+                                        235,
+                                        154,
+                                        36,
+                                        151,
+                                        114,
+                                        7,
+                                        131,
+                                        206,
+                                        153,
+                                        30,
+                                        43,
+                                        25,
+                                        116,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_token_update_transaction_from_transaction_body_protobuf() {
+        let tx = services::TokenUpdateTransactionBody {
+            token: Some(TEST_TOKEN_ID.to_protobuf()),
+            symbol: TEST_TOKEN_SYMBOL.to_owned(),
+            name: TEST_TOKEN_NAME.to_owned(),
+            treasury: Some(TEST_TREASURY_ACCOUNT_ID.to_protobuf()),
+            admin_key: Some(test_admin_key().to_protobuf()),
+            kyc_key: Some(test_kyc_key().to_protobuf()),
+            freeze_key: Some(test_freeze_key().to_protobuf()),
+            wipe_key: Some(test_wipe_key().to_protobuf()),
+            supply_key: Some(test_supply_key().to_protobuf()),
+            auto_renew_account: Some(TEST_AUTO_RENEW_ACCOUNT_ID.to_protobuf()),
+            auto_renew_period: Some(TEST_AUTO_RENEW_PERIOD.to_protobuf()),
+            expiry: Some(TEST_EXPIRATION_TIME.to_protobuf()),
+            memo: Some(TEST_TOKEN_MEMO.to_owned()),
+            fee_schedule_key: Some(test_fee_schedule_key().to_protobuf()),
+            pause_key: Some(test_pause_key().to_protobuf()),
+        };
+
+        let tx = TokenUpdateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.token_id, Some(TEST_TOKEN_ID));
+        assert_eq!(tx.token_name, TEST_TOKEN_NAME);
+        assert_eq!(tx.token_symbol, TEST_TOKEN_SYMBOL);
+        assert_eq!(tx.treasury_account_id, Some(TEST_TREASURY_ACCOUNT_ID));
+        assert_eq!(tx.admin_key, Some(test_admin_key().into()));
+        assert_eq!(tx.kyc_key, Some(test_kyc_key().into()));
+        assert_eq!(tx.freeze_key, Some(test_freeze_key().into()));
+        assert_eq!(tx.wipe_key, Some(test_wipe_key().into()));
+        assert_eq!(tx.supply_key, Some(test_supply_key().into()));
+        assert_eq!(tx.auto_renew_account_id, Some(TEST_AUTO_RENEW_ACCOUNT_ID));
+        assert_eq!(tx.auto_renew_period, Some(TEST_AUTO_RENEW_PERIOD));
+        assert_eq!(tx.expiration_time, Some(TEST_EXPIRATION_TIME));
+        assert_eq!(tx.token_memo, TEST_TOKEN_MEMO);
+        assert_eq!(tx.fee_schedule_key, Some(test_fee_schedule_key().into()));
+        assert_eq!(tx.pause_key, Some(test_pause_key().into()));
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.token_id(TEST_TOKEN_ID);
+        assert_eq!(tx.get_token_id(), Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_id(TEST_TOKEN_ID);
+    }
+
+    #[test]
+    fn get_set_name() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.token_name(TEST_TOKEN_NAME);
+        assert_eq!(tx.get_token_name(), TEST_TOKEN_NAME);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_name_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_name(TEST_TOKEN_NAME);
+    }
+
+    #[test]
+    fn get_set_symbol() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.token_symbol(TEST_TOKEN_SYMBOL);
+        assert_eq!(tx.get_token_symbol(), TEST_TOKEN_SYMBOL);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_symbol_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_symbol(TEST_TOKEN_SYMBOL);
+    }
+
+    #[test]
+    fn get_set_treasury_account_id() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.treasury_account_id(TEST_TREASURY_ACCOUNT_ID);
+        assert_eq!(tx.get_treasury_account_id(), Some(TEST_TREASURY_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_treasury_account_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.treasury_account_id(TEST_TREASURY_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_admin_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.admin_key(test_admin_key());
+        assert_eq!(tx.get_admin_key(), Some(&test_admin_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_admin_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.admin_key(test_admin_key());
+    }
+
+    #[test]
+    fn get_set_kyc_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.kyc_key(test_kyc_key());
+        assert_eq!(tx.get_kyc_key(), Some(&test_kyc_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_kyc_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.kyc_key(test_kyc_key());
+    }
+
+    #[test]
+    fn get_set_freeze_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.freeze_key(test_freeze_key());
+        assert_eq!(tx.get_freeze_key(), Some(&test_freeze_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_freeze_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.freeze_key(test_freeze_key());
+    }
+
+    #[test]
+    fn get_set_wipe_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.wipe_key(test_wipe_key());
+        assert_eq!(tx.get_wipe_key(), Some(&test_wipe_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_wipe_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.wipe_key(test_wipe_key());
+    }
+
+    #[test]
+    fn get_set_supply_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.supply_key(test_supply_key());
+        assert_eq!(tx.get_supply_key(), Some(&test_supply_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_supply_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.supply_key(test_supply_key());
+    }
+
+    #[test]
+    fn get_set_auto_renew_account_id() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.auto_renew_account_id(TEST_AUTO_RENEW_ACCOUNT_ID);
+        assert_eq!(tx.get_auto_renew_account_id(), Some(TEST_AUTO_RENEW_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_account_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.auto_renew_account_id(TEST_AUTO_RENEW_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_auto_renew_period() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.auto_renew_period(TEST_AUTO_RENEW_PERIOD);
+        assert_eq!(tx.get_auto_renew_period(), Some(TEST_AUTO_RENEW_PERIOD));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_period_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.auto_renew_period(TEST_AUTO_RENEW_PERIOD);
+    }
+
+    #[test]
+    fn get_set_expiration_time() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.expiration_time(TEST_EXPIRATION_TIME);
+        assert_eq!(tx.get_expiration_time(), Some(TEST_EXPIRATION_TIME));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_expiration_time_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.expiration_time(TEST_EXPIRATION_TIME);
+    }
+
+    #[test]
+    fn get_set_token_memo() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.token_memo(TEST_TOKEN_MEMO);
+        assert_eq!(tx.get_token_memo(), TEST_TOKEN_MEMO);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_memo_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_memo(TEST_TOKEN_MEMO);
+    }
+
+    #[test]
+    fn get_set_fee_schedule_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.fee_schedule_key(test_fee_schedule_key());
+        assert_eq!(tx.get_fee_schedule_key(), Some(&test_fee_schedule_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_fee_schedule_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.fee_schedule_key(test_fee_schedule_key());
+    }
+
+    #[test]
+    fn get_set_pause_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.pause_key(test_pause_key());
+        assert_eq!(tx.get_pause_key(), Some(&test_pause_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_pause_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.pause_key(test_pause_key());
+    }
+}
