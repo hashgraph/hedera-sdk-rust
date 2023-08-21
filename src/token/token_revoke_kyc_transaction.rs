@@ -157,3 +157,127 @@ impl ToProtobuf for TokenRevokeKycTransactionData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+
+    use super::TokenRevokeKycTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        TokenId,
+        TokenRevokeKycTransaction,
+    };
+
+    const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
+    const TEST_ACCOUNT_ID: AccountId =
+        AccountId { shard: 6, realm: 9, num: 0, alias: None, evm_address: None, checksum: None };
+
+    fn make_transaction() -> TokenRevokeKycTransaction {
+        let mut tx = TokenRevokeKycTransaction::new_for_tests();
+
+        tx.token_id(TEST_TOKEN_ID).account_id(TEST_ACCOUNT_ID).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn seriralize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            TokenRevokeKyc(
+                TokenRevokeKycTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
+                        },
+                    ),
+                    account: Some(
+                        AccountId {
+                            shard_num: 6,
+                            realm_num: 9,
+                            account: Some(
+                                AccountNum(
+                                    0,
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_token_revoke_kyc_transaction_from_transaction_body_protobuf() {
+        let tx = services::TokenRevokeKycTransactionBody {
+            token: Some(TEST_TOKEN_ID.to_protobuf()),
+            account: Some(TEST_ACCOUNT_ID.to_protobuf()),
+        };
+
+        let tx = TokenRevokeKycTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.account_id, Some(TEST_ACCOUNT_ID));
+        assert_eq!(tx.token_id, Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = TokenRevokeKycTransaction::new();
+        tx.account_id(TEST_ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(TEST_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.account_id(TEST_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenRevokeKycTransaction::new();
+        tx.token_id(TEST_TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_id(TEST_TOKEN_ID);
+    }
+}
