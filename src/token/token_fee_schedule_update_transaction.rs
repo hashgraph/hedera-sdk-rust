@@ -167,20 +167,17 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         FixedFee,
         FractionalFee,
-        Hbar,
         TokenFeeScheduleUpdateTransaction,
         TokenId,
     };
 
     fn make_transaction() -> TokenFeeScheduleUpdateTransaction {
-        let mut tx = TokenFeeScheduleUpdateTransaction::new();
+        let mut tx = TokenFeeScheduleUpdateTransaction::new_for_tests();
 
         let custom_fees = [
             FixedFee {
@@ -206,13 +203,7 @@ mod tests {
             .into(),
         ];
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .token_id(TokenId::new(0, 0, 8798))
-            .custom_fees(custom_fees)
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap();
+        tx.token_id(TokenId::new(0, 0, 8798)).custom_fees(custom_fees).freeze().unwrap();
 
         tx
     }

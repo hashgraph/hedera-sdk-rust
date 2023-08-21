@@ -417,23 +417,18 @@ mod tests {
         check_body,
         transaction_body,
         unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AccountId,
         AccountUpdateTransaction,
         AnyTransaction,
-        Hbar,
     };
 
     #[allow(deprecated)]
     fn make_transaction() -> AccountUpdateTransaction {
-        let mut tx = AccountUpdateTransaction::new();
+        let mut tx = AccountUpdateTransaction::new_for_tests();
 
         tx.key(unused_private_key().public_key())
-            .node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
             .account_id(AccountId::new(0, 0, 2002))
             .proxy_account_id(AccountId::new(0, 0, 1001))
             .auto_renew_period(Duration::hours(10))
@@ -441,22 +436,18 @@ mod tests {
             .receiver_signature_required(false)
             .max_automatic_token_associations(100)
             .account_memo("Some memo")
-            .max_transaction_fee(Hbar::new(2))
             .staked_account_id(AccountId::new(0, 0, 3))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         return tx;
     }
 
     #[allow(deprecated)]
     fn make_transaction2() -> AccountUpdateTransaction {
-        let mut tx = AccountUpdateTransaction::new();
+        let mut tx = AccountUpdateTransaction::new_for_tests();
 
         tx.key(unused_private_key().public_key())
-            .node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
             .account_id(AccountId::new(0, 0, 2002))
             .proxy_account_id(AccountId::new(0, 0, 1001))
             .auto_renew_period(Duration::hours(10))
@@ -464,11 +455,9 @@ mod tests {
             .receiver_signature_required(false)
             .max_automatic_token_associations(100)
             .account_memo("Some memo")
-            .max_transaction_fee(Hbar::new(2))
             .staked_node_id(4)
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         return tx;
     }

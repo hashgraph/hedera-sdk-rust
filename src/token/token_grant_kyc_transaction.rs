@@ -171,14 +171,10 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AccountId,
         AnyTransaction,
-        Hbar,
         TokenGrantKycTransaction,
         TokenId,
     };
@@ -188,16 +184,9 @@ mod tests {
         AccountId { shard: 6, realm: 9, num: 0, alias: None, evm_address: None, checksum: None };
 
     fn make_transaction() -> TokenGrantKycTransaction {
-        let mut tx = TokenGrantKycTransaction::new();
+        let mut tx = TokenGrantKycTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .account_id(TEST_ACCOUNT_ID)
-            .token_id(TEST_TOKEN_ID)
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.account_id(TEST_ACCOUNT_ID).token_id(TEST_TOKEN_ID).freeze().unwrap();
 
         tx
     }

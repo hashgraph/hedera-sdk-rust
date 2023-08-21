@@ -178,14 +178,10 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AccountId,
         AnyTransaction,
-        Hbar,
         TokenDissociateTransaction,
         TokenId,
     };
@@ -197,16 +193,9 @@ mod tests {
         [TokenId::new(4, 2, 0), TokenId::new(4, 2, 1), TokenId::new(4, 2, 2)];
 
     fn make_transaction() -> TokenDissociateTransaction {
-        let mut tx = TokenDissociateTransaction::new();
+        let mut tx = TokenDissociateTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .account_id(TEST_ACCOUNT_ID)
-            .token_ids(TEST_TOKEN_IDS)
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.account_id(TEST_ACCOUNT_ID).token_ids(TEST_TOKEN_IDS).freeze().unwrap();
 
         tx
     }

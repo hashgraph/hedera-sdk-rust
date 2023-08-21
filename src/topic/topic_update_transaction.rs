@@ -284,31 +284,24 @@ mod tests {
         check_body,
         transaction_body,
         unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
         AnyTransaction,
-        Hbar,
         TopicId,
         TopicUpdateTransaction,
     };
 
     fn make_transaction() -> TopicUpdateTransaction {
-        let mut tx = TopicUpdateTransaction::new();
+        let mut tx = TopicUpdateTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .topic_id("0.0.5007".parse::<TopicId>().unwrap())
+        tx.topic_id("0.0.5007".parse::<TopicId>().unwrap())
             .clear_admin_key()
             .clear_auto_renew_account_id()
             .clear_submit_key()
             .topic_memo("")
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }
@@ -389,21 +382,17 @@ mod tests {
     }
 
     fn make_transaction2() -> TopicUpdateTransaction {
-        let mut tx = TopicUpdateTransaction::new();
+        let mut tx = TopicUpdateTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .topic_id("0.0.5007".parse::<TopicId>().unwrap())
+        tx.topic_id("0.0.5007".parse::<TopicId>().unwrap())
             .admin_key(unused_private_key().public_key())
             .auto_renew_account_id("0.0.5009".parse().unwrap())
             .auto_renew_period(Duration::days(1))
             .submit_key(unused_private_key().public_key())
             .topic_memo("Hello memo")
             .expiration_time(VALID_START)
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }

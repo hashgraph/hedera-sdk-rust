@@ -265,28 +265,21 @@ mod tests {
         check_body,
         transaction_body,
         unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         FileCreateTransaction,
-        Hbar,
     };
 
     fn make_transaction() -> FileCreateTransaction {
-        let mut tx = FileCreateTransaction::new();
+        let mut tx = FileCreateTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .contents(Vec::from([0xde, 0xad, 0xbe, 0xef]))
+        tx.contents(Vec::from([0xde, 0xad, 0xbe, 0xef]))
             .expiration_time(OffsetDateTime::from_unix_timestamp(1554158728).unwrap())
             .keys([unused_private_key().public_key()])
-            .max_transaction_fee(Hbar::new(2))
             .file_memo("Hello memo")
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }

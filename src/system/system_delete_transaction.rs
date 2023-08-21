@@ -204,44 +204,32 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
         AnyTransaction,
         ContractId,
         FileId,
-        Hbar,
         SystemDeleteTransaction,
     };
 
     fn make_transaction_file() -> SystemDeleteTransaction {
-        let mut tx = SystemDeleteTransaction::new();
+        let mut tx = SystemDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .file_id("0.0.444".parse::<FileId>().unwrap())
+        tx.file_id("0.0.444".parse::<FileId>().unwrap())
             .expiration_time(VALID_START)
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
         tx
     }
 
     fn make_transaction_contract() -> SystemDeleteTransaction {
-        let mut tx = SystemDeleteTransaction::new();
+        let mut tx = SystemDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .contract_id("0.0.444".parse::<ContractId>().unwrap())
+        tx.contract_id("0.0.444".parse::<ContractId>().unwrap())
             .expiration_time(VALID_START)
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
         tx
     }
 

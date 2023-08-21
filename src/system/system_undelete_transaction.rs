@@ -176,41 +176,25 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         ContractId,
         FileId,
-        Hbar,
         SystemUndeleteTransaction,
     };
 
     fn make_transaction_file() -> SystemUndeleteTransaction {
-        let mut tx = SystemUndeleteTransaction::new();
+        let mut tx = SystemUndeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .file_id("0.0.444".parse::<FileId>().unwrap())
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.file_id("0.0.444".parse::<FileId>().unwrap()).freeze().unwrap();
         tx
     }
 
     fn make_transaction_contract() -> SystemUndeleteTransaction {
-        let mut tx = SystemUndeleteTransaction::new();
+        let mut tx = SystemUndeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .contract_id("0.0.444".parse::<ContractId>().unwrap())
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.contract_id("0.0.444".parse::<ContractId>().unwrap()).freeze().unwrap();
         tx
     }
 

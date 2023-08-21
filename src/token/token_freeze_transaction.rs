@@ -164,28 +164,17 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
-        Hbar,
         TokenFreezeTransaction,
         TokenId,
     };
 
     fn make_transaction() -> TokenFreezeTransaction {
-        let mut tx = TokenFreezeTransaction::new();
+        let mut tx = TokenFreezeTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .account_id("0.0.222".parse().unwrap())
-            .token_id(TokenId::new(5, 3, 3))
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.account_id("0.0.222".parse().unwrap()).token_id(TokenId::new(5, 3, 3)).freeze().unwrap();
 
         tx
     }

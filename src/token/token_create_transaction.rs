@@ -586,8 +586,6 @@ mod tests {
         check_body,
         transaction_body,
         unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
@@ -595,7 +593,6 @@ mod tests {
         AnyTransaction,
         FixedFee,
         FixedFeeData,
-        Hbar,
         Key,
         TokenCreateTransaction,
         TokenId,
@@ -604,7 +601,7 @@ mod tests {
     };
 
     fn make_transaction() -> TokenCreateTransaction {
-        let mut tx = TokenCreateTransaction::new();
+        let mut tx = TokenCreateTransaction::new_for_tests();
 
         let fee = FixedFee {
             fee: FixedFeeData {
@@ -615,9 +612,7 @@ mod tests {
             all_collectors_are_exempt: false,
         };
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .initial_supply(30)
+        tx.initial_supply(30)
             .fee_schedule_key(unused_private_key().public_key())
             .supply_key(unused_private_key().public_key())
             .admin_key(unused_private_key().public_key())
@@ -635,20 +630,16 @@ mod tests {
             .name("Flook")
             .token_memo("Flook memo")
             .custom_fees([fee.into()])
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }
 
     fn make_transaction_nft() -> TokenCreateTransaction {
-        let mut tx = TokenCreateTransaction::new();
+        let mut tx = TokenCreateTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .fee_schedule_key(unused_private_key().public_key())
+        tx.fee_schedule_key(unused_private_key().public_key())
             .supply_key(unused_private_key().public_key())
             .max_supply(500)
             .admin_key(unused_private_key().public_key())
@@ -665,11 +656,8 @@ mod tests {
             .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
             .name("Flook")
             .token_memo("Flook memo")
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
-
+            .unwrap();
         tx
     }
 

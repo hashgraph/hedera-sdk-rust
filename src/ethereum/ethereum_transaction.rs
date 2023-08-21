@@ -167,28 +167,20 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         EthereumTransaction,
-        Hbar,
     };
 
     fn make_transaction() -> EthereumTransaction {
-        let mut tx = EthereumTransaction::new();
+        let mut tx = EthereumTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .ethereum_data(vec![0xde, 0xad, 0xbe, 0xef])
+        tx.ethereum_data(vec![0xde, 0xad, 0xbe, 0xef])
             .call_data_file_id("4.5.6".parse().unwrap())
             .max_gas_allowance_hbar("3".parse().unwrap())
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }

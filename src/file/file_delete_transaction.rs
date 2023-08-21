@@ -135,27 +135,17 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         FileDeleteTransaction,
         FileId,
-        Hbar,
     };
 
     fn make_transaction() -> FileDeleteTransaction {
-        let mut tx = FileDeleteTransaction::new();
+        let mut tx = FileDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .file_id("0.0.6006".parse::<FileId>().unwrap())
-            .max_transaction_fee(Hbar::new(2))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.file_id("0.0.6006".parse::<FileId>().unwrap()).freeze().unwrap();
 
         tx
     }

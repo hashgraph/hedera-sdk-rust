@@ -197,35 +197,27 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AccountAllowanceDeleteTransaction,
         AccountId,
         AnyTransaction,
-        Hbar,
         TokenId,
     };
 
     fn make_transaction() -> AccountAllowanceDeleteTransaction {
         let owner_id: AccountId = AccountId::new(5, 6, 7);
-        let mut tx = AccountAllowanceDeleteTransaction::new();
 
         let invalid_token_ids: [TokenId; 2] = [TokenId::new(4, 4, 4), TokenId::new(8, 8, 8)];
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .delete_all_token_nft_allowances(invalid_token_ids[0].nft(123), owner_id)
+        let mut tx = AccountAllowanceDeleteTransaction::new_for_tests();
+
+        tx.delete_all_token_nft_allowances(invalid_token_ids[0].nft(123), owner_id)
             .delete_all_token_nft_allowances(invalid_token_ids[0].nft(456), owner_id)
             .delete_all_token_nft_allowances(invalid_token_ids[1].nft(456), owner_id)
             .delete_all_token_nft_allowances(invalid_token_ids[0].nft(789), owner_id)
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
-
+            .unwrap();
         tx
     }
 

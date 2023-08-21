@@ -189,10 +189,7 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
         TEST_TOKEN_ID,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
@@ -200,31 +197,19 @@ mod tests {
     };
 
     fn make_transaction() -> TokenBurnTransaction {
-        let mut tx = TokenBurnTransaction::new();
+        let mut tx = TokenBurnTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .token_id(TEST_TOKEN_ID)
-            .amount(6 as u64)
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.token_id(TEST_TOKEN_ID).amount(6 as u64).freeze().unwrap();
 
         tx
     }
 
     fn make_transaction_nft() -> TokenBurnTransaction {
-        let mut tx = TokenBurnTransaction::new();
+        let mut tx = TokenBurnTransaction::new_for_tests();
 
         let vec1 = vec![1, 2, 64];
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .token_id(TEST_TOKEN_ID)
-            .serials(vec1)
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.token_id(TEST_TOKEN_ID).serials(vec1).freeze().unwrap();
 
         tx
     }

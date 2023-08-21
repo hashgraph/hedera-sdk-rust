@@ -183,31 +183,23 @@ mod tests {
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
-        unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
         AnyTransaction,
         FreezeTransaction,
         FreezeType,
-        Hbar,
     };
 
     fn make_transaction() -> FreezeTransaction {
-        let mut tx = FreezeTransaction::new();
+        let mut tx = FreezeTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .file_id(("4.5.6").parse().unwrap())
+        tx.file_id(("4.5.6").parse().unwrap())
             .file_hash(hex!("1723904587120938954702349857").to_vec())
             .start_time(VALID_START)
             .freeze_type(FreezeType::FreezeAbort)
-            .max_transaction_fee(Hbar::new(2))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }

@@ -248,8 +248,6 @@ mod tests {
         check_body,
         transaction_body,
         unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
         VALID_START,
     };
     use crate::{
@@ -260,7 +258,7 @@ mod tests {
     };
 
     fn make_transaction() -> ScheduleCreateTransaction {
-        let mut tx = ScheduleCreateTransaction::new();
+        let mut tx = ScheduleCreateTransaction::new_for_tests();
 
         tx.scheduled_transaction({
             let mut tx = TransferTransaction::new();
@@ -268,16 +266,12 @@ mod tests {
                 .hbar_transfer("0.0.666".parse().unwrap(), Hbar::new(10));
             tx
         })
-        .node_account_ids(TEST_NODE_ACCOUNT_IDS)
-        .transaction_id(TEST_TX_ID)
         .admin_key(unused_private_key().public_key())
         .payer_account_id("0.0.222".parse().unwrap())
         .schedule_memo("hi")
-        .max_transaction_fee(Hbar::new(2))
         .expiration_time(VALID_START)
         .freeze()
-        .unwrap()
-        .sign(unused_private_key());
+        .unwrap();
 
         tx
     }

@@ -265,29 +265,22 @@ mod tests {
         check_body,
         transaction_body,
         unused_private_key,
-        TEST_NODE_ACCOUNT_IDS,
-        TEST_TX_ID,
     };
     use crate::{
         AnyTransaction,
         FileId,
         FileUpdateTransaction,
-        Hbar,
     };
 
     fn make_transaction() -> FileUpdateTransaction {
-        let mut tx = FileUpdateTransaction::new();
+        let mut tx = FileUpdateTransaction::new_for_tests();
 
-        tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
-            .transaction_id(TEST_TX_ID)
-            .file_id("0.0.6006".parse::<FileId>().unwrap())
+        tx.file_id("0.0.6006".parse::<FileId>().unwrap())
             .expiration_time(OffsetDateTime::from_unix_timestamp(1554158728).unwrap())
             .contents(Vec::from([1, 2, 3, 4, 5]))
-            .max_transaction_fee(Hbar::new(2))
             .keys([unused_private_key().public_key()])
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }

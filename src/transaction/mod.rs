@@ -1089,6 +1089,24 @@ pub(crate) mod test_helpers {
         TransactionId,
     };
 
+    impl<D: Default> Transaction<D> {
+        // todo: bikeshed name, idc.
+        /// Creates a transaction with some fields set to regular values to make serialization more regular.
+        ///
+        /// Currently the fields set are `node_account_ids`, `transaction_id`, and `max_transaction_fee`.
+        /// Additionally the transaction is signed with 1 key.
+        pub(crate) fn new_for_tests() -> Self {
+            let mut tx = Self::new();
+
+            tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+                .transaction_id(TEST_TX_ID)
+                .max_transaction_fee(Hbar::new(2))
+                .sign(unused_private_key());
+
+            tx
+        }
+    }
+
     #[track_caller]
     pub(crate) fn transaction_body<D: TransactionExecute>(
         tx: Transaction<D>,
@@ -1100,10 +1118,9 @@ pub(crate) mod test_helpers {
         .unwrap()
     }
 
-    /// checks the entire traknsaction body *other than* `data` and returns that.
+    /// Checks the entire traknsaction body *other than* `data` and returns that.
     ///
-    /// This is basically a boilerplate reducer.
-    #[track_caller]
+    /// This is basically a boilerplate reducer, however, it failing means that [`Transaction::new_for_tests`] is probably buggy.
     pub(crate) fn check_body(body: services::TransactionBody) -> services::transaction_body::Data {
         #[allow(deprecated)]
         let services::TransactionBody {
