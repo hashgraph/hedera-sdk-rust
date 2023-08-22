@@ -159,3 +159,203 @@ impl ToProtobuf for TokenFeeScheduleUpdateTransactionData {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        FixedFee,
+        FractionalFee,
+        TokenFeeScheduleUpdateTransaction,
+        TokenId,
+        TransactionId,
+    };
+
+    fn make_transaction() -> TokenFeeScheduleUpdateTransaction {
+        let mut tx = TokenFeeScheduleUpdateTransaction::new();
+
+        let custom_fees = [
+            FixedFee {
+                fee: crate::FixedFeeData {
+                    amount: 10,
+                    denominating_token_id: Some(TokenId::new(0, 0, 483902)),
+                },
+                fee_collector_account_id: Some("4322".parse().unwrap()),
+                all_collectors_are_exempt: false,
+            }
+            .into(),
+            FractionalFee {
+                fee: crate::FractionalFeeData {
+                    denominator: 7,
+                    numerator: 3,
+                    minimum_amount: 3,
+                    maximum_amount: 100,
+                    assessment_method: crate::FeeAssessmentMethod::Exclusive,
+                },
+                fee_collector_account_id: Some("389042".parse().unwrap()),
+                all_collectors_are_exempt: false,
+            }
+            .into(),
+        ];
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .token_id(TokenId::new(0, 0, 8798))
+            .custom_fees(custom_fees)
+            .freeze()
+            .unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 200000000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    TokenFeeScheduleUpdate(
+                        TokenFeeScheduleUpdateTransactionBody {
+                            token_id: Some(
+                                TokenId {
+                                    shard_num: 0,
+                                    realm_num: 0,
+                                    token_num: 8798,
+                                },
+                            ),
+                            custom_fees: [
+                                CustomFee {
+                                    fee_collector_account_id: Some(
+                                        AccountId {
+                                            shard_num: 0,
+                                            realm_num: 0,
+                                            account: Some(
+                                                AccountNum(
+                                                    4322,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    all_collectors_are_exempt: false,
+                                    fee: Some(
+                                        FixedFee(
+                                            FixedFee {
+                                                amount: 10,
+                                                denominating_token_id: Some(
+                                                    TokenId {
+                                                        shard_num: 0,
+                                                        realm_num: 0,
+                                                        token_num: 483902,
+                                                    },
+                                                ),
+                                            },
+                                        ),
+                                    ),
+                                },
+                                CustomFee {
+                                    fee_collector_account_id: Some(
+                                        AccountId {
+                                            shard_num: 0,
+                                            realm_num: 0,
+                                            account: Some(
+                                                AccountNum(
+                                                    389042,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    all_collectors_are_exempt: false,
+                                    fee: Some(
+                                        FractionalFee(
+                                            FractionalFee {
+                                                fractional_amount: Some(
+                                                    Fraction {
+                                                        numerator: 3,
+                                                        denominator: 7,
+                                                    },
+                                                ),
+                                                minimum_amount: 3,
+                                                maximum_amount: 100,
+                                                net_of_transfers: true,
+                                            },
+                                        ),
+                                    ),
+                                },
+                            ],
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+}

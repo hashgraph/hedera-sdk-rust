@@ -130,3 +130,154 @@ impl ToProtobuf for TokenPauseTransactionData {
         services::TokenPauseTransactionBody { token: self.token_id.to_protobuf() }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services::TokenPauseTransactionBody;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenPauseTransactionData;
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AnyTransaction,
+        Hbar,
+        TokenId,
+        TokenPauseTransaction,
+        TransactionId,
+    };
+
+    const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
+
+    fn make_transaction() -> TokenPauseTransaction {
+        let mut tx = TokenPauseTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .token_id(TEST_TOKEN_ID)
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    TokenPause(
+                        TokenPauseTransactionBody {
+                            token: Some(
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 0,
+                                },
+                            ),
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_token_pause_transaction_from_transaction_body_protobuf() {
+        let tx = TokenPauseTransactionBody { token: Some(TEST_TOKEN_ID.to_protobuf()) };
+
+        let data = TokenPauseTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.token_id, Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenPauseTransaction::new();
+        tx.token_id(TEST_TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        let mut tx = make_transaction();
+
+        tx.token_id(TEST_TOKEN_ID);
+    }
+}

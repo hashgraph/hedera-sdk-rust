@@ -164,3 +164,197 @@ impl ToProtobuf for TokenDissociateTransactionData {
         services::TokenDissociateTransactionBody { account, tokens }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenDissociateTransactionData;
+    use crate::transaction::test_helpers::{
+        transaction_body,
+        unused_private_key,
+        VALID_START,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        Hbar,
+        TokenDissociateTransaction,
+        TokenId,
+        TransactionId,
+    };
+
+    const TEST_ACCOUNT_ID: AccountId =
+        AccountId { shard: 6, realm: 9, num: 0, alias: None, evm_address: None, checksum: None };
+
+    const TEST_TOKEN_IDS: [TokenId; 3] =
+        [TokenId::new(4, 2, 0), TokenId::new(4, 2, 1), TokenId::new(4, 2, 2)];
+
+    fn make_transaction() -> TokenDissociateTransaction {
+        let mut tx = TokenDissociateTransaction::new();
+
+        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
+            .transaction_id(TransactionId {
+                account_id: "5006".parse().unwrap(),
+                valid_start: VALID_START,
+                nonce: None,
+                scheduled: false,
+            })
+            .account_id(TEST_ACCOUNT_ID)
+            .token_ids(TEST_TOKEN_IDS)
+            .max_transaction_fee(Hbar::new(1))
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        expect![[r#"
+            TransactionBody {
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                node_account_id: Some(
+                    AccountId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        account: Some(
+                            AccountNum(
+                                5005,
+                            ),
+                        ),
+                    },
+                ),
+                transaction_fee: 100000000,
+                transaction_valid_duration: Some(
+                    Duration {
+                        seconds: 120,
+                    },
+                ),
+                generate_record: false,
+                memo: "",
+                data: Some(
+                    TokenDissociate(
+                        TokenDissociateTransactionBody {
+                            account: Some(
+                                AccountId {
+                                    shard_num: 6,
+                                    realm_num: 9,
+                                    account: Some(
+                                        AccountNum(
+                                            0,
+                                        ),
+                                    ),
+                                },
+                            ),
+                            tokens: [
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 0,
+                                },
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 1,
+                                },
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 2,
+                                },
+                            ],
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_token_dissociate_transaction_from_transaction_body_protobuf() {
+        let tx = services::TokenDissociateTransactionBody {
+            account: Some(TEST_ACCOUNT_ID.to_protobuf()),
+            tokens: TEST_TOKEN_IDS.iter().map(TokenId::to_protobuf).collect(),
+        };
+
+        let data = TokenDissociateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.account_id, Some(TEST_ACCOUNT_ID));
+        assert_eq!(data.token_ids, TEST_TOKEN_IDS);
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = TokenDissociateTransaction::new();
+        tx.account_id(TEST_ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(TEST_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panic() {
+        make_transaction().account_id(TEST_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_token_ids() {
+        let mut tx = TokenDissociateTransaction::new();
+        tx.token_ids(TEST_TOKEN_IDS);
+
+        assert_eq!(tx.get_token_ids(), &TEST_TOKEN_IDS);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_ids_frozen_panic() {
+        make_transaction().token_ids(TEST_TOKEN_IDS);
+    }
+}
