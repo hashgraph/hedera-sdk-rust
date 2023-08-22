@@ -160,7 +160,8 @@ mod tests {
                     range: 0,
                 },
             )
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]
@@ -190,7 +191,8 @@ mod tests {
                     range: 100,
                 },
             )
-        "#]].assert_debug_eq(&tx)
+        "#]]
+        .assert_debug_eq(&tx)
     }
 
     #[test]
