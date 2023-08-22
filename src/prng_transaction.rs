@@ -116,3 +116,93 @@ impl TransactionExecute for PrngTransactionData {
         Box::pin(async { UtilServiceClient::new(channel).prng(request).await })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+    };
+    use crate::{
+        AnyTransaction,
+        PrngTransaction,
+    };
+
+    fn make_transaction() -> PrngTransaction {
+        let mut tx = PrngTransaction::new_for_tests();
+
+        tx.freeze().unwrap();
+
+        tx
+    }
+
+    fn make_transaction2() -> PrngTransaction {
+        let mut tx = PrngTransaction::new_for_tests();
+
+        tx.range(100).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            UtilPrng(
+                UtilPrngTransactionBody {
+                    range: 0,
+                },
+            )
+        "#]].assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn serialize2() {
+        let tx = make_transaction2();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            UtilPrng(
+                UtilPrngTransactionBody {
+                    range: 100,
+                },
+            )
+        "#]].assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes2() {
+        let tx = make_transaction2();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+}
