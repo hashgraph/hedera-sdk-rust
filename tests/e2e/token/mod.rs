@@ -17,14 +17,26 @@ mod update;
 mod wipe;
 
 use hedera::{
-    Client, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenId,
-    TokenMintTransaction, TransactionResponse,
+    Client,
+    TokenBurnTransaction,
+    TokenCreateTransaction,
+    TokenDeleteTransaction,
+    TokenId,
+    TokenMintTransaction,
+    TransactionResponse,
 };
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tokio::task::JoinSet;
 
 use crate::account::Account;
-use crate::common::{setup_global, Operator, TestEnvironment};
+use crate::common::{
+    setup_global,
+    Operator,
+    TestEnvironment,
+};
 
 pub(crate) struct FungibleToken {
     pub(crate) id: TokenId,

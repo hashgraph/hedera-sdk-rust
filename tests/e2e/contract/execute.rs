@@ -135,7 +135,10 @@ async fn missing_gas_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InsufficientGas, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InsufficientGas,
+            transaction_id: _
+        })
     );
 
     ContractDeleteTransaction::new()

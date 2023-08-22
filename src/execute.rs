@@ -20,7 +20,10 @@
 
 use std::error::Error as StdError;
 use std::ops::ControlFlow;
-use std::time::Duration;
+use std::time::{
+    Duration,
+    Instant,
+};
 
 use backoff::{
     ExponentialBackoff,
@@ -31,7 +34,6 @@ use futures_util::StreamExt;
 use prost::Message;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use time::OffsetDateTime;
 use tonic::metadata::AsciiMetadataValue;
 use tonic::transport::Channel;
 use triomphe::Arc;
@@ -249,7 +251,7 @@ where
             let random_node_indexes = {
                 let random_node_indexes = &random_node_indexes;
                 let client = ctx;
-                let now = OffsetDateTime::now_utc();
+                let now = Instant::now();
                 futures_util::stream::iter(random_node_indexes.iter().copied()).filter(
                     move |&node_index| async move {
                         // NOTE: For pings we're relying on the fact that they have an explict node index.
@@ -265,7 +267,7 @@ where
             while let Some(node_index) = random_node_indexes.next().await {
                 let tmp = execute_single(ctx, executable, node_index, &mut transaction_id).await;
 
-                ctx.network.mark_node_used(node_index, OffsetDateTime::now_utc());
+                ctx.network.mark_node_used(node_index, Instant::now());
 
                 match tmp? {
                     ControlFlow::Continue(err) => last_error = Some(err),
@@ -379,6 +381,9 @@ async fn execute_single<E: Execute + Sync>(
         Err(e) => return Err(e),
     };
 
+    // at this point, any failure isn't from the node, it's from the request.
+    ctx.network.mark_node_healthy(node_index);
+
     let status = E::response_pre_check_status(&response)
         .and_then(|status| {
             // not sure how to proceed, fail immediately
@@ -442,7 +447,7 @@ fn random_node_indexes(
     // cache the rng impl and "now" because `thread_rng` is TLS (a thread local),
     // and because using the same reference time avoids situations where a node that wasn't available becomes available.
     let mut rng = thread_rng();
-    let now = OffsetDateTime::now_utc();
+    let now = Instant::now();
 
     if let Some(indexes) = explicit_node_indexes {
         let tmp: Vec<_> =
