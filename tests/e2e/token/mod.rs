@@ -17,26 +17,14 @@ mod update;
 mod wipe;
 
 use hedera::{
-    Client,
-    TokenBurnTransaction,
-    TokenCreateTransaction,
-    TokenDeleteTransaction,
-    TokenId,
-    TokenMintTransaction,
-    TransactionResponse,
+    Client, TokenBurnTransaction, TokenCreateTransaction, TokenDeleteTransaction, TokenId,
+    TokenMintTransaction, TransactionResponse,
 };
-use time::{
-    Duration,
-    OffsetDateTime,
-};
+use time::{Duration, OffsetDateTime};
 use tokio::task::JoinSet;
 
 use crate::account::Account;
-use crate::common::{
-    setup_global,
-    Operator,
-    TestEnvironment,
-};
+use crate::common::{setup_global, Operator, TestEnvironment};
 
 pub(crate) struct FungibleToken {
     pub(crate) id: TokenId,
@@ -181,7 +169,13 @@ impl Nft {
             client: &Client,
             mut tx: TokenBurnTransaction,
         ) -> hedera::Result<()> {
-            tx.token_id(nft.id).sign(nft.owner.key.clone()).execute(client).await.map(drop)
+            tx.token_id(nft.id)
+                .sign(nft.owner.key.clone())
+                .execute(client)
+                .await?
+                .get_receipt(client)
+                .await
+                .map(drop)
         }
 
         let mut tx = TokenBurnTransaction::new();
