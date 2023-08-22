@@ -234,3 +234,161 @@ impl ToProtobuf for TransactionReceipt {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::protobuf::ToProtobuf;
+    use crate::transaction::test_helpers::TEST_TX_ID;
+    use crate::{
+        AccountId,
+        ContractId,
+        FileId,
+        ScheduleId,
+        Status,
+        TokenId,
+        TopicId,
+        TransactionReceipt,
+    };
+
+    fn make_receipt() -> TransactionReceipt {
+        TransactionReceipt {
+            transaction_id: None,
+            status: Status::ScheduleAlreadyDeleted,
+            account_id: Some(AccountId::new(1, 2, 3)),
+            file_id: Some(FileId::new(4, 5, 6)),
+            contract_id: Some(ContractId::new(3, 2, 1)),
+            topic_id: Some(TopicId::new(9, 8, 7)),
+            topic_sequence_number: 3,
+            topic_running_hash: Some(b"how now brown cow".to_vec()),
+            topic_running_hash_version: 0,
+            token_id: Some(TokenId::new(6, 5, 4)),
+            total_supply: 30,
+            schedule_id: Some(ScheduleId::new(1, 1, 1)),
+            scheduled_transaction_id: Some(TEST_TX_ID),
+            serials: Vec::from([1, 2, 3]),
+            duplicates: Vec::new(),
+            children: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            TransactionReceipt {
+                status: ScheduleAlreadyDeleted,
+                account_id: Some(
+                    AccountId {
+                        shard_num: 1,
+                        realm_num: 2,
+                        account: Some(
+                            AccountNum(
+                                3,
+                            ),
+                        ),
+                    },
+                ),
+                file_id: Some(
+                    FileId {
+                        shard_num: 4,
+                        realm_num: 5,
+                        file_num: 6,
+                    },
+                ),
+                contract_id: Some(
+                    ContractId {
+                        shard_num: 3,
+                        realm_num: 2,
+                        contract: Some(
+                            ContractNum(
+                                1,
+                            ),
+                        ),
+                    },
+                ),
+                exchange_rate: None,
+                topic_id: Some(
+                    TopicId {
+                        shard_num: 9,
+                        realm_num: 8,
+                        topic_num: 7,
+                    },
+                ),
+                topic_sequence_number: 3,
+                topic_running_hash: [
+                    104,
+                    111,
+                    119,
+                    32,
+                    110,
+                    111,
+                    119,
+                    32,
+                    98,
+                    114,
+                    111,
+                    119,
+                    110,
+                    32,
+                    99,
+                    111,
+                    119,
+                ],
+                topic_running_hash_version: 0,
+                token_id: Some(
+                    TokenId {
+                        shard_num: 6,
+                        realm_num: 5,
+                        token_num: 4,
+                    },
+                ),
+                new_total_supply: 30,
+                schedule_id: Some(
+                    ScheduleId {
+                        shard_num: 1,
+                        realm_num: 1,
+                        schedule_num: 1,
+                    },
+                ),
+                scheduled_transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                serial_numbers: [
+                    1,
+                    2,
+                    3,
+                ],
+            }
+        "#]]
+        .assert_debug_eq(&make_receipt().to_protobuf())
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let a = make_receipt();
+        let b = TransactionReceipt::from_bytes(&a.to_bytes()).unwrap();
+
+        assert_eq!(a.to_protobuf(), b.to_protobuf());
+    }
+}
