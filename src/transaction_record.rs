@@ -23,6 +23,7 @@ use std::collections::HashMap;
 use hedera_proto::services;
 use time::OffsetDateTime;
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     AssessedCustomFee,
@@ -127,6 +128,21 @@ pub struct TransactionRecord {
 // TODO: paid_staking_rewards
 
 impl TransactionRecord {
+    /// Create a new `TransactionRecord` from protobuf-encoded `bytes`.
+    ///
+    /// # Errors
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the bytes fails to produce a valid protobuf.
+    /// - [`Error::FromProtobuf`](crate::Error::FromProtobuf) if decoding the protobuf fails.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        FromProtobuf::<services::TransactionRecord>::from_bytes(bytes)
+    }
+
+    /// Convert `self` to a protobuf-encoded [`Vec<u8>`].
+    #[must_use]
+    pub fn to_bytes(&self) -> Vec<u8> {
+        ToProtobuf::to_bytes(self)
+    }
+
     fn from_protobuf(
         record: services::TransactionRecord,
         duplicates: Vec<Self>,
@@ -141,8 +157,7 @@ impl TransactionRecord {
         let schedule_ref = Option::from_protobuf(record.schedule_ref)?;
         let parent_consensus_timestamp = record.parent_consensus_timestamp.map(Into::into);
 
-        let alias_key =
-            (!record.alias.is_empty()).then(|| PublicKey::from_bytes(&record.alias)).transpose()?;
+        let alias_key = PublicKey::from_alias_bytes(&record.alias)?;
 
         let automatic_token_associations = Vec::from_protobuf(record.automatic_token_associations)?;
 
@@ -249,5 +264,973 @@ impl FromProtobuf<services::TransactionRecord> for TransactionRecord {
         Self: Sized,
     {
         Self::from_protobuf(receipt, Vec::new(), Vec::new())
+    }
+}
+
+impl ToProtobuf for TransactionRecord {
+    type Protobuf = services::TransactionRecord;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        let entropy = self
+            .prng_number
+            .map(|it| services::transaction_record::Entropy::PrngNumber(it as i32))
+            .or_else(|| {
+                self.prng_bytes.clone().map(services::transaction_record::Entropy::PrngBytes)
+            });
+
+        let token_transfer_lists = self
+            .token_transfers
+            .iter()
+            .map(|it| services::TokenTransferList {
+                token: Some(it.0.to_protobuf()),
+                transfers: it
+                    .1
+                    .iter()
+                    .map(|it| services::AccountAmount {
+                        account_id: Some(it.0.to_protobuf()),
+                        amount: *it.1,
+                        is_approval: false,
+                    })
+                    .collect(),
+                nft_transfers: Vec::new(),
+                expected_decimals: None,
+            })
+            .collect();
+
+        services::TransactionRecord {
+            receipt: Some(self.receipt.to_protobuf()),
+            transaction_hash: self.transaction_hash.clone(),
+            consensus_timestamp: Some(self.consensus_timestamp.to_protobuf()),
+            transaction_id: Some(self.transaction_id.to_protobuf()),
+            memo: self.transaction_memo.clone(),
+            transaction_fee: self.transaction_fee.to_tinybars() as u64,
+            transfer_list: Some(services::TransferList {
+                account_amounts: self.transfers.iter().map(|it| it.to_protobuf()).collect(),
+            }),
+            token_transfer_lists: token_transfer_lists,
+            schedule_ref: self.schedule_ref.to_protobuf(),
+            assessed_custom_fees: self.assessed_custom_fees.to_protobuf(),
+            automatic_token_associations: self.automatic_token_associations.to_protobuf(),
+            parent_consensus_timestamp: self.parent_consensus_timestamp.to_protobuf(),
+            alias: self.alias_key.as_ref().map(ToProtobuf::to_bytes).unwrap_or_default(),
+            ethereum_hash: self.ethereum_hash.clone(),
+            // TODO:
+            paid_staking_rewards: Vec::new(),
+            evm_address: self
+                .evm_address
+                .as_ref()
+                .map_or_else(Vec::default, |it| it.to_bytes().to_vec()),
+            body: self
+                .contract_function_result
+                .as_ref()
+                .map(|it| services::transaction_record::Body::ContractCallResult(it.to_protobuf())),
+            entropy,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use expect_test::expect;
+
+    use crate::protobuf::ToProtobuf;
+    use crate::transaction::test_helpers::{
+        TEST_TX_ID,
+        VALID_START,
+    };
+    use crate::{
+        AccountId,
+        AssessedCustomFee,
+        ContractFunctionResult,
+        ContractId,
+        Hbar,
+        PrivateKey,
+        ScheduleId,
+        TokenAssociation,
+        TokenId,
+        TokenNftTransfer,
+        TransactionRecord,
+        Transfer,
+    };
+
+    fn make_record(prng_bytes: Option<Vec<u8>>, prng_number: Option<u32>) -> TransactionRecord {
+        TransactionRecord {
+            receipt: crate::transaction_receipt::make_receipt(),
+            transaction_hash: b"hello".to_vec(),
+            consensus_timestamp: VALID_START,
+            contract_function_result: Some(ContractFunctionResult {
+                contract_id: ContractId::new(1, 2, 3),
+                evm_address: Some(ContractId::new(1, 2, 3)),
+                bytes: Vec::new(),
+                error_message: None,
+                bloom: Vec::new(),
+                gas_used: 0,
+                gas: 0,
+                hbar_amount: 0,
+                contract_function_parameters_bytes: Vec::new(),
+                sender_account_id: Some(AccountId::new(1, 2, 3)),
+                logs: Vec::new(),
+                contract_nonces: Vec::new(),
+            }),
+            transfers: Vec::from([Transfer {
+                account_id: AccountId::new(4, 4, 4),
+                amount: Hbar::new(5),
+            }]),
+            token_transfers: HashMap::from([(
+                TokenId::new(6, 6, 6),
+                HashMap::from([(AccountId::new(1, 1, 1), 4)]),
+            )]),
+            token_nft_transfers: HashMap::from([(
+                TokenId::new(4, 4, 4),
+                Vec::from([TokenNftTransfer {
+                    token_id: TokenId::new(4, 4, 4),
+                    sender: AccountId::new(1, 2, 3),
+                    receiver: AccountId::new(3, 2, 1),
+                    serial: 4,
+                    is_approved: true,
+                }]),
+            )]),
+            transaction_id: TEST_TX_ID,
+            transaction_memo: "memo".to_owned(),
+            transaction_fee: Hbar::from_tinybars(3000),
+            schedule_ref: Some(ScheduleId::new(3, 3, 3)),
+            assessed_custom_fees: Vec::from([AssessedCustomFee {
+                amount: 4,
+                token_id: Some(TokenId::new(4, 5, 6)),
+                fee_collector_account_id: Some(AccountId::new(8, 6, 5)),
+                payer_account_id_list: Vec::from([AccountId::new(3, 3, 3)]),
+            }]),
+            automatic_token_associations: Vec::from([TokenAssociation {
+                token_id: TokenId::new(5, 4, 3),
+                account_id: AccountId::new(8, 7, 6),
+            }]),
+            parent_consensus_timestamp: Some(VALID_START),
+            alias_key: Some(
+                PrivateKey::from_str_ecdsa(
+                    "8776c6b831a1b61ac10dac0304a2843de4716f54b1919bb91a2685d0fe3f3048",
+                )
+                .unwrap()
+                .public_key()
+                .into(),
+            ),
+            children: Vec::new(),
+            duplicates: Vec::new(),
+            ethereum_hash: b"Some hash".to_vec(),
+            prng_bytes,
+            prng_number,
+            evm_address: Some(crate::EvmAddress([0; 20])),
+        }
+    }
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            TransactionRecord {
+                receipt: Some(
+                    TransactionReceipt {
+                        status: ScheduleAlreadyDeleted,
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 1,
+                                realm_num: 2,
+                                account: Some(
+                                    AccountNum(
+                                        3,
+                                    ),
+                                ),
+                            },
+                        ),
+                        file_id: Some(
+                            FileId {
+                                shard_num: 4,
+                                realm_num: 5,
+                                file_num: 6,
+                            },
+                        ),
+                        contract_id: Some(
+                            ContractId {
+                                shard_num: 3,
+                                realm_num: 2,
+                                contract: Some(
+                                    ContractNum(
+                                        1,
+                                    ),
+                                ),
+                            },
+                        ),
+                        exchange_rate: None,
+                        topic_id: Some(
+                            TopicId {
+                                shard_num: 9,
+                                realm_num: 8,
+                                topic_num: 7,
+                            },
+                        ),
+                        topic_sequence_number: 3,
+                        topic_running_hash: [
+                            104,
+                            111,
+                            119,
+                            32,
+                            110,
+                            111,
+                            119,
+                            32,
+                            98,
+                            114,
+                            111,
+                            119,
+                            110,
+                            32,
+                            99,
+                            111,
+                            119,
+                        ],
+                        topic_running_hash_version: 0,
+                        token_id: Some(
+                            TokenId {
+                                shard_num: 6,
+                                realm_num: 5,
+                                token_num: 4,
+                            },
+                        ),
+                        new_total_supply: 30,
+                        schedule_id: Some(
+                            ScheduleId {
+                                shard_num: 1,
+                                realm_num: 1,
+                                schedule_num: 1,
+                            },
+                        ),
+                        scheduled_transaction_id: Some(
+                            TransactionId {
+                                transaction_valid_start: Some(
+                                    Timestamp {
+                                        seconds: 1554158542,
+                                        nanos: 0,
+                                    },
+                                ),
+                                account_id: Some(
+                                    AccountId {
+                                        shard_num: 0,
+                                        realm_num: 0,
+                                        account: Some(
+                                            AccountNum(
+                                                5006,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                                scheduled: false,
+                                nonce: 0,
+                            },
+                        ),
+                        serial_numbers: [
+                            1,
+                            2,
+                            3,
+                        ],
+                    },
+                ),
+                transaction_hash: [
+                    104,
+                    101,
+                    108,
+                    108,
+                    111,
+                ],
+                consensus_timestamp: Some(
+                    Timestamp {
+                        seconds: 1554158542,
+                        nanos: 0,
+                    },
+                ),
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                memo: "memo",
+                transaction_fee: 3000,
+                transfer_list: Some(
+                    TransferList {
+                        account_amounts: [
+                            AccountAmount {
+                                account_id: Some(
+                                    AccountId {
+                                        shard_num: 4,
+                                        realm_num: 4,
+                                        account: Some(
+                                            AccountNum(
+                                                4,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                                amount: 500000000,
+                                is_approval: false,
+                            },
+                        ],
+                    },
+                ),
+                token_transfer_lists: [
+                    TokenTransferList {
+                        token: Some(
+                            TokenId {
+                                shard_num: 6,
+                                realm_num: 6,
+                                token_num: 6,
+                            },
+                        ),
+                        transfers: [
+                            AccountAmount {
+                                account_id: Some(
+                                    AccountId {
+                                        shard_num: 1,
+                                        realm_num: 1,
+                                        account: Some(
+                                            AccountNum(
+                                                1,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                                amount: 4,
+                                is_approval: false,
+                            },
+                        ],
+                        nft_transfers: [],
+                        expected_decimals: None,
+                    },
+                ],
+                schedule_ref: Some(
+                    ScheduleId {
+                        shard_num: 3,
+                        realm_num: 3,
+                        schedule_num: 3,
+                    },
+                ),
+                assessed_custom_fees: [
+                    AssessedCustomFee {
+                        amount: 4,
+                        token_id: Some(
+                            TokenId {
+                                shard_num: 4,
+                                realm_num: 5,
+                                token_num: 6,
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            AccountId {
+                                shard_num: 8,
+                                realm_num: 6,
+                                account: Some(
+                                    AccountNum(
+                                        5,
+                                    ),
+                                ),
+                            },
+                        ),
+                        effective_payer_account_id: [
+                            AccountId {
+                                shard_num: 3,
+                                realm_num: 3,
+                                account: Some(
+                                    AccountNum(
+                                        3,
+                                    ),
+                                ),
+                            },
+                        ],
+                    },
+                ],
+                automatic_token_associations: [
+                    TokenAssociation {
+                        token_id: Some(
+                            TokenId {
+                                shard_num: 5,
+                                realm_num: 4,
+                                token_num: 3,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 8,
+                                realm_num: 7,
+                                account: Some(
+                                    AccountNum(
+                                        6,
+                                    ),
+                                ),
+                            },
+                        ),
+                    },
+                ],
+                parent_consensus_timestamp: Some(
+                    Timestamp {
+                        seconds: 1554158542,
+                        nanos: 0,
+                    },
+                ),
+                alias: [
+                    58,
+                    33,
+                    2,
+                    112,
+                    58,
+                    147,
+                    112,
+                    176,
+                    68,
+                    59,
+                    230,
+                    174,
+                    124,
+                    80,
+                    123,
+                    10,
+                    236,
+                    129,
+                    165,
+                    94,
+                    148,
+                    228,
+                    168,
+                    99,
+                    185,
+                    101,
+                    83,
+                    96,
+                    189,
+                    101,
+                    53,
+                    140,
+                    170,
+                    101,
+                    136,
+                ],
+                ethereum_hash: [
+                    83,
+                    111,
+                    109,
+                    101,
+                    32,
+                    104,
+                    97,
+                    115,
+                    104,
+                ],
+                paid_staking_rewards: [],
+                evm_address: [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                body: Some(
+                    ContractCallResult(
+                        ContractFunctionResult {
+                            contract_id: Some(
+                                ContractId {
+                                    shard_num: 1,
+                                    realm_num: 2,
+                                    contract: Some(
+                                        ContractNum(
+                                            3,
+                                        ),
+                                    ),
+                                },
+                            ),
+                            contract_call_result: [],
+                            error_message: "",
+                            bloom: [],
+                            gas_used: 0,
+                            log_info: [],
+                            created_contract_i_ds: [],
+                            evm_address: None,
+                            gas: 0,
+                            amount: 0,
+                            function_parameters: [],
+                            sender_id: Some(
+                                AccountId {
+                                    shard_num: 1,
+                                    realm_num: 2,
+                                    account: Some(
+                                        AccountNum(
+                                            3,
+                                        ),
+                                    ),
+                                },
+                            ),
+                            contract_nonces: [],
+                        },
+                    ),
+                ),
+                entropy: Some(
+                    PrngBytes(
+                        [
+                            118,
+                            101,
+                            114,
+                            121,
+                            32,
+                            114,
+                            97,
+                            110,
+                            100,
+                            111,
+                            109,
+                            32,
+                            98,
+                            121,
+                            116,
+                            101,
+                            115,
+                        ],
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&make_record(Some(b"very random bytes".to_vec()), None).to_protobuf())
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let a = make_record(Some(b"very random bytes".to_vec()), None);
+        let b = TransactionRecord::from_bytes(&a.to_bytes()).unwrap();
+
+        assert_eq!(a.to_protobuf(), b.to_protobuf());
+    }
+
+    #[test]
+    fn serialize2() {
+        expect![[r#"
+            TransactionRecord {
+                receipt: Some(
+                    TransactionReceipt {
+                        status: ScheduleAlreadyDeleted,
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 1,
+                                realm_num: 2,
+                                account: Some(
+                                    AccountNum(
+                                        3,
+                                    ),
+                                ),
+                            },
+                        ),
+                        file_id: Some(
+                            FileId {
+                                shard_num: 4,
+                                realm_num: 5,
+                                file_num: 6,
+                            },
+                        ),
+                        contract_id: Some(
+                            ContractId {
+                                shard_num: 3,
+                                realm_num: 2,
+                                contract: Some(
+                                    ContractNum(
+                                        1,
+                                    ),
+                                ),
+                            },
+                        ),
+                        exchange_rate: None,
+                        topic_id: Some(
+                            TopicId {
+                                shard_num: 9,
+                                realm_num: 8,
+                                topic_num: 7,
+                            },
+                        ),
+                        topic_sequence_number: 3,
+                        topic_running_hash: [
+                            104,
+                            111,
+                            119,
+                            32,
+                            110,
+                            111,
+                            119,
+                            32,
+                            98,
+                            114,
+                            111,
+                            119,
+                            110,
+                            32,
+                            99,
+                            111,
+                            119,
+                        ],
+                        topic_running_hash_version: 0,
+                        token_id: Some(
+                            TokenId {
+                                shard_num: 6,
+                                realm_num: 5,
+                                token_num: 4,
+                            },
+                        ),
+                        new_total_supply: 30,
+                        schedule_id: Some(
+                            ScheduleId {
+                                shard_num: 1,
+                                realm_num: 1,
+                                schedule_num: 1,
+                            },
+                        ),
+                        scheduled_transaction_id: Some(
+                            TransactionId {
+                                transaction_valid_start: Some(
+                                    Timestamp {
+                                        seconds: 1554158542,
+                                        nanos: 0,
+                                    },
+                                ),
+                                account_id: Some(
+                                    AccountId {
+                                        shard_num: 0,
+                                        realm_num: 0,
+                                        account: Some(
+                                            AccountNum(
+                                                5006,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                                scheduled: false,
+                                nonce: 0,
+                            },
+                        ),
+                        serial_numbers: [
+                            1,
+                            2,
+                            3,
+                        ],
+                    },
+                ),
+                transaction_hash: [
+                    104,
+                    101,
+                    108,
+                    108,
+                    111,
+                ],
+                consensus_timestamp: Some(
+                    Timestamp {
+                        seconds: 1554158542,
+                        nanos: 0,
+                    },
+                ),
+                transaction_id: Some(
+                    TransactionId {
+                        transaction_valid_start: Some(
+                            Timestamp {
+                                seconds: 1554158542,
+                                nanos: 0,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        scheduled: false,
+                        nonce: 0,
+                    },
+                ),
+                memo: "memo",
+                transaction_fee: 3000,
+                transfer_list: Some(
+                    TransferList {
+                        account_amounts: [
+                            AccountAmount {
+                                account_id: Some(
+                                    AccountId {
+                                        shard_num: 4,
+                                        realm_num: 4,
+                                        account: Some(
+                                            AccountNum(
+                                                4,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                                amount: 500000000,
+                                is_approval: false,
+                            },
+                        ],
+                    },
+                ),
+                token_transfer_lists: [
+                    TokenTransferList {
+                        token: Some(
+                            TokenId {
+                                shard_num: 6,
+                                realm_num: 6,
+                                token_num: 6,
+                            },
+                        ),
+                        transfers: [
+                            AccountAmount {
+                                account_id: Some(
+                                    AccountId {
+                                        shard_num: 1,
+                                        realm_num: 1,
+                                        account: Some(
+                                            AccountNum(
+                                                1,
+                                            ),
+                                        ),
+                                    },
+                                ),
+                                amount: 4,
+                                is_approval: false,
+                            },
+                        ],
+                        nft_transfers: [],
+                        expected_decimals: None,
+                    },
+                ],
+                schedule_ref: Some(
+                    ScheduleId {
+                        shard_num: 3,
+                        realm_num: 3,
+                        schedule_num: 3,
+                    },
+                ),
+                assessed_custom_fees: [
+                    AssessedCustomFee {
+                        amount: 4,
+                        token_id: Some(
+                            TokenId {
+                                shard_num: 4,
+                                realm_num: 5,
+                                token_num: 6,
+                            },
+                        ),
+                        fee_collector_account_id: Some(
+                            AccountId {
+                                shard_num: 8,
+                                realm_num: 6,
+                                account: Some(
+                                    AccountNum(
+                                        5,
+                                    ),
+                                ),
+                            },
+                        ),
+                        effective_payer_account_id: [
+                            AccountId {
+                                shard_num: 3,
+                                realm_num: 3,
+                                account: Some(
+                                    AccountNum(
+                                        3,
+                                    ),
+                                ),
+                            },
+                        ],
+                    },
+                ],
+                automatic_token_associations: [
+                    TokenAssociation {
+                        token_id: Some(
+                            TokenId {
+                                shard_num: 5,
+                                realm_num: 4,
+                                token_num: 3,
+                            },
+                        ),
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 8,
+                                realm_num: 7,
+                                account: Some(
+                                    AccountNum(
+                                        6,
+                                    ),
+                                ),
+                            },
+                        ),
+                    },
+                ],
+                parent_consensus_timestamp: Some(
+                    Timestamp {
+                        seconds: 1554158542,
+                        nanos: 0,
+                    },
+                ),
+                alias: [
+                    58,
+                    33,
+                    2,
+                    112,
+                    58,
+                    147,
+                    112,
+                    176,
+                    68,
+                    59,
+                    230,
+                    174,
+                    124,
+                    80,
+                    123,
+                    10,
+                    236,
+                    129,
+                    165,
+                    94,
+                    148,
+                    228,
+                    168,
+                    99,
+                    185,
+                    101,
+                    83,
+                    96,
+                    189,
+                    101,
+                    53,
+                    140,
+                    170,
+                    101,
+                    136,
+                ],
+                ethereum_hash: [
+                    83,
+                    111,
+                    109,
+                    101,
+                    32,
+                    104,
+                    97,
+                    115,
+                    104,
+                ],
+                paid_staking_rewards: [],
+                evm_address: [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                ],
+                body: Some(
+                    ContractCallResult(
+                        ContractFunctionResult {
+                            contract_id: Some(
+                                ContractId {
+                                    shard_num: 1,
+                                    realm_num: 2,
+                                    contract: Some(
+                                        ContractNum(
+                                            3,
+                                        ),
+                                    ),
+                                },
+                            ),
+                            contract_call_result: [],
+                            error_message: "",
+                            bloom: [],
+                            gas_used: 0,
+                            log_info: [],
+                            created_contract_i_ds: [],
+                            evm_address: None,
+                            gas: 0,
+                            amount: 0,
+                            function_parameters: [],
+                            sender_id: Some(
+                                AccountId {
+                                    shard_num: 1,
+                                    realm_num: 2,
+                                    account: Some(
+                                        AccountNum(
+                                            3,
+                                        ),
+                                    ),
+                                },
+                            ),
+                            contract_nonces: [],
+                        },
+                    ),
+                ),
+                entropy: Some(
+                    PrngNumber(
+                        4,
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&make_record(None, Some(4)).to_protobuf())
+    }
+
+    #[test]
+    fn to_from_bytes2() {
+        let a = make_record(None, Some(4));
+        let b = TransactionRecord::from_bytes(&a.to_bytes()).unwrap();
+
+        assert_eq!(a.to_protobuf(), b.to_protobuf());
     }
 }

@@ -21,6 +21,8 @@
 use std::ops::Not;
 
 use hedera_proto::services;
+#[cfg(test)]
+pub(super) use tests::make_receipt;
 
 use crate::protobuf::ToProtobuf;
 use crate::{
@@ -252,7 +254,8 @@ mod tests {
         TransactionReceipt,
     };
 
-    fn make_receipt() -> TransactionReceipt {
+    // needed in `transaction_record`.
+    pub(crate) fn make_receipt() -> TransactionReceipt {
         TransactionReceipt {
             transaction_id: None,
             status: Status::ScheduleAlreadyDeleted,
