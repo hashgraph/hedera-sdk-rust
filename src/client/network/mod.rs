@@ -29,15 +29,14 @@ use std::collections::{
 use std::fmt;
 use std::net::Ipv4Addr;
 use std::str::FromStr;
-use std::sync::atomic::{
-    AtomicI64,
-    Ordering,
+use std::time::{
+    Duration,
+    Instant,
 };
-use std::time::Duration;
 
+use backoff::backoff::Backoff;
 use once_cell::sync::OnceCell;
 use rand::thread_rng;
-use time::OffsetDateTime;
 use tonic::transport::{
     Channel,
     Endpoint,
@@ -177,7 +176,7 @@ pub(crate) struct NetworkData {
     map: HashMap<AccountId, usize>,
     node_ids: Box<[AccountId]>,
     // Health stuff has to be in an Arc because it needs to stick around even if the map changes.
-    health: Box<[Arc<NodeHealth>]>,
+    health: Box<[Arc<parking_lot::RwLock<NodeHealth>>]>,
     connections: Box<[NodeConnection]>,
 }
 
@@ -318,39 +317,36 @@ impl NetworkData {
         Ok(indexes)
     }
 
-    pub(crate) fn mark_node_used(&self, node_index: usize, now: OffsetDateTime) {
-        self.health[node_index].last_pinged.store(now.unix_timestamp(), Ordering::Release);
+    pub(crate) fn mark_node_used(&self, node_index: usize, now: Instant) {
+        self.health[node_index].write().mark_used(now);
     }
 
     pub(crate) fn mark_node_unhealthy(&self, node_index: usize) {
-        let now = OffsetDateTime::now_utc();
-        self.health[node_index]
-            .healthy
-            .store((now + time::Duration::minutes(30)).unix_timestamp(), Ordering::Relaxed);
+        let now = Instant::now();
+
+        self.health[node_index].write().mark_unhealthy(now);
     }
 
-    pub(crate) fn is_node_healthy(&self, node_index: usize, now: OffsetDateTime) -> bool {
-        let now = now.unix_timestamp();
+    pub(crate) fn mark_node_healthy(&self, node_index: usize) {
+        self.health[node_index].write().mark_healthy();
+    }
 
+    pub(crate) fn is_node_healthy(&self, node_index: usize, now: Instant) -> bool {
         // a healthy node has a healthiness before now.
-        self.health[node_index].healthy.load(Ordering::Relaxed) < now
+
+        self.health[node_index].read().is_healthy(now)
     }
 
-    pub(crate) fn node_recently_pinged(&self, node_index: usize, now: OffsetDateTime) -> bool {
-        !self.is_node_healthy(node_index, now)
-            || self.health[node_index].last_pinged.load(Ordering::Relaxed)
-                > (now - time::Duration::minutes(15)).unix_timestamp()
+    pub(crate) fn node_recently_pinged(&self, node_index: usize, now: Instant) -> bool {
+        self.health[node_index].read().recently_pinged(now)
     }
 
-    pub(crate) fn healthy_node_indexes(
-        &self,
-        time: OffsetDateTime,
-    ) -> impl Iterator<Item = usize> + '_ {
+    pub(crate) fn healthy_node_indexes(&self, time: Instant) -> impl Iterator<Item = usize> + '_ {
         (0..self.node_ids.len()).filter(move |index| self.is_node_healthy(*index, time))
     }
 
     pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {
-        self.healthy_node_indexes(OffsetDateTime::now_utc()).map(|it| self.node_ids[it])
+        self.healthy_node_indexes(Instant::now()).map(|it| self.node_ids[it])
     }
 
     pub(crate) fn random_node_ids(&self) -> Vec<AccountId> {
@@ -388,10 +384,53 @@ impl NetworkData {
     }
 }
 
-#[derive(Default)]
 pub(crate) struct NodeHealth {
-    healthy: AtomicI64,
-    last_pinged: AtomicI64,
+    backoff: backoff::ExponentialBackoff,
+    healthy: Option<Instant>,
+    used: Option<Instant>,
+}
+
+impl NodeHealth {
+    pub(crate) fn mark_used(&mut self, now: Instant) {
+        self.used = Some(now);
+    }
+
+    pub(crate) fn mark_unhealthy(&mut self, now: Instant) {
+        let backoff = self.backoff.next_backoff().expect("`max_elapsed_time` is hardwired to None");
+
+        self.healthy = Some(now + backoff);
+    }
+
+    pub(crate) fn mark_healthy(&mut self) {
+        self.healthy = None;
+        self.backoff.reset();
+    }
+
+    pub(crate) fn is_healthy(&self, now: Instant) -> bool {
+        // a healthy node has a healthiness before now.
+        self.healthy < Some(now)
+    }
+
+    pub(crate) fn recently_pinged(&self, now: Instant) -> bool {
+        !self.is_healthy(now)
+            || self.used.map_or(false, |it| it.elapsed() < Duration::from_secs(15 * 60))
+    }
+}
+
+impl Default for NodeHealth {
+    fn default() -> Self {
+        Self {
+            backoff: backoff::ExponentialBackoff {
+                current_interval: Duration::from_millis(250),
+                initial_interval: Duration::from_millis(250),
+                max_elapsed_time: None,
+                max_interval: Duration::from_secs(60 * 60),
+                ..Default::default()
+            },
+            healthy: Default::default(),
+            used: Default::default(),
+        }
+    }
 }
 
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq)]

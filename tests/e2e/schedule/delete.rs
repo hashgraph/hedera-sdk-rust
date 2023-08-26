@@ -137,7 +137,7 @@ async fn double_delete_fails() -> anyhow::Result<()> {
 async fn missing_schedule_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
-    let res = ScheduleDeleteTransaction::new().execute(&client).await?.get_receipt(&client).await;
+    let res = ScheduleDeleteTransaction::new().execute(&client).await;
 
     assert_matches!(
         res,
