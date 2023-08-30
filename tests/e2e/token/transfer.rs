@@ -6,7 +6,6 @@ use hedera::{
     Status,
     TokenAssociateTransaction,
     TokenCreateTransaction,
-    TokenGrantKycTransaction,
     TokenId,
     TokenWipeTransaction,
     TransferTransaction,
@@ -21,7 +20,17 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
-use crate::token::FungibleToken;
+use crate::token::{
+    CreateFungibleToken,
+    FungibleToken,
+    Key,
+    TokenKeys,
+};
+
+const TOKEN_PARAMS: CreateFungibleToken = CreateFungibleToken {
+    initial_supply: 10,
+    keys: TokenKeys { supply: Some(Key::Owner), ..TokenKeys::DEFAULT },
+};
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -32,22 +41,13 @@ async fn basic() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+    let token = super::FungibleToken::create(&client, &alice, TOKEN_PARAMS).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
         .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenGrantKycTransaction::new()
-        .account_id(bob.id)
-        .token_id(token.id)
-        .sign(alice.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -192,22 +192,13 @@ async fn unowned_token_fails() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+    let token = super::FungibleToken::create(&client, &alice, TOKEN_PARAMS).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
         .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenGrantKycTransaction::new()
-        .account_id(bob.id)
-        .token_id(token.id)
-        .sign(alice.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -249,22 +240,13 @@ async fn decimals() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+    let token = super::FungibleToken::create(&client, &alice, TOKEN_PARAMS).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
         .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenGrantKycTransaction::new()
-        .account_id(bob.id)
-        .token_id(token.id)
-        .sign(alice.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -306,22 +288,13 @@ async fn incorrect_decimals_fails() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+    let token = super::FungibleToken::create(&client, &alice, TOKEN_PARAMS).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
         .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenGrantKycTransaction::new()
-        .account_id(bob.id)
-        .token_id(token.id)
-        .sign(alice.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)

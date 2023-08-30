@@ -3,7 +3,6 @@ use hedera::{
     Hbar,
     Status,
     TokenAssociateTransaction,
-    TokenGrantKycTransaction,
     TokenWipeTransaction,
     TransferTransaction,
 };
@@ -13,6 +12,13 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
+use crate::token::{
+    CreateFungibleToken,
+    Key,
+    TokenKeys,
+};
+
+const KEYS: TokenKeys = TokenKeys { wipe: Some(Key::Owner), ..TokenKeys::DEFAULT };
 
 #[tokio::test]
 async fn fungible() -> anyhow::Result<()> {
@@ -23,22 +29,18 @@ async fn fungible() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &alice,
+        CreateFungibleToken { initial_supply: 10, keys: KEYS },
+    )
+    .await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
         .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenGrantKycTransaction::new()
-        .account_id(bob.id)
-        .token_id(token.id)
-        .sign(alice.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -183,7 +185,12 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 0, keys: KEYS },
+    )
+    .await?;
 
     let res = TokenWipeTransaction::new().token_id(token.id).amount(10_u64).execute(&client).await;
 
@@ -231,22 +238,18 @@ async fn missing_amount() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 10).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &alice,
+        CreateFungibleToken { initial_supply: 10, keys: KEYS },
+    )
+    .await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
         .token_ids([token.id])
         .freeze_with(&client)?
         .sign(bob.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenGrantKycTransaction::new()
-        .account_id(bob.id)
-        .token_id(token.id)
-        .sign(alice.key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)

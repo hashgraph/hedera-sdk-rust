@@ -11,6 +11,16 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
+use crate::token::{
+    CreateFungibleToken,
+    Key,
+    TokenKeys,
+};
+
+const TOKEN_PARAMS: CreateFungibleToken = CreateFungibleToken {
+    initial_supply: 0,
+    keys: TokenKeys { kyc: Some(Key::Owner), ..TokenKeys::DEFAULT },
+};
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -21,7 +31,7 @@ async fn basic() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 0).await?;
+    let token = super::FungibleToken::create(&client, &alice, TOKEN_PARAMS).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
@@ -78,7 +88,7 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, TOKEN_PARAMS).await?;
 
     let res = TokenRevokeKycTransaction::new()
         .token_id(token.id)
@@ -109,7 +119,7 @@ async fn non_associated_token_fails() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 0).await?;
+    let token = super::FungibleToken::create(&client, &alice, TOKEN_PARAMS).await?;
 
     let res = TokenRevokeKycTransaction::new()
         .account_id(bob.id)

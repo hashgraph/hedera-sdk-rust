@@ -18,9 +18,14 @@ use crate::common::{
     TestEnvironment,
 };
 use crate::token::{
+    CreateFungibleToken,
     FungibleToken,
+    Key,
     Nft,
+    TokenKeys,
 };
+
+const TOKEN_KEYS: TokenKeys = TokenKeys { supply: Some(Key::Owner), ..TokenKeys::DEFAULT };
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -28,7 +33,12 @@ async fn basic() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, INITIAL_SUPPLY).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: INITIAL_SUPPLY, keys: TOKEN_KEYS },
+    )
+    .await?;
 
     let receipt = TokenMintTransaction::new()
         .amount(10)
@@ -122,7 +132,12 @@ async fn zero() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, INITIAL_SUPPLY).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: INITIAL_SUPPLY, keys: TOKEN_KEYS },
+    )
+    .await?;
 
     let receipt = TokenMintTransaction::new()
         .token_id(token.id)
@@ -147,7 +162,12 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 0, keys: TOKEN_KEYS },
+    )
+    .await?;
 
     let res = TokenMintTransaction::new()
         .token_id(token.id)

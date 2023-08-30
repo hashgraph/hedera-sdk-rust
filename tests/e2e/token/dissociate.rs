@@ -21,7 +21,7 @@ async fn basic() -> anyhow::Result<()> {
         Account::create(Hbar::new(1), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 0).await?;
+    let token = super::FungibleToken::create(&client, &alice, Default::default()).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)
@@ -118,7 +118,7 @@ async fn unassociated_token_fails() -> anyhow::Result<()> {
         Account::create(Hbar::new(1), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 0).await?;
+    let token = super::FungibleToken::create(&client, &alice, Default::default()).await?;
 
     let res = TokenDissociateTransaction::new()
         .account_id(bob.id)

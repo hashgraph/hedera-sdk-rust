@@ -20,7 +20,7 @@ async fn basic() -> anyhow::Result<()> {
         Account::create(Hbar::new(0), &client)
     )?;
 
-    let token = super::FungibleToken::create(&client, &alice, 0).await?;
+    let token = super::FungibleToken::create(&client, &alice, Default::default()).await?;
 
     TokenAssociateTransaction::new()
         .account_id(bob.id)

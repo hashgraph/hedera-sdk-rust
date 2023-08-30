@@ -18,6 +18,7 @@ mod wipe;
 
 use hedera::{
     Client,
+    PublicKey,
     TokenBurnTransaction,
     TokenCreateTransaction,
     TokenDeleteTransaction,
@@ -38,6 +39,57 @@ use crate::common::{
     TestEnvironment,
 };
 
+pub(crate) enum Key {
+    Owner,
+    Custom(PublicKey),
+}
+
+pub(crate) struct TokenKeys {
+    pub(crate) admin: Option<Key>,
+    pub(crate) freeze: Option<Key>,
+    pub(crate) wipe: Option<Key>,
+    pub(crate) kyc: Option<Key>,
+    pub(crate) supply: Option<Key>,
+    pub(crate) fee_schedule: Option<Key>,
+    pub(crate) pause: Option<Key>,
+}
+
+impl TokenKeys {
+    const NONE: Self = Self {
+        admin: None,
+        freeze: None,
+        wipe: None,
+        kyc: None,
+        supply: None,
+        fee_schedule: None,
+        pause: None,
+    };
+
+    const DEFAULT: Self = Self { admin: Some(Key::Owner), ..Self::NONE };
+
+    const ALL_OWNER: Self = Self {
+        admin: Some(Key::Owner),
+        freeze: Some(Key::Owner),
+        wipe: Some(Key::Owner),
+        kyc: Some(Key::Owner),
+        supply: Some(Key::Owner),
+        fee_schedule: Some(Key::Owner),
+        pause: Some(Key::Owner),
+    };
+}
+
+impl Default for TokenKeys {
+    fn default() -> Self {
+        Self::DEFAULT
+    }
+}
+
+#[derive(Default)]
+pub(crate) struct CreateFungibleToken {
+    initial_supply: u64,
+    keys: TokenKeys,
+}
+
 pub(crate) struct FungibleToken {
     pub(crate) id: TokenId,
     pub(crate) owner: Account,
@@ -47,30 +99,79 @@ impl FungibleToken {
     pub(crate) async fn create(
         client: &Client,
         owner: &Account,
-        initial_supply: u64,
+        params: CreateFungibleToken,
     ) -> hedera::Result<Self> {
         let owner_public_key = owner.key.public_key();
-        let token_id = TokenCreateTransaction::new()
-            .name("ffff")
-            .symbol("F")
-            .decimals(3)
-            .initial_supply(initial_supply)
-            .treasury_account_id(owner.id)
-            .admin_key(owner_public_key)
-            .freeze_key(owner_public_key)
-            .wipe_key(owner_public_key)
-            .kyc_key(owner_public_key)
-            .supply_key(owner_public_key)
-            .fee_schedule_key(owner_public_key)
-            .freeze_default(false)
-            .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-            .sign(owner.key.clone())
-            .execute(client)
-            .await?
-            .get_receipt(client)
-            .await?
-            .token_id
-            .unwrap();
+
+        let token_id = {
+            let mut tx = TokenCreateTransaction::new();
+            tx.name("ffff")
+                .symbol("F")
+                .decimals(3)
+                .treasury_account_id(owner.id)
+                .initial_supply(params.initial_supply);
+
+            let keys = params.keys;
+
+            if let Some(it) = keys.admin {
+                tx.admin_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            if let Some(it) = keys.freeze {
+                tx.freeze_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            if let Some(it) = keys.wipe {
+                tx.wipe_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            if let Some(it) = keys.kyc {
+                tx.kyc_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            if let Some(it) = keys.supply {
+                tx.supply_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            if let Some(it) = keys.fee_schedule {
+                tx.fee_schedule_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            if let Some(it) = keys.pause {
+                tx.pause_key(match it {
+                    Key::Owner => owner_public_key,
+                    Key::Custom(key) => key,
+                });
+            }
+
+            tx.freeze_default(false)
+                .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
+                .sign(owner.key.clone())
+                .execute(client)
+                .await?
+                .get_receipt(client)
+                .await?
+                .token_id
+                .unwrap()
+        };
 
         Ok(Self { id: token_id, owner: owner.clone() })
     }
