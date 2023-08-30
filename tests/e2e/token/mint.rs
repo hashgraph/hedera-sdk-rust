@@ -59,7 +59,6 @@ async fn basic() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn over_supply_limit_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
@@ -108,7 +107,6 @@ async fn over_supply_limit_fails() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn missing_token_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
@@ -126,7 +124,6 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn zero() -> anyhow::Result<()> {
     const INITIAL_SUPPLY: u64 = 1_000_000;
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
@@ -189,7 +186,6 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn nfts() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
@@ -235,7 +231,6 @@ async fn nfts() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn nft_metadata_too_long_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
