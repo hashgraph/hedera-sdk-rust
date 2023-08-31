@@ -14,6 +14,7 @@ mod pause;
 mod revoke_kyc;
 mod transfer;
 mod unfreeze;
+mod unpause;
 mod update;
 mod wipe;
 
