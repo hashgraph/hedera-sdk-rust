@@ -414,69 +414,50 @@ mod tests {
     };
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
-        VALID_START,
     };
     use crate::{
+        AccountId,
         AccountUpdateTransaction,
         AnyTransaction,
-        Hbar,
-        TransactionId,
     };
 
     #[allow(deprecated)]
     fn make_transaction() -> AccountUpdateTransaction {
-        let mut tx = AccountUpdateTransaction::new();
+        let mut tx = AccountUpdateTransaction::new_for_tests();
 
         tx.key(unused_private_key().public_key())
-            .node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .account_id("0.0.2002".parse().unwrap())
-            .proxy_account_id("0.0.1001".parse().unwrap())
+            .account_id(AccountId::new(0, 0, 2002))
+            .proxy_account_id(AccountId::new(0, 0, 1001))
             .auto_renew_period(Duration::hours(10))
-            .expiration_time(OffsetDateTime::UNIX_EPOCH + Duration::seconds(1554158543))
+            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158543).unwrap())
             .receiver_signature_required(false)
             .max_automatic_token_associations(100)
             .account_memo("Some memo")
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
-            .staked_account_id("0.0.3".parse().unwrap())
+            .staked_account_id(AccountId::new(0, 0, 3))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         return tx;
     }
 
     #[allow(deprecated)]
     fn make_transaction2() -> AccountUpdateTransaction {
-        let mut tx = AccountUpdateTransaction::new();
+        let mut tx = AccountUpdateTransaction::new_for_tests();
 
         tx.key(unused_private_key().public_key())
-            .node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .account_id("0.0.2002".parse().unwrap())
-            .proxy_account_id("0.0.1001".parse().unwrap())
+            .account_id(AccountId::new(0, 0, 2002))
+            .proxy_account_id(AccountId::new(0, 0, 1001))
             .auto_renew_period(Duration::hours(10))
-            .expiration_time(OffsetDateTime::UNIX_EPOCH + Duration::seconds(1554158543))
+            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158543).unwrap())
             .receiver_signature_required(false)
             .max_automatic_token_associations(100)
             .account_memo("Some memo")
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
             .staked_node_id(4)
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         return tx;
     }
@@ -487,160 +468,116 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
+            CryptoUpdateAccount(
+                CryptoUpdateTransactionBody {
+                    account_id_to_update: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    2002,
+                                ),
+                            ),
+                        },
+                    ),
+                    key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    proxy_account_id: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    1001,
+                                ),
+                            ),
+                        },
+                    ),
+                    proxy_fraction: 0,
+                    auto_renew_period: Some(
+                        Duration {
+                            seconds: 36000,
+                        },
+                    ),
+                    expiration_time: Some(
+                        Timestamp {
+                            seconds: 1554158543,
+                            nanos: 0,
+                        },
+                    ),
+                    memo: Some(
+                        "Some memo",
+                    ),
+                    max_automatic_token_associations: Some(
+                        100,
+                    ),
+                    decline_reward: None,
+                    send_record_threshold_field: None,
+                    receive_record_threshold_field: None,
+                    receiver_sig_required_field: Some(
+                        ReceiverSigRequiredWrapper(
+                            false,
                         ),
-                        account_id: Some(
+                    ),
+                    staked_id: Some(
+                        StakedAccountId(
                             AccountId {
                                 shard_num: 0,
                                 realm_num: 0,
                                 account: Some(
                                     AccountNum(
-                                        5006,
+                                        3,
                                     ),
                                 ),
                             },
                         ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    CryptoUpdateAccount(
-                        CryptoUpdateTransactionBody {
-                            account_id_to_update: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            2002,
-                                        ),
-                                    ),
-                                },
-                            ),
-                            key: Some(
-                                Key {
-                                    key: Some(
-                                        Ed25519(
-                                            [
-                                                224,
-                                                200,
-                                                236,
-                                                39,
-                                                88,
-                                                165,
-                                                135,
-                                                159,
-                                                250,
-                                                194,
-                                                38,
-                                                161,
-                                                60,
-                                                12,
-                                                81,
-                                                107,
-                                                121,
-                                                158,
-                                                114,
-                                                227,
-                                                81,
-                                                65,
-                                                160,
-                                                221,
-                                                130,
-                                                143,
-                                                148,
-                                                211,
-                                                121,
-                                                136,
-                                                164,
-                                                183,
-                                            ],
-                                        ),
-                                    ),
-                                },
-                            ),
-                            proxy_account_id: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            1001,
-                                        ),
-                                    ),
-                                },
-                            ),
-                            proxy_fraction: 0,
-                            auto_renew_period: Some(
-                                Duration {
-                                    seconds: 36000,
-                                },
-                            ),
-                            expiration_time: Some(
-                                Timestamp {
-                                    seconds: 1554158543,
-                                    nanos: 0,
-                                },
-                            ),
-                            memo: Some(
-                                "Some memo",
-                            ),
-                            max_automatic_token_associations: Some(
-                                100,
-                            ),
-                            decline_reward: None,
-                            send_record_threshold_field: None,
-                            receive_record_threshold_field: None,
-                            receiver_sig_required_field: Some(
-                                ReceiverSigRequiredWrapper(
-                                    false,
-                                ),
-                            ),
-                            staked_id: Some(
-                                StakedAccountId(
-                                    AccountId {
-                                        shard_num: 0,
-                                        realm_num: 0,
-                                        account: Some(
-                                            AccountNum(
-                                                3,
-                                            ),
-                                        ),
-                                    },
-                                ),
-                            ),
-                        },
                     ),
-                ),
-            }
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }
@@ -664,152 +601,108 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    CryptoUpdateAccount(
-                        CryptoUpdateTransactionBody {
-                            account_id_to_update: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            2002,
-                                        ),
-                                    ),
-                                },
-                            ),
-                            key: Some(
-                                Key {
-                                    key: Some(
-                                        Ed25519(
-                                            [
-                                                224,
-                                                200,
-                                                236,
-                                                39,
-                                                88,
-                                                165,
-                                                135,
-                                                159,
-                                                250,
-                                                194,
-                                                38,
-                                                161,
-                                                60,
-                                                12,
-                                                81,
-                                                107,
-                                                121,
-                                                158,
-                                                114,
-                                                227,
-                                                81,
-                                                65,
-                                                160,
-                                                221,
-                                                130,
-                                                143,
-                                                148,
-                                                211,
-                                                121,
-                                                136,
-                                                164,
-                                                183,
-                                            ],
-                                        ),
-                                    ),
-                                },
-                            ),
-                            proxy_account_id: Some(
-                                AccountId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    account: Some(
-                                        AccountNum(
-                                            1001,
-                                        ),
-                                    ),
-                                },
-                            ),
-                            proxy_fraction: 0,
-                            auto_renew_period: Some(
-                                Duration {
-                                    seconds: 36000,
-                                },
-                            ),
-                            expiration_time: Some(
-                                Timestamp {
-                                    seconds: 1554158543,
-                                    nanos: 0,
-                                },
-                            ),
-                            memo: Some(
-                                "Some memo",
-                            ),
-                            max_automatic_token_associations: Some(
-                                100,
-                            ),
-                            decline_reward: None,
-                            send_record_threshold_field: None,
-                            receive_record_threshold_field: None,
-                            receiver_sig_required_field: Some(
-                                ReceiverSigRequiredWrapper(
-                                    false,
-                                ),
-                            ),
-                            staked_id: Some(
-                                StakedNodeId(
-                                    4,
+            CryptoUpdateAccount(
+                CryptoUpdateTransactionBody {
+                    account_id_to_update: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    2002,
                                 ),
                             ),
                         },
                     ),
-                ),
-            }
+                    key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    proxy_account_id: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    1001,
+                                ),
+                            ),
+                        },
+                    ),
+                    proxy_fraction: 0,
+                    auto_renew_period: Some(
+                        Duration {
+                            seconds: 36000,
+                        },
+                    ),
+                    expiration_time: Some(
+                        Timestamp {
+                            seconds: 1554158543,
+                            nanos: 0,
+                        },
+                    ),
+                    memo: Some(
+                        "Some memo",
+                    ),
+                    max_automatic_token_associations: Some(
+                        100,
+                    ),
+                    decline_reward: None,
+                    send_record_threshold_field: None,
+                    receive_record_threshold_field: None,
+                    receiver_sig_required_field: Some(
+                        ReceiverSigRequiredWrapper(
+                            false,
+                        ),
+                    ),
+                    staked_id: Some(
+                        StakedNodeId(
+                            4,
+                        ),
+                    ),
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

@@ -181,36 +181,25 @@ mod tests {
     use hex_literal::hex;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
-        unused_private_key,
         VALID_START,
     };
     use crate::{
         AnyTransaction,
         FreezeTransaction,
         FreezeType,
-        Hbar,
-        TransactionId,
     };
 
     fn make_transaction() -> FreezeTransaction {
-        let mut tx = FreezeTransaction::new();
+        let mut tx = FreezeTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .file_id(("4.5.6").parse().unwrap())
+        tx.file_id(("4.5.6").parse().unwrap())
             .file_hash(hex!("1723904587120938954702349857").to_vec())
             .start_time(VALID_START)
             .freeze_type(FreezeType::FreezeAbort)
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }
@@ -221,91 +210,47 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    Freeze(
-                        FreezeTransactionBody {
-                            start_hour: 0,
-                            start_min: 0,
-                            end_hour: 0,
-                            end_min: 0,
-                            update_file: Some(
-                                FileId {
-                                    shard_num: 4,
-                                    realm_num: 5,
-                                    file_num: 6,
-                                },
-                            ),
-                            file_hash: [
-                                23,
-                                35,
-                                144,
-                                69,
-                                135,
-                                18,
-                                9,
-                                56,
-                                149,
-                                71,
-                                2,
-                                52,
-                                152,
-                                87,
-                            ],
-                            start_time: Some(
-                                Timestamp {
-                                    seconds: 1554158542,
-                                    nanos: 0,
-                                },
-                            ),
-                            freeze_type: FreezeAbort,
+            Freeze(
+                FreezeTransactionBody {
+                    start_hour: 0,
+                    start_min: 0,
+                    end_hour: 0,
+                    end_min: 0,
+                    update_file: Some(
+                        FileId {
+                            shard_num: 4,
+                            realm_num: 5,
+                            file_num: 6,
                         },
                     ),
-                ),
-            }
+                    file_hash: [
+                        23,
+                        35,
+                        144,
+                        69,
+                        135,
+                        18,
+                        9,
+                        56,
+                        149,
+                        71,
+                        2,
+                        52,
+                        152,
+                        87,
+                    ],
+                    start_time: Some(
+                        Timestamp {
+                            seconds: 1554158542,
+                            nanos: 0,
+                        },
+                    ),
+                    freeze_type: FreezeAbort,
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

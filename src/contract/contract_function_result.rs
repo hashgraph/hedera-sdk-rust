@@ -27,6 +27,7 @@ use num_bigint::{
     BigUint,
 };
 
+use crate::protobuf::ToProtobuf;
 use crate::{
     AccountId,
     ContractId,
@@ -279,6 +280,29 @@ impl FromProtobuf<services::response::Response> for ContractFunctionResult {
         let result = ContractFunctionResult::from_protobuf(result)?;
 
         Ok(result)
+    }
+}
+
+impl ToProtobuf for ContractFunctionResult {
+    type Protobuf = services::ContractFunctionResult;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        #[allow(deprecated)]
+        services::ContractFunctionResult {
+            contract_id: Some(self.contract_id.to_protobuf()),
+            contract_call_result: self.bytes.clone(),
+            error_message: self.error_message.clone().unwrap_or_default(),
+            bloom: self.bloom.clone(),
+            gas_used: self.gas,
+            log_info: self.logs.to_protobuf(),
+            created_contract_i_ds: Vec::new(),
+            evm_address: self.evm_address.and_then(|it| it.evm_address.map(|it| it.to_vec())),
+            gas: self.gas as i64,
+            amount: self.hbar_amount as i64,
+            function_parameters: self.contract_function_parameters_bytes.clone(),
+            sender_id: self.sender_account_id.to_protobuf(),
+            contract_nonces: self.contract_nonces.to_protobuf(),
+        }
     }
 }
 

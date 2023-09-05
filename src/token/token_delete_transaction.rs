@@ -137,33 +137,19 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
-        test_token_id,
+        check_body,
         transaction_body,
-        unused_private_key,
-        VALID_START,
+        TEST_TOKEN_ID,
     };
     use crate::{
         AnyTransaction,
-        Hbar,
         TokenDeleteTransaction,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenDeleteTransaction {
-        let mut tx = TokenDeleteTransaction::new();
+        let mut tx = TokenDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .token_id(test_token_id())
-            .max_transaction_fee(Hbar::new(1))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.token_id(TEST_TOKEN_ID).freeze().unwrap();
 
         tx
     }
@@ -171,6 +157,10 @@ mod tests {
     #[test]
     fn seriralize() {
         let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_delete_transaction/serialize.txt"].assert_debug_eq(&tx);
     }
@@ -198,8 +188,8 @@ mod tests {
     fn get_set_token_id() {
         let mut tx = TokenDeleteTransaction::new();
 
-        let tx2 = tx.token_id(test_token_id());
+        let tx2 = tx.token_id(TEST_TOKEN_ID);
 
-        assert_eq!(tx2.get_token_id(), Some(test_token_id()));
+        assert_eq!(tx2.get_token_id(), Some(TEST_TOKEN_ID));
     }
 }

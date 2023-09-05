@@ -1070,7 +1070,6 @@ where
 
 #[cfg(test)]
 pub(crate) mod test_helpers {
-    use std::str::FromStr;
 
     use hedera_proto::services;
     use prost::Message;
@@ -1080,12 +1079,33 @@ pub(crate) mod test_helpers {
     };
 
     use super::TransactionExecute;
+    use crate::protobuf::ToProtobuf;
     use crate::{
         AccountId,
+        Hbar,
         PrivateKey,
         TokenId,
         Transaction,
+        TransactionId,
     };
+
+    impl<D: Default> Transaction<D> {
+        // todo: bikeshed name, idc.
+        /// Creates a transaction with some fields set to regular values to make serialization more regular.
+        ///
+        /// Currently the fields set are `node_account_ids`, `transaction_id`, and `max_transaction_fee`.
+        /// Additionally the transaction is signed with 1 key.
+        pub(crate) fn new_for_tests() -> Self {
+            let mut tx = Self::new();
+
+            tx.node_account_ids(TEST_NODE_ACCOUNT_IDS)
+                .transaction_id(TEST_TX_ID)
+                .max_transaction_fee(Hbar::new(2))
+                .sign(unused_private_key());
+
+            tx
+        }
+    }
 
     #[track_caller]
     pub(crate) fn transaction_body<D: TransactionExecute>(
@@ -1098,17 +1118,48 @@ pub(crate) mod test_helpers {
         .unwrap()
     }
 
+    /// Checks the entire traknsaction body *other than* `data` and returns that.
+    ///
+    /// This is basically a boilerplate reducer, however, it failing means that [`Transaction::new_for_tests`] is probably buggy.
+    pub(crate) fn check_body(body: services::TransactionBody) -> services::transaction_body::Data {
+        #[allow(deprecated)]
+        let services::TransactionBody {
+            transaction_id,
+            node_account_id,
+            transaction_fee,
+            transaction_valid_duration,
+            generate_record,
+            memo,
+            data,
+        } = body;
+
+        assert_eq!(transaction_id, Some(TEST_TX_ID.to_protobuf()));
+        assert_eq!(node_account_id, Some(TEST_NODE_ACCOUNT_IDS[0].to_protobuf()));
+        assert_eq!(transaction_fee, Hbar::new(2).to_tinybars() as u64);
+        assert_eq!(transaction_valid_duration, Some(services::Duration { seconds: 120 }));
+        assert_eq!(generate_record, false);
+        assert_eq!(memo, "");
+
+        data.unwrap()
+    }
+
     pub(crate) fn unused_private_key() -> PrivateKey {
         "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e10".parse().unwrap()
     }
 
-    pub(crate) fn test_token_id() -> TokenId {
-        TokenId::from_str("1.2.3").unwrap()
-    }
+    pub(crate) const TEST_TOKEN_ID: TokenId = TokenId::new(1, 2, 3);
 
-    pub(crate) fn test_account_id() -> AccountId {
-        AccountId::from_str("0.0.5006").unwrap()
-    }
+    pub(crate) const TEST_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 5006);
+
+    pub(crate) const TEST_NODE_ACCOUNT_IDS: [AccountId; 2] =
+        [AccountId::new(0, 0, 5005), AccountId::new(0, 0, 5006)];
+
+    pub(crate) const TEST_TX_ID: TransactionId = TransactionId {
+        account_id: TEST_ACCOUNT_ID,
+        valid_start: VALID_START,
+        nonce: None,
+        scheduled: false,
+    };
 
     pub(crate) const VALID_START: OffsetDateTime =
         OffsetDateTime::UNIX_EPOCH.saturating_add(Duration::seconds(1554158542));

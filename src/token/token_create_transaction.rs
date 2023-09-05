@@ -583,6 +583,7 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
         unused_private_key,
         VALID_START,
@@ -592,17 +593,15 @@ mod tests {
         AnyTransaction,
         FixedFee,
         FixedFeeData,
-        Hbar,
         Key,
         TokenCreateTransaction,
         TokenId,
         TokenSupplyType,
         TokenType,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenCreateTransaction {
-        let mut tx = TokenCreateTransaction::new();
+        let mut tx = TokenCreateTransaction::new_for_tests();
 
         let fee = FixedFee {
             fee: FixedFeeData {
@@ -613,14 +612,7 @@ mod tests {
             all_collectors_are_exempt: false,
         };
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .initial_supply(30)
+        tx.initial_supply(30)
             .fee_schedule_key(unused_private_key().public_key())
             .supply_key(unused_private_key().public_key())
             .admin_key(unused_private_key().public_key())
@@ -638,25 +630,16 @@ mod tests {
             .name("Flook")
             .token_memo("Flook memo")
             .custom_fees([fee.into()])
-            .max_transaction_fee(Hbar::new(1))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
 
         tx
     }
 
     fn make_transaction_nft() -> TokenCreateTransaction {
-        let mut tx = TokenCreateTransaction::new();
+        let mut tx = TokenCreateTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .fee_schedule_key(unused_private_key().public_key())
+        tx.fee_schedule_key(unused_private_key().public_key())
             .supply_key(unused_private_key().public_key())
             .max_supply(500)
             .admin_key(unused_private_key().public_key())
@@ -673,18 +656,18 @@ mod tests {
             .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
             .name("Flook")
             .token_memo("Flook memo")
-            .max_transaction_fee(Hbar::new(1))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
-
+            .unwrap();
         tx
     }
 
     #[test]
     fn serialize_fungible() {
         let tx = make_transaction();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_create_transaction/serialize_fungible.txt"]
             .assert_debug_eq(&tx);
@@ -693,7 +676,10 @@ mod tests {
     #[test]
     fn serialize_nft() {
         let tx = make_transaction_nft();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_create_transaction/serialize_nft.txt"].assert_debug_eq(&tx);
     }

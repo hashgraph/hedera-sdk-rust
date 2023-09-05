@@ -187,53 +187,29 @@ mod tests {
     use expect_test::expect_file;
 
     use crate::transaction::test_helpers::{
-        test_token_id,
+        check_body,
         transaction_body,
-        unused_private_key,
-        VALID_START,
+        TEST_TOKEN_ID,
     };
     use crate::{
         AnyTransaction,
         TokenBurnTransaction,
-        TransactionId,
     };
 
     fn make_transaction() -> TokenBurnTransaction {
-        let mut tx = TokenBurnTransaction::new();
+        let mut tx = TokenBurnTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .token_id(test_token_id())
-            .amount(6 as u64)
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.token_id(TEST_TOKEN_ID).amount(6 as u64).freeze().unwrap();
 
         tx
     }
 
     fn make_transaction_nft() -> TokenBurnTransaction {
-        let mut tx = TokenBurnTransaction::new();
+        let mut tx = TokenBurnTransaction::new_for_tests();
 
         let vec1 = vec![1, 2, 64];
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .token_id(test_token_id())
-            .serials(vec1)
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.token_id(TEST_TOKEN_ID).serials(vec1).freeze().unwrap();
 
         tx
     }
@@ -241,7 +217,10 @@ mod tests {
     #[test]
     fn serialize_fungible() {
         let tx = make_transaction();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_burn_transaction/serialize_fungible.txt"]
             .assert_debug_eq(&tx);
@@ -250,7 +229,10 @@ mod tests {
     #[test]
     fn serialize_nft() {
         let tx = make_transaction_nft();
+
         let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
 
         expect_file!["./snapshots/token_burn_transaction/serialize_nft.txt"].assert_debug_eq(&tx);
     }
@@ -279,9 +261,9 @@ mod tests {
     fn get_set_token_id() {
         let mut tx = TokenBurnTransaction::new();
 
-        let tx2 = tx.token_id(test_token_id());
+        let tx2 = tx.token_id(TEST_TOKEN_ID);
 
-        assert_eq!(tx2.get_token_id(), Some(test_token_id()));
+        assert_eq!(tx2.get_token_id(), Some(TEST_TOKEN_ID));
     }
 
     #[test]

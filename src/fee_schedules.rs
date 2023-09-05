@@ -11,7 +11,7 @@ use crate::protobuf::{
 /// See the [Hedera documentation]
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/currentandnextfeeschedule
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FeeSchedules {
     /// The current fee schedule.
     pub current: Option<FeeSchedule>,
@@ -62,7 +62,7 @@ impl ToProtobuf for FeeSchedules {
 /// See the [Hedera documentation].
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/feeschedule
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FeeSchedule {
     /// The fee schedules per specific piece of functionality.
     pub transaction_fee_schedules: Vec<TransactionFeeSchedule>,
@@ -113,7 +113,7 @@ impl ToProtobuf for FeeSchedule {
 /// See the [Hedera documentation].
 ///
 /// [Hedera documentation]: https://docs.hedera.com/guides/docs/hedera-api/basic-types/transactionfeeschedule
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TransactionFeeSchedule {
     /// The request type that this fee schedule applies to.
     pub request_type: RequestType,
@@ -170,7 +170,7 @@ impl ToProtobuf for TransactionFeeSchedule {
 }
 
 /// The functionality provided by Hedera.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum RequestType {
     /// UNSPECIFIED - Need to keep first value as unspecified because first element is ignored and not parsed (0 is ignored by parser)
@@ -573,7 +573,7 @@ impl ToProtobuf for RequestType {
 
 /// The total fees charged for a transaction, consisting of 3 parts:
 /// The node fee, the network fee, and the service fee.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FeeData {
     /// Fee charged by the node for this functionality.
     pub node: FeeComponents,
@@ -630,7 +630,7 @@ impl ToProtobuf for FeeData {
 }
 
 /// The different components used for fee calculation.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct FeeComponents {
     /// The minimum fee that needs to be paid.
     pub min: u64,
@@ -724,7 +724,7 @@ impl ToProtobuf for FeeComponents {
 }
 
 /// Possible [`FeeData`] subtypes.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum FeeDataType {
     /// The resource prices have no special scope.
@@ -780,5 +780,235 @@ impl ToProtobuf for FeeDataType {
             }
             Self::ScheduleCreateContractCall => SubType::ScheduleCreateContractCall,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use time::OffsetDateTime;
+
+    use crate::protobuf::ToProtobuf;
+    use crate::{
+        FeeComponents,
+        FeeData,
+        FeeSchedule,
+        FeeSchedules,
+        TransactionFeeSchedule,
+    };
+
+    const ZERO_FEES: FeeComponents = FeeComponents {
+        min: 0,
+        max: 0,
+        constant: 0,
+        bandwidth_byte: 0,
+        verification: 0,
+        storage_byte_hour: 0,
+        ram_byte_hour: 0,
+        contract_transaction_gas: 0,
+        transfer_volume_hbar: 0,
+        response_memory_byte: 0,
+        response_disk_byte: 0,
+    };
+
+    fn make_fee_schedules() -> FeeSchedules {
+        #[allow(deprecated)]
+        FeeSchedules {
+            current: Some(FeeSchedule {
+                transaction_fee_schedules: Vec::from([TransactionFeeSchedule {
+                    request_type: crate::RequestType::None,
+                    fee_data: None,
+                    fees: Vec::from([FeeData {
+                        node: ZERO_FEES,
+                        network: FeeComponents { min: 2, max: 5, ..ZERO_FEES },
+                        service: ZERO_FEES,
+                        kind: crate::FeeDataType::Default,
+                    }]),
+                }]),
+                expiration_time: OffsetDateTime::from_unix_timestamp(1554158542).unwrap(),
+            }),
+            next: Some(FeeSchedule {
+                transaction_fee_schedules: Vec::from([TransactionFeeSchedule {
+                    request_type: crate::RequestType::None,
+                    fee_data: None,
+                    fees: Vec::from([FeeData {
+                        node: FeeComponents { min: 1, max: 2, ..ZERO_FEES },
+                        network: ZERO_FEES,
+                        service: ZERO_FEES,
+                        kind: crate::FeeDataType::Default,
+                    }]),
+                }]),
+                expiration_time: OffsetDateTime::from_unix_timestamp(1554158222).unwrap(),
+            }),
+        }
+    }
+
+    #[test]
+    fn serialize() {
+        let schedules = make_fee_schedules();
+
+        expect![[r#"
+            CurrentAndNextFeeSchedule {
+                current_fee_schedule: Some(
+                    FeeSchedule {
+                        transaction_fee_schedule: [
+                            TransactionFeeSchedule {
+                                hedera_functionality: None,
+                                fee_data: None,
+                                fees: [
+                                    FeeData {
+                                        nodedata: Some(
+                                            FeeComponents {
+                                                min: 0,
+                                                max: 0,
+                                                constant: 0,
+                                                bpt: 0,
+                                                vpt: 0,
+                                                rbh: 0,
+                                                sbh: 0,
+                                                gas: 0,
+                                                tv: 0,
+                                                bpr: 0,
+                                                sbpr: 0,
+                                            },
+                                        ),
+                                        networkdata: Some(
+                                            FeeComponents {
+                                                min: 2,
+                                                max: 5,
+                                                constant: 0,
+                                                bpt: 0,
+                                                vpt: 0,
+                                                rbh: 0,
+                                                sbh: 0,
+                                                gas: 0,
+                                                tv: 0,
+                                                bpr: 0,
+                                                sbpr: 0,
+                                            },
+                                        ),
+                                        servicedata: Some(
+                                            FeeComponents {
+                                                min: 0,
+                                                max: 0,
+                                                constant: 0,
+                                                bpt: 0,
+                                                vpt: 0,
+                                                rbh: 0,
+                                                sbh: 0,
+                                                gas: 0,
+                                                tv: 0,
+                                                bpr: 0,
+                                                sbpr: 0,
+                                            },
+                                        ),
+                                        sub_type: Default,
+                                    },
+                                ],
+                            },
+                        ],
+                        expiry_time: Some(
+                            TimestampSeconds {
+                                seconds: 1554158542,
+                            },
+                        ),
+                    },
+                ),
+                next_fee_schedule: Some(
+                    FeeSchedule {
+                        transaction_fee_schedule: [
+                            TransactionFeeSchedule {
+                                hedera_functionality: None,
+                                fee_data: None,
+                                fees: [
+                                    FeeData {
+                                        nodedata: Some(
+                                            FeeComponents {
+                                                min: 1,
+                                                max: 2,
+                                                constant: 0,
+                                                bpt: 0,
+                                                vpt: 0,
+                                                rbh: 0,
+                                                sbh: 0,
+                                                gas: 0,
+                                                tv: 0,
+                                                bpr: 0,
+                                                sbpr: 0,
+                                            },
+                                        ),
+                                        networkdata: Some(
+                                            FeeComponents {
+                                                min: 0,
+                                                max: 0,
+                                                constant: 0,
+                                                bpt: 0,
+                                                vpt: 0,
+                                                rbh: 0,
+                                                sbh: 0,
+                                                gas: 0,
+                                                tv: 0,
+                                                bpr: 0,
+                                                sbpr: 0,
+                                            },
+                                        ),
+                                        servicedata: Some(
+                                            FeeComponents {
+                                                min: 0,
+                                                max: 0,
+                                                constant: 0,
+                                                bpt: 0,
+                                                vpt: 0,
+                                                rbh: 0,
+                                                sbh: 0,
+                                                gas: 0,
+                                                tv: 0,
+                                                bpr: 0,
+                                                sbpr: 0,
+                                            },
+                                        ),
+                                        sub_type: Default,
+                                    },
+                                ],
+                            },
+                        ],
+                        expiry_time: Some(
+                            TimestampSeconds {
+                                seconds: 1554158222,
+                            },
+                        ),
+                    },
+                ),
+            }
+        "#]]
+        .assert_debug_eq(&schedules.to_protobuf());
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let a = make_fee_schedules();
+        let b = FeeSchedules::from_bytes(&a.to_bytes()).unwrap();
+
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn serialize_default() {
+        let schedules = FeeSchedules { current: None, next: None };
+        expect![[r#"
+            CurrentAndNextFeeSchedule {
+                current_fee_schedule: None,
+                next_fee_schedule: None,
+            }
+        "#]]
+        .assert_debug_eq(&schedules.to_protobuf());
+    }
+
+    #[test]
+    fn to_from_bytes_default() {
+        let a = FeeSchedules { current: None, next: None };
+        let b = FeeSchedules::from_bytes(&a.to_bytes()).unwrap();
+
+        assert_eq!(a, b);
     }
 }

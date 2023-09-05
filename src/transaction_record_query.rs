@@ -167,3 +167,65 @@ impl ValidateChecksums for TransactionRecordQueryData {
         self.transaction_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::transaction::test_helpers::TEST_TX_ID;
+    use crate::TransactionRecordQuery;
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    TransactionGetRecord(
+                        TransactionGetRecordQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            transaction_id: Some(
+                                TransactionId {
+                                    transaction_valid_start: Some(
+                                        Timestamp {
+                                            seconds: 1554158542,
+                                            nanos: 0,
+                                        },
+                                    ),
+                                    account_id: Some(
+                                        AccountId {
+                                            shard_num: 0,
+                                            realm_num: 0,
+                                            account: Some(
+                                                AccountNum(
+                                                    5006,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    scheduled: false,
+                                    nonce: 0,
+                                },
+                            ),
+                            include_duplicates: true,
+                            include_child_records: true,
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &TransactionRecordQuery::new()
+                .transaction_id(TEST_TX_ID)
+                .include_children(true)
+                .include_duplicates(true)
+                .data
+                .to_query_protobuf(Default::default()),
+        )
+    }
+}

@@ -134,33 +134,19 @@ mod tests {
     use expect_test::expect;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
-        unused_private_key,
-        VALID_START,
     };
     use crate::{
         AnyTransaction,
-        Hbar,
         TopicDeleteTransaction,
         TopicId,
-        TransactionId,
     };
 
     fn make_transaction() -> TopicDeleteTransaction {
-        let mut tx = TopicDeleteTransaction::new();
+        let mut tx = TopicDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .topic_id("0.0.5007".parse::<TopicId>().unwrap())
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.topic_id("0.0.5007".parse::<TopicId>().unwrap()).freeze().unwrap();
 
         tx
     }
@@ -171,64 +157,20 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    ConsensusDeleteTopic(
-                        ConsensusDeleteTopicTransactionBody {
-                            topic_id: Some(
-                                TopicId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    topic_num: 5007,
-                                },
-                            ),
+            ConsensusDeleteTopic(
+                ConsensusDeleteTopicTransactionBody {
+                    topic_id: Some(
+                        TopicId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            topic_num: 5007,
                         },
                     ),
-                ),
-            }
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

@@ -201,7 +201,13 @@ mod tests {
     use std::str::FromStr;
 
     use assert_matches::assert_matches;
+    use expect_test::expect;
+    use time::OffsetDateTime;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::{
         AccountId,
         TransactionId,
@@ -252,5 +258,91 @@ mod tests {
         };
 
         assert_eq!(id.to_string(), "0.0.31415@1641088801.2");
+    }
+
+    #[test]
+    fn serialize() {
+        expect!["0.0.23847@1588539964.632521325"].assert_eq(
+            &TransactionId::from_str("0.0.23847@1588539964.632521325").unwrap().to_string(),
+        )
+    }
+
+    #[test]
+    fn serialize2() {
+        expect!["0.0.23847@1588539964.632521325?scheduled/3"].assert_eq(
+            &TransactionId::from_str("0.0.23847@1588539964.632521325?scheduled/3")
+                .unwrap()
+                .to_string(),
+        )
+    }
+
+    #[test]
+    fn to_from_pb() {
+        let a = TransactionId::from_str("0.0.23847@1588539964.632521325").unwrap();
+        let b = TransactionId::from_protobuf(a.to_protobuf()).unwrap();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn to_from_pb2() {
+        let a = TransactionId::from_str("0.0.23847@1588539964.632521325?scheduled/2").unwrap();
+        let b = TransactionId::from_protobuf(a.to_protobuf()).unwrap();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let a = TransactionId::from_str("0.0.23847@1588539964.632521325").unwrap();
+        let b = TransactionId::from_bytes(&a.to_bytes()).unwrap();
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn parse() {
+        let transaction_id = TransactionId::from_str("0.0.23847@1588539964.632521325").unwrap();
+
+        assert_eq!(
+            transaction_id,
+            TransactionId {
+                account_id: AccountId::new(0, 0, 23847),
+                valid_start: OffsetDateTime::from_unix_timestamp_nanos(1588539964632521325)
+                    .unwrap(),
+                nonce: None,
+                scheduled: false
+            }
+        )
+    }
+
+    #[test]
+    fn parse_scheduled() {
+        let transaction_id: TransactionId =
+            TransactionId::from_str("0.0.23847@1588539964.632521325?scheduled").unwrap();
+
+        assert_eq!(
+            transaction_id,
+            TransactionId {
+                account_id: AccountId::new(0, 0, 23847),
+                valid_start: OffsetDateTime::from_unix_timestamp_nanos(1588539964632521325)
+                    .unwrap(),
+                nonce: None,
+                scheduled: true
+            }
+        )
+    }
+
+    #[test]
+    fn parse_nonce() {
+        let transaction_id = TransactionId::from_str("0.0.23847@1588539964.632521325/4").unwrap();
+
+        assert_eq!(
+            transaction_id,
+            TransactionId {
+                account_id: AccountId::new(0, 0, 23847),
+                valid_start: OffsetDateTime::from_unix_timestamp_nanos(1588539964632521325)
+                    .unwrap(),
+                nonce: Some(4),
+                scheduled: false
+            }
+        )
     }
 }

@@ -202,54 +202,34 @@ mod tests {
     use expect_test::expect;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
-        unused_private_key,
         VALID_START,
     };
     use crate::{
         AnyTransaction,
         ContractId,
         FileId,
-        Hbar,
         SystemDeleteTransaction,
-        TransactionId,
     };
 
     fn make_transaction_file() -> SystemDeleteTransaction {
-        let mut tx = SystemDeleteTransaction::new();
+        let mut tx = SystemDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .file_id("0.0.444".parse::<FileId>().unwrap())
+        tx.file_id("0.0.444".parse::<FileId>().unwrap())
             .expiration_time(VALID_START)
-            .max_transaction_fee(Hbar::new(1))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
         tx
     }
 
     fn make_transaction_contract() -> SystemDeleteTransaction {
-        let mut tx = SystemDeleteTransaction::new();
+        let mut tx = SystemDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .contract_id("0.0.444".parse::<ContractId>().unwrap())
+        tx.contract_id("0.0.444".parse::<ContractId>().unwrap())
             .expiration_time(VALID_START)
-            .max_transaction_fee(Hbar::new(1))
             .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+            .unwrap();
         tx
     }
 
@@ -259,71 +239,27 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    SystemDelete(
-                        SystemDeleteTransactionBody {
-                            expiration_time: Some(
-                                TimestampSeconds {
-                                    seconds: 1554158542,
-                                },
-                            ),
-                            id: Some(
-                                FileId(
-                                    FileId {
-                                        shard_num: 0,
-                                        realm_num: 0,
-                                        file_num: 444,
-                                    },
-                                ),
-                            ),
+            SystemDelete(
+                SystemDeleteTransactionBody {
+                    expiration_time: Some(
+                        TimestampSeconds {
+                            seconds: 1554158542,
                         },
                     ),
-                ),
-            }
+                    id: Some(
+                        FileId(
+                            FileId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                file_num: 444,
+                            },
+                        ),
+                    ),
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }
@@ -334,75 +270,31 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
+            SystemDelete(
+                SystemDeleteTransactionBody {
+                    expiration_time: Some(
+                        TimestampSeconds {
+                            seconds: 1554158542,
+                        },
+                    ),
+                    id: Some(
+                        ContractId(
+                            ContractId {
                                 shard_num: 0,
                                 realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
+                                contract: Some(
+                                    ContractNum(
+                                        444,
                                     ),
                                 ),
                             },
                         ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    SystemDelete(
-                        SystemDeleteTransactionBody {
-                            expiration_time: Some(
-                                TimestampSeconds {
-                                    seconds: 1554158542,
-                                },
-                            ),
-                            id: Some(
-                                ContractId(
-                                    ContractId {
-                                        shard_num: 0,
-                                        realm_num: 0,
-                                        contract: Some(
-                                            ContractNum(
-                                                444,
-                                            ),
-                                        ),
-                                    },
-                                ),
-                            ),
-                        },
                     ),
-                ),
-            }
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }

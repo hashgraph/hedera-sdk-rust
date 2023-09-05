@@ -67,6 +67,12 @@ pub struct AccountId {
 }
 
 impl AccountId {
+    // todo: maybe make this public & not `#[cfg(test)]`?
+    #[cfg(test)]
+    pub(crate) const fn new(shard: u64, realm: u64, num: u64) -> Self {
+        Self { shard, realm, num, alias: None, evm_address: None, checksum: None }
+    }
+
     /// Create a new `AccountId` from protobuf-encoded `bytes`.
     ///
     /// # Errors

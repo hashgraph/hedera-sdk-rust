@@ -152,13 +152,7 @@ mod tests {
         "#]]
         .assert_debug_eq(
             &ContractBytecodeQuery::new()
-                .contract_id(crate::ContractId {
-                    shard: 0,
-                    realm: 0,
-                    num: 5005,
-                    evm_address: None,
-                    checksum: None,
-                })
+                .contract_id(crate::ContractId::new(0, 0, 5005))
                 .max_payment_amount(Hbar::from_tinybars(100_000))
                 .data
                 .to_query_protobuf(Default::default()),

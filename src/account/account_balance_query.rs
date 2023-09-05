@@ -192,14 +192,7 @@ mod tests {
         "#]]
         .assert_debug_eq(
             &AccountBalanceQuery::new()
-                .account_id(crate::AccountId {
-                    shard: 0,
-                    realm: 0,
-                    num: 5005,
-                    alias: None,
-                    evm_address: None,
-                    checksum: None,
-                })
+                .account_id(crate::AccountId::new(0, 0, 5005))
                 .data
                 .to_query_protobuf(Default::default()),
         );
@@ -238,13 +231,7 @@ mod tests {
         "#]]
         .assert_debug_eq(
             &AccountBalanceQuery::new()
-                .contract_id(crate::ContractId {
-                    shard: 0,
-                    realm: 0,
-                    num: 5005,
-                    evm_address: None,
-                    checksum: None,
-                })
+                .contract_id(crate::ContractId::new(0, 0, 5005))
                 .data
                 .to_query_protobuf(Default::default()),
         );

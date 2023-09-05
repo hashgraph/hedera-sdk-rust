@@ -352,6 +352,8 @@ mod tests {
         assert_eq!(Hbar::from_str("15 Mℏ").unwrap(), Hbar::from_unit(15, HbarUnit::Megabar));
         assert_eq!(Hbar::from_str("16 Gℏ").unwrap(), Hbar::from_unit(16, HbarUnit::Gigabar));
         assert_eq!(Hbar::from_str("17").unwrap(), Hbar::from(Decimal::from(17)));
+        assert_eq!(Hbar::from_str("-17 ℏ").unwrap(), Hbar::new(-17));
+        assert_eq!(Hbar::from_str("+19 ℏ").unwrap(), Hbar::new(19));
     }
 
     #[test]
@@ -360,13 +362,6 @@ mod tests {
         assert_eq!(Hbar::from_unit(10_000, HbarUnit::Tinybar).to_string(), "0.0001 ℏ");
         assert_eq!(Hbar::from_unit(-9_999, HbarUnit::Tinybar).to_string(), "-9999 tℏ");
         assert_eq!(Hbar::from_unit(-10_000, HbarUnit::Tinybar).to_string(), "-0.0001 ℏ");
-    }
-
-    #[test]
-    fn it_can_compare() {
-        assert!(Hbar::from_tinybars(1000) == Hbar::from_tinybars(1000));
-        assert!(Hbar::from_tinybars(1000) != Hbar::from_tinybars(999));
-        assert!(Hbar::from_tinybars(1000) > Hbar::from_tinybars(999));
     }
 
     #[test]

@@ -81,3 +81,35 @@ impl FromProtobuf<services::ExchangeRate> for ExchangeRate {
         Ok(Self { hbars, cents, expiration_time: pb_getf!(pb, expiration_time)?.into() })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hex_literal::hex;
+
+    use crate::ExchangeRates;
+
+    #[test]
+    fn from_protobuf() {
+        let exchange_rates = ExchangeRates::from_bytes(&hex!(
+            "0a1008b0ea0110b6b4231a0608f0bade9006121008b0ea01108cef231a060880d7de9006"
+        ))
+        .unwrap();
+
+        expect![[r#"
+            ExchangeRates {
+                current_rate: ExchangeRate {
+                    hbars: 30000,
+                    cents: 580150,
+                    expiration_time: 2022-02-24 15:00:00.0 +00:00:00,
+                },
+                next_rate: ExchangeRate {
+                    hbars: 30000,
+                    cents: 587660,
+                    expiration_time: 2022-02-24 16:00:00.0 +00:00:00,
+                },
+            }
+        "#]]
+        .assert_debug_eq(&exchange_rates);
+    }
+}

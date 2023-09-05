@@ -195,3 +195,63 @@ impl ValidateChecksums for TransactionReceiptQueryData {
         self.transaction_id.validate_checksums(ledger_id)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::query::ToQueryProtobuf;
+    use crate::transaction::test_helpers::TEST_TX_ID;
+    use crate::TransactionReceiptQuery;
+
+    #[test]
+    fn serialize() {
+        expect![[r#"
+            Query {
+                query: Some(
+                    TransactionGetReceipt(
+                        TransactionGetReceiptQuery {
+                            header: Some(
+                                QueryHeader {
+                                    payment: None,
+                                    response_type: AnswerOnly,
+                                },
+                            ),
+                            transaction_id: Some(
+                                TransactionId {
+                                    transaction_valid_start: Some(
+                                        Timestamp {
+                                            seconds: 1554158542,
+                                            nanos: 0,
+                                        },
+                                    ),
+                                    account_id: Some(
+                                        AccountId {
+                                            shard_num: 0,
+                                            realm_num: 0,
+                                            account: Some(
+                                                AccountNum(
+                                                    5006,
+                                                ),
+                                            ),
+                                        },
+                                    ),
+                                    scheduled: false,
+                                    nonce: 0,
+                                },
+                            ),
+                            include_duplicates: false,
+                            include_child_receipts: false,
+                        },
+                    ),
+                ),
+            }
+        "#]]
+        .assert_debug_eq(
+            &TransactionReceiptQuery::new()
+                .transaction_id(TEST_TX_ID)
+                .data
+                .to_query_protobuf(Default::default()),
+        )
+    }
+}

@@ -129,3 +129,94 @@ impl ToProtobuf for TokenUnpauseTransactionData {
         services::TokenUnpauseTransactionBody { token: self.token_id.to_protobuf() }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenUnpauseTransactionData;
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+    };
+    use crate::{
+        AnyTransaction,
+        TokenId,
+        TokenUnpauseTransaction,
+    };
+
+    const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
+
+    fn make_transaction() -> TokenUnpauseTransaction {
+        let mut tx = TokenUnpauseTransaction::new_for_tests();
+
+        tx.token_id(TEST_TOKEN_ID).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn seriralize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            TokenUnpause(
+                TokenUnpauseTransactionBody {
+                    token: Some(
+                        TokenId {
+                            shard_num: 4,
+                            realm_num: 2,
+                            token_num: 0,
+                        },
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn construct_token_unpause_transaction_from_transaction_body_protobuf() {
+        let tx = services::TokenUnpauseTransactionBody { token: Some(TEST_TOKEN_ID.to_protobuf()) };
+
+        let tx = TokenUnpauseTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.token_id, Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenUnpauseTransaction::new();
+        tx.token_id(TEST_TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.token_id(TEST_TOKEN_ID);
+    }
+}

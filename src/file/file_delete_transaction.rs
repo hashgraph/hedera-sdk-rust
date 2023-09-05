@@ -133,33 +133,19 @@ mod tests {
     use expect_test::expect;
 
     use crate::transaction::test_helpers::{
+        check_body,
         transaction_body,
-        unused_private_key,
-        VALID_START,
     };
     use crate::{
         AnyTransaction,
         FileDeleteTransaction,
         FileId,
-        Hbar,
-        TransactionId,
     };
 
     fn make_transaction() -> FileDeleteTransaction {
-        let mut tx = FileDeleteTransaction::new();
+        let mut tx = FileDeleteTransaction::new_for_tests();
 
-        tx.node_account_ids(["0.0.5005".parse().unwrap(), "0.0.5006".parse().unwrap()])
-            .transaction_id(TransactionId {
-                account_id: "5006".parse().unwrap(),
-                valid_start: VALID_START,
-                nonce: None,
-                scheduled: false,
-            })
-            .file_id("0.0.6006".parse::<FileId>().unwrap())
-            .max_transaction_fee(Hbar::from_tinybars(100_000))
-            .freeze()
-            .unwrap()
-            .sign(unused_private_key());
+        tx.file_id("0.0.6006".parse::<FileId>().unwrap()).freeze().unwrap();
 
         tx
     }
@@ -170,64 +156,20 @@ mod tests {
 
         let tx = transaction_body(tx);
 
+        let tx = check_body(tx);
+
         expect![[r#"
-            TransactionBody {
-                transaction_id: Some(
-                    TransactionId {
-                        transaction_valid_start: Some(
-                            Timestamp {
-                                seconds: 1554158542,
-                                nanos: 0,
-                            },
-                        ),
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        scheduled: false,
-                        nonce: 0,
-                    },
-                ),
-                node_account_id: Some(
-                    AccountId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        account: Some(
-                            AccountNum(
-                                5005,
-                            ),
-                        ),
-                    },
-                ),
-                transaction_fee: 100000,
-                transaction_valid_duration: Some(
-                    Duration {
-                        seconds: 120,
-                    },
-                ),
-                generate_record: false,
-                memo: "",
-                data: Some(
-                    FileDelete(
-                        FileDeleteTransactionBody {
-                            file_id: Some(
-                                FileId {
-                                    shard_num: 0,
-                                    realm_num: 0,
-                                    file_num: 6006,
-                                },
-                            ),
+            FileDelete(
+                FileDeleteTransactionBody {
+                    file_id: Some(
+                        FileId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            file_num: 6006,
                         },
                     ),
-                ),
-            }
+                },
+            )
         "#]]
         .assert_debug_eq(&tx)
     }
