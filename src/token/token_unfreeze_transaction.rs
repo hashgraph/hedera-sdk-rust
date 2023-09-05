@@ -159,7 +159,13 @@ impl ToProtobuf for TokenUnfreezeTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenUnfreezeTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -171,10 +177,13 @@ mod tests {
         TokenUnfreezeTransaction,
     };
 
+    const TOKEN_ID: TokenId = TokenId::new(6, 5, 4);
+    const ACCOUNT_ID: AccountId = AccountId::new(0, 0, 222);
+
     fn make_transaction() -> TokenUnfreezeTransaction {
         let mut tx = TokenUnfreezeTransaction::new_for_tests();
 
-        tx.token_id(TokenId::new(6, 5, 4)).account_id(AccountId::new(0, 0, 222)).freeze().unwrap();
+        tx.token_id(TOKEN_ID).account_id(ACCOUNT_ID).freeze().unwrap();
 
         tx
     }
@@ -224,5 +233,46 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::TokenUnfreezeAccountTransactionBody {
+            account: Some(ACCOUNT_ID.to_protobuf()),
+            token: Some(TOKEN_ID.to_protobuf()),
+        };
+
+        let data = TokenUnfreezeTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.account_id, Some(ACCOUNT_ID));
+        assert_eq!(data.token_id, Some(TOKEN_ID));
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenUnfreezeTransaction::new();
+        tx.token_id(TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        make_transaction().token_id(TOKEN_ID);
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = TokenUnfreezeTransaction::new();
+        tx.account_id(ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panic() {
+        make_transaction().account_id(ACCOUNT_ID);
     }
 }
