@@ -259,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_dissociate_transaction_from_transaction_body_protobuf() {
+    fn from_proto_body() {
         let tx = services::TokenDissociateTransactionBody {
             account: Some(TEST_ACCOUNT_ID.to_protobuf()),
             tokens: TEST_TOKEN_IDS.iter().map(TokenId::to_protobuf).collect(),
