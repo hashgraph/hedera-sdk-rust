@@ -148,3 +148,132 @@ impl ToProtobuf for AccountDeleteTransactionData {
         services::CryptoDeleteTransactionBody { transfer_account_id, delete_account_id: account_id }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+
+    use crate::account::AccountDeleteTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+    };
+    use crate::{
+        AccountDeleteTransaction,
+        AccountId,
+        AnyTransaction,
+    };
+
+    const ACCOUNT_ID: AccountId = AccountId::new(0, 0, 5007);
+    const TRANSFER_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 9);
+
+    fn make_transaction() -> AccountDeleteTransaction {
+        let mut tx = AccountDeleteTransaction::new_for_tests();
+
+        tx.account_id(ACCOUNT_ID).transfer_account_id(TRANSFER_ACCOUNT_ID).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            CryptoDelete(
+                CryptoDeleteTransactionBody {
+                    transfer_account_id: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    9,
+                                ),
+                            ),
+                        },
+                    ),
+                    delete_account_id: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    5007,
+                                ),
+                            ),
+                        },
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::CryptoDeleteTransactionBody {
+            delete_account_id: Some(ACCOUNT_ID.to_protobuf()),
+            transfer_account_id: Some(TRANSFER_ACCOUNT_ID.to_protobuf()),
+        };
+
+        let tx = AccountDeleteTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.account_id, Some(ACCOUNT_ID));
+        assert_eq!(tx.transfer_account_id, Some(TRANSFER_ACCOUNT_ID));
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = AccountDeleteTransaction::new();
+        tx.account_id(ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.account_id(ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_transfer_account_id() {
+        let mut tx = AccountDeleteTransaction::new();
+        tx.transfer_account_id(TRANSFER_ACCOUNT_ID);
+
+        assert_eq!(tx.get_transfer_account_id(), Some(TRANSFER_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_transfer_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.transfer_account_id(TRANSFER_ACCOUNT_ID);
+    }
+}
