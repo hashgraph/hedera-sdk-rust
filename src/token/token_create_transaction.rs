@@ -581,7 +581,14 @@ mod tests {
     use std::str::FromStr;
 
     use expect_test::expect_file;
+    use hedera_proto::services;
+    use time::OffsetDateTime;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenCreateTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -590,19 +597,36 @@ mod tests {
     };
     use crate::{
         AccountId,
+        AnyCustomFee,
         AnyTransaction,
         FixedFee,
         FixedFeeData,
         Key,
+        PublicKey,
         TokenCreateTransaction,
         TokenId,
         TokenSupplyType,
         TokenType,
     };
 
-    fn make_transaction() -> TokenCreateTransaction {
-        let mut tx = TokenCreateTransaction::new_for_tests();
+    const INITIAL_SUPPLY: u64 = 30;
 
+    fn key() -> PublicKey {
+        unused_private_key().public_key()
+    }
+
+    const AUTO_RENEW_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 123);
+    const MAX_SUPPLY: u64 = 500;
+    const AUTO_RENEW_PERIOD: time::Duration = time::Duration::seconds(100);
+    const DECIMALS: u32 = 3;
+    const FREEZE_DEFAULT: bool = true;
+    const SYMBOL: &str = "K";
+    const EXPIRATION_TIME: OffsetDateTime = VALID_START;
+    const TREASURY_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 456);
+    const NAME: &str = "Flook";
+    const TOKEN_MEMO: &str = "Flook memo";
+
+    fn custom_fees() -> impl IntoIterator<Item = AnyCustomFee> {
         let fee = FixedFee {
             fee: FixedFeeData {
                 amount: 3,
@@ -612,24 +636,30 @@ mod tests {
             all_collectors_are_exempt: false,
         };
 
-        tx.initial_supply(30)
-            .fee_schedule_key(unused_private_key().public_key())
-            .supply_key(unused_private_key().public_key())
-            .admin_key(unused_private_key().public_key())
-            .auto_renew_account_id(AccountId::from_str("0.0.123").unwrap())
-            .auto_renew_period(time::Duration::seconds(100))
+        std::iter::once(fee.into())
+    }
+
+    fn make_transaction() -> TokenCreateTransaction {
+        let mut tx = TokenCreateTransaction::new_for_tests();
+
+        tx.initial_supply(INITIAL_SUPPLY)
+            .fee_schedule_key(key())
+            .supply_key(key())
+            .admin_key(key())
+            .auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
             .decimals(3)
-            .freeze_default(true)
-            .freeze_key(unused_private_key().public_key())
-            .wipe_key(unused_private_key().public_key())
-            .symbol("K")
-            .kyc_key(unused_private_key().public_key())
-            .pause_key(unused_private_key().public_key())
-            .expiration_time(VALID_START)
-            .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
-            .name("Flook")
-            .token_memo("Flook memo")
-            .custom_fees([fee.into()])
+            .freeze_default(FREEZE_DEFAULT)
+            .freeze_key(key())
+            .wipe_key(key())
+            .symbol(SYMBOL)
+            .kyc_key(key())
+            .pause_key(key())
+            .expiration_time(EXPIRATION_TIME)
+            .treasury_account_id(TREASURY_ACCOUNT_ID)
+            .name(NAME)
+            .token_memo(TOKEN_MEMO)
+            .custom_fees(custom_fees())
             .freeze()
             .unwrap();
 
@@ -639,23 +669,23 @@ mod tests {
     fn make_transaction_nft() -> TokenCreateTransaction {
         let mut tx = TokenCreateTransaction::new_for_tests();
 
-        tx.fee_schedule_key(unused_private_key().public_key())
-            .supply_key(unused_private_key().public_key())
-            .max_supply(500)
-            .admin_key(unused_private_key().public_key())
-            .auto_renew_account_id(AccountId::from_str("0.0.123").unwrap())
-            .auto_renew_period(time::Duration::seconds(100))
+        tx.fee_schedule_key(key())
+            .supply_key(key())
+            .max_supply(MAX_SUPPLY)
+            .admin_key(key())
+            .auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
             .token_type(TokenType::NonFungibleUnique)
             .token_supply_type(TokenSupplyType::Finite)
-            .freeze_key(unused_private_key().public_key())
-            .wipe_key(unused_private_key().public_key())
-            .symbol("K")
-            .kyc_key(unused_private_key().public_key())
-            .pause_key(unused_private_key().public_key())
-            .expiration_time(VALID_START)
-            .treasury_account_id(AccountId::from_str("0.0.456").unwrap())
-            .name("Flook")
-            .token_memo("Flook memo")
+            .freeze_key(key())
+            .wipe_key(key())
+            .symbol(SYMBOL)
+            .kyc_key(key())
+            .pause_key(key())
+            .expiration_time(EXPIRATION_TIME)
+            .treasury_account_id(TREASURY_ACCOUNT_ID)
+            .name(NAME)
+            .token_memo(TOKEN_MEMO)
             .freeze()
             .unwrap();
         tx
@@ -694,16 +724,67 @@ mod tests {
     }
 
     #[test]
+    fn from_proto_body() {
+        let tx = services::TokenCreateTransactionBody {
+            name: NAME.to_owned(),
+            symbol: SYMBOL.to_owned(),
+            decimals: DECIMALS as _,
+            initial_supply: INITIAL_SUPPLY as _,
+            treasury: Some(TREASURY_ACCOUNT_ID.to_protobuf()),
+            admin_key: Some(key().to_protobuf()),
+            kyc_key: Some(key().to_protobuf()),
+            freeze_key: Some(key().to_protobuf()),
+            wipe_key: Some(key().to_protobuf()),
+            supply_key: Some(key().to_protobuf()),
+            freeze_default: FREEZE_DEFAULT,
+            expiry: Some(EXPIRATION_TIME.to_protobuf()),
+            auto_renew_account: Some(AUTO_RENEW_ACCOUNT_ID.to_protobuf()),
+            auto_renew_period: Some(AUTO_RENEW_PERIOD.to_protobuf()),
+            memo: TOKEN_MEMO.to_owned(),
+            token_type: services::TokenType::FungibleCommon as _,
+            supply_type: services::TokenSupplyType::Infinite as _,
+            max_supply: 0,
+            fee_schedule_key: Some(key().to_protobuf()),
+            custom_fees: custom_fees().into_iter().map(|it| it.to_protobuf()).collect(),
+            pause_key: Some(key().to_protobuf()),
+        };
+
+        let data = TokenCreateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.name, NAME);
+        assert_eq!(data.symbol, SYMBOL);
+        assert_eq!(data.decimals, DECIMALS);
+        assert_eq!(data.initial_supply, INITIAL_SUPPLY);
+        assert_eq!(data.treasury_account_id, Some(TREASURY_ACCOUNT_ID));
+        assert_eq!(data.admin_key, Some(key().into()));
+        assert_eq!(data.kyc_key, Some(key().into()));
+        assert_eq!(data.freeze_key, Some(key().into()));
+        assert_eq!(data.wipe_key, Some(key().into()));
+        assert_eq!(data.supply_key, Some(key().into()));
+        assert_eq!(data.freeze_default, FREEZE_DEFAULT);
+        assert_eq!(data.expiration_time, Some(EXPIRATION_TIME));
+        assert_eq!(data.auto_renew_account_id, Some(AUTO_RENEW_ACCOUNT_ID));
+        assert_eq!(data.auto_renew_period, Some(AUTO_RENEW_PERIOD));
+        assert_eq!(data.token_memo, TOKEN_MEMO);
+        assert_eq!(data.token_type, TokenType::FungibleCommon);
+        assert_eq!(data.token_supply_type, TokenSupplyType::Infinite);
+        assert_eq!(data.max_supply, 0);
+        assert_eq!(data.fee_schedule_key, Some(key().into()));
+        assert_eq!(data.custom_fees, Vec::from_iter(custom_fees()));
+        assert_eq!(data.pause_key, Some(key().into()));
+    }
+
+    #[test]
     fn properties() {
         let tx = make_transaction();
-        let key = &Key::Single(unused_private_key().public_key());
+        let key = &Key::Single(key());
 
-        assert_eq!(tx.get_name(), "Flook");
-        assert_eq!(tx.get_symbol(), "K");
-        assert_eq!(tx.get_token_memo(), "Flook memo");
-        assert_eq!(tx.get_decimals(), 3);
-        assert_eq!(tx.get_initial_supply(), 30);
-        assert_eq!(tx.get_treasury_account_id(), Some(AccountId::from_str("0.0.456").unwrap()));
+        assert_eq!(tx.get_name(), NAME);
+        assert_eq!(tx.get_symbol(), SYMBOL);
+        assert_eq!(tx.get_token_memo(), TOKEN_MEMO);
+        assert_eq!(tx.get_decimals(), DECIMALS);
+        assert_eq!(tx.get_initial_supply(), INITIAL_SUPPLY);
+        assert_eq!(tx.get_treasury_account_id(), Some(TREASURY_ACCOUNT_ID));
         assert_eq!(tx.get_admin_key(), Some(key));
         assert_eq!(tx.get_kyc_key(), Some(key));
         assert_eq!(tx.get_freeze_key(), Some(key));
@@ -712,11 +793,321 @@ mod tests {
         assert_eq!(tx.get_fee_schedule_key(), Some(key));
         assert_eq!(tx.get_pause_key(), Some(key));
         assert_eq!(tx.get_freeze_default(), true);
-        assert_eq!(tx.get_expiration_time(), Some(VALID_START));
-        assert_eq!(tx.get_auto_renew_account_id(), Some(AccountId::from_str("0.0.123").unwrap()));
+        assert_eq!(tx.get_expiration_time(), Some(EXPIRATION_TIME));
+        assert_eq!(tx.get_auto_renew_account_id(), Some(AUTO_RENEW_ACCOUNT_ID));
         assert_eq!(tx.get_auto_renew_period(), None);
         assert_eq!(tx.get_token_type(), TokenType::FungibleCommon);
         assert_eq!(tx.get_token_supply_type(), TokenSupplyType::Infinite);
         assert_eq!(tx.get_max_supply(), 0);
+    }
+
+    #[test]
+    fn get_set_name() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.name(NAME);
+
+        assert_eq!(tx.get_name(), NAME);
+    }
+    #[test]
+    #[should_panic]
+    fn get_set_name_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.name(NAME);
+    }
+
+    #[test]
+    fn get_set_symbol() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.symbol(SYMBOL);
+
+        assert_eq!(tx.get_symbol(), SYMBOL);
+    }
+    #[test]
+    #[should_panic]
+    fn get_set_symbol_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.symbol(SYMBOL);
+    }
+
+    #[test]
+    fn get_set_decimals() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.decimals(DECIMALS);
+
+        assert_eq!(tx.get_decimals(), DECIMALS);
+    }
+    #[test]
+    #[should_panic]
+    fn get_set_decimals_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.decimals(DECIMALS);
+    }
+
+    #[test]
+    fn get_set_initial_supply() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.initial_supply(INITIAL_SUPPLY);
+
+        assert_eq!(tx.get_initial_supply(), INITIAL_SUPPLY);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_initial_supply_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.initial_supply(INITIAL_SUPPLY);
+    }
+
+    #[test]
+    fn get_set_treasury_account_id() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.treasury_account_id(TREASURY_ACCOUNT_ID);
+
+        assert_eq!(tx.get_treasury_account_id(), Some(TREASURY_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_treasury_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.treasury_account_id(TREASURY_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_admin_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.admin_key(key());
+
+        assert_eq!(tx.get_admin_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_admin_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.admin_key(key());
+    }
+
+    #[test]
+    fn get_set_kyc_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.kyc_key(key());
+
+        assert_eq!(tx.get_kyc_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_kyc_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.kyc_key(key());
+    }
+
+    #[test]
+    fn get_set_freeze_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.freeze_key(key());
+
+        assert_eq!(tx.get_freeze_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_freeze_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.freeze_key(key());
+    }
+
+    #[test]
+    fn get_set_wipe_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.wipe_key(key());
+
+        assert_eq!(tx.get_wipe_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_wipe_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.wipe_key(key());
+    }
+
+    #[test]
+    fn get_set_supply_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.supply_key(key());
+
+        assert_eq!(tx.get_supply_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_supply_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.supply_key(key());
+    }
+
+    #[test]
+    fn get_set_freeze_default() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.freeze_default(FREEZE_DEFAULT);
+
+        assert_eq!(tx.get_freeze_default(), FREEZE_DEFAULT);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_freeze_default_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.freeze_default(FREEZE_DEFAULT);
+    }
+
+    #[test]
+    fn get_set_expiration_time() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.expiration_time(EXPIRATION_TIME);
+
+        assert_eq!(tx.get_expiration_time(), Some(EXPIRATION_TIME));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_expiration_time_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.expiration_time(EXPIRATION_TIME);
+    }
+
+    #[test]
+    fn get_set_auto_renew_account_id() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID);
+
+        assert_eq!(tx.get_auto_renew_account_id(), Some(AUTO_RENEW_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_auto_renew_period() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+
+        assert_eq!(tx.get_auto_renew_period(), Some(AUTO_RENEW_PERIOD));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_period_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+    }
+
+    #[test]
+    fn get_set_token_memo() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.token_memo(TOKEN_MEMO);
+
+        assert_eq!(tx.get_token_memo(), TOKEN_MEMO);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_memo_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.token_memo(TOKEN_MEMO);
+    }
+
+    #[test]
+    fn get_set_token_type() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.token_type(TokenType::NonFungibleUnique);
+
+        assert_eq!(tx.get_token_type(), TokenType::NonFungibleUnique);
+    }
+    #[test]
+    #[should_panic]
+    fn get_set_token_type_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.token_type(TokenType::NonFungibleUnique);
+    }
+
+    #[test]
+    fn get_set_token_supply_type() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.token_supply_type(TokenSupplyType::Finite);
+
+        assert_eq!(tx.get_token_supply_type(), TokenSupplyType::Finite);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_supply_type_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.token_supply_type(TokenSupplyType::Finite);
+    }
+
+    #[test]
+    fn get_set_max_supply() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.max_supply(MAX_SUPPLY);
+
+        assert_eq!(tx.get_max_supply(), MAX_SUPPLY);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_max_supply_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.max_supply(MAX_SUPPLY);
+    }
+
+    #[test]
+    fn get_set_fee_schedule_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.fee_schedule_key(key());
+
+        assert_eq!(tx.get_fee_schedule_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_fee_schedule_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.fee_schedule_key(key());
+    }
+
+    #[test]
+    fn get_set_custom_fees() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.custom_fees(custom_fees());
+
+        assert_eq!(tx.get_custom_fees(), Vec::from_iter(custom_fees()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_custom_fees_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.custom_fees(custom_fees());
+    }
+
+    #[test]
+    fn get_set_pause_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.pause_key(key());
+
+        assert_eq!(tx.get_pause_key(), Some(&key().into()));
+    }
+    #[test]
+    #[should_panic]
+    fn get_set_pause_key_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.pause_key(key());
     }
 }
