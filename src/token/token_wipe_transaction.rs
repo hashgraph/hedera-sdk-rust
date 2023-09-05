@@ -359,7 +359,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_wipe_transaction_from_transaction_body_protobuf() {
+    fn from_proto_body() {
         let tx = services::TokenWipeAccountTransactionBody {
             token: Some(TEST_TOKEN_ID.to_protobuf()),
             account: Some(TEST_ACCOUNT_ID.to_protobuf()),

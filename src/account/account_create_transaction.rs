@@ -323,7 +323,7 @@ impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransa
             key: Option::from_protobuf(pb.key)?,
             initial_balance: Hbar::from_tinybars(pb.initial_balance as i64),
             receiver_signature_required: pb.receiver_sig_required,
-            auto_renew_period: None,
+            auto_renew_period: pb.auto_renew_period.map(Into::into),
             auto_renew_account_id: None,
             account_memo: pb.memo,
             max_automatic_token_associations: pb.max_automatic_token_associations as u16,
@@ -369,5 +369,495 @@ impl ToProtobuf for AccountCreateTransactionData {
             decline_reward: self.decline_staking_reward,
             staked_id,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+    use hedera_proto::services;
+    use hex_literal::hex;
+    use time::Duration;
+
+    use crate::account::AccountCreateTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::staked_id::StakedId;
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+        unused_private_key,
+    };
+    use crate::{
+        AccountCreateTransaction,
+        AccountId,
+        AnyTransaction,
+        EvmAddress,
+        Hbar,
+        PublicKey,
+    };
+
+    fn key() -> PublicKey {
+        unused_private_key().public_key()
+    }
+
+    const INITIAL_BALANCE: Hbar = Hbar::from_tinybars(450);
+    const ACCOUNT_MEMO: &str = "some memo";
+    const RECEIVER_SIGNATURE_REQUIRED: bool = true;
+    const AUTO_RENEW_PERIOD: Duration = Duration::hours(10);
+    const STAKED_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 3);
+    const STAKED_NODE_ID: u64 = 4;
+    const ALIAS: EvmAddress = EvmAddress(hex!("5c562e90feaf0eebd33ea75d21024f249d451417"));
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u16 = 100;
+
+    fn make_transaction() -> AccountCreateTransaction {
+        let mut tx = AccountCreateTransaction::new_for_tests();
+
+        tx.key(key())
+            .initial_balance(INITIAL_BALANCE)
+            .account_memo(ACCOUNT_MEMO)
+            .receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
+            .staked_account_id(STAKED_ACCOUNT_ID)
+            .alias(ALIAS)
+            .max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            .freeze()
+            .unwrap();
+
+        return tx;
+    }
+
+    fn make_transaction2() -> AccountCreateTransaction {
+        let mut tx = AccountCreateTransaction::new_for_tests();
+
+        tx.key(key())
+            .initial_balance(INITIAL_BALANCE)
+            .account_memo(ACCOUNT_MEMO)
+            .receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
+            .staked_node_id(STAKED_NODE_ID)
+            .alias(ALIAS)
+            .max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            .freeze()
+            .unwrap();
+
+        return tx;
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            CryptoCreateAccount(
+                CryptoCreateTransactionBody {
+                    key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    initial_balance: 450,
+                    proxy_account_id: None,
+                    send_record_threshold: 9223372036854775807,
+                    receive_record_threshold: 9223372036854775807,
+                    receiver_sig_required: true,
+                    auto_renew_period: Some(
+                        Duration {
+                            seconds: 36000,
+                        },
+                    ),
+                    shard_id: None,
+                    realm_id: None,
+                    new_realm_admin_key: None,
+                    memo: "some memo",
+                    max_automatic_token_associations: 100,
+                    decline_reward: false,
+                    alias: [
+                        92,
+                        86,
+                        46,
+                        144,
+                        254,
+                        175,
+                        14,
+                        235,
+                        211,
+                        62,
+                        167,
+                        93,
+                        33,
+                        2,
+                        79,
+                        36,
+                        157,
+                        69,
+                        20,
+                        23,
+                    ],
+                    staked_id: Some(
+                        StakedAccountId(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        3,
+                                    ),
+                                ),
+                            },
+                        ),
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn serialize2() {
+        let tx = make_transaction2();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect![[r#"
+            CryptoCreateAccount(
+                CryptoCreateTransactionBody {
+                    key: Some(
+                        Key {
+                            key: Some(
+                                Ed25519(
+                                    [
+                                        224,
+                                        200,
+                                        236,
+                                        39,
+                                        88,
+                                        165,
+                                        135,
+                                        159,
+                                        250,
+                                        194,
+                                        38,
+                                        161,
+                                        60,
+                                        12,
+                                        81,
+                                        107,
+                                        121,
+                                        158,
+                                        114,
+                                        227,
+                                        81,
+                                        65,
+                                        160,
+                                        221,
+                                        130,
+                                        143,
+                                        148,
+                                        211,
+                                        121,
+                                        136,
+                                        164,
+                                        183,
+                                    ],
+                                ),
+                            ),
+                        },
+                    ),
+                    initial_balance: 450,
+                    proxy_account_id: None,
+                    send_record_threshold: 9223372036854775807,
+                    receive_record_threshold: 9223372036854775807,
+                    receiver_sig_required: true,
+                    auto_renew_period: Some(
+                        Duration {
+                            seconds: 36000,
+                        },
+                    ),
+                    shard_id: None,
+                    realm_id: None,
+                    new_realm_admin_key: None,
+                    memo: "some memo",
+                    max_automatic_token_associations: 100,
+                    decline_reward: false,
+                    alias: [
+                        92,
+                        86,
+                        46,
+                        144,
+                        254,
+                        175,
+                        14,
+                        235,
+                        211,
+                        62,
+                        167,
+                        93,
+                        33,
+                        2,
+                        79,
+                        36,
+                        157,
+                        69,
+                        20,
+                        23,
+                    ],
+                    staked_id: Some(
+                        StakedNodeId(
+                            4,
+                        ),
+                    ),
+                },
+            )
+        "#]]
+        .assert_debug_eq(&tx)
+    }
+
+    #[test]
+    fn to_from_bytes2() {
+        let tx = make_transaction2();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        #[allow(deprecated)]
+        let tx = services::CryptoCreateTransactionBody {
+            key: Some(key().to_protobuf()),
+            initial_balance: INITIAL_BALANCE.to_tinybars() as u64,
+            proxy_account_id: None,
+            send_record_threshold: i64::MAX as u64,
+            receive_record_threshold: i64::MAX as u64,
+            receiver_sig_required: RECEIVER_SIGNATURE_REQUIRED,
+            auto_renew_period: Some(AUTO_RENEW_PERIOD.to_protobuf()),
+            shard_id: None,
+            realm_id: None,
+            new_realm_admin_key: None,
+            memo: ACCOUNT_MEMO.to_owned(),
+            max_automatic_token_associations: MAX_AUTOMATIC_TOKEN_ASSOCIATIONS as i32,
+            decline_reward: false,
+            alias: ALIAS.to_bytes().to_vec(),
+            staked_id: Some(services::crypto_create_transaction_body::StakedId::StakedAccountId(
+                STAKED_ACCOUNT_ID.to_protobuf(),
+            )),
+        };
+
+        let tx = AccountCreateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.key, Some(key().into()));
+        assert_eq!(tx.initial_balance, INITIAL_BALANCE);
+        assert_eq!(tx.account_memo, ACCOUNT_MEMO);
+        assert_eq!(tx.receiver_signature_required, RECEIVER_SIGNATURE_REQUIRED);
+        assert_eq!(tx.auto_renew_period, Some(AUTO_RENEW_PERIOD));
+        assert_eq!(tx.staked_id.and_then(StakedId::to_account_id), Some(STAKED_ACCOUNT_ID));
+        assert_eq!(tx.alias, Some(ALIAS));
+        assert_eq!(tx.max_automatic_token_associations, MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+    }
+
+    #[test]
+    fn properties() {
+        let tx = make_transaction();
+
+        assert_eq!(tx.get_key(), Some(&key().into()));
+        assert_eq!(tx.get_initial_balance(), INITIAL_BALANCE);
+        assert_eq!(tx.get_account_memo(), ACCOUNT_MEMO);
+        assert_eq!(tx.get_receiver_signature_required(), RECEIVER_SIGNATURE_REQUIRED);
+        assert_eq!(tx.get_auto_renew_period(), Some(AUTO_RENEW_PERIOD));
+        assert_eq!(tx.get_staked_account_id(), Some(STAKED_ACCOUNT_ID));
+        assert_eq!(tx.get_alias(), Some(ALIAS));
+        assert_eq!(tx.get_max_automatic_token_associations(), MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+    }
+
+    #[test]
+    fn get_set_key() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.key(key());
+
+        assert_eq!(tx.get_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_key_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.key(key());
+    }
+
+    #[test]
+    fn get_set_initial_balance() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.initial_balance(INITIAL_BALANCE);
+
+        assert_eq!(tx.get_initial_balance(), INITIAL_BALANCE);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_initial_balance_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.initial_balance(INITIAL_BALANCE);
+    }
+
+    #[test]
+    fn get_set_account_memo() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.account_memo(ACCOUNT_MEMO);
+
+        assert_eq!(tx.get_account_memo(), ACCOUNT_MEMO);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_memo_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.account_memo(ACCOUNT_MEMO);
+    }
+
+    #[test]
+    fn get_set_receiver_signature_required() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED);
+
+        assert_eq!(tx.get_receiver_signature_required(), RECEIVER_SIGNATURE_REQUIRED);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_receiver_signature_required_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED);
+    }
+
+    #[test]
+    fn get_set_auto_renew_period() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+
+        assert_eq!(tx.get_auto_renew_period(), Some(AUTO_RENEW_PERIOD));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_period_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+    }
+
+    #[test]
+    fn get_set_staked_account_id() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.staked_account_id(STAKED_ACCOUNT_ID);
+
+        assert_eq!(tx.get_staked_account_id(), Some(STAKED_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_staked_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.staked_account_id(STAKED_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_alias() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.alias(ALIAS);
+
+        assert_eq!(tx.get_alias(), Some(ALIAS));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_alias_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.alias(ALIAS);
+    }
+
+    #[test]
+    fn get_set_max_automatic_token_associations() {
+        let mut tx = AccountCreateTransaction::new();
+        tx.max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+
+        assert_eq!(tx.get_max_automatic_token_associations(), MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_max_automatic_token_associations_frozen_panics() {
+        let mut tx = make_transaction();
+
+        tx.max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
     }
 }
