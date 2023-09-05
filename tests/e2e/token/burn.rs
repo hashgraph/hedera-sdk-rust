@@ -12,7 +12,14 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
-use crate::token::Nft;
+use crate::token::{
+    CreateFungibleToken,
+    Key,
+    Nft,
+    TokenKeys,
+};
+
+const KEYS: TokenKeys = TokenKeys { supply: Some(Key::Owner), ..TokenKeys::DEFAULT };
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
@@ -20,7 +27,12 @@ async fn basic() -> anyhow::Result<()> {
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
-    let token = super::FungibleToken::create(&client, &account, 10).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 10, keys: KEYS },
+    )
+    .await?;
 
     let receipt = TokenBurnTransaction::new()
         .amount(10_u64)
@@ -61,7 +73,12 @@ async fn burn_zero() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 0, keys: KEYS },
+    )
+    .await?;
 
     let receipt = TokenBurnTransaction::new()
         .token_id(token.id)
@@ -84,7 +101,12 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 0, keys: KEYS },
+    )
+    .await?;
 
     let res = TokenBurnTransaction::new()
         .token_id(token.id)

@@ -3,13 +3,8 @@ use hedera::{
     Hbar,
     Key,
     Status,
-    TokenCreateTransaction,
     TokenInfoQuery,
     TokenUpdateTransaction,
-};
-use time::{
-    Duration,
-    OffsetDateTime,
 };
 
 use super::FungibleToken;
@@ -18,13 +13,22 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
+use crate::token::{
+    CreateFungibleToken,
+    TokenKeys,
+};
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = FungibleToken::create(&client, &account, 0).await?;
+    let token = FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 0, keys: TokenKeys::ALL_OWNER },
+    )
+    .await?;
 
     TokenUpdateTransaction::new()
         .token_id(token.id)
@@ -48,6 +52,8 @@ async fn basic() -> anyhow::Result<()> {
     assert_eq!(info.wipe_key, Some(Key::Single(account.key.public_key())));
     assert_eq!(info.kyc_key, Some(Key::Single(account.key.public_key())));
     assert_eq!(info.supply_key, Some(Key::Single(account.key.public_key())));
+    assert_eq!(info.pause_key, Some(Key::Single(account.key.public_key())));
+    assert_eq!(info.fee_schedule_key, Some(Key::Single(account.key.public_key())));
     assert_eq!(info.default_freeze_status, Some(false));
     assert_eq!(info.default_kyc_status, Some(false));
 
@@ -64,22 +70,15 @@ async fn immutable_token_fails() -> anyhow::Result<()> {
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .treasury_account_id(account.id)
-        .freeze_default(false)
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    let token = FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken { initial_supply: 0, keys: TokenKeys::NONE },
+    )
+    .await?;
 
     let res = TokenUpdateTransaction::new()
-        .token_id(token_id)
+        .token_id(token.id)
         .token_name("aaaa")
         .token_symbol("A")
         .execute(&client)

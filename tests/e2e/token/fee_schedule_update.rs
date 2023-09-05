@@ -15,13 +15,23 @@ use crate::common::{
     setup_nonfree,
     TestEnvironment,
 };
+use crate::token::{
+    CreateFungibleToken,
+    Key,
+    TokenKeys,
+};
+
+const TOKEN_PARAMS: CreateFungibleToken = CreateFungibleToken {
+    initial_supply: 0,
+    keys: TokenKeys { fee_schedule: Some(Key::Owner), ..TokenKeys::DEFAULT },
+};
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, TOKEN_PARAMS).await?;
 
     let info = TokenInfoQuery::new().token_id(token.id).execute(&client).await?;
 
@@ -72,7 +82,7 @@ async fn invalid_signature_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, TOKEN_PARAMS).await?;
 
     let info = TokenInfoQuery::new().token_id(token.id).execute(&client).await?;
 

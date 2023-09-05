@@ -20,8 +20,10 @@ use crate::common::{
     TestEnvironment,
 };
 use crate::token::{
+    CreateFungibleToken,
     FungibleToken,
     Nft,
+    TokenKeys,
 };
 
 #[tokio::test]
@@ -31,33 +33,30 @@ async fn query_all_different_keys() -> anyhow::Result<()> {
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
-    let key2 = PrivateKey::generate_ed25519();
-    let key3 = PrivateKey::generate_ed25519();
-    let key4 = PrivateKey::generate_ed25519();
-    let key5 = PrivateKey::generate_ed25519();
+    let freeze_key = PrivateKey::generate_ed25519();
+    let wipe_key = PrivateKey::generate_ed25519();
+    let kyc_key = PrivateKey::generate_ed25519();
+    let supply_key = PrivateKey::generate_ed25519();
+    let fee_schedule_key = PrivateKey::generate_ed25519();
+    let pause_key = PrivateKey::generate_ed25519();
 
-    let token_id = TokenCreateTransaction::new()
-        .name("ffff")
-        .symbol("F")
-        .decimals(3)
-        .initial_supply(0)
-        .treasury_account_id(account.id)
-        .admin_key(account.key.public_key())
-        .freeze_key(key2.public_key())
-        .wipe_key(key3.public_key())
-        .kyc_key(key4.public_key())
-        .supply_key(key5.public_key())
-        .freeze_default(false)
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .sign(account.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token = FungibleToken { id: token_id, owner: account.clone() };
+    let token = FungibleToken::create(
+        &client,
+        &account,
+        CreateFungibleToken {
+            initial_supply: 0,
+            keys: TokenKeys {
+                admin: Some(super::Key::Owner),
+                freeze: Some(super::Key::Custom(freeze_key.public_key())),
+                wipe: Some(super::Key::Custom(wipe_key.public_key())),
+                kyc: Some(super::Key::Custom(kyc_key.public_key())),
+                supply: Some(super::Key::Custom(supply_key.public_key())),
+                fee_schedule: Some(super::Key::Custom(fee_schedule_key.public_key())),
+                pause: Some(super::Key::Custom(pause_key.public_key())),
+            },
+        },
+    )
+    .await?;
 
     let info = TokenInfoQuery::new().token_id(token.id).execute(&client).await?;
 
@@ -67,10 +66,12 @@ async fn query_all_different_keys() -> anyhow::Result<()> {
     assert_eq!(info.decimals, 3);
     assert_eq!(info.treasury_account_id, account.id);
     assert_eq!(info.admin_key, Some(Key::Single(account.key.public_key())));
-    assert_eq!(info.freeze_key, Some(Key::Single(key2.public_key())));
-    assert_eq!(info.wipe_key, Some(Key::Single(key3.public_key())));
-    assert_eq!(info.kyc_key, Some(Key::Single(key4.public_key())));
-    assert_eq!(info.supply_key, Some(Key::Single(key5.public_key())));
+    assert_eq!(info.freeze_key, Some(Key::Single(freeze_key.public_key())));
+    assert_eq!(info.wipe_key, Some(Key::Single(wipe_key.public_key())));
+    assert_eq!(info.kyc_key, Some(Key::Single(kyc_key.public_key())));
+    assert_eq!(info.supply_key, Some(Key::Single(supply_key.public_key())));
+    assert_eq!(info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
+    assert_eq!(info.pause_key, Some(Key::Single(pause_key.public_key())));
     assert_eq!(info.default_freeze_status, Some(false));
     assert_eq!(info.default_kyc_status, Some(false));
     assert_eq!(info.token_type, TokenType::FungibleCommon);
@@ -185,7 +186,7 @@ async fn query_cost() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
 
     let mut query = TokenInfoQuery::new();
 
@@ -207,7 +208,7 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
 
     let mut query = TokenInfoQuery::new();
 
@@ -229,7 +230,7 @@ async fn query_cost_small_max_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
 
     let mut query = TokenInfoQuery::new();
 
@@ -263,7 +264,7 @@ async fn query_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
 
     let account = Account::create(Hbar::new(0), &client).await?;
-    let token = super::FungibleToken::create(&client, &account, 0).await?;
+    let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
 
     let res = TokenInfoQuery::new()
         .token_id(token.id)
