@@ -135,7 +135,13 @@ impl ToProtobuf for TokenDeleteTransactionData {
 mod tests {
 
     use expect_test::expect_file;
+    use hedera_proto::services;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenDeleteTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -178,10 +184,12 @@ mod tests {
     }
 
     #[test]
-    fn construct_transaction() {
-        let tx = TokenDeleteTransaction::new();
+    fn from_proto_body() {
+        let tx = services::TokenDeleteTransactionBody { token: Some(TEST_TOKEN_ID.to_protobuf()) };
 
-        assert_eq!(tx.get_token_id(), None);
+        let data = TokenDeleteTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.token_id, Some(TEST_TOKEN_ID));
     }
 
     #[test]
@@ -191,5 +199,13 @@ mod tests {
         let tx2 = tx.token_id(TEST_TOKEN_ID);
 
         assert_eq!(tx2.get_token_id(), Some(TEST_TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        let mut tx = make_transaction();
+
+        tx.token_id(TEST_TOKEN_ID);
     }
 }
