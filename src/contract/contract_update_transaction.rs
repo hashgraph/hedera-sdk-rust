@@ -20,32 +20,18 @@
 
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use time::{
-    Duration,
-    OffsetDateTime,
-};
+use time::{Duration, OffsetDateTime};
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
-    AnyTransactionData,
-    ChunkInfo,
-    ToSchedulableTransactionDataProtobuf,
-    ToTransactionDataProtobuf,
-    TransactionData,
-    TransactionExecute,
+    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
+    TransactionData, TransactionExecute,
 };
 use crate::{
-    AccountId,
-    BoxGrpcFuture,
-    ContractId,
-    Error,
-    Key,
-    ToProtobuf,
-    Transaction,
-    ValidateChecksums,
+    AccountId, BoxGrpcFuture, ContractId, Error, Key, ToProtobuf, Transaction, ValidateChecksums,
 };
 
 /// Updates the fields of a smart contract to the given values.
@@ -335,33 +321,45 @@ impl From<ContractUpdateTransactionData> for AnyTransactionData {
 mod tests {
 
     use expect_test::expect;
-    use time::{
-        Duration,
-        OffsetDateTime,
-    };
+    use hedera_proto::services;
+    use time::{Duration, OffsetDateTime};
 
-    use crate::transaction::test_helpers::{
-        check_body,
-        transaction_body,
-        unused_private_key,
-    };
-    use crate::{
-        AnyTransaction,
-        ContractUpdateTransaction,
-    };
+    use crate::contract::ContractUpdateTransactionData;
+    use crate::protobuf::{FromProtobuf, ToProtobuf};
+    use crate::transaction::test_helpers::{check_body, transaction_body, unused_private_key};
+    use crate::{AccountId, AnyTransaction, ContractId, ContractUpdateTransaction, PublicKey};
+
+    fn admin_key() -> PublicKey {
+        unused_private_key().public_key()
+    }
+
+    const CONTRACT_ID: ContractId = ContractId::new(0, 0, 5007);
+
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u32 = 101;
+    const AUTO_RENEW_PERIOD: Duration = Duration::days(1);
+    const CONTRACT_MEMO: &str = "3";
+    const EXPIRATION_TIME: OffsetDateTime =
+        match OffsetDateTime::from_unix_timestamp_nanos(4_000_000) {
+            Ok(it) => it,
+            Err(_) => panic!("Panic in `const` unwrap"),
+        };
+    const PROXY_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 4);
+    const AUTO_RENEW_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 30);
+    const STAKED_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 3);
+    const STAKED_NODE_ID: u64 = 4;
 
     fn make_transaction() -> ContractUpdateTransaction {
         let mut tx = ContractUpdateTransaction::new_for_tests();
 
-        tx.contract_id(("0.0.5007").parse().unwrap())
-            .admin_key(unused_private_key().public_key())
-            .max_automatic_token_associations(101)
-            .auto_renew_period(Duration::days(1))
-            .contract_memo("3")
-            .staked_account_id("0.0.3".parse().unwrap())
-            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(4_000_000).unwrap())
-            .proxy_account_id("0.0.4".parse().unwrap())
-            .auto_renew_account_id("0.0.30".parse().unwrap())
+        tx.contract_id(CONTRACT_ID)
+            .admin_key(admin_key())
+            .max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
+            .contract_memo(CONTRACT_MEMO)
+            .expiration_time(EXPIRATION_TIME)
+            .proxy_account_id(PROXY_ACCOUNT_ID)
+            .auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID)
+            .staked_account_id(STAKED_ACCOUNT_ID)
             .freeze()
             .unwrap();
 
@@ -371,15 +369,15 @@ mod tests {
     fn make_transaction2() -> ContractUpdateTransaction {
         let mut tx = ContractUpdateTransaction::new_for_tests();
 
-        tx.contract_id(("0.0.5007").parse().unwrap())
-            .admin_key(unused_private_key().public_key())
-            .max_automatic_token_associations(101)
-            .auto_renew_period(Duration::days(1))
-            .contract_memo("3")
-            .staked_node_id(4)
-            .expiration_time(OffsetDateTime::from_unix_timestamp_nanos(4_000_000).unwrap())
-            .proxy_account_id("0.0.4".parse().unwrap())
-            .auto_renew_account_id("0.0.30".parse().unwrap())
+        tx.contract_id(CONTRACT_ID)
+            .admin_key(admin_key())
+            .max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
+            .contract_memo(CONTRACT_MEMO)
+            .expiration_time(EXPIRATION_TIME)
+            .proxy_account_id(PROXY_ACCOUNT_ID)
+            .auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID)
+            .staked_node_id(STAKED_NODE_ID)
             .freeze()
             .unwrap();
 
@@ -654,5 +652,186 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        #[allow(deprecated)]
+        let tx = services::ContractUpdateTransactionBody {
+            contract_id: Some(CONTRACT_ID.to_protobuf()),
+            expiration_time: Some(EXPIRATION_TIME.to_protobuf()),
+            admin_key: Some(admin_key().to_protobuf()),
+            proxy_account_id: Some(PROXY_ACCOUNT_ID.to_protobuf()),
+            auto_renew_period: Some(AUTO_RENEW_PERIOD.to_protobuf()),
+            max_automatic_token_associations: Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS as _),
+            auto_renew_account_id: Some(AUTO_RENEW_ACCOUNT_ID.to_protobuf()),
+            decline_reward: None,
+            memo_field: Some(services::contract_update_transaction_body::MemoField::MemoWrapper(
+                CONTRACT_MEMO.to_owned(),
+            )),
+            staked_id: Some(services::contract_update_transaction_body::StakedId::StakedAccountId(
+                STAKED_ACCOUNT_ID.to_protobuf(),
+            )),
+            file_id: None,
+        };
+
+        let tx = ContractUpdateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.contract_id, Some(CONTRACT_ID));
+        assert_eq!(tx.admin_key, Some(admin_key().into()));
+        assert_eq!(tx.max_automatic_token_associations, Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS));
+        assert_eq!(tx.auto_renew_period, Some(AUTO_RENEW_PERIOD));
+        assert_eq!(tx.contract_memo, Some(CONTRACT_MEMO.to_owned()));
+        assert_eq!(tx.expiration_time, Some(EXPIRATION_TIME));
+        assert_eq!(tx.proxy_account_id, Some(PROXY_ACCOUNT_ID));
+        assert_eq!(tx.auto_renew_account_id, Some(AUTO_RENEW_ACCOUNT_ID));
+        assert_eq!(tx.staked_id, Some(crate::staked_id::StakedId::AccountId(STAKED_ACCOUNT_ID)));
+    }
+
+    mod get_set {
+        use super::*;
+
+        #[test]
+        fn contract_id() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.contract_id(CONTRACT_ID);
+
+            assert_eq!(tx.get_contract_id(), Some(CONTRACT_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn contract_id_frozen_panics() {
+            make_transaction().contract_id(CONTRACT_ID);
+        }
+
+        #[test]
+        fn admin_key() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.admin_key(super::admin_key());
+
+            assert_eq!(tx.get_admin_key(), Some(&super::admin_key().into()));
+        }
+
+        #[test]
+        #[should_panic]
+        fn admin_key_frozen_panics() {
+            make_transaction().admin_key(super::admin_key());
+        }
+
+        #[test]
+        fn max_automatic_token_associations() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+
+            assert_eq!(
+                tx.get_max_automatic_token_associations(),
+                Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            );
+        }
+
+        #[test]
+        #[should_panic]
+        fn max_automatic_token_associations_frozen_panics() {
+            make_transaction().max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+        }
+
+        #[test]
+        fn auto_renew_period() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.auto_renew_period(AUTO_RENEW_PERIOD);
+
+            assert_eq!(tx.get_auto_renew_period(), Some(AUTO_RENEW_PERIOD));
+        }
+
+        #[test]
+        #[should_panic]
+        fn auto_renew_period_frozen_panics() {
+            make_transaction().auto_renew_period(AUTO_RENEW_PERIOD);
+        }
+
+        #[test]
+        fn contract_memo() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.contract_memo(CONTRACT_MEMO);
+
+            assert_eq!(tx.get_contract_memo(), Some(CONTRACT_MEMO));
+        }
+
+        #[test]
+        #[should_panic]
+        fn contract_memo_frozen_panics() {
+            make_transaction().contract_memo(CONTRACT_MEMO);
+        }
+
+        #[test]
+        fn expiration_time() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.expiration_time(EXPIRATION_TIME);
+
+            assert_eq!(tx.get_expiration_time(), Some(EXPIRATION_TIME));
+        }
+
+        #[test]
+        #[should_panic]
+        fn expiration_time_frozen_panics() {
+            make_transaction().expiration_time(EXPIRATION_TIME);
+        }
+
+        #[test]
+        fn proxy_account_id() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.proxy_account_id(PROXY_ACCOUNT_ID);
+
+            assert_eq!(tx.get_proxy_account_id(), Some(PROXY_ACCOUNT_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn proxy_account_id_frozen_panics() {
+            make_transaction().proxy_account_id(PROXY_ACCOUNT_ID);
+        }
+
+        #[test]
+        fn auto_renew_account_id() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID);
+
+            assert_eq!(tx.get_auto_renew_account_id(), Some(AUTO_RENEW_ACCOUNT_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn auto_renew_account_id_frozen_panics() {
+            make_transaction().auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID);
+        }
+
+        #[test]
+        fn staked_account_id() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.staked_account_id(STAKED_ACCOUNT_ID);
+
+            assert_eq!(tx.get_staked_account_id(), Some(STAKED_ACCOUNT_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn staked_account_id_frozen_panics() {
+            make_transaction().staked_account_id(STAKED_ACCOUNT_ID);
+        }
+
+        #[test]
+        fn staked_node_id() {
+            let mut tx = ContractUpdateTransaction::new();
+            tx.staked_node_id(STAKED_NODE_ID);
+
+            assert_eq!(tx.get_staked_node_id(), Some(STAKED_NODE_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn staked_node_id_frozen_panics() {
+            make_transaction().staked_node_id(STAKED_NODE_ID);
+        }
     }
 }
