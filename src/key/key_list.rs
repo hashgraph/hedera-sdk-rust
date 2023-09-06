@@ -79,7 +79,7 @@ impl ToProtobuf for KeyList {
 
 impl FromIterator<Key> for KeyList {
     fn from_iter<T: IntoIterator<Item = Key>>(iter: T) -> Self {
-        Self { keys: iter.into_iter().collect(), threshold: None }
+        Self { keys: Vec::from_iter(iter), threshold: None }
     }
 }
 
