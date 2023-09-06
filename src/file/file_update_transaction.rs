@@ -259,8 +259,14 @@ impl ToProtobuf for FileUpdateTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
     use time::OffsetDateTime;
 
+    use crate::file::FileUpdateTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -270,15 +276,33 @@ mod tests {
         AnyTransaction,
         FileId,
         FileUpdateTransaction,
+        Key,
+        KeyList,
     };
+
+    const FILE_ID: FileId = FileId::new(0, 0, 6006);
+
+    const CONTENTS: [u8; 5] = [1, 2, 3, 4, 5];
+
+    const EXPIRATION_TIME: OffsetDateTime = match OffsetDateTime::from_unix_timestamp(1554158728) {
+        Ok(it) => it,
+        Err(_) => panic!("Panic in `const` unwrap"),
+    };
+
+    fn keys() -> impl IntoIterator<Item = Key> {
+        [unused_private_key().public_key().into()]
+    }
+
+    const FILE_MEMO: &str = "new memo";
 
     fn make_transaction() -> FileUpdateTransaction {
         let mut tx = FileUpdateTransaction::new_for_tests();
 
-        tx.file_id("0.0.6006".parse::<FileId>().unwrap())
-            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158728).unwrap())
-            .contents(Vec::from([1, 2, 3, 4, 5]))
-            .keys([unused_private_key().public_key()])
+        tx.file_id(FILE_ID)
+            .expiration_time(EXPIRATION_TIME)
+            .contents(CONTENTS.into())
+            .keys(keys())
+            .file_memo(FILE_MEMO)
             .freeze()
             .unwrap();
 
@@ -362,7 +386,9 @@ mod tests {
                         4,
                         5,
                     ],
-                    memo: None,
+                    memo: Some(
+                        "new memo",
+                    ),
                 },
             )
         "#]]
@@ -380,5 +406,83 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::FileUpdateTransactionBody {
+            file_id: Some(FILE_ID.to_protobuf()),
+            expiration_time: Some(EXPIRATION_TIME.to_protobuf()),
+            keys: Some(KeyList::from_iter(keys()).to_protobuf()),
+            contents: CONTENTS.into(),
+            memo: Some(FILE_MEMO.to_owned()),
+        };
+
+        let tx = FileUpdateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.contents.as_deref(), Some(CONTENTS.as_slice()));
+        assert_eq!(tx.expiration_time, Some(EXPIRATION_TIME));
+        assert_eq!(tx.keys, Some(KeyList::from_iter(keys())));
+        assert_eq!(tx.file_memo.as_deref(), Some(FILE_MEMO));
+    }
+
+    mod get_set {
+        use super::*;
+
+        #[test]
+        fn contents() {
+            let mut tx = FileUpdateTransaction::new();
+            tx.contents(CONTENTS.into());
+
+            assert_eq!(tx.get_contents(), Some(CONTENTS.as_slice()));
+        }
+
+        #[test]
+        #[should_panic]
+        fn contents_frozen_panics() {
+            make_transaction().contents(CONTENTS.into());
+        }
+
+        #[test]
+        fn expiration_time() {
+            let mut tx = FileUpdateTransaction::new();
+            tx.expiration_time(EXPIRATION_TIME);
+
+            assert_eq!(tx.get_expiration_time(), Some(EXPIRATION_TIME));
+        }
+
+        #[test]
+        #[should_panic]
+        fn expiration_time_frozen_panics() {
+            make_transaction().expiration_time(EXPIRATION_TIME);
+        }
+
+        #[test]
+        fn keys() {
+            let mut tx = FileUpdateTransaction::new();
+            tx.keys(super::keys());
+
+            assert_eq!(tx.get_keys(), Some(&KeyList::from_iter(super::keys())));
+        }
+
+        #[test]
+        #[should_panic]
+        fn keys_frozen_panics() {
+            make_transaction().keys(super::keys());
+        }
+
+        #[test]
+        fn file_memo() {
+            let mut tx = FileUpdateTransaction::new();
+            tx.file_memo(FILE_MEMO);
+
+            assert_eq!(tx.get_file_memo(), Some(FILE_MEMO));
+        }
+
+        #[test]
+        #[should_panic]
+        fn file_memo_frozen_panics() {
+            make_transaction().file_memo(FILE_MEMO);
+        }
     }
 }
