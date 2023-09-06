@@ -243,35 +243,55 @@ impl FromProtobuf<services::ScheduleCreateTransactionBody> for ScheduleCreateTra
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
+    use time::OffsetDateTime;
 
+    use super::ScheduleCreateTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
         unused_private_key,
         VALID_START,
     };
+    use crate::transaction::ToSchedulableTransactionDataProtobuf;
     use crate::{
+        AccountId,
         AnyTransaction,
         Hbar,
+        PublicKey,
         ScheduleCreateTransaction,
         TransferTransaction,
     };
 
+    fn scheduled_transaction() -> TransferTransaction {
+        let mut tx = TransferTransaction::new();
+        tx.hbar_transfer("0.0.555".parse().unwrap(), -Hbar::new(10))
+            .hbar_transfer("0.0.666".parse().unwrap(), Hbar::new(10));
+        tx
+    }
+
+    fn admin_key() -> PublicKey {
+        unused_private_key().public_key()
+    }
+
+    const PAYER_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 222);
+    const SCHEDULE_MEMO: &str = "hi";
+    const EXPIRATION_TIME: OffsetDateTime = VALID_START;
+
     fn make_transaction() -> ScheduleCreateTransaction {
         let mut tx = ScheduleCreateTransaction::new_for_tests();
 
-        tx.scheduled_transaction({
-            let mut tx = TransferTransaction::new();
-            tx.hbar_transfer("0.0.555".parse().unwrap(), -Hbar::new(10))
-                .hbar_transfer("0.0.666".parse().unwrap(), Hbar::new(10));
-            tx
-        })
-        .admin_key(unused_private_key().public_key())
-        .payer_account_id("0.0.222".parse().unwrap())
-        .schedule_memo("hi")
-        .expiration_time(VALID_START)
-        .freeze()
-        .unwrap();
+        tx.scheduled_transaction(scheduled_transaction())
+            .admin_key(admin_key())
+            .payer_account_id(PAYER_ACCOUNT_ID)
+            .schedule_memo(SCHEDULE_MEMO)
+            .expiration_time(EXPIRATION_TIME)
+            .freeze()
+            .unwrap();
 
         tx
     }
@@ -414,5 +434,117 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::ScheduleCreateTransactionBody {
+            scheduled_transaction_body: Some(services::SchedulableTransactionBody {
+                transaction_fee: Hbar::new(2).to_tinybars() as _,
+                memo: String::new(),
+                data: Some(
+                    scheduled_transaction().data().to_schedulable_transaction_data_protobuf(),
+                ),
+            }),
+            memo: SCHEDULE_MEMO.to_owned(),
+            admin_key: Some(admin_key().to_protobuf()),
+            payer_account_id: Some(PAYER_ACCOUNT_ID.to_protobuf()),
+            expiration_time: Some(EXPIRATION_TIME.to_protobuf()),
+            wait_for_expiry: false,
+        };
+
+        let tx = ScheduleCreateTransactionData::from_protobuf(tx).unwrap();
+
+        expect![[r#"
+            SchedulableTransactionBody {
+                data: Transfer(
+                    TransferTransactionData {
+                        transfers: [
+                            Transfer {
+                                account_id: "0.0.555",
+                                amount: -1000000000,
+                                is_approval: false,
+                            },
+                            Transfer {
+                                account_id: "0.0.666",
+                                amount: 1000000000,
+                                is_approval: false,
+                            },
+                        ],
+                        token_transfers: [],
+                    },
+                ),
+                max_transaction_fee: Some(
+                    "2 ℏ",
+                ),
+                transaction_memo: "",
+            }
+        "#]]
+        .assert_debug_eq(&tx.scheduled_transaction.unwrap());
+
+        assert_eq!(tx.schedule_memo.as_deref(), Some(SCHEDULE_MEMO));
+        assert_eq!(tx.admin_key, Some(admin_key().into()));
+        assert_eq!(tx.payer_account_id, Some(PAYER_ACCOUNT_ID));
+        assert_eq!(tx.expiration_time, Some(EXPIRATION_TIME));
+        assert_eq!(tx.wait_for_expiry, false);
+    }
+
+    mod get_set {
+        use super::*;
+        #[test]
+        fn admin_key() {
+            let mut tx = ScheduleCreateTransaction::new();
+            tx.admin_key(super::admin_key());
+
+            assert_eq!(tx.get_admin_key(), Some(&super::admin_key().into()));
+        }
+
+        #[test]
+        #[should_panic]
+        fn zen_panics() {
+            make_transaction().admin_key(super::admin_key());
+        }
+
+        #[test]
+        fn payer_account_id() {
+            let mut tx = ScheduleCreateTransaction::new();
+            tx.payer_account_id(PAYER_ACCOUNT_ID);
+
+            assert_eq!(tx.get_payer_account_id(), Some(PAYER_ACCOUNT_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn payer_account_id_frozen_panics() {
+            make_transaction().payer_account_id(PAYER_ACCOUNT_ID);
+        }
+
+        #[test]
+        fn expiration_time() {
+            let mut tx = ScheduleCreateTransaction::new();
+            tx.expiration_time(EXPIRATION_TIME);
+
+            assert_eq!(tx.get_expiration_time(), Some(EXPIRATION_TIME));
+        }
+
+        #[test]
+        #[should_panic]
+        fn expiration_time_frozen_panics() {
+            make_transaction().expiration_time(EXPIRATION_TIME);
+        }
+
+        #[test]
+        fn wait_for_expiry() {
+            let mut tx = ScheduleCreateTransaction::new();
+            tx.wait_for_expiry(true);
+
+            assert_eq!(tx.get_wait_for_expiry(), true);
+        }
+
+        #[test]
+        #[should_panic]
+        fn wait_for_expiry_frozen_panics() {
+            make_transaction().wait_for_expiry(true);
+        }
     }
 }
