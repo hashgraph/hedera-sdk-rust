@@ -20,18 +20,32 @@
 
 use hedera_proto::services;
 use hedera_proto::services::smart_contract_service_client::SmartContractServiceClient;
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
 use crate::protobuf::FromProtobuf;
 use crate::staked_id::StakedId;
 use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
 };
 use crate::{
-    AccountId, BoxGrpcFuture, ContractId, Error, Key, ToProtobuf, Transaction, ValidateChecksums,
+    AccountId,
+    BoxGrpcFuture,
+    ContractId,
+    Error,
+    Key,
+    ToProtobuf,
+    Transaction,
+    ValidateChecksums,
 };
 
 /// Updates the fields of a smart contract to the given values.
@@ -322,12 +336,28 @@ mod tests {
 
     use expect_test::expect;
     use hedera_proto::services;
-    use time::{Duration, OffsetDateTime};
+    use time::{
+        Duration,
+        OffsetDateTime,
+    };
 
     use crate::contract::ContractUpdateTransactionData;
-    use crate::protobuf::{FromProtobuf, ToProtobuf};
-    use crate::transaction::test_helpers::{check_body, transaction_body, unused_private_key};
-    use crate::{AccountId, AnyTransaction, ContractId, ContractUpdateTransaction, PublicKey};
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+        unused_private_key,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        ContractId,
+        ContractUpdateTransaction,
+        PublicKey,
+    };
 
     fn admin_key() -> PublicKey {
         unused_private_key().public_key()

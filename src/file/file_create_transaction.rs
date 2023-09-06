@@ -20,17 +20,33 @@
 
 use hedera_proto::services;
 use hedera_proto::services::file_service_client::FileServiceClient;
-use time::{Duration, OffsetDateTime};
+use time::{
+    Duration,
+    OffsetDateTime,
+};
 use tonic::transport::Channel;
 
 use crate::entity_id::ValidateChecksums;
 use crate::ledger_id::RefLedgerId;
-use crate::protobuf::{FromProtobuf, ToProtobuf};
-use crate::transaction::{
-    AnyTransactionData, ChunkInfo, ToSchedulableTransactionDataProtobuf, ToTransactionDataProtobuf,
-    TransactionData, TransactionExecute,
+use crate::protobuf::{
+    FromProtobuf,
+    ToProtobuf,
 };
-use crate::{AccountId, BoxGrpcFuture, Key, KeyList, Transaction};
+use crate::transaction::{
+    AnyTransactionData,
+    ChunkInfo,
+    ToSchedulableTransactionDataProtobuf,
+    ToTransactionDataProtobuf,
+    TransactionData,
+    TransactionExecute,
+};
+use crate::{
+    AccountId,
+    BoxGrpcFuture,
+    Key,
+    KeyList,
+    Transaction,
+};
 
 /// Create a new file, containing the given contents.
 pub type FileCreateTransaction = Transaction<FileCreateTransactionData>;
@@ -248,9 +264,21 @@ mod tests {
     use time::OffsetDateTime;
 
     use crate::file::FileCreateTransactionData;
-    use crate::protobuf::{FromProtobuf, ToProtobuf};
-    use crate::transaction::test_helpers::{check_body, transaction_body, unused_private_key};
-    use crate::{AnyTransaction, FileCreateTransaction, Key, KeyList};
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+        unused_private_key,
+    };
+    use crate::{
+        AnyTransaction,
+        FileCreateTransaction,
+        Key,
+        KeyList,
+    };
 
     const CONTENTS: [u8; 4] = hex!("deadbeef");
 
@@ -392,6 +420,7 @@ mod tests {
 
     mod get_set {
         use super::*;
+
         #[test]
         fn contents() {
             let mut tx = FileCreateTransaction::new();
