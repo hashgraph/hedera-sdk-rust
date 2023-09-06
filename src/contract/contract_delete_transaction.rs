@@ -192,22 +192,34 @@ impl ToProtobuf for ContractDeleteTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::contract::ContractDeleteTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
     };
     use crate::{
+        AccountId,
         AnyTransaction,
         ContractDeleteTransaction,
+        ContractId,
     };
+
+    const CONTRACT_ID: ContractId = ContractId::new(0, 0, 5007);
+    const TRANSFER_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 9);
+    const TRANSFER_CONTRACT_ID: ContractId = ContractId::new(0, 0, 5008);
 
     fn make_transaction() -> ContractDeleteTransaction {
         let mut tx = ContractDeleteTransaction::new_for_tests();
 
-        tx.contract_id("0.0.5007".parse().unwrap())
-            .transfer_account_id("0.0.9".parse().unwrap())
-            .transfer_contract_id("0.0.5008".parse().unwrap())
+        tx.contract_id(CONTRACT_ID)
+            .transfer_account_id(TRANSFER_ACCOUNT_ID)
+            .transfer_contract_id(TRANSFER_CONTRACT_ID)
             .freeze()
             .unwrap();
 
@@ -255,5 +267,66 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::ContractDeleteTransactionBody {
+            contract_id: Some(CONTRACT_ID.to_protobuf()),
+            obtainers: Some(
+                services::contract_delete_transaction_body::Obtainers::TransferAccountId(
+                    TRANSFER_ACCOUNT_ID.to_protobuf(),
+                ),
+            ),
+            permanent_removal: false,
+        };
+
+        let tx = ContractDeleteTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.contract_id, Some(CONTRACT_ID));
+        assert_eq!(tx.transfer_account_id, Some(TRANSFER_ACCOUNT_ID));
+        assert_eq!(tx.transfer_contract_id, None);
+    }
+
+    #[test]
+    fn get_set_contract_id() {
+        let mut tx = ContractDeleteTransaction::new();
+        tx.contract_id(CONTRACT_ID);
+
+        assert_eq!(tx.get_contract_id(), Some(CONTRACT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_contract_id_frozen_panics() {
+        make_transaction().contract_id(CONTRACT_ID);
+    }
+
+    #[test]
+    fn get_set_transfer_account_id() {
+        let mut tx = ContractDeleteTransaction::new();
+        tx.transfer_account_id(TRANSFER_ACCOUNT_ID);
+
+        assert_eq!(tx.get_transfer_account_id(), Some(TRANSFER_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_transfer_account_id_frozen_panics() {
+        make_transaction().transfer_account_id(TRANSFER_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_transfer_contract_id() {
+        let mut tx = ContractDeleteTransaction::new();
+        tx.transfer_contract_id(TRANSFER_CONTRACT_ID);
+
+        assert_eq!(tx.get_transfer_contract_id(), Some(TRANSFER_CONTRACT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_transfer_contract_id_frozen_panics() {
+        make_transaction().transfer_contract_id(TRANSFER_CONTRACT_ID);
     }
 }
