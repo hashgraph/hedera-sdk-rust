@@ -172,7 +172,13 @@ impl ToProtobuf for SystemUndeleteTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::system::SystemUndeleteTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -184,17 +190,20 @@ mod tests {
         SystemUndeleteTransaction,
     };
 
+    const FILE_ID: FileId = FileId::new(0, 0, 444);
+    const CONTRACT_ID: ContractId = ContractId::new(0, 0, 444);
+
     fn make_transaction_file() -> SystemUndeleteTransaction {
         let mut tx = SystemUndeleteTransaction::new_for_tests();
 
-        tx.file_id("0.0.444".parse::<FileId>().unwrap()).freeze().unwrap();
+        tx.file_id(FILE_ID).freeze().unwrap();
         tx
     }
 
     fn make_transaction_contract() -> SystemUndeleteTransaction {
         let mut tx = SystemUndeleteTransaction::new_for_tests();
 
-        tx.contract_id("0.0.444".parse::<ContractId>().unwrap()).freeze().unwrap();
+        tx.contract_id(CONTRACT_ID).freeze().unwrap();
         tx
     }
 
@@ -278,5 +287,45 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::SystemUndeleteTransactionBody {
+            id: Some(services::system_undelete_transaction_body::Id::FileId(FILE_ID.to_protobuf())),
+        };
+
+        let tx = SystemUndeleteTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.file_id, Some(FILE_ID));
+        assert_eq!(tx.contract_id, None);
+    }
+
+    #[test]
+    fn get_set_file_id() {
+        let mut tx = SystemUndeleteTransaction::new();
+        tx.file_id(FILE_ID);
+
+        assert_eq!(tx.get_file_id(), Some(FILE_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_file_id_frozen_panics() {
+        make_transaction_file().file_id(FILE_ID);
+    }
+
+    #[test]
+    fn get_set_contract_id() {
+        let mut tx = SystemUndeleteTransaction::new();
+        tx.contract_id(CONTRACT_ID);
+
+        assert_eq!(tx.get_contract_id(), Some(CONTRACT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_contract_id_frozen_panics() {
+        make_transaction_file().contract_id(CONTRACT_ID);
     }
 }
