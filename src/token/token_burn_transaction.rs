@@ -185,7 +185,13 @@ impl ToProtobuf for TokenBurnTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect_file;
+    use hedera_proto::services;
 
+    use super::TokenBurnTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -258,31 +264,42 @@ mod tests {
     }
 
     #[test]
+    fn from_proto_body() {
+        let tx = services::TokenBurnTransactionBody {
+            token: Some(TEST_TOKEN_ID.to_protobuf()),
+            amount: 6,
+            serial_numbers: Vec::new(),
+        };
+
+        let tx = TokenBurnTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.token_id, Some(TEST_TOKEN_ID));
+        assert_eq!(tx.amount, 6);
+    }
+
+    #[test]
     fn get_set_token_id() {
         let mut tx = TokenBurnTransaction::new();
+        tx.token_id(TEST_TOKEN_ID);
 
-        let tx2 = tx.token_id(TEST_TOKEN_ID);
-
-        assert_eq!(tx2.get_token_id(), Some(TEST_TOKEN_ID));
+        assert_eq!(tx.get_token_id(), Some(TEST_TOKEN_ID));
     }
 
     #[test]
     fn get_set_amount() {
         let mut tx = TokenBurnTransaction::new();
+        tx.amount(23_u64);
 
-        let tx2 = tx.amount(23 as u64);
-
-        assert_eq!(tx2.get_amount(), 23);
+        assert_eq!(tx.get_amount(), 23);
     }
 
     #[test]
     fn get_set_serial() {
-        let serials = vec![1, 2, 64];
+        let serials = [1, 2, 64];
 
         let mut tx = TokenBurnTransaction::new();
+        tx.serials(Vec::from(serials));
 
-        let tx2 = tx.serials(serials.to_owned());
-
-        assert_eq!(tx2.get_serials(), serials);
+        assert_eq!(tx.get_serials(), serials);
     }
 }
