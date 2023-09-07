@@ -227,25 +227,40 @@ impl ToProtobuf for TopicCreateTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
     use time::Duration;
 
+    use super::TopicCreateTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
         unused_private_key,
     };
     use crate::{
+        AccountId,
         AnyTransaction,
+        PublicKey,
         TopicCreateTransaction,
     };
+
+    fn key() -> PublicKey {
+        unused_private_key().public_key()
+    }
+
+    const AUTO_RENEW_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 5007);
+    const AUTO_RENEW_PERIOD: Duration = Duration::days(1);
 
     fn make_transaction() -> TopicCreateTransaction {
         let mut tx = TopicCreateTransaction::new_for_tests();
 
-        tx.submit_key(unused_private_key().public_key())
-            .admin_key(unused_private_key().public_key())
-            .auto_renew_account_id("0.0.5007".parse().unwrap())
-            .auto_renew_period(Duration::days(1))
+        tx.submit_key(key())
+            .admin_key(key())
+            .auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
             .freeze()
             .unwrap();
 
@@ -381,5 +396,79 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::ConsensusCreateTopicTransactionBody {
+            memo: String::new(),
+            admin_key: Some(key().to_protobuf()),
+            submit_key: Some(key().to_protobuf()),
+            auto_renew_period: Some(AUTO_RENEW_PERIOD.to_protobuf()),
+            auto_renew_account: Some(AUTO_RENEW_ACCOUNT_ID.to_protobuf()),
+        };
+
+        let tx = TopicCreateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.admin_key, Some(key().into()));
+        assert_eq!(tx.submit_key, Some(key().into()));
+        assert_eq!(tx.auto_renew_period, Some(AUTO_RENEW_PERIOD));
+        assert_eq!(tx.auto_renew_account_id, Some(AUTO_RENEW_ACCOUNT_ID));
+    }
+
+    #[test]
+    fn get_set_admin_key() {
+        let mut tx = TopicCreateTransaction::new();
+        tx.admin_key(key());
+
+        assert_eq!(tx.get_admin_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_admin_key_frozen_panics() {
+        make_transaction().admin_key(key());
+    }
+
+    #[test]
+    fn get_set_submit_key() {
+        let mut tx = TopicCreateTransaction::new();
+        tx.submit_key(key());
+
+        assert_eq!(tx.get_submit_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_submit_key_frozen_panics() {
+        make_transaction().submit_key(key());
+    }
+
+    #[test]
+    fn get_set_auto_renew_period() {
+        let mut tx = TopicCreateTransaction::new();
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+
+        assert_eq!(tx.get_auto_renew_period(), Some(AUTO_RENEW_PERIOD));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_period_frozen_panics() {
+        make_transaction().auto_renew_period(AUTO_RENEW_PERIOD);
+    }
+
+    #[test]
+    fn get_set_auto_renew_account_id() {
+        let mut tx = TopicCreateTransaction::new();
+        tx.auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID);
+
+        assert_eq!(tx.get_auto_renew_account_id(), Some(AUTO_RENEW_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_account_id_frozen_panics() {
+        make_transaction().auto_renew_account_id(AUTO_RENEW_ACCOUNT_ID);
     }
 }
