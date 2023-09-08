@@ -501,7 +501,7 @@ mod tests {
 
         #[test]
         #[should_panic]
-        fn zen_panics() {
+        fn admin_key_frozen_panics() {
             make_transaction().admin_key(super::admin_key());
         }
 
