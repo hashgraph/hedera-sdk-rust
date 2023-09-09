@@ -1,4 +1,5 @@
 mod allowance_approve;
+mod allowance_delete;
 mod balance;
 mod create;
 mod delete;

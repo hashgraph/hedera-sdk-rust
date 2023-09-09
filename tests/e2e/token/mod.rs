@@ -204,13 +204,13 @@ impl FungibleToken {
     }
 }
 
-struct Nft {
-    id: TokenId,
-    owner: Account,
+pub(crate) struct Nft {
+    pub(crate) id: TokenId,
+    pub(crate) owner: Account,
 }
 
 impl Nft {
-    async fn create(client: &Client, owner: &Account) -> hedera::Result<Self> {
+    pub(crate) async fn create(client: &Client, owner: &Account) -> hedera::Result<Self> {
         let owner_public_key = owner.key.public_key();
         let token_id = TokenCreateTransaction::new()
             .name("ffff")
@@ -244,7 +244,7 @@ impl Nft {
         self.mint(client, (0..nfts_to_mint).map(|it| [it])).await
     }
 
-    async fn mint<Bytes: AsRef<[u8]>>(
+    pub(crate) async fn mint<Bytes: AsRef<[u8]>>(
         &self,
         client: &Client,
         metadata: impl IntoIterator<Item = Bytes>,
@@ -273,7 +273,7 @@ impl Nft {
         inner(self, client, tx).await
     }
 
-    async fn burn(
+    pub(crate) async fn burn(
         &self,
         client: &Client,
         serials: impl IntoIterator<Item = i64>,
@@ -300,7 +300,7 @@ impl Nft {
         inner(self, client, tx).await
     }
 
-    async fn delete(self, client: &Client) -> hedera::Result<()> {
+    pub(crate) async fn delete(self, client: &Client) -> hedera::Result<()> {
         TokenDeleteTransaction::new()
             .token_id(self.id)
             .sign(self.owner.key)
