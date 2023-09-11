@@ -23,19 +23,9 @@ use hedera_proto::services::crypto_service_client::CryptoServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::query::{
-    AnyQueryData,
-    QueryExecute,
-    ToQueryProtobuf,
-};
+use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
 use crate::{
-    AccountId,
-    AllProxyStakers,
-    BoxGrpcFuture,
-    Error,
-    Query,
-    ToProtobuf,
-    ValidateChecksums,
+    AccountId, AllProxyStakers, BoxGrpcFuture, Error, Query, ToProtobuf, ValidateChecksums,
 };
 
 /// Get all the accounts that are proxy staking to this account.
@@ -105,10 +95,7 @@ mod tests {
     use expect_test::expect;
 
     use crate::query::ToQueryProtobuf;
-    use crate::{
-        AccountStakersQuery,
-        Hbar,
-    };
+    use crate::{AccountId, AccountStakersQuery, Hbar};
 
     #[test]
     fn serialize() {
@@ -153,5 +140,13 @@ mod tests {
                 .data
                 .to_query_protobuf(Default::default()),
         );
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut query = AccountStakersQuery::new();
+        query.account_id(AccountId::new(0, 0, 5005));
+
+        assert_eq!(query.get_account_id(), Some(AccountId::new(0, 0, 5005)));
     }
 }
