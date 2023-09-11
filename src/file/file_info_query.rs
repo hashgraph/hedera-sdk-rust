@@ -104,6 +104,7 @@ mod tests {
 
     use crate::query::ToQueryProtobuf;
     use crate::{
+        FileContentsQuery,
         FileId,
         FileInfoQuery,
         Hbar,
@@ -141,5 +142,13 @@ mod tests {
                 .data
                 .to_query_protobuf(Default::default()),
         )
+    }
+
+    #[test]
+    fn get_set_file_id() {
+        let mut query = FileContentsQuery::new();
+        query.file_id(FileId::new(0, 0, 5005));
+
+        assert_eq!(query.get_file_id(), Some(FileId::new(0, 0, 5005)));
     }
 }
