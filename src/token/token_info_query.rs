@@ -143,4 +143,12 @@ mod tests {
                 .to_query_protobuf(Default::default()),
         )
     }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut query = TokenInfoQuery::new();
+        query.token_id(TokenId::new(0, 0, 5005));
+
+        assert_eq!(query.get_token_id(), Some(TokenId::new(0, 0, 5005)));
+    }
 }

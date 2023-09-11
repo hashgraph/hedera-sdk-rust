@@ -141,4 +141,12 @@ mod tests {
                 .to_query_protobuf(Default::default()),
         )
     }
+
+    #[test]
+    fn get_set_schedule_id() {
+        let mut query = ScheduleInfoQuery::new();
+        query.schedule_id(ScheduleId::new(0, 0, 5005));
+
+        assert_eq!(query.get_schedule_id(), Some(ScheduleId::new(0, 0, 5005)));
+    }
 }
