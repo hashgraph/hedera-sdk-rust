@@ -23,10 +23,21 @@ use hedera_proto::services::smart_contract_service_client::SmartContractServiceC
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
-use crate::query::{AnyQueryData, QueryExecute, ToQueryProtobuf};
+use crate::query::{
+    AnyQueryData,
+    QueryExecute,
+    ToQueryProtobuf,
+};
 use crate::{
-    AccountId, BoxGrpcFuture, ContractFunctionParameters, ContractFunctionResult, ContractId,
-    Error, Query, ToProtobuf, ValidateChecksums,
+    AccountId,
+    BoxGrpcFuture,
+    ContractFunctionParameters,
+    ContractFunctionResult,
+    ContractId,
+    Error,
+    Query,
+    ToProtobuf,
+    ValidateChecksums,
 };
 
 /// Call a function of the given smart contract instance.
@@ -172,7 +183,13 @@ mod tests {
     use hedera_proto::services;
 
     use crate::query::ToQueryProtobuf;
-    use crate::{AccountId, ContractCallQuery, ContractFunctionParameters, ContractId, Hbar};
+    use crate::{
+        AccountId,
+        ContractCallQuery,
+        ContractFunctionParameters,
+        ContractId,
+        Hbar,
+    };
 
     fn make_query() -> ContractCallQuery {
         let mut query = ContractCallQuery::new();
