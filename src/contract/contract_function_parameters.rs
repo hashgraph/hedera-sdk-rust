@@ -930,9 +930,11 @@ impl ContractFunctionParameters {
     ) -> &mut Self {
         let mut value_bytes = SolidityAddress::from_str(address).unwrap().to_bytes().to_vec();
         value_bytes.extend(selector.finish());
+        right_pad_32_bytes(&mut value_bytes);
+
         self.args.push(Argument {
             type_name: "function",
-            value_bytes: right_pad_32_bytes(value_bytes.as_slice()).to_vec(),
+            value_bytes: value_bytes,
             is_dynamic: false,
         });
         self
@@ -957,10 +959,13 @@ where
     left_pad_32_bytes(truncated_value_bytes, is_negative)
 }
 
-fn right_pad_32_bytes(bytes: &[u8]) -> [u8; 32] {
-    let mut result = [0_u8; 32];
-    result[..bytes.len()].copy_from_slice(bytes);
-    result
+/// Pads out `buf` so that it's len % 32 == 0
+fn right_pad_32_bytes(buf: &mut Vec<u8>) {
+    let rem = buf.len() % 32;
+    if rem != 0 {
+        let padding = [0_u8; 32];
+        buf.extend_from_slice(&padding[..(32 - rem)])
+    }
 }
 
 fn encode_address(address: &str) -> [u8; 32] {
@@ -969,7 +974,8 @@ fn encode_address(address: &str) -> [u8; 32] {
 
 fn encode_dynamic_bytes(bytes: &[u8]) -> Vec<u8> {
     let mut out_bytes = left_pad_32_bytes(bytes.len().to_be_bytes().as_slice(), false).to_vec();
-    out_bytes.extend_from_slice(right_pad_32_bytes(bytes).as_slice());
+    out_bytes.extend(bytes);
+    right_pad_32_bytes(&mut out_bytes);
     out_bytes
 }
 
@@ -1138,5 +1144,36 @@ mod tests {
                 1122334455667788990011223344556677889900010203040000000000000000\
                 112233445566778899001122334455667788990063441d820000000000000000"
         );
+    }
+
+    // regression test for https://github.com/hashgraph/hedera-sdk-rust/issues/715
+    #[test]
+    fn long_string() {
+        let s = "abcd".repeat(63);
+
+        let bytes = ContractFunctionParameters::new().add_string(s).to_bytes(None);
+
+        // sigh, the things we do to not have to manually format.
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect![[r#"
+            0000000000000000000000000000000000000000000000000000000000000020
+            00000000000000000000000000000000000000000000000000000000000000fc
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636461626364
+            6162636461626364616263646162636461626364616263646162636400000000"#]]
+        .assert_eq(&buf);
     }
 }
