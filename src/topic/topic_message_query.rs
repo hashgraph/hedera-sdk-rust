@@ -348,3 +348,46 @@ fn filter_map(
         false => Ok(None),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use time::OffsetDateTime;
+
+    use crate::{
+        TopicId,
+        TopicMessageQuery,
+    };
+
+    #[test]
+    fn get_set_topic_id() {
+        let mut query = TopicMessageQuery::new();
+        query.topic_id(TopicId::new(31, 41, 59));
+
+        assert_eq!(query.get_topic_id(), Some(TopicId::new(31, 41, 59)));
+    }
+    #[test]
+    fn get_set_start_time() {
+        let start_time = OffsetDateTime::now_utc();
+
+        let mut query = TopicMessageQuery::new();
+        query.start_time(start_time);
+
+        assert_eq!(query.get_start_time(), Some(start_time));
+    }
+    #[test]
+    fn get_set_end_time() {
+        let end_time = OffsetDateTime::now_utc();
+
+        let mut query = TopicMessageQuery::new();
+        query.end_time(end_time);
+
+        assert_eq!(query.get_end_time(), Some(end_time));
+    }
+    #[test]
+    fn get_set_limit() {
+        let mut query = TopicMessageQuery::new();
+        query.limit(1415);
+
+        assert_eq!(query.get_limit(), 1415);
+    }
+}
