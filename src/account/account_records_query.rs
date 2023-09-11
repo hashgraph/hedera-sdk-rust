@@ -116,6 +116,7 @@ mod tests {
 
     use crate::query::ToQueryProtobuf;
     use crate::{
+        AccountId,
         AccountRecordsQuery,
         Hbar,
     };
@@ -163,5 +164,13 @@ mod tests {
                 .data
                 .to_query_protobuf(Default::default()),
         );
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut query = AccountRecordsQuery::new();
+        query.account_id(AccountId::new(0, 0, 5005));
+
+        assert_eq!(query.get_account_id(), Some(AccountId::new(0, 0, 5005)));
     }
 }
