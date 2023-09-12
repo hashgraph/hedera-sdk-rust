@@ -208,3 +208,139 @@ impl FromProtobuf<Vec<services::FileAppendTransactionBody>> for FileAppendTransa
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_bodies,
+    };
+    use crate::{
+        AnyTransaction,
+        FileAppendTransaction,
+        FileId,
+    };
+
+    const FILE_ID: FileId = FileId::new(0, 0, 10);
+
+    const CONTENTS: &[u8] = br#"{"foo": 231}"#;
+
+    fn make_transaction() -> FileAppendTransaction {
+        let mut tx = FileAppendTransaction::new_for_tests();
+        tx.file_id(FILE_ID).contents(CONTENTS).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        // unlike most transactions we *do* need to do this like in case it's chunked.
+        // granted, trying to do anything with a chunked transaction without a Client is hard.
+        let txes = transaction_bodies(tx);
+
+        // this is kinda a mess... But it works.
+        let txes: Vec<_> = txes.into_iter().map(check_body).collect();
+
+        expect![[r#"
+            [
+                FileAppend(
+                    FileAppendTransactionBody {
+                        file_id: Some(
+                            FileId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                file_num: 10,
+                            },
+                        ),
+                        contents: [
+                            123,
+                            34,
+                            102,
+                            111,
+                            111,
+                            34,
+                            58,
+                            32,
+                            50,
+                            51,
+                            49,
+                            125,
+                        ],
+                    },
+                ),
+                FileAppend(
+                    FileAppendTransactionBody {
+                        file_id: Some(
+                            FileId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                file_num: 10,
+                            },
+                        ),
+                        contents: [
+                            123,
+                            34,
+                            102,
+                            111,
+                            111,
+                            34,
+                            58,
+                            32,
+                            50,
+                            51,
+                            49,
+                            125,
+                        ],
+                    },
+                ),
+            ]
+        "#]]
+        .assert_debug_eq(&txes);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_bodies(tx);
+        let tx2 = transaction_bodies(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn get_set_file_id() {
+        let mut tx = FileAppendTransaction::new();
+        tx.file_id(FILE_ID);
+
+        assert_eq!(tx.get_file_id(), Some(FILE_ID));
+    }
+
+    #[test]
+    fn get_set_contents() {
+        let mut tx = FileAppendTransaction::new();
+        tx.contents(CONTENTS);
+
+        assert_eq!(tx.get_contents(), Some(CONTENTS));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_file_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.file_id(FILE_ID);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_contents_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.contents(CONTENTS);
+    }
+}
