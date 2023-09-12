@@ -131,14 +131,6 @@ impl ContractCreateFlow {
         self
     }
 
-    // /// Sets the parameters to pass to the constructor.
-    // ///
-    // /// This is equivalent to calling `constructorParameters(parameters.toBytes())`
-    // pub fn constructorParameters(&mut self , constructorParameters: ContractFunctionParameters) -> &mut Self {
-    //     self.constructorParameters = constructorParameters.toBytes()
-
-    //     self    // }
-
     /// Returns the gas limit to deploy the smart contract.
     #[must_use]
     pub fn get_gas(&self) -> u64 {
@@ -529,4 +521,133 @@ fn make_file_delete_transaction(
     }
 
     tmp
+}
+
+#[cfg(test)]
+mod tests {
+    use time::Duration;
+
+    use crate::{
+        AccountId,
+        ContractCreateFlow,
+        Hbar,
+        PrivateKey,
+    };
+
+    #[test]
+    fn get_set_bytecode() {
+        const BYTECODE: [u8; 3] = [2, 3, 4];
+        let mut flow = ContractCreateFlow::new();
+        flow.bytecode(BYTECODE.into());
+
+        assert_eq!(flow.get_bytecode(), &BYTECODE)
+    }
+
+    #[test]
+    fn get_set_max_chunks() {
+        let mut flow = ContractCreateFlow::new();
+        flow.max_chunks(15);
+
+        assert_eq!(flow.get_max_chunks(), Some(15));
+    }
+
+    #[test]
+    fn get_set_node_account_ids() {
+        const ACCOUNT_IDS: [AccountId; 3] =
+            [AccountId::new(1, 2, 3), AccountId::new(1, 3, 2), AccountId::new(2, 1, 3)];
+        let mut flow = ContractCreateFlow::new();
+        flow.node_account_ids(ACCOUNT_IDS);
+
+        assert_eq!(flow.get_node_account_ids(), Some(ACCOUNT_IDS.as_slice()))
+    }
+
+    #[test]
+    fn get_set_constructor_parameters() {
+        const PARAMS: [u8; 3] = *b"123";
+        let mut flow = ContractCreateFlow::new();
+        flow.constructor_parameters(PARAMS);
+
+        assert_eq!(flow.get_constructor_parameters(), PARAMS);
+    }
+
+    #[test]
+    fn get_set_gas() {
+        let mut flow = ContractCreateFlow::new();
+        flow.gas(31415);
+
+        assert_eq!(flow.get_gas(), 31415);
+    }
+
+    #[test]
+    fn get_set_initial_balance() {
+        let mut flow = ContractCreateFlow::new();
+        flow.initial_balance(Hbar::new(2));
+
+        assert_eq!(flow.get_initial_balance(), Hbar::new(2));
+    }
+
+    #[test]
+    fn get_set_max_automatic_token_associations() {
+        let mut flow = ContractCreateFlow::new();
+        flow.max_automatic_token_associations(15);
+
+        assert_eq!(flow.get_max_automatic_token_associations(), 15);
+    }
+
+    #[test]
+    fn get_set_decline_staking_reward() {
+        let mut flow = ContractCreateFlow::new();
+        flow.decline_staking_reward(true);
+
+        assert_eq!(flow.get_decline_staking_reward(), true);
+    }
+
+    #[test]
+    fn get_set_admin_key() {
+        let key = PrivateKey::generate_ecdsa().public_key();
+        let mut flow = ContractCreateFlow::new();
+        flow.admin_key(key);
+
+        assert_eq!(flow.get_admin_key(), Some(&key.into()));
+    }
+
+    #[test]
+    fn get_set_auto_renew_account_id() {
+        let mut flow = ContractCreateFlow::new();
+        flow.auto_renew_account_id(AccountId::new(0, 1, 2));
+
+        assert_eq!(flow.get_auto_renew_account_id(), Some(AccountId::new(0, 1, 2)));
+    }
+
+    #[test]
+    fn get_set_auto_renew_period() {
+        let mut flow = ContractCreateFlow::new();
+        flow.auto_renew_period(Duration::seconds(1231));
+
+        assert_eq!(flow.get_auto_renew_period(), Some(Duration::seconds(1231)));
+    }
+
+    #[test]
+    fn get_set_contract_memo() {
+        let mut flow = ContractCreateFlow::new();
+        flow.contract_memo("xyz abc".to_owned());
+
+        assert_eq!(flow.get_contract_memo(), Some("xyz abc"));
+    }
+
+    #[test]
+    fn get_set_staked_account_id() {
+        let mut flow = ContractCreateFlow::new();
+        flow.staked_account_id(AccountId::new(0, 1, 2));
+
+        assert_eq!(flow.get_staked_account_id(), Some(AccountId::new(0, 1, 2)));
+    }
+
+    #[test]
+    fn get_set_staked_node_id() {
+        let mut flow = ContractCreateFlow::new();
+        flow.staked_node_id(4);
+
+        assert_eq!(flow.get_staked_node_id(), Some(4));
+    }
 }
