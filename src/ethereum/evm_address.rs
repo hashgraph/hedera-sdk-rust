@@ -48,7 +48,7 @@ impl EvmAddress {
 }
 
 // potential point of confusion: This type is specifically for the `shard.realm.num` in 20 byte format.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub(crate) struct SolidityAddress(pub(crate) EvmAddress);
 
@@ -233,5 +233,82 @@ impl fmt::LowerHex for EvmAddress {
         // should never fail. But `unsafe` here when we *aren't* in that crate would be... not great.
         let output = std::str::from_utf8_mut(&mut output).unwrap();
         f.write_str(output)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use assert_matches::assert_matches;
+    use expect_test::expect;
+
+    use super::SolidityAddress;
+    use crate::{
+        EntityId,
+        EvmAddress,
+    };
+
+    #[test]
+    fn parse_solidity() {
+        let addr: SolidityAddress = "131211100f0e0d0c0b0a09080706050403020100".parse().unwrap();
+
+        assert_eq!(
+            &addr,
+            SolidityAddress::from_ref(&hex_literal::hex!(
+                "131211100f0e0d0c0b0a09080706050403020100"
+            ))
+        );
+    }
+
+    #[test]
+    fn parse_evm() {
+        let addr: EvmAddress = "0x131211100f0e0d0c0b0a09080706050403020100".parse().unwrap();
+
+        assert_eq!(
+            &addr,
+            EvmAddress::from_ref(&hex_literal::hex!("131211100f0e0d0c0b0a09080706050403020100"))
+        );
+    }
+
+    #[test]
+    fn evm_address_missing_0x_fails() {
+        let res: Result<EvmAddress, _> = "131211100f0e0d0c0b0a09080706050403020100".parse();
+
+        assert_matches!(res, Err(crate::Error::BasicParse(_)))
+    }
+
+    #[test]
+    fn solidity_address_bad_length_fails() {
+        let res: Result<EvmAddress, _> = "0x0f0e0d0c0b0a09080706050403020100".parse();
+
+        assert_matches!(res, Err(crate::Error::BasicParse(_)))
+    }
+
+    #[test]
+    fn evm_address_bad_length_fails() {
+        let res: Result<EvmAddress, _> = "0x0f0e0d0c0b0a09080706050403020100".parse();
+
+        assert_matches!(res, Err(crate::Error::BasicParse(_)))
+    }
+
+    #[test]
+    fn display() {
+        expect![[r#"
+            "0x0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c"
+        "#]]
+        .assert_debug_eq(&EvmAddress([0x0c; 20]));
+    }
+
+    #[test]
+    fn to_entity_id() {
+        let solidity_address = SolidityAddress(EvmAddress([0x0c; 20]));
+        assert_eq!(
+            EntityId::from(solidity_address),
+            EntityId {
+                shard: 0x0c0c0c0c,
+                realm: 0x0c0c0c0c0c0c0c0c,
+                num: 0x0c0c0c0c0c0c0c0c,
+                checksum: None
+            }
+        )
     }
 }
