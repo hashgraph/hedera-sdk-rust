@@ -267,8 +267,6 @@ where
             while let Some(node_index) = random_node_indexes.next().await {
                 let tmp = execute_single(ctx, executable, node_index, &mut transaction_id).await;
 
-                ctx.network.mark_node_used(node_index, Instant::now());
-
                 match tmp? {
                     ControlFlow::Continue(err) => last_error = Some(err),
                     ControlFlow::Break(res) => return Ok(res),
