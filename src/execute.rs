@@ -387,7 +387,7 @@ async fn execute_single<E: Execute + Sync>(
     let status = E::response_pre_check_status(&response)
         .and_then(|status| {
             // not sure how to proceed, fail immediately
-            Status::from_i32(status).ok_or_else(|| Error::ResponseStatusUnrecognized(status))
+            Status::try_from(status).map_err(|_| Error::ResponseStatusUnrecognized(status))
         })
         .map_err(retry::Error::Permanent)?;
 
