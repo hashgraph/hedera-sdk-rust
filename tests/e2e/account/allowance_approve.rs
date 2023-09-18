@@ -55,6 +55,71 @@ async fn spend() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn nft_allowance_no_association() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+
+    let (treasury, spender) = tokio::try_join!(
+        Account::create(Hbar::new(0), &client),
+        Account::create(Hbar::new(1), &client),
+    )?;
+
+    let receiver = Account::create(Hbar::new(0), &client).await?;
+
+    let nft_collection = crate::token::Nft::create(&client, &treasury).await?;
+
+    let serials = nft_collection.mint(&client, [b"asd"]).await?;
+
+    let nft1 = nft_collection.id.nft(serials[0] as u64);
+
+    AccountAllowanceApproveTransaction::new()
+        .approve_token_nft_allowance(nft1, treasury.id, spender.id)
+        .sign(treasury.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TokenAssociateTransaction::new()
+        .account_id(receiver.id)
+        .token_ids([nft_collection.id])
+        .sign(receiver.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TransferTransaction::new()
+        .approved_nft_transfer(nft1, treasury.id, receiver.id)
+        .transaction_id(TransactionId::generate(spender.id))
+        .sign(spender.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    TransferTransaction::new()
+        .nft_transfer(nft1, receiver.id, treasury.id)
+        .sign(receiver.key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    nft_collection.burn(&client, serials).await?;
+    nft_collection.delete(&client).await?;
+
+    let _ = tokio::try_join!(
+        treasury.delete(&client),
+        spender.delete(&client),
+        receiver.delete(&client)
+    )?;
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn missing_nft_allowance_approval_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());

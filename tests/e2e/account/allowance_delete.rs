@@ -30,15 +30,6 @@ async fn transfer_after_allowance_remove_fails() -> anyhow::Result<()> {
     let nft_collection = crate::token::Nft::create(&client, &treasury).await?;
 
     TokenAssociateTransaction::new()
-        .account_id(spender.id)
-        .token_ids([nft_collection.id])
-        .sign(spender.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
-
-    TokenAssociateTransaction::new()
         .account_id(receiver.id)
         .token_ids([nft_collection.id])
         .sign(receiver.key.clone())
@@ -133,15 +124,6 @@ async fn remove_single_serial_when_allowance_is_given_for_all_fails() -> anyhow:
     )?;
 
     let nft_collection = crate::token::Nft::create(&client, &treasury).await?;
-
-    TokenAssociateTransaction::new()
-        .account_id(spender.id)
-        .token_ids([nft_collection.id])
-        .sign(spender.key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
 
     TokenAssociateTransaction::new()
         .account_id(receiver.id)
