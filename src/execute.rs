@@ -293,6 +293,7 @@ fn map_tonic_error(
     status: tonic::Status,
     network: &client::NetworkData,
     node_index: usize,
+    request_free: bool,
 ) -> retry::Error {
     /// punches through all the layers of `tonic::Status` sources to check if this is a `hyper::Error` that is canceled.
 
@@ -325,6 +326,7 @@ fn map_tonic_error(
         }
 
         // todo: find a way to make this less fragile
+        // hack:
         // if this happens:
         // the node is completely borked (we're probably seeing the load balancer's response),
         // and we have no clue if the effect went through
@@ -334,7 +336,12 @@ fn map_tonic_error(
         {
             network.mark_node_unhealthy(node_index);
 
-            retry::Error::Permanent(status.into())
+            // hack to the hack:
+            // if this is a free request let's try retrying it anyway...
+            match request_free {
+                true => retry::Error::Transient(status.into()),
+                false => retry::Error::Permanent(status.into()),
+            }
         }
 
         // fail immediately
@@ -368,9 +375,9 @@ async fn execute_single<E: Execute + Sync>(
         None => fut.await,
     };
 
-    let response = response
-        .map(tonic::Response::into_inner)
-        .map_err(|status| map_tonic_error(status, &ctx.network, node_index));
+    let response = response.map(tonic::Response::into_inner).map_err(|status| {
+        map_tonic_error(status, &ctx.network, node_index, transaction_id.is_none())
+    });
 
     let response = match response {
         Ok(response) => response,
