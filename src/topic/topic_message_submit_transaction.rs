@@ -218,3 +218,141 @@ impl FromProtobuf<Vec<services::ConsensusSubmitMessageTransactionBody>>
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_bodies,
+    };
+    use crate::{
+        AnyTransaction,
+        TopicId,
+        TopicMessageSubmitTransaction,
+    };
+
+    const TOPIC_ID: TopicId = TopicId::new(0, 0, 10);
+
+    const MESSAGE: &[u8] = br#"{"foo": 231}"#;
+
+    fn make_transaction() -> TopicMessageSubmitTransaction {
+        let mut tx = TopicMessageSubmitTransaction::new_for_tests();
+        tx.topic_id(TOPIC_ID).message(MESSAGE).freeze().unwrap();
+
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        // unlike most transactions we *do* need to do this like in case it's chunked.
+        // granted, trying to do anything with a chunked transaction without a Client is hard.
+        let txes = transaction_bodies(tx);
+
+        // this is kinda a mess... But it works.
+        let txes: Vec<_> = txes.into_iter().map(check_body).collect();
+
+        expect![[r#"
+            [
+                ConsensusSubmitMessage(
+                    ConsensusSubmitMessageTransactionBody {
+                        topic_id: Some(
+                            TopicId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                topic_num: 10,
+                            },
+                        ),
+                        message: [
+                            123,
+                            34,
+                            102,
+                            111,
+                            111,
+                            34,
+                            58,
+                            32,
+                            50,
+                            51,
+                            49,
+                            125,
+                        ],
+                        chunk_info: None,
+                    },
+                ),
+                ConsensusSubmitMessage(
+                    ConsensusSubmitMessageTransactionBody {
+                        topic_id: Some(
+                            TopicId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                topic_num: 10,
+                            },
+                        ),
+                        message: [
+                            123,
+                            34,
+                            102,
+                            111,
+                            111,
+                            34,
+                            58,
+                            32,
+                            50,
+                            51,
+                            49,
+                            125,
+                        ],
+                        chunk_info: None,
+                    },
+                ),
+            ]
+        "#]]
+        .assert_debug_eq(&txes);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_bodies(tx);
+        let tx2 = transaction_bodies(tx2);
+
+        assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn get_set_topic_id() {
+        let mut tx = TopicMessageSubmitTransaction::new();
+        tx.topic_id(TOPIC_ID);
+
+        assert_eq!(tx.get_topic_id(), Some(TOPIC_ID));
+    }
+
+    #[test]
+    fn get_set_message() {
+        let mut tx = TopicMessageSubmitTransaction::new();
+        tx.message(MESSAGE);
+
+        assert_eq!(tx.get_message(), Some(MESSAGE));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_topic_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.topic_id(TOPIC_ID);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_message_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.message(MESSAGE);
+    }
+}

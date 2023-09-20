@@ -211,7 +211,13 @@ impl ToProtobuf for ContractExecuteTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::contract::ContractExecuteTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -219,16 +225,25 @@ mod tests {
     use crate::{
         AnyTransaction,
         ContractExecuteTransaction,
+        ContractId,
         Hbar,
     };
+
+    const CONTRACT_ID: ContractId = ContractId::new(0, 0, 5007);
+    const GAS: u64 = 10;
+    const PAYABLE_AMOUNT: Hbar = Hbar::from_tinybars(1000);
+
+    fn function_parameters() -> Vec<u8> {
+        Vec::from([24, 43, 11])
+    }
 
     fn make_transaction() -> ContractExecuteTransaction {
         let mut tx = ContractExecuteTransaction::new_for_tests();
 
-        tx.contract_id("0.0.5007".parse().unwrap())
-            .gas(10)
-            .payable_amount(Hbar::from_tinybars(1000))
-            .function_parameters(Vec::from([24, 43, 11]))
+        tx.contract_id(CONTRACT_ID)
+            .gas(GAS)
+            .payable_amount(PAYABLE_AMOUNT)
+            .function_parameters(function_parameters())
             .freeze()
             .unwrap();
 
@@ -281,5 +296,78 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::ContractCallTransactionBody {
+            contract_id: Some(CONTRACT_ID.to_protobuf()),
+            gas: GAS as _,
+            amount: PAYABLE_AMOUNT.to_tinybars(),
+            function_parameters: function_parameters(),
+        };
+
+        let tx = ContractExecuteTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.contract_id, Some(CONTRACT_ID));
+        assert_eq!(tx.gas, GAS);
+        assert_eq!(tx.payable_amount, PAYABLE_AMOUNT);
+        assert_eq!(tx.function_parameters, function_parameters());
+    }
+
+    #[test]
+    fn get_set_contract_id() {
+        let mut tx = ContractExecuteTransaction::new();
+        tx.contract_id(CONTRACT_ID);
+
+        assert_eq!(tx.get_contract_id(), Some(CONTRACT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_contract_id_frozen_panics() {
+        make_transaction().contract_id(CONTRACT_ID);
+    }
+
+    #[test]
+    fn get_set_gas() {
+        let mut tx = ContractExecuteTransaction::new();
+        tx.gas(GAS);
+
+        assert_eq!(tx.get_gas(), GAS);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_gas_frozen_panics() {
+        make_transaction().gas(GAS);
+    }
+
+    #[test]
+    fn get_set_payable_amount() {
+        let mut tx = ContractExecuteTransaction::new();
+        tx.payable_amount(PAYABLE_AMOUNT);
+
+        assert_eq!(tx.get_payable_amount(), PAYABLE_AMOUNT);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_payable_amount_frozen_panics() {
+        make_transaction().payable_amount(PAYABLE_AMOUNT);
+    }
+
+    #[test]
+    fn get_set_function_parameters() {
+        let mut tx = ContractExecuteTransaction::new();
+        tx.function_parameters(function_parameters());
+
+        assert_eq!(tx.get_function_parameters(), function_parameters());
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_function_parameters_frozen_panics() {
+        make_transaction().function_parameters(function_parameters());
     }
 }

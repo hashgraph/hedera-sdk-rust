@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_revoke_kyc_transaction_from_transaction_body_protobuf() {
+    fn from_proto_body() {
         let tx = services::TokenRevokeKycTransactionBody {
             token: Some(TEST_TOKEN_ID.to_protobuf()),
             account: Some(TEST_ACCOUNT_ID.to_protobuf()),

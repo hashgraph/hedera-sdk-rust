@@ -141,4 +141,12 @@ mod tests {
                 .to_query_protobuf(Default::default()),
         )
     }
+
+    #[test]
+    fn get_set_topic_id() {
+        let mut query = TopicInfoQuery::new();
+        query.topic_id(TopicId::new(0, 0, 5005));
+
+        assert_eq!(query.get_topic_id(), Some(TopicId::new(0, 0, 5005)));
+    }
 }

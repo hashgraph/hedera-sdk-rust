@@ -1118,6 +1118,18 @@ pub(crate) mod test_helpers {
         .unwrap()
     }
 
+    #[track_caller]
+    pub(crate) fn transaction_bodies<D: TransactionExecute>(
+        tx: Transaction<D>,
+    ) -> Vec<services::TransactionBody> {
+        tx.make_sources()
+            .unwrap()
+            .signed_transactions()
+            .iter()
+            .map(|it| services::TransactionBody::decode(&*it.body_bytes).unwrap())
+            .collect()
+    }
+
     /// Checks the entire traknsaction body *other than* `data` and returns that.
     ///
     /// This is basically a boilerplate reducer, however, it failing means that [`Transaction::new_for_tests`] is probably buggy.
@@ -1133,8 +1145,12 @@ pub(crate) mod test_helpers {
             data,
         } = body;
 
+        let node_account_id = node_account_id.unwrap();
+
         assert_eq!(transaction_id, Some(TEST_TX_ID.to_protobuf()));
-        assert_eq!(node_account_id, Some(TEST_NODE_ACCOUNT_IDS[0].to_protobuf()));
+
+        assert!(TEST_NODE_ACCOUNT_IDS.iter().any(|it| it.to_protobuf() == node_account_id));
+
         assert_eq!(transaction_fee, Hbar::new(2).to_tinybars() as u64);
         assert_eq!(transaction_valid_duration, Some(services::Duration { seconds: 120 }));
         assert_eq!(generate_record, false);

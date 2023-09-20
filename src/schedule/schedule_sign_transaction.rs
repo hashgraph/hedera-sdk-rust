@@ -111,20 +111,29 @@ impl FromProtobuf<services::ScheduleSignTransactionBody> for ScheduleSignTransac
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::schedule::ScheduleSignTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
     };
     use crate::{
         AnyTransaction,
+        ScheduleId,
         ScheduleSignTransaction,
     };
+
+    const SCHEDULE_ID: ScheduleId = ScheduleId::new(0, 0, 444);
 
     fn make_transaction() -> ScheduleSignTransaction {
         let mut tx = ScheduleSignTransaction::new_for_tests();
 
-        tx.schedule_id("0.0.444".parse().unwrap()).freeze().unwrap();
+        tx.schedule_id(SCHEDULE_ID).freeze().unwrap();
 
         tx
     }
@@ -164,5 +173,29 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx =
+            services::ScheduleSignTransactionBody { schedule_id: Some(SCHEDULE_ID.to_protobuf()) };
+
+        let tx = ScheduleSignTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.schedule_id, Some(SCHEDULE_ID));
+    }
+
+    #[test]
+    fn get_set_schedule_id() {
+        let mut tx = ScheduleSignTransaction::new();
+        tx.schedule_id(SCHEDULE_ID);
+
+        assert_eq!(tx.get_schedule_id(), Some(SCHEDULE_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_schedule_id_frozen_panics() {
+        make_transaction().schedule_id(SCHEDULE_ID);
     }
 }

@@ -131,7 +131,13 @@ impl ToProtobuf for FileDeleteTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::file::FileDeleteTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -142,10 +148,12 @@ mod tests {
         FileId,
     };
 
+    const FILE_ID: FileId = FileId::new(0, 0, 6006);
+
     fn make_transaction() -> FileDeleteTransaction {
         let mut tx = FileDeleteTransaction::new_for_tests();
 
-        tx.file_id("0.0.6006".parse::<FileId>().unwrap()).freeze().unwrap();
+        tx.file_id(FILE_ID).freeze().unwrap();
 
         tx
     }
@@ -185,5 +193,28 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::FileDeleteTransactionBody { file_id: Some(FILE_ID.to_protobuf()) };
+
+        let tx = FileDeleteTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.file_id, Some(FILE_ID));
+    }
+
+    #[test]
+    fn get_set_file_id() {
+        let mut tx = FileDeleteTransaction::new();
+        tx.file_id(FILE_ID);
+
+        assert_eq!(tx.get_file_id(), Some(FILE_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_file_id_frozen_panics() {
+        make_transaction().file_id(FILE_ID);
     }
 }

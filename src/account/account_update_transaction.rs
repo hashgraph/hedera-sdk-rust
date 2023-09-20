@@ -408,11 +408,18 @@ impl ToProtobuf for AccountUpdateTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
     use time::{
         Duration,
         OffsetDateTime,
     };
 
+    use crate::account::AccountUpdateTransactionData;
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::staked_id::StakedId;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -422,21 +429,40 @@ mod tests {
         AccountId,
         AccountUpdateTransaction,
         AnyTransaction,
+        PublicKey,
     };
+
+    fn key() -> PublicKey {
+        unused_private_key().public_key()
+    }
+
+    const ACCOUNT_ID: AccountId = AccountId::new(0, 0, 2002);
+    const PROXY_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 1001);
+    const AUTO_RENEW_PERIOD: Duration = Duration::hours(10);
+    const EXPIRATION_TIME: OffsetDateTime = match OffsetDateTime::from_unix_timestamp(1554158543) {
+        Ok(it) => it,
+        Err(_) => panic!("Panic in `const` unwrap"),
+    };
+
+    const RECEIVER_SIGNATURE_REQUIRED: bool = false;
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u16 = 100;
+    const ACCOUNT_MEMO: &str = "Some memo";
+    const STAKED_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 3);
+    const STAKED_NODE_ID: u64 = 4;
 
     #[allow(deprecated)]
     fn make_transaction() -> AccountUpdateTransaction {
         let mut tx = AccountUpdateTransaction::new_for_tests();
 
-        tx.key(unused_private_key().public_key())
-            .account_id(AccountId::new(0, 0, 2002))
-            .proxy_account_id(AccountId::new(0, 0, 1001))
-            .auto_renew_period(Duration::hours(10))
-            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158543).unwrap())
-            .receiver_signature_required(false)
-            .max_automatic_token_associations(100)
-            .account_memo("Some memo")
-            .staked_account_id(AccountId::new(0, 0, 3))
+        tx.key(key())
+            .account_id(ACCOUNT_ID)
+            .proxy_account_id(PROXY_ACCOUNT_ID)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
+            .expiration_time(EXPIRATION_TIME)
+            .receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED)
+            .max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            .account_memo(ACCOUNT_MEMO)
+            .staked_account_id(STAKED_ACCOUNT_ID)
             .freeze()
             .unwrap();
 
@@ -447,15 +473,15 @@ mod tests {
     fn make_transaction2() -> AccountUpdateTransaction {
         let mut tx = AccountUpdateTransaction::new_for_tests();
 
-        tx.key(unused_private_key().public_key())
-            .account_id(AccountId::new(0, 0, 2002))
-            .proxy_account_id(AccountId::new(0, 0, 1001))
-            .auto_renew_period(Duration::hours(10))
-            .expiration_time(OffsetDateTime::from_unix_timestamp(1554158543).unwrap())
-            .receiver_signature_required(false)
-            .max_automatic_token_associations(100)
-            .account_memo("Some memo")
-            .staked_node_id(4)
+        tx.key(key())
+            .account_id(ACCOUNT_ID)
+            .proxy_account_id(PROXY_ACCOUNT_ID)
+            .auto_renew_period(AUTO_RENEW_PERIOD)
+            .expiration_time(EXPIRATION_TIME)
+            .receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED)
+            .max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+            .account_memo(ACCOUNT_MEMO)
+            .staked_node_id(STAKED_NODE_ID)
             .freeze()
             .unwrap();
 
@@ -718,5 +744,181 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        #[allow(deprecated)]
+        let tx = services::CryptoUpdateTransactionBody {
+            account_id_to_update: Some(ACCOUNT_ID.to_protobuf()),
+            key: Some(key().to_protobuf()),
+            proxy_account_id: Some(PROXY_ACCOUNT_ID.to_protobuf()),
+            send_record_threshold_field: None,
+            receive_record_threshold_field: None,
+            receiver_sig_required_field: Some(services::crypto_update_transaction_body::ReceiverSigRequiredField::ReceiverSigRequiredWrapper(RECEIVER_SIGNATURE_REQUIRED)),
+            auto_renew_period: Some(AUTO_RENEW_PERIOD.to_protobuf()),
+            memo: Some(ACCOUNT_MEMO.to_owned()),
+            max_automatic_token_associations: Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS as i32),
+            decline_reward: None,
+            staked_id: Some(services::crypto_update_transaction_body::StakedId::StakedAccountId(
+                STAKED_ACCOUNT_ID.to_protobuf(),
+            )),
+            proxy_fraction: 0,
+            expiration_time: Some(EXPIRATION_TIME.to_protobuf()),
+        };
+
+        let tx = AccountUpdateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.account_id, Some(ACCOUNT_ID));
+        #[allow(deprecated)]
+        {
+            assert_eq!(tx.proxy_account_id, Some(PROXY_ACCOUNT_ID));
+        }
+        assert_eq!(tx.auto_renew_period, Some(AUTO_RENEW_PERIOD));
+        assert_eq!(tx.expiration_time, Some(EXPIRATION_TIME));
+        assert_eq!(tx.receiver_signature_required, Some(RECEIVER_SIGNATURE_REQUIRED));
+        assert_eq!(tx.max_automatic_token_associations, Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS));
+        assert_eq!(tx.account_memo, Some(ACCOUNT_MEMO.to_owned()));
+        assert_eq!(tx.staked_id.and_then(StakedId::to_account_id), Some(STAKED_ACCOUNT_ID));
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.account_id(ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.account_id(ACCOUNT_ID);
+    }
+
+    #[test]
+    #[allow(deprecated)]
+    fn get_set_proxy_account_id() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.proxy_account_id(PROXY_ACCOUNT_ID);
+
+        assert_eq!(tx.get_proxy_account_id(), Some(PROXY_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    #[allow(deprecated)]
+    fn get_set_proxy_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.proxy_account_id(PROXY_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_auto_renew_period() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+
+        assert_eq!(tx.get_auto_renew_period(), Some(AUTO_RENEW_PERIOD));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_auto_renew_period_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.auto_renew_period(AUTO_RENEW_PERIOD);
+    }
+
+    #[test]
+    fn get_set_expiration_time() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.expiration_time(EXPIRATION_TIME);
+
+        assert_eq!(tx.get_expiration_time(), Some(EXPIRATION_TIME));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_expiration_time_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.expiration_time(EXPIRATION_TIME);
+    }
+
+    #[test]
+    fn get_set_receiver_signature_required() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED);
+
+        assert_eq!(tx.get_receiver_signature_required(), Some(RECEIVER_SIGNATURE_REQUIRED));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_receiver_signature_required_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.receiver_signature_required(RECEIVER_SIGNATURE_REQUIRED);
+    }
+
+    #[test]
+    fn get_set_max_automatic_token_associations() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+
+        assert_eq!(
+            tx.get_max_automatic_token_associations(),
+            Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS)
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_max_automatic_token_associations_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.max_automatic_token_associations(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS);
+    }
+
+    #[test]
+    fn get_set_account_memo() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.account_memo(ACCOUNT_MEMO);
+
+        assert_eq!(tx.get_account_memo(), Some(ACCOUNT_MEMO));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_memo_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.account_memo(ACCOUNT_MEMO);
+    }
+
+    #[test]
+    fn get_set_staked_account_id() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.staked_account_id(STAKED_ACCOUNT_ID);
+
+        assert_eq!(tx.get_staked_account_id(), Some(STAKED_ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_staked_account_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.staked_account_id(STAKED_ACCOUNT_ID);
+    }
+
+    #[test]
+    fn get_set_staked_node_id() {
+        let mut tx = AccountUpdateTransaction::new();
+        tx.staked_node_id(STAKED_NODE_ID);
+
+        assert_eq!(tx.get_staked_node_id(), Some(STAKED_NODE_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_staked_node_id_frozen_panics() {
+        let mut tx = make_transaction();
+        tx.staked_node_id(STAKED_NODE_ID);
     }
 }

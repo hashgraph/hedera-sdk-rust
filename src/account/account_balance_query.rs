@@ -157,7 +157,11 @@ mod tests {
     use expect_test::expect;
 
     use crate::query::ToQueryProtobuf;
-    use crate::AccountBalanceQuery;
+    use crate::{
+        AccountBalanceQuery,
+        AccountId,
+        ContractId,
+    };
 
     #[test]
     fn serialize_with_account_id() {
@@ -235,5 +239,21 @@ mod tests {
                 .data
                 .to_query_protobuf(Default::default()),
         );
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut query = AccountBalanceQuery::new();
+        query.account_id(AccountId::new(0, 0, 5005));
+
+        assert_eq!(query.get_account_id(), Some(AccountId::new(0, 0, 5005)));
+    }
+
+    #[test]
+    fn get_set_contract_id() {
+        let mut query = AccountBalanceQuery::new();
+        query.contract_id(ContractId::new(0, 0, 5005));
+
+        assert_eq!(query.get_contract_id(), Some(ContractId::new(0, 0, 5005)));
     }
 }

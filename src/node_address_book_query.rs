@@ -78,7 +78,7 @@ impl NodeAddressBookQueryData {
 
 impl Default for NodeAddressBookQueryData {
     fn default() -> Self {
-        Self { file_id: FileId::from(102), limit: 0 }
+        Self { file_id: FileId::ADDRESS_BOOK, limit: 0 }
     }
 }
 
@@ -193,5 +193,29 @@ impl NodeAddressBookQuery {
             self.data.clone(),
         ))
         .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        FileId,
+        NodeAddressBookQuery,
+    };
+
+    #[test]
+    fn get_set_file_id() {
+        let mut query = NodeAddressBookQuery::new();
+        query.file_id(FileId::new(0, 0, 1111));
+
+        assert_eq!(query.get_file_id(), FileId::new(0, 0, 1111));
+    }
+
+    #[test]
+    fn get_set_limit() {
+        let mut query = NodeAddressBookQuery::new();
+        query.limit(231);
+
+        assert_eq!(query.get_limit(), 231);
     }
 }

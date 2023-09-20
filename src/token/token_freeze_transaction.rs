@@ -160,21 +160,32 @@ impl ToProtobuf for TokenFreezeTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenFreezeTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
     };
     use crate::{
+        AccountId,
         AnyTransaction,
         TokenFreezeTransaction,
         TokenId,
     };
 
+    const ACCOUNT_ID: AccountId = AccountId::new(0, 0, 222);
+
+    const TOKEN_ID: TokenId = TokenId::new(5, 3, 3);
+
     fn make_transaction() -> TokenFreezeTransaction {
         let mut tx = TokenFreezeTransaction::new_for_tests();
 
-        tx.account_id("0.0.222".parse().unwrap()).token_id(TokenId::new(5, 3, 3)).freeze().unwrap();
+        tx.account_id(ACCOUNT_ID).token_id(TOKEN_ID).freeze().unwrap();
 
         tx
     }
@@ -225,5 +236,46 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::TokenFreezeAccountTransactionBody {
+            account: Some(ACCOUNT_ID.to_protobuf()),
+            token: Some(TOKEN_ID.to_protobuf()),
+        };
+
+        let data = TokenFreezeTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.account_id, Some(ACCOUNT_ID));
+        assert_eq!(data.token_id, Some(TOKEN_ID));
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenFreezeTransaction::new();
+        tx.token_id(TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        make_transaction().token_id(TOKEN_ID);
+    }
+
+    #[test]
+    fn get_set_account_id() {
+        let mut tx = TokenFreezeTransaction::new();
+        tx.account_id(ACCOUNT_ID);
+
+        assert_eq!(tx.get_account_id(), Some(ACCOUNT_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_account_id_frozen_panic() {
+        make_transaction().account_id(ACCOUNT_ID);
     }
 }

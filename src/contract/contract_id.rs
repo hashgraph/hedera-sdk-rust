@@ -69,7 +69,7 @@ pub struct ContractId {
 impl ContractId {
     /// Create a `ContractId` from the given shard/realm/num
     #[must_use]
-    pub fn new(shard: u64, realm: u64, num: u64) -> Self {
+    pub const fn new(shard: u64, realm: u64, num: u64) -> Self {
         Self { shard, realm, num, evm_address: None, checksum: None }
     }
 

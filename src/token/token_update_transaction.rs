@@ -890,7 +890,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_update_transaction_from_transaction_body_protobuf() {
+    fn from_proto_body() {
         let tx = services::TokenUpdateTransactionBody {
             token: Some(TEST_TOKEN_ID.to_protobuf()),
             symbol: TEST_TOKEN_SYMBOL.to_owned(),

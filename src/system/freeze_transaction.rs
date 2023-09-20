@@ -178,8 +178,15 @@ impl ToProtobuf for FreezeTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
     use hex_literal::hex;
+    use time::OffsetDateTime;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::system::FreezeTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -187,17 +194,23 @@ mod tests {
     };
     use crate::{
         AnyTransaction,
+        FileId,
         FreezeTransaction,
         FreezeType,
     };
 
+    const FILE_ID: FileId = FileId::new(4, 5, 6);
+    const FILE_HASH: [u8; 14] = hex!("1723904587120938954702349857");
+    const START_TIME: OffsetDateTime = VALID_START;
+    const FREEZE_TYPE: FreezeType = FreezeType::FreezeAbort;
+
     fn make_transaction() -> FreezeTransaction {
         let mut tx = FreezeTransaction::new_for_tests();
 
-        tx.file_id(("4.5.6").parse().unwrap())
-            .file_hash(hex!("1723904587120938954702349857").to_vec())
-            .start_time(VALID_START)
-            .freeze_type(FreezeType::FreezeAbort)
+        tx.file_id(FILE_ID)
+            .file_hash(FILE_HASH.to_vec())
+            .start_time(START_TIME)
+            .freeze_type(FREEZE_TYPE)
             .freeze()
             .unwrap();
 
@@ -266,5 +279,83 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::FreezeTransactionBody {
+            update_file: Some(FILE_ID.to_protobuf()),
+            file_hash: FILE_HASH.to_vec(),
+            start_time: Some(START_TIME.to_protobuf()),
+            freeze_type: FREEZE_TYPE as i32,
+            ..Default::default()
+        };
+
+        let tx = FreezeTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(tx.file_id, Some(FILE_ID));
+        assert_eq!(tx.file_hash.as_deref(), Some(FILE_HASH.as_slice()));
+        assert_eq!(tx.start_time, Some(START_TIME));
+        assert_eq!(tx.freeze_type, FREEZE_TYPE);
+    }
+
+    mod get_set {
+        use super::*;
+
+        #[test]
+        fn file_id() {
+            let mut tx = FreezeTransaction::new();
+            tx.file_id(FILE_ID);
+
+            assert_eq!(tx.get_file_id(), Some(FILE_ID));
+        }
+
+        #[test]
+        #[should_panic]
+        fn file_id_frozen_panics() {
+            make_transaction().file_id(FILE_ID);
+        }
+
+        #[test]
+        fn file_hash() {
+            let mut tx = FreezeTransaction::new();
+            tx.file_hash(FILE_HASH.to_vec());
+
+            assert_eq!(tx.get_file_hash(), Some(FILE_HASH.as_slice()));
+        }
+
+        #[test]
+        #[should_panic]
+        fn file_hash_frozen_panics() {
+            make_transaction().file_hash(FILE_HASH.to_vec());
+        }
+
+        #[test]
+        fn start_time() {
+            let mut tx = FreezeTransaction::new();
+            tx.start_time(START_TIME);
+
+            assert_eq!(tx.get_start_time(), Some(START_TIME));
+        }
+
+        #[test]
+        #[should_panic]
+        fn start_time_frozen_panics() {
+            make_transaction().start_time(START_TIME);
+        }
+
+        #[test]
+        fn freeze_type() {
+            let mut tx = FreezeTransaction::new();
+            tx.freeze_type(FREEZE_TYPE);
+
+            assert_eq!(tx.get_freeze_type(), FREEZE_TYPE);
+        }
+
+        #[test]
+        #[should_panic]
+        fn freeze_type_frozen_panics() {
+            make_transaction().freeze_type(FREEZE_TYPE);
+        }
     }
 }

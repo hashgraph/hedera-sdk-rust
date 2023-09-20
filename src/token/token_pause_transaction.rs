@@ -199,7 +199,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_pause_transaction_from_transaction_body_protobuf() {
+    fn from_proto_body() {
         let tx = TokenPauseTransactionBody { token: Some(TEST_TOKEN_ID.to_protobuf()) };
 
         let data = TokenPauseTransactionData::from_protobuf(tx).unwrap();

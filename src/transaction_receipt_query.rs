@@ -254,4 +254,37 @@ mod tests {
                 .to_query_protobuf(Default::default()),
         )
     }
+
+    #[test]
+    fn get_set_transaction_id() {
+        let mut query = TransactionReceiptQuery::new();
+        query.transaction_id(TEST_TX_ID);
+
+        assert_eq!(query.get_transaction_id(), Some(TEST_TX_ID));
+    }
+
+    // default is false for all of these, so setting it to `true` is the "interesting" state.
+    #[test]
+    fn get_set_include_children() {
+        let mut query = TransactionReceiptQuery::new();
+        query.include_children(true);
+
+        assert_eq!(query.get_include_children(), true);
+    }
+
+    #[test]
+    fn get_set_include_duplicates() {
+        let mut query = TransactionReceiptQuery::new();
+        query.include_duplicates(true);
+
+        assert_eq!(query.get_include_duplicates(), true);
+    }
+
+    #[test]
+    fn get_set_validate_status() {
+        let mut query = TransactionReceiptQuery::new();
+        query.validate_status(true);
+
+        assert_eq!(query.get_validate_status(), true);
+    }
 }

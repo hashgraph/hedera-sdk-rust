@@ -163,12 +163,19 @@ impl ToProtobuf for TokenFeeScheduleUpdateTransactionData {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use hedera_proto::services;
 
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenFeeScheduleUpdateTransactionData;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
     };
     use crate::{
+        AnyCustomFee,
         AnyTransaction,
         FixedFee,
         FractionalFee,
@@ -176,10 +183,10 @@ mod tests {
         TokenId,
     };
 
-    fn make_transaction() -> TokenFeeScheduleUpdateTransaction {
-        let mut tx = TokenFeeScheduleUpdateTransaction::new_for_tests();
+    const TOKEN_ID: TokenId = TokenId::new(0, 0, 8798);
 
-        let custom_fees = [
+    fn custom_fees() -> [AnyCustomFee; 2] {
+        [
             FixedFee {
                 fee: crate::FixedFeeData {
                     amount: 10,
@@ -201,9 +208,13 @@ mod tests {
                 all_collectors_are_exempt: false,
             }
             .into(),
-        ];
+        ]
+    }
 
-        tx.token_id(TokenId::new(0, 0, 8798)).custom_fees(custom_fees).freeze().unwrap();
+    fn make_transaction() -> TokenFeeScheduleUpdateTransaction {
+        let mut tx = TokenFeeScheduleUpdateTransaction::new_for_tests();
+
+        tx.token_id(TOKEN_ID).custom_fees(custom_fees()).freeze().unwrap();
 
         tx
     }
@@ -302,5 +313,46 @@ mod tests {
         let tx2 = transaction_body(tx2);
 
         assert_eq!(tx, tx2);
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::TokenFeeScheduleUpdateTransactionBody {
+            token_id: Some(TOKEN_ID.to_protobuf()),
+            custom_fees: custom_fees().to_vec().to_protobuf(),
+        };
+
+        let data = TokenFeeScheduleUpdateTransactionData::from_protobuf(tx).unwrap();
+
+        assert_eq!(data.token_id, Some(TOKEN_ID));
+        assert_eq!(data.custom_fees, custom_fees());
+    }
+
+    #[test]
+    fn get_set_token_id() {
+        let mut tx = TokenFeeScheduleUpdateTransaction::new();
+        tx.token_id(TOKEN_ID);
+
+        assert_eq!(tx.get_token_id(), Some(TOKEN_ID));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_id_frozen_panic() {
+        make_transaction().token_id(TOKEN_ID);
+    }
+
+    #[test]
+    fn get_set_custom_fees() {
+        let mut tx = TokenFeeScheduleUpdateTransaction::new();
+        tx.custom_fees(custom_fees());
+
+        assert_eq!(tx.get_custom_fees(), custom_fees());
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_custom_fees_frozen_panic() {
+        make_transaction().custom_fees(custom_fees());
     }
 }

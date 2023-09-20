@@ -184,8 +184,10 @@ mod tests {
 
     use crate::query::ToQueryProtobuf;
     use crate::{
+        AccountId,
         ContractCallQuery,
         ContractFunctionParameters,
+        ContractId,
         Hbar,
     };
 
@@ -699,5 +701,38 @@ mod tests {
                 .data
                 .to_query_protobuf(services::QueryHeader::default()),
         );
+    }
+
+    #[test]
+    fn get_set_contract_id() {
+        let mut query = ContractCallQuery::new();
+        query.contract_id(ContractId::new(0, 0, 5005));
+
+        assert_eq!(query.get_contract_id(), Some(ContractId::new(0, 0, 5005)));
+    }
+
+    #[test]
+    fn get_set_gas() {
+        let mut query = ContractCallQuery::new();
+        query.gas(1541);
+
+        assert_eq!(query.get_gas(), 1541);
+    }
+
+    #[test]
+    fn get_set_contract_parameters() {
+        const BYTES: [u8; 6] = [0x0a, 0x0b, 0x0c, 0x01, 0x02, 0x03];
+        let mut query = ContractCallQuery::new();
+        query.function_parameters(Vec::from(BYTES));
+
+        assert_eq!(query.get_contract_parameters(), &BYTES);
+    }
+
+    #[test]
+    fn get_set_sender_account_id() {
+        let mut query = ContractCallQuery::new();
+        query.sender_account_id(AccountId::new(1, 2, 3));
+
+        assert_eq!(query.get_sender_account_id(), Some(AccountId::new(1, 2, 3)));
     }
 }

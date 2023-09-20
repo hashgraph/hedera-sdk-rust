@@ -197,7 +197,7 @@ mod tests {
     }
 
     #[test]
-    fn construct_token_unpause_transaction_from_transaction_body_protobuf() {
+    fn from_proto_body() {
         let tx = services::TokenUnpauseTransactionBody { token: Some(TEST_TOKEN_ID.to_protobuf()) };
 
         let tx = TokenUnpauseTransactionData::from_protobuf(tx).unwrap();

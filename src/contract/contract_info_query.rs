@@ -107,6 +107,7 @@ mod tests {
 
     use crate::query::ToQueryProtobuf;
     use crate::{
+        ContractId,
         ContractInfoQuery,
         Hbar,
     };
@@ -153,5 +154,13 @@ mod tests {
                 .data
                 .to_query_protobuf(Default::default()),
         );
+    }
+
+    #[test]
+    fn get_set_contract_id() {
+        let mut query = ContractInfoQuery::new();
+        query.contract_id(ContractId::new(0, 0, 5005));
+
+        assert_eq!(query.get_contract_id(), Some(ContractId::new(0, 0, 5005)));
     }
 }
