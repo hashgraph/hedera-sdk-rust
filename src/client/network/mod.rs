@@ -317,10 +317,6 @@ impl NetworkData {
         Ok(indexes)
     }
 
-    pub(crate) fn mark_node_used(&self, node_index: usize, now: Instant) {
-        self.health[node_index].write().mark_used(now);
-    }
-
     pub(crate) fn mark_node_unhealthy(&self, node_index: usize) {
         let now = Instant::now();
 
@@ -328,7 +324,7 @@ impl NetworkData {
     }
 
     pub(crate) fn mark_node_healthy(&self, node_index: usize) {
-        self.health[node_index].write().mark_healthy();
+        self.health[node_index].write().mark_healthy(Instant::now());
     }
 
     pub(crate) fn is_node_healthy(&self, node_index: usize, now: Instant) -> bool {
@@ -384,51 +380,73 @@ impl NetworkData {
     }
 }
 
-pub(crate) struct NodeHealth {
-    backoff: backoff::ExponentialBackoff,
-    healthy: Option<Instant>,
-    used: Option<Instant>,
+#[derive(Default)]
+enum NodeHealth {
+    /// The node has never been used, so we don't know anything about it.
+    ///
+    /// However, we'll vaguely consider it healthy (`is_healthy` returns `true`).
+    #[default]
+    Unused,
+
+    /// When we used or pinged the node we got some kind of error with it (like a BUSY response).
+    ///
+    /// Repeated errors cause the backoff to increase.
+    ///
+    /// Once we've reached `healthyAt` the node is *semantically* in the ``unused`` state,
+    /// other than retaining the backoff until a `healthy` request happens.
+    Unhealthy { backoff_interval: Duration, healthy_at: Instant },
+
+    /// When we last used the node the node acted as normal, so, we get to treat it as a healthy node for 15 minutes.
+    Healthy { used_at: Instant },
 }
 
 impl NodeHealth {
-    pub(crate) fn mark_used(&mut self, now: Instant) {
-        self.used = Some(now);
+    fn backoff(&self) -> backoff::ExponentialBackoff {
+        const BASE_BACKOFF: Duration = Duration::from_millis(250);
+        let current_interval = match self {
+            Self::Unhealthy { backoff_interval, healthy_at: _ } => *backoff_interval,
+            _ => BASE_BACKOFF,
+        };
+
+        backoff::ExponentialBackoff {
+            current_interval,
+            initial_interval: BASE_BACKOFF,
+            max_elapsed_time: None,
+            max_interval: Duration::from_secs(60 * 60),
+            ..Default::default()
+        }
     }
 
     pub(crate) fn mark_unhealthy(&mut self, now: Instant) {
-        let backoff = self.backoff.next_backoff().expect("`max_elapsed_time` is hardwired to None");
+        let backoff =
+            self.backoff().next_backoff().expect("`max_elapsed_time` is hardwired to None");
 
-        self.healthy = Some(now + backoff);
+        let healthy_at = now + backoff;
+
+        *self = Self::Unhealthy { backoff_interval: backoff, healthy_at };
     }
 
-    pub(crate) fn mark_healthy(&mut self) {
-        self.healthy = None;
-        self.backoff.reset();
+    pub(crate) fn mark_healthy(&mut self, now: Instant) {
+        *self = Self::Healthy { used_at: now };
     }
 
     pub(crate) fn is_healthy(&self, now: Instant) -> bool {
         // a healthy node has a healthiness before now.
-        self.healthy < Some(now)
+        match self {
+            Self::Unhealthy { backoff_interval: _, healthy_at } => healthy_at < &now,
+            _ => true,
+        }
     }
 
     pub(crate) fn recently_pinged(&self, now: Instant) -> bool {
-        !self.is_healthy(now)
-            || self.used.map_or(false, |it| it.elapsed() < Duration::from_secs(15 * 60))
-    }
-}
+        match self {
+            // when used at was less than 15 minutes ago we consider ourselves "pinged", otherwise we're basically `.unused`.
+            Self::Healthy { used_at } => now < *used_at + Duration::from_secs(15 * 60),
+            // likewise an unhealthy node (healthyAt > now) has been "pinged" (although we don't want to use it probably we at least *have* gotten *something* from it)
+            Self::Unhealthy { backoff_interval: _, healthy_at } => now < *healthy_at,
 
-impl Default for NodeHealth {
-    fn default() -> Self {
-        Self {
-            backoff: backoff::ExponentialBackoff {
-                current_interval: Duration::from_millis(250),
-                initial_interval: Duration::from_millis(250),
-                max_elapsed_time: None,
-                max_interval: Duration::from_secs(60 * 60),
-                ..Default::default()
-            },
-            healthy: Default::default(),
-            used: Default::default(),
+            // an unused node is by definition not pinged.
+            Self::Unused => false,
         }
     }
 }
