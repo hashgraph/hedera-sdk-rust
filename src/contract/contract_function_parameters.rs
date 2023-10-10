@@ -1,11 +1,6 @@
+use num_bigint::{BigInt, BigUint, Sign};
 use std::cmp::max;
 use std::str::FromStr;
-
-use num_bigint::{
-    BigInt,
-    BigUint,
-    Sign,
-};
 
 use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::ethereum::SolidityAddress;
@@ -21,6 +16,28 @@ struct Argument {
     type_name: &'static str,
     value_bytes: Vec<u8>,
     is_dynamic: bool,
+}
+
+trait IntoBytes32 {
+    fn get_bytes_32(&self) -> Vec<u8>;
+}
+
+impl IntoBytes32 for &[u8; 32] {
+    fn get_bytes_32(&self) -> Vec<u8> {
+        self.to_vec()
+    }
+}
+
+impl IntoBytes32 for String {
+    fn get_bytes_32(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
+}
+
+impl IntoBytes32 for &str {
+    fn get_bytes_32(&self) -> Vec<u8> {
+        self.as_bytes().to_vec()
+    }
 }
 
 trait IntEncode {
@@ -190,10 +207,10 @@ impl ContractFunctionParameters {
     }
 
     /// Add a `bytes32` argument to the `ContractFunctionParameters`
-    pub fn add_bytes32(&mut self, val: &[u8; 32]) -> &mut Self {
+    fn add_bytes32<T: IntoBytes32>(&mut self, val: T) -> &mut Self {
         self.args.push(Argument {
             type_name: "bytes32",
-            value_bytes: val.to_vec(),
+            value_bytes: encode_array_of_32_byte(val),
             is_dynamic: false,
         });
         self
@@ -1013,12 +1030,20 @@ where
     out_bytes
 }
 
+fn encode_array_of_32_byte<T: IntoBytes32>(elements: T) -> Vec<u8> {
+    let slice = elements.get_bytes_32();
+    if slice.len() > 32 {
+        panic!("32 bytes exceeded in contract function call")
+    }
+
+    let mut new_bytes = slice;
+    right_pad_32_bytes(&mut new_bytes);
+    new_bytes
+}
+
 #[cfg(test)]
 mod tests {
-    use num_bigint::{
-        BigInt,
-        BigUint,
-    };
+    use num_bigint::{BigInt, BigUint};
 
     use crate::contract::contract_function_parameters::ContractFunctionParameters;
     use crate::contract::contract_function_selector::ContractFunctionSelector;
