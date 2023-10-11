@@ -1163,6 +1163,7 @@ mod tests {
                 ContractFunctionSelector::new("randomFunction").add_bool().clone(),
             )
             .to_bytes(Some("foo"));
+
         assert_eq!(
             hex::encode(param_bytes),
             "c99c40cd\
@@ -1200,5 +1201,78 @@ mod tests {
             6162636461626364616263646162636461626364616263646162636461626364
             6162636461626364616263646162636461626364616263646162636400000000"#]]
         .assert_eq(&buf);
+    }
+
+    #[test]
+    fn string_to_bytes32() {
+        let s = "alice".to_string();
+
+        let bytes = ContractFunctionParameters::new().add_bytes32(s).to_bytes(None);
+
+        // sigh, the things we do to not have to manually format.
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect!["616c696365000000000000000000000000000000000000000000000000000000"]
+            .assert_eq(&buf);
+    }
+
+    #[test]
+    fn str_to_bytes32() {
+        let s = "alice";
+
+        let bytes = ContractFunctionParameters::new().add_bytes32(s).to_bytes(None);
+
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect!["616c696365000000000000000000000000000000000000000000000000000000"]
+            .assert_eq(&buf);
+    }
+
+    #[test]
+    fn bytes_to_bytes32() {
+        let mut array = [0u8; 32];
+
+        let str_sample = "aliceandbob".as_bytes();
+
+        for (i, &byte) in str_sample.iter().enumerate() {
+            array[i] = byte;
+        }
+
+        let bytes = ContractFunctionParameters::new().add_bytes32(&array).to_bytes(None);
+
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect!["616c696365616e64626f62000000000000000000000000000000000000000000"]
+            .assert_eq(&buf);
+    }
+
+    #[test]
+    #[should_panic]
+    fn bytes32_panic() {
+        let str_sample = "alice bought some burgers from bob";
+
+        // should panic if input is more than 32 bytes in add_bytes32
+        ContractFunctionParameters::new().add_bytes32(str_sample).to_bytes(None);
     }
 }
