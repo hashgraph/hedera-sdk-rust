@@ -1,6 +1,11 @@
-use num_bigint::{BigInt, BigUint, Sign};
 use std::cmp::max;
 use std::str::FromStr;
+
+use num_bigint::{
+    BigInt,
+    BigUint,
+    Sign,
+};
 
 use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::ethereum::SolidityAddress;
@@ -1043,7 +1048,10 @@ fn encode_array_of_32_byte<T: IntoBytes32>(elements: T) -> Vec<u8> {
 
 #[cfg(test)]
 mod tests {
-    use num_bigint::{BigInt, BigUint};
+    use num_bigint::{
+        BigInt,
+        BigUint,
+    };
 
     use crate::contract::contract_function_parameters::ContractFunctionParameters;
     use crate::contract::contract_function_selector::ContractFunctionSelector;
