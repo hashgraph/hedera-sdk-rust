@@ -7,6 +7,7 @@ use num_bigint::{
     Sign,
 };
 
+use self::private::Sealed;
 use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::ethereum::SolidityAddress;
 
@@ -23,25 +24,20 @@ struct Argument {
     is_dynamic: bool,
 }
 
-trait IntoBytes32 {
-    fn get_bytes_32(&self) -> Vec<u8>;
+mod private {
+    pub trait Sealed {}
+    impl Sealed for String {}
+    impl Sealed for str {}
+    impl Sealed for [u8; 32] {}
 }
 
-impl IntoBytes32 for &[u8; 32] {
-    fn get_bytes_32(&self) -> Vec<u8> {
-        self.to_vec()
-    }
+pub trait AsBytes32: Sealed {
+    fn as_bytes32(&self) -> &[u8];
 }
 
-impl IntoBytes32 for String {
-    fn get_bytes_32(&self) -> Vec<u8> {
-        self.as_bytes().to_vec()
-    }
-}
-
-impl IntoBytes32 for &str {
-    fn get_bytes_32(&self) -> Vec<u8> {
-        self.as_bytes().to_vec()
+impl<T: Sealed + AsRef<[u8]> + ?Sized> AsBytes32 for T {
+    fn as_bytes32(&self) -> &[u8] {
+        self.as_ref()
     }
 }
 
@@ -212,7 +208,7 @@ impl ContractFunctionParameters {
     }
 
     /// Add a `bytes32` argument to the `ContractFunctionParameters`
-    fn add_bytes32<T: IntoBytes32>(&mut self, val: T) -> &mut Self {
+    pub fn add_bytes32<T: AsBytes32 + ?Sized>(&mut self, val: &T) -> &mut Self {
         self.args.push(Argument {
             type_name: "bytes32",
             value_bytes: encode_array_of_32_byte(val),
@@ -1035,13 +1031,13 @@ where
     out_bytes
 }
 
-fn encode_array_of_32_byte<T: IntoBytes32>(elements: T) -> Vec<u8> {
-    let slice = elements.get_bytes_32();
+fn encode_array_of_32_byte<T: AsBytes32 + ?Sized>(elements: &T) -> Vec<u8> {
+    let slice = elements.as_bytes32();
     if slice.len() > 32 {
         panic!("32 bytes exceeded in contract function call")
     }
 
-    let mut new_bytes = slice;
+    let mut new_bytes = slice.to_vec();
     right_pad_32_bytes(&mut new_bytes);
     new_bytes
 }
@@ -1215,7 +1211,7 @@ mod tests {
     fn string_to_bytes32() {
         let s = "alice".to_string();
 
-        let bytes = ContractFunctionParameters::new().add_bytes32(s).to_bytes(None);
+        let bytes = ContractFunctionParameters::new().add_bytes32(&s).to_bytes(None);
 
         // sigh, the things we do to not have to manually format.
         let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
