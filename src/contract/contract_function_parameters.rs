@@ -7,6 +7,7 @@ use num_bigint::{
     Sign,
 };
 
+use self::private::Sealed;
 use crate::contract::contract_function_selector::ContractFunctionSelector;
 use crate::ethereum::SolidityAddress;
 
@@ -21,6 +22,23 @@ struct Argument {
     type_name: &'static str,
     value_bytes: Vec<u8>,
     is_dynamic: bool,
+}
+
+mod private {
+    pub trait Sealed {}
+    impl Sealed for String {}
+    impl Sealed for str {}
+    impl Sealed for [u8; 32] {}
+}
+
+pub trait AsBytes32: Sealed {
+    fn as_bytes32(&self) -> &[u8];
+}
+
+impl<T: Sealed + AsRef<[u8]> + ?Sized> AsBytes32 for T {
+    fn as_bytes32(&self) -> &[u8] {
+        self.as_ref()
+    }
 }
 
 trait IntEncode {
@@ -190,10 +208,10 @@ impl ContractFunctionParameters {
     }
 
     /// Add a `bytes32` argument to the `ContractFunctionParameters`
-    pub fn add_bytes32(&mut self, val: &[u8; 32]) -> &mut Self {
+    pub fn add_bytes32<T: AsBytes32 + ?Sized>(&mut self, val: &T) -> &mut Self {
         self.args.push(Argument {
             type_name: "bytes32",
-            value_bytes: val.to_vec(),
+            value_bytes: encode_array_of_32_byte(val),
             is_dynamic: false,
         });
         self
@@ -1013,6 +1031,17 @@ where
     out_bytes
 }
 
+fn encode_array_of_32_byte<T: AsBytes32 + ?Sized>(elements: &T) -> Vec<u8> {
+    let slice = elements.as_bytes32();
+    if slice.len() > 32 {
+        panic!("32 bytes exceeded in contract function call")
+    }
+
+    let mut new_bytes = slice.to_vec();
+    right_pad_32_bytes(&mut new_bytes);
+    new_bytes
+}
+
 #[cfg(test)]
 mod tests {
     use num_bigint::{
@@ -1138,6 +1167,7 @@ mod tests {
                 ContractFunctionSelector::new("randomFunction").add_bool().clone(),
             )
             .to_bytes(Some("foo"));
+
         assert_eq!(
             hex::encode(param_bytes),
             "c99c40cd\
@@ -1175,5 +1205,78 @@ mod tests {
             6162636461626364616263646162636461626364616263646162636461626364
             6162636461626364616263646162636461626364616263646162636400000000"#]]
         .assert_eq(&buf);
+    }
+
+    #[test]
+    fn string_to_bytes32() {
+        let s = "alice".to_string();
+
+        let bytes = ContractFunctionParameters::new().add_bytes32(&s).to_bytes(None);
+
+        // sigh, the things we do to not have to manually format.
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect!["616c696365000000000000000000000000000000000000000000000000000000"]
+            .assert_eq(&buf);
+    }
+
+    #[test]
+    fn str_to_bytes32() {
+        let s = "alice";
+
+        let bytes = ContractFunctionParameters::new().add_bytes32(s).to_bytes(None);
+
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect!["616c696365000000000000000000000000000000000000000000000000000000"]
+            .assert_eq(&buf);
+    }
+
+    #[test]
+    fn bytes_to_bytes32() {
+        let mut array = [0u8; 32];
+
+        let str_sample = "aliceandbob".as_bytes();
+
+        for (i, &byte) in str_sample.iter().enumerate() {
+            array[i] = byte;
+        }
+
+        let bytes = ContractFunctionParameters::new().add_bytes32(&array).to_bytes(None);
+
+        let mut buf = String::with_capacity(bytes.len() * 2 + ((bytes.len() * 2) / 64));
+        for line in bytes.chunks(32).map(hex::encode) {
+            if !buf.is_empty() {
+                buf.push('\n');
+            }
+
+            buf.push_str(&line);
+        }
+
+        expect_test::expect!["616c696365616e64626f62000000000000000000000000000000000000000000"]
+            .assert_eq(&buf);
+    }
+
+    #[test]
+    #[should_panic]
+    fn bytes32_panic() {
+        let str_sample = "alice bought some burgers from bob";
+
+        // should panic if input is more than 32 bytes in add_bytes32
+        ContractFunctionParameters::new().add_bytes32(str_sample).to_bytes(None);
     }
 }
