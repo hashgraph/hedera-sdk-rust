@@ -75,7 +75,7 @@ impl ContractHelper {
             let record = tx
                 .execute(client)
                 .await?
-                .valdiate_status(false)
+                .validate_status(false)
                 .get_record(client)
                 .await?;
 
