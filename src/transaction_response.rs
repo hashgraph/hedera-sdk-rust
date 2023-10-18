@@ -59,7 +59,7 @@ pub struct TransactionResponse {
 
 impl TransactionResponse {
     /// Whether the receipt/record status should be validated.
-    pub fn valdiate_status(&mut self, validate: bool) -> &mut Self {
+    pub fn validate_status(&mut self, validate: bool) -> &mut Self {
         self.validate_status = validate;
         self
     }
