@@ -16,7 +16,9 @@ use crate::common::{
 
 #[tokio::test]
 async fn query() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -55,7 +57,9 @@ async fn query() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_empty_no_admin_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let file_id = FileCreateTransaction::new()
         .execute(&client)
@@ -77,7 +81,9 @@ async fn query_empty_no_admin_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_big_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -114,7 +120,9 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_small_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -163,7 +171,9 @@ async fn query_cost_small_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_insufficient_tx_fee() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

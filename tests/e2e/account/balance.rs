@@ -147,7 +147,9 @@ async fn invalid_account_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_token_balances() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(10), &client).await?;
 

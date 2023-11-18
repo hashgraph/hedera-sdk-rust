@@ -19,7 +19,9 @@ use crate::common::{
 #[tokio::test]
 #[ignore = "not implemented in Hedera yet"]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -52,7 +54,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -90,7 +94,9 @@ async fn query() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_schedule_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = ScheduleInfoQuery::new().execute(&client).await;
 
@@ -104,7 +110,9 @@ async fn missing_schedule_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -135,7 +143,9 @@ async fn query_cost() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_big_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -166,7 +176,9 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_small_max_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -209,7 +221,9 @@ async fn query_cost_small_max_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

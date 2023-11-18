@@ -29,7 +29,9 @@ use crate::token::{
 #[tokio::test]
 
 async fn query_all_different_keys() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -86,7 +88,9 @@ async fn query_all_different_keys() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn query_minimal() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -129,7 +133,9 @@ async fn query_minimal() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn query_nft() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -183,7 +189,9 @@ async fn query_nft() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn query_cost() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
@@ -205,7 +213,9 @@ async fn query_cost() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn query_cost_big_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
@@ -227,7 +237,9 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn query_cost_small_max_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
@@ -261,7 +273,9 @@ async fn query_cost_small_max_fails() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn query_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, Default::default()).await?;

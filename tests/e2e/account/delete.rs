@@ -15,7 +15,9 @@ use crate::common::{
 
 #[tokio::test]
 async fn create_then_delete() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let key = PrivateKey::generate_ed25519();
 
@@ -70,7 +72,9 @@ async fn missing_account_id_fails() {
 
 #[tokio::test]
 async fn missing_deletee_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

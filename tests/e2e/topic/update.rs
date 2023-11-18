@@ -11,7 +11,9 @@ use crate::topic::Topic;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 

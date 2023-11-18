@@ -13,7 +13,9 @@ use crate::topic::Topic;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -67,13 +69,22 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn large() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+
+    // Skip if using local node.
+    // Note: Remove when multinode is supported
+    if config.is_local {
+        return Ok(());
+    }
 
     let topic = Topic::create(&client).await?;
 
     tokio::spawn({
         let id = topic.id;
         let client = client.clone();
+
         async move {
             TopicMessageSubmitTransaction::new()
                 .topic_id(id)

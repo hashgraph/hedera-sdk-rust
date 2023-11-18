@@ -15,7 +15,9 @@ use crate::token::Nft;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -68,7 +70,9 @@ async fn basic() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn unowned_nfts_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),

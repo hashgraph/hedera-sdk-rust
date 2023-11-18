@@ -44,7 +44,9 @@ const TOKEN_PARAMS: CreateFungibleToken = CreateFungibleToken {
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let owner = Account::create(Hbar::new(0), &client).await?;
 
@@ -63,7 +65,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_token_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TokenUnpauseTransaction::new().execute(&client).await;
 
@@ -80,7 +84,9 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_pause_key_sig_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let owner = Account::create(Hbar::new(0), &client).await?;
 
@@ -103,7 +109,9 @@ async fn missing_pause_key_sig_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_pause_key_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let owner = Account::create(Hbar::new(0), &client).await?;
 

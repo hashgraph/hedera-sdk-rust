@@ -14,7 +14,9 @@ use crate::common::{
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -49,7 +51,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_admin_key_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -85,7 +89,9 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn double_delete_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -135,7 +141,9 @@ async fn double_delete_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_schedule_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = ScheduleDeleteTransaction::new().execute(&client).await;
 

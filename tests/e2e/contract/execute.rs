@@ -14,7 +14,9 @@ use crate::contract::ContractAdminKey;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -50,7 +52,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_contract_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = ContractExecuteTransaction::new()
         .gas(100_000)
@@ -73,7 +77,9 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_function_parameters_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -113,7 +119,9 @@ async fn missing_function_parameters_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_gas_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

@@ -70,7 +70,7 @@ impl ToProtobuf for ContractLogInfo {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
-    use hedera_proto::services::{self,};
+    use hedera_proto::services;
     use prost::Message;
 
     use crate::protobuf::{
