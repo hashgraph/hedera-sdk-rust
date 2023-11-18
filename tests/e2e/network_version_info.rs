@@ -12,7 +12,9 @@ use crate::common::{
 
 #[tokio::test]
 async fn query() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let _info = NetworkVersionInfoQuery::new().execute(&client).await?;
 
@@ -21,7 +23,9 @@ async fn query() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let mut query = NetworkVersionInfoQuery::new();
 
@@ -36,7 +40,9 @@ async fn query_cost() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_big_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let mut query = NetworkVersionInfoQuery::new();
 
@@ -51,7 +57,9 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_small_max_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let mut query = NetworkVersionInfoQuery::new();
 
@@ -78,7 +86,9 @@ async fn query_cost_small_max_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn get_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = NetworkVersionInfoQuery::new() //
         .max_payment_amount(Hbar::from_tinybars(10000))

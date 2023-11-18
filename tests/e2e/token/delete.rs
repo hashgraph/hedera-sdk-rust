@@ -17,7 +17,9 @@ use crate::token::{
 
 #[tokio::test]
 async fn all_keys() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(
@@ -42,7 +44,9 @@ async fn all_keys() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn only_admin_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -63,7 +67,9 @@ async fn only_admin_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_admin_key_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, Default::default()).await?;
@@ -88,7 +94,9 @@ async fn missing_admin_key_signature_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_admin_key_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
     let account = Account::create(Hbar::new(0), &client).await?;
 
     let token = super::FungibleToken::create(
@@ -116,7 +124,9 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_token_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TokenDeleteTransaction::new().execute(&client).await;
 

@@ -34,7 +34,9 @@ const TOKEN_PARAMS: CreateFungibleToken = CreateFungibleToken {
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -82,7 +84,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn insufficient_balance_for_fee_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob, cherry) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -185,7 +189,9 @@ async fn insufficient_balance_for_fee_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn unowned_token_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -233,7 +239,9 @@ async fn unowned_token_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn decimals() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),
@@ -281,7 +289,9 @@ async fn decimals() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn incorrect_decimals_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let (alice, bob) = tokio::try_join!(
         Account::create(Hbar::new(0), &client),

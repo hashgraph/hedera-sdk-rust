@@ -16,7 +16,9 @@ use crate::token::Nft;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = Nft::create(&client, &account).await?;
@@ -41,7 +43,9 @@ async fn basic() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn invalid_nft_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TokenNftInfoQuery::new()
         .nft_id(NftId { token_id: TokenId::new(0, 0, 0), serial: 2023 })
@@ -58,7 +62,9 @@ async fn invalid_nft_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn invalid_serial_number_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TokenNftInfoQuery::new()
         .nft_id(NftId { token_id: TokenId::new(0, 0, 0), serial: u64::MAX })

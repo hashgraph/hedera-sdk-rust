@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::sync::atomic::AtomicBool;
 
 use anyhow::Context;
@@ -20,6 +21,8 @@ mod keys {
 }
 
 static CONFIG: Lazy<Config> = Lazy::new(Config::parse_env);
+static DEFAULT_LOCAL_NODE_ADDRESS: &str = "127.0.0.1:50211";
+static DEFAULT_LOCAL_MIRROR_NODE_ADDRESS: &str = "127.0.0.1:5600";
 
 /// Generates a client using the active config.
 ///
@@ -27,16 +30,22 @@ static CONFIG: Lazy<Config> = Lazy::new(Config::parse_env);
 fn client() -> Client {
     let config = &*CONFIG;
 
-    let client = match Client::for_name(&config.network_name) {
-        Ok(client) => client,
-        Err(e) => {
+    let client = match &*config.network_name {
+        "mainnet" => Client::for_mainnet(),
+        "testnet" => Client::for_testnet(),
+        "previewnet" => Client::for_previewnet(),
+        "localhost" => for_local_node(),
+        _ => {
             // to ensure we don't spam the logs with `Error creating client: ...`,
             // we just let an arbitrary thread win and log the "error".
             static LOGS_ONCE: AtomicBool = AtomicBool::new(false);
 
             // note: Relaxed is probably fine, AcqRel is *definitely* fine.
             if !LOGS_ONCE.swap(true, std::sync::atomic::Ordering::AcqRel) {
-                log::error!("Error creating client: {e}; creating one using `testnet`");
+                log::error!(
+                    "Error creating client: {}; creating one using `testnet`",
+                    &*config.network_name
+                );
             }
 
             Client::for_testnet()
@@ -47,6 +56,15 @@ fn client() -> Client {
         client.set_operator(op.account_id, op.private_key.clone());
     }
 
+    client
+}
+
+fn for_local_node() -> Client {
+    let mut network: HashMap<String, AccountId> = HashMap::new();
+    network.insert(DEFAULT_LOCAL_NODE_ADDRESS.to_string(), AccountId::new(0, 0, 3));
+
+    let client = Client::for_network(network).unwrap();
+    client.set_mirror_network([DEFAULT_LOCAL_MIRROR_NODE_ADDRESS.to_string()]);
     client
 }
 
@@ -106,6 +124,9 @@ pub(crate) struct Config {
     ///
     /// If this is set and an operator is not provided, a warning will be logged and this will be forcibly disabled.
     pub(crate) run_nonfree_tests: bool,
+
+    /// A flag signifying that local node is the current testing environment.
+    pub(crate) is_local: bool,
 }
 
 /// Returns true if the provided env var is
@@ -131,13 +152,20 @@ impl Config {
     fn parse_env() -> Self {
         let network_name = dotenvy::var(keys::NETWORK).ok();
 
+        let mut is_local = false;
+
+        // default tests to localhost
         let network_name = network_name.map_or_else(|| Cow::Borrowed("testnet"), Cow::Owned);
+
+        if network_name == "localhost" {
+            is_local = true
+        }
 
         let operator = Operator::parse_env();
 
         let run_nonfree_tests = env_bool(false, keys::RUN_NONFREE);
 
-        Self { network_name, operator, run_nonfree_tests }
+        Self { network_name, operator, run_nonfree_tests, is_local }
     }
 }
 

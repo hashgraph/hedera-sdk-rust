@@ -30,7 +30,9 @@ const TOKEN_KEYS: TokenKeys = TokenKeys { supply: Some(Key::Owner), ..TokenKeys:
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
     const INITIAL_SUPPLY: u64 = 1_000_000;
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(
@@ -60,7 +62,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn over_supply_limit_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -108,7 +112,9 @@ async fn over_supply_limit_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_token_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TokenMintTransaction::new().amount(6).execute(&client).await;
 
@@ -126,7 +132,9 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 #[tokio::test]
 async fn zero() -> anyhow::Result<()> {
     const INITIAL_SUPPLY: u64 = 1_000_000;
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(
@@ -156,7 +164,9 @@ async fn zero() -> anyhow::Result<()> {
 #[tokio::test]
 
 async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(
@@ -187,7 +197,9 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn nfts() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -232,7 +244,9 @@ async fn nfts() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn nft_metadata_too_long_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 

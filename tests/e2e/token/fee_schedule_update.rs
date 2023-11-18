@@ -28,7 +28,9 @@ const TOKEN_PARAMS: CreateFungibleToken = CreateFungibleToken {
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, TOKEN_PARAMS).await?;
@@ -79,7 +81,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn invalid_signature_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
     let token = super::FungibleToken::create(&client, &account, TOKEN_PARAMS).await?;

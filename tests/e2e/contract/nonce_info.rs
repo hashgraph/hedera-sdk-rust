@@ -14,7 +14,9 @@ const SMART_CONTRACT_BYTECODE: &str = "6080604052348015600f57600080fd5b506040516
 
 #[tokio::test]
 async fn increment_nonce_through_contract_constructor() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

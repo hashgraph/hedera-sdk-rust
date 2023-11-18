@@ -13,7 +13,9 @@ use crate::common::{
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -46,7 +48,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn immutable_file_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let file_id = FileCreateTransaction::new()
         .contents("[rust::e2e::file_delete::2]")

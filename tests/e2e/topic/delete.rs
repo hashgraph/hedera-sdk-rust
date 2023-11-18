@@ -14,7 +14,9 @@ use crate::topic::Topic;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -30,7 +32,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn immutable_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic_id = TopicCreateTransaction::new()
         .execute(&client)
@@ -56,7 +60,9 @@ async fn immutable_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn wrong_admin_key_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let admin_key = PrivateKey::generate_ed25519();
 

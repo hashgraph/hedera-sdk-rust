@@ -16,7 +16,9 @@ use crate::resources;
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
     // There are potential bugs in FileAppendTransaction which require more than one node to trigger.
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -61,7 +63,9 @@ async fn basic() -> anyhow::Result<()> {
 #[tokio::test]
 async fn large_contents() -> anyhow::Result<()> {
     // There are potential bugs in FileAppendTransaction which require more than one node to trigger.
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -113,7 +117,9 @@ async fn large_contents() -> anyhow::Result<()> {
 #[tokio::test]
 async fn large_contents_small_valid_duration() -> anyhow::Result<()> {
     // There are potential bugs in FileAppendTransaction which require more than one node to trigger.
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

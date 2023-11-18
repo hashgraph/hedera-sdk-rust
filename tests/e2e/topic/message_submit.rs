@@ -15,7 +15,9 @@ use crate::topic::Topic;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -39,7 +41,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn large_message() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -66,7 +70,9 @@ async fn large_message() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_topic_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TopicMessageSubmitTransaction::new()
         .max_chunks(15)
@@ -86,7 +92,9 @@ async fn missing_topic_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_message_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 

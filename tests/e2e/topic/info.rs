@@ -13,7 +13,9 @@ use crate::topic::Topic;
 
 #[tokio::test]
 async fn query() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -27,7 +29,9 @@ async fn query() -> anyhow::Result<()> {
 }
 #[tokio::test]
 async fn query_cost() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
     let mut query = TopicInfoQuery::new();
@@ -47,7 +51,9 @@ async fn query_cost() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_big_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -68,7 +74,9 @@ async fn query_cost_big_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_small_max() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 
@@ -99,7 +107,9 @@ async fn query_cost_small_max() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn query_cost_insufficient_tx_fee() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let topic = Topic::create(&client).await?;
 

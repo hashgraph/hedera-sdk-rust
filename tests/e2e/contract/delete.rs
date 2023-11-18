@@ -13,7 +13,9 @@ use crate::contract::ContractAdminKey;
 
 #[tokio::test]
 async fn admin_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -41,7 +43,9 @@ async fn admin_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_admin_key_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -70,7 +74,9 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_contract_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = ContractDeleteTransaction::new().execute(&client).await;
 

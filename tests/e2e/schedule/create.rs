@@ -24,7 +24,9 @@ use crate::common::{
 #[tokio::test]
 #[ignore = "not implemented in Hedera yet"]
 async fn create_account() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -57,7 +59,9 @@ async fn create_account() -> anyhow::Result<()> {
 #[tokio::test]
 #[ignore = "not implemented in Hedera yet"]
 async fn create_account_schedule() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -90,7 +94,9 @@ async fn create_account_schedule() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn transfer() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -168,7 +174,9 @@ async fn transfer() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn double_schedule_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");
@@ -214,7 +222,9 @@ async fn double_schedule_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn topic_message() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let Some(op) = &config.operator else {
         log::debug!("skipping test due to missing operator");

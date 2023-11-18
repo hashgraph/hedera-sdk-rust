@@ -15,7 +15,9 @@ use crate::common::{
 
 #[tokio::test]
 async fn set_key() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let key1 = PrivateKey::generate_ed25519();
     let key2 = PrivateKey::generate_ed25519();
@@ -71,7 +73,9 @@ async fn set_key() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_account_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = AccountUpdateTransaction::new().execute(&client).await?.get_receipt(&client).await;
 

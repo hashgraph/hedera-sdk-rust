@@ -55,7 +55,9 @@ fn fractional_fee(fee_collector: AccountId) -> AnyCustomFee {
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -91,7 +93,9 @@ async fn basic() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn minimal() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -111,7 +115,9 @@ async fn minimal() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_name_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -137,7 +143,9 @@ async fn missing_name_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_symbol_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -163,7 +171,9 @@ async fn missing_symbol_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_treasury_account_id_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
     let res = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
@@ -184,7 +194,9 @@ async fn missing_treasury_account_id_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_treasury_account_id_sig_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let res = TokenCreateTransaction::new()
         .name("ffff")
@@ -206,7 +218,9 @@ async fn missing_treasury_account_id_sig_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn missing_admin_key_sig_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -234,7 +248,9 @@ async fn missing_admin_key_sig_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn custom_fees() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -265,7 +281,9 @@ async fn custom_fees() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn too_many_custom_fees_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -296,7 +314,9 @@ async fn too_many_custom_fees_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn ten_fixed_fees() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -324,7 +344,9 @@ async fn ten_fixed_fees() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn ten_fractional_fees() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -352,7 +374,9 @@ async fn ten_fractional_fees() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn fractional_fee_min_bigger_than_max_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -396,7 +420,9 @@ async fn fractional_fee_min_bigger_than_max_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn invalid_fee_collector_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -434,7 +460,9 @@ async fn invalid_fee_collector_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn negative_fee_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -472,7 +500,9 @@ async fn negative_fee_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn zero_denominator_fails() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -516,7 +546,9 @@ async fn zero_denominator_fails() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn nfts() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
@@ -549,7 +581,9 @@ async fn nfts() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn royalty_fee() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else { return Ok(()) };
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
