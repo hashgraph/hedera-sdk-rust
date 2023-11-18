@@ -30,22 +30,6 @@ static DEFAULT_LOCAL_MIRROR_NODE_ADDRESS: &str = "127.0.0.1:5600";
 fn client() -> Client {
     let config = &*CONFIG;
 
-    // let client = match Client::for_name(&config.network_name) {
-    //     Ok(client) => client,
-    //     Err(e) => {
-    //         // to ensure we don't spam the logs with `Error creating client: ...`,
-    //         // we just let an arbitrary thread win and log the "error".
-    //         static LOGS_ONCE: AtomicBool = AtomicBool::new(false);
-
-    //         // note: Relaxed is probably fine, AcqRel is *definitely* fine.
-    //         if !LOGS_ONCE.swap(true, std::sync::atomic::Ordering::AcqRel) {
-    //             log::error!("Error creating client: {e}; creating one using `localhost`");
-    //         }
-
-    //         Client::for_localhost()
-    //     }
-    // };
-
     let client = match &*config.network_name {
         "mainnet" => Client::for_mainnet(),
         "testnet" => Client::for_testnet(),
@@ -59,12 +43,12 @@ fn client() -> Client {
             // note: Relaxed is probably fine, AcqRel is *definitely* fine.
             if !LOGS_ONCE.swap(true, std::sync::atomic::Ordering::AcqRel) {
                 log::error!(
-                    "Error creating client: {}; creating one using `localhost`",
+                    "Error creating client: {}; creating one using `testnet`",
                     &*config.network_name
                 );
             }
 
-            for_local_node()
+            Client::for_testnet()
         }
     };
 
@@ -171,7 +155,7 @@ impl Config {
         let mut is_local = false;
 
         // default tests to localhost
-        let network_name = network_name.map_or_else(|| Cow::Borrowed("localhost"), Cow::Owned);
+        let network_name = network_name.map_or_else(|| Cow::Borrowed("testnet"), Cow::Owned);
 
         if network_name == "localhost" {
             is_local = true
