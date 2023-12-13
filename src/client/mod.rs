@@ -21,7 +21,10 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fmt;
-use std::num::NonZeroU64;
+use std::num::{
+    NonZeroU64,
+    NonZeroUsize,
+};
 use std::sync::atomic::{
     AtomicBool,
     AtomicU64,
@@ -339,6 +342,36 @@ impl Client {
     #[must_use]
     pub fn network(&self) -> HashMap<String, AccountId> {
         self.net().0.load().addresses()
+    }
+
+    /// Returns the max number of times a node can be retried before removing it from the network.
+    pub fn max_node_attempts(&self) -> Option<NonZeroUsize> {
+        self.net().0.load().max_node_attempts()
+    }
+
+    /// Set the max number of times a node can return a bad gRPC status before we remove it from the list.
+    pub fn set_max_node_attempts(&self, attempts: usize) {
+        self.net().0.load().set_max_node_attempts(NonZeroUsize::new(attempts))
+    }
+
+    /// Returns the max backoff interval for network nodes if gRPC response fail.    
+    pub fn max_node_backoff(&self) -> Duration {
+        self.net().0.load().max_backoff()
+    }
+
+    /// Sets max backoff interval for network nodes
+    pub fn set_max_node_backoff(&self, max_node_backoff: Duration) {
+        self.net().0.load().set_max_backoff(max_node_backoff)
+    }
+
+    /// Returns the initial backoff interval for network nodes if gRPC response fail.    
+    pub fn min_node_backoff(&self) -> Duration {
+        self.net().0.load().min_backoff()
+    }
+
+    /// Sets initial backoff interval for network nodes
+    pub fn set_min_node_backoff(&self, min_node_backoff: Duration) {
+        self.net().0.load().set_min_backoff(min_node_backoff)
     }
 
     /// Construct a hedera client pre-configured for access to the given network.

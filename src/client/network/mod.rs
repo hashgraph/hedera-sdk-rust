@@ -28,6 +28,7 @@ use std::collections::{
 };
 use std::fmt;
 use std::net::Ipv4Addr;
+use std::num::NonZeroUsize;
 use std::str::FromStr;
 use std::time::{
     Duration,
@@ -36,6 +37,7 @@ use std::time::{
 
 use backoff::backoff::Backoff;
 use once_cell::sync::OnceCell;
+use parking_lot::RwLock;
 use rand::thread_rng;
 use tonic::transport::{
     Channel,
@@ -175,6 +177,7 @@ impl From<NetworkData> for Network {
 pub(crate) struct NetworkData {
     map: HashMap<AccountId, usize>,
     node_ids: Box<[AccountId]>,
+    backoff: RwLock<NodeBackoff>,
     // Health stuff has to be in an Arc because it needs to stick around even if the map changes.
     health: Box<[Arc<parking_lot::RwLock<NodeHealth>>]>,
     connections: Box<[NodeConnection]>,
@@ -205,6 +208,7 @@ impl NetworkData {
             node_ids: node_ids.into_boxed_slice(),
             health: health.into_boxed_slice(),
             connections: connections.into_boxed_slice(),
+            backoff: NodeBackoff::default().into(),
         }
     }
 
@@ -255,6 +259,7 @@ impl NetworkData {
             node_ids: node_ids.into_boxed_slice(),
             health: health.into_boxed_slice(),
             connections: connections.into_boxed_slice(),
+            backoff: NodeBackoff::default().into(),
         }
     }
 
@@ -296,6 +301,7 @@ impl NetworkData {
             node_ids: node_ids.into_boxed_slice(),
             health: health.into_boxed_slice(),
             connections: connections.into_boxed_slice(),
+            backoff: NodeBackoff::default().into(),
         })
     }
 
@@ -317,10 +323,42 @@ impl NetworkData {
         Ok(indexes)
     }
 
+    // Sets the max attempts that an unhealthy node can retry
+    pub(crate) fn set_max_node_attempts(&self, max_attempts: Option<NonZeroUsize>) {
+        self.backoff.write().max_attempts = max_attempts
+    }
+
+    // Returns the max attempts that an unhealthy node can retry
+    pub(crate) fn max_node_attempts(&self) -> Option<NonZeroUsize> {
+        self.backoff.read().max_attempts
+    }
+
+    // Sets the max backoff for a node.
+    pub(crate) fn set_max_backoff(&self, max_backoff: Duration) {
+        self.backoff.write().max_backoff = max_backoff
+    }
+
+    // Return the initial backoff for a node.
+    #[must_use]
+    pub(crate) fn max_backoff(&self) -> Duration {
+        self.backoff.read().max_backoff
+    }
+
+    // Sets the initial backoff for a request being executed.
+    pub(crate) fn set_min_backoff(&self, min_backoff: Duration) {
+        self.backoff.write().min_backoff = min_backoff
+    }
+
+    // Return the initial backoff for a request being executed.
+    #[must_use]
+    pub(crate) fn min_backoff(&self) -> Duration {
+        self.backoff.read().min_backoff
+    }
+
     pub(crate) fn mark_node_unhealthy(&self, node_index: usize) {
         let now = Instant::now();
 
-        self.health[node_index].write().mark_unhealthy(now);
+        self.health[node_index].write().mark_unhealthy(*self.backoff.read(), now);
     }
 
     pub(crate) fn mark_node_healthy(&self, node_index: usize) {
@@ -344,9 +382,9 @@ impl NetworkData {
     pub(crate) fn healthy_node_ids(&self) -> impl Iterator<Item = AccountId> + '_ {
         self.healthy_node_indexes(Instant::now()).map(|it| self.node_ids[it])
     }
-
     pub(crate) fn random_node_ids(&self) -> Vec<AccountId> {
         let mut node_ids: Vec<_> = self.healthy_node_ids().collect();
+        // self.remove_dead_nodes();
 
         if node_ids.is_empty() {
             log::warn!("No healthy nodes, randomly picking some unhealthy ones");
@@ -394,36 +432,78 @@ enum NodeHealth {
     ///
     /// Once we've reached `healthyAt` the node is *semantically* in the ``unused`` state,
     /// other than retaining the backoff until a `healthy` request happens.
-    Unhealthy { backoff_interval: Duration, healthy_at: Instant },
+    Unhealthy { backoff: NodeBackoff, healthy_at: Instant, attempts: usize },
 
     /// When we last used the node the node acted as normal, so, we get to treat it as a healthy node for 15 minutes.
     Healthy { used_at: Instant },
 }
 
-impl NodeHealth {
-    fn backoff(&self) -> backoff::ExponentialBackoff {
-        const BASE_BACKOFF: Duration = Duration::from_millis(250);
-        let current_interval = match self {
-            Self::Unhealthy { backoff_interval, healthy_at: _ } => *backoff_interval,
-            _ => BASE_BACKOFF,
-        };
+#[derive(Copy, Clone)]
+pub(crate) struct NodeBackoff {
+    pub(crate) current_interval: Duration,
+    pub(crate) max_backoff: Duration,
+    pub(crate) min_backoff: Duration,
+    pub(crate) max_attempts: Option<NonZeroUsize>,
+}
 
-        backoff::ExponentialBackoff {
-            current_interval,
-            initial_interval: BASE_BACKOFF,
-            max_elapsed_time: None,
-            max_interval: Duration::from_secs(60 * 60),
-            ..Default::default()
+impl Default for NodeBackoff {
+    fn default() -> Self {
+        Self {
+            current_interval: Duration::from_millis(250),
+            max_backoff: Duration::from_secs(60 * 60),
+            min_backoff: Duration::from_millis(250),
+            max_attempts: NonZeroUsize::new(10),
         }
     }
+}
 
-    pub(crate) fn mark_unhealthy(&mut self, now: Instant) {
-        let backoff =
-            self.backoff().next_backoff().expect("`max_elapsed_time` is hardwired to None");
+impl NodeHealth {
+    fn backoff(&self, backoff_config: NodeBackoff) -> (backoff::ExponentialBackoff, usize) {
+        // If node is already labeled Unhealthy, preserve backoff and attempt amount
+        // For new Unhealthy nodes, apply config and start attempt count at 0
+        let (node_backoff, attempts) = match self {
+            Self::Unhealthy { backoff, healthy_at: _, attempts } => (*backoff, attempts),
+            _ => (backoff_config, &0),
+        };
 
-        let healthy_at = now + backoff;
+        (
+            backoff::ExponentialBackoff {
+                current_interval: node_backoff.current_interval,
+                initial_interval: node_backoff.min_backoff,
+                max_elapsed_time: None,
+                max_interval: node_backoff.max_backoff,
+                ..Default::default()
+            },
+            *attempts + 1,
+        )
+    }
 
-        *self = Self::Unhealthy { backoff_interval: backoff, healthy_at };
+    pub(crate) fn mark_unhealthy(&mut self, backoff_config: NodeBackoff, now: Instant) {
+        let (mut backoff, unhealthy_node_attempts) = self.backoff(backoff_config);
+
+        // Remove node if max_attempts has been reached and max_attempts is not 0
+        if backoff_config
+            .max_attempts
+            .map_or(false, |max_attempts| unhealthy_node_attempts > max_attempts.get())
+        {
+            log::debug!("Node has reached the max amount of retries, removing from network")
+        }
+
+        // Generates the next current_interval with a random duration
+        let next_backoff = backoff.next_backoff().expect("`max_elapsed_time` is hardwired to None");
+
+        let healthy_at = now + next_backoff;
+
+        *self = Self::Unhealthy {
+            backoff: NodeBackoff {
+                current_interval: next_backoff,
+                max_backoff: backoff.max_interval,
+                min_backoff: backoff.initial_interval,
+                max_attempts: backoff_config.max_attempts,
+            },
+            healthy_at,
+            attempts: unhealthy_node_attempts,
+        };
     }
 
     pub(crate) fn mark_healthy(&mut self, now: Instant) {
@@ -433,7 +513,7 @@ impl NodeHealth {
     pub(crate) fn is_healthy(&self, now: Instant) -> bool {
         // a healthy node has a healthiness before now.
         match self {
-            Self::Unhealthy { backoff_interval: _, healthy_at } => healthy_at < &now,
+            Self::Unhealthy { backoff: _, healthy_at, attempts: _ } => healthy_at < &now,
             _ => true,
         }
     }
@@ -443,7 +523,7 @@ impl NodeHealth {
             // when used at was less than 15 minutes ago we consider ourselves "pinged", otherwise we're basically `.unused`.
             Self::Healthy { used_at } => now < *used_at + Duration::from_secs(15 * 60),
             // likewise an unhealthy node (healthyAt > now) has been "pinged" (although we don't want to use it probably we at least *have* gotten *something* from it)
-            Self::Unhealthy { backoff_interval: _, healthy_at } => now < *healthy_at,
+            Self::Unhealthy { backoff: _, healthy_at, attempts: _ } => now < *healthy_at,
 
             // an unused node is by definition not pinged.
             Self::Unused => false,
