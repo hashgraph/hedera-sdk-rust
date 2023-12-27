@@ -27,9 +27,9 @@ enum KnownKind {
 pub struct RefLedgerId([u8]);
 
 impl RefLedgerId {
-    pub(crate) const MAINNET: &Self = Self::new(&[0]);
-    pub(crate) const TESTNET: &Self = Self::new(&[1]);
-    pub(crate) const PREVIEWNET: &Self = Self::new(&[2]);
+    pub(crate) const MAINNET: &'static Self = Self::new(&[0]);
+    pub(crate) const TESTNET: &'static Self = Self::new(&[1]);
+    pub(crate) const PREVIEWNET: &'static Self = Self::new(&[2]);
 
     pub const fn new(data: &[u8]) -> &Self {
         // safety: blessed by the standard library: see `path.rs`

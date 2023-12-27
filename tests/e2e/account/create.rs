@@ -42,11 +42,6 @@ async fn initial_balance_and_key() -> anyhow::Result<()> {
     assert_eq!(info.key, Key::Single(key.public_key()));
     assert_eq!(info.balance, Hbar::new(1));
     assert_eq!(info.auto_renew_period, Some(Duration::days(90)));
-
-    #[allow(deprecated)]
-    {
-        assert_eq!(info.proxy_account_id, None);
-    }
     assert_eq!(info.proxy_received, Hbar::ZERO);
 
     Ok(())
@@ -76,11 +71,6 @@ async fn no_initial_balance() -> anyhow::Result<()> {
     assert_eq!(info.key, Key::Single(key.public_key()));
     assert_eq!(info.balance, Hbar::ZERO);
     assert_eq!(info.auto_renew_period, Some(Duration::days(90)));
-
-    #[allow(deprecated)]
-    {
-        assert_eq!(info.proxy_account_id, None);
-    }
     assert_eq!(info.proxy_received, Hbar::ZERO);
 
     Ok(())

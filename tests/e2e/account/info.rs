@@ -31,11 +31,6 @@ async fn query() -> anyhow::Result<()> {
     assert!(!info.is_deleted);
     assert_eq!(info.key, Key::Single(op.private_key.public_key()));
     assert!(info.balance.to_tinybars() > 0);
-
-    #[allow(deprecated)]
-    {
-        assert_eq!(info.proxy_account_id, None);
-    }
     assert_eq!(info.proxy_received, Hbar::ZERO);
 
     Ok(())

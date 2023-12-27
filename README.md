@@ -44,7 +44,7 @@ Before running the integration tests, an operator key, operator account id, and 
 
 ```bash
 # Account that will pay query and transaction fees.
-TEST_OPERATOR_ACCOUNT_ID=
+TEST_OPERATOR_ID=
 # Default private key to use to sign for all transactions and queries.
 TEST_OPERATOR_KEY=
 # Network names: "localhost", "testnet", "previewnet", "mainnet".
@@ -62,12 +62,17 @@ Hedera offers a way to run tests through your localhost using the `hedera-local-
 For instructions on how to set up and run local node, follow the steps in the git repository:
 <https://github.com/hashgraph/hedera-local-node>
 
-Once the local node is running in Docker, the appropriate `.env` values must be set:
+Once the local node is running in Docker, use these environment variables in the `.env`.
 
 ```bash
-TEST_OPERATOR_ACCOUNT_ID=0.0.2
-TEST_OPERATOR_KEY=3030020100300706052b8104000a042204205bc004059ffa2943965d306f2c44d266255318b3775bacfec42a77ca83e998f2
+# Account that will pay query and transaction fees.
+TEST_OPERATOR_ID=0.0.1022
+# Default private key to use to sign for all transactions and queries.
+TEST_OPERATOR_KEY=302e020100300506032b657004220420a608e2130a0a3cb34f86e757303c862bee353d9ab77ba4387ec084f881d420d4
+# Network names: "localhost", "testnet", "previewnet", "mainnet".
 TEST_NETWORK_NAME=localhost
+# Running on-chain tests if this value is set to 1.
+TEST_RUN_NONFREE=1
 ```
 
 Lastly, run the tests using `cargo test`

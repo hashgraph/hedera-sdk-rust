@@ -15,9 +15,9 @@ mod keys {
 
     pub(super) const OPERATOR_KEY: &str = "TEST_OPERATOR_KEY";
 
-    pub(super) const OPERATOR_ACCOUNT_ID: &str = "TEST_OPERATOR_ACCOUNT_ID";
+    pub(super) const OPERATOR_ACCOUNT_ID: &str = "TEST_OPERATOR_ID";
 
-    pub(super) const RUN_NONFREE: &str = "TEST_RUN_NONEFREE";
+    pub(super) const RUN_NONFREE: &str = "TEST_RUN_NONFREE";
 }
 
 static CONFIG: Lazy<Config> = Lazy::new(Config::parse_env);

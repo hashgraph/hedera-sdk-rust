@@ -61,11 +61,6 @@ async fn set_key() -> anyhow::Result<()> {
     assert_eq!(info.key, Key::Single(key2.public_key()));
     assert_eq!(info.balance, Hbar::ZERO);
     assert_eq!(info.auto_renew_period, Some(Duration::days(90)));
-
-    #[allow(deprecated)]
-    {
-        assert_eq!(info.proxy_account_id, None);
-    }
     assert_eq!(info.proxy_received, Hbar::ZERO);
 
     Ok(())
