@@ -1,4 +1,6 @@
 use hedera::{
+    Key,
+    TopicInfoQuery,
     TopicMessageQuery,
     TopicMessageSubmitTransaction,
 };
@@ -13,11 +15,26 @@ use crate::topic::Topic;
 
 #[tokio::test]
 async fn basic() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
         return Ok(());
     };
 
+    // Skip if using local node.
+    // Note: Remove when multinode is supported
+    if config.is_local {
+        return Ok(());
+    }
+
     let topic = Topic::create(&client).await?;
+
+    let info = TopicInfoQuery::new().topic_id(topic.id).execute(&client).await?;
+
+    assert_eq!(info.topic_id, topic.id);
+    assert_eq!(info.topic_memo, "[e2e::TopicCreateTransaction]");
+    assert_eq!(info.sequence_number, 0);
+    assert_eq!(info.admin_key, Some(Key::from(client.get_operator_public_key().unwrap())));
+
+    tokio::time::sleep(std::time::Duration::from_millis(3000)).await;
 
     tokio::spawn({
         let id = topic.id;
@@ -43,6 +60,8 @@ async fn basic() -> anyhow::Result<()> {
                 .limit(1)
                 .execute(&client)
                 .await;
+
+            tokio::time::sleep(std::time::Duration::from_millis(3000)).await;
 
             // topic not found -> try again
             if let Err(hedera::Error::GrpcStatus(status)) = &res {
