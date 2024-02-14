@@ -1,6 +1,7 @@
 use futures_core::Future;
 use tokio::time::sleep;
 
+#[derive(Debug)]
 pub(crate) enum Error {
     /// An error that may be resolved after backoff is applied (connection issues for example)
     Transient(crate::Error),
@@ -39,7 +40,13 @@ where
         }
 
         if let Some(duration) = backoff.next_backoff() {
+            let duration_ms = duration.as_millis();
+            let err_suffix =
+                last_error.as_ref().map(|l| format!(" due to {l:?}")).unwrap_or_default();
+
+            log::warn!("Backing off for {duration_ms}ms after failure of attempt {attempt_number}{err_suffix}");
             sleep(duration).await;
+            log::warn!("Backed off for {duration_ms}ms after failure of attempt {attempt_number}{err_suffix}");
         } else {
             let last_error = last_error.expect("timeout while network had no healthy nodes");
             return Err(crate::Error::TimedOut(last_error.into()));
