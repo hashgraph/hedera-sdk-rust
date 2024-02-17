@@ -373,6 +373,7 @@ mod tests {
                 sender_account_id: Some(AccountId::new(1, 2, 3)),
                 logs: Vec::new(),
                 contract_nonces: Vec::new(),
+                signer_nonce: None,
             }),
             transfers: Vec::from([Transfer {
                 account_id: AccountId::new(4, 4, 4),
@@ -799,6 +800,7 @@ mod tests {
                                 },
                             ),
                             contract_nonces: [],
+                            signer_nonce: None,
                         },
                     ),
                 ),
@@ -1213,6 +1215,7 @@ mod tests {
                                 },
                             ),
                             contract_nonces: [],
+                            signer_nonce: None,
                         },
                     ),
                 ),
