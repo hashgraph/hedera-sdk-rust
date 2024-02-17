@@ -75,6 +75,10 @@ pub struct ContractFunctionResult {
     /// A list of updated contract account nonces containing the new nonce value for each contract account.
     /// This is always empty in a ContractLocalCallQuery response, since no internal creations can happen in a static EVM call.
     pub contract_nonces: Vec<ContractNonceInfo>,
+
+    /// If not null this field specifies what the value of the signer account nonce is post transaction execution.
+    /// For transactions that don't update the signer nonce (like HAPI ContractCall and ContractCreate transactions) this field should be null.
+    pub signer_nonce: Option<u64>,
 }
 
 impl ContractFunctionResult {
@@ -252,6 +256,8 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
             pb.contract_call_result
         };
 
+        let signer_nonce = pb.signer_nonce.map(|it| it as u64);
+
         Ok(Self {
             contract_id,
             bytes,
@@ -265,6 +271,7 @@ impl FromProtobuf<services::ContractFunctionResult> for ContractFunctionResult {
             evm_address,
             logs: Vec::from_protobuf(pb.log_info)?,
             contract_nonces: Vec::from_protobuf(pb.contract_nonces)?,
+            signer_nonce,
         })
     }
 }
@@ -302,6 +309,7 @@ impl ToProtobuf for ContractFunctionResult {
             function_parameters: self.contract_function_parameters_bytes.clone(),
             sender_id: self.sender_account_id.to_protobuf(),
             contract_nonces: self.contract_nonces.to_protobuf(),
+            signer_nonce: self.signer_nonce.map(|it| it as i64),
         }
     }
 }
