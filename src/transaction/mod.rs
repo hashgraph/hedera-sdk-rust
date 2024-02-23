@@ -733,6 +733,7 @@ where
         timeout_per_chunk: Option<std::time::Duration>,
     ) -> crate::Result<Vec<TransactionResponse>> {
         assert!(self.is_frozen());
+
         let wait_for_receipts = self.data().wait_for_receipt();
 
         // fixme: error with an actual error.
