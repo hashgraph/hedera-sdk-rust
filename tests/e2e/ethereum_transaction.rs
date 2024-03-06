@@ -8,8 +8,6 @@ use hedera::{
     ContractDeleteTransaction,
     ContractExecuteTransaction,
     ContractFunctionParameters,
-    Eip1559EthereumData,
-    EthereumData,
     EthereumTransaction,
     FileCreateTransaction,
     FileDeleteTransaction,
@@ -77,12 +75,12 @@ async fn signer_nonce_changed_on_ethereum_transaction() -> anyhow::Result<()> {
         .unwrap();
 
     let chain_id = hex::decode("012a").unwrap();
-    let nonce = hex::decode("00").unwrap();
+    let nonce = hex::decode("80").unwrap();
     let max_priority_gas = hex::decode("00").unwrap();
     let max_gas = hex::decode("d1385c7bf0").unwrap();
     let gas_limit = hex::decode("0249f0").unwrap();
     let to = hex::decode(contract_id.to_solidity_address().unwrap()).unwrap();
-    let value = hex::decode("00").unwrap();
+    let value = hex::decode("80").unwrap();
     let call_data: Vec<u8> = ContractExecuteTransaction::new()
         .function_with_parameters(
             "setMessage",
@@ -91,6 +89,7 @@ async fn signer_nonce_changed_on_ethereum_transaction() -> anyhow::Result<()> {
         .get_function_parameters()
         .try_into()
         .unwrap();
+
     let access_list: Vec<u8> = vec![];
     let rec_id = hex::decode("01").map_err(|e| e)?;
 
@@ -122,11 +121,8 @@ async fn signer_nonce_changed_on_ethereum_transaction() -> anyhow::Result<()> {
     list.append(&r);
     list.append(&s);
 
-    let eth_resp = EthereumTransaction::new()
-        .ethereum_data(list.out().to_vec())
-        .execute(&client)
-        .await
-        .unwrap();
+    let eth_resp =
+        EthereumTransaction::new().ethereum_data(list.out().to_vec()).execute(&client).await?;
 
     let eth_record = eth_resp.get_record(&client).await.unwrap();
 
