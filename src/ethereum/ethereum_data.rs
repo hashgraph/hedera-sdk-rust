@@ -360,9 +360,6 @@ mod test {
         let data = EthereumData::from_bytes(RAW_TX_TYPE_2).unwrap();
         assert_eq!(hex::encode(RAW_TX_TYPE_2), hex::encode(data.to_bytes()));
 
-        let hexy = hex::encode(RAW_TX_TYPE_2);
-        println!("encode: {hexy}");
-
         expect![[r#"
             Eip1559(
                 Eip1559EthereumData {
