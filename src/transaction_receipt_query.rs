@@ -166,7 +166,7 @@ impl QueryExecute for TransactionReceiptQueryData {
                 return false;
             };
 
-            match r.receipt.as_ref().and_then(|it| Status::from_i32(it.status)) {
+            match r.receipt.as_ref().and_then(|it| Status::try_from(it.status).ok()) {
                 Some(receipt_status) => receipt_status,
                 None => return false,
             }
