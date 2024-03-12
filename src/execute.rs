@@ -18,6 +18,8 @@
  * ‍
  */
 
+use std::any::type_name;
+use std::borrow::Cow;
 use std::error::Error as StdError;
 use std::ops::ControlFlow;
 use std::time::{
@@ -267,6 +269,23 @@ where
             while let Some(node_index) = random_node_indexes.next().await {
                 let tmp = execute_single(ctx, executable, node_index, &mut transaction_id).await;
 
+                log::log!(
+                    match &tmp {
+                        Ok(ControlFlow::Break(_)) => log::Level::Debug,
+                        Ok(ControlFlow::Continue(_)) => log::Level::Warn,
+                        Err(_) => log::Level::Error,
+                    },
+                    "Execution of {} on node at index {node_index} / node id {} {}",
+                    type_name::<E>(),
+                    ctx.network.channel(node_index).0,
+                    match &tmp {
+                        Ok(ControlFlow::Break(_)) => Cow::Borrowed("succeeded"),
+                        Ok(ControlFlow::Continue(err)) =>
+                            format!("will continue due to {err:?}").into(),
+                        Err(err) => format!("failed due to {err:?}").into(),
+                    },
+                );
+
                 match tmp? {
                     ControlFlow::Continue(err) => last_error = Some(err),
                     ControlFlow::Break(res) => return Ok(res),
@@ -354,6 +373,11 @@ async fn execute_single<E: Execute + Sync>(
     transaction_id: &mut Option<TransactionId>,
 ) -> retry::Result<ControlFlow<E::Response, Error>> {
     let (node_account_id, channel) = ctx.network.channel(node_index);
+
+    log::debug!(
+        "Executing {} on node at index {node_index} / node id {node_account_id}",
+        type_name::<E>()
+    );
 
     let (request, context) = executable
         .make_request(transaction_id.as_ref(), node_account_id)
