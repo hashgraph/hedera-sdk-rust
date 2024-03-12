@@ -28,12 +28,19 @@ use std::path::Path;
 
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
 const DERIVE_EQ_HASH_COPY: &str = "#[derive(Copy, Eq, Hash)]";
+const SERVICES_FOLDER: &str = "./protobufs/services";
 
 fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
     // in the beginning, there was only services and it was named "protos"
 
-    let services: Vec<_> = read_dir("./protobufs/services")?
+    let services_path = Path::new(SERVICES_FOLDER);
+
+    if !services_path.is_dir() {
+        anyhow::bail!("Folder {SERVICES_FOLDER} does not exist; do you need to `git submodule update --init`?");
+    }
+
+    let services: Vec<_> = read_dir(services_path)?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             entry.file_type().ok()?.is_file().then(|| entry.path())
