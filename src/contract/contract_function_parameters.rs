@@ -129,7 +129,7 @@ impl ContractFunctionParameters {
     /// Returns the encoding of the currently added parameters as bytes.
     ///
     /// You can continue adding arguments after calling this function.
-    // passing an `&Optiuon<A>` or an `Option<&A>` would just be pointlessly more restrictive,
+    // passing an `&Option<A>` or an `Option<&A>` would just be pointlessly more restrictive,
     // since downstream code can just...
     // Call this with `Option<&A>` anyway if they want to keep ownership of it.
     pub fn to_bytes(&self, func_name: Option<&str>) -> Vec<u8> {

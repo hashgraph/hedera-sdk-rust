@@ -29,7 +29,7 @@ async fn basic() -> anyhow::Result<()> {
     let contract_id = ContractCreateFlow::new()
         .bytecode_hex(SMART_CONTRACT_BYTECODE)?
         .admin_key(op.private_key.public_key())
-        .gas(100_000)
+        .gas(200_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )
@@ -71,7 +71,7 @@ async fn admin_key_missing_signature_fails() -> anyhow::Result<()> {
     let res = ContractCreateFlow::new()
         .bytecode_hex(SMART_CONTRACT_BYTECODE)?
         .admin_key(admin_key.public_key())
-        .gas(100_000)
+        .gas(200_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )
@@ -102,7 +102,7 @@ async fn admin_key() -> anyhow::Result<()> {
     let contract_id = ContractCreateFlow::new()
         .bytecode_hex(SMART_CONTRACT_BYTECODE)?
         .admin_key(admin_key.public_key())
-        .gas(100_000)
+        .gas(200_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )
@@ -150,7 +150,7 @@ async fn admin_key_sign_with() -> anyhow::Result<()> {
     let contract_id = ContractCreateFlow::new()
         .bytecode_hex(SMART_CONTRACT_BYTECODE)?
         .admin_key(admin_key.public_key())
-        .gas(100_000)
+        .gas(200_000)
         .constructor_parameters(
             ContractFunctionParameters::new().add_string("Hello from Hedera.").to_bytes(None),
         )
