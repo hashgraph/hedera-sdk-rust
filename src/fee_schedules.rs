@@ -403,6 +403,9 @@ pub enum RequestType {
 
     /// Execute a PRNG transaction.
     UtilPrng,
+
+    /// Get a record for a transaction.
+    TransactionGetFastRecord,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -482,6 +485,7 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::EthereumTransaction => Self::EthereumTransaction,
             HederaFunctionality::NodeStakeUpdate => Self::NodeStakeUpdate,
             HederaFunctionality::UtilPrng => Self::UtilPrng,
+            HederaFunctionality::TransactionGetFastRecord => Self::TransactionGetFastRecord,
         };
 
         Ok(value)
@@ -567,6 +571,7 @@ impl ToProtobuf for RequestType {
             Self::EthereumTransaction => HederaFunctionality::EthereumTransaction,
             Self::NodeStakeUpdate => HederaFunctionality::NodeStakeUpdate,
             Self::UtilPrng => HederaFunctionality::UtilPrng,
+            Self::TransactionGetFastRecord => HederaFunctionality::TransactionGetFastRecord,
         }
     }
 }
