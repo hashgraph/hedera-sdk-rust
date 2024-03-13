@@ -141,6 +141,13 @@ pub struct TokenCreateTransactionData {
 
     /// The key which can pause and unpause the token.
     pause_key: Option<Key>,
+
+    /// Metadata of the created token definition.
+    metadata: Vec<u8>,
+
+    /// The key which can change the metadata of a token
+    /// (token definition, partition definition, and individual NFTs).
+    metadata_key: Option<Key>,
 }
 
 impl Default for TokenCreateTransactionData {
@@ -167,6 +174,8 @@ impl Default for TokenCreateTransactionData {
             fee_schedule_key: None,
             custom_fees: vec![],
             pause_key: None,
+            metadata: vec![],
+            metadata_key: None,
         }
     }
 }
@@ -439,6 +448,30 @@ impl TokenCreateTransaction {
         self.data_mut().pause_key = Some(pause_key.into());
         self
     }
+
+    /// Returns the metadata of the created token definition.
+    #[must_use]
+    pub fn get_metadata(&self) -> &Vec<u8> {
+        &self.data().metadata
+    }
+
+    /// Sets metadata of the created token definition.
+    pub fn metadata(&mut self, metadata: Vec<u8>) -> &mut Self {
+        self.data_mut().metadata = metadata;
+        self
+    }
+
+    /// Returns the key which can change the metadata of a token.
+    #[must_use]
+    pub fn get_metadata_key(&self) -> Option<&Key> {
+        self.data().metadata_key.as_ref()
+    }
+
+    /// Sets the key which can change the metadata of a token.
+    pub fn metadata_key(&mut self, metadata_key: impl Into<Key>) -> &mut Self {
+        self.data_mut().metadata_key = Some(metadata_key.into());
+        self
+    }
 }
 
 impl TransactionData for TokenCreateTransactionData {
@@ -514,6 +547,8 @@ impl FromProtobuf<services::TokenCreateTransactionBody> for TokenCreateTransacti
             fee_schedule_key,
             custom_fees,
             pause_key,
+            metadata,
+            metadata_key,
         } = pb;
 
         let token_type = services::TokenType::from_i32(token_type).unwrap_or_default();
@@ -542,6 +577,8 @@ impl FromProtobuf<services::TokenCreateTransactionBody> for TokenCreateTransacti
             fee_schedule_key: Option::from_protobuf(fee_schedule_key)?,
             custom_fees: Vec::from_protobuf(custom_fees)?,
             pause_key: Option::from_protobuf(pause_key)?,
+            metadata,
+            metadata_key: Option::from_protobuf(metadata_key)?,
         })
     }
 }
@@ -572,6 +609,8 @@ impl ToProtobuf for TokenCreateTransactionData {
             fee_schedule_key: self.fee_schedule_key.to_protobuf(),
             custom_fees: self.custom_fees.to_protobuf(),
             pause_key: self.pause_key.to_protobuf(),
+            metadata: self.metadata.clone(),
+            metadata_key: self.metadata_key.to_protobuf(),
         }
     }
 }
@@ -625,6 +664,7 @@ mod tests {
     const TREASURY_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 456);
     const NAME: &str = "Flook";
     const TOKEN_MEMO: &str = "Flook memo";
+    const METADATA: &str = "Token Metadata";
 
     fn custom_fees() -> impl IntoIterator<Item = AnyCustomFee> {
         let fee = FixedFee {
@@ -660,6 +700,8 @@ mod tests {
             .name(NAME)
             .token_memo(TOKEN_MEMO)
             .custom_fees(custom_fees())
+            .metadata(METADATA.as_bytes().to_vec())
+            .metadata_key(key())
             .freeze()
             .unwrap();
 
@@ -686,6 +728,8 @@ mod tests {
             .treasury_account_id(TREASURY_ACCOUNT_ID)
             .name(NAME)
             .token_memo(TOKEN_MEMO)
+            .metadata(METADATA.as_bytes().to_vec())
+            .metadata_key(key())
             .freeze()
             .unwrap();
         tx
@@ -747,6 +791,8 @@ mod tests {
             fee_schedule_key: Some(key().to_protobuf()),
             custom_fees: custom_fees().into_iter().map(|it| it.to_protobuf()).collect(),
             pause_key: Some(key().to_protobuf()),
+            metadata: METADATA.to_owned().into(),
+            metadata_key: Some(key().to_protobuf()),
         };
 
         let data = TokenCreateTransactionData::from_protobuf(tx).unwrap();
@@ -1104,10 +1150,39 @@ mod tests {
 
         assert_eq!(tx.get_pause_key(), Some(&key().into()));
     }
+
     #[test]
     #[should_panic]
     fn get_set_pause_key_frozen_panics() {
         let mut tx = make_transaction();
         tx.pause_key(key());
+    }
+
+    #[test]
+    fn get_set_metadata() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.metadata(METADATA.as_bytes().to_vec());
+        assert_eq!(tx.get_metadata(), &METADATA.as_bytes().to_vec());
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_metadata_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.metadata(METADATA.as_bytes().to_vec());
+    }
+
+    #[test]
+    fn get_set_metadata_key() {
+        let mut tx = TokenCreateTransaction::new();
+        tx.metadata_key(key());
+        assert_eq!(tx.get_metadata_key(), Some(&key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_metadata_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.metadata_key(key());
     }
 }
