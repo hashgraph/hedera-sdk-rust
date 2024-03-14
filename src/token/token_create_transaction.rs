@@ -451,8 +451,8 @@ impl TokenCreateTransaction {
 
     /// Returns the metadata of the created token definition.
     #[must_use]
-    pub fn get_metadata(&self) -> &Vec<u8> {
-        &self.data().metadata
+    pub fn get_metadata(&self) -> Vec<u8> {
+        self.data().metadata.clone()
     }
 
     /// Sets metadata of the created token definition.
@@ -1162,7 +1162,7 @@ mod tests {
     fn get_set_metadata() {
         let mut tx = TokenCreateTransaction::new();
         tx.metadata(METADATA.as_bytes().to_vec());
-        assert_eq!(tx.get_metadata(), &METADATA.as_bytes().to_vec());
+        assert_eq!(tx.get_metadata(), METADATA.as_bytes().to_vec());
     }
 
     #[test]

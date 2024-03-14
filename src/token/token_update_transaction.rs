@@ -345,8 +345,8 @@ impl TokenUpdateTransaction {
 
     /// Returns the new metadata of the created token definition.
     #[must_use]
-    pub fn get_metadata(&self) -> &[u8] {
-        &self.data().metadata
+    pub fn get_metadata(&self) -> Vec<u8> {
+        self.data().metadata.clone()
     }
 
     /// Sets the new metadata of the token definition.
@@ -431,7 +431,7 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             token_memo: pb.memo.unwrap_or_default(),
             fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
             pause_key: Option::from_protobuf(pb.pause_key)?,
-            metadata: pb.metadata.unwrap_or_default(),
+            metadata: pb.metadata.unwrap(),
             metadata_key: Option::from_protobuf(pb.metadata_key)?,
         })
     }
