@@ -431,7 +431,7 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             token_memo: pb.memo.unwrap_or_default(),
             fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
             pause_key: Option::from_protobuf(pb.pause_key)?,
-            metadata: pb.metadata.unwrap(),
+            metadata: pb.metadata.unwrap_or_default(),
             metadata_key: Option::from_protobuf(pb.metadata_key)?,
         })
     }

@@ -77,7 +77,7 @@ async fn update_nft_metadata() -> anyhow::Result<()> {
         .token_id(token_id)
         .serials(nft_serials.into_iter().take(2).collect())
         .metadata(updated_metadata)
-        // .sign(metadata_key)
+        .sign(metadata_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
