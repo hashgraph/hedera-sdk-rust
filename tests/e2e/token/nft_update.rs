@@ -112,6 +112,7 @@ async fn update_nft_metadata_after_setting_metadata_key() -> anyhow::Result<()> 
     let updated_metadata_list: Vec<Vec<u8>> =
         repeat(updated_metadata.clone()).take(nft_count / 2).collect();
 
+    // Create token without associating a metadata key
     let token_id = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
@@ -131,6 +132,7 @@ async fn update_nft_metadata_after_setting_metadata_key() -> anyhow::Result<()> 
 
     assert_eq!(token_info.metadata_key, None);
 
+    // Update token with metadata key
     let _ = TokenUpdateTransaction::new()
         .token_id(token_id)
         .metadata_key(metadata_key.public_key())
@@ -141,6 +143,7 @@ async fn update_nft_metadata_after_setting_metadata_key() -> anyhow::Result<()> 
 
     assert_eq!(updated_info.metadata_key.unwrap(), metadata_key.public_key().into());
 
+    // Mint token
     let mint_receipt = TokenMintTransaction::new()
         .metadata(initial_metadata_list.clone())
         .token_id(token_id)
@@ -154,6 +157,7 @@ async fn update_nft_metadata_after_setting_metadata_key() -> anyhow::Result<()> 
 
     assert_eq!(metadata_list, initial_metadata_list);
 
+    // Update Nft with new metadata, signed with associated metadata key
     let receipt = TokenUpdateNftsTransaction::new()
         .token_id(token_id)
         .serials(nft_serials.into_iter().take(2).collect())
@@ -183,6 +187,7 @@ async fn cannot_update_without_signed_metadata_key_error() -> anyhow::Result<()>
     let initial_metadata_list: Vec<Vec<u8>> = repeat(vec![9, 1, 6]).take(nft_count).collect();
     let updated_metadata: Vec<u8> = vec![3, 4];
 
+    // Create token with metadata key
     let token_id = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
@@ -199,20 +204,11 @@ async fn cannot_update_without_signed_metadata_key_error() -> anyhow::Result<()>
         .token_id
         .unwrap();
 
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.metadata_key.unwrap(), metadata_key.public_key().into());
-
-    let _ = TokenUpdateTransaction::new()
-        .token_id(token_id)
-        .metadata_key(metadata_key.public_key())
-        .execute(&client)
-        .await?;
-
     let updated_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
 
     assert_eq!(updated_info.metadata_key.unwrap(), metadata_key.public_key().into());
 
+    // Mint token
     let mint_receipt = TokenMintTransaction::new()
         .metadata(initial_metadata_list.clone())
         .token_id(token_id)
@@ -223,15 +219,20 @@ async fn cannot_update_without_signed_metadata_key_error() -> anyhow::Result<()>
 
     let nft_serials = mint_receipt.serials;
 
-    let _ = TokenUpdateNftsTransaction::new()
+    // Update Nfts without signing with metadata key
+    let res = TokenUpdateNftsTransaction::new()
         .token_id(token_id)
         .serials(nft_serials.into_iter().take(2).collect())
         .metadata(updated_metadata)
-        .sign(metadata_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
-        .await?;
+        .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+    );
 
     Ok(())
 }
@@ -247,6 +248,7 @@ async fn cannot_update_without_set_metadata_key_error() -> anyhow::Result<()> {
     let initial_metadata_list: Vec<Vec<u8>> = repeat(vec![9, 1, 6]).take(nft_count).collect();
     let updated_metadata: Vec<u8> = vec![3, 4];
 
+    // Create token without metadata key
     let token_id = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
@@ -255,7 +257,6 @@ async fn cannot_update_without_set_metadata_key_error() -> anyhow::Result<()> {
         .admin_key(client.get_operator_public_key().unwrap())
         .supply_key(client.get_operator_public_key().unwrap())
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .metadata_key(metadata_key.public_key())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -267,6 +268,7 @@ async fn cannot_update_without_set_metadata_key_error() -> anyhow::Result<()> {
 
     assert_eq!(token_info.metadata_key, None);
 
+    // Mint Token
     let mint_receipt = TokenMintTransaction::new()
         .metadata(initial_metadata_list.clone())
         .token_id(token_id)
@@ -277,6 +279,7 @@ async fn cannot_update_without_set_metadata_key_error() -> anyhow::Result<()> {
 
     let nft_serials = mint_receipt.serials;
 
+    // Update Nfts without a set metadata key
     let res = TokenUpdateNftsTransaction::new()
         .token_id(token_id)
         .serials(nft_serials.into_iter().take(2).collect())
@@ -286,6 +289,14 @@ async fn cannot_update_without_set_metadata_key_error() -> anyhow::Result<()> {
         .await?
         .get_receipt(&client)
         .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::ReceiptStatus {
+            status: Status::TokenHasNoMetadataKey,
+            transaction_id: _
+        })
+    );
 
     Ok(())
 }
