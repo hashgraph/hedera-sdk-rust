@@ -89,6 +89,7 @@ mod data {
         TokenRevokeKycTransactionData as TokenRevokeKyc,
         TokenUnfreezeTransactionData as TokenUnfreeze,
         TokenUnpauseTransactionData as TokenUnpause,
+        TokenUpdateNftsTransactionData as TokenUpdateNfts,
         TokenUpdateTransactionData as TokenUpdate,
         TokenWipeTransactionData as TokenWipe,
     };
@@ -148,6 +149,7 @@ pub enum AnyTransactionData {
     SystemUndelete(data::SystemUndelete),
     Freeze(data::Freeze),
     Ethereum(data::Ethereum),
+    TokenUpdateNfts(data::TokenUpdateNfts),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -277,6 +279,9 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::Ethereum(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
+            Self::TokenUpdateNfts(transaction) => {
+                transaction.to_transaction_data_protobuf(chunk_info)
+            }
         }
     }
 }
@@ -325,6 +330,7 @@ impl TransactionData for AnyTransactionData {
             Self::ScheduleSign(transaction) => transaction.default_max_transaction_fee(),
             Self::ScheduleDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::Ethereum(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenUpdateNfts(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -371,6 +377,7 @@ impl TransactionData for AnyTransactionData {
             Self::ScheduleSign(it) => it.maybe_chunk_data(),
             Self::ScheduleDelete(it) => it.maybe_chunk_data(),
             Self::Ethereum(it) => it.maybe_chunk_data(),
+            Self::TokenUpdateNfts(it) => it.maybe_chunk_data(),
         }
     }
 
@@ -417,6 +424,7 @@ impl TransactionData for AnyTransactionData {
             Self::ScheduleSign(it) => it.wait_for_receipt(),
             Self::ScheduleDelete(it) => it.wait_for_receipt(),
             Self::Ethereum(it) => it.wait_for_receipt(),
+            Self::TokenUpdateNfts(it) => it.wait_for_receipt(),
         }
     }
 }
@@ -469,6 +477,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::ScheduleSign(transaction) => transaction.execute(channel, request),
             Self::ScheduleDelete(transaction) => transaction.execute(channel, request),
             Self::Ethereum(transaction) => transaction.execute(channel, request),
+            Self::TokenUpdateNfts(transaction) => transaction.execute(channel, request),
         }
     }
 }
@@ -519,6 +528,7 @@ impl ValidateChecksums for AnyTransactionData {
             Self::SystemUndelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::Freeze(transaction) => transaction.validate_checksums(ledger_id),
             Self::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenUpdateNfts(transaction) => transaction.validate_checksums(ledger_id),
         }
     }
 }
@@ -577,6 +587,7 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::ScheduleCreate(pb) => data::ScheduleCreate::from_protobuf(pb)?.into(),
             Data::ScheduleDelete(pb) => data::ScheduleDelete::from_protobuf(pb)?.into(),
             Data::ScheduleSign(pb) => data::ScheduleSign::from_protobuf(pb)?.into(),
+            Data::TokenUpdateNfts(pb) => data::TokenUpdateNfts::from_protobuf(pb)?.into(),
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
@@ -738,6 +749,9 @@ impl AnyTransactionData {
             ServicesTransactionDataList::UtilPrng(v) => {
                 data::Prng::from_protobuf(try_into_only_element(v)?)?.into()
             }
+            ServicesTransactionDataList::TokenUpdateNfts(v) => {
+                data::TokenUpdateNfts::from_protobuf(try_into_only_element(v)?)?.into()
+            }
         };
 
         Ok(data)
@@ -816,6 +830,7 @@ enum ServicesTransactionDataList {
     ScheduleDelete(Vec<services::ScheduleDeleteTransactionBody>),
     Ethereum(Vec<services::EthereumTransactionBody>),
     UtilPrng(Vec<services::UtilPrngTransactionBody>),
+    TokenUpdateNfts(Vec<services::TokenUpdateNftsTransactionBody>),
 }
 
 impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransactionDataList {
@@ -879,7 +894,7 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             Data::ScheduleDelete(it) => Self::ScheduleDelete(make_vec(it, len)),
             Data::ScheduleSign(it) => Self::ScheduleSign(make_vec(it, len)),
             Data::UtilPrng(it) => Self::UtilPrng(make_vec(it, len)),
-
+            Data::TokenUpdateNfts(it) => Self::TokenUpdateNfts(make_vec(it, len)),
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
@@ -1049,4 +1064,5 @@ impl_downcast_any! {
     SystemUndelete,
     Freeze,
     Ethereum,
+    TokenUpdateNfts,
 }

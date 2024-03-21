@@ -77,7 +77,7 @@ pub struct ContractFunctionResult {
     pub contract_nonces: Vec<ContractNonceInfo>,
 
     /// If not null this field specifies what the value of the signer account nonce is post transaction execution.
-    /// For transactions that don't update the signer nonce (like HAPI ContractCall and ContractCreate transactions) this field should be null.
+    /// For transactions that don't update the signer nonce, this field should be null.
     pub signer_nonce: Option<u64>,
 }
 

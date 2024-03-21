@@ -403,6 +403,12 @@ pub enum RequestType {
 
     /// Execute a PRNG transaction.
     UtilPrng,
+
+    /// Get a record for a transaction.
+    TransactionGetFastRecord,
+
+    /// Update the metadata of one or more NFT's of a specific token type.
+    TokenUpdateNfts,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -482,6 +488,8 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::EthereumTransaction => Self::EthereumTransaction,
             HederaFunctionality::NodeStakeUpdate => Self::NodeStakeUpdate,
             HederaFunctionality::UtilPrng => Self::UtilPrng,
+            HederaFunctionality::TransactionGetFastRecord => Self::TransactionGetFastRecord,
+            HederaFunctionality::TokenUpdateNfts => Self::TokenUpdateNfts,
         };
 
         Ok(value)
@@ -567,6 +575,8 @@ impl ToProtobuf for RequestType {
             Self::EthereumTransaction => HederaFunctionality::EthereumTransaction,
             Self::NodeStakeUpdate => HederaFunctionality::NodeStakeUpdate,
             Self::UtilPrng => HederaFunctionality::UtilPrng,
+            Self::TransactionGetFastRecord => HederaFunctionality::TransactionGetFastRecord,
+            Self::TokenUpdateNfts => HederaFunctionality::TokenUpdateNfts,
         }
     }
 }

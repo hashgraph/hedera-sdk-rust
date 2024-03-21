@@ -49,6 +49,7 @@ mod data {
         TokenRevokeKycTransactionData as TokenRevokeKyc,
         TokenUnfreezeTransactionData as TokenUnfreeze,
         TokenUnpauseTransactionData as TokenUnpause,
+        TokenUpdateNftsTransactionData as TokenUpdateNfts,
         TokenUpdateTransactionData as TokenUpdate,
         TokenWipeTransactionData as TokenWipe,
     };
@@ -136,6 +137,7 @@ pub(super) enum AnySchedulableTransactionData {
     SystemUndelete(data::SystemUndelete),
     Freeze(data::Freeze),
     ScheduleDelete(data::ScheduleDelete),
+    TokenUpdateNfts(data::TokenUpdateNfts),
 }
 
 impl AnySchedulableTransactionData {
@@ -176,6 +178,7 @@ impl AnySchedulableTransactionData {
             AnySchedulableTransactionData::TokenFreeze(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenGrantKyc(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenMint(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::TokenUpdateNfts(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenPause(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenRevokeKyc(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenUnfreeze(it) => it.default_max_transaction_fee(),
@@ -281,6 +284,9 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
                 Ok(Self::ScheduleDelete(data::ScheduleDelete::from_protobuf(it)?))
             }
             Data::UtilPrng(it) => Ok(Self::Prng(data::Prng::from_protobuf(it)?)),
+            Data::TokenUpdateNfts(it) => {
+                Ok(Self::TokenUpdateNfts(data::TokenUpdateNfts::from_protobuf(it)?))
+            }
         }
     }
 }
@@ -405,6 +411,9 @@ impl ToSchedulableTransactionDataProtobuf for AnySchedulableTransactionData {
             AnySchedulableTransactionData::Prng(it) => {
                 it.to_schedulable_transaction_data_protobuf()
             }
+            AnySchedulableTransactionData::TokenUpdateNfts(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
         }
     }
 }
@@ -454,6 +463,7 @@ impl TryFrom<AnyTransactionData> for AnySchedulableTransactionData {
             AnyTransactionData::Freeze(it) => Ok(Self::Freeze(it)),
             AnyTransactionData::ScheduleDelete(it) => Ok(Self::ScheduleDelete(it)),
             AnyTransactionData::Prng(it) => Ok(Self::Prng(it)),
+            AnyTransactionData::TokenUpdateNfts(it) => Ok(Self::TokenUpdateNfts(it)),
 
             // fixme: basic-parse isn't suitable for this.
             AnyTransactionData::ScheduleCreate(_) => {
@@ -516,6 +526,7 @@ impl From<AnySchedulableTransactionData> for AnyTransactionData {
             AnySchedulableTransactionData::Freeze(it) => Self::Freeze(it),
             AnySchedulableTransactionData::ScheduleDelete(it) => Self::ScheduleDelete(it),
             AnySchedulableTransactionData::Prng(it) => Self::Prng(it),
+            AnySchedulableTransactionData::TokenUpdateNfts(it) => Self::TokenUpdateNfts(it),
         }
     }
 }

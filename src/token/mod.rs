@@ -43,6 +43,7 @@ mod token_supply_type;
 mod token_type;
 mod token_unfreeze_transaction;
 mod token_unpause_transaction;
+mod token_update_nfts_transaction;
 mod token_update_transaction;
 mod token_wipe_transaction;
 
@@ -126,6 +127,10 @@ pub use token_unfreeze_transaction::{
 pub use token_unpause_transaction::{
     TokenUnpauseTransaction,
     TokenUnpauseTransactionData,
+};
+pub use token_update_nfts_transaction::{
+    TokenUpdateNftsTransaction,
+    TokenUpdateNftsTransactionData,
 };
 pub use token_update_transaction::{
     TokenUpdateTransaction,
