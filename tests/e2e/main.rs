@@ -14,4 +14,3 @@ mod resources;
 mod schedule;
 mod token;
 mod topic;
-mod fee_schedules;
