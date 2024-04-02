@@ -72,14 +72,13 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
         .account_id(account.id)
         .sign(account.key.clone())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTokenId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidTokenId, transaction_id: _ })
     );
 
     account.delete(&client).await?;
@@ -105,14 +104,13 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
         .token_id(token.id)
         .sign(account.key.clone())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidAccountId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidAccountId, transaction_id: _ })
     );
 
     token.delete(&client).await?;

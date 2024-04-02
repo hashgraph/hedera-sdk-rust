@@ -370,20 +370,6 @@ impl TokenUpdateTransaction {
         self.data_mut().metadata_key = Some(metadata_key.into());
         self
     }
-
-    /// Checks the validity of the passed keys for updates
-    pub fn get_key_verification_mode(&self) -> TokenKeyValidation {
-        self.data().key_verification_mode
-    }
-
-    /// Checks the validity of the passed keys for updates
-    pub fn key_verification_mode(
-        &mut self,
-        key_verification_mode: TokenKeyValidation,
-    ) -> &mut Self {
-        self.data_mut().key_verification_mode = key_verification_mode;
-        self
-    }
 }
 
 impl TransactionData for TokenUpdateTransactionData {}

@@ -79,14 +79,11 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let res = ContractDeleteTransaction::new().execute(&client).await;
+    let res = ContractDeleteTransaction::new().execute(&client).await?.get_receipt(&client).await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidContractId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidContractId, transaction_id: _ })
     );
 
     Ok(())

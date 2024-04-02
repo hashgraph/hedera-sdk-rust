@@ -51,23 +51,27 @@ async fn create_then_delete() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn missing_account_id_fails() {
+async fn missing_account_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return;
+        return Ok(());
     };
 
     let res = AccountDeleteTransaction::new()
         .transfer_account_id(client.get_operator_account_id().unwrap())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
+        Err(hedera::Error::ReceiptStatus {
             status: Status::AccountIdDoesNotExist,
             transaction_id: _
         })
     );
+
+    Ok(())
 }
 
 #[tokio::test]

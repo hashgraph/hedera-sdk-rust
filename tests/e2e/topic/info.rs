@@ -113,12 +113,15 @@ async fn query_cost_insufficient_tx_fee() -> anyhow::Result<()> {
 
     let topic = Topic::create(&client).await?;
 
-    let res = TopicInfoQuery::new()
-        .topic_id(topic.id)
-        .max_payment_amount(Hbar::from_tinybars(10000))
-        .payment_amount(Hbar::from_tinybars(1))
-        .execute(&client)
-        .await;
+    let mut info_query = TopicInfoQuery::new();
+
+    info_query.topic_id(topic.id);
+
+    let cost = info_query.get_cost(&client).await?;
+
+    println!("cost: {cost:?}");
+
+    let res = info_query.payment_amount(Hbar::from_tinybars(1)).execute(&client).await;
 
     assert_matches!(
         res,

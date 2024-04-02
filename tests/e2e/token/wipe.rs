@@ -200,14 +200,17 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
     )
     .await?;
 
-    let res = TokenWipeTransaction::new().token_id(token.id).amount(10_u64).execute(&client).await;
+    let res = TokenWipeTransaction::new()
+        .token_id(token.id)
+        .amount(10_u64)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidAccountId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidAccountId, transaction_id: _ })
     );
 
     token.delete(&client).await?;
@@ -223,15 +226,17 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 
     let account = Account::create(Hbar::new(0), &client).await?;
 
-    let res =
-        TokenWipeTransaction::new().account_id(account.id).amount(10_u64).execute(&client).await;
+    let res = TokenWipeTransaction::new()
+        .account_id(account.id)
+        .amount(10_u64)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTokenId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidTokenId, transaction_id: _ })
     );
 
     account.delete(&client).await?;
