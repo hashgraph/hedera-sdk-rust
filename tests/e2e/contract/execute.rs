@@ -63,14 +63,13 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
             ContractFunctionParameters::new().add_string("new message"),
         )
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidContractId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::FailInvalid, transaction_id: _ })
     );
 
     Ok(())

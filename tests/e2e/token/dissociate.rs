@@ -61,13 +61,18 @@ async fn missing_token_id() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    TokenDissociateTransaction::new()
+    let res = TokenDissociateTransaction::new()
         .account_id(op.account_id)
         .freeze_with(&client)?
         .execute(&client)
         .await?
         .get_receipt(&client)
-        .await?;
+        .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::ReceiptStatus { status: Status::FailInvalid, transaction_id: _ })
+    );
 
     Ok(())
 }
@@ -78,14 +83,13 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let res = TokenDissociateTransaction::new().execute(&client).await;
+    let res = TokenDissociateTransaction::new().execute(&client).await?;
+
+    let res = res.get_receipt(&client).await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidAccountId,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidAccountId, transaction_id: _ })
     );
 
     Ok(())
