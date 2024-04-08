@@ -60,6 +60,7 @@ use crate::{
 #[cfg(feature = "serde")]
 mod config;
 
+mod mirror;
 mod network;
 mod operator;
 
