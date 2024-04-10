@@ -31,6 +31,7 @@ use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
+use crate::token::token_key_validation_type::TokenKeyValidation;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
@@ -126,6 +127,9 @@ pub struct TokenUpdateTransactionData {
     /// The key which can change the metadata of a token
     /// (token definition, partition definition, and individual NFTs).
     metadata_key: Option<Key>,
+
+    /// Determines whether the system should check the validity of the passed keys for update.
+    key_verification_mode: TokenKeyValidation,
 }
 
 impl TokenUpdateTransaction {
@@ -415,6 +419,10 @@ impl From<TokenUpdateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransactionData {
     fn from_protobuf(pb: services::TokenUpdateTransactionBody) -> crate::Result<Self> {
+        let key_verification_mode =
+            services::TokenKeyValidation::from_i32(pb.key_verification_mode as i32)
+                .unwrap_or_default();
+
         Ok(Self {
             token_id: Option::from_protobuf(pb.token)?,
             token_name: pb.name,
@@ -433,6 +441,7 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             pause_key: Option::from_protobuf(pb.pause_key)?,
             metadata: pb.metadata.unwrap_or_default(),
             metadata_key: Option::from_protobuf(pb.metadata_key)?,
+            key_verification_mode: TokenKeyValidation::from_protobuf(key_verification_mode)?,
         })
     }
 }
@@ -459,6 +468,7 @@ impl ToProtobuf for TokenUpdateTransactionData {
             pause_key: self.pause_key.to_protobuf(),
             metadata: Some(self.metadata.clone()),
             metadata_key: self.metadata_key.to_protobuf(),
+            key_verification_mode: self.key_verification_mode.to_protobuf().into(),
         }
     }
 }
@@ -479,6 +489,7 @@ mod tests {
         FromProtobuf,
         ToProtobuf,
     };
+    use crate::token::token_key_validation_type::TokenKeyValidation;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -542,6 +553,7 @@ mod tests {
     const TEST_AUTO_RENEW_PERIOD: Duration = Duration::hours(10);
     const TEST_EXPIRATION_TIME: OffsetDateTime = VALID_START;
     const TEST_METADATA: &str = "Token Metadata";
+    const TEST_KEY_VERIFICATION_MODE: TokenKeyValidation = TokenKeyValidation::FullValidation;
 
     fn make_transaction() -> TokenUpdateTransaction {
         let mut tx = TokenUpdateTransaction::new_for_tests();
@@ -612,6 +624,7 @@ mod tests {
             pause_key: Some(test_pause_key().to_protobuf()),
             metadata: Some(TEST_METADATA.to_owned().into()),
             metadata_key: Some(test_metadata_key().to_protobuf()),
+            key_verification_mode: TEST_KEY_VERIFICATION_MODE.to_protobuf().into(),
         };
 
         let tx = TokenUpdateTransactionData::from_protobuf(tx).unwrap();
@@ -633,6 +646,7 @@ mod tests {
         assert_eq!(tx.pause_key, Some(test_pause_key().into()));
         assert_eq!(tx.metadata, TEST_METADATA.as_bytes());
         assert_eq!(tx.metadata_key, Some(test_metadata_key().into()));
+        assert_eq!(tx.key_verification_mode, TEST_KEY_VERIFICATION_MODE);
     }
 
     #[test]

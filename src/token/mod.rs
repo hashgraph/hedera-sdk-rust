@@ -33,6 +33,7 @@ mod token_grant_kyc_transaction;
 mod token_id;
 mod token_info;
 mod token_info_query;
+mod token_key_validation_type;
 mod token_mint_transaction;
 mod token_nft_info;
 mod token_nft_info_query;

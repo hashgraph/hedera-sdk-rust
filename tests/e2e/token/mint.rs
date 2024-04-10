@@ -275,14 +275,13 @@ async fn nft_metadata_too_long_fails() -> anyhow::Result<()> {
         .metadata([[1; 101]])
         .sign(account.key.clone())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::MetadataTooLong,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::MetadataTooLong, transaction_id: _ })
     );
 
     token.delete(&client).await?;

@@ -2,6 +2,7 @@ mod account;
 mod common;
 mod contract;
 mod ethereum_transaction;
+mod fee_schedules;
 mod file;
 mod network_version_info;
 mod node_address_book;

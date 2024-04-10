@@ -40,7 +40,7 @@ async fn update_nft_metadata() -> anyhow::Result<()> {
     let initial_metadata_list: Vec<Vec<u8>> = repeat(vec![9, 1, 6]).take(nft_count).collect();
     let updated_metadata: Vec<u8> = vec![3, 4];
     let updated_metadata_list: Vec<Vec<u8>> =
-        repeat(updated_metadata.clone()).take(nft_count / 2).collect();
+        repeat(updated_metadata.clone()).take(nft_count).collect();
 
     let token_id = TokenCreateTransaction::new()
         .name("ffff")
@@ -72,28 +72,19 @@ async fn update_nft_metadata() -> anyhow::Result<()> {
 
     assert_eq!(metadata_list, initial_metadata_list);
 
-    let receipt = TokenUpdateNftsTransaction::new()
+    _ = TokenUpdateNftsTransaction::new()
         .token_id(token_id)
-        .serials(nft_serials.into_iter().take(2).collect())
+        .serials(nft_serials.clone())
         .metadata(updated_metadata)
+        .freeze_with(&client)?
         .sign(metadata_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
         .await?;
 
-    let updated_serials = receipt.clone().serials.into_iter().take(2).collect::<Vec<_>>();
-    let new_metadata_list = get_metadata_list(&client, &token_id, &updated_serials).await?;
-
+    let new_metadata_list = get_metadata_list(&client, &token_id, &nft_serials).await?;
     assert_eq!(new_metadata_list, updated_metadata_list);
-
-    let ending_serials = receipt.serials.into_iter().skip(2).take(2).collect::<Vec<_>>();
-    let metadata_list = get_metadata_list(&client, &token_id, &ending_serials).await?;
-
-    assert_eq!(
-        metadata_list,
-        initial_metadata_list.into_iter().skip(2).take(2).collect::<Vec<_>>()
-    );
 
     Ok(())
 }

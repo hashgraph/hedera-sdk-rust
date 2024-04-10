@@ -127,14 +127,13 @@ async fn missing_name_fails() -> anyhow::Result<()> {
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
         .sign(account.key.clone())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::MissingTokenName,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::MissingTokenName, transaction_id: _ })
     );
 
     account.delete(&client).await?;
@@ -155,14 +154,13 @@ async fn missing_symbol_fails() -> anyhow::Result<()> {
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
         .sign(account.key.clone())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::MissingTokenSymbol,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::MissingTokenSymbol, transaction_id: _ })
     );
 
     account.delete(&client).await?;
