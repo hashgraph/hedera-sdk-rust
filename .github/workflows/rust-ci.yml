@@ -8,7 +8,7 @@ jobs:
   format:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
       - name: Add `rustfmt` to toolchain
@@ -19,7 +19,7 @@ jobs:
   check:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
 
@@ -42,7 +42,7 @@ jobs:
     needs: ['check']
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
 
@@ -60,6 +60,13 @@ jobs:
         run: npx @hashgraph/hedera-local start -d --network local --network-tag=0.48.0-alpha.12
 
       - name: "Create env file"
+        # probably need to add TEST_OPERATOR_[ID&KEY] to github repo secrets.
+        # Can't I use an env stanza instead of a run stanza to generate the same data? see below
+        # env:
+        #     TEST_OPERATOR_KEY: ${{secrets.TEST_OPERATOR_KEY}}
+        #     TEST_OPERATOR_ID: ${{secrets.TEST_OPERATOR_ID}}
+        #     TEST_NETWORK_NAME: 'localhost'
+        #     TEST_RUN_NONFREE: '1'
         run: |
             touch .env
             echo TEST_OPERATOR_KEY="302e020100300506032b657004220420a608e2130a0a3cb34f86e757303c862bee353d9ab77ba4387ec084f881d420d4" >> .env
