@@ -1,0 +1,59 @@
+/*
+ * ‌
+ * Hedera Rust SDK
+ * ​
+ * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
+ * ​
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * ‍
+ */
+
+use hedera_proto::services;
+
+use crate::{
+    FromProtobuf,
+    ToProtobuf,
+};
+
+/// Types of validation strategies for token keys.
+/// Defaults to [`FullValidation`](Self::FullValidation).
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, Default)]
+#[repr(C)]
+pub enum TokenKeyValidation {
+    /// Currently the default behaviour. It will perform all token key validations.
+    #[default]
+    FullValidation = 0,
+
+    /// Perform no validations at all for all passed token keys.
+    NoValidation = 1,
+}
+
+impl FromProtobuf<services::TokenKeyValidation> for TokenKeyValidation {
+    fn from_protobuf(pb: services::TokenKeyValidation) -> crate::Result<Self> {
+        Ok(match pb {
+            services::TokenKeyValidation::FullValidation => Self::FullValidation,
+            services::TokenKeyValidation::NoValidation => Self::NoValidation,
+        })
+    }
+}
+
+impl ToProtobuf for TokenKeyValidation {
+    type Protobuf = services::TokenKeyValidation;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        match self {
+            Self::FullValidation => Self::Protobuf::FullValidation,
+            Self::NoValidation => Self::Protobuf::NoValidation,
+        }
+    }
+}

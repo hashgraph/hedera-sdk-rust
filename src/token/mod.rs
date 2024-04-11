@@ -33,6 +33,7 @@ mod token_grant_kyc_transaction;
 mod token_id;
 mod token_info;
 mod token_info_query;
+mod token_key_validation_type;
 mod token_mint_transaction;
 mod token_nft_info;
 mod token_nft_info_query;
@@ -43,6 +44,7 @@ mod token_supply_type;
 mod token_type;
 mod token_unfreeze_transaction;
 mod token_unpause_transaction;
+mod token_update_nfts_transaction;
 mod token_update_transaction;
 mod token_wipe_transaction;
 
@@ -126,6 +128,10 @@ pub use token_unfreeze_transaction::{
 pub use token_unpause_transaction::{
     TokenUnpauseTransaction,
     TokenUnpauseTransactionData,
+};
+pub use token_update_nfts_transaction::{
+    TokenUpdateNftsTransaction,
+    TokenUpdateNftsTransactionData,
 };
 pub use token_update_transaction::{
     TokenUpdateTransaction,

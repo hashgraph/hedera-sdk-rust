@@ -330,6 +330,7 @@ pub use token::{
     TokenType,
     TokenUnfreezeTransaction,
     TokenUnpauseTransaction,
+    TokenUpdateNftsTransaction,
     TokenUpdateTransaction,
     TokenWipeTransaction,
 };

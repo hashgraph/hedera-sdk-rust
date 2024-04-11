@@ -72,11 +72,11 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let res = AccountUpdateTransaction::new().execute(&client).await?.get_receipt(&client).await;
+    let res = AccountUpdateTransaction::new().execute(&client).await;
 
     assert_matches::assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
+        Err(hedera::Error::TransactionPreCheckStatus {
             status: hedera::Status::AccountIdDoesNotExist,
             transaction_id: _
         })

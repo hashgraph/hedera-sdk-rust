@@ -211,6 +211,7 @@ fn main() -> anyhow::Result<()> {
         .services_same("TokenUnfreezeAccountTransactionBody")
         .services_same("TokenUnpauseTransactionBody")
         .services_same("TokenUpdateTransactionBody")
+        .services_same("TokenUpdateNftsTransactionBody")
         .services_same("TokenWipeAccountTransactionBody")
         .services_same("Transaction")
         .services_same("TransactionBody")
