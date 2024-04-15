@@ -22,7 +22,8 @@ jobs:
       - name: Setup Rust
         run: |
             curl https://sh.rustup.rs -sSf | sh -s -- -y
-            source $HOME/.cargo/env 
+            ls -alF $HOME/.cargo
+            source $HOME/.cargo/env
 
       - name: Add `rustfmt` to toolchain
         run: rustup +nightly component add rustfmt
@@ -44,8 +45,9 @@ jobs:
 
       - name: Setup Rust
         run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source $HOME/.cargo/env
+            curl https://sh.rustup.rs -sSf | sh -s -- -y
+            ls -alF $HOME/.cargo
+            source $HOME/.cargo/env
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
@@ -78,7 +80,8 @@ jobs:
       - name: Setup Rust
         run: |
           curl https://sh.rustup.rs -sSf | sh -s -- -y
-          source $HOME/.cargo/env 
+          ls -alF $HOME/.cargo
+          source $HOME/.cargo/env
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
