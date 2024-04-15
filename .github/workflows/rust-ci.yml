@@ -19,13 +19,10 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Setup Rust
-        run: |
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            . $HOME/.cargo/env
-
       - name: Add `rustfmt` to toolchain
         run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
           rustup +nightly component add rustfmt  
 
       - name: Format
@@ -42,11 +39,6 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
-
-      - name: Setup Rust
-        run: |
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-            . $HOME/.cargo/env
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
@@ -76,11 +68,6 @@ jobs:
         with:
           submodules: 'recursive'
 
-      - name: Setup Rust
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          . $HOME/.cargo/env
-
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
           workspaces: |
@@ -105,6 +92,8 @@ jobs:
 
       - name: Test
         run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
           cargo test --workspace  
 
       - name: Stop the local node
