@@ -21,9 +21,9 @@ jobs:
 
       - name: Setup Rust
         run: |
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
-            ls -alF $HOME/.cargo
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             . $HOME/.cargo/env
+            rustup --version
             rustfmt --version
 
       - name: Add `rustfmt` to toolchain
@@ -46,9 +46,9 @@ jobs:
 
       - name: Setup Rust
         run: |
-            curl https://sh.rustup.rs -sSf | sh -s -- -y
-            ls -alF $HOME/.cargo
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             . $HOME/.cargo/env
+            rustup --version
             rustfmt --version
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
@@ -81,9 +81,9 @@ jobs:
 
       - name: Setup Rust
         run: |
-          curl https://sh.rustup.rs -sSf | sh -s -- -y
-          ls -alF $HOME/.cargo
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           . $HOME/.cargo/env
+          rustup --version
           rustfmt --version
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
