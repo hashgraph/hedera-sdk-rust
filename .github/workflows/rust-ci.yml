@@ -23,11 +23,10 @@ jobs:
         run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             . $HOME/.cargo/env
-            rustup --version
-            rustfmt --version
 
       - name: Add `rustfmt` to toolchain
-        run: rustup +nightly component add rustfmt
+        run: |
+          rustup +nightly component add rustfmt  
 
       - name: Format
         run: cargo +nightly fmt --check
@@ -48,8 +47,6 @@ jobs:
         run: |
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             . $HOME/.cargo/env
-            rustup --version
-            rustfmt --version
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
@@ -83,8 +80,6 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           . $HOME/.cargo/env
-          rustup --version
-          rustfmt --version
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
@@ -109,7 +104,8 @@ jobs:
             cat .env
 
       - name: Test
-        run: cargo test --workspace
+        run: |
+          cargo test --workspace  
 
       - name: Stop the local node
         run: npx @hashgraph/hedera-local stop
