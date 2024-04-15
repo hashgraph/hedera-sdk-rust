@@ -4,10 +4,16 @@ on:
   push:
     branches: ['main']
 
+defaults:
+    run:
+        shell: bash
+
+permissions:
+    contents: read
+
 jobs:
   format:
-    # runs-on: [self-hosted, Linux, medium, ephemeral]
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
@@ -18,8 +24,7 @@ jobs:
         run: cargo +nightly fmt --check
   
   check:
-    # runs-on: [self-hosted, Linux, medium, ephemeral]
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
       - name: Setup NodeJS
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
@@ -47,8 +52,7 @@ jobs:
   
   test:
     needs: ['check']
-    # runs-on: [self-hosted, Linux, medium, ephemeral]
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
       - name: Setup NodeJS
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
