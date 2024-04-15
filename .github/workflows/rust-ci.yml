@@ -26,7 +26,11 @@ jobs:
           rustup +nightly component add rustfmt  
 
       - name: Format
-        run: cargo +nightly fmt --check
+
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
+          cargo +nightly fmt --check
   
   check:
     runs-on: [self-hosted, Linux, medium, ephemeral]
@@ -52,8 +56,10 @@ jobs:
 
 
       - name: Check
-        run: cargo check --workspace
-        
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
+          cargo check --workspace
   
   test:
     needs: ['check']
