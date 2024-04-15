@@ -39,7 +39,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends curl
-          curl https://sh.rustup.rs -sSf | sh -- -y
+          curl https://sh.rustup.rs -sSf -- -y| sh
 
       - uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
