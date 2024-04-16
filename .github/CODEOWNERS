@@ -16,13 +16,11 @@
 # Legacy Maven project files
 **/pom.xml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers
 
-# Gradle project files and inline plugins
-/gradle/                                        @hashgraph/release-engineering @hashgraph/release-engineering-managers
-gradlew                                         @hashgraph/release-engineering @hashgraph/release-engineering-managers
-gradlew.bat                                     @hashgraph/release-engineering @hashgraph/release-engineering-managers
-**/build-logic/                                 @hashgraph/release-engineering @hashgraph/release-engineering-managers
-**/gradle.*                                     @hashgraph/release-engineering @hashgraph/release-engineering-managers
-**/*.gradle.*                                   @hashgraph/release-engineering @hashgraph/release-engineering-managers
+# Cargo project files and inline plugins
+Cargo.lock                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers
+Cargo.toml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers
+rustfmt.toml                                    @hashgraph/release-engineering @hashgraph/release-engineering-managers
+rust-toolchain.toml                             @hashgraph/release-engineering @hashgraph/release-engineering-managers
 
 # Codacy Tool Configurations
 /config/                                        @hashgraph/release-engineering @hashgraph/release-engineering-managers
