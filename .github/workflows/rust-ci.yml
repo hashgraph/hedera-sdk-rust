@@ -15,6 +15,11 @@ jobs:
   format:
     runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
@@ -35,6 +40,11 @@ jobs:
   check:
     runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: Setup NodeJS
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
@@ -70,6 +80,11 @@ jobs:
     needs: ['check']
     runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
       - name: Setup NodeJS
         uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
         with:
