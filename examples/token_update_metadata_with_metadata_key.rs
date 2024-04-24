@@ -53,6 +53,7 @@ async fn main() -> anyhow::Result<()> {
     // New metadata
     let new_metadata: Vec<u8> = vec![1, 2];
 
+    // Create Token with a set metadata key
     let token_create_receipt = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
@@ -62,9 +63,8 @@ async fn main() -> anyhow::Result<()> {
         .metadata(metadata)
         .treasury_account_id(client.get_operator_account_id().unwrap())
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
+        .admin_key(client.get_operator_public_key().unwrap())
         .metadata_key(metadata_key.public_key())
-        .freeze_with(&client)?
-        .sign(args.operator_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
