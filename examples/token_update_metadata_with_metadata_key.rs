@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
         .metadata_key(metadata_key.public_key())
         .freeze_with(&client)?
-        .sign(args.operator_key.clone())
+        .sign(metadata_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)

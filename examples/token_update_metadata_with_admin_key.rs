@@ -46,6 +46,8 @@ async fn main() -> anyhow::Result<()> {
 
     client.set_operator(args.operator_account_id, args.operator_key.clone());
 
+    let admin_key = PrivateKey::generate_ed25519();
+
     // Initial metadata
     let metadata: Vec<u8> = vec![1];
     // New metadata
@@ -59,8 +61,10 @@ async fn main() -> anyhow::Result<()> {
         .initial_supply(1000000)
         .treasury_account_id(client.get_operator_account_id().unwrap())
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .admin_key(client.get_operator_public_key().unwrap())
+        .admin_key(admin_key.public_key())
         .metadata(metadata)
+        .freeze_with(&client)?
+        .sign(admin_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -83,6 +87,8 @@ async fn main() -> anyhow::Result<()> {
     let token_update_receipt = TokenUpdateTransaction::new()
         .token_id(token_id)
         .metadata(new_metadata)
+        .freeze_with(&client)?
+        .sign(admin_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
