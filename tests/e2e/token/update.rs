@@ -2,9 +2,16 @@ use assert_matches::assert_matches;
 use hedera::{
     Hbar,
     Key,
+    PrivateKey,
     Status,
+    TokenCreateTransaction,
     TokenInfoQuery,
+    TokenType,
     TokenUpdateTransaction,
+};
+use time::{
+    Duration,
+    OffsetDateTime,
 };
 
 use super::FungibleToken;
@@ -66,7 +73,6 @@ async fn basic() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn immutable_token_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
@@ -96,6 +102,57 @@ async fn immutable_token_fails() -> anyhow::Result<()> {
     );
 
     // can't delete the account because the token still exists, can't delete the token because there's no admin key.
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn update_immutable_token_metadata() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+    let initial_metadata = vec![1];
+    let updated_metadata = vec![1, 2];
+    let metadata_key = PrivateKey::generate_ed25519();
+
+    // Create the Fungible Token with metadata key.
+    let token_id = TokenCreateTransaction::new()
+        .name("ffff")
+        .symbol("F")
+        .token_type(TokenType::FungibleCommon)
+        .decimals(3)
+        .initial_supply(100000)
+        .metadata(initial_metadata.clone())
+        .treasury_account_id(client.get_operator_account_id().unwrap())
+        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
+        .admin_key(client.get_operator_public_key().unwrap())
+        .metadata_key(metadata_key.public_key())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?
+        .token_id
+        .unwrap();
+
+    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
+
+    assert_eq!(&token_info.metadata, &initial_metadata);
+    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+
+    // Update token with metadata key.
+    _ = TokenUpdateTransaction::new()
+        .token_id(token_id)
+        .metadata(updated_metadata.clone())
+        .freeze_with(&client)?
+        .sign(metadata_key)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await;
+
+    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
+
+    assert_eq!(token_info.metadata, updated_metadata);
 
     Ok(())
 }
