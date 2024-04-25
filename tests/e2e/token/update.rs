@@ -73,7 +73,6 @@ async fn basic() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn immutable_token_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
@@ -108,7 +107,6 @@ async fn immutable_token_fails() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-
 async fn update_immutable_token_metadata() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
@@ -123,7 +121,7 @@ async fn update_immutable_token_metadata() -> anyhow::Result<()> {
         .symbol("F")
         .token_type(TokenType::FungibleCommon)
         .decimals(3)
-        .initial_supply(1000000)
+        .initial_supply(100000)
         .metadata(initial_metadata.clone())
         .treasury_account_id(client.get_operator_account_id().unwrap())
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
