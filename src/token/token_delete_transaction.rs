@@ -20,7 +20,6 @@
 
 use hedera_proto::services;
 use hedera_proto::services::token_service_client::TokenServiceClient;
-
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
