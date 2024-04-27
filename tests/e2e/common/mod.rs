@@ -15,7 +15,7 @@ mod keys {
 
     pub(super) const OPERATOR_KEY: &str = "TEST_OPERATOR_KEY";
 
-    pub(super) const OPERATOR_ACCOUNT_ID: &str = "TEST_OPERATOR_ID";
+    pub(super) const OPERATOR_ID: &str = "TEST_OPERATOR_ID";
 
     pub(super) const RUN_NONFREE: &str = "TEST_RUN_NONFREE";
 }
@@ -77,7 +77,7 @@ pub(crate) struct Operator {
 impl Operator {
     fn try_parse_env() -> anyhow::Result<Option<Self>> {
         let key = dotenvy::var(keys::OPERATOR_KEY).ok();
-        let account_id = dotenvy::var(keys::OPERATOR_ACCOUNT_ID).ok();
+        let account_id = dotenvy::var(keys::OPERATOR_ID).ok();
 
         // note: intentionally avoiding zip in order to log warnings
         let (key, account_id) = match (key, account_id) {

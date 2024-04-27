@@ -551,9 +551,9 @@ impl FromProtobuf<services::TokenCreateTransactionBody> for TokenCreateTransacti
             metadata_key,
         } = pb;
 
-        let token_type = services::TokenType::from_i32(token_type).unwrap_or_default();
+        let token_type = services::TokenType::try_from(token_type).unwrap_or_default();
         let token_supply_type =
-            services::TokenSupplyType::from_i32(supply_type).unwrap_or_default();
+            services::TokenSupplyType::try_from(supply_type).unwrap_or_default();
 
         Ok(Self {
             name,

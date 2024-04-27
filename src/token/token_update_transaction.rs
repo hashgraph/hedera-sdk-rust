@@ -420,7 +420,7 @@ impl From<TokenUpdateTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransactionData {
     fn from_protobuf(pb: services::TokenUpdateTransactionBody) -> crate::Result<Self> {
         let key_verification_mode =
-            services::TokenKeyValidation::from_i32(pb.key_verification_mode as i32)
+            services::TokenKeyValidation::try_from(pb.key_verification_mode as i32)
                 .unwrap_or_default();
 
         Ok(Self {
