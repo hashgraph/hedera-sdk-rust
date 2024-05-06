@@ -42,7 +42,6 @@ impl MirrorNodeGateway {
             MirrorNodeRouter::get_mirror_node_url(mirror_network, ledger_id).unwrap();
 
         // initiate Mirror node gateway
-        // initiate Mirror node gateway
         MirrorNodeGateway {
             inner: ArcSwap::new(Arc::new(MirrorNodeGatewayInner { mirror_node_url })),
         }
@@ -79,9 +78,9 @@ enum MirrorRoutes {
 impl MirrorRoutes {
     fn to_route(&self, id: String) -> String {
         match self {
-            MirrorRoutes::AccountsRoute => "/accounts/{id}".to_string(),
-            MirrorRoutes::ContractsRoute => "/contracts/{id}".to_string(),
-            MirrorRoutes::AccountTokensRoute => "/accounts/{id}/tokens".to_string(),
+            MirrorRoutes::AccountsRoute => format!("/accounts/{}", id),
+            MirrorRoutes::ContractsRoute => format!("/contracts/{}", id),
+            MirrorRoutes::AccountTokensRoute => format!("/accounts/{}/tokens", id),
         }
     }
 }
@@ -114,12 +113,6 @@ impl MirrorNodeRouter {
     fn build_api_url(mirror_node_url: String, route: MirrorRoutes, id: String) -> String {
         format!("{mirror_node_url}/api/v1{}", route.to_route(id))
     }
-}
-
-enum MirrorNodeRoutes {
-    Accounts,
-    Contracts,
-    AccountTokens,
 }
 
 pub struct MirrorNodeService {
