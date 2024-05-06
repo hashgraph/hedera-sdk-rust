@@ -1,74 +1,51 @@
-use std::net::SocketAddr;
-
-use arc_swap::access::Access;
-use axum::extract::Path;
-use axum::http::StatusCode;
-use axum::response::IntoResponse;
-use axum::routing::get;
-use axum::{
-    Json,
-    Router,
-};
-use hyper::Response;
 use serde_json::Value;
 use triomphe::Arc;
 
-use crate::client::MirrorNetworkData;
 use crate::{
-    ledger_id,
-    AccountId,
-    AccountInfo,
     Client,
-    EvmAddress,
+    Error,
     LedgerId,
 };
 
 const LOCAL_NODE_PORT: &str = "5551";
 
-use std::ops::Deref;
-
 use crate::ArcSwap;
 
 #[derive(Default)]
-pub(crate) struct MirrorNodeGateway {
+pub struct MirrorNodeGateway {
     inner: ArcSwap<MirrorNodeGatewayInner>,
 }
 
 // todo: Add client
 #[derive(Clone, Default)]
-pub(crate) struct MirrorNodeGatewayInner {
+pub struct MirrorNodeGatewayInner {
     mirror_node_url: String,
 }
 
 impl MirrorNodeGateway {
     // Set client in the outer later
-    fn for_client(&self, client: Client) -> Self {
-        let ledger_id: Option<LedgerId> = client.ledger_id_internal().load().as_ref().map(|id| (**id).clone());
+    pub fn for_client(client: Client) -> Self {
+        let binding = client.ledger_id_internal();
+        let ledger_id = binding.as_ref();
 
-        let mirror_node_url = MirrorNodeRouter::get_mirror_node_url(
-            client.mirror_network(),
-            ledger_id        )
-        .unwrap();
+        let mirror_node_url =
+            MirrorNodeRouter::get_mirror_node_url(client.mirror_network(), ledger_id).unwrap();
 
         // initiate Mirror node gateway
         MirrorNodeGateway {
-            inner: ArcSwap::new(Arc::new(MirrorNodeGatewayInner {
-                mirror_node_url,
-            })),
-        }    
+            inner: ArcSwap::new(Arc::new(MirrorNodeGatewayInner { mirror_node_url })),
+        }
     }
 
-    fn for_network(&self, mirror_network: Vec<String>, ledger_id: Option<LedgerId>) -> Self {
+    fn for_network(&self, mirror_network: Vec<String>, ledger_id: Option<&Arc<LedgerId>>) -> Self {
         let mirror_node_url =
             MirrorNodeRouter::get_mirror_node_url(mirror_network, ledger_id).unwrap();
 
         // initiate Mirror node gateway
         // initiate Mirror node gateway
         MirrorNodeGateway {
-            inner: ArcSwap::new(Arc::new(MirrorNodeGatewayInner {
-                mirror_node_url,
-            })),
-        }      
+            inner: ArcSwap::new(Arc::new(MirrorNodeGatewayInner { mirror_node_url })),
+        }
     }
 
     // Gets called in MirrorNodeGateway
@@ -81,7 +58,7 @@ impl MirrorNodeGateway {
 
         let response_body = self.query_from_mirror_node(api_url).await;
 
-        let info: Value = serde_json::from_str(&response_body).unwrap();
+        let info = serde_json::from_str(&response_body).unwrap();
         info
     }
 
@@ -112,7 +89,7 @@ impl MirrorRoutes {
 impl MirrorNodeRouter {
     fn get_mirror_node_url(
         mirror_network: Vec<String>,
-        ledger_id: Option<LedgerId>,
+        ledger_id: Option<&Arc<LedgerId>>,
     ) -> crate::Result<String> {
         let mut address: Vec<String> = Vec::new();
 
@@ -143,4 +120,33 @@ enum MirrorNodeRoutes {
     Accounts,
     Contracts,
     AccountTokens,
+}
+
+pub struct MirrorNodeService {
+    mirror_node_gateway: MirrorNodeGateway,
+}
+
+impl MirrorNodeService {
+    pub fn new(mirror_node_gateway: MirrorNodeGateway) -> Self {
+        MirrorNodeService { mirror_node_gateway }
+    }
+
+    pub async fn get_account_num(&self, evm_address: String) -> crate::Result<u64> {
+        let expecting = || Error::basic_parse(format!("Could not parse data"));
+
+        let account_info = self.mirror_node_gateway.get_account_info(evm_address).await;
+
+        let num = account_info.get("account").map(|it| it.as_str().unwrap()).unwrap();
+
+        if let Some(index) = num.rfind('.') {
+            let substring = &num[index + 1..];
+            substring.parse::<u64>().map_err(|e| crate::Error::BasicParse(Box::new(e)))
+        } else {
+            crate::Result::Err(expecting())
+        }
+    }
+
+    // async fn get_account_evm_adress(&self, num: u64) -> EvmAddress {
+
+    // }
 }
