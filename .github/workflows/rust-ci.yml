@@ -4,55 +4,113 @@ on:
   push:
     branches: ['main']
 
+defaults:
+    run:
+        shell: bash
+
+permissions:
+    contents: read
+
 jobs:
   format:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
         with:
-          submodules: 'recursive'
-      - name: Add `rustfmt` to toolchain
-        run: rustup +nightly component add rustfmt
-      - name: Format
-        run: cargo +nightly fmt --check
-  
-  check:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
+          egress-policy: audit
+
+      - name: Checkout Code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
 
-      - uses: Swatinem/rust-cache@v2
+      - name: Add `rustfmt` to toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
+          rustup +nightly component add rustfmt  
+
+      - name: Format
+
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
+          cargo +nightly fmt --check
+  
+  check:
+    runs-on: [self-hosted, Linux, medium, ephemeral]
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 18
+
+      - name: Setup GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev
+
+      - name: Checkout Code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          submodules: 'recursive'
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
           workspaces: |
             sdk/rust
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Check
-        run: cargo check --workspace
-        
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
+          cargo check --workspace
   
   test:
     needs: ['check']
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, Linux, medium, ephemeral]
     steps:
-      - uses: actions/checkout@v3
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: 18
+
+      - name: Setup GCC
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev
+
+      - name: Checkout Code
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           submodules: 'recursive'
 
-      - uses: Swatinem/rust-cache@v2
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
         with:
           workspaces: |
             .
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v1
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -62,14 +120,17 @@ jobs:
       - name: "Create env file"
         run: |
             touch .env
-            echo TEST_OPERATOR_KEY="302e020100300506032b657004220420a608e2130a0a3cb34f86e757303c862bee353d9ab77ba4387ec084f881d420d4" >> .env
-            echo TEST_OPERATOR_ID="0.0.1022" >> .env
+            echo TEST_OPERATOR_KEY="${{ secrets.TEST_OPERATOR_KEY }}" >> .env
+            echo TEST_OPERATOR_ID="${{ secrets.TEST_OPERATOR_ID }}" >> .env
             echo TEST_NETWORK_NAME="localhost" >> .env
             echo TEST_RUN_NONFREE="1" >> .env
             cat .env
 
       - name: Test
-        run: cargo test --workspace
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          . $HOME/.cargo/env
+          cargo test --workspace  
 
       - name: Stop the local node
         run: npx @hashgraph/hedera-local stop
