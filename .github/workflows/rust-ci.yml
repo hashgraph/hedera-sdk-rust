@@ -115,7 +115,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start the local node
-        run: npx @hashgraph/hedera-local start -d --network local --network-tag=0.48.0-alpha.12
+        run: npx @hashgraph/hedera-local start -d --network local --balance=100000
 
       - name: "Create env file"
         run: |

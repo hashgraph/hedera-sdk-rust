@@ -144,8 +144,7 @@ impl TransactionReceipt {
         children: Vec<Self>,
         transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self> {
-        let status = Status::from_i32(receipt.status)
-            .ok_or(Error::ResponseStatusUnrecognized(receipt.status))?;
+        let status = Status::try_from(receipt.status).unwrap_or_default();
 
         let account_id = Option::from_protobuf(receipt.account_id)?;
         let file_id = Option::from_protobuf(receipt.file_id)?;

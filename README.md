@@ -36,9 +36,31 @@ If you have any questions on the Hedera SDK or Hedera more generally, you can jo
   <img alt="" src="https://user-images.githubusercontent.com/753919/167244200-b95cd3a6-6256-4eaf-b9b4-f1f192341485.png" height="60">
 </a>
 
+### Examples
+
+To the run an example, set an operator id and operator key in the `.env` file. By default, these run against testnet.
+
+```bash
+# Account that will pay query and transaction fees.
+OPERATOR_ID=
+# Default private key to use to sign for all transactions and queries.
+OPERATOR_KEY=
+```
+
+Cargo Command:
+```bash
+cargo run --release --example <EXAMPLE_FILENAME>
+```
+
+Create Account Example: 
+```bash
+cargo run --release --example create_account
+```
+
+
 ### Integration Tests
 
-Before running the integration tests, an operator key, operator account id, and a network name must be set in an `.env` file.
+Before running the integration tests, an operator key, operator id, and a network name must be set in an `.env` file.
 
 ```bash
 # Account that will pay query and transaction fees.
@@ -64,9 +86,9 @@ Once the local node is running in Docker, use these environment variables in the
 
 ```bash
 # Account that will pay query and transaction fees.
-TEST_OPERATOR_ID=0.0.1022
+TEST_OPERATOR_ID=0.0.2
 # Default private key to use to sign for all transactions and queries.
-TEST_OPERATOR_KEY=302e020100300506032b657004220420a608e2130a0a3cb34f86e757303c862bee353d9ab77ba4387ec084f881d420d4
+TEST_OPERATOR_KEY=302e020100300506032b65700422042091132178e72057a1d7528025956fe39b0b847f200ab59b2fdd367017f3087137
 # Network names: "localhost", "testnet", "previewnet", "mainnet".
 TEST_NETWORK_NAME=localhost
 # Running on-chain tests if this value is set to 1.

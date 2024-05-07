@@ -56,6 +56,7 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
     let res = ContractDeleteTransaction::new()
         .contract_id(contract_id)
+        .transfer_account_id(client.get_operator_account_id().unwrap())
         .execute(&client)
         .await?
         .get_receipt(&client)

@@ -111,7 +111,7 @@ pub struct TokenUpdateTransactionData {
     expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the token (UTF-8 encoding max 100 bytes)
-    token_memo: String,
+    token_memo: Option<String>,
 
     /// The key which can change the token's custom fee schedule; must sign a TokenFeeScheduleUpdate
     /// transaction
@@ -306,15 +306,15 @@ impl TokenUpdateTransaction {
 
     /// Returns the new memo associated with the token.
     #[must_use]
-    pub fn get_token_memo(&self) -> &str {
-        &self.data().token_memo
+    pub fn get_token_memo(&self) -> Option<&str> {
+        self.data().token_memo.as_deref()
     }
 
     /// Sets the new memo associated with the token.
     ///
     /// Maximum of 100 bytes.
-    pub fn token_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.data_mut().token_memo = memo.into();
+    pub fn token_memo(&mut self, memo: Option<impl Into<String>>) -> &mut Self {
+        self.data_mut().token_memo = memo.map(|m| m.into());
         self
     }
 
@@ -420,7 +420,7 @@ impl From<TokenUpdateTransactionData> for AnyTransactionData {
 impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransactionData {
     fn from_protobuf(pb: services::TokenUpdateTransactionBody) -> crate::Result<Self> {
         let key_verification_mode =
-            services::TokenKeyValidation::from_i32(pb.key_verification_mode as i32)
+            services::TokenKeyValidation::try_from(pb.key_verification_mode as i32)
                 .unwrap_or_default();
 
         Ok(Self {
@@ -436,7 +436,7 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
             auto_renew_period: pb.auto_renew_period.map(Into::into),
             expiration_time: pb.expiry.map(Into::into),
-            token_memo: pb.memo.unwrap_or_default(),
+            token_memo: pb.memo,
             fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
             pause_key: Option::from_protobuf(pb.pause_key)?,
             metadata: pb.metadata.unwrap_or_default(),
@@ -463,7 +463,7 @@ impl ToProtobuf for TokenUpdateTransactionData {
             expiry: self.expiration_time.map(Into::into),
             auto_renew_account: self.auto_renew_account_id.to_protobuf(),
             auto_renew_period: self.auto_renew_period.map(Into::into),
-            memo: Some(self.token_memo.clone()),
+            memo: self.token_memo.clone(),
             fee_schedule_key: self.fee_schedule_key.to_protobuf(),
             pause_key: self.pause_key.to_protobuf(),
             metadata: Some(self.metadata.clone()),
@@ -572,7 +572,7 @@ mod tests {
             .expiration_time(TEST_EXPIRATION_TIME)
             .treasury_account_id(TEST_TREASURY_ACCOUNT_ID)
             .token_name(TEST_TOKEN_NAME)
-            .token_memo(TEST_TOKEN_MEMO)
+            .token_memo(Some(TEST_TOKEN_MEMO))
             .metadata(TEST_METADATA.as_bytes().to_vec())
             .metadata_key(test_metadata_key())
             .freeze()
@@ -641,7 +641,7 @@ mod tests {
         assert_eq!(tx.auto_renew_account_id, Some(TEST_AUTO_RENEW_ACCOUNT_ID));
         assert_eq!(tx.auto_renew_period, Some(TEST_AUTO_RENEW_PERIOD));
         assert_eq!(tx.expiration_time, Some(TEST_EXPIRATION_TIME));
-        assert_eq!(tx.token_memo, TEST_TOKEN_MEMO);
+        assert_eq!(tx.token_memo, Some(TEST_TOKEN_MEMO.into()));
         assert_eq!(tx.fee_schedule_key, Some(test_fee_schedule_key().into()));
         assert_eq!(tx.pause_key, Some(test_pause_key().into()));
         assert_eq!(tx.metadata, TEST_METADATA.as_bytes());
@@ -820,15 +820,15 @@ mod tests {
     #[test]
     fn get_set_token_memo() {
         let mut tx = TokenUpdateTransaction::new();
-        tx.token_memo(TEST_TOKEN_MEMO);
-        assert_eq!(tx.get_token_memo(), TEST_TOKEN_MEMO);
+        tx.token_memo(Some(TEST_TOKEN_MEMO));
+        assert_eq!(tx.get_token_memo(), Some(TEST_TOKEN_MEMO));
     }
 
     #[test]
     #[should_panic]
     fn get_set_token_memo_frozen_panic() {
         let mut tx = make_transaction();
-        tx.token_memo(TEST_TOKEN_MEMO);
+        tx.token_memo(Some(TEST_TOKEN_MEMO));
     }
 
     #[test]

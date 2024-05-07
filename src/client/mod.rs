@@ -385,6 +385,14 @@ impl Client {
             "mainnet" => Ok(Self::for_mainnet()),
             "testnet" => Ok(Self::for_testnet()),
             "previewnet" => Ok(Self::for_previewnet()),
+            "localhost" => {
+                let mut network: HashMap<String, AccountId> = HashMap::new();
+                network.insert("127.0.0.1:50211".to_string(), AccountId::new(0, 0, 3));
+
+                let client = Client::for_network(network).unwrap();
+                client.set_mirror_network(["127.0.0.1:5600".to_string()]);
+                Ok(client)
+            }
             _ => Err(Error::basic_parse(format!("Unknown network name {name}"))),
         }
     }
