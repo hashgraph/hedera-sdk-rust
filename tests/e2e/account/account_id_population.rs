@@ -1,11 +1,16 @@
 use hedera::{
-    AccountId, Hbar, PrivateKey, TransactionReceiptQuery, TransferTransaction
+    AccountId,
+    Hbar,
+    PrivateKey,
+    TransactionReceiptQuery,
+    TransferTransaction,
 };
 
-use crate::{account::Account, common::{
+use crate::account::Account;
+use crate::common::{
     setup_nonfree,
     TestEnvironment,
-}};
+};
 
 #[tokio::test]
 async fn can_populate_account_id_num() -> anyhow::Result<()> {
@@ -40,7 +45,7 @@ async fn can_populate_account_id_num() -> anyhow::Result<()> {
 
     println!("here2");
     let new_account_id = receipt.children.get(0).unwrap().account_id.unwrap();
-    
+
     println!("here3");
     let id_mirror = AccountId::from_evm_address(&evm_address);
     let account_id = id_mirror.populate_account_num(&client).await?;

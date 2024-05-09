@@ -36,7 +36,10 @@ impl Account {
         Ok(Self { key, id: account_id })
     }
 
-    pub async fn create_ecdsa(initial_balance: Hbar, client: &hedera::Client) -> hedera::Result<Self> {
+    pub async fn create_ecdsa(
+        initial_balance: Hbar,
+        client: &hedera::Client,
+    ) -> hedera::Result<Self> {
         let key = PrivateKey::generate_ecdsa();
 
         let receipt = hedera::AccountCreateTransaction::new()

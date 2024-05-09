@@ -149,7 +149,10 @@ async fn missing_schedule_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidScheduleId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InvalidScheduleId,
+            transaction_id: _
+        })
     );
 
     Ok(())

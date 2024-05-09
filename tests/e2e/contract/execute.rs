@@ -67,7 +67,10 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidContractId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InvalidContractId,
+            transaction_id: _
+        })
     );
 
     Ok(())

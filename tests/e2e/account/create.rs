@@ -82,10 +82,7 @@ async fn missing_key_error() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let res = AccountCreateTransaction::new()
-        .initial_balance(Hbar::new(1))
-        .execute(&client)
-        .await;
+    let res = AccountCreateTransaction::new().initial_balance(Hbar::new(1)).execute(&client).await;
 
     assert_matches::assert_matches!(
         res,

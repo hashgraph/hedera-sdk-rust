@@ -60,7 +60,10 @@ async fn missing_token_id() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTokenId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InvalidTokenId,
+            transaction_id: _
+        })
     );
 
     Ok(())
@@ -76,7 +79,10 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidAccountId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InvalidAccountId,
+            transaction_id: _
+        })
     );
 
     Ok(())
