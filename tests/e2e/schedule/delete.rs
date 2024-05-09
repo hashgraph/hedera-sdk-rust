@@ -145,11 +145,11 @@ async fn missing_schedule_id_fails() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let res = ScheduleDeleteTransaction::new().execute(&client).await?.get_receipt(&client).await;
+    let res = ScheduleDeleteTransaction::new().execute(&client).await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidScheduleId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidScheduleId, transaction_id: _ })
     );
 
     Ok(())

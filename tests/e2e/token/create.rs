@@ -177,13 +177,11 @@ async fn missing_treasury_account_id_fails() -> anyhow::Result<()> {
         .symbol("F")
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
         .execute(&client)
-        .await?
-        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
+        Err(hedera::Error::TransactionPreCheckStatus {
             status: Status::InvalidTreasuryAccountForToken,
             transaction_id: _
         })

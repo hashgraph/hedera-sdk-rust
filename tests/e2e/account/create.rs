@@ -85,14 +85,12 @@ async fn missing_key_error() -> anyhow::Result<()> {
     let res = AccountCreateTransaction::new()
         .initial_balance(Hbar::new(1))
         .execute(&client)
-        .await?
-        .get_receipt(&client)
         .await;
 
     assert_matches::assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: hedera::Status::InvalidAliasKey,
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: hedera::Status::KeyRequired,
             transaction_id: _
         })
     );

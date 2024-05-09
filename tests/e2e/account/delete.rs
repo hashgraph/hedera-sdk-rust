@@ -59,13 +59,11 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
     let res = AccountDeleteTransaction::new()
         .transfer_account_id(client.get_operator_account_id().unwrap())
         .execute(&client)
-        .await?
-        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
+        Err(hedera::Error::TransactionPreCheckStatus {
             status: Status::AccountIdDoesNotExist,
             transaction_id: _
         })

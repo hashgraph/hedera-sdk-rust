@@ -62,13 +62,11 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
     let res = TokenBurnTransaction::new()
         .amount(10_u64)
         .execute(&client)
-        .await?
-        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidTokenId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTokenId, transaction_id: _ })
     );
 
     Ok(())
