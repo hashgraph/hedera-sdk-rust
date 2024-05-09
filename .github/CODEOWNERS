@@ -2,7 +2,7 @@
 ##### Global Protection Rule ######
 ###################################
 # NOTE: This rule is overriden by the more specific rules below. This is the catch-all rule for all files not covered by the more specific rules below.
-*                                               @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+*                                               @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 #########################
 #####  Core Files  ######
@@ -12,35 +12,35 @@
 
 # Protection Rules for Github Configuration Files and Actions Workflows
 /.github/                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers
-/.github/workflows/                             @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+/.github/workflows/                             @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Legacy Maven project files
-**/pom.xml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+**/pom.xml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Cargo project files and inline plugins
-Cargo.lock                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
-Cargo.toml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
-rustfmt.toml                                    @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
-rust-toolchain.toml                             @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+Cargo.lock                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+Cargo.toml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+rustfmt.toml                                    @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+rust-toolchain.toml                             @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Codacy Tool Configurations
-/config/                                        @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
-.remarkrc                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+/config/                                        @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+.remarkrc                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Self-protection for root CODEOWNERS files (this file should not exist and should definitely require approval)
-/CODEOWNERS                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+/CODEOWNERS                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Protect the repository root files
-/README.md                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+/README.md                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 **/LICENSE                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers
 
 # CodeCov configuration
-**/codecov.yml                                  @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+**/codecov.yml                                  @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Git Ignore definitions
-**/.gitignore                                   @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
-**/.gitignore.*                                 @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+**/.gitignore                                   @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+**/.gitignore.*                                 @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
 
 # Legacy CircleCI configuration
-.circleci.settings.xml                          @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
-/.circleci/                                     @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors
+.circleci.settings.xml                          @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+/.circleci/                                     @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
