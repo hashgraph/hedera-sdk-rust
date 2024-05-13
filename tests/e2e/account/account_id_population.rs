@@ -6,7 +6,6 @@ use hedera::{
     TransferTransaction,
 };
 
-use crate::account::Account;
 use crate::common::{
     setup_nonfree,
     TestEnvironment,
@@ -14,25 +13,20 @@ use crate::common::{
 
 #[tokio::test]
 async fn can_populate_account_id_num() -> anyhow::Result<()> {
-    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
 
-    let Some(op) = &config.operator else {
-        log::debug!("skipping test due to missing operator");
-        return Ok(());
-    };
-    let account = Account::create_ecdsa(Hbar::new(1), &client).await?;
-
-    let public_key = account.key.public_key();
+    let private_key = PrivateKey::generate_ecdsa();
+    let public_key = private_key.public_key();
 
     let evm_address = public_key.to_evm_address().unwrap();
     let evm_address_account = AccountId::from_evm_address(&evm_address);
 
     println!("evm_address: {evm_address_account:?}");
     let tx = TransferTransaction::new()
-        .hbar_transfer(evm_address_account, Hbar::new(-1))
-        .hbar_transfer(client.get_operator_account_id().unwrap(), Hbar::new(1))
+        .hbar_transfer(evm_address_account, Hbar::new(1))
+        .hbar_transfer(client.get_operator_account_id().unwrap(), Hbar::new(-1))
         .execute(&client)
         .await?;
 

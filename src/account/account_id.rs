@@ -149,10 +149,7 @@ impl AccountId {
         }
     }
 
-    /// Validates `self.checksum` (if it exists) for `client`.
-    ///
-    /// # Errors
-    /// - [`Error::BadEntityId`] if there is a checksum, and the checksum is not valid for the client's `ledger_id`.
+    /// Query account id from Mirror Node.
     pub async fn populate_account_num(&self, client: &Client) -> crate::Result<AccountId> {
         let mirror_node_gateway = MirrorNodeGateway::for_client(client.to_owned());
         let mirror_node_service = MirrorNodeService::new(mirror_node_gateway);
