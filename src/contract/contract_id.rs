@@ -28,6 +28,10 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
+use crate::client::{
+    MirrorNodeGateway,
+    MirrorNodeService,
+};
 use crate::entity_id::{
     Checksum,
     PartialEntityId,
@@ -39,6 +43,7 @@ use crate::{
     Client,
     EntityId,
     Error,
+    EvmAddress,
     FromProtobuf,
     ToProtobuf,
 };
@@ -140,6 +145,28 @@ impl ContractId {
             Err(Error::CannotCreateChecksum)
         } else {
             Ok(EntityId::to_string_with_checksum(self.to_string(), client))
+        }
+    }
+
+    /// Query contract id from Mirror Node.
+    pub async fn populate_contract_num(&self, client: &Client) -> crate::Result<ContractId> {
+        let mirror_node_gateway = MirrorNodeGateway::for_client(client.to_owned());
+        let mirror_node_service = MirrorNodeService::new(mirror_node_gateway);
+
+        match self.evm_address {
+            Some(addr) => {
+                let evm_address = EvmAddress::from_ref(&addr);
+                let contract_num =
+                    mirror_node_service.get_contract_num(evm_address.to_string()).await?;
+                Ok(ContractId {
+                    shard: self.shard,
+                    realm: self.realm,
+                    num: contract_num,
+                    evm_address: self.evm_address,
+                    checksum: self.checksum,
+                })
+            }
+            None => todo!(),
         }
     }
 

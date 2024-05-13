@@ -1,9 +1,14 @@
+use std::str::FromStr;
+
+use hyper::Uri;
+use reqwest::Client as ReqwestClient;
 use serde_json::Value;
 use triomphe::Arc;
 
 use crate::{
     Client,
     Error,
+    EvmAddress,
     LedgerId,
 };
 
@@ -47,7 +52,6 @@ impl MirrorNodeGateway {
         }
     }
 
-    // Gets called in MirrorNodeGateway
     async fn get_account_info(&self, id_or_address: String) -> Value {
         let api_url = MirrorNodeRouter::build_api_url(
             self.inner.load().mirror_node_url.clone(),
@@ -61,9 +65,39 @@ impl MirrorNodeGateway {
         info
     }
 
-    // todo: Return Result instead of unwrapping
+    async fn get_contract_info(&self, id_or_address: String) -> Value {
+        let api_url = MirrorNodeRouter::build_api_url(
+            self.inner.load().mirror_node_url.clone(),
+            MirrorRoutes::ContractsRoute,
+            id_or_address,
+        );
+
+        let response_body = self.query_from_mirror_node(api_url).await;
+
+        let info = serde_json::from_str(&response_body).unwrap();
+        info
+    }
+
+    async fn get_account_tokens(&self, id_or_address: String) -> Value {
+        let api_url = MirrorNodeRouter::build_api_url(
+            self.inner.load().mirror_node_url.clone(),
+            MirrorRoutes::AccountTokensRoute,
+            id_or_address,
+        );
+
+        let response_body = self.query_from_mirror_node(api_url).await;
+
+        let info = serde_json::from_str(&response_body).unwrap();
+        info
+    }
+
     async fn query_from_mirror_node(&self, api_url: String) -> String {
-        reqwest::get(api_url).await.unwrap().text().await.unwrap()
+        let client = ReqwestClient::new();
+        println!("url: {api_url}");
+        let response = client.get(&api_url).send().await.unwrap();
+        println!("response: {response:?}");
+        let body = response.text().await.unwrap();
+        body
     }
 }
 
@@ -106,7 +140,7 @@ impl MirrorNodeRouter {
         if ledger_id.is_some() {
             return Ok(format!("https://{}", address[0]));
         } else {
-            return Ok(format!("http://{}:{}", address[0], LOCAL_NODE_PORT));
+            return Ok(format!("{}:{}", address[0], LOCAL_NODE_PORT));
         }
     }
 
@@ -139,7 +173,35 @@ impl MirrorNodeService {
         }
     }
 
-    // async fn get_account_evm_adress(&self, num: u64) -> EvmAddress {
+    async fn get_account_evm_adress(&self, num: u64) -> crate::Result<EvmAddress> {
+        let expecting = || Error::basic_parse(format!("Could not parse data"));
 
-    // }
+        let account_info = self.mirror_node_gateway.get_account_info(num.to_string()).await;
+
+        let num = account_info.get("evm_address").map(|it| it.as_str().unwrap()).unwrap();
+
+        if let Some(index) = num.rfind('.') {
+            let substring = &num[index + 1..];
+            EvmAddress::from_str(substring)
+        } else {
+            crate::Result::Err(expecting())
+        }
+    }
+
+    pub async fn get_contract_num(&self, evm_address: String) -> crate::Result<u64> {
+        let expecting = || Error::basic_parse(format!("Could not parse data"));
+
+        let contract_info = self.mirror_node_gateway.get_contract_info(evm_address).await;
+
+        println!("contract info = {contract_info}");
+
+        let num = contract_info.get("contract_id").map(|it| it.as_str().unwrap()).unwrap();
+
+        if let Some(index) = num.rfind('.') {
+            let substring = &num[index + 1..];
+            substring.parse::<u64>().map_err(|e| crate::Error::BasicParse(Box::new(e)))
+        } else {
+            crate::Result::Err(expecting())
+        }
+    }
 }
