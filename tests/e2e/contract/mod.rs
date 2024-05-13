@@ -83,7 +83,7 @@ async fn bytecode_file_id(
             .file_id
             .unwrap();
 
-        log::debug!("created `{file_id}@file`");
+        log::debug!("created: `{file_id}@file`");
 
         Ok(file_id)
     }

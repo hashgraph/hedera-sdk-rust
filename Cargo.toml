@@ -58,6 +58,8 @@ cbc = "0.1.2"
 aes = "0.8.3"
 md5 = "0.7.0"
 sec1 = { version = "0.7.3", features = ["der"] }
+reqwest = "0.12.4"
+openssl-sys = "0.9.102"
 
 [dependencies.futures-util]
 version = "0.3.21"
