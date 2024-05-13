@@ -202,6 +202,10 @@ pub enum Error {
     /// Failed to verify a signature.
     #[error("failed to verify a signature: {0}")]
     SignatureVerify(#[source] BoxStdError),
+
+    /// Mirror address is not found.
+    #[error("Query failed due to missing mirror address")]
+    AddressNotFound,
 }
 
 impl Error {

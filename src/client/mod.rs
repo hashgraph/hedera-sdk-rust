@@ -32,6 +32,10 @@ use std::sync::atomic::{
 };
 use std::time::Duration;
 
+pub(crate) use mirror::{
+    MirrorNodeGateway,
+    MirrorNodeService,
+};
 pub(crate) use network::{
     Network,
     NetworkData,
@@ -60,6 +64,7 @@ use crate::{
 #[cfg(feature = "serde")]
 mod config;
 
+mod mirror;
 mod network;
 mod operator;
 
