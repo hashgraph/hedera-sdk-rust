@@ -54,7 +54,7 @@ jobs:
       - name: Setup GCC
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev libssl-dev
+          sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev libssl-dev pkg-config libclang-dev
 
       - name: Checkout Code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -96,7 +96,7 @@ jobs:
       - name: Setup GCC
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev libssl-dev
+          sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev libssl-dev pkg-config libclang-dev
 
       - name: Checkout Code
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -120,8 +120,8 @@ jobs:
       - name: "Create env file"
         run: |
             touch .env
-            echo TEST_OPERATOR_KEY="${{ secrets.TEST_OPERATOR_KEY }}" >> .env
-            echo TEST_OPERATOR_ID="${{ secrets.TEST_OPERATOR_ID }}" >> .env
+            echo TEST_OPERATOR_KEY="302e020100300506032b657004220420a608e2130a0a3cb34f86e757303c862bee353d9ab77ba4387ec084f881d420d4" >> .env
+            echo TEST_OPERATOR_ID="0.0.1022" >> .env
             echo TEST_NETWORK_NAME="localhost" >> .env
             echo TEST_RUN_NONFREE="1" >> .env
             cat .env
