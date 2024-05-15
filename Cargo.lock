@@ -831,7 +831,7 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hedera"
-version = "0.25.0-beta.1"
+version = "0.25.0"
 dependencies = [
  "aes",
  "anyhow",
@@ -886,7 +886,7 @@ dependencies = [
 
 [[package]]
 name = "hedera-proto"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "fraction",
