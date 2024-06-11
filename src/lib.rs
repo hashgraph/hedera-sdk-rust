@@ -320,6 +320,7 @@ pub use token::{
     TokenId,
     TokenInfo,
     TokenInfoQuery,
+    TokenKeyValidation,
     TokenMintTransaction,
     TokenNftInfo,
     TokenNftInfoQuery,

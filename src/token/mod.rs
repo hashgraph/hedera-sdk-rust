@@ -101,6 +101,7 @@ pub use token_info_query::{
     TokenInfoQuery,
     TokenInfoQueryData,
 };
+pub use token_key_validation_type::TokenKeyValidation;
 pub use token_mint_transaction::{
     TokenMintTransaction,
     TokenMintTransactionData,

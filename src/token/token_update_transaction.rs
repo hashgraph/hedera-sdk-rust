@@ -370,6 +370,21 @@ impl TokenUpdateTransaction {
         self.data_mut().metadata_key = Some(metadata_key.into());
         self
     }
+
+    /// Returns key verification mode.
+    #[must_use]
+    pub fn get_key_verification_mode(&self) -> TokenKeyValidation {
+        self.data().key_verification_mode
+    }
+
+    /// Assignss key verification mode.
+    pub fn key_verification_mode(
+        &mut self,
+        key_verification_mode: TokenKeyValidation,
+    ) -> &mut Self {
+        self.data_mut().key_verification_mode = key_verification_mode;
+        self
+    }
 }
 
 impl TransactionData for TokenUpdateTransactionData {}
@@ -575,6 +590,7 @@ mod tests {
             .token_memo(Some(TEST_TOKEN_MEMO))
             .metadata(TEST_METADATA.as_bytes().to_vec())
             .metadata_key(test_metadata_key())
+            .key_verification_mode(TokenKeyValidation::NoValidation)
             .freeze()
             .unwrap();
 
@@ -885,5 +901,19 @@ mod tests {
     fn get_set_metadata_key_frozen_panic() {
         let mut tx = make_transaction();
         tx.metadata_key(test_metadata_key());
+    }
+
+    #[test]
+    fn get_set_key_verification_mode() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.key_verification_mode(TokenKeyValidation::NoValidation);
+        assert_eq!(tx.get_key_verification_mode(), TokenKeyValidation::NoValidation);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_key_verification_mode_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.key_verification_mode(TokenKeyValidation::NoValidation);
     }
 }
