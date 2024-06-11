@@ -122,7 +122,7 @@ pub struct TokenUpdateTransactionData {
     pause_key: Option<Key>,
 
     /// Metadata of the created token definition.
-    metadata: Vec<u8>,
+    metadata: Option<Vec<u8>>,
 
     /// The key which can change the metadata of a token
     /// (token definition, partition definition, and individual NFTs).
@@ -349,13 +349,13 @@ impl TokenUpdateTransaction {
 
     /// Returns the new metadata of the created token definition.
     #[must_use]
-    pub fn get_metadata(&self) -> Vec<u8> {
+    pub fn get_metadata(&self) -> Option<Vec<u8>> {
         self.data().metadata.clone()
     }
 
     /// Sets the new metadata of the token definition.
     pub fn metadata(&mut self, metadata: Vec<u8>) -> &mut Self {
-        self.data_mut().metadata = metadata;
+        self.data_mut().metadata = Some(metadata);
         self
     }
 
@@ -454,7 +454,7 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             token_memo: pb.memo,
             fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
             pause_key: Option::from_protobuf(pb.pause_key)?,
-            metadata: pb.metadata.unwrap_or_default(),
+            metadata: pb.metadata,
             metadata_key: Option::from_protobuf(pb.metadata_key)?,
             key_verification_mode: TokenKeyValidation::from_protobuf(key_verification_mode)?,
         })
@@ -481,7 +481,7 @@ impl ToProtobuf for TokenUpdateTransactionData {
             memo: self.token_memo.clone(),
             fee_schedule_key: self.fee_schedule_key.to_protobuf(),
             pause_key: self.pause_key.to_protobuf(),
-            metadata: Some(self.metadata.clone()),
+            metadata: self.metadata.clone(),
             metadata_key: self.metadata_key.to_protobuf(),
             key_verification_mode: self.key_verification_mode.to_protobuf().into(),
         }
@@ -660,7 +660,7 @@ mod tests {
         assert_eq!(tx.token_memo, Some(TEST_TOKEN_MEMO.into()));
         assert_eq!(tx.fee_schedule_key, Some(test_fee_schedule_key().into()));
         assert_eq!(tx.pause_key, Some(test_pause_key().into()));
-        assert_eq!(tx.metadata, TEST_METADATA.as_bytes());
+        assert_eq!(tx.metadata, Some(TEST_METADATA.as_bytes().into()));
         assert_eq!(tx.metadata_key, Some(test_metadata_key().into()));
         assert_eq!(tx.key_verification_mode, TEST_KEY_VERIFICATION_MODE);
     }
@@ -879,7 +879,7 @@ mod tests {
     fn get_set_metadata() {
         let mut tx = TokenUpdateTransaction::new();
         tx.metadata(TEST_METADATA.as_bytes().to_vec());
-        assert_eq!(tx.get_metadata(), TEST_METADATA.as_bytes().to_vec());
+        assert_eq!(tx.get_metadata(), Some(TEST_METADATA.as_bytes().to_vec()));
     }
 
     #[test]
