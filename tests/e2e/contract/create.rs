@@ -119,13 +119,14 @@ async fn unset_gas_fails() -> anyhow::Result<()> {
         .bytecode_file_id(file_id)
         .contract_memo("[e2e::ContractCreateTransaction]")
         .execute(&client)
-        .await?
-        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InsufficientGas, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InsufficientGas,
+            transaction_id: _
+        })
     );
 
     Ok(())
