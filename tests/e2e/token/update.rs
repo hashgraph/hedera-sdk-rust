@@ -1,5 +1,6 @@
 use assert_matches::assert_matches;
 use hedera::{
+    Client,
     Hbar,
     Key,
     KeyList,
@@ -7,6 +8,8 @@ use hedera::{
     PublicKey,
     Status,
     TokenCreateTransaction,
+    TokenDeleteTransaction,
+    TokenId,
     TokenInfoQuery,
     TokenKeyValidation,
     TokenType,
@@ -164,55 +167,18 @@ async fn update_immutable_token_metadata() -> anyhow::Result<()> {
 // Make a token immutable when updating keys to an empty KeyList, signing with an Admin Key,
 // and setting the key verification mode to NO_VALIDATION
 #[tokio::test]
-async fn update_immutable_token_keys_with_admin_sig() -> anyhow::Result<()> {
+async fn update_keys_with_admin_sig() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
 
-    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
     let admin_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
 
-    // Create the NFT with all keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .admin_key(admin_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
+    let keys = generate_keys(Some(admin_key));
 
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the token with all keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     let empty_keylist = KeyList::new();
 
@@ -230,7 +196,7 @@ async fn update_immutable_token_keys_with_admin_sig() -> anyhow::Result<()> {
         .metadata_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(admin_key)
+        .sign(keys.admin_key.unwrap().to_owned())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -247,6 +213,8 @@ async fn update_immutable_token_keys_with_admin_sig() -> anyhow::Result<()> {
     assert_eq!(token_info.fee_schedule_key, None);
     assert_eq!(token_info.metadata_key, None);
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
+
     Ok(())
 }
 
@@ -254,55 +222,18 @@ async fn update_immutable_token_keys_with_admin_sig() -> anyhow::Result<()> {
 // Can remove all of token’s lower-privilege keys when updating keys to an empty KeyList,
 // signing with an Admin Key, and setting the key verification mode to FULL_VALIDATION
 #[tokio::test]
-async fn remove_token_keys_with_admin_sig() -> anyhow::Result<()> {
+async fn remove_keys_with_admin_sig() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
 
-    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
     let admin_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
 
-    // Create the NFT with all keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .admin_key(admin_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
+    let keys = generate_keys(Some(admin_key));
 
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the token with all keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     let empty_keylist = KeyList::new();
 
@@ -320,7 +251,7 @@ async fn remove_token_keys_with_admin_sig() -> anyhow::Result<()> {
         .metadata_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(admin_key)
+        .sign(keys.admin_key.unwrap())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -337,6 +268,7 @@ async fn remove_token_keys_with_admin_sig() -> anyhow::Result<()> {
     assert_eq!(token_info.fee_schedule_key, None);
     assert_eq!(token_info.metadata_key, None);
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -344,55 +276,18 @@ async fn remove_token_keys_with_admin_sig() -> anyhow::Result<()> {
 // Can update all of token’s lower-privilege keys to an unusable key (i.e. all-zeros key),
 // when signing with an Admin Key, and setting the key verification mode to FULL_VALIDATION, and then revert previous keys
 #[tokio::test]
-async fn revert_token_keys_with_admin_sig() -> anyhow::Result<()> {
+async fn revert_keys_with_admin_sig() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
 
-    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
     let admin_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
 
-    // Create the NFT with all keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .admin_key(admin_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
+    let keys = generate_keys(Some(admin_key));
 
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the token with all keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Generate an unusable key to update the supply key.
     let unusable_key = PublicKey::from_str_ed25519(
@@ -413,7 +308,7 @@ async fn revert_token_keys_with_admin_sig() -> anyhow::Result<()> {
         .metadata_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(admin_key.clone())
+        .sign(keys.admin_key.as_ref().unwrap().clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -433,16 +328,16 @@ async fn revert_token_keys_with_admin_sig() -> anyhow::Result<()> {
     // signing with admin key, and verifying with no validation.
     _ = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .wipe_key(wipe_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
+        .wipe_key(keys.wipe_key.public_key())
+        .freeze_key(keys.freeze_key.public_key())
+        .kyc_key(keys.kyc_key.public_key())
+        .supply_key(keys.supply_key.public_key())
+        .pause_key(keys.pause_key.public_key())
+        .fee_schedule_key(keys.fee_schedule_key.public_key())
+        .metadata_key(keys.metadata_key.public_key())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(admin_key.clone())
+        .sign(keys.admin_key.as_ref().unwrap().clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -450,15 +345,19 @@ async fn revert_token_keys_with_admin_sig() -> anyhow::Result<()> {
 
     let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
 
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    assert_eq!(
+        token_info.admin_key,
+        Some(Key::Single(keys.admin_key.unwrap().clone().public_key()))
+    );
+    assert_eq!(token_info.freeze_key, Some(Key::Single(keys.freeze_key.public_key())));
+    assert_eq!(token_info.wipe_key, Some(Key::Single(keys.wipe_key.public_key())));
+    assert_eq!(token_info.kyc_key, Some(Key::Single(keys.kyc_key.public_key())));
+    assert_eq!(token_info.supply_key, Some(Key::Single(keys.supply_key.public_key())));
+    assert_eq!(token_info.pause_key, Some(Key::Single(keys.pause_key.public_key())));
+    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(keys.fee_schedule_key.public_key())));
+    assert_eq!(token_info.metadata_key, Some(Key::Single(keys.metadata_key.public_key())));
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -466,86 +365,43 @@ async fn revert_token_keys_with_admin_sig() -> anyhow::Result<()> {
 // Can update all of token’s lower-privilege keys when signing with an Admin Key
 // and new respective lower-privilege key, and setting key verification mode to FULL_VALIDATION
 #[tokio::test]
-async fn update_token_new_keys_with_admin_sig() -> anyhow::Result<()> {
+async fn update_low_privilege_keys_with_admin_sig() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
 
-    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
     let admin_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+
+    // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
+    let keys = generate_keys(Some(admin_key));
 
     // New Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let new_freeze_key = PrivateKey::generate_ed25519();
-    let new_wipe_key = PrivateKey::generate_ed25519();
-    let new_kyc_key = PrivateKey::generate_ed25519();
-    let new_supply_key = PrivateKey::generate_ed25519();
-    let new_pause_key = PrivateKey::generate_ed25519();
-    let new_fee_schedule_key = PrivateKey::generate_ed25519();
-    let new_metadata_key = PrivateKey::generate_ed25519();
+    let new_keys = generate_keys(None);
 
-    // Create the NFT with all keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .admin_key(admin_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the NFT with all of token’s lower-privilege keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Update all lower-privilege keys for token with new lower-privilege keys,
     // signing with admin key and new lower-privilege keys, and verifying with full validation.
     _ = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .wipe_key(new_wipe_key.public_key())
-        .freeze_key(new_freeze_key.public_key())
-        .kyc_key(new_kyc_key.public_key())
-        .supply_key(new_supply_key.public_key())
-        .pause_key(new_pause_key.public_key())
-        .fee_schedule_key(new_fee_schedule_key.public_key())
-        .metadata_key(new_metadata_key.public_key())
+        .wipe_key(new_keys.wipe_key.public_key())
+        .freeze_key(new_keys.freeze_key.public_key())
+        .kyc_key(new_keys.kyc_key.public_key())
+        .supply_key(new_keys.supply_key.public_key())
+        .pause_key(new_keys.pause_key.public_key())
+        .fee_schedule_key(new_keys.fee_schedule_key.public_key())
+        .metadata_key(new_keys.metadata_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .sign(new_wipe_key.clone())
-        .sign(new_freeze_key.clone())
-        .sign(new_kyc_key.clone())
-        .sign(new_supply_key.clone())
-        .sign(new_pause_key.clone())
-        .sign(new_fee_schedule_key.clone())
-        .sign(new_metadata_key.clone())
+        .sign(keys.admin_key.unwrap())
+        .sign(new_keys.wipe_key.clone())
+        .sign(new_keys.freeze_key.clone())
+        .sign(new_keys.kyc_key.clone())
+        .sign(new_keys.supply_key.clone())
+        .sign(new_keys.pause_key.clone())
+        .sign(new_keys.fee_schedule_key.clone())
+        .sign(new_keys.metadata_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -553,14 +409,20 @@ async fn update_token_new_keys_with_admin_sig() -> anyhow::Result<()> {
 
     let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
 
-    assert_eq!(token_info.freeze_key, Some(Key::Single(new_freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(new_wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(new_kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(new_supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(new_pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(new_fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(new_metadata_key.public_key())));
+    assert_eq!(token_info.freeze_key, Some(Key::Single(new_keys.freeze_key.public_key())));
+    assert_eq!(token_info.wipe_key, Some(Key::Single(new_keys.wipe_key.public_key())));
+    assert_eq!(token_info.kyc_key, Some(Key::Single(new_keys.kyc_key.public_key())));
+    assert_eq!(token_info.supply_key, Some(Key::Single(new_keys.supply_key.public_key())));
+    assert_eq!(token_info.pause_key, Some(Key::Single(new_keys.pause_key.public_key())));
+    assert_eq!(
+        token_info.fee_schedule_key,
+        Some(Key::Single(new_keys.fee_schedule_key.public_key()))
+    );
+    assert_eq!(token_info.metadata_key, Some(Key::Single(new_keys.metadata_key.public_key())));
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
+
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -573,50 +435,13 @@ async fn update_keys_empty_keylist_without_admin_sig_fails() -> anyhow::Result<(
         return Ok(());
     };
 
-    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
     let admin_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
 
-    // Create the NFT with all keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .admin_key(admin_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    // Admin (if required), Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
+    let keys = generate_keys(Some(admin_key));
 
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the token with all keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     let empty_keylist = KeyList::new();
 
@@ -733,6 +558,7 @@ async fn update_keys_empty_keylist_without_admin_sig_fails() -> anyhow::Result<(
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -745,50 +571,13 @@ async fn update_keys_unusable_key_without_admin_sig_fails() -> anyhow::Result<()
         return Ok(());
     };
 
-    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
     let admin_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
 
-    // Create the NFT with all keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .admin_key(admin_key.public_key())
-        .freeze_key(freeze_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .supply_key(supply_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .freeze_with(&client)?
-        .sign(admin_key.clone())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
+    // Admin, Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
+    let keys = generate_keys(Some(admin_key));
 
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the token with all keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Generate an unusable key.
     let unusable_key = PublicKey::from_str_ed25519(
@@ -909,6 +698,7 @@ async fn update_keys_unusable_key_without_admin_sig_fails() -> anyhow::Result<()
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -971,6 +761,7 @@ async fn update_admin_key_to_usuable_key_fail() -> anyhow::Result<()> {
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -982,46 +773,11 @@ async fn update_keys_with_lower_privilege_keys_sigs() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
-
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
-    // Create the NFT with all lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the NFT with all of token’s lower-privilege keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Generate an unusable key.
     let unusable_key = PublicKey::from_str_ed25519(
@@ -1043,13 +799,13 @@ async fn update_keys_with_lower_privilege_keys_sigs() -> anyhow::Result<()> {
         .metadata_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(freeze_key.clone())
-        .sign(wipe_key.clone())
-        .sign(kyc_key.clone())
-        .sign(supply_key.clone())
-        .sign(pause_key.clone())
-        .sign(fee_schedule_key.clone())
-        .sign(metadata_key.clone())
+        .sign(keys.freeze_key.clone())
+        .sign(keys.wipe_key.clone())
+        .sign(keys.kyc_key.clone())
+        .sign(keys.supply_key.clone())
+        .sign(keys.pause_key.clone())
+        .sign(keys.fee_schedule_key.clone())
+        .sign(keys.metadata_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1065,6 +821,7 @@ async fn update_keys_with_lower_privilege_keys_sigs() -> anyhow::Result<()> {
     assert_eq!(token_info.fee_schedule_key, Some(Key::Single(unusable_key)));
     assert_eq!(token_info.metadata_key, Some(Key::Single(unusable_key)));
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1078,81 +835,41 @@ async fn update_keys_with_new_and_old_lower_privilege_keys_sigs() -> anyhow::Res
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // New Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let new_freeze_key = PrivateKey::generate_ed25519();
-    let new_wipe_key = PrivateKey::generate_ed25519();
-    let new_kyc_key = PrivateKey::generate_ed25519();
-    let new_supply_key = PrivateKey::generate_ed25519();
-    let new_pause_key = PrivateKey::generate_ed25519();
-    let new_fee_schedule_key = PrivateKey::generate_ed25519();
-    let new_metadata_key = PrivateKey::generate_ed25519();
+    let new_keys = generate_keys(None);
 
-    // Create the NFT with all of token’s lower-privilege keys set to the respective new keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    // Create the NFT with all of token’s lower-privilege keys.
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Update all of token’s lower-privilege keys when signing with an old respective lower-privilege key,
     // and setting key verification mode to NO_VALIDATION
     let _ = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .freeze_key(new_freeze_key.public_key())
-        .wipe_key(new_wipe_key.public_key())
-        .kyc_key(new_kyc_key.public_key())
-        .supply_key(new_supply_key.public_key())
-        .pause_key(new_pause_key.public_key())
-        .fee_schedule_key(new_fee_schedule_key.public_key())
-        .metadata_key(new_metadata_key.public_key())
+        .freeze_key(new_keys.freeze_key.public_key())
+        .wipe_key(new_keys.wipe_key.public_key())
+        .kyc_key(new_keys.kyc_key.public_key())
+        .supply_key(new_keys.supply_key.public_key())
+        .pause_key(new_keys.pause_key.public_key())
+        .fee_schedule_key(new_keys.fee_schedule_key.public_key())
+        .metadata_key(new_keys.metadata_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(freeze_key.clone())
-        .sign(kyc_key.clone())
-        .sign(wipe_key.clone())
-        .sign(supply_key.clone())
-        .sign(pause_key.clone())
-        .sign(fee_schedule_key.clone())
-        .sign(metadata_key.clone())
-        .sign(new_freeze_key.clone())
-        .sign(new_kyc_key.clone())
-        .sign(new_wipe_key.clone())
-        .sign(new_supply_key.clone())
-        .sign(new_pause_key.clone())
-        .sign(new_fee_schedule_key.clone())
-        .sign(new_metadata_key.clone())
+        .sign(keys.freeze_key.clone())
+        .sign(keys.kyc_key.clone())
+        .sign(keys.wipe_key.clone())
+        .sign(keys.supply_key.clone())
+        .sign(keys.pause_key.clone())
+        .sign(keys.fee_schedule_key.clone())
+        .sign(keys.metadata_key.clone())
+        .sign(new_keys.freeze_key.clone())
+        .sign(new_keys.kyc_key.clone())
+        .sign(new_keys.wipe_key.clone())
+        .sign(new_keys.supply_key.clone())
+        .sign(new_keys.pause_key.clone())
+        .sign(new_keys.fee_schedule_key.clone())
+        .sign(new_keys.metadata_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1160,14 +877,18 @@ async fn update_keys_with_new_and_old_lower_privilege_keys_sigs() -> anyhow::Res
 
     let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
 
-    assert_eq!(token_info.freeze_key, Some(Key::Single(new_freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(new_wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(new_kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(new_supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(new_pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(new_fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(new_metadata_key.public_key())));
+    assert_eq!(token_info.freeze_key, Some(Key::Single(new_keys.freeze_key.public_key())));
+    assert_eq!(token_info.wipe_key, Some(Key::Single(new_keys.wipe_key.public_key())));
+    assert_eq!(token_info.kyc_key, Some(Key::Single(new_keys.kyc_key.public_key())));
+    assert_eq!(token_info.supply_key, Some(Key::Single(new_keys.supply_key.public_key())));
+    assert_eq!(token_info.pause_key, Some(Key::Single(new_keys.pause_key.public_key())));
+    assert_eq!(
+        token_info.fee_schedule_key,
+        Some(Key::Single(new_keys.fee_schedule_key.public_key()))
+    );
+    assert_eq!(token_info.metadata_key, Some(Key::Single(new_keys.metadata_key.public_key())));
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1181,74 +902,34 @@ async fn update_keys_with_all_old_lower_privilege_keys_sigs() -> anyhow::Result<
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // New Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let new_freeze_key = PrivateKey::generate_ed25519();
-    let new_wipe_key = PrivateKey::generate_ed25519();
-    let new_kyc_key = PrivateKey::generate_ed25519();
-    let new_supply_key = PrivateKey::generate_ed25519();
-    let new_pause_key = PrivateKey::generate_ed25519();
-    let new_fee_schedule_key = PrivateKey::generate_ed25519();
-    let new_metadata_key = PrivateKey::generate_ed25519();
+    let new_keys = generate_keys(None);
 
     // Create the NFT with all of token’s lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Update all of token’s lower-privilege keys when signing with all older respective lower-privilege keys,
     // and setting key verification mode to NO_VALIDATION
     let _ = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .freeze_key(new_freeze_key.public_key())
-        .wipe_key(new_wipe_key.public_key())
-        .kyc_key(new_kyc_key.public_key())
-        .supply_key(new_supply_key.public_key())
-        .pause_key(new_pause_key.public_key())
-        .fee_schedule_key(new_fee_schedule_key.public_key())
-        .metadata_key(new_metadata_key.public_key())
+        .freeze_key(new_keys.freeze_key.public_key())
+        .wipe_key(new_keys.wipe_key.public_key())
+        .kyc_key(new_keys.kyc_key.public_key())
+        .supply_key(new_keys.supply_key.public_key())
+        .pause_key(new_keys.pause_key.public_key())
+        .fee_schedule_key(new_keys.fee_schedule_key.public_key())
+        .metadata_key(new_keys.metadata_key.public_key())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(freeze_key.clone())
-        .sign(kyc_key.clone())
-        .sign(wipe_key.clone())
-        .sign(supply_key.clone())
-        .sign(pause_key.clone())
-        .sign(fee_schedule_key.clone())
-        .sign(metadata_key.clone())
+        .sign(keys.freeze_key.clone())
+        .sign(keys.kyc_key.clone())
+        .sign(keys.wipe_key.clone())
+        .sign(keys.supply_key.clone())
+        .sign(keys.pause_key.clone())
+        .sign(keys.fee_schedule_key.clone())
+        .sign(keys.metadata_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1256,14 +937,18 @@ async fn update_keys_with_all_old_lower_privilege_keys_sigs() -> anyhow::Result<
 
     let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
 
-    assert_eq!(token_info.freeze_key, Some(Key::Single(new_freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(new_wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(new_kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(new_supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(new_pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(new_fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(new_metadata_key.public_key())));
+    assert_eq!(token_info.freeze_key, Some(Key::Single(new_keys.freeze_key.public_key())));
+    assert_eq!(token_info.wipe_key, Some(Key::Single(new_keys.wipe_key.public_key())));
+    assert_eq!(token_info.kyc_key, Some(Key::Single(new_keys.kyc_key.public_key())));
+    assert_eq!(token_info.supply_key, Some(Key::Single(new_keys.supply_key.public_key())));
+    assert_eq!(token_info.pause_key, Some(Key::Single(new_keys.pause_key.public_key())));
+    assert_eq!(
+        token_info.fee_schedule_key,
+        Some(Key::Single(new_keys.fee_schedule_key.public_key()))
+    );
+    assert_eq!(token_info.metadata_key, Some(Key::Single(new_keys.metadata_key.public_key())));
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1277,44 +962,10 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // Create the NFT with all of token’s lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     let empty_keylist = KeyList::new();
 
@@ -1327,7 +978,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .wipe_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(wipe_key.clone())
+        .sign(keys.wipe_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1343,7 +994,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .kyc_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(kyc_key.clone())
+        .sign(keys.kyc_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1359,7 +1010,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .freeze_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(freeze_key.clone())
+        .sign(keys.freeze_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1375,7 +1026,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .pause_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(pause_key.clone())
+        .sign(keys.pause_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1391,7 +1042,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .supply_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(supply_key.clone())
+        .sign(keys.supply_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1407,7 +1058,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .fee_schedule_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(fee_schedule_key.clone())
+        .sign(keys.fee_schedule_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1423,7 +1074,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         .metadata_key(empty_keylist.clone())
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
-        .sign(metadata_key.clone())
+        .sign(keys.metadata_key.clone())
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1434,6 +1085,7 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
         Err(hedera::Error::ReceiptStatus { status: Status::TokenIsImmutable, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1442,50 +1094,16 @@ async fn remove_empty_keylist_keys_lower_privilege_keys_sigs_fails() -> anyhow::
 // when signing with a key that is different from a respective lower-privilege key, and setting
 // the key verification mode to NO_VALIDATION
 #[tokio::test]
-async fn update_keys_unusable_key_unknown_key_sig_fails() -> anyhow::Result<()> {
+async fn update_keys_unusable_key_different_key_sig_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // Create the NFT with all of token’s lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Generate an unusable key.
     let unusable_key = PublicKey::from_str_ed25519(
@@ -1595,6 +1213,7 @@ async fn update_keys_unusable_key_unknown_key_sig_fails() -> anyhow::Result<()> 
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1609,44 +1228,10 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // Create the NFT with all of token’s lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Generate an unusable key.
     let unusable_key = PublicKey::from_str_ed25519(
@@ -1663,7 +1248,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .wipe_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(wipe_key)
+        .sign(keys.wipe_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1679,7 +1264,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .kyc_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(kyc_key)
+        .sign(keys.kyc_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1695,7 +1280,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .freeze_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(freeze_key)
+        .sign(keys.freeze_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1711,7 +1296,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .pause_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(pause_key)
+        .sign(keys.pause_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1727,7 +1312,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .supply_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(supply_key)
+        .sign(keys.supply_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1743,7 +1328,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .fee_schedule_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(fee_schedule_key)
+        .sign(keys.fee_schedule_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1759,7 +1344,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         .metadata_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(metadata_key)
+        .sign(keys.metadata_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1770,6 +1355,7 @@ async fn update_with_unusable_key_with_old_key_sig_fails() -> anyhow::Result<()>
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1784,53 +1370,13 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // New Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let new_freeze_key = PrivateKey::generate_ed25519();
-    let new_wipe_key = PrivateKey::generate_ed25519();
-    let new_kyc_key = PrivateKey::generate_ed25519();
-    let new_supply_key = PrivateKey::generate_ed25519();
-    let new_pause_key = PrivateKey::generate_ed25519();
-    let new_fee_schedule_key = PrivateKey::generate_ed25519();
-    let new_metadata_key = PrivateKey::generate_ed25519();
+    let new_keys = generate_keys(None);
 
     // Create the NFT with all of token’s lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Generate an unusable key.
     let unusable_key = PublicKey::from_str_ed25519(
@@ -1847,8 +1393,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .wipe_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(wipe_key)
-        .sign(new_wipe_key)
+        .sign(keys.wipe_key)
+        .sign(new_keys.wipe_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1864,8 +1410,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .kyc_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(kyc_key)
-        .sign(new_kyc_key)
+        .sign(keys.kyc_key)
+        .sign(new_keys.kyc_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1881,8 +1427,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .freeze_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(freeze_key)
-        .sign(new_freeze_key)
+        .sign(keys.freeze_key)
+        .sign(new_keys.freeze_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1898,8 +1444,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .pause_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(pause_key)
-        .sign(new_pause_key)
+        .sign(keys.pause_key)
+        .sign(new_keys.pause_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1915,8 +1461,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .supply_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(supply_key)
-        .sign(new_supply_key)
+        .sign(keys.supply_key)
+        .sign(new_keys.supply_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1932,8 +1478,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .fee_schedule_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(fee_schedule_key)
-        .sign(new_fee_schedule_key)
+        .sign(keys.fee_schedule_key)
+        .sign(new_keys.fee_schedule_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1949,8 +1495,8 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         .metadata_key(unusable_key)
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(metadata_key)
-        .sign(new_metadata_key)
+        .sign(keys.metadata_key)
+        .sign(new_keys.metadata_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -1961,6 +1507,7 @@ async fn update_unusable_key_old_new_key_sig_full_validation_fails() -> anyhow::
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
@@ -1975,53 +1522,13 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
     };
 
     // Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let freeze_key = PrivateKey::generate_ed25519();
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+    let keys = generate_keys(None);
 
     // New Freeze, Wipe, Kyc, Supply, Pause, Fee Schedule, and Metadata keys.
-    let new_freeze_key = PrivateKey::generate_ed25519();
-    let new_wipe_key = PrivateKey::generate_ed25519();
-    let new_kyc_key = PrivateKey::generate_ed25519();
-    let new_supply_key = PrivateKey::generate_ed25519();
-    let new_pause_key = PrivateKey::generate_ed25519();
-    let new_fee_schedule_key = PrivateKey::generate_ed25519();
-    let new_metadata_key = PrivateKey::generate_ed25519();
+    let new_keys = generate_keys(None);
 
     // Create the NFT with all of token’s lower-privilege keys.
-    let token_id = TokenCreateTransaction::new()
-        .name("Test NFT")
-        .symbol("TNFT")
-        .token_type(TokenType::NonFungibleUnique)
-        .treasury_account_id(client.get_operator_account_id().unwrap())
-        .freeze_key(freeze_key.public_key())
-        .supply_key(supply_key.public_key())
-        .wipe_key(wipe_key.public_key())
-        .kyc_key(kyc_key.public_key())
-        .pause_key(pause_key.public_key())
-        .fee_schedule_key(fee_schedule_key.public_key())
-        .metadata_key(metadata_key.public_key())
-        .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?
-        .token_id
-        .unwrap();
-
-    let token_info = TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
-
-    assert_eq!(token_info.freeze_key, Some(Key::Single(freeze_key.public_key())));
-    assert_eq!(token_info.wipe_key, Some(Key::Single(wipe_key.public_key())));
-    assert_eq!(token_info.kyc_key, Some(Key::Single(kyc_key.public_key())));
-    assert_eq!(token_info.supply_key, Some(Key::Single(supply_key.public_key())));
-    assert_eq!(token_info.pause_key, Some(Key::Single(pause_key.public_key())));
-    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(fee_schedule_key.public_key())));
-    assert_eq!(token_info.metadata_key, Some(Key::Single(metadata_key.public_key())));
+    let token_id = create_token_with_keys(&client, &keys).await?;
 
     // Update all of token’s lower-privilege keys
     // (trying to update keys one by one to check all errors),
@@ -2029,10 +1536,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
     // and setting the key verification mode to FULL_VALIDATION
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .wipe_key(new_wipe_key.public_key())
+        .wipe_key(new_keys.wipe_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(wipe_key)
+        .sign(keys.wipe_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2045,10 +1552,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
 
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .kyc_key(new_kyc_key.public_key())
+        .kyc_key(new_keys.kyc_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(kyc_key)
+        .sign(keys.kyc_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2061,10 +1568,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
 
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .freeze_key(new_freeze_key.public_key())
+        .freeze_key(new_keys.freeze_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(freeze_key)
+        .sign(keys.freeze_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2077,10 +1584,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
 
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .pause_key(new_pause_key.public_key())
+        .pause_key(new_keys.pause_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(pause_key)
+        .sign(keys.pause_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2093,10 +1600,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
 
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .supply_key(new_supply_key.public_key())
+        .supply_key(new_keys.supply_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(supply_key)
+        .sign(keys.supply_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2109,10 +1616,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
 
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .fee_schedule_key(new_fee_schedule_key.public_key())
+        .fee_schedule_key(new_keys.fee_schedule_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(fee_schedule_key)
+        .sign(keys.fee_schedule_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2125,10 +1632,10 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
 
     let tx = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .metadata_key(new_metadata_key.public_key())
+        .metadata_key(new_keys.metadata_key.public_key())
         .key_verification_mode(TokenKeyValidation::FullValidation)
         .freeze_with(&client)?
-        .sign(metadata_key)
+        .sign(keys.metadata_key)
         .execute(&client)
         .await?
         .get_receipt(&client)
@@ -2139,18 +1646,75 @@ async fn update_keys_old_key_sig_full_validation_fails() -> anyhow::Result<()> {
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
     );
 
+    _ = TokenDeleteTransaction::new().token_id(token_id).execute(&client).await?;
     Ok(())
 }
 
-fn generate_lower_privileges_keys(
-) -> (PrivateKey, PrivateKey, PrivateKey, PrivateKey, PrivateKey, PrivateKey, PrivateKey) {
-    let wipe_key = PrivateKey::generate_ed25519();
-    let kyc_key = PrivateKey::generate_ed25519();
-    let freeze_key = PrivateKey::generate_ed25519();
-    let pause_key = PrivateKey::generate_ed25519();
-    let supply_key = PrivateKey::generate_ed25519();
-    let fee_schedule_key = PrivateKey::generate_ed25519();
-    let metadata_key = PrivateKey::generate_ed25519();
+struct Keys {
+    admin_key: Option<PrivateKey>,
+    wipe_key: PrivateKey,
+    kyc_key: PrivateKey,
+    freeze_key: PrivateKey,
+    pause_key: PrivateKey,
+    supply_key: PrivateKey,
+    fee_schedule_key: PrivateKey,
+    metadata_key: PrivateKey,
+}
 
-    (wipe_key, kyc_key, freeze_key, pause_key, supply_key, fee_schedule_key, metadata_key)
+fn generate_keys(admin_key: Option<PrivateKey>) -> Keys {
+    Keys {
+        admin_key,
+        wipe_key: PrivateKey::generate_ed25519(),
+        kyc_key: PrivateKey::generate_ed25519(),
+        freeze_key: PrivateKey::generate_ed25519(),
+        pause_key: PrivateKey::generate_ed25519(),
+        supply_key: PrivateKey::generate_ed25519(),
+        fee_schedule_key: PrivateKey::generate_ed25519(),
+        metadata_key: PrivateKey::generate_ed25519(),
+    }
+}
+
+async fn create_token_with_keys(client: &Client, keys: &Keys) -> anyhow::Result<TokenId> {
+    // Create the NFT with all of token’s lower-privilege keys.
+    let token_id = {
+        let mut tx = TokenCreateTransaction::new();
+
+        tx.name("Test NFT")
+            .symbol("TNFT")
+            .token_type(TokenType::NonFungibleUnique)
+            .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
+            .treasury_account_id(client.get_operator_account_id().unwrap())
+            .freeze_key(keys.freeze_key.public_key())
+            .supply_key(keys.supply_key.public_key())
+            .wipe_key(keys.wipe_key.public_key())
+            .kyc_key(keys.kyc_key.public_key())
+            .pause_key(keys.pause_key.public_key())
+            .fee_schedule_key(keys.fee_schedule_key.public_key())
+            .metadata_key(keys.metadata_key.public_key());
+
+        if let Some(admin_key) = &keys.admin_key {
+            tx.admin_key(admin_key.public_key()).freeze_with(client)?.sign(admin_key.clone());
+        }
+
+        tx.execute(&client).await?.get_receipt(&client).await?.token_id.unwrap()
+    };
+
+    let token_info: hedera::TokenInfo =
+        TokenInfoQuery::new().token_id(token_id).execute(&client).await?;
+
+    if let Some(admin_key) = &keys.admin_key {
+        assert_eq!(token_info.admin_key, Some(Key::Single(admin_key.public_key())));
+    } else {
+        assert_eq!(token_info.admin_key, None);
+    }
+
+    assert_eq!(token_info.freeze_key, Some(Key::Single(keys.freeze_key.public_key())));
+    assert_eq!(token_info.wipe_key, Some(Key::Single(keys.wipe_key.public_key())));
+    assert_eq!(token_info.kyc_key, Some(Key::Single(keys.kyc_key.public_key())));
+    assert_eq!(token_info.supply_key, Some(Key::Single(keys.supply_key.public_key())));
+    assert_eq!(token_info.pause_key, Some(Key::Single(keys.pause_key.public_key())));
+    assert_eq!(token_info.fee_schedule_key, Some(Key::Single(keys.fee_schedule_key.public_key())));
+    assert_eq!(token_info.metadata_key, Some(Key::Single(keys.metadata_key.public_key())));
+
+    Ok(token_id)
 }

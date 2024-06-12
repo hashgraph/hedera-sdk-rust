@@ -55,7 +55,7 @@ async fn main() -> anyhow::Result<()> {
     let new_supply_key = PrivateKey::generate_ed25519();
 
     // Generate an invalid key to update the supply key.
-    let all_zeros_key = PublicKey::from_str_ed25519(
+    let unusable = PublicKey::from_str_ed25519(
         "0x0000000000000000000000000000000000000000000000000000000000000000",
     )
     .unwrap();
@@ -161,7 +161,7 @@ async fn main() -> anyhow::Result<()> {
     // Remove the supply key with an invalid key, signing with the new supply key.
     _ = TokenUpdateTransaction::new()
         .token_id(token_id)
-        .supply_key(all_zeros_key)
+        .supply_key(unusable)
         .key_verification_mode(TokenKeyValidation::NoValidation)
         .freeze_with(&client)?
         .sign(new_supply_key)
