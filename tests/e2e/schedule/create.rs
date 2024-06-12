@@ -210,10 +210,7 @@ async fn double_schedule_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::IdenticalScheduleAlreadyCreated,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::IdenticalScheduleAlreadyCreated, .. })
     );
 
     account.delete(&client).await?;

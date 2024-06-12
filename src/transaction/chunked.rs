@@ -15,6 +15,7 @@ use crate::{
     AccountId,
     BoxGrpcFuture,
     Error,
+    Hbar,
     Transaction,
     TransactionHash,
     TransactionId,
@@ -199,9 +200,11 @@ where
         &self,
         status: services::ResponseCodeEnum,
         transaction_id: Option<&TransactionId>,
+        response: Self::GrpcResponse,
     ) -> crate::Error {
         crate::Error::TransactionPreCheckStatus {
             status,
+            cost: (response.cost != 0).then(|| Hbar::from_tinybars(response.cost as i64)),
             transaction_id: Box::new(
                 *transaction_id.expect("transactions must have transaction IDs"),
             ),
@@ -301,9 +304,11 @@ where
         &self,
         status: services::ResponseCodeEnum,
         transaction_id: Option<&TransactionId>,
+        response: Self::GrpcResponse,
     ) -> crate::Error {
         crate::Error::TransactionPreCheckStatus {
             status,
+            cost: (response.cost != 0).then(|| Hbar::from_tinybars(response.cost as i64)),
             transaction_id: Box::new(
                 *transaction_id.expect("transactions must have transaction IDs"),
             ),

@@ -166,7 +166,7 @@ async fn insufficient_balance_for_fee_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::ReceiptStatus {
             status: Status::InsufficientSenderAccountBalanceForCustomFee,
-            transaction_id: _
+            ..
         })
     );
 
@@ -222,10 +222,7 @@ async fn unowned_token_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::InsufficientTokenBalance,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InsufficientTokenBalance, .. })
     );
 
     token.burn(&client, 10).await?;
@@ -321,10 +318,7 @@ async fn incorrect_decimals_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::UnexpectedTokenDecimals,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::UnexpectedTokenDecimals, .. })
     );
 
     token.burn(&client, 10).await?;

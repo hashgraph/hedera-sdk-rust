@@ -68,10 +68,7 @@ async fn immutable_file_fails() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await;
 
-    assert_matches!(
-        res,
-        Err(hedera::Error::ReceiptStatus { status: Status::Unauthorized, transaction_id: _ })
-    );
+    assert_matches!(res, Err(hedera::Error::ReceiptStatus { status: Status::Unauthorized, .. }));
 
     Ok(())
 }
