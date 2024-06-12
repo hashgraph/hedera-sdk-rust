@@ -52,6 +52,7 @@ use crate::{
 
 mod any;
 mod chunked;
+mod cost;
 mod execute;
 mod protobuf;
 mod source;
@@ -65,6 +66,7 @@ pub(crate) use chunked::{
     ChunkInfo,
     ChunkedTransactionData,
 };
+pub(crate) use cost::CostTransaction;
 pub(crate) use execute::{
     TransactionData,
     TransactionExecute,
@@ -691,8 +693,31 @@ impl<D> Transaction<D>
 where
     D: TransactionExecute,
 {
+    /// Get the estimated transaction cost for this transaction.
+    pub async fn get_cost(&mut self, client: &Client) -> crate::Result<Hbar> {
+        let result = CostTransaction::from_transaction(self).execute(client).await;
+
+        match result {
+            Ok(response) => {
+                // unexpected response from Hedera, expecting to receive an `InsufficientTxFee` but received `Ok`
+                return Err(Error::TransactionPreCheckStatus {
+                    cost: None,
+                    status: services::ResponseCodeEnum::Ok,
+                    transaction_id: Box::new(response.transaction_id),
+                });
+            }
+
+            Err(Error::TransactionPreCheckStatus { status, cost: Some(cost), .. })
+                if status == services::ResponseCodeEnum::InsufficientTxFee =>
+            {
+                return Ok(cost);
+            }
+
+            Err(error) => Err(error),
+        }
+    }
+
     /// Execute this transaction against the provided client of the Hedera network.
-    // todo:
     pub async fn execute(&mut self, client: &Client) -> crate::Result<TransactionResponse> {
         self.execute_with_optional_timeout(client, None).await
     }

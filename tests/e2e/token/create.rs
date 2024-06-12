@@ -133,7 +133,7 @@ async fn missing_name_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::MissingTokenName, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::MissingTokenName, .. })
     );
 
     account.delete(&client).await?;
@@ -160,7 +160,7 @@ async fn missing_symbol_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::MissingTokenSymbol, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::MissingTokenSymbol, .. })
     );
 
     account.delete(&client).await?;
@@ -183,7 +183,7 @@ async fn missing_treasury_account_id_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::TransactionPreCheckStatus {
             status: Status::InvalidTreasuryAccountForToken,
-            transaction_id: _
+            ..
         })
     );
 
@@ -208,7 +208,7 @@ async fn missing_treasury_account_id_sig_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     Ok(())
@@ -237,7 +237,7 @@ async fn missing_admin_key_sig_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     account.delete(&client).await?;
@@ -300,10 +300,7 @@ async fn too_many_custom_fees_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::CustomFeesListTooLong,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::CustomFeesListTooLong, .. })
     );
 
     account.delete(&client).await?;
@@ -408,7 +405,7 @@ async fn fractional_fee_min_bigger_than_max_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::ReceiptStatus {
             status: Status::FractionalFeeMaxAmountLessThanMinAmount,
-            transaction_id: _
+            ..
         })
     );
 
@@ -446,10 +443,7 @@ async fn invalid_fee_collector_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::InvalidCustomFeeCollector,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidCustomFeeCollector, .. })
     );
 
     account.delete(&client).await?;
@@ -486,10 +480,7 @@ async fn negative_fee_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::CustomFeeMustBePositive,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::CustomFeeMustBePositive, .. })
     );
 
     account.delete(&client).await?;
@@ -532,10 +523,7 @@ async fn zero_denominator_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::FractionDividesByZero,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::FractionDividesByZero, .. })
     );
 
     account.delete(&client).await?;

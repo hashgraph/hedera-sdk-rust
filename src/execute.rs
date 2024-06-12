@@ -130,6 +130,7 @@ pub(crate) trait Execute: ValidateChecksums {
         &self,
         status: Status,
         transaction_id: Option<&TransactionId>,
+        response: Self::GrpcResponse,
     ) -> crate::Error;
 
     /// Extract the pre-check status from the GRPC response.
@@ -422,7 +423,7 @@ async fn execute_single<E: Execute + Sync>(
 
     match status {
         Status::Ok if executable.should_retry(&response) => Err(retry::Error::Transient(
-            executable.make_error_pre_check(status, transaction_id.as_ref()),
+            executable.make_error_pre_check(status, transaction_id.as_ref(), response),
         )),
 
         Status::Ok => executable
@@ -433,9 +434,11 @@ async fn execute_single<E: Execute + Sync>(
         Status::Busy | Status::PlatformNotActive => {
             // NOTE: this is a "busy" node
             // try the next node in our allowed list, immediately
-            Ok(ControlFlow::Continue(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Ok(ControlFlow::Continue(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
 
         // would do an `if_let` but, not stable ._.
@@ -447,23 +450,29 @@ async fn execute_single<E: Execute + Sync>(
 
             *transaction_id = Some(new);
 
-            Ok(ControlFlow::Continue(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Ok(ControlFlow::Continue(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
 
         _ if executable.should_retry_pre_check(status) => {
             // conditional retry on pre-check should back-off and try again
-            Err(retry::Error::Transient(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Err(retry::Error::Transient(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
 
         _ => {
             // any other pre-check is an error that the user needs to fix, fail immediately
-            Err(retry::Error::Permanent(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Err(retry::Error::Permanent(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
     }
 }

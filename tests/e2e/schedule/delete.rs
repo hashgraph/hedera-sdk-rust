@@ -78,10 +78,7 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::ScheduleIsImmutable,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::ScheduleIsImmutable, .. })
     );
 
     Ok(())
@@ -130,10 +127,7 @@ async fn double_delete_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::ScheduleAlreadyDeleted,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::ScheduleAlreadyDeleted, .. })
     );
 
     Ok(())
@@ -149,10 +143,7 @@ async fn missing_schedule_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidScheduleId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidScheduleId, .. })
     );
 
     Ok(())

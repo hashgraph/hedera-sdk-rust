@@ -67,10 +67,7 @@ async fn missing_contract_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidContractId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidContractId, .. })
     );
 
     Ok(())
@@ -101,10 +98,7 @@ async fn missing_function_parameters_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::ContractRevertExecuted,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::ContractRevertExecuted, .. })
     );
 
     ContractDeleteTransaction::new()
@@ -144,10 +138,7 @@ async fn missing_gas_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InsufficientGas,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InsufficientGas, .. })
     );
 
     ContractDeleteTransaction::new()

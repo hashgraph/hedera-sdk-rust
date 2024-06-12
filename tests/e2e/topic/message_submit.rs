@@ -82,10 +82,7 @@ async fn missing_topic_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTopicId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTopicId, .. })
     );
 
     Ok(())
@@ -103,10 +100,7 @@ async fn missing_message_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTopicMessage,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTopicMessage, .. })
     );
 
     topic.delete(&client).await?;

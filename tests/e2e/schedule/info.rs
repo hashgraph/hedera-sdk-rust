@@ -250,10 +250,7 @@ async fn query_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::QueryPaymentPreCheckStatus {
-            status: Status::InsufficientTxFee,
-            transaction_id: _
-        })
+        Err(hedera::Error::QueryPaymentPreCheckStatus { status: Status::InsufficientTxFee, .. })
     );
 
     account.delete(&client).await?;

@@ -124,6 +124,7 @@ impl Execute for PingQuery {
         &self,
         status: hedera_proto::services::ResponseCodeEnum,
         _transaction_id: Option<&crate::TransactionId>,
+        _response: Self::GrpcResponse,
     ) -> crate::Error {
         crate::Error::QueryNoPaymentPreCheckStatus { status }
     }

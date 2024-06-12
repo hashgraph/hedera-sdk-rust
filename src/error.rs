@@ -64,8 +64,12 @@ pub enum Error {
     TransactionPreCheckStatus {
         /// The status that caused the [`Transaction`](crate::Transaction) to fail pre-check.
         status: Status,
+
         /// The `TransactionId` of the failed [`Transaction`](crate::Transaction) .
         transaction_id: Box<TransactionId>,
+
+        /// The estimated transaction fee, if the status was [`InsufficientTxFee`].
+        cost: Option<Hbar>,
     },
 
     /// A [`Query`](crate::Query) for `transaction_id` failed pre-check.
