@@ -50,10 +50,7 @@ async fn immutable_fails() -> anyhow::Result<()> {
         .await?
         .get_receipt(&client)
         .await;
-    assert_matches!(
-        res,
-        Err(hedera::Error::ReceiptStatus { status: Status::Unauthorized, transaction_id: _ })
-    );
+    assert_matches!(res, Err(hedera::Error::ReceiptStatus { status: Status::Unauthorized, .. }));
 
     Ok(())
 }
@@ -85,7 +82,7 @@ async fn wrong_admin_key_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     Ok(())

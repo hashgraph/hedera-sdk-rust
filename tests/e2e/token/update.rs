@@ -104,7 +104,7 @@ async fn immutable_token_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::TokenIsImmutable, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::TokenIsImmutable, .. })
     );
 
     // can't delete the account because the token still exists, can't delete the token because there's no admin key.

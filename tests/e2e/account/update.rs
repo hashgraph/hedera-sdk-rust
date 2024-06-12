@@ -78,7 +78,7 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::TransactionPreCheckStatus {
             status: hedera::Status::AccountIdDoesNotExist,
-            transaction_id: _
+            ..
         })
     );
 
