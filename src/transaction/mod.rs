@@ -694,7 +694,7 @@ where
     D: TransactionExecute,
 {
     /// Get the estimated transaction cost for this transaction.
-    pub async fn get_cost(&mut self, client: &Client) -> crate::Result<Hbar> {
+    pub async fn get_cost(&self, client: &Client) -> crate::Result<Hbar> {
         let result = CostTransaction::from_transaction(self).execute(client).await;
 
         match result {
