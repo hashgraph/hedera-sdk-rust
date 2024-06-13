@@ -21,7 +21,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout Code
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           submodules: 'recursive'
 
@@ -57,7 +57,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev libssl-dev
 
       - name: Checkout Code
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           submodules: 'recursive'
 
@@ -99,7 +99,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends gcc libc6-dev libc-dev libssl-dev
 
       - name: Checkout Code
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           submodules: 'recursive'
 
