@@ -99,8 +99,8 @@ pub struct AccountUpdateTransactionData {
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
-    ///
-    max_automatic_token_associations: Option<u16>,
+    /// If the value is set to `-1`, unlimited automatic token associations are allowed.
+    max_automatic_token_associations: Option<i32>,
 
     /// ID of the account or node to which this account is staking, if any.
     staked_id: Option<StakedId>,
@@ -227,12 +227,13 @@ impl AccountUpdateTransaction {
 
     /// Returns the maximum number of tokens that an Account can be implicitly associated with.
     #[must_use]
-    pub fn get_max_automatic_token_associations(&self) -> Option<u16> {
+    pub fn get_max_automatic_token_associations(&self) -> Option<i32> {
         self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
-    pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
+    /// 
+    pub fn max_automatic_token_associations(&mut self, amount: i32) -> &mut Self {
         self.data_mut().max_automatic_token_associations = Some(amount);
         self
     }
@@ -354,8 +355,7 @@ impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransa
             expiration_time: pb.expiration_time.map(Into::into),
             account_memo: pb.memo,
             max_automatic_token_associations: pb
-                .max_automatic_token_associations
-                .map(|it| it as u16),
+                .max_automatic_token_associations,
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
         })
@@ -445,7 +445,7 @@ mod tests {
     };
 
     const RECEIVER_SIGNATURE_REQUIRED: bool = false;
-    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u16 = 100;
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: i32 = 100;
     const ACCOUNT_MEMO: &str = "Some memo";
     const STAKED_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 3);
     const STAKED_NODE_ID: u64 = 4;
