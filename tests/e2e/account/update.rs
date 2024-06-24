@@ -5,6 +5,8 @@ use hedera::{
     Hbar,
     Key,
     PrivateKey,
+    TokenCreateTransaction,
+    TransferTransaction,
 };
 use time::Duration;
 
@@ -78,6 +80,70 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::TransactionPreCheckStatus {
             status: hedera::Status::AccountIdDoesNotExist,
+            ..
+        })
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn cannot_update_max_token_association_to_lower_value_fails() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+
+    let account_key = PrivateKey::generate_ed25519();
+
+    // Create account with max token associations of 1
+    let account_id = AccountCreateTransaction::new()
+        .key(account_key.public_key())
+        .max_automatic_token_associations(1)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?
+        .account_id
+        .unwrap();
+
+    // Create token
+    let token_id = TokenCreateTransaction::new()
+        .name("ffff")
+        .symbol("F")
+        .initial_supply(100_000)
+        .treasury_account_id(client.get_operator_account_id().unwrap())
+        .admin_key(client.get_operator_public_key().unwrap())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?
+        .token_id
+        .unwrap();
+
+    // Associate token with account
+    _ = TransferTransaction::new()
+        .token_transfer(token_id, client.get_operator_account_id().unwrap(), -10)
+        .token_transfer(token_id, account_id, 10)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    // Update account max token associations to 0
+    let res = AccountUpdateTransaction::new()
+        .account_id(account_id)
+        .max_automatic_token_associations(0)
+        .freeze_with(&client)?
+        .sign(account_key)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await;
+
+    assert_matches::assert_matches!(
+        res,
+        Err(hedera::Error::ReceiptStatus {
+            status: hedera::Status::ExistingAutomaticAssociationsExceedGivenLimit,
             ..
         })
     );

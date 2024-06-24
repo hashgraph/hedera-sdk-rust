@@ -232,7 +232,7 @@ impl AccountUpdateTransaction {
     }
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
-    /// 
+    ///
     pub fn max_automatic_token_associations(&mut self, amount: i32) -> &mut Self {
         self.data_mut().max_automatic_token_associations = Some(amount);
         self
@@ -354,8 +354,7 @@ impl FromProtobuf<services::CryptoUpdateTransactionBody> for AccountUpdateTransa
             proxy_account_id: Option::from_protobuf(pb.proxy_account_id)?,
             expiration_time: pb.expiration_time.map(Into::into),
             account_memo: pb.memo,
-            max_automatic_token_associations: pb
-                .max_automatic_token_associations,
+            max_automatic_token_associations: pb.max_automatic_token_associations,
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
         })
