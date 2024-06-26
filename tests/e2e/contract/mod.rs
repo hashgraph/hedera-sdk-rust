@@ -7,6 +7,7 @@ use hedera::{
 };
 
 mod bytecode;
+mod contract_id_population;
 mod create;
 mod create_flow;
 mod delete;

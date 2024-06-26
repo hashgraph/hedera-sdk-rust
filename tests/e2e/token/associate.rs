@@ -52,13 +52,19 @@ async fn missing_token_id() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    TokenAssociateTransaction::new()
+    let res = TokenAssociateTransaction::new()
         .account_id(op.account_id)
         .freeze_with(&client)?
         .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await?;
+        .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: Status::InvalidTokenId,
+            transaction_id: _
+        })
+    );
 
     Ok(())
 }

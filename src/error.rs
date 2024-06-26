@@ -55,6 +55,10 @@ pub enum Error {
     #[error("freeze failed due to node account IDs being unset")]
     FreezeUnsetNodeAccountIds,
 
+    /// Mirror address is not found.
+    #[error("Query failed due to missing mirror address")]
+    AddressNotFound,
+
     /// A transaction failed pre-check.
     ///
     /// The transaction had the ID `transaction_id`.

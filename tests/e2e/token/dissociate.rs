@@ -61,13 +61,17 @@ async fn missing_token_id() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    TokenDissociateTransaction::new()
+    let res = TokenDissociateTransaction::new()
         .account_id(op.account_id)
-        .freeze_with(&client)?
         .execute(&client)
         .await?
         .get_receipt(&client)
-        .await?;
+        .await;
+
+    assert_matches!(
+        res,
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidTokenId, transaction_id: _ })
+    );
 
     Ok(())
 }

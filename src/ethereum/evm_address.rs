@@ -21,7 +21,10 @@
 use std::fmt;
 use std::str::FromStr;
 
-use hex::FromHexError;
+use hex::{
+    FromHexError,
+    ToHex,
+};
 
 use crate::{
     EntityId,
@@ -44,6 +47,11 @@ impl EvmAddress {
     #[must_use]
     pub fn to_bytes(self) -> [u8; 20] {
         self.0
+    }
+
+    /// Gets the string EVM address
+    pub fn to_string(self) -> String {
+        self.0.encode_hex::<String>()
     }
 }
 

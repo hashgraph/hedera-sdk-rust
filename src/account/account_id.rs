@@ -28,6 +28,10 @@ use std::str::FromStr;
 
 use hedera_proto::services;
 
+use crate::client::{
+    MirrorNodeGateway,
+    MirrorNodeService,
+};
 use crate::entity_id::{
     Checksum,
     PartialEntityId,
@@ -142,6 +146,27 @@ impl AccountId {
             Ok(())
         } else {
             EntityId::validate_checksum(self.shard, self.realm, self.num, self.checksum, client)
+        }
+    }
+
+    /// Query account id from Mirror Node.
+    pub async fn populate_account_num(&self, client: &Client) -> crate::Result<AccountId> {
+        let mirror_node_gateway = MirrorNodeGateway::for_client(client.to_owned());
+        let mirror_node_service = MirrorNodeService::new(mirror_node_gateway);
+
+        match self.evm_address {
+            Some(addr) => {
+                let account_num = mirror_node_service.get_account_num(addr.to_string()).await?;
+                Ok(AccountId {
+                    shard: self.shard,
+                    realm: self.realm,
+                    num: account_num,
+                    alias: self.alias,
+                    evm_address: self.evm_address,
+                    checksum: self.checksum,
+                })
+            }
+            None => todo!(),
         }
     }
 }

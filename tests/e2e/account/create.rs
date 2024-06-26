@@ -77,9 +77,9 @@ async fn no_initial_balance() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn missing_key_error() {
+async fn missing_key_error() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return;
+        return Ok(());
     };
 
     let res = AccountCreateTransaction::new().initial_balance(Hbar::new(1)).execute(&client).await;
@@ -88,6 +88,8 @@ async fn missing_key_error() {
         res,
         Err(hedera::Error::TransactionPreCheckStatus { status: hedera::Status::KeyRequired, .. })
     );
+
+    Ok(())
 }
 
 #[tokio::test]

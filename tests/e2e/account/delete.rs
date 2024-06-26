@@ -51,9 +51,9 @@ async fn create_then_delete() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn missing_account_id_fails() {
+async fn missing_account_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
-        return;
+        return Ok(());
     };
 
     let res = AccountDeleteTransaction::new()
@@ -65,6 +65,8 @@ async fn missing_account_id_fails() {
         res,
         Err(hedera::Error::TransactionPreCheckStatus { status: Status::AccountIdDoesNotExist, .. })
     );
+
+    Ok(())
 }
 
 #[tokio::test]

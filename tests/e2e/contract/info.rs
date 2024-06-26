@@ -189,7 +189,7 @@ async fn query_cost_insufficient_tx_fee_fails() -> anyhow::Result<()> {
 
     let res = ContractInfoQuery::new()
         .contract_id(contract_id)
-        .max_payment_amount(Hbar::from_tinybars(10000))
+        .max_payment_amount(Hbar::new(100))
         .payment_amount(Hbar::from_tinybars(1))
         .execute(&client)
         .await;
