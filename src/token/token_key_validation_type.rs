@@ -18,6 +18,13 @@
  * ‍
  */
 
+use std::fmt::{
+    self,
+    Debug,
+    Display,
+    Formatter,
+};
+
 use hedera_proto::services;
 
 use crate::{
@@ -36,6 +43,15 @@ pub enum TokenKeyValidation {
 
     /// Perform no validations at all for all passed token keys.
     NoValidation = 1,
+}
+
+impl Display for TokenKeyValidation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::FullValidation => write!(f, "FULL_VALIDATION"),
+            Self::NoValidation => write!(f, "NO_VALIDATION"),
+        }
+    }
 }
 
 impl FromProtobuf<services::TokenKeyValidation> for TokenKeyValidation {

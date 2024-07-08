@@ -144,7 +144,7 @@ async fn cannot_update_without_signed_metadata_key_error() -> anyhow::Result<()>
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     Ok(())
@@ -205,10 +205,7 @@ async fn cannot_update_without_set_metadata_key_error() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::TokenHasNoMetadataKey,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::TokenHasNoMetadataKey, .. })
     );
 
     Ok(())

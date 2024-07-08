@@ -82,10 +82,7 @@ async fn missing_account_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidAccountId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidAccountId, .. })
     );
 
     Ok(())
@@ -109,7 +106,7 @@ async fn missing_signature_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     account.delete(&client).await?;
@@ -141,10 +138,7 @@ async fn unassociated_token_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::TokenNotAssociatedToAccount,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::TokenNotAssociatedToAccount, .. })
     );
 
     token.delete(&client).await?;

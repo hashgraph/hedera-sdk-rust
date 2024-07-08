@@ -63,10 +63,7 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTokenId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTokenId, .. })
     );
 
     Ok(())
@@ -125,7 +122,7 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     token.delete(&client).await?;
@@ -205,10 +202,7 @@ async fn unowned_nft_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::TreasuryMustOwnBurnedNft,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::TreasuryMustOwnBurnedNft, .. })
     );
 
     TransferTransaction::new()

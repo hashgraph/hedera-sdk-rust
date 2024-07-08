@@ -63,10 +63,7 @@ async fn missing_account_id_fails() {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::AccountIdDoesNotExist,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::AccountIdDoesNotExist, .. })
     );
 }
 
@@ -103,7 +100,7 @@ async fn missing_deletee_signature_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     Ok(())

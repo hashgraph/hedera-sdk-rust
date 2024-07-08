@@ -83,7 +83,7 @@ async fn missing_admin_key_signature_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     token.delete(&client).await?;
@@ -116,7 +116,7 @@ async fn missing_admin_key_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::TokenIsImmutable, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::TokenIsImmutable, .. })
     );
 
     Ok(())
@@ -132,10 +132,7 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTokenId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTokenId, .. })
     );
 
     Ok(())

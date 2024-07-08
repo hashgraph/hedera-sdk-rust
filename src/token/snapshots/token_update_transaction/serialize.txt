@@ -395,6 +395,6 @@ TokenUpdate(
                 ),
             },
         ),
-        key_verification_mode: FullValidation,
+        key_verification_mode: NoValidation,
     },
 )

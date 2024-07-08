@@ -18,6 +18,12 @@ Clone this repository and its submodules:
 git clone --recursive https://github.com/hashgraph/hedera-sdk-rust.git
 ```
 
+Update [`\protobufs`](https://github.com/hashgraph/hedera-protobufs) submodule to recent version (if necessary):
+
+```bash
+git submodule update --recursive --remote
+```
+
 To check dependencies validity, run the following command in the root directory:
 
 ```bash

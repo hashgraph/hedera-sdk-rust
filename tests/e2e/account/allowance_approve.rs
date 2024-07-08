@@ -158,7 +158,7 @@ async fn missing_nft_allowance_approval_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::ReceiptStatus {
             status: hedera::Status::SpenderDoesNotHaveAllowance,
-            transaction_id: _
+            ..
         })
     );
 

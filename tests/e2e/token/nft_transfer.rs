@@ -109,10 +109,7 @@ async fn unowned_nfts_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::SenderDoesNotOwnNftSerialNo,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::SenderDoesNotOwnNftSerialNo, .. })
     );
 
     token.burn(&client, serials).await?;
