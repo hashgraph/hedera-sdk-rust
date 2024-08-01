@@ -114,6 +114,7 @@ impl ToProtobuf for NodeAddress {
             .map(|it| services::ServiceEndpoint {
                 ip_address_v4: it.ip().octets().to_vec(),
                 port: i32::from(it.port()),
+                domain_name: "".to_owned(),
             })
             .collect();
 

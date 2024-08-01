@@ -50,3 +50,16 @@ pub mod streams {
 pub mod sdk {
     tonic::include_proto!("sdk/proto");
 }
+
+#[allow(clippy::derive_partial_eq_without_eq)]
+pub mod com {
+    pub mod hedera {
+        pub mod hapi {
+            pub mod node {
+                pub mod addressbook {
+                    tonic::include_proto!("com.hedera.hapi.node.addressbook");
+                }
+            }
+        }
+    }
+}
