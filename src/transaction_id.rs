@@ -152,39 +152,49 @@ impl ToProtobuf for TransactionId {
     }
 }
 
-// TODO: add unit tests to prove parsing
 // TODO: potentially improve parsing with `nom` or `combine`
 impl FromStr for TransactionId {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        const EXPECTED: &str = "expecting <accountId>@<validStart>[?scheduled][/<nonce>]";
+        const EXPECTED: &str = "expecting <accountId>@<validStart>[?scheduled][/<nonce>] or <accountId>-<validStart>[?scheduled][/<nonce>]";
         // parse route:
-        // split_once('@') -> ("<accountId>", "<validStart>[?scheduled][/<nonce>]")
+        // split_once('@') or split_once('-') -> ("<accountId>", "<validStart>[?scheduled][/<nonce>]")
         // rsplit_once('/') -> Either ("<validStart>[?scheduled]", "<nonce>") or ("<validStart>[?scheduled]")
         // .strip_suffix("?scheduled") -> ("<validStart>") and the suffix was either removed or not.
         // (except it's better ux to do a `split_once('?')`... Except it doesn't matter that much)
 
-        let (account_id, s) = s.split_once('@').ok_or_else(|| Error::basic_parse(EXPECTED))?;
+        let (account_id, seconds, remainder) = s
+            .split_once('@')
+            .and_then(|(account_id, remainder)| {
+                remainder
+                    .split_once('.')
+                    .map(|(vs_secs, remainder)| (account_id, vs_secs, remainder))
+            })
+            .or_else(|| {
+                s.split_once('-').and_then(|(account_id, remainder)| {
+                    remainder
+                        .split_once('-')
+                        .map(|(vs_secs, remainder)| (account_id, vs_secs, remainder))
+                })
+            })
+            .ok_or_else(|| Error::basic_parse(EXPECTED))?;
 
         let account_id: AccountId = account_id.parse()?;
 
-        let (s, nonce) = match s.rsplit_once('/') {
+        let (s, nonce) = match remainder.rsplit_once('/') {
             Some((s, nonce)) => (s, Some(nonce)),
-            None => (s, None),
+            None => (remainder, None),
         };
 
         let nonce = nonce.map(i32::from_str).transpose().map_err(Error::basic_parse)?;
 
-        let (valid_start, scheduled) = match s.strip_suffix("?scheduled") {
+        let (nanos, scheduled) = match s.strip_suffix("?scheduled") {
             Some(rest) => (rest, true),
             None => (s, false),
         };
 
         let valid_start = {
-            let (seconds, nanos) =
-                valid_start.split_once('.').ok_or_else(|| Error::basic_parse(EXPECTED))?;
-
             let seconds = i64::from_str(seconds).map_err(Error::basic_parse)?;
             let nanos = i64::from_str(nanos).map_err(Error::basic_parse)?;
 
@@ -341,6 +351,26 @@ mod tests {
                 valid_start: OffsetDateTime::from_unix_timestamp_nanos(1588539964632521325)
                     .unwrap(),
                 nonce: Some(4),
+                scheduled: false
+            }
+        )
+    }
+
+    /// Parse a transaction ID returned by the Hedera mirror api.
+    ///
+    /// Test case was an output of this mirror request:
+    /// curl 'https://mainnet.mirrornode.hedera.com/api/v1/accounts/2?transactionType=cryptotransfer'
+    #[test]
+    fn parse_from_mirror() {
+        let transaction_id = TransactionId::from_str("0.0.2247604-1691870420-078765024").unwrap();
+
+        assert_eq!(
+            transaction_id,
+            TransactionId {
+                account_id: AccountId::new(0, 0, 2247604),
+                valid_start: OffsetDateTime::from_unix_timestamp_nanos(1691870420078765024)
+                    .unwrap(),
+                nonce: None,
                 scheduled: false
             }
         )
