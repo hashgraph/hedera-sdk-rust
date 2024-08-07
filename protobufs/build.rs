@@ -26,6 +26,8 @@ use std::fs::{
 };
 use std::path::Path;
 
+use regex::RegexBuilder;
+
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
 const DERIVE_EQ_HASH_COPY: &str = "#[derive(Copy, Eq, Hash)]";
 const SERVICES_FOLDER: &str = "./protobufs/services";
@@ -40,12 +42,38 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("Folder {SERVICES_FOLDER} does not exist; do you need to `git submodule update --init`?");
     }
 
-    let services: Vec<_> = read_dir(services_path)?
+    let out_dir = env::var("OUT_DIR")?;
+    let out_path = Path::new(&out_dir);
+    let services_tmp_path = out_path.join("services_src");
+
+    // ensure we start fresh
+    fs::remove_dir_all(&services_tmp_path)?;
+    create_dir_all(&services_tmp_path)?;
+
+    // copy over services into our tmp path so we can edit
+    fs_extra::copy_items(&[services_path], &out_path, &fs_extra::dir::CopyOptions::new().overwrite(true).copy_inside(false))?;
+    fs::rename(out_path.join("services"), &services_tmp_path)?;
+
+    let services: Vec<_> = read_dir(&services_tmp_path)?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             entry.file_type().ok()?.is_file().then(|| entry.path())
         })
         .collect();
+
+    // iterate through each file
+    let re_package = RegexBuilder::new(r"^package (.*);$").multi_line(true).build()?;
+    for service in &services {
+        let contents = fs::read_to_string(service)?;
+
+        // ensure that every `package _` entry is `package proto;`
+        let contents = re_package.replace(&contents, "package proto;");
+
+        // remove com.hedera.hapi.node.addressbook. prefix
+        let contents = contents.replace("com.hedera.hapi.node.addressbook.", "");
+
+        fs::write(service, &*contents)?;
+    }
 
     let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
 
@@ -99,7 +127,7 @@ fn main() -> anyhow::Result<()> {
      "]"#,
     );
 
-    cfg.compile(&services, &["./protobufs/services/"])?;
+    cfg.compile(&services, &[services_tmp_path])?;
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
@@ -130,36 +158,6 @@ fn main() -> anyhow::Result<()> {
         )?;
 
     remove_useless_comments(&mirror_out_dir.join("proto.rs"))?;
-
-    let com_out_dir = Path::new(&env::var("OUT_DIR")?).join("com");
-    create_dir_all(&com_out_dir)?;
-
-    tonic_build::configure()
-        // .build_server(false)
-        .extern_path(
-            ".com.hedera.hapi.node.addressbook.NodeCreateTransactionBody",
-            "crate::services::NodeCreateTransactionBody",
-        )
-        .extern_path(
-            ".com.hedera.hapi.node.addressbook.NodeUpdateTransactionBody",
-            "crate::services::NodeUpdateTransactionBody",
-        )
-        .extern_path(
-            ".com.hedera.hapi.node.addressbook.NodeDeleteTransactionBody",
-            "crate::services::NodeDeleteTransactionBody",
-        )
-        .out_dir(&com_out_dir)
-        .compile(
-            &[
-                "./protobufs/services/address_book_service.proto",
-                "./protobufs/services/node_create.proto",
-                "./protobufs/services/node_delete.proto",
-                "./protobufs/services/node_update.proto",
-            ],
-            &["./protobufs/com/"],
-        )?;
-
-    remove_useless_comments(&com_out_dir.join("proto.rs"))?;
 
     // streams
     // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
@@ -258,32 +256,6 @@ fn main() -> anyhow::Result<()> {
     // see note wrt services.
     remove_useless_comments(&sdk_out_dir.join("proto.rs"))?;
 
-    // let addressbook_out_dir = Path::new(&env::var("OUT_DIR")?).join("addressbook");
-    // create_dir_all(&addressbook_out_dir)?;
-
-    // modify_addressbook_package("./protobufs/services/node_create.proto");
-
-    // tonic_build::configure()
-    //     .build_server(false)
-    //     // Add any necessary extern_path configurations
-    //     .extern_path(".com.hedera.hapi.node.addressbook.NodeCreateTransactionBody", "crate::services::NodeCreateTransactionBody")
-    //     .extern_path(".com.hedera.hapi.node.addressbook.NodeDeleteTransactionBody", "crate::services::NodeDeleteTransactionBody")
-    //     .extern_path(".com.hedera.hapi.node.addressbook.NodeUpdateTransactionBody", "crate::services::NodeUpdateTransactionBody")
-    //     // .extern_path(".node_create.proto", "proto")
-    //     // .extern_path(".node_delete.proto", "proto")
-    //     // .extern_path(".node_update.proto", "proto")
-    //     .out_dir(&addressbook_out_dir)
-    //     .compile(
-    //         &[
-    //             "./protobufs/services/node_create.proto",
-    //             "./protobufs/services/node_delete.proto",
-    //             "./protobufs/services/node_update.proto",
-    //         ],
-    //         &["./protobufs/services/"],
-    //     )?;
-
-    // remove_useless_comments(&addressbook_out_dir.join("proto.rs"))?;
-
     Ok(())
 }
 
@@ -298,14 +270,6 @@ fn remove_useless_comments(path: &Path) -> anyhow::Result<()> {
 
     Ok(())
 }
-
-// fn modify_addressbook_package(path: &String) -> anyhow::Result<()> {
-//     contents = contents.replace("package com.hedera.hapi.node.addressbook;", "package proto;");
-
-//     fs::write(path, contents)?;
-
-//     Ok(())
-// }
 
 trait BuilderExtensions {
     fn services_path<T: AsRef<str>, U: AsRef<str>>(self, proto_name: T, rust_name: U) -> Self
