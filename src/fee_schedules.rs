@@ -490,6 +490,10 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::UtilPrng => Self::UtilPrng,
             HederaFunctionality::TransactionGetFastRecord => Self::TransactionGetFastRecord,
             HederaFunctionality::TokenUpdateNfts => Self::TokenUpdateNfts,
+            HederaFunctionality::NodeCreate => todo!(),
+            HederaFunctionality::NodeUpdate => todo!(),
+            HederaFunctionality::NodeDelete => todo!(),
+            HederaFunctionality::TokenReject => todo!(),
         };
 
         Ok(value)
