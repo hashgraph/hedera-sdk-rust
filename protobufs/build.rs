@@ -47,11 +47,16 @@ fn main() -> anyhow::Result<()> {
     let services_tmp_path = out_path.join("services_src");
 
     // ensure we start fresh
-    fs::remove_dir_all(&services_tmp_path)?;
+    let _ = fs::remove_dir_all(&services_tmp_path);
+
     create_dir_all(&services_tmp_path)?;
 
     // copy over services into our tmp path so we can edit
-    fs_extra::copy_items(&[services_path], &out_path, &fs_extra::dir::CopyOptions::new().overwrite(true).copy_inside(false))?;
+    fs_extra::copy_items(
+        &[services_path],
+        &out_path,
+        &fs_extra::dir::CopyOptions::new().overwrite(true).copy_inside(false),
+    )?;
     fs::rename(out_path.join("services"), &services_tmp_path)?;
 
     let services: Vec<_> = read_dir(&services_tmp_path)?
@@ -109,8 +114,7 @@ fn main() -> anyhow::Result<()> {
         .type_attribute("proto.TokenAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.GrantedCryptoAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.GrantedTokenAllowance", DERIVE_EQ_HASH)
-        .type_attribute("proto.Duration", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.ServiceEndpoint", DERIVE_EQ_HASH);
+        .type_attribute("proto.Duration", DERIVE_EQ_HASH_COPY);
 
     // the ResponseCodeEnum should be marked as #[non_exhaustive] so
     // adding variants does not trigger a breaking change
