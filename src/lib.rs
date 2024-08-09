@@ -326,6 +326,7 @@ pub use token::{
     TokenNftInfoQuery,
     TokenNftTransfer,
     TokenPauseTransaction,
+    TokenRejectTransaction,
     TokenRevokeKycTransaction,
     TokenSupplyType,
     TokenType,

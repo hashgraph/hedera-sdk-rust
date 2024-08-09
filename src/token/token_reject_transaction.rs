@@ -216,7 +216,11 @@ impl ToProtobuf for TokenRejectTransactionData {
 mod tests {
 
     use expect_test::expect_file;
-    use hedera_proto::services::{token_reference, TokenReference, TokenRejectTransactionBody};
+    use hedera_proto::services::{
+        token_reference,
+        TokenReference,
+        TokenRejectTransactionBody,
+    };
 
     use super::TokenRejectTransaction;
     use crate::protobuf::{
@@ -225,20 +229,17 @@ mod tests {
     };
     use crate::token::TokenRejectTransactionData;
     use crate::transaction::test_helpers::{
-        check_body, transaction_body, unused_private_key, TEST_ACCOUNT_ID, TEST_NFT_IDS, TEST_NODE_ACCOUNT_IDS, TEST_TOKEN_IDS, TEST_TX_ID
+        check_body,
+        transaction_body,
+        TEST_ACCOUNT_ID,
+        TEST_NFT_IDS,
+        TEST_TOKEN_IDS,
     };
-
     use crate::AnyTransaction;
 
     fn make_transaction() -> TokenRejectTransaction {
-
-        let mut tx =  TokenRejectTransaction::new_for_tests();
-        tx
-            .owner(TEST_ACCOUNT_ID)
-            .token_ids(TEST_TOKEN_IDS)
-            .nft_ids(TEST_NFT_IDS)
-            .freeze()
-            .unwrap();
+        let mut tx = TokenRejectTransaction::new_for_tests();
+        tx.owner(TEST_ACCOUNT_ID).token_ids(TEST_TOKEN_IDS).nft_ids(TEST_NFT_IDS).freeze().unwrap();
 
         tx
     }
@@ -272,7 +273,9 @@ mod tests {
 
         for token_id in TEST_TOKEN_IDS {
             references.push(TokenReference {
-                token_identifier: Some(token_reference::TokenIdentifier::FungibleToken(token_id.to_protobuf())),
+                token_identifier: Some(token_reference::TokenIdentifier::FungibleToken(
+                    token_id.to_protobuf(),
+                )),
             });
         }
 
@@ -353,7 +356,7 @@ mod tests {
         tx.add_token_id(TEST_TOKEN_IDS[2]);
 
         assert_eq!(tx.get_token_ids()[0], TEST_TOKEN_IDS[0]);
-        assert_eq!(tx.get_token_ids()[2], TEST_TOKEN_IDS[2]);
+        assert_eq!(tx.get_token_ids()[1], TEST_TOKEN_IDS[2]);
     }
 
     #[test]
@@ -364,6 +367,6 @@ mod tests {
         tx.add_nft_id(TEST_NFT_IDS[2]);
 
         assert_eq!(tx.get_nft_ids()[0], TEST_NFT_IDS[0]);
-        assert_eq!(tx.get_nft_ids()[2], TEST_NFT_IDS[2]);
+        assert_eq!(tx.get_nft_ids()[1], TEST_NFT_IDS[2]);
     }
 }

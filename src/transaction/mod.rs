@@ -1096,9 +1096,6 @@ where
 
 #[cfg(test)]
 pub(crate) mod test_helpers {
-
-    use std::str::FromStr;
-
     use hedera_proto::services;
     use prost::Message;
     use time::{
