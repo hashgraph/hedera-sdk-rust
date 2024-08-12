@@ -409,6 +409,9 @@ pub enum RequestType {
 
     /// Update the metadata of one or more NFT's of a specific token type.
     TokenUpdateNfts,
+
+    /// Reject tokens.
+    TokenReject,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -493,7 +496,7 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::NodeCreate => todo!(),
             HederaFunctionality::NodeUpdate => todo!(),
             HederaFunctionality::NodeDelete => todo!(),
-            HederaFunctionality::TokenReject => todo!(),
+            HederaFunctionality::TokenReject => Self::TokenReject,
         };
 
         Ok(value)
@@ -581,6 +584,7 @@ impl ToProtobuf for RequestType {
             Self::UtilPrng => HederaFunctionality::UtilPrng,
             Self::TransactionGetFastRecord => HederaFunctionality::TransactionGetFastRecord,
             Self::TokenUpdateNfts => HederaFunctionality::TokenUpdateNfts,
+            Self::TokenReject => HederaFunctionality::TokenReject,
         }
     }
 }

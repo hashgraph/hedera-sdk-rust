@@ -70,13 +70,13 @@ pub struct TokenRejectTransactionData {
 }
 
 impl TokenRejectTransaction {
-    /// Returns the token for which to burn tokens.
+    /// Returns the owner id of the token to be rejected.
     #[must_use]
     pub fn get_owner(&self) -> Option<AccountId> {
         self.data().owner
     }
 
-    /// Sets the token for which to burn tokens.
+    /// Sets the owner id of the token to be rejected.
     pub fn owner(&mut self, owner: impl Into<AccountId>) -> &mut Self {
         self.data_mut().owner = Some(owner.into());
         self

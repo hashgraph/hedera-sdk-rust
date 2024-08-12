@@ -448,7 +448,7 @@ async fn remove_allowance_fails() -> anyhow::Result<()> {
     let ft = create_ft(&client, &operator_account, 3).await?;
     let nft = Nft::create(&client, &operator_account).await?;
     let receiver_account_key = PrivateKey::generate_ed25519();
-    let receiver_account = create_receiver_account(100, &receiver_account_key, &client).await?;
+    let receiver_account = create_receiver_account(-1, &receiver_account_key, &client).await?;
 
     let spender_account_key = PrivateKey::generate_ed25519();
     let spender_account_id = AccountCreateTransaction::new()

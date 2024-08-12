@@ -13,6 +13,8 @@ mod nft_transfer;
 mod nft_update;
 mod pause;
 mod reject;
+mod reject_flow;
+
 mod revoke_kyc;
 mod transfer;
 mod unfreeze;

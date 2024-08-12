@@ -108,14 +108,9 @@ pub struct TransactionRecord {
 
     /// The keccak256 hash of the ethereumData. This field will only be populated for
     /// `EthereumTransaction`.
-    #[cfg_attr(feature = "ffi", serde(with = "serde_with::As::<serde_with::base64::Base64>"))]
     pub ethereum_hash: Vec<u8>,
 
     /// In the record of a PRNG transaction with no output range, a pseudorandom 384-bit string.
-    #[cfg_attr(
-        feature = "ffi",
-        serde(with = "serde_with::As::<Option<serde_with::base64::Base64>>")
-    )]
     pub prng_bytes: Option<Vec<u8>>,
 
     /// In the record of a PRNG transaction with an output range, the output of a PRNG
