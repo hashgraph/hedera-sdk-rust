@@ -80,7 +80,7 @@ fn main() -> anyhow::Result<()> {
         fs::write(service, &*contents)?;
     }
 
-    let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
+    let mut cfg = tonic_build::configure();
 
     // most of the protobufs in "basic types" should be Eq + Hash + Copy
     // any protobufs that would typically be used as parameter, that meet the requirements of those
