@@ -42,8 +42,7 @@ pub struct AccountBalance {
     pub hbars: Hbar,
 
     /// Token balances for the referenced account.
-    #[deprecated = "use a mirror query"]
-    #[allow(deprecated)]
+    // #[deprecated = "use a mirror query"]
     pub tokens: HashMap<TokenId, u64>,
 
     /// Token decimals for the referenced account.

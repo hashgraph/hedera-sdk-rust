@@ -12,6 +12,9 @@ mod nft_info;
 mod nft_transfer;
 mod nft_update;
 mod pause;
+mod reject;
+mod reject_flow;
+
 mod revoke_kyc;
 mod transfer;
 mod unfreeze;
@@ -221,6 +224,7 @@ impl Nft {
             .admin_key(owner_public_key)
             .freeze_key(owner_public_key)
             .wipe_key(owner_public_key)
+            .pause_key(owner_public_key)
             .supply_key(owner_public_key)
             .fee_schedule_key(owner_public_key)
             .freeze_default(false)

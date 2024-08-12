@@ -62,7 +62,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
+        uses: step-security/rust-cache@2f2489f62393ef58cfac808ecc4fba12a98f83f4 # v2.7.3
         with:
           workspaces: |
             sdk/rust
@@ -104,7 +104,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2.7.3
+        uses: step-security/rust-cache@2f2489f62393ef58cfac808ecc4fba12a98f83f4 # v2.7.3
         with:
           workspaces: |
             .

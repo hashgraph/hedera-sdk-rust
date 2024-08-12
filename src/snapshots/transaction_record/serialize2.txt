@@ -103,6 +103,7 @@ TransactionRecord {
                 2,
                 3,
             ],
+            node_id: 1,
         },
     ),
     transaction_hash: [
