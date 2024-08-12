@@ -410,6 +410,15 @@ pub enum RequestType {
     /// Update the metadata of one or more NFT's of a specific token type.
     TokenUpdateNfts,
 
+    /// Create a new node.
+    NodeCreate,
+
+    /// Update an existing node.
+    NodeUpdate,
+
+    /// Delete a node.
+    NodeDelete,
+
     /// Reject tokens.
     TokenReject,
 }
@@ -493,9 +502,9 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::UtilPrng => Self::UtilPrng,
             HederaFunctionality::TransactionGetFastRecord => Self::TransactionGetFastRecord,
             HederaFunctionality::TokenUpdateNfts => Self::TokenUpdateNfts,
-            HederaFunctionality::NodeCreate => todo!(),
-            HederaFunctionality::NodeUpdate => todo!(),
-            HederaFunctionality::NodeDelete => todo!(),
+            HederaFunctionality::NodeCreate => Self::NodeCreate,
+            HederaFunctionality::NodeUpdate => Self::NodeUpdate,
+            HederaFunctionality::NodeDelete => Self::NodeDelete,
             HederaFunctionality::TokenReject => Self::TokenReject,
         };
 
@@ -584,6 +593,9 @@ impl ToProtobuf for RequestType {
             Self::UtilPrng => HederaFunctionality::UtilPrng,
             Self::TransactionGetFastRecord => HederaFunctionality::TransactionGetFastRecord,
             Self::TokenUpdateNfts => HederaFunctionality::TokenUpdateNfts,
+            Self::NodeCreate => HederaFunctionality::NodeCreate,
+            Self::NodeUpdate => HederaFunctionality::NodeUpdate,
+            Self::NodeDelete => HederaFunctionality::NodeDelete,
             Self::TokenReject => HederaFunctionality::TokenReject,
         }
     }
