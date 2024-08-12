@@ -1096,7 +1096,6 @@ where
 
 #[cfg(test)]
 pub(crate) mod test_helpers {
-
     use hedera_proto::services;
     use prost::Message;
     use time::{
@@ -1109,6 +1108,7 @@ pub(crate) mod test_helpers {
     use crate::{
         AccountId,
         Hbar,
+        NftId,
         PrivateKey,
         TokenId,
         Transaction,
@@ -1190,6 +1190,15 @@ pub(crate) mod test_helpers {
     }
 
     pub(crate) const TEST_TOKEN_ID: TokenId = TokenId::new(1, 2, 3);
+
+    pub(crate) const TEST_TOKEN_IDS: [TokenId; 3] =
+        [TokenId::new(1, 2, 3), TokenId::new(2, 3, 4), TokenId::new(3, 4, 5)];
+
+    pub(crate) const TEST_NFT_IDS: [NftId; 3] = [
+        NftId { token_id: TokenId::new(4, 2, 3), serial: 1 },
+        NftId { token_id: TokenId::new(4, 2, 4), serial: 2 },
+        NftId { token_id: TokenId::new(4, 2, 5), serial: 3 },
+    ];
 
     pub(crate) const TEST_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 5006);
 

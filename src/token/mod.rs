@@ -39,6 +39,8 @@ mod token_nft_info;
 mod token_nft_info_query;
 mod token_nft_transfer;
 mod token_pause_transaction;
+mod token_reject_flow;
+mod token_reject_transaction;
 mod token_revoke_kyc_transaction;
 mod token_supply_type;
 mod token_type;
@@ -115,6 +117,11 @@ pub use token_nft_transfer::TokenNftTransfer;
 pub use token_pause_transaction::{
     TokenPauseTransaction,
     TokenPauseTransactionData,
+};
+pub use token_reject_flow::TokenRejectFlow;
+pub use token_reject_transaction::{
+    TokenRejectTransaction,
+    TokenRejectTransactionData,
 };
 pub use token_revoke_kyc_transaction::{
     TokenRevokeKycTransaction,

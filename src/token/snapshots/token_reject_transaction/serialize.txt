@@ -1,0 +1,98 @@
+TokenReject(
+    TokenRejectTransactionBody {
+        owner: Some(
+            AccountId {
+                shard_num: 0,
+                realm_num: 0,
+                account: Some(
+                    AccountNum(
+                        5006,
+                    ),
+                ),
+            },
+        ),
+        rejections: [
+            TokenReference {
+                token_identifier: Some(
+                    FungibleToken(
+                        TokenId {
+                            shard_num: 1,
+                            realm_num: 2,
+                            token_num: 3,
+                        },
+                    ),
+                ),
+            },
+            TokenReference {
+                token_identifier: Some(
+                    FungibleToken(
+                        TokenId {
+                            shard_num: 2,
+                            realm_num: 3,
+                            token_num: 4,
+                        },
+                    ),
+                ),
+            },
+            TokenReference {
+                token_identifier: Some(
+                    FungibleToken(
+                        TokenId {
+                            shard_num: 3,
+                            realm_num: 4,
+                            token_num: 5,
+                        },
+                    ),
+                ),
+            },
+            TokenReference {
+                token_identifier: Some(
+                    Nft(
+                        NftId {
+                            token_id: Some(
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 3,
+                                },
+                            ),
+                            serial_number: 1,
+                        },
+                    ),
+                ),
+            },
+            TokenReference {
+                token_identifier: Some(
+                    Nft(
+                        NftId {
+                            token_id: Some(
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 4,
+                                },
+                            ),
+                            serial_number: 2,
+                        },
+                    ),
+                ),
+            },
+            TokenReference {
+                token_identifier: Some(
+                    Nft(
+                        NftId {
+                            token_id: Some(
+                                TokenId {
+                                    shard_num: 4,
+                                    realm_num: 2,
+                                    token_num: 5,
+                                },
+                            ),
+                            serial_number: 3,
+                        },
+                    ),
+                ),
+            },
+        ],
+    },
+)
