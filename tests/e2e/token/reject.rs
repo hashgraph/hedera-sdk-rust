@@ -23,9 +23,7 @@ use std::iter::repeat;
 use anyhow::anyhow;
 use assert_matches::assert_matches;
 use hedera::{
-    AccountAllowanceApproveTransaction,
     AccountBalanceQuery,
-    AccountCreateTransaction,
     Client,
     Hbar,
     PrivateKey,
@@ -36,7 +34,6 @@ use hedera::{
     TokenNftInfoQuery,
     TokenPauseTransaction,
     TokenRejectTransaction,
-    TransactionId,
     TransferTransaction,
 };
 
