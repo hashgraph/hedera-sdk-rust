@@ -21,7 +21,7 @@
 use std::net::Ipv4Addr;
 
 use hedera_proto::services;
-use hedera_proto::services::token_service_client::TokenServiceClient;
+use hedera_proto::services::address_book_service_client::AddressBookServiceClient;
 use tonic::transport::Channel;
 
 use crate::ledger_id::RefLedgerId;
@@ -222,7 +222,7 @@ impl TransactionExecute for NodeUpdateTransactionData {
         channel: Channel,
         request: services::Transaction,
     ) -> BoxGrpcFuture<'_, services::TransactionResponse> {
-        Box::pin(async { TokenServiceClient::new(channel).associate_tokens(request).await })
+        Box::pin(async { AddressBookServiceClient::new(channel).update_node(request).await })
     }
 }
 

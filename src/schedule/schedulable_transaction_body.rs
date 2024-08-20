@@ -18,8 +18,8 @@ mod data {
     };
     pub(super) use crate::address_book::{
         NodeCreateTransactionData as NodeCreate,
-        NodeUpdateTransactionData as NodeUpdate,
         NodeDeleteTransactionData as NodeDelete,
+        NodeUpdateTransactionData as NodeUpdate,
     };
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,

@@ -53,8 +53,8 @@ mod data {
     };
     pub(super) use crate::address_book::{
         NodeCreateTransactionData as NodeCreate,
-        NodeUpdateTransactionData as NodeUpdate,
         NodeDeleteTransactionData as NodeDelete,
+        NodeUpdateTransactionData as NodeUpdate,
     };
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,
@@ -650,7 +650,7 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             }
             Data::NodeCreate(pb) => data::NodeCreate::from_protobuf(pb)?.into(),
             Data::NodeUpdate(pb) => data::NodeUpdate::from_protobuf(pb)?.into(),
-            Data::NodeDelete(pb) => data::NodeDelete::from_protobuf(pb)?.into()
+            Data::NodeDelete(pb) => data::NodeDelete::from_protobuf(pb)?.into(),
         };
 
         Ok(data)
