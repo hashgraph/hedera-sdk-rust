@@ -19,5 +19,7 @@
  */
 
 mod node_create_transaction;
+mod node_update_transaction;
 
 pub use node_create_transaction::NodeCreateTransactionData;
+pub use node_update_transaction::NodeUpdateTransactionData;

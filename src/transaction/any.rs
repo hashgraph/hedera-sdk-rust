@@ -51,7 +51,10 @@ mod data {
         AccountDeleteTransactionData as AccountDelete,
         AccountUpdateTransactionData as AccountUpdate,
     };
-    pub(super) use crate::address_book::NodeCreateTransactionData as NodeCreate;
+    pub(super) use crate::address_book::{
+        NodeCreateTransactionData as NodeCreate,
+        NodeUpdateTransactionData as NodeUpdate,
+    };
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,
         ContractDeleteTransactionData as ContractDelete,
@@ -153,6 +156,7 @@ pub enum AnyTransactionData {
     Ethereum(data::Ethereum),
     TokenUpdateNfts(data::TokenUpdateNfts),
     NodeCreate(data::NodeCreate),
+    NodeUpdate(data::NodeUpdate),
     TokenReject(data::TokenReject),
 }
 
@@ -291,6 +295,8 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             }
 
             Self::NodeCreate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
+
+            Self::NodeUpdate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
         }
     }
 }
@@ -341,6 +347,7 @@ impl TransactionData for AnyTransactionData {
             Self::Ethereum(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUpdateNfts(transaction) => transaction.default_max_transaction_fee(),
             Self::NodeCreate(transaction) => transaction.default_max_transaction_fee(),
+            Self::NodeUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenReject(transaction) => transaction.default_max_transaction_fee(),
         }
     }
@@ -390,6 +397,7 @@ impl TransactionData for AnyTransactionData {
             Self::Ethereum(it) => it.maybe_chunk_data(),
             Self::TokenUpdateNfts(it) => it.maybe_chunk_data(),
             Self::NodeCreate(it) => it.maybe_chunk_data(),
+            Self::NodeUpdate(it) => it.maybe_chunk_data(),
             Self::TokenReject(it) => it.maybe_chunk_data(),
         }
     }
@@ -439,6 +447,7 @@ impl TransactionData for AnyTransactionData {
             Self::Ethereum(it) => it.wait_for_receipt(),
             Self::TokenUpdateNfts(it) => it.wait_for_receipt(),
             Self::NodeCreate(it) => it.wait_for_receipt(),
+            Self::NodeUpdate(it) => it.wait_for_receipt(),
             Self::TokenReject(it) => it.wait_for_receipt(),
         }
     }
@@ -494,6 +503,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::Ethereum(transaction) => transaction.execute(channel, request),
             Self::TokenUpdateNfts(transaction) => transaction.execute(channel, request),
             Self::NodeCreate(transaction) => transaction.execute(channel, request),
+            Self::NodeUpdate(transaction) => transaction.execute(channel, request),
             Self::TokenReject(transaction) => transaction.execute(channel, request),
         }
     }
@@ -547,6 +557,7 @@ impl ValidateChecksums for AnyTransactionData {
             Self::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenUpdateNfts(transaction) => transaction.validate_checksums(ledger_id),
             Self::NodeCreate(transaction) => transaction.validate_checksums(ledger_id),
+            Self::NodeUpdate(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenReject(transaction) => transaction.validate_checksums(ledger_id),
         }
     }
@@ -782,6 +793,12 @@ impl AnyTransactionData {
             ServicesTransactionDataList::TokenReject(v) => {
                 data::TokenReject::from_protobuf(try_into_only_element(v)?)?.into()
             }
+            ServicesTransactionDataList::NodeCreate(v) => {
+                data::NodeCreate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::NodeUpdate(v) => {
+                data::NodeUpdate::from_protobuf(try_into_only_element(v)?)?.into()
+            }
         };
 
         Ok(data)
@@ -862,6 +879,8 @@ enum ServicesTransactionDataList {
     ScheduleDelete(Vec<services::ScheduleDeleteTransactionBody>),
     Ethereum(Vec<services::EthereumTransactionBody>),
     UtilPrng(Vec<services::UtilPrngTransactionBody>),
+    NodeCreate(Vec<services::NodeCreateTransactionBody>),
+    NodeUpdate(Vec<services::NodeUpdateTransactionBody>),
 }
 
 impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransactionDataList {
@@ -927,6 +946,8 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             Data::ScheduleSign(it) => Self::ScheduleSign(make_vec(it, len)),
             Data::UtilPrng(it) => Self::UtilPrng(make_vec(it, len)),
             Data::TokenUpdateNfts(it) => Self::TokenUpdateNfts(make_vec(it, len)),
+            Data::NodeCreate(it) => Self::NodeCreate(make_vec(it, len)),
+            Data::NodeUpdate(it) => Self::NodeUpdate(make_vec(it, len)),
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
@@ -948,14 +969,8 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                     "unsupported transaction `NodeStakeUpdateTransaction`",
                 ))
             }
-            Data::NodeCreate(_) => {
-                return Err(Error::from_protobuf("unsupported transaction `NodeCreateTransaction`"))
-            }
             Data::NodeDelete(_) => {
                 return Err(Error::from_protobuf("unsupported transaction `NodeDeleteTransaction`"))
-            }
-            Data::NodeUpdate(_) => {
-                return Err(Error::from_protobuf("unsupported transaction `NodeUpdateTransaction`"))
             }
         };
 
@@ -1107,5 +1122,6 @@ impl_downcast_any! {
     Ethereum,
     TokenUpdateNfts,
     NodeCreate,
+    NodeUpdate,
     TokenReject
 }
