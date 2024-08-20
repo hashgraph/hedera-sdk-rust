@@ -51,6 +51,7 @@ mod data {
         AccountDeleteTransactionData as AccountDelete,
         AccountUpdateTransactionData as AccountUpdate,
     };
+    pub(super) use crate::address_book::NodeCreateTransactionData as NodeCreate;
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,
         ContractDeleteTransactionData as ContractDelete,
@@ -151,6 +152,7 @@ pub enum AnyTransactionData {
     Freeze(data::Freeze),
     Ethereum(data::Ethereum),
     TokenUpdateNfts(data::TokenUpdateNfts),
+    NodeCreate(data::NodeCreate),
     TokenReject(data::TokenReject),
 }
 
@@ -287,6 +289,8 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::TokenUpdateNfts(transaction) => {
                 transaction.to_transaction_data_protobuf(chunk_info)
             }
+
+            Self::NodeCreate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
         }
     }
 }
@@ -336,6 +340,7 @@ impl TransactionData for AnyTransactionData {
             Self::ScheduleDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::Ethereum(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenUpdateNfts(transaction) => transaction.default_max_transaction_fee(),
+            Self::NodeCreate(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenReject(transaction) => transaction.default_max_transaction_fee(),
         }
     }
@@ -384,6 +389,7 @@ impl TransactionData for AnyTransactionData {
             Self::ScheduleDelete(it) => it.maybe_chunk_data(),
             Self::Ethereum(it) => it.maybe_chunk_data(),
             Self::TokenUpdateNfts(it) => it.maybe_chunk_data(),
+            Self::NodeCreate(it) => it.maybe_chunk_data(),
             Self::TokenReject(it) => it.maybe_chunk_data(),
         }
     }
@@ -432,6 +438,7 @@ impl TransactionData for AnyTransactionData {
             Self::ScheduleDelete(it) => it.wait_for_receipt(),
             Self::Ethereum(it) => it.wait_for_receipt(),
             Self::TokenUpdateNfts(it) => it.wait_for_receipt(),
+            Self::NodeCreate(it) => it.wait_for_receipt(),
             Self::TokenReject(it) => it.wait_for_receipt(),
         }
     }
@@ -486,6 +493,7 @@ impl TransactionExecute for AnyTransactionData {
             Self::ScheduleDelete(transaction) => transaction.execute(channel, request),
             Self::Ethereum(transaction) => transaction.execute(channel, request),
             Self::TokenUpdateNfts(transaction) => transaction.execute(channel, request),
+            Self::NodeCreate(transaction) => transaction.execute(channel, request),
             Self::TokenReject(transaction) => transaction.execute(channel, request),
         }
     }
@@ -538,6 +546,7 @@ impl ValidateChecksums for AnyTransactionData {
             Self::Freeze(transaction) => transaction.validate_checksums(ledger_id),
             Self::Ethereum(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenUpdateNfts(transaction) => transaction.validate_checksums(ledger_id),
+            Self::NodeCreate(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenReject(transaction) => transaction.validate_checksums(ledger_id),
         }
     }
@@ -619,9 +628,7 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
                     "unsupported transaction `NodeStakeUpdateTransaction`",
                 ))
             }
-            Data::NodeCreate(_) => {
-                return Err(Error::from_protobuf("unsupported transaction `NodeCreateTransaction`"))
-            }
+            Data::NodeCreate(pb) => data::NodeCreate::from_protobuf(pb)?.into(),
             Data::NodeUpdate(_) => {
                 return Err(Error::from_protobuf("unsupported transaction `NodeUpdateTransaction`"))
             }
@@ -1099,5 +1106,6 @@ impl_downcast_any! {
     Freeze,
     Ethereum,
     TokenUpdateNfts,
+    NodeCreate,
     TokenReject
 }

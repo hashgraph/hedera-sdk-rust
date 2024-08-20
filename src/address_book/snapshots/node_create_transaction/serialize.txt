@@ -1,0 +1,94 @@
+NodeCreate(
+    NodeCreateTransactionBody {
+        account_id: Some(
+            AccountId {
+                shard_num: 0,
+                realm_num: 0,
+                account: Some(
+                    AccountNum(
+                        5006,
+                    ),
+                ),
+            },
+        ),
+        description: "test description",
+        gossip_endpoint: [
+            ServiceEndpoint {
+                ip_address_v4: [
+                    127,
+                    0,
+                    0,
+                    1,
+                ],
+                port: 1234,
+                domain_name: "",
+            },
+        ],
+        service_endpoint: [
+            ServiceEndpoint {
+                ip_address_v4: [
+                    127,
+                    0,
+                    0,
+                    1,
+                ],
+                port: 1234,
+                domain_name: "",
+            },
+        ],
+        gossip_ca_certificate: [
+            1,
+            2,
+            3,
+            4,
+        ],
+        grpc_certificate_hash: [
+            5,
+            6,
+            7,
+            8,
+        ],
+        admin_key: Some(
+            Key {
+                key: Some(
+                    Ed25519(
+                        [
+                            224,
+                            200,
+                            236,
+                            39,
+                            88,
+                            165,
+                            135,
+                            159,
+                            250,
+                            194,
+                            38,
+                            161,
+                            60,
+                            12,
+                            81,
+                            107,
+                            121,
+                            158,
+                            114,
+                            227,
+                            81,
+                            65,
+                            160,
+                            221,
+                            130,
+                            143,
+                            148,
+                            211,
+                            121,
+                            136,
+                            164,
+                            183,
+                        ],
+                    ),
+                ),
+            },
+        ),
+    },
+)

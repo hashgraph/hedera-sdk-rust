@@ -16,6 +16,7 @@ mod data {
         AccountDeleteTransactionData as AccountDelete,
         AccountUpdateTransactionData as AccountUpdate,
     };
+    pub(super) use crate::address_book::NodeCreateTransactionData as NodeCreate;
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,
         ContractDeleteTransactionData as ContractDelete,
@@ -140,6 +141,7 @@ pub(super) enum AnySchedulableTransactionData {
     SystemUndelete(data::SystemUndelete),
     Freeze(data::Freeze),
     ScheduleDelete(data::ScheduleDelete),
+    NodeCreate(data::NodeCreate),
 }
 
 impl AnySchedulableTransactionData {
@@ -193,6 +195,7 @@ impl AnySchedulableTransactionData {
             AnySchedulableTransactionData::Freeze(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::ScheduleDelete(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::Prng(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::NodeCreate(it) => it.default_max_transaction_fee(),
         }
     }
 }
@@ -424,6 +427,9 @@ impl ToSchedulableTransactionDataProtobuf for AnySchedulableTransactionData {
             AnySchedulableTransactionData::TokenReject(it) => {
                 it.to_schedulable_transaction_data_protobuf()
             }
+            AnySchedulableTransactionData::NodeCreate(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
         }
     }
 }
@@ -475,6 +481,7 @@ impl TryFrom<AnyTransactionData> for AnySchedulableTransactionData {
             AnyTransactionData::ScheduleDelete(it) => Ok(Self::ScheduleDelete(it)),
             AnyTransactionData::Prng(it) => Ok(Self::Prng(it)),
             AnyTransactionData::TokenUpdateNfts(it) => Ok(Self::TokenUpdateNfts(it)),
+            AnyTransactionData::NodeCreate(it) => Ok(Self::NodeCreate(it)),
 
             // fixme: basic-parse isn't suitable for this.
             AnyTransactionData::ScheduleCreate(_) => {
@@ -538,6 +545,7 @@ impl From<AnySchedulableTransactionData> for AnyTransactionData {
             AnySchedulableTransactionData::ScheduleDelete(it) => Self::ScheduleDelete(it),
             AnySchedulableTransactionData::Prng(it) => Self::Prng(it),
             AnySchedulableTransactionData::TokenUpdateNfts(it) => Self::TokenUpdateNfts(it),
+            AnySchedulableTransactionData::NodeCreate(it) => Self::NodeCreate(it),
             AnySchedulableTransactionData::TokenReject(it) => Self::TokenReject(it),
         }
     }
