@@ -1,0 +1,5 @@
+NodeDelete(
+    NodeDeleteTransactionBody {
+        node_id: 1,
+    },
+)

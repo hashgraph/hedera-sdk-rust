@@ -20,6 +20,8 @@
 
 mod node_create_transaction;
 mod node_update_transaction;
+mod node_delete_transaction;
 
 pub use node_create_transaction::NodeCreateTransactionData;
 pub use node_update_transaction::NodeUpdateTransactionData;
+pub use node_delete_transaction::NodeDeleteTransactionData;

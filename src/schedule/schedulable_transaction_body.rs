@@ -19,6 +19,7 @@ mod data {
     pub(super) use crate::address_book::{
         NodeCreateTransactionData as NodeCreate,
         NodeUpdateTransactionData as NodeUpdate,
+        NodeDeleteTransactionData as NodeDelete,
     };
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,
@@ -146,6 +147,7 @@ pub(super) enum AnySchedulableTransactionData {
     ScheduleDelete(data::ScheduleDelete),
     NodeCreate(data::NodeCreate),
     NodeUpdate(data::NodeUpdate),
+    NodeDelete(data::NodeDelete),
 }
 
 impl AnySchedulableTransactionData {
@@ -201,6 +203,7 @@ impl AnySchedulableTransactionData {
             AnySchedulableTransactionData::Prng(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::NodeCreate(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::NodeUpdate(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::NodeDelete(it) => it.default_max_transaction_fee(),
         }
     }
 }
@@ -301,7 +304,7 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
             }
             Data::NodeCreate(it) => Ok(Self::NodeCreate(data::NodeCreate::from_protobuf(it)?)),
             Data::NodeUpdate(it) => Ok(Self::NodeUpdate(data::NodeUpdate::from_protobuf(it)?)),
-            Data::NodeDelete(_) => todo!(),
+            Data::NodeDelete(it) => Ok(Self::NodeDelete(data::NodeDelete::from_protobuf(it)?)),
         }
     }
 }
@@ -438,6 +441,9 @@ impl ToSchedulableTransactionDataProtobuf for AnySchedulableTransactionData {
             AnySchedulableTransactionData::NodeUpdate(it) => {
                 it.to_schedulable_transaction_data_protobuf()
             }
+            AnySchedulableTransactionData::NodeDelete(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
         }
     }
 }
@@ -491,6 +497,7 @@ impl TryFrom<AnyTransactionData> for AnySchedulableTransactionData {
             AnyTransactionData::TokenUpdateNfts(it) => Ok(Self::TokenUpdateNfts(it)),
             AnyTransactionData::NodeCreate(it) => Ok(Self::NodeCreate(it)),
             AnyTransactionData::NodeUpdate(it) => Ok(Self::NodeUpdate(it)),
+            AnyTransactionData::NodeDelete(it) => Ok(Self::NodeDelete(it)),
 
             // fixme: basic-parse isn't suitable for this.
             AnyTransactionData::ScheduleCreate(_) => {
@@ -556,6 +563,7 @@ impl From<AnySchedulableTransactionData> for AnyTransactionData {
             AnySchedulableTransactionData::TokenUpdateNfts(it) => Self::TokenUpdateNfts(it),
             AnySchedulableTransactionData::NodeCreate(it) => Self::NodeCreate(it),
             AnySchedulableTransactionData::NodeUpdate(it) => Self::NodeUpdate(it),
+            AnySchedulableTransactionData::NodeDelete(it) => Self::NodeDelete(it),
             AnySchedulableTransactionData::TokenReject(it) => Self::TokenReject(it),
         }
     }
