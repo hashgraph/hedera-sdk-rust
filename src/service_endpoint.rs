@@ -46,7 +46,25 @@ fn parse_socket_addr_v4(ip: Vec<u8>, port: i32) -> crate::Result<SocketAddrV4> {
     Ok(SocketAddrV4::new(octets.into(), port))
 }
 
-/// Contains the IP address and the port representing a service endpoint of
+fn validate_domain_name(domain_name: String) -> crate::Result<()> {
+    if domain_name.len() > 253 {
+        return Err(Error::from_protobuf("Domain name exceeds 253 characters"));
+    }
+
+    // Check for valid characters and format
+    if !domain_name.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '.') {
+        return Err(Error::from_protobuf("Invalid characters in domain name"));
+    }
+
+    // Check for valid domain name format (simplified)
+    if !domain_name.contains('.') || domain_name.starts_with('.') || domain_name.ends_with('.') {
+        return Err(Error::from_protobuf("Invalid domain name format"));
+    }
+
+    Ok(())
+}
+
+/// Contains the IP address, the port, and the domain name representing a service endpoint of
 /// a Node in a network. Used to reach the Hedera API and submit transactions
 /// to the network.
 #[derive(Debug, Clone, PartialEq)]
@@ -74,6 +92,10 @@ impl FromProtobuf<services::ServiceEndpoint> for ServiceEndpoint {
         }
 
         let socket_addr_v4 = parse_socket_addr_v4(pb.ip_address_v4, port)?;
+
+        if !pb.domain_name.is_empty() {
+            validate_domain_name(pb.domain_name.clone())?;
+        }
 
         Ok(Self {
             ip_address_v4: Some(socket_addr_v4.ip().to_owned()),
