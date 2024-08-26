@@ -68,7 +68,12 @@ pub struct ServiceEndpoint {
 
 impl FromProtobuf<services::ServiceEndpoint> for ServiceEndpoint {
     fn from_protobuf(pb: services::ServiceEndpoint) -> crate::Result<Self> {
-        let socket_addr_v4 = parse_socket_addr_v4(pb.ip_address_v4, pb.port)?;
+        let mut port = pb.port;
+        if pb.port == 0 || pb.port == 50111 {
+            port = 50211;
+        }
+
+        let socket_addr_v4 = parse_socket_addr_v4(pb.ip_address_v4, port)?;
 
         Ok(Self {
             ip_address_v4: Some(socket_addr_v4.ip().to_owned()),
