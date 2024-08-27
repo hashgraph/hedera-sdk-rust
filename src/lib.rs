@@ -118,6 +118,7 @@
 mod protobuf;
 
 mod account;
+mod address_book;
 mod client;
 mod contract;
 mod downcast;
@@ -145,6 +146,7 @@ mod query;
 mod retry;
 mod schedule;
 mod semantic_version;
+mod service_endpoint;
 mod signer;
 mod staked_id;
 mod staking_info;
