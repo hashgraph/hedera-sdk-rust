@@ -1,8 +1,10 @@
 use assert_matches::assert_matches;
 use hedera::{
+    AccountCreateTransaction,
     FixedFee,
     FixedFeeData,
     Hbar,
+    PrivateKey,
     Status,
     TokenAssociateTransaction,
     TokenCreateTransaction,
@@ -326,6 +328,78 @@ async fn incorrect_decimals_fails() -> anyhow::Result<()> {
     token.delete(&client).await?;
 
     tokio::try_join!(alice.delete(&client), bob.delete(&client))?;
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn transfer_to_account_with_unlimited_associations() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+
+    let sender_key = PrivateKey::generate_ed25519();
+    let receiver_key = PrivateKey::generate_ed25519();
+
+    let token_id = TokenCreateTransaction::new()
+        .name("ffff")
+        .symbol("F")
+        .initial_supply(100_000)
+        .treasury_account_id(client.get_operator_account_id().unwrap())
+        .admin_key(client.get_operator_public_key().unwrap())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?
+        .token_id
+        .unwrap();
+
+    let sender_id = AccountCreateTransaction::new()
+        .key(sender_key.public_key())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?
+        .account_id
+        .unwrap();
+
+    let receiver_id = AccountCreateTransaction::new()
+        .key(receiver_key.public_key())
+        .max_automatic_token_associations(-1)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?
+        .account_id
+        .unwrap();
+
+    _ = TokenAssociateTransaction::new()
+        .account_id(sender_id)
+        .token_ids([token_id])
+        .freeze_with(&client)?
+        .sign(sender_key.clone())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    _ = TransferTransaction::new()
+        .token_transfer(token_id, client.get_operator_account_id().unwrap(), -10)
+        .token_transfer(token_id, sender_id, 10)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    _ = TransferTransaction::new()
+        .token_transfer(token_id, sender_id, -10)
+        .token_transfer(token_id, receiver_id, 10)
+        .freeze_with(&client)?
+        .sign(sender_key)
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
 
     Ok(())
 }

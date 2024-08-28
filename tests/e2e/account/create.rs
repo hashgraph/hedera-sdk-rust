@@ -389,3 +389,29 @@ async fn alias_with_receiver_sig_required_missing_signature_fails() -> anyhow::R
 
     Ok(())
 }
+
+#[tokio::test]
+async fn cannot_create_account_with_invalid_negative_max_auto_token_assocation(
+) -> anyhow::Result<()> {
+    let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+
+    let key = PrivateKey::generate_ed25519();
+
+    let res = AccountCreateTransaction::new()
+        .key(key.public_key())
+        .max_automatic_token_associations(-2)
+        .execute(&client)
+        .await;
+
+    assert_matches::assert_matches!(
+        res,
+        Err(hedera::Error::TransactionPreCheckStatus {
+            status: hedera::Status::InvalidMaxAutoAssociations,
+            ..
+        })
+    );
+
+    Ok(())
+}

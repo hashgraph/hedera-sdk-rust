@@ -67,7 +67,7 @@ pub struct ContractCreateTransactionData {
 
     contract_memo: String,
 
-    max_automatic_token_associations: u32,
+    max_automatic_token_associations: i32,
 
     auto_renew_account_id: Option<AccountId>,
 
@@ -196,12 +196,12 @@ impl ContractCreateTransaction {
 
     /// Returns the maximum number of tokens that the contract can be automatically associated with.
     #[must_use]
-    pub fn get_max_automatic_token_associations(&self) -> u32 {
+    pub fn get_max_automatic_token_associations(&self) -> i32 {
         self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that this contract can be automatically associated with.
-    pub fn max_automatic_token_associations(&mut self, max: u32) -> &mut Self {
+    pub fn max_automatic_token_associations(&mut self, max: i32) -> &mut Self {
         self.data_mut().max_automatic_token_associations = max;
         self
     }
@@ -327,7 +327,7 @@ impl FromProtobuf<services::ContractCreateTransactionBody> for ContractCreateTra
             auto_renew_period: pb_getf!(pb, auto_renew_period)?.into(),
             constructor_parameters: pb.constructor_parameters,
             contract_memo: pb.memo,
-            max_automatic_token_associations: pb.max_automatic_token_associations as u32,
+            max_automatic_token_associations: pb.max_automatic_token_associations,
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account_id)?,
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
@@ -385,7 +385,7 @@ impl ToProtobuf for ContractCreateTransactionData {
             realm_id: None,
             new_realm_admin_key: None,
             memo: self.contract_memo.clone(),
-            max_automatic_token_associations: self.max_automatic_token_associations as i32,
+            max_automatic_token_associations: self.max_automatic_token_associations,
             auto_renew_account_id,
             decline_reward: self.decline_staking_reward,
             initcode_source,
@@ -429,7 +429,7 @@ mod tests {
 
     const GAS: u64 = 0;
     const INITIAL_BALANCE: Hbar = Hbar::from_tinybars(1000);
-    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u32 = 101;
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: i32 = 101;
     const AUTO_RENEW_PERIOD: Duration = Duration::hours(10);
     const CONSTRUCTOR_PARAMETERS: [u8; 5] = [10, 11, 12, 13, 25];
     const AUTO_RENEW_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 30);
@@ -729,7 +729,7 @@ mod tests {
             realm_id: None,
             new_realm_admin_key: None,
             memo: String::new(),
-            max_automatic_token_associations: MAX_AUTOMATIC_TOKEN_ASSOCIATIONS as i32,
+            max_automatic_token_associations: MAX_AUTOMATIC_TOKEN_ASSOCIATIONS,
             decline_reward: false,
             staked_id: Some(services::contract_create_transaction_body::StakedId::StakedAccountId(
                 STAKED_ACCOUNT_ID.to_protobuf(),

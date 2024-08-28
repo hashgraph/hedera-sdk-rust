@@ -16,6 +16,11 @@ mod data {
         AccountDeleteTransactionData as AccountDelete,
         AccountUpdateTransactionData as AccountUpdate,
     };
+    pub(super) use crate::address_book::{
+        NodeCreateTransactionData as NodeCreate,
+        NodeDeleteTransactionData as NodeDelete,
+        NodeUpdateTransactionData as NodeUpdate,
+    };
     pub(super) use crate::contract::{
         ContractCreateTransactionData as ContractCreate,
         ContractDeleteTransactionData as ContractDelete,
@@ -46,6 +51,7 @@ mod data {
         TokenGrantKycTransactionData as TokenGrantKyc,
         TokenMintTransactionData as TokenMint,
         TokenPauseTransactionData as TokenPause,
+        TokenRejectTransactionData as TokenReject,
         TokenRevokeKycTransactionData as TokenRevokeKyc,
         TokenUnfreezeTransactionData as TokenUnfreeze,
         TokenUnpauseTransactionData as TokenUnpause,
@@ -133,11 +139,15 @@ pub(super) enum AnySchedulableTransactionData {
     TokenUnpause(data::TokenUnpause),
     TokenUpdate(data::TokenUpdate),
     TokenWipe(data::TokenWipe),
+    TokenUpdateNfts(data::TokenUpdateNfts),
+    TokenReject(data::TokenReject),
     SystemDelete(data::SystemDelete),
     SystemUndelete(data::SystemUndelete),
     Freeze(data::Freeze),
     ScheduleDelete(data::ScheduleDelete),
-    TokenUpdateNfts(data::TokenUpdateNfts),
+    NodeCreate(data::NodeCreate),
+    NodeUpdate(data::NodeUpdate),
+    NodeDelete(data::NodeDelete),
 }
 
 impl AnySchedulableTransactionData {
@@ -185,11 +195,15 @@ impl AnySchedulableTransactionData {
             AnySchedulableTransactionData::TokenUnpause(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenUpdate(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenWipe(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::TokenReject(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::SystemDelete(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::SystemUndelete(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::Freeze(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::ScheduleDelete(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::Prng(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::NodeCreate(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::NodeUpdate(it) => it.default_max_transaction_fee(),
+            AnySchedulableTransactionData::NodeDelete(it) => it.default_max_transaction_fee(),
         }
     }
 }
@@ -280,6 +294,7 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
             Data::TokenUnpause(it) => {
                 Ok(Self::TokenUnpause(data::TokenUnpause::from_protobuf(it)?))
             }
+            Data::TokenReject(it) => Ok(Self::TokenReject(data::TokenReject::from_protobuf(it)?)),
             Data::ScheduleDelete(it) => {
                 Ok(Self::ScheduleDelete(data::ScheduleDelete::from_protobuf(it)?))
             }
@@ -287,6 +302,9 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
             Data::TokenUpdateNfts(it) => {
                 Ok(Self::TokenUpdateNfts(data::TokenUpdateNfts::from_protobuf(it)?))
             }
+            Data::NodeCreate(it) => Ok(Self::NodeCreate(data::NodeCreate::from_protobuf(it)?)),
+            Data::NodeUpdate(it) => Ok(Self::NodeUpdate(data::NodeUpdate::from_protobuf(it)?)),
+            Data::NodeDelete(it) => Ok(Self::NodeDelete(data::NodeDelete::from_protobuf(it)?)),
         }
     }
 }
@@ -414,6 +432,18 @@ impl ToSchedulableTransactionDataProtobuf for AnySchedulableTransactionData {
             AnySchedulableTransactionData::TokenUpdateNfts(it) => {
                 it.to_schedulable_transaction_data_protobuf()
             }
+            AnySchedulableTransactionData::TokenReject(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
+            AnySchedulableTransactionData::NodeCreate(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
+            AnySchedulableTransactionData::NodeUpdate(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
+            AnySchedulableTransactionData::NodeDelete(it) => {
+                it.to_schedulable_transaction_data_protobuf()
+            }
         }
     }
 }
@@ -458,12 +488,16 @@ impl TryFrom<AnyTransactionData> for AnySchedulableTransactionData {
             AnyTransactionData::TokenUnpause(it) => Ok(Self::TokenUnpause(it)),
             AnyTransactionData::TokenUpdate(it) => Ok(Self::TokenUpdate(it)),
             AnyTransactionData::TokenWipe(it) => Ok(Self::TokenWipe(it)),
+            AnyTransactionData::TokenReject(it) => Ok(Self::TokenReject(it)),
             AnyTransactionData::SystemDelete(it) => Ok(Self::SystemDelete(it)),
             AnyTransactionData::SystemUndelete(it) => Ok(Self::SystemUndelete(it)),
             AnyTransactionData::Freeze(it) => Ok(Self::Freeze(it)),
             AnyTransactionData::ScheduleDelete(it) => Ok(Self::ScheduleDelete(it)),
             AnyTransactionData::Prng(it) => Ok(Self::Prng(it)),
             AnyTransactionData::TokenUpdateNfts(it) => Ok(Self::TokenUpdateNfts(it)),
+            AnyTransactionData::NodeCreate(it) => Ok(Self::NodeCreate(it)),
+            AnyTransactionData::NodeUpdate(it) => Ok(Self::NodeUpdate(it)),
+            AnyTransactionData::NodeDelete(it) => Ok(Self::NodeDelete(it)),
 
             // fixme: basic-parse isn't suitable for this.
             AnyTransactionData::ScheduleCreate(_) => {
@@ -527,6 +561,10 @@ impl From<AnySchedulableTransactionData> for AnyTransactionData {
             AnySchedulableTransactionData::ScheduleDelete(it) => Self::ScheduleDelete(it),
             AnySchedulableTransactionData::Prng(it) => Self::Prng(it),
             AnySchedulableTransactionData::TokenUpdateNfts(it) => Self::TokenUpdateNfts(it),
+            AnySchedulableTransactionData::NodeCreate(it) => Self::NodeCreate(it),
+            AnySchedulableTransactionData::NodeUpdate(it) => Self::NodeUpdate(it),
+            AnySchedulableTransactionData::NodeDelete(it) => Self::NodeDelete(it),
+            AnySchedulableTransactionData::TokenReject(it) => Self::TokenReject(it),
         }
     }
 }
