@@ -1057,7 +1057,7 @@ impl AnyTransaction {
 /// Impl `DowncastOwned` for `AnyTransactionData`.
 ///
 /// This macro will ensure you get all variants via a pattern match, if something changes (say, another transaction type is added), you'll get a `Missing match arm` compiler error.
-macro_rules! impl_downcast_any {
+macro_rules! impl_cast_any {
     ($($id:ident),+$(,)?) => {
         $(
             impl $crate::downcast::DowncastOwned<data::$id> for AnyTransactionData {
@@ -1069,10 +1069,30 @@ macro_rules! impl_downcast_any {
                     Ok(data)
                 }
             }
+
+            impl From<Transaction<data::$id>> for AnyTransaction {
+                fn from(transaction: Transaction<data::$id>) -> Self {
+                    Self {
+                        body: TransactionBody {
+                            data: transaction.body.data.into(),
+                            node_account_ids: transaction.body.node_account_ids,
+                            transaction_valid_duration: transaction.body.transaction_valid_duration,
+                            max_transaction_fee: transaction.body.max_transaction_fee,
+                            transaction_memo: transaction.body.transaction_memo,
+                            transaction_id: transaction.body.transaction_id,
+                            operator: transaction.body.operator,
+                            is_frozen: transaction.body.is_frozen,
+                            regenerate_transaction_id: transaction.body.regenerate_transaction_id,
+                        },
+                        signers: transaction.signers,
+                        sources: transaction.sources,
+                    }
+                }
+            }
         )*
 
         #[allow(non_snake_case)]
-        mod ___private_impl_downcast_any {
+        mod ___private_impl_cast_any {
             use super::AnyTransactionData;
             // ensure the what we were given is actually everything.
             fn _assert_exhaustive(d: AnyTransactionData)
@@ -1085,7 +1105,7 @@ macro_rules! impl_downcast_any {
     };
 }
 
-impl_downcast_any! {
+impl_cast_any! {
     AccountCreate,
     AccountUpdate,
     AccountDelete,
