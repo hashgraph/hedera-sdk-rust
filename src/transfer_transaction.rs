@@ -69,27 +69,27 @@ pub struct TransferTransactionData {
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-struct Transfer {
+pub(crate) struct Transfer {
     /// The account involved in the transfer.
-    account_id: AccountId,
+    pub account_id: AccountId,
 
     /// The value of the transfer.
-    amount: i64,
+    pub amount: i64,
 
     /// If this is an approved transfer.
-    is_approval: bool,
+    pub is_approval: bool,
 }
 
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
-struct TokenTransfer {
-    token_id: TokenId,
+pub(crate) struct TokenTransfer {
+    pub token_id: TokenId,
 
-    transfers: Vec<Transfer>,
+    pub transfers: Vec<Transfer>,
 
-    nft_transfers: Vec<TokenNftTransfer>,
+    pub nft_transfers: Vec<TokenNftTransfer>,
 
-    expected_decimals: Option<u32>,
+    pub expected_decimals: Option<u32>,
 }
 
 impl TransferTransaction {

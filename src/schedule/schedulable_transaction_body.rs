@@ -41,8 +41,11 @@ mod data {
         SystemUndeleteTransactionData as SystemUndelete,
     };
     pub(super) use crate::token::{
+        TokenAirdropTransactionData as TokenAirdrop,
         TokenAssociateTransactionData as TokenAssociate,
         TokenBurnTransactionData as TokenBurn,
+        TokenCancelAirdropTransactionData as TokenCancelAirdrop,
+        TokenClaimAirdropTransactionData as TokenClaimAirdrop,
         TokenCreateTransactionData as TokenCreate,
         TokenDeleteTransactionData as TokenDelete,
         TokenDissociateTransactionData as TokenDissociate,
@@ -208,9 +211,12 @@ impl AnySchedulableTransactionData {
             AnySchedulableTransactionData::NodeUpdate(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::NodeDelete(it) => it.default_max_transaction_fee(),
             AnySchedulableTransactionData::TokenAirdrop(it) => it.default_max_transaction_fee(),
-            AnySchedulableTransactionData::TokenClaimAirdrop(it) => it.default_max_transaction_fee(),
-            AnySchedulableTransactionData::TokenCancelAirdrop(it) => it.default_max_transaction_fee(),
-
+            AnySchedulableTransactionData::TokenClaimAirdrop(it) => {
+                it.default_max_transaction_fee()
+            }
+            AnySchedulableTransactionData::TokenCancelAirdrop(it) => {
+                it.default_max_transaction_fee()
+            }
         }
     }
 }
@@ -314,9 +320,13 @@ impl FromProtobuf<services::schedulable_transaction_body::Data> for AnySchedulab
             Data::NodeDelete(it) => Ok(Self::NodeDelete(data::NodeDelete::from_protobuf(it)?)),
             Data::TokenAirdrop(it) => {
                 Ok(Self::TokenAirdrop(data::TokenAirdrop::from_protobuf(it)?))
-            },
-            Data::TokenClaimAirdrop(it) => todo!(),
-            Data::TokenCancelAirdrop(it) => todo!()
+            }
+            Data::TokenClaimAirdrop(it) => {
+                Ok(Self::TokenClaimAirdrop(data::TokenClaimAirdrop::from_protobuf(it)?))
+            }
+            Data::TokenCancelAirdrop(it) => {
+                Ok(Self::TokenCancelAirdrop(data::TokenCancelAirdrop::from_protobuf(it)?))
+            }
         }
     }
 }
@@ -519,6 +529,9 @@ impl TryFrom<AnyTransactionData> for AnySchedulableTransactionData {
             AnyTransactionData::NodeCreate(it) => Ok(Self::NodeCreate(it)),
             AnyTransactionData::NodeUpdate(it) => Ok(Self::NodeUpdate(it)),
             AnyTransactionData::NodeDelete(it) => Ok(Self::NodeDelete(it)),
+            AnyTransactionData::TokenAirdrop(it) => Ok(Self::TokenAirdrop(it)),
+            AnyTransactionData::TokenClaimAirdrop(it) => Ok(Self::TokenClaimAirdrop(it)),
+            AnyTransactionData::TokenCancelAirdrop(it) => Ok(Self::TokenCancelAirdrop(it)),
 
             // fixme: basic-parse isn't suitable for this.
             AnyTransactionData::ScheduleCreate(_) => {

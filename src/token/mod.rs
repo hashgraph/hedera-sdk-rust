@@ -21,9 +21,12 @@
 mod assessed_custom_fee;
 mod custom_fees;
 mod nft_id;
+mod token_airdrop_transaction;
 mod token_associate_transaction;
 mod token_association;
 mod token_burn_transaction;
+mod token_cancel_airdrop_transaction;
+mod token_claim_airdrop_transaction;
 mod token_create_transaction;
 mod token_delete_transaction;
 mod token_dissociate_transaction;
@@ -64,6 +67,10 @@ pub use custom_fees::{
     RoyaltyFeeData,
 };
 pub use nft_id::NftId;
+pub use token_airdrop_transaction::{
+    TokenAirdropTransaction,
+    TokenAirdropTransactionData,
+};
 pub use token_associate_transaction::{
     TokenAssociateTransaction,
     TokenAssociateTransactionData,
@@ -72,6 +79,14 @@ pub use token_association::TokenAssociation;
 pub use token_burn_transaction::{
     TokenBurnTransaction,
     TokenBurnTransactionData,
+};
+pub use token_cancel_airdrop_transaction::{
+    TokenCancelAirdropTransaction,
+    TokenCancelAirdropTransactionData,
+};
+pub use token_claim_airdrop_transaction::{
+    TokenClaimAirdropTransaction,
+    TokenClaimAirdropTransactionData,
 };
 pub use token_create_transaction::{
     TokenCreateTransaction,

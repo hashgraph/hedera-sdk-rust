@@ -81,8 +81,11 @@ mod data {
         SystemUndeleteTransactionData as SystemUndelete,
     };
     pub(super) use crate::token::{
+        TokenAirdropTransactionData as TokenAirdrop,
         TokenAssociateTransactionData as TokenAssociate,
         TokenBurnTransactionData as TokenBurn,
+        TokenCancelAirdropTransactionData as TokenCancelAirdrop,
+        TokenClaimAirdropTransactionData as TokenClaimAirdrop,
         TokenCreateTransactionData as TokenCreate,
         TokenDeleteTransactionData as TokenDelete,
         TokenDissociateTransactionData as TokenDissociate,
@@ -160,6 +163,9 @@ pub enum AnyTransactionData {
     NodeUpdate(data::NodeUpdate),
     NodeDelete(data::NodeDelete),
     TokenReject(data::TokenReject),
+    TokenAirdrop(data::TokenAirdrop),
+    TokenClaimAirdrop(data::TokenClaimAirdrop),
+    TokenCancelAirdrop(data::TokenCancelAirdrop),
 }
 
 impl ToTransactionDataProtobuf for AnyTransactionData {
@@ -301,6 +307,15 @@ impl ToTransactionDataProtobuf for AnyTransactionData {
             Self::NodeUpdate(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
 
             Self::NodeDelete(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
+
+            Self::TokenAirdrop(transaction) => transaction.to_transaction_data_protobuf(chunk_info),
+
+            Self::TokenClaimAirdrop(transaction) => {
+                transaction.to_transaction_data_protobuf(chunk_info)
+            }
+            Self::TokenCancelAirdrop(transaction) => {
+                transaction.to_transaction_data_protobuf(chunk_info)
+            }
         }
     }
 }
@@ -354,6 +369,9 @@ impl TransactionData for AnyTransactionData {
             Self::NodeUpdate(transaction) => transaction.default_max_transaction_fee(),
             Self::NodeDelete(transaction) => transaction.default_max_transaction_fee(),
             Self::TokenReject(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenAirdrop(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenClaimAirdrop(transaction) => transaction.default_max_transaction_fee(),
+            Self::TokenCancelAirdrop(transaction) => transaction.default_max_transaction_fee(),
         }
     }
 
@@ -405,6 +423,9 @@ impl TransactionData for AnyTransactionData {
             Self::NodeUpdate(it) => it.maybe_chunk_data(),
             Self::NodeDelete(it) => it.maybe_chunk_data(),
             Self::TokenReject(it) => it.maybe_chunk_data(),
+            Self::TokenAirdrop(it) => it.maybe_chunk_data(),
+            Self::TokenClaimAirdrop(it) => it.maybe_chunk_data(),
+            Self::TokenCancelAirdrop(it) => it.maybe_chunk_data(),
         }
     }
 
@@ -456,6 +477,9 @@ impl TransactionData for AnyTransactionData {
             Self::NodeUpdate(it) => it.wait_for_receipt(),
             Self::NodeDelete(it) => it.wait_for_receipt(),
             Self::TokenReject(it) => it.wait_for_receipt(),
+            Self::TokenAirdrop(it) => it.wait_for_receipt(),
+            Self::TokenClaimAirdrop(it) => it.wait_for_receipt(),
+            Self::TokenCancelAirdrop(it) => it.wait_for_receipt(),
         }
     }
 }
@@ -513,6 +537,9 @@ impl TransactionExecute for AnyTransactionData {
             Self::NodeUpdate(transaction) => transaction.execute(channel, request),
             Self::NodeDelete(transaction) => transaction.execute(channel, request),
             Self::TokenReject(transaction) => transaction.execute(channel, request),
+            Self::TokenAirdrop(transaction) => transaction.execute(channel, request),
+            Self::TokenClaimAirdrop(transaction) => transaction.execute(channel, request),
+            Self::TokenCancelAirdrop(transaction) => transaction.execute(channel, request),
         }
     }
 }
@@ -568,6 +595,9 @@ impl ValidateChecksums for AnyTransactionData {
             Self::NodeUpdate(transaction) => transaction.validate_checksums(ledger_id),
             Self::NodeDelete(transaction) => transaction.validate_checksums(ledger_id),
             Self::TokenReject(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenAirdrop(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenClaimAirdrop(transaction) => transaction.validate_checksums(ledger_id),
+            Self::TokenCancelAirdrop(transaction) => transaction.validate_checksums(ledger_id),
         }
     }
 }
@@ -628,6 +658,12 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::ScheduleDelete(pb) => data::ScheduleDelete::from_protobuf(pb)?.into(),
             Data::ScheduleSign(pb) => data::ScheduleSign::from_protobuf(pb)?.into(),
             Data::TokenUpdateNfts(pb) => data::TokenUpdateNfts::from_protobuf(pb)?.into(),
+            Data::NodeCreate(pb) => data::NodeCreate::from_protobuf(pb)?.into(),
+            Data::NodeUpdate(pb) => data::NodeUpdate::from_protobuf(pb)?.into(),
+            Data::NodeDelete(pb) => data::NodeDelete::from_protobuf(pb)?.into(),
+            Data::TokenAirdrop(pb) => data::TokenAirdrop::from_protobuf(pb)?.into(),
+            Data::TokenClaimAirdrop(pb) => data::TokenClaimAirdrop::from_protobuf(pb)?.into(),
+            Data::TokenCancelAirdrop(pb) => data::TokenCancelAirdrop::from_protobuf(pb)?.into(),
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
@@ -646,24 +682,6 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::NodeStakeUpdate(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `NodeStakeUpdateTransaction`",
-                ))
-            }
-            Data::NodeCreate(pb) => data::NodeCreate::from_protobuf(pb)?.into(),
-            Data::NodeUpdate(pb) => data::NodeUpdate::from_protobuf(pb)?.into(),
-            Data::NodeDelete(pb) => data::NodeDelete::from_protobuf(pb)?.into(),
-            Data::TokenAirdrop(_pb) => {
-                return Err(Error::from_protobuf(
-                    "unsupported transaction `TokenAirdropTransaction`",
-                ))
-            }
-            Data::TokenClaimAirdrop(_pb) => {
-                return Err(Error::from_protobuf(
-                    "unsupported transaction `TokenClaimAirdropTransaction`",
-                ))
-            }
-            Data::TokenCancelAirdrop(_pb) => {
-                return Err(Error::from_protobuf(
-                    "unsupported transaction `TokenCancelAirdropTransaction`",
                 ))
             }
         };
@@ -822,6 +840,15 @@ impl AnyTransactionData {
             ServicesTransactionDataList::NodeDelete(v) => {
                 data::NodeDelete::from_protobuf(try_into_only_element(v)?)?.into()
             }
+            ServicesTransactionDataList::TokenAirdrop(v) => {
+                data::TokenAirdrop::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenClaimAirdrop(v) => {
+                data::TokenClaimAirdrop::from_protobuf(try_into_only_element(v)?)?.into()
+            }
+            ServicesTransactionDataList::TokenCancelAirdrop(v) => {
+                data::TokenCancelAirdrop::from_protobuf(try_into_only_element(v)?)?.into()
+            }
         };
 
         Ok(data)
@@ -905,6 +932,9 @@ enum ServicesTransactionDataList {
     NodeCreate(Vec<services::NodeCreateTransactionBody>),
     NodeUpdate(Vec<services::NodeUpdateTransactionBody>),
     NodeDelete(Vec<services::NodeDeleteTransactionBody>),
+    TokenAirdrop(Vec<services::TokenAirdropTransactionBody>),
+    TokenClaimAirdrop(Vec<services::TokenClaimAirdropTransactionBody>),
+    TokenCancelAirdrop(Vec<services::TokenCancelAirdropTransactionBody>),
 }
 
 impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransactionDataList {
@@ -973,6 +1003,9 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             Data::NodeCreate(it) => Self::NodeCreate(make_vec(it, len)),
             Data::NodeUpdate(it) => Self::NodeUpdate(make_vec(it, len)),
             Data::NodeDelete(it) => Self::NodeDelete(make_vec(it, len)),
+            Data::TokenAirdrop(it) => Self::TokenAirdrop(make_vec(it, len)),
+            Data::TokenClaimAirdrop(it) => Self::TokenClaimAirdrop(make_vec(it, len)),
+            Data::TokenCancelAirdrop(it) => Self::TokenCancelAirdrop(make_vec(it, len)),
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
@@ -992,21 +1025,6 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             Data::NodeStakeUpdate(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `NodeStakeUpdateTransaction`",
-                ))
-            }
-            Data::TokenAirdrop(_it) => {
-                return Err(Error::from_protobuf(
-                    "unsupported transaction `TokenAirdropTransaction`",
-                ))
-            }
-            Data::TokenClaimAirdrop(_it) => {
-                return Err(Error::from_protobuf(
-                    "unsupported transaction `TokenClaimAirdropTransaction`",
-                ))
-            }
-            Data::TokenCancelAirdrop(_it) => {
-                return Err(Error::from_protobuf(
-                    "unsupported transaction `TokenCancelAirdropTransaction`",
                 ))
             }
         };
@@ -1062,6 +1080,10 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
                 (Self::ScheduleDelete(v), Data::ScheduleDelete(element)) => v.push(element),
                 (Self::Ethereum(v), Data::EthereumTransaction(element)) => v.push(element),
                 (Self::UtilPrng(v), Data::UtilPrng(element)) => v.push(element),
+                (Self::TokenAirdrop(v), Data::TokenAirdrop(element)) => v.push(element),
+                (Self::TokenClaimAirdrop(v), Data::TokenClaimAirdrop(element)) => v.push(element),
+                (Self::TokenCancelAirdrop(v), Data::TokenCancelAirdrop(element)) => v.push(element),
+
                 _ => return Err(Error::from_protobuf("mismatched transaction types")),
             }
         }
@@ -1181,5 +1203,8 @@ impl_cast_any! {
     NodeCreate,
     NodeUpdate,
     NodeDelete,
-    TokenReject
+    TokenReject,
+    TokenAirdrop,
+    TokenClaimAirdrop,
+    TokenCancelAirdrop
 }

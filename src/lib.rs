@@ -140,6 +140,7 @@ mod network_version_info_query;
 mod node_address;
 mod node_address_book;
 mod node_address_book_query;
+mod pending_airdrop_id;
 mod ping_query;
 mod prng_transaction;
 mod query;
@@ -310,9 +311,12 @@ pub use token::{
     NftId,
     RoyaltyFee,
     RoyaltyFeeData,
+    TokenAirdropTransaction,
     TokenAssociateTransaction,
     TokenAssociation,
     TokenBurnTransaction,
+    TokenCancelAirdropTransaction,
+    TokenClaimAirdropTransaction,
     TokenCreateTransaction,
     TokenDeleteTransaction,
     TokenDissociateTransaction,
