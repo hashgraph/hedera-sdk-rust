@@ -651,6 +651,21 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::NodeCreate(pb) => data::NodeCreate::from_protobuf(pb)?.into(),
             Data::NodeUpdate(pb) => data::NodeUpdate::from_protobuf(pb)?.into(),
             Data::NodeDelete(pb) => data::NodeDelete::from_protobuf(pb)?.into(),
+            Data::TokenAirdrop(_pb) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `TokenAirdropTransaction`",
+                ))
+            }
+            Data::TokenClaimAirdrop(_pb) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `TokenClaimAirdropTransaction`",
+                ))
+            }
+            Data::TokenCancelAirdrop(_pb) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `TokenCancelAirdropTransaction`",
+                ))
+            }
         };
 
         Ok(data)
@@ -977,6 +992,21 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             Data::NodeStakeUpdate(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `NodeStakeUpdateTransaction`",
+                ))
+            }
+            Data::TokenAirdrop(_it) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `TokenAirdropTransaction`",
+                ))
+            }
+            Data::TokenClaimAirdrop(_it) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `TokenClaimAirdropTransaction`",
+                ))
+            }
+            Data::TokenCancelAirdrop(_it) => {
+                return Err(Error::from_protobuf(
+                    "unsupported transaction `TokenCancelAirdropTransaction`",
                 ))
             }
         };

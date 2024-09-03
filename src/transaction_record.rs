@@ -320,6 +320,7 @@ impl ToProtobuf for TransactionRecord {
                 .as_ref()
                 .map(|it| services::transaction_record::Body::ContractCallResult(it.to_protobuf())),
             entropy,
+            new_pending_airdrops: Vec::new(),
         }
     }
 }
