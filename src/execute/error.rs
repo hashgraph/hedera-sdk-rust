@@ -67,3 +67,28 @@ mod test_is_hyper_canceled {
         assert!(!is_hyper_canceled(&input));
     }
 }
+
+pub(super) fn is_tonic_status_transient(status: &tonic::Status) -> bool {
+    let source = status
+        .source()
+        .and_then(|it| it.downcast_ref::<tonic::transport::Error>())
+        .and_then(StdError::source);
+
+    let Some(source) = source else {
+        return false;
+    };
+
+    if let Some(hyper_0) = source.downcast_ref::<hyper_0::Error>() {
+        // tonic 0.11 (current dependency)
+        let source: Option<&h2_03::Error> = hyper_0.source().and_then(|s| s.downcast_ref());
+
+        source.map(|s| s.is_go_away()).unwrap_or_default()
+    } else if let Some(hyper_1) = source.downcast_ref::<hyper::Error>() {
+        // tonic 0.12
+        let source: Option<&h2::Error> = hyper_1.source().and_then(|s| s.downcast_ref());
+
+        source.map(|s| s.is_go_away()).unwrap_or_default()
+    } else {
+        false
+    }
+}

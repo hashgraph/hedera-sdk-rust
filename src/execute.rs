@@ -41,7 +41,10 @@ use tonic::transport::Channel;
 use triomphe::Arc;
 
 use crate::client::NetworkData;
-use crate::execute::error::is_hyper_canceled;
+use crate::execute::error::{
+    is_hyper_canceled,
+    is_tonic_status_transient,
+};
 use crate::ping_query::PingQuery;
 use crate::{
     client,
@@ -355,6 +358,10 @@ fn map_tonic_error(
                 true => retry::Error::Transient(status.into()),
                 false => retry::Error::Permanent(status.into()),
             }
+        }
+
+        tonic::Code::Internal if is_tonic_status_transient(&status) => {
+            retry::Error::Transient(status.into())
         }
 
         // fail immediately
