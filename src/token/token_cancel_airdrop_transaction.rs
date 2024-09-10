@@ -150,3 +150,169 @@ impl FromProtobuf<services::TokenCancelAirdropTransactionBody>
         Ok(Self { pending_airdrop_ids })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect_file;
+    use hedera_proto::services;
+
+    use crate::pending_airdrop_id::{
+        PendingAirdropId,
+        TokenReference,
+    };
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenCancelAirdropTransactionData;
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+        unused_private_key,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        TokenCancelAirdropTransaction,
+        TokenId,
+    };
+
+    fn make_transaction() -> TokenCancelAirdropTransaction {
+        let pending_airdrop_ids: Vec<PendingAirdropId> = vec![
+            PendingAirdropId::new(
+                AccountId::new(0, 2, 134),
+                AccountId::new(0, 2, 6),
+                Some(TokenReference::FungibleTokenType(TokenId::new(0, 0, 312))),
+            ),
+            PendingAirdropId::new(
+                AccountId::new(0, 2, 134),
+                AccountId::new(0, 2, 6),
+                Some(TokenReference::NonFungibleToken(TokenId::new(1, 3, 5).nft(2))),
+            ),
+        ]
+        .into_iter()
+        .collect();
+        let mut tx = TokenCancelAirdropTransaction::new_for_tests();
+
+        tx.pending_airdrop_ids(pending_airdrop_ids).freeze().unwrap().sign(unused_private_key());
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect_file!["./snapshots/token_cancel_airdrop_transaction/serialize.txt"]
+            .assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2)
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::TokenCancelAirdropTransactionBody {
+            pending_airdrops: vec![
+                PendingAirdropId::new(
+                    AccountId::new(0, 0, 415),
+                    AccountId::new(0, 0, 6),
+                    Some(TokenReference::FungibleTokenType(TokenId::new(0, 0, 312))),
+                )
+                .to_protobuf(),
+                PendingAirdropId::new(
+                    AccountId::new(0, 2, 134),
+                    AccountId::new(0, 2, 6),
+                    Some(TokenReference::NonFungibleToken(TokenId::new(0, 0, 123).nft(1))),
+                )
+                .to_protobuf(),
+            ],
+        };
+
+        let data = TokenCancelAirdropTransactionData::from_protobuf(tx).unwrap();
+
+        let pending_airdrops = data
+            .pending_airdrop_ids
+            .into_iter()
+            .map(|it| it.token_reference.clone().unwrap())
+            .collect::<Vec<_>>();
+
+        assert_eq!(pending_airdrops.len(), 2);
+        assert!(
+            pending_airdrops.contains(&TokenReference::FungibleTokenType(TokenId::new(0, 0, 312)))
+        );
+        assert!(pending_airdrops
+            .contains(&TokenReference::NonFungibleToken(TokenId::new(0, 0, 123).nft(1))));
+    }
+
+    #[test]
+    fn get_set_pending_airdrop_ids() {
+        let pending_airdrop_ids = [
+            PendingAirdropId::new(
+                AccountId::new(0, 0, 134),
+                AccountId::new(0, 0, 6),
+                Some(TokenReference::FungibleTokenType(TokenId::new(0, 0, 420))),
+            ),
+            PendingAirdropId::new(
+                AccountId::new(0, 2, 134),
+                AccountId::new(0, 2, 6),
+                Some(TokenReference::NonFungibleToken(TokenId::new(0, 0, 112).nft(1))),
+            ),
+        ];
+        let mut tx = TokenCancelAirdropTransaction::new();
+        tx.pending_airdrop_ids(pending_airdrop_ids);
+
+        let token_references = tx
+            .get_pending_airdrop_ids()
+            .into_iter()
+            .map(|it| it.token_reference.clone().unwrap())
+            .collect::<Vec<_>>();
+
+        assert!(
+            token_references.contains(&TokenReference::FungibleTokenType(TokenId::new(0, 0, 420)))
+        );
+        assert!(token_references
+            .contains(&TokenReference::NonFungibleToken(TokenId::new(0, 0, 112).nft(1))));
+    }
+
+    #[test]
+    #[should_panic]
+    fn set_pending_airdrop_ids_frozen_panic() {
+        make_transaction().pending_airdrop_ids([PendingAirdropId::new(
+            AccountId::new(0, 0, 134),
+            AccountId::new(0, 0, 6),
+            Some(TokenReference::FungibleTokenType(TokenId::new(0, 0, 420))),
+        )]);
+    }
+
+    #[test]
+    fn get_set_add_pending_airdrop_id() {
+        let mut tx = TokenCancelAirdropTransaction::new();
+        tx.add_pending_airdrop_id(PendingAirdropId::new(
+            AccountId::new(0, 0, 134),
+            AccountId::new(0, 0, 6),
+            Some(TokenReference::FungibleTokenType(TokenId::new(0, 0, 420))),
+        ));
+
+        let token_references = tx
+            .get_pending_airdrop_ids()
+            .into_iter()
+            .map(|it| it.token_reference.clone().unwrap())
+            .collect::<Vec<_>>();
+        assert!(
+            token_references.contains(&TokenReference::FungibleTokenType(TokenId::new(0, 0, 420)))
+        );
+    }
+}

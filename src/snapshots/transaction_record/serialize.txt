@@ -335,6 +335,7 @@ TransactionRecord {
         0,
         0,
     ],
+    new_pending_airdrops: [],
     body: Some(
         ContractCallResult(
             ContractFunctionResult {

@@ -109,22 +109,21 @@ pub struct TokenAirdropTransactionData {
     token_transfers: Vec<TokenTransfer>,
 }
 
-impl TokenAirdropTransactionData {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
+impl TokenAirdropTransaction {
+    /// Add a non-approved token transfer.
     pub fn add_token_transfer(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
-        amount: i64,
+        value: i64,
     ) -> &mut Self {
-        self.do_add_token_transfer(token_id, account_id, amount, false, None)
+        self.do_add_token_transfer(token_id, account_id, value, false, None)
     }
 
+    /// Return a non-approved token transfer.
     pub fn get_token_transfers(&self) -> HashMap<TokenId, HashMap<AccountId, i64>> {
-        self.token_transfers
+        self.data()
+            .token_transfers
             .iter()
             .map(|t| (t.token_id, t.transfers.iter().map(|t| (t.account_id, t.amount)).collect()))
             .collect()
@@ -143,7 +142,7 @@ impl TokenAirdropTransactionData {
 
     /// Extract the of token nft transfers.
     pub fn get_nft_transfers(&self) -> HashMap<TokenId, Vec<TokenNftTransfer>> {
-        self.token_transfers.iter().map(|t| (t.token_id, t.nft_transfers.clone())).collect()
+        self.data().token_transfers.iter().map(|t| (t.token_id, t.nft_transfers.clone())).collect()
     }
 
     /// Add a non-approved token transfer with decimals.
@@ -160,10 +159,7 @@ impl TokenAirdropTransactionData {
 
     /// Extract the list of token id decimals.
     pub fn get_token_ids_with_decimals(&self) -> HashMap<TokenId, Option<u32>> {
-        self.token_transfers
-            .iter()
-            .map(|t| (t.token_id, t.expected_decimals))
-            .collect()
+        self.data().token_transfers.iter().map(|t| (t.token_id, t.expected_decimals)).collect()
     }
 
     /// Add an approved token transfer to the transaction.
@@ -208,7 +204,7 @@ impl TokenAirdropTransactionData {
         is_approved: bool,
         decimals: Option<u32>,
     ) -> &mut Self {
-        self.token_transfers.push(TokenTransfer {
+        self.data_mut().token_transfers.push(TokenTransfer {
             token_id: token_id,
             transfers: vec![Transfer { account_id: account_id, amount, is_approval: is_approved }],
             nft_transfers: vec![],
@@ -224,7 +220,7 @@ impl TokenAirdropTransactionData {
         receiver: AccountId,
         is_approved: bool,
     ) -> &mut Self {
-        self.token_transfers.push(TokenTransfer {
+        self.data_mut().token_transfers.push(TokenTransfer {
             token_id: nft_id.token_id,
             transfers: vec![],
             nft_transfers: vec![TokenNftTransfer {
@@ -320,5 +316,252 @@ impl FromProtobuf<services::TokenAirdropTransactionBody> for TokenAirdropTransac
                 .map(|t| TokenTransfer::from_protobuf(t))
                 .collect::<crate::Result<_>>()?,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use expect_test::expect_file;
+    use hedera_proto::services::{
+        self,
+        AccountAmount,
+        NftTransfer,
+        TokenTransferList,
+    };
+
+    use crate::protobuf::{
+        FromProtobuf,
+        ToProtobuf,
+    };
+    use crate::token::TokenAirdropTransactionData;
+    use crate::transaction::test_helpers::{
+        check_body,
+        transaction_body,
+        unused_private_key,
+        TEST_ACCOUNT_ID,
+        TEST_TOKEN_ID,
+    };
+    use crate::{
+        AccountId,
+        AnyTransaction,
+        TokenAirdropTransaction,
+        TokenId,
+    };
+
+    fn make_transaction() -> TokenAirdropTransaction {
+        let mut tx = TokenAirdropTransaction::new_for_tests();
+
+        tx.add_token_transfer(TokenId::new(0, 0, 5005), AccountId::new(0, 0, 5006), 400)
+            .add_token_transfer_with_decimals(
+                TokenId::new(0, 0, 5),
+                AccountId::new(0, 0, 5005),
+                -800,
+                3,
+            )
+            .add_token_transfer_with_decimals(
+                TokenId::new(0, 0, 5),
+                AccountId::new(0, 0, 5007),
+                -400,
+                3,
+            )
+            .add_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5008), 1)
+            .add_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5006), -1)
+            .add_nft_transfer(
+                TokenId::new(0, 0, 3).nft(2),
+                AccountId::new(0, 0, 5008),
+                AccountId::new(0, 0, 5007),
+            )
+            .add_nft_transfer(
+                TokenId::new(0, 0, 3).nft(1),
+                AccountId::new(0, 0, 5008),
+                AccountId::new(0, 0, 5007),
+            )
+            .add_nft_transfer(
+                TokenId::new(0, 0, 3).nft(3),
+                AccountId::new(0, 0, 5008),
+                AccountId::new(0, 0, 5006),
+            )
+            .add_nft_transfer(
+                TokenId::new(0, 0, 3).nft(4),
+                AccountId::new(0, 0, 5007),
+                AccountId::new(0, 0, 5006),
+            )
+            .add_nft_transfer(
+                TokenId::new(0, 0, 2).nft(4),
+                AccountId::new(0, 0, 5007),
+                AccountId::new(0, 0, 5006),
+            )
+            .add_approved_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5006), 123)
+            .add_approved_nft_transfer(
+                TokenId::new(0, 0, 4).nft(4),
+                AccountId::new(0, 0, 5005),
+                AccountId::new(0, 0, 5006),
+            )
+            .freeze()
+            .unwrap()
+            .sign(unused_private_key());
+        tx
+    }
+
+    #[test]
+    fn serialize() {
+        let tx = make_transaction();
+
+        let tx = transaction_body(tx);
+
+        let tx = check_body(tx);
+
+        expect_file!["./snapshots/token_airdrop_transaction/serialize.txt"].assert_debug_eq(&tx);
+    }
+
+    #[test]
+    fn to_from_bytes() {
+        let tx = make_transaction();
+
+        let tx2 = AnyTransaction::from_bytes(&tx.to_bytes().unwrap()).unwrap();
+
+        let tx = transaction_body(tx);
+        let tx2 = transaction_body(tx2);
+
+        assert_eq!(tx, tx2)
+    }
+
+    #[test]
+    fn from_proto_body() {
+        let tx = services::TokenAirdropTransactionBody {
+            token_transfers: vec![TokenTransferList {
+                token: Some(TEST_TOKEN_ID.to_protobuf()),
+                transfers: vec![
+                    AccountAmount {
+                        account_id: Some(AccountId::from_str("0.0.5008").unwrap().to_protobuf()),
+                        amount: 200,
+                        is_approval: false,
+                    },
+                    AccountAmount {
+                        account_id: Some(AccountId::from_str("0.0.5009").unwrap().to_protobuf()),
+                        amount: -100,
+                        is_approval: false,
+                    },
+                    AccountAmount {
+                        account_id: Some(AccountId::from_str("0.0.5010").unwrap().to_protobuf()),
+                        amount: 40,
+                        is_approval: false,
+                    },
+                    AccountAmount {
+                        account_id: Some(AccountId::from_str("0.0.5011").unwrap().to_protobuf()),
+                        amount: 20,
+                        is_approval: false,
+                    },
+                ],
+                nft_transfers: vec![NftTransfer {
+                    sender_account_id: Some(AccountId::from_str("0.0.5010").unwrap().to_protobuf()),
+                    receiver_account_id: Some(
+                        AccountId::from_str("0.0.5011").unwrap().to_protobuf(),
+                    ),
+                    serial_number: 1,
+                    is_approval: true,
+                }],
+                expected_decimals: Some(3),
+            }],
+        };
+
+        let data = TokenAirdropTransactionData::from_protobuf(tx).unwrap();
+
+        let ft_transfers =
+            data.token_transfers.iter().flat_map(|t| &t.transfers).collect::<Vec<_>>();
+        let nft_transfers =
+            data.token_transfers.iter().flat_map(|t| &t.nft_transfers).collect::<Vec<_>>();
+
+        assert_eq!(ft_transfers.len(), 4);
+        assert_eq!(nft_transfers.len(), 1);
+    }
+
+    #[test]
+    fn get_set_token_transfers() {
+        let token_id = TokenId::new(0, 0, 123);
+        let account_id = AccountId::new(0, 0, 456);
+        let value = 1000;
+        let mut tx = TokenAirdropTransaction::new();
+        tx.add_token_transfer(token_id, account_id, value);
+
+        let token_transfers = tx.get_token_transfers();
+
+        assert!(token_transfers.contains_key(&token_id));
+        assert_eq!(token_transfers.len(), 1);
+        assert_eq!(value, *token_transfers.get(&token_id).unwrap().get(&account_id).unwrap());
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_token_transfers_frozen_panic() {
+        make_transaction().add_token_transfer(TEST_TOKEN_ID, TEST_ACCOUNT_ID, 142);
+    }
+
+    #[test]
+    fn get_set_nft_transfer() {
+        let (nft_id, sender, receiver) =
+            (TEST_TOKEN_ID.nft(1), TEST_ACCOUNT_ID, AccountId::new(0, 0, 5011));
+        let mut tx = TokenAirdropTransaction::new();
+        tx.add_nft_transfer(nft_id, sender, receiver);
+        let nft_transfers = tx.get_nft_transfers();
+
+        assert!(nft_transfers.contains_key(&nft_id.token_id));
+        assert_eq!(1, nft_transfers.get(&nft_id.token_id).unwrap().len());
+        assert_eq!(sender, nft_transfers.get(&nft_id.token_id).unwrap()[0].sender);
+        assert_eq!(receiver, nft_transfers.get(&nft_id.token_id).unwrap()[0].receiver);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_nft_transfer_frozen_panic() {
+        make_transaction().add_nft_transfer(
+            TEST_TOKEN_ID.nft(1),
+            TEST_ACCOUNT_ID,
+            AccountId::new(0, 0, 156),
+        );
+    }
+
+    #[test]
+    fn get_set_approved_nft_transfer() {
+        let (nft_id, sender, receiver) =
+            (TEST_TOKEN_ID.nft(1), TEST_ACCOUNT_ID, AccountId::new(0, 0, 123));
+        let mut tx = TokenAirdropTransaction::new();
+        tx.add_approved_nft_transfer(nft_id, sender, receiver);
+        let nft_transfers = tx.get_nft_transfers();
+
+        assert!(nft_transfers.contains_key(&nft_id.token_id));
+        assert_eq!(nft_transfers.get(&nft_id.token_id).unwrap().len(), 1);
+        assert_eq!(sender, nft_transfers.get(&nft_id.token_id).unwrap()[0].sender);
+        assert_eq!(receiver, nft_transfers.get(&nft_id.token_id).unwrap()[0].receiver);
+    }
+
+    #[test]
+    fn get_set_approved_token_transfer() {
+        let (token_id, account_id, value) =
+            (TokenId::new(0, 0, 1420), AccountId::new(0, 0, 415), 1000);
+        let mut tx = TokenAirdropTransaction::new();
+        tx.add_approved_token_transfer(token_id, account_id, value);
+
+        let token_transfers = tx.get_token_transfers();
+
+        assert!(token_transfers.contains_key(&token_id));
+        assert_eq!(token_transfers.len(), 1);
+        assert_eq!(value, *token_transfers.get(&token_id).unwrap().get(&account_id).unwrap());
+    }
+
+    #[test]
+    fn get_set_token_id_decimals() {
+        let (nft_id, sender, receiver) =
+            (TEST_TOKEN_ID.nft(1), TEST_ACCOUNT_ID, AccountId::new(0, 0, 123));
+        let mut tx = TokenAirdropTransaction::new();
+        tx.add_approved_nft_transfer(nft_id, sender, receiver);
+        let nft_transfers = tx.get_nft_transfers();
+
+        assert!(nft_transfers.contains_key(&nft_id.token_id));
+        assert_eq!(nft_transfers.get(&nft_id.token_id).unwrap().len(), 1);
+        assert_eq!(sender, nft_transfers.get(&nft_id.token_id).unwrap()[0].sender);
+        assert_eq!(receiver, nft_transfers.get(&nft_id.token_id).unwrap()[0].receiver);
     }
 }
