@@ -31,6 +31,7 @@ use crate::{
     EvmAddress,
     FromProtobuf,
     Hbar,
+    PendingAirdropRecord,
     PublicKey,
     ScheduleId,
     Tinybar,
@@ -119,6 +120,9 @@ pub struct TransactionRecord {
 
     /// The last 20 bytes of the keccak-256 hash of a ECDSA_SECP256K1 primitive key.
     pub evm_address: Option<EvmAddress>,
+
+    /// A list of pending token airdrops.
+    pub pending_airdrop_records: Vec<PendingAirdropRecord>,
 }
 // TODO: paid_staking_rewards
 
@@ -210,6 +214,8 @@ impl TransactionRecord {
             None => (None, None),
         };
 
+        let pending_airdrop_records = Vec::from_protobuf(record.new_pending_airdrops)?;
+
         Ok(Self {
             receipt,
             transaction_hash: record.transaction_hash,
@@ -232,6 +238,7 @@ impl TransactionRecord {
             evm_address,
             prng_bytes,
             prng_number,
+            pending_airdrop_records,
         })
     }
 }
@@ -320,7 +327,7 @@ impl ToProtobuf for TransactionRecord {
                 .as_ref()
                 .map(|it| services::transaction_record::Body::ContractCallResult(it.to_protobuf())),
             entropy,
-            new_pending_airdrops: Vec::new(),
+            new_pending_airdrops: self.pending_airdrop_records.to_protobuf(),
         }
     }
 }
@@ -331,6 +338,10 @@ mod tests {
 
     use expect_test::expect_file;
 
+    use crate::pending_airdrop_id::{
+        PendingAirdropId,
+        TokenReference,
+    };
     use crate::protobuf::ToProtobuf;
     use crate::transaction::test_helpers::{
         TEST_TX_ID,
@@ -342,6 +353,7 @@ mod tests {
         ContractFunctionResult,
         ContractId,
         Hbar,
+        PendingAirdropRecord,
         PrivateKey,
         ScheduleId,
         TokenAssociation,
@@ -418,6 +430,14 @@ mod tests {
             prng_bytes,
             prng_number,
             evm_address: Some(crate::EvmAddress([0; 20])),
+            pending_airdrop_records: vec![PendingAirdropRecord {
+                pending_airdrop_id: PendingAirdropId::new(
+                    AccountId::new(0, 0, 678),
+                    AccountId::new(1, 2, 3),
+                    Some(TokenReference::FungibleTokenType(TokenId::new(1, 2, 3))),
+                ),
+                pending_airdrop_value: Some(2),
+            }],
         }
     }
 
