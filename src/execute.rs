@@ -274,7 +274,12 @@ where
                     match &tmp {
                         Ok(ControlFlow::Break(_)) => log::Level::Debug,
                         Ok(ControlFlow::Continue(_)) => log::Level::Warn,
-                        Err(_) => log::Level::Error,
+                        Err(e) =>
+                            if e.is_transient() {
+                                log::Level::Warn
+                            } else {
+                                log::Level::Error
+                            },
                     },
                     "Execution of {} on node at index {node_index} / node id {} {}",
                     type_name::<E>(),
