@@ -335,6 +335,50 @@ TransactionRecord {
         0,
         0,
     ],
+    new_pending_airdrops: [
+        PendingAirdropRecord {
+            pending_airdrop_id: Some(
+                PendingAirdropId {
+                    sender_id: Some(
+                        AccountId {
+                            shard_num: 0,
+                            realm_num: 0,
+                            account: Some(
+                                AccountNum(
+                                    678,
+                                ),
+                            ),
+                        },
+                    ),
+                    receiver_id: Some(
+                        AccountId {
+                            shard_num: 1,
+                            realm_num: 2,
+                            account: Some(
+                                AccountNum(
+                                    3,
+                                ),
+                            ),
+                        },
+                    ),
+                    token_reference: Some(
+                        FungibleTokenType(
+                            TokenId {
+                                shard_num: 1,
+                                realm_num: 2,
+                                token_num: 3,
+                            },
+                        ),
+                    ),
+                },
+            ),
+            pending_airdrop_value: Some(
+                PendingAirdropValue {
+                    amount: 2,
+                },
+            ),
+        },
+    ],
     body: Some(
         ContractCallResult(
             ContractFunctionResult {

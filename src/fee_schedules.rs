@@ -421,6 +421,15 @@ pub enum RequestType {
 
     /// Reject tokens.
     TokenReject,
+
+    /// Airdrop tokens.
+    TokenAirdrop,
+
+    /// Claim airdrop tokens.
+    TokenClaimAirdrop,
+
+    /// Cancel airdrop tokens.
+    TokenCancelAirdrop,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -506,6 +515,9 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::NodeUpdate => Self::NodeUpdate,
             HederaFunctionality::NodeDelete => Self::NodeDelete,
             HederaFunctionality::TokenReject => Self::TokenReject,
+            HederaFunctionality::TokenAirdrop => Self::TokenAirdrop,
+            HederaFunctionality::TokenClaimAirdrop => Self::TokenClaimAirdrop,
+            HederaFunctionality::TokenCancelAirdrop => Self::TokenCancelAirdrop,
         };
 
         Ok(value)
@@ -597,6 +609,9 @@ impl ToProtobuf for RequestType {
             Self::NodeUpdate => HederaFunctionality::NodeUpdate,
             Self::NodeDelete => HederaFunctionality::NodeDelete,
             Self::TokenReject => HederaFunctionality::TokenReject,
+            Self::TokenAirdrop => HederaFunctionality::TokenAirdrop,
+            Self::TokenClaimAirdrop => HederaFunctionality::TokenClaimAirdrop,
+            Self::TokenCancelAirdrop => HederaFunctionality::TokenCancelAirdrop,
         }
     }
 }
