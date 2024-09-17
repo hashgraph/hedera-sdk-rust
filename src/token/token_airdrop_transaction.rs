@@ -55,52 +55,52 @@ use crate::{
 };
 
 ///
-/// * Airdrop one or more tokens to one or more accounts.
-//  *
-//  * ### Effects
-//  * This distributes tokens from the balance of one or more sending account(s) to the balance
-//  * of one or more recipient accounts. Accounts MAY receive the tokens in one of four ways.
-//  *
-//  *  - An account already associated to the token to be distributed SHALL receive the
-//  *    airdropped tokens immediately to the recipient account balance.<br/>
-//  *    The fee for this transfer SHALL include the transfer, the airdrop fee, and any custom fees.
-//  *  - An account with available automatic association slots SHALL be automatically
-//  *    associated to the token, and SHALL immediately receive the airdropped tokens to the
-//  *    recipient account balance.<br/>
-//  *    The fee for this transfer SHALL include the transfer, the association, the cost to renew
-//  *    that association once, the airdrop fee, and any custom fees.
-//  *  - An account with "receiver signature required" set SHALL have a "Pending Airdrop" created
-//  *    and must claim that airdrop with a `claimAirdrop` transaction.<br/>
-//  *    The fee for this transfer SHALL include the transfer, the association, the cost to renew
-//  *    that association once, the airdrop fee, and any custom fees. If the pending airdrop is not
-//  *    claimed immediately, the `sender` SHALL pay the cost to renew the token association, and
-//  *    the cost to maintain the pending airdrop, until the pending airdrop is claimed or cancelled.
-//  *  - An account with no available automatic association slots SHALL have a "Pending Airdrop"
-//  *    created and must claim that airdrop with a `claimAirdrop` transaction.<br/>
-//  *    The fee for this transfer SHALL include the transfer, the association, the cost to renew
-//  *    that association once, the airdrop fee, and any custom fees. If the pending airdrop is not
-//  *    claimed immediately, the `sender` SHALL pay the cost to renew the token association, and
-//  *    the cost to maintain the pending airdrop, until the pending airdrop is claimed or cancelled.
-//  *
-//  * If an airdrop would create a pending airdrop for a fungible/common token, and a pending airdrop
-//  * for the same sender, receiver, and token already exists, the existing pending airdrop
-//  * SHALL be updated to add the new amount to the existing airdrop, rather than creating a new
-//  * pending airdrop.
-//  *
-//  * Any airdrop that completes immediately SHALL be irreversible. Any airdrop that results in a
-//  * "Pending Airdrop" MAY be canceled via a `cancelAirdrop` transaction.
-//  *
-//  * All transfer fees (including custom fees and royalties), as well as the rent cost for the
-//  * first auto-renewal period for any automatic-association slot occupied by the airdropped
-//  * tokens, SHALL be charged to the account paying for this transaction.
-//  *
-//  * ### Record Stream Effects
-//  * - Each successful transfer SHALL be recorded in `token_transfer_list` for the transaction record.
-//  * - Each successful transfer that consumes an automatic association slot SHALL populate the
-//  *   `automatic_association` field for the record.
-//  * - Each pending transfer _created_ SHALL be added to the `pending_airdrops` field for the record.
-//  * - Each pending transfer _updated_ SHALL be added to the `pending_airdrops` field for the record.
-//  */
+/// Airdrop one or more tokens to one or more accounts.
+///
+///  ### Effects
+///  This distributes tokens from the balance of one or more sending account(s) to the balance
+///  of one or more recipient accounts. Accounts MAY receive the tokens in one of four ways.
+///
+///   - An account already associated to the token to be distributed SHALL receive the
+///     airdropped tokens immediately to the recipient account balance.<br/>
+///     The fee for this transfer SHALL include the transfer, the airdrop fee, and any custom fees.
+///   - An account with available automatic association slots SHALL be automatically
+///     associated to the token, and SHALL immediately receive the airdropped tokens to the
+///     recipient account balance.<br/>
+///     The fee for this transfer SHALL include the transfer, the association, the cost to renew
+///     that association once, the airdrop fee, and any custom fees.
+///   - An account with "receiver signature required" set SHALL have a "Pending Airdrop" created
+///     and must claim that airdrop with a `claimAirdrop` transaction.<br/>
+///     The fee for this transfer SHALL include the transfer, the association, the cost to renew
+///     that association once, the airdrop fee, and any custom fees. If the pending airdrop is not
+///     claimed immediately, the `sender` SHALL pay the cost to renew the token association, and
+///     the cost to maintain the pending airdrop, until the pending airdrop is claimed or cancelled.
+///   - An account with no available automatic association slots SHALL have a "Pending Airdrop"
+///     created and must claim that airdrop with a `claimAirdrop` transaction.<br/>
+///     The fee for this transfer SHALL include the transfer, the association, the cost to renew
+///     that association once, the airdrop fee, and any custom fees. If the pending airdrop is not
+///     claimed immediately, the `sender` SHALL pay the cost to renew the token association, and
+///     the cost to maintain the pending airdrop, until the pending airdrop is claimed or cancelled.
+///
+///  If an airdrop would create a pending airdrop for a fungible/common token, and a pending airdrop
+///  for the same sender, receiver, and token already exists, the existing pending airdrop
+///  SHALL be updated to add the new amount to the existing airdrop, rather than creating a new
+///  pending airdrop.
+///
+///  Any airdrop that completes immediately SHALL be irreversible. Any airdrop that results in a
+///  "Pending Airdrop" MAY be canceled via a `cancelAirdrop` transaction.
+///
+///  All transfer fees (including custom fees and royalties), as well as the rent cost for the
+///  first auto-renewal period for any automatic-association slot occupied by the airdropped
+///  tokens, SHALL be charged to the account paying for this transaction.
+///
+///  ### Record Stream Effects
+///  - Each successful transfer SHALL be recorded in `token_transfer_list` for the transaction record.
+///  - Each successful transfer that consumes an automatic association slot SHALL populate the
+///    `automatic_association` field for the record.
+///  - Each pending transfer _created_ SHALL be added to the `pending_airdrops` field for the record.
+///  - Each pending transfer _updated_ SHALL be added to the `pending_airdrops` field for the record.
+///
 pub type TokenAirdropTransaction = Transaction<TokenAirdropTransactionData>;
 
 #[derive(Debug, Clone, Default)]
@@ -111,32 +111,44 @@ pub struct TokenAirdropTransactionData {
 
 impl TokenAirdropTransaction {
     /// Add a non-approved token transfer.
-    pub fn add_token_transfer(
+    pub fn token_transfer(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
         value: i64,
     ) -> &mut Self {
-        self.do_add_token_transfer(token_id, account_id, value, false, None)
+        self._token_transfer(token_id, account_id, value, false, None)
     }
 
     /// Return a non-approved token transfer.
     pub fn get_token_transfers(&self) -> HashMap<TokenId, HashMap<AccountId, i64>> {
-        self.data()
-            .token_transfers
-            .iter()
-            .map(|t| (t.token_id, t.transfers.iter().map(|t| (t.account_id, t.amount)).collect()))
-            .collect()
+        use std::collections::hash_map::Entry;
+
+        // note: using fold instead of nested collects on the off chance a token is in here twice.
+        self.data().token_transfers.iter().fold(
+            HashMap::with_capacity(self.data().token_transfers.len()),
+            |mut map, transfer| {
+                let iter = transfer.transfers.iter().map(|it| (it.account_id, it.amount));
+                match map.entry(transfer.token_id) {
+                    Entry::Occupied(mut it) => it.get_mut().extend(iter),
+                    Entry::Vacant(it) => {
+                        it.insert(iter.collect());
+                    }
+                }
+
+                map
+            },
+        )
     }
 
     /// Add a non-approved nft transfer.
-    pub fn add_nft_transfer(
+    pub fn nft_transfer(
         &mut self,
         nft_id: NftId,
         sender: AccountId,
         receiver: AccountId,
     ) -> &mut Self {
-        self.do_add_nft_transfer(nft_id, sender, receiver, false);
+        self._nft_transfer(nft_id, sender, receiver, false);
         self
     }
 
@@ -146,14 +158,14 @@ impl TokenAirdropTransaction {
     }
 
     /// Add a non-approved token transfer with decimals.
-    pub fn add_token_transfer_with_decimals(
+    pub fn token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
         amount: i64,
         decimals: u32,
     ) -> &mut Self {
-        self.do_add_token_transfer(token_id, account_id, amount, false, Some(decimals));
+        self._token_transfer(token_id, account_id, amount, false, Some(decimals));
         self
     }
 
@@ -163,80 +175,87 @@ impl TokenAirdropTransaction {
     }
 
     /// Add an approved token transfer to the transaction.
-    pub fn add_approved_token_transfer(
+    pub fn approved_token_transfer(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
         amount: i64,
     ) -> &mut Self {
-        self.do_add_token_transfer(token_id, account_id, amount, true, None);
+        self._token_transfer(token_id, account_id, amount, true, None);
         self
     }
 
     /// Add an approved nft transfer.
-    pub fn add_approved_nft_transfer(
+    pub fn approved_nft_transfer(
         &mut self,
         nft_id: NftId,
         sender: AccountId,
         receiver: AccountId,
     ) -> &mut Self {
-        self.do_add_nft_transfer(nft_id, sender, receiver, true);
+        self._nft_transfer(nft_id, sender, receiver, true);
         self
     }
 
     /// Add an approved token transfer with decimals.
-    pub fn add_approved_token_transfer_with_decimals(
+    pub fn approved_token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
         amount: i64,
         decimals: u32,
     ) -> &mut Self {
-        self.do_add_token_transfer(token_id, account_id, amount, true, Some(decimals));
+        self._token_transfer(token_id, account_id, amount, true, Some(decimals));
         self
     }
 
-    fn do_add_token_transfer(
+    fn _token_transfer(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
         amount: i64,
-        is_approved: bool,
-        decimals: Option<u32>,
+        approved: bool,
+        expected_decimals: Option<u32>,
     ) -> &mut Self {
-        self.data_mut().token_transfers.push(TokenTransfer {
-            token_id: token_id,
-            transfers: vec![Transfer { account_id: account_id, amount, is_approval: is_approved }],
-            nft_transfers: vec![],
-            expected_decimals: decimals,
-        });
+        let transfer = Transfer { account_id, amount, is_approval: approved };
+        let data = self.data_mut();
+
+        if let Some(tt) = data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id) {
+            tt.expected_decimals = expected_decimals;
+            tt.transfers.push(transfer);
+        } else {
+            data.token_transfers.push(TokenTransfer {
+                token_id,
+                expected_decimals,
+                nft_transfers: Vec::new(),
+                transfers: vec![transfer],
+            });
+        }
         self
     }
 
-    fn do_add_nft_transfer(
+    fn _nft_transfer(
         &mut self,
         nft_id: NftId,
         sender: AccountId,
         receiver: AccountId,
         is_approved: bool,
     ) -> &mut Self {
-        self.data_mut().token_transfers.push(TokenTransfer {
-            token_id: nft_id.token_id,
-            transfers: vec![],
-            nft_transfers: vec![TokenNftTransfer {
-                token_id: TokenId {
-                    shard: nft_id.token_id.shard,
-                    realm: nft_id.token_id.realm,
-                    num: nft_id.token_id.num,
-                    checksum: nft_id.token_id.checksum,
-                },
-                sender,
-                receiver,
-                serial: nft_id.serial,
-                is_approved,
-            }],
-            expected_decimals: None,
-        });
+        let NftId { token_id, serial } = nft_id;
+        let transfer = TokenNftTransfer { token_id, serial, sender, receiver, is_approved };
+
+        let data = self.data_mut();
+
+        if let Some(tt) = data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id) {
+            tt.nft_transfers.push(transfer);
+        } else {
+            data.token_transfers.push(TokenTransfer {
+                token_id,
+                expected_decimals: None,
+                transfers: Vec::new(),
+                nft_transfers: vec![transfer],
+            });
+        }
+
         self
     }
 }
@@ -298,8 +317,43 @@ impl ToProtobuf for TokenAirdropTransactionData {
     type Protobuf = services::TokenAirdropTransactionBody;
 
     fn to_protobuf(&self) -> Self::Protobuf {
+        let mut token_transfers = self.token_transfers.clone();
+
+        // Sort token transfers by token ID
+        token_transfers.sort_by(|a, b| {
+            a.token_id
+                .shard
+                .cmp(&b.token_id.shard)
+                .then(a.token_id.realm.cmp(&b.token_id.realm))
+                .then(a.token_id.num.cmp(&b.token_id.num))
+        });
+
+        // Sort transfers within each TokenTransfer
+        for tt in &mut token_transfers {
+            tt.transfers.sort_by(|a, b| {
+                a.account_id
+                    .shard
+                    .cmp(&b.account_id.shard)
+                    .then_with(|| a.account_id.realm.cmp(&b.account_id.realm))
+                    .then_with(|| a.account_id.num.cmp(&b.account_id.num))
+            });
+            tt.nft_transfers.sort_by(|a, b| a.serial.cmp(&b.serial));
+        }
+
         services::TokenAirdropTransactionBody {
-            token_transfers: self.token_transfers.iter().map(|t| t.to_protobuf()).collect(),
+            token_transfers: token_transfers
+                .into_iter()
+                .map(|tt| services::TokenTransferList {
+                    token: Some(tt.token_id.to_protobuf()),
+                    transfers: tt.transfers.into_iter().map(|t| t.to_protobuf()).collect(),
+                    nft_transfers: tt
+                        .nft_transfers
+                        .into_iter()
+                        .map(|nt| nt.to_protobuf())
+                        .collect(),
+                    expected_decimals: tt.expected_decimals.map(|d| d as u32),
+                })
+                .collect(),
         }
     }
 }
@@ -353,48 +407,48 @@ mod tests {
     fn make_transaction() -> TokenAirdropTransaction {
         let mut tx = TokenAirdropTransaction::new_for_tests();
 
-        tx.add_token_transfer(TokenId::new(0, 0, 5005), AccountId::new(0, 0, 5006), 400)
-            .add_token_transfer_with_decimals(
+        tx.token_transfer(TokenId::new(0, 0, 5005), AccountId::new(0, 0, 5006), 400)
+            .token_transfer_with_decimals(
                 TokenId::new(0, 0, 5),
                 AccountId::new(0, 0, 5005),
                 -800,
                 3,
             )
-            .add_token_transfer_with_decimals(
+            .token_transfer_with_decimals(
                 TokenId::new(0, 0, 5),
                 AccountId::new(0, 0, 5007),
                 -400,
                 3,
             )
-            .add_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5008), 1)
-            .add_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5006), -1)
-            .add_nft_transfer(
+            .token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5008), 1)
+            .token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5006), -1)
+            .nft_transfer(
                 TokenId::new(0, 0, 3).nft(2),
                 AccountId::new(0, 0, 5008),
                 AccountId::new(0, 0, 5007),
             )
-            .add_nft_transfer(
+            .nft_transfer(
                 TokenId::new(0, 0, 3).nft(1),
                 AccountId::new(0, 0, 5008),
                 AccountId::new(0, 0, 5007),
             )
-            .add_nft_transfer(
+            .nft_transfer(
                 TokenId::new(0, 0, 3).nft(3),
                 AccountId::new(0, 0, 5008),
                 AccountId::new(0, 0, 5006),
             )
-            .add_nft_transfer(
+            .nft_transfer(
                 TokenId::new(0, 0, 3).nft(4),
                 AccountId::new(0, 0, 5007),
                 AccountId::new(0, 0, 5006),
             )
-            .add_nft_transfer(
+            .nft_transfer(
                 TokenId::new(0, 0, 2).nft(4),
                 AccountId::new(0, 0, 5007),
                 AccountId::new(0, 0, 5006),
             )
-            .add_approved_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5006), 123)
-            .add_approved_nft_transfer(
+            .approved_token_transfer(TokenId::new(0, 0, 4), AccountId::new(0, 0, 5006), 123)
+            .approved_nft_transfer(
                 TokenId::new(0, 0, 4).nft(4),
                 AccountId::new(0, 0, 5005),
                 AccountId::new(0, 0, 5006),
@@ -484,7 +538,7 @@ mod tests {
         let account_id = AccountId::new(0, 0, 456);
         let value = 1000;
         let mut tx = TokenAirdropTransaction::new();
-        tx.add_token_transfer(token_id, account_id, value);
+        tx.token_transfer(token_id, account_id, value);
 
         let token_transfers = tx.get_token_transfers();
 
@@ -496,7 +550,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn get_set_token_transfers_frozen_panic() {
-        make_transaction().add_token_transfer(TEST_TOKEN_ID, TEST_ACCOUNT_ID, 142);
+        make_transaction().token_transfer(TEST_TOKEN_ID, TEST_ACCOUNT_ID, 142);
     }
 
     #[test]
@@ -504,7 +558,7 @@ mod tests {
         let (nft_id, sender, receiver) =
             (TEST_TOKEN_ID.nft(1), TEST_ACCOUNT_ID, AccountId::new(0, 0, 5011));
         let mut tx = TokenAirdropTransaction::new();
-        tx.add_nft_transfer(nft_id, sender, receiver);
+        tx.nft_transfer(nft_id, sender, receiver);
         let nft_transfers = tx.get_nft_transfers();
 
         assert!(nft_transfers.contains_key(&nft_id.token_id));
@@ -516,7 +570,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn get_set_nft_transfer_frozen_panic() {
-        make_transaction().add_nft_transfer(
+        make_transaction().nft_transfer(
             TEST_TOKEN_ID.nft(1),
             TEST_ACCOUNT_ID,
             AccountId::new(0, 0, 156),
@@ -528,7 +582,7 @@ mod tests {
         let (nft_id, sender, receiver) =
             (TEST_TOKEN_ID.nft(1), TEST_ACCOUNT_ID, AccountId::new(0, 0, 123));
         let mut tx = TokenAirdropTransaction::new();
-        tx.add_approved_nft_transfer(nft_id, sender, receiver);
+        tx.approved_nft_transfer(nft_id, sender, receiver);
         let nft_transfers = tx.get_nft_transfers();
 
         assert!(nft_transfers.contains_key(&nft_id.token_id));
@@ -542,7 +596,7 @@ mod tests {
         let (token_id, account_id, value) =
             (TokenId::new(0, 0, 1420), AccountId::new(0, 0, 415), 1000);
         let mut tx = TokenAirdropTransaction::new();
-        tx.add_approved_token_transfer(token_id, account_id, value);
+        tx.approved_token_transfer(token_id, account_id, value);
 
         let token_transfers = tx.get_token_transfers();
 
@@ -556,7 +610,7 @@ mod tests {
         let (nft_id, sender, receiver) =
             (TEST_TOKEN_ID.nft(1), TEST_ACCOUNT_ID, AccountId::new(0, 0, 123));
         let mut tx = TokenAirdropTransaction::new();
-        tx.add_approved_nft_transfer(nft_id, sender, receiver);
+        tx.approved_nft_transfer(nft_id, sender, receiver);
         let nft_transfers = tx.get_nft_transfers();
 
         assert!(nft_transfers.contains_key(&nft_id.token_id));

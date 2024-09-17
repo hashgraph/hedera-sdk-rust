@@ -18,12 +18,7 @@
  * ‍
  */
 
-use std::fmt::{
-    self,
-    Debug,
-    Display,
-    Formatter,
-};
+use std::fmt::Debug;
 
 use hedera_proto::services;
 
@@ -44,7 +39,7 @@ use crate::{
 /// A PendingAirdropId SHALL be recorded when created and MUST be provided in any transaction
 /// that would modify that pending airdrop (such as a `claimAirdrop` or `cancelAirdrop`).
 ///
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]
 pub struct PendingAirdropId {
     /// A sending account.
     ///
@@ -58,26 +53,24 @@ pub struct PendingAirdropId {
     /// This field is REQUIRED.
     pub receiver_id: AccountId,
 
-    /// A token reference.
-    pub token_reference: Option<TokenReference>,
-}
+    /// Token Id.
+    pub token_id: Option<TokenId>,
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub enum TokenReference {
-    /// A token ID.
-    FungibleTokenType(TokenId),
-
-    /// The id of a single NFT, consisting of a Token ID and serial number.
-    NonFungibleToken(NftId),
+    /// Nft Id.
+    pub nft_id: Option<NftId>,
 }
 
 impl PendingAirdropId {
-    pub const fn new(
+    pub const fn new_nft_id(sender_id: AccountId, receiver_id: AccountId, nft_id: NftId) -> Self {
+        Self { sender_id, receiver_id, token_id: None, nft_id: Some(nft_id) }
+    }
+
+    pub const fn new_token_id(
         sender_id: AccountId,
         receiver_id: AccountId,
-        token_reference: Option<TokenReference>,
+        token_id: TokenId,
     ) -> Self {
-        Self { sender_id, receiver_id, token_reference }
+        Self { sender_id, receiver_id, token_id: Some(token_id), nft_id: None }
     }
 
     /// Create a new `PendingAirdropId` from protobuf-encoded `bytes`.
@@ -96,66 +89,17 @@ impl PendingAirdropId {
     }
 }
 
-impl Debug for TokenReference {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            TokenReference::FungibleTokenType(token_id) => {
-                f.debug_tuple("FungibleTokenType").field(token_id).finish()
-            }
-            TokenReference::NonFungibleToken(nft_id) => {
-                f.debug_tuple("NonFungibleToken").field(nft_id).finish()
-            }
-        }
-    }
-}
-
-impl Display for TokenReference {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            TokenReference::FungibleTokenType(token_id) => write!(f, "FT:{}", token_id),
-            TokenReference::NonFungibleToken(nft_id) => write!(f, "NFT:{}", nft_id),
-        }
-    }
-}
-
-impl Debug for PendingAirdropId {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.debug_struct("PendingAirdropId")
-            .field("sender_id", &self.sender_id)
-            .field("receiver_id", &self.receiver_id)
-            .field("token_reference", &self.token_reference)
-            .finish()
-    }
-}
-
-impl Display for PendingAirdropId {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}->{}:{}",
-            self.sender_id,
-            self.receiver_id,
-            match &self.token_reference {
-                Some(TokenReference::FungibleTokenType(token_id)) => token_id.to_string(),
-                Some(TokenReference::NonFungibleToken(nft_id)) => nft_id.to_string(),
-                None => "No token reference".to_string(),
-            }
-        )
-    }
-}
-
 impl ValidateChecksums for PendingAirdropId {
     fn validate_checksums(&self, ledger_id: &RefLedgerId) -> Result<(), Error> {
         let _ = self.sender_id.validate_checksums(ledger_id);
         let _ = self.receiver_id.validate_checksums(ledger_id);
 
-        if let Some(token_reference) = &self.token_reference {
-            match token_reference {
-                TokenReference::FungibleTokenType(token_id) => {
-                    token_id.validate_checksums(ledger_id)?
-                }
-                TokenReference::NonFungibleToken(nft_id) => nft_id.validate_checksums(ledger_id)?,
-            }
+        if let Some(token_id) = self.token_id {
+            token_id.validate_checksums(ledger_id)?
+        };
+
+        if let Some(nft_id) = &self.nft_id {
+            nft_id.validate_checksums(ledger_id)?
         }
 
         Ok(())
@@ -167,19 +111,29 @@ impl FromProtobuf<services::PendingAirdropId> for PendingAirdropId {
         let sender_id = AccountId::from_protobuf(pb_getf!(pb, sender_id)?)?;
         let receiver_id = AccountId::from_protobuf(pb_getf!(pb, receiver_id)?)?;
 
-        let token_reference = match pb.token_reference {
-            Some(token_reference) => match token_reference {
-                services::pending_airdrop_id::TokenReference::FungibleTokenType(token_id) => {
-                    Some(TokenReference::FungibleTokenType(TokenId::from_protobuf(token_id)?))
-                }
+        let nft_id = if let Some(reference) = pb.token_reference.clone() {
+            match reference {
                 services::pending_airdrop_id::TokenReference::NonFungibleToken(nft_id) => {
-                    Some(TokenReference::NonFungibleToken(NftId::from_protobuf(nft_id)?))
+                    Some(NftId::from_protobuf(nft_id)?)
                 }
-            },
-            None => None,
+                _ => None,
+            }
+        } else {
+            None
         };
 
-        Ok(Self { sender_id, receiver_id, token_reference })
+        let token_id = if let Some(token) = pb.token_reference {
+            match token {
+                services::pending_airdrop_id::TokenReference::FungibleTokenType(token_id) => {
+                    Some(TokenId::from_protobuf(token_id)?)
+                }
+                _ => None,
+            }
+        } else {
+            None
+        };
+
+        Ok(Self { sender_id, receiver_id, token_id, nft_id })
     }
 }
 
@@ -187,22 +141,21 @@ impl ToProtobuf for PendingAirdropId {
     type Protobuf = services::PendingAirdropId;
 
     fn to_protobuf(&self) -> Self::Protobuf {
+        let nft_id = self.nft_id.as_ref().map(|nft_id| nft_id.to_protobuf());
+        let token_id = self.token_id.as_ref().map(|token_id| token_id.to_protobuf());
+
+        let token_reference = if let Some(nft_id) = nft_id {
+            Some(services::pending_airdrop_id::TokenReference::NonFungibleToken(nft_id))
+        } else if let Some(token_id) = token_id {
+            Some(services::pending_airdrop_id::TokenReference::FungibleTokenType(token_id))
+        } else {
+            None
+        };
+
         services::PendingAirdropId {
             sender_id: Some(self.sender_id.to_protobuf()),
             receiver_id: Some(self.receiver_id.to_protobuf()),
-            token_reference: match &self.token_reference {
-                Some(TokenReference::FungibleTokenType(token_id)) => {
-                    Some(services::pending_airdrop_id::TokenReference::FungibleTokenType(
-                        token_id.to_protobuf(),
-                    ))
-                }
-                Some(TokenReference::NonFungibleToken(nft_id)) => {
-                    Some(services::pending_airdrop_id::TokenReference::NonFungibleToken(
-                        nft_id.to_protobuf(),
-                    ))
-                }
-                None => None,
-            },
+            token_reference,
         }
     }
 }

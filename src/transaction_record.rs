@@ -338,10 +338,7 @@ mod tests {
 
     use expect_test::expect_file;
 
-    use crate::pending_airdrop_id::{
-        PendingAirdropId,
-        TokenReference,
-    };
+    use crate::pending_airdrop_id::PendingAirdropId;
     use crate::protobuf::ToProtobuf;
     use crate::transaction::test_helpers::{
         TEST_TX_ID,
@@ -431,10 +428,10 @@ mod tests {
             prng_number,
             evm_address: Some(crate::EvmAddress([0; 20])),
             pending_airdrop_records: vec![PendingAirdropRecord {
-                pending_airdrop_id: PendingAirdropId::new(
+                pending_airdrop_id: PendingAirdropId::new_token_id(
                     AccountId::new(0, 0, 678),
                     AccountId::new(1, 2, 3),
-                    Some(TokenReference::FungibleTokenType(TokenId::new(1, 2, 3))),
+                    TokenId::new(1, 2, 3),
                 ),
                 pending_airdrop_value: Some(2),
             }],

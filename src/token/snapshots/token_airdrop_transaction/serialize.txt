@@ -6,151 +6,7 @@ TokenAirdrop(
                     TokenId {
                         shard_num: 0,
                         realm_num: 0,
-                        token_num: 5005,
-                    },
-                ),
-                transfers: [
-                    AccountAmount {
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        amount: 400,
-                        is_approval: false,
-                    },
-                ],
-                nft_transfers: [],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 5,
-                    },
-                ),
-                transfers: [
-                    AccountAmount {
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5005,
-                                    ),
-                                ),
-                            },
-                        ),
-                        amount: -800,
-                        is_approval: false,
-                    },
-                ],
-                nft_transfers: [],
-                expected_decimals: Some(
-                    3,
-                ),
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 5,
-                    },
-                ),
-                transfers: [
-                    AccountAmount {
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5007,
-                                    ),
-                                ),
-                            },
-                        ),
-                        amount: -400,
-                        is_approval: false,
-                    },
-                ],
-                nft_transfers: [],
-                expected_decimals: Some(
-                    3,
-                ),
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 4,
-                    },
-                ),
-                transfers: [
-                    AccountAmount {
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5008,
-                                    ),
-                                ),
-                            },
-                        ),
-                        amount: 1,
-                        is_approval: false,
-                    },
-                ],
-                nft_transfers: [],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 4,
-                    },
-                ),
-                transfers: [
-                    AccountAmount {
-                        account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        amount: -1,
-                        is_approval: false,
-                    },
-                ],
-                nft_transfers: [],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 3,
+                        token_num: 2,
                     },
                 ),
                 transfers: [],
@@ -162,7 +18,7 @@ TokenAirdrop(
                                 realm_num: 0,
                                 account: Some(
                                     AccountNum(
-                                        5008,
+                                        5007,
                                     ),
                                 ),
                             },
@@ -173,12 +29,12 @@ TokenAirdrop(
                                 realm_num: 0,
                                 account: Some(
                                     AccountNum(
-                                        5007,
+                                        5006,
                                     ),
                                 ),
                             },
                         ),
-                        serial_number: 2,
+                        serial_number: 4,
                         is_approval: false,
                     },
                 ],
@@ -220,19 +76,32 @@ TokenAirdrop(
                         serial_number: 1,
                         is_approval: false,
                     },
-                ],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 3,
+                    NftTransfer {
+                        sender_account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5008,
+                                    ),
+                                ),
+                            },
+                        ),
+                        receiver_account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5007,
+                                    ),
+                                ),
+                            },
+                        ),
+                        serial_number: 2,
+                        is_approval: false,
                     },
-                ),
-                transfers: [],
-                nft_transfers: [
                     NftTransfer {
                         sender_account_id: Some(
                             AccountId {
@@ -259,58 +128,6 @@ TokenAirdrop(
                         serial_number: 3,
                         is_approval: false,
                     },
-                ],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 3,
-                    },
-                ),
-                transfers: [],
-                nft_transfers: [
-                    NftTransfer {
-                        sender_account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5007,
-                                    ),
-                                ),
-                            },
-                        ),
-                        receiver_account_id: Some(
-                            AccountId {
-                                shard_num: 0,
-                                realm_num: 0,
-                                account: Some(
-                                    AccountNum(
-                                        5006,
-                                    ),
-                                ),
-                            },
-                        ),
-                        serial_number: 4,
-                        is_approval: false,
-                    },
-                ],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 2,
-                    },
-                ),
-                transfers: [],
-                nft_transfers: [
                     NftTransfer {
                         sender_account_id: Some(
                             AccountId {
@@ -361,22 +178,40 @@ TokenAirdrop(
                                 ),
                             },
                         ),
+                        amount: -1,
+                        is_approval: false,
+                    },
+                    AccountAmount {
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
                         amount: 123,
                         is_approval: true,
                     },
-                ],
-                nft_transfers: [],
-                expected_decimals: None,
-            },
-            TokenTransferList {
-                token: Some(
-                    TokenId {
-                        shard_num: 0,
-                        realm_num: 0,
-                        token_num: 4,
+                    AccountAmount {
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5008,
+                                    ),
+                                ),
+                            },
+                        ),
+                        amount: 1,
+                        is_approval: false,
                     },
-                ),
-                transfers: [],
+                ],
                 nft_transfers: [
                     NftTransfer {
                         sender_account_id: Some(
@@ -405,6 +240,79 @@ TokenAirdrop(
                         is_approval: true,
                     },
                 ],
+                expected_decimals: None,
+            },
+            TokenTransferList {
+                token: Some(
+                    TokenId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        token_num: 5,
+                    },
+                ),
+                transfers: [
+                    AccountAmount {
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5005,
+                                    ),
+                                ),
+                            },
+                        ),
+                        amount: -800,
+                        is_approval: false,
+                    },
+                    AccountAmount {
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5007,
+                                    ),
+                                ),
+                            },
+                        ),
+                        amount: -400,
+                        is_approval: false,
+                    },
+                ],
+                nft_transfers: [],
+                expected_decimals: Some(
+                    3,
+                ),
+            },
+            TokenTransferList {
+                token: Some(
+                    TokenId {
+                        shard_num: 0,
+                        realm_num: 0,
+                        token_num: 5005,
+                    },
+                ),
+                transfers: [
+                    AccountAmount {
+                        account_id: Some(
+                            AccountId {
+                                shard_num: 0,
+                                realm_num: 0,
+                                account: Some(
+                                    AccountNum(
+                                        5006,
+                                    ),
+                                ),
+                            },
+                        ),
+                        amount: 400,
+                        is_approval: false,
+                    },
+                ],
+                nft_transfers: [],
                 expected_decimals: None,
             },
         ],
