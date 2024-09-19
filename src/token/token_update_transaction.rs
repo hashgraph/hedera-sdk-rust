@@ -31,6 +31,7 @@ use crate::protobuf::{
     FromProtobuf,
     ToProtobuf,
 };
+use crate::token::token_key_validation_type::TokenKeyValidation;
 use crate::transaction::{
     AnyTransactionData,
     ChunkInfo,
@@ -110,7 +111,7 @@ pub struct TokenUpdateTransactionData {
     expiration_time: Option<OffsetDateTime>,
 
     /// The memo associated with the token (UTF-8 encoding max 100 bytes)
-    token_memo: String,
+    token_memo: Option<String>,
 
     /// The key which can change the token's custom fee schedule; must sign a TokenFeeScheduleUpdate
     /// transaction
@@ -119,6 +120,16 @@ pub struct TokenUpdateTransactionData {
     /// The Key which can pause and unpause the Token.
     /// If Empty the token pause status defaults to PauseNotApplicable, otherwise Unpaused.
     pause_key: Option<Key>,
+
+    /// Metadata of the created token definition.
+    metadata: Option<Vec<u8>>,
+
+    /// The key which can change the metadata of a token
+    /// (token definition, partition definition, and individual NFTs).
+    metadata_key: Option<Key>,
+
+    /// Determines whether the system should check the validity of the passed keys for update.
+    key_verification_mode: TokenKeyValidation,
 }
 
 impl TokenUpdateTransaction {
@@ -295,15 +306,15 @@ impl TokenUpdateTransaction {
 
     /// Returns the new memo associated with the token.
     #[must_use]
-    pub fn get_token_memo(&self) -> &str {
-        &self.data().token_memo
+    pub fn get_token_memo(&self) -> Option<&str> {
+        self.data().token_memo.as_deref()
     }
 
     /// Sets the new memo associated with the token.
     ///
     /// Maximum of 100 bytes.
-    pub fn token_memo(&mut self, memo: impl Into<String>) -> &mut Self {
-        self.data_mut().token_memo = memo.into();
+    pub fn token_memo(&mut self, memo: Option<impl Into<String>>) -> &mut Self {
+        self.data_mut().token_memo = memo.map(|m| m.into());
         self
     }
 
@@ -333,6 +344,45 @@ impl TokenUpdateTransaction {
     /// If the token does not currently have a pause key, transaction will resolve to `TokenHasNoPauseKey`.
     pub fn pause_key(&mut self, pause_key: impl Into<Key>) -> &mut Self {
         self.data_mut().pause_key = Some(pause_key.into());
+        self
+    }
+
+    /// Returns the new metadata of the created token definition.
+    #[must_use]
+    pub fn get_metadata(&self) -> Option<Vec<u8>> {
+        self.data().metadata.clone()
+    }
+
+    /// Sets the new metadata of the token definition.
+    pub fn metadata(&mut self, metadata: Vec<u8>) -> &mut Self {
+        self.data_mut().metadata = Some(metadata);
+        self
+    }
+
+    /// Returns the new key which can change the metadata of a token.
+    #[must_use]
+    pub fn get_metadata_key(&self) -> Option<&Key> {
+        self.data().metadata_key.as_ref()
+    }
+
+    /// Sets the new key which can change the metadata of a token.
+    pub fn metadata_key(&mut self, metadata_key: impl Into<Key>) -> &mut Self {
+        self.data_mut().metadata_key = Some(metadata_key.into());
+        self
+    }
+
+    /// Returns key verification mode.
+    #[must_use]
+    pub fn get_key_verification_mode(&self) -> TokenKeyValidation {
+        self.data().key_verification_mode
+    }
+
+    /// Assignss key verification mode.
+    pub fn key_verification_mode(
+        &mut self,
+        key_verification_mode: TokenKeyValidation,
+    ) -> &mut Self {
+        self.data_mut().key_verification_mode = key_verification_mode;
         self
     }
 }
@@ -384,6 +434,10 @@ impl From<TokenUpdateTransactionData> for AnyTransactionData {
 
 impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransactionData {
     fn from_protobuf(pb: services::TokenUpdateTransactionBody) -> crate::Result<Self> {
+        let key_verification_mode =
+            services::TokenKeyValidation::try_from(pb.key_verification_mode as i32)
+                .unwrap_or_default();
+
         Ok(Self {
             token_id: Option::from_protobuf(pb.token)?,
             token_name: pb.name,
@@ -397,9 +451,12 @@ impl FromProtobuf<services::TokenUpdateTransactionBody> for TokenUpdateTransacti
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account)?,
             auto_renew_period: pb.auto_renew_period.map(Into::into),
             expiration_time: pb.expiry.map(Into::into),
-            token_memo: pb.memo.unwrap_or_default(),
+            token_memo: pb.memo,
             fee_schedule_key: Option::from_protobuf(pb.fee_schedule_key)?,
             pause_key: Option::from_protobuf(pb.pause_key)?,
+            metadata: pb.metadata,
+            metadata_key: Option::from_protobuf(pb.metadata_key)?,
+            key_verification_mode: TokenKeyValidation::from_protobuf(key_verification_mode)?,
         })
     }
 }
@@ -421,9 +478,12 @@ impl ToProtobuf for TokenUpdateTransactionData {
             expiry: self.expiration_time.map(Into::into),
             auto_renew_account: self.auto_renew_account_id.to_protobuf(),
             auto_renew_period: self.auto_renew_period.map(Into::into),
-            memo: Some(self.token_memo.clone()),
+            memo: self.token_memo.clone(),
             fee_schedule_key: self.fee_schedule_key.to_protobuf(),
             pause_key: self.pause_key.to_protobuf(),
+            metadata: self.metadata.clone(),
+            metadata_key: self.metadata_key.to_protobuf(),
+            key_verification_mode: self.key_verification_mode.to_protobuf().into(),
         }
     }
 }
@@ -432,7 +492,7 @@ impl ToProtobuf for TokenUpdateTransactionData {
 mod tests {
     use std::str::FromStr;
 
-    use expect_test::expect;
+    use expect_test::expect_file;
     use hedera_proto::services;
     use time::{
         Duration,
@@ -444,6 +504,7 @@ mod tests {
         FromProtobuf,
         ToProtobuf,
     };
+    use crate::token::token_key_validation_type::TokenKeyValidation;
     use crate::transaction::test_helpers::{
         check_body,
         transaction_body,
@@ -492,6 +553,12 @@ mod tests {
         PrivateKey::from_str(
             "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e17").unwrap().public_key()
     }
+
+    fn test_metadata_key() -> PublicKey {
+        PrivateKey::from_str(
+            "302e020100300506032b657004220420db484b828e64b2d8f12ce3c0a0e93a0b8cce7af1bb8f39c97732394482538e18").unwrap().public_key()
+    }
+
     const TEST_TREASURY_ACCOUNT_ID: AccountId = AccountId::new(7, 7, 7);
     const TEST_AUTO_RENEW_ACCOUNT_ID: AccountId = AccountId::new(8, 8, 8);
     const TEST_TOKEN_NAME: &str = "test name";
@@ -500,6 +567,8 @@ mod tests {
     const TEST_TOKEN_ID: TokenId = TokenId::new(4, 2, 0);
     const TEST_AUTO_RENEW_PERIOD: Duration = Duration::hours(10);
     const TEST_EXPIRATION_TIME: OffsetDateTime = VALID_START;
+    const TEST_METADATA: &str = "Token Metadata";
+    const TEST_KEY_VERIFICATION_MODE: TokenKeyValidation = TokenKeyValidation::FullValidation;
 
     fn make_transaction() -> TokenUpdateTransaction {
         let mut tx = TokenUpdateTransaction::new_for_tests();
@@ -518,7 +587,10 @@ mod tests {
             .expiration_time(TEST_EXPIRATION_TIME)
             .treasury_account_id(TEST_TREASURY_ACCOUNT_ID)
             .token_name(TEST_TOKEN_NAME)
-            .token_memo(TEST_TOKEN_MEMO)
+            .token_memo(Some(TEST_TOKEN_MEMO))
+            .metadata(TEST_METADATA.as_bytes().to_vec())
+            .metadata_key(test_metadata_key())
+            .key_verification_mode(TokenKeyValidation::NoValidation)
             .freeze()
             .unwrap();
 
@@ -526,355 +598,14 @@ mod tests {
     }
 
     #[test]
-    fn seriralize() {
+    fn serialize() {
         let tx = make_transaction();
 
         let tx = transaction_body(tx);
 
         let tx = check_body(tx);
 
-        expect![[r#"
-            TokenUpdate(
-                TokenUpdateTransactionBody {
-                    token: Some(
-                        TokenId {
-                            shard_num: 4,
-                            realm_num: 2,
-                            token_num: 0,
-                        },
-                    ),
-                    symbol: "test symbol",
-                    name: "test name",
-                    treasury: Some(
-                        AccountId {
-                            shard_num: 7,
-                            realm_num: 7,
-                            account: Some(
-                                AccountNum(
-                                    7,
-                                ),
-                            ),
-                        },
-                    ),
-                    admin_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        218,
-                                        135,
-                                        112,
-                                        16,
-                                        151,
-                                        134,
-                                        110,
-                                        115,
-                                        240,
-                                        221,
-                                        148,
-                                        44,
-                                        187,
-                                        62,
-                                        151,
-                                        6,
-                                        51,
-                                        41,
-                                        249,
-                                        5,
-                                        88,
-                                        134,
-                                        33,
-                                        177,
-                                        120,
-                                        210,
-                                        23,
-                                        89,
-                                        104,
-                                        141,
-                                        71,
-                                        252,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                    kyc_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        251,
-                                        136,
-                                        179,
-                                        55,
-                                        223,
-                                        215,
-                                        101,
-                                        97,
-                                        123,
-                                        228,
-                                        50,
-                                        42,
-                                        231,
-                                        239,
-                                        133,
-                                        51,
-                                        214,
-                                        30,
-                                        100,
-                                        131,
-                                        5,
-                                        14,
-                                        32,
-                                        236,
-                                        72,
-                                        69,
-                                        165,
-                                        51,
-                                        189,
-                                        220,
-                                        164,
-                                        177,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                    freeze_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        61,
-                                        237,
-                                        83,
-                                        227,
-                                        34,
-                                        51,
-                                        83,
-                                        47,
-                                        61,
-                                        132,
-                                        98,
-                                        50,
-                                        76,
-                                        209,
-                                        19,
-                                        171,
-                                        190,
-                                        79,
-                                        115,
-                                        33,
-                                        109,
-                                        240,
-                                        109,
-                                        84,
-                                        161,
-                                        28,
-                                        182,
-                                        145,
-                                        193,
-                                        91,
-                                        39,
-                                        205,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                    wipe_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        82,
-                                        91,
-                                        156,
-                                        21,
-                                        95,
-                                        144,
-                                        43,
-                                        145,
-                                        45,
-                                        189,
-                                        129,
-                                        190,
-                                        166,
-                                        212,
-                                        58,
-                                        7,
-                                        125,
-                                        122,
-                                        98,
-                                        221,
-                                        31,
-                                        239,
-                                        207,
-                                        199,
-                                        125,
-                                        233,
-                                        97,
-                                        68,
-                                        213,
-                                        250,
-                                        195,
-                                        238,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                    supply_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        59,
-                                        145,
-                                        56,
-                                        83,
-                                        175,
-                                        165,
-                                        155,
-                                        85,
-                                        171,
-                                        197,
-                                        129,
-                                        194,
-                                        172,
-                                        13,
-                                        54,
-                                        88,
-                                        10,
-                                        194,
-                                        236,
-                                        164,
-                                        189,
-                                        16,
-                                        28,
-                                        2,
-                                        23,
-                                        63,
-                                        239,
-                                        2,
-                                        230,
-                                        119,
-                                        221,
-                                        213,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                    auto_renew_account: Some(
-                        AccountId {
-                            shard_num: 8,
-                            realm_num: 8,
-                            account: Some(
-                                AccountNum(
-                                    8,
-                                ),
-                            ),
-                        },
-                    ),
-                    auto_renew_period: None,
-                    expiry: Some(
-                        Timestamp {
-                            seconds: 1554158542,
-                            nanos: 0,
-                        },
-                    ),
-                    memo: Some(
-                        "test memo",
-                    ),
-                    fee_schedule_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        75,
-                                        190,
-                                        149,
-                                        168,
-                                        109,
-                                        36,
-                                        248,
-                                        249,
-                                        103,
-                                        115,
-                                        177,
-                                        40,
-                                        38,
-                                        252,
-                                        190,
-                                        0,
-                                        150,
-                                        136,
-                                        203,
-                                        13,
-                                        202,
-                                        136,
-                                        207,
-                                        241,
-                                        23,
-                                        163,
-                                        168,
-                                        175,
-                                        80,
-                                        195,
-                                        113,
-                                        19,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                    pause_key: Some(
-                        Key {
-                            key: Some(
-                                Ed25519(
-                                    [
-                                        209,
-                                        104,
-                                        101,
-                                        169,
-                                        140,
-                                        248,
-                                        176,
-                                        183,
-                                        248,
-                                        250,
-                                        55,
-                                        118,
-                                        178,
-                                        13,
-                                        175,
-                                        197,
-                                        190,
-                                        4,
-                                        255,
-                                        235,
-                                        154,
-                                        36,
-                                        151,
-                                        114,
-                                        7,
-                                        131,
-                                        206,
-                                        153,
-                                        30,
-                                        43,
-                                        25,
-                                        116,
-                                    ],
-                                ),
-                            ),
-                        },
-                    ),
-                },
-            )
-        "#]]
-        .assert_debug_eq(&tx);
+        expect_file!["./snapshots/token_update_transaction/serialize.txt"].assert_debug_eq(&tx);
     }
 
     #[test]
@@ -907,6 +638,9 @@ mod tests {
             memo: Some(TEST_TOKEN_MEMO.to_owned()),
             fee_schedule_key: Some(test_fee_schedule_key().to_protobuf()),
             pause_key: Some(test_pause_key().to_protobuf()),
+            metadata: Some(TEST_METADATA.to_owned().into()),
+            metadata_key: Some(test_metadata_key().to_protobuf()),
+            key_verification_mode: TEST_KEY_VERIFICATION_MODE.to_protobuf().into(),
         };
 
         let tx = TokenUpdateTransactionData::from_protobuf(tx).unwrap();
@@ -923,9 +657,12 @@ mod tests {
         assert_eq!(tx.auto_renew_account_id, Some(TEST_AUTO_RENEW_ACCOUNT_ID));
         assert_eq!(tx.auto_renew_period, Some(TEST_AUTO_RENEW_PERIOD));
         assert_eq!(tx.expiration_time, Some(TEST_EXPIRATION_TIME));
-        assert_eq!(tx.token_memo, TEST_TOKEN_MEMO);
+        assert_eq!(tx.token_memo, Some(TEST_TOKEN_MEMO.into()));
         assert_eq!(tx.fee_schedule_key, Some(test_fee_schedule_key().into()));
         assert_eq!(tx.pause_key, Some(test_pause_key().into()));
+        assert_eq!(tx.metadata, Some(TEST_METADATA.as_bytes().into()));
+        assert_eq!(tx.metadata_key, Some(test_metadata_key().into()));
+        assert_eq!(tx.key_verification_mode, TEST_KEY_VERIFICATION_MODE);
     }
 
     #[test]
@@ -1099,15 +836,15 @@ mod tests {
     #[test]
     fn get_set_token_memo() {
         let mut tx = TokenUpdateTransaction::new();
-        tx.token_memo(TEST_TOKEN_MEMO);
-        assert_eq!(tx.get_token_memo(), TEST_TOKEN_MEMO);
+        tx.token_memo(Some(TEST_TOKEN_MEMO));
+        assert_eq!(tx.get_token_memo(), Some(TEST_TOKEN_MEMO));
     }
 
     #[test]
     #[should_panic]
     fn get_set_token_memo_frozen_panic() {
         let mut tx = make_transaction();
-        tx.token_memo(TEST_TOKEN_MEMO);
+        tx.token_memo(Some(TEST_TOKEN_MEMO));
     }
 
     #[test]
@@ -1136,5 +873,47 @@ mod tests {
     fn get_set_pause_key_frozen_panic() {
         let mut tx = make_transaction();
         tx.pause_key(test_pause_key());
+    }
+
+    #[test]
+    fn get_set_metadata() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.metadata(TEST_METADATA.as_bytes().to_vec());
+        assert_eq!(tx.get_metadata(), Some(TEST_METADATA.as_bytes().to_vec()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_metadata_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.metadata(TEST_METADATA.as_bytes().to_vec());
+    }
+
+    #[test]
+    fn get_set_metadata_key() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.metadata_key(test_metadata_key());
+        assert_eq!(tx.get_metadata_key(), Some(&test_metadata_key().into()));
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_metadata_key_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.metadata_key(test_metadata_key());
+    }
+
+    #[test]
+    fn get_set_key_verification_mode() {
+        let mut tx = TokenUpdateTransaction::new();
+        tx.key_verification_mode(TokenKeyValidation::NoValidation);
+        assert_eq!(tx.get_key_verification_mode(), TokenKeyValidation::NoValidation);
+    }
+
+    #[test]
+    #[should_panic]
+    fn get_set_key_verification_mode_frozen_panic() {
+        let mut tx = make_transaction();
+        tx.key_verification_mode(TokenKeyValidation::NoValidation);
     }
 }

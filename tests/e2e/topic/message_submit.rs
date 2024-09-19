@@ -78,13 +78,11 @@ async fn missing_topic_id_fails() -> anyhow::Result<()> {
         .max_chunks(15)
         .message(resources::BIG_CONTENTS)
         .execute(&client)
-        .await?
-        .get_receipt(&client)
         .await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidTopicId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTopicId, .. })
     );
 
     Ok(())
@@ -98,19 +96,11 @@ async fn missing_message_fails() -> anyhow::Result<()> {
 
     let topic = Topic::create(&client).await?;
 
-    let res = TopicMessageSubmitTransaction::new()
-        .topic_id(topic.id)
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await;
+    let res = TopicMessageSubmitTransaction::new().topic_id(topic.id).execute(&client).await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::InvalidTopicMessage,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTopicMessage, .. })
     );
 
     topic.delete(&client).await?;

@@ -63,7 +63,7 @@ pub struct ContractUpdateTransactionData {
 
     contract_memo: Option<String>,
 
-    max_automatic_token_associations: Option<u32>,
+    max_automatic_token_associations: Option<i32>,
 
     auto_renew_account_id: Option<AccountId>,
 
@@ -138,12 +138,12 @@ impl ContractUpdateTransaction {
 
     /// Returns the maximum number of tokens that this contract can be automatically associated with.
     #[must_use]
-    pub fn get_max_automatic_token_associations(&self) -> Option<u32> {
+    pub fn get_max_automatic_token_associations(&self) -> Option<i32> {
         self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that this contract can be automatically associated with.
-    pub fn max_automatic_token_associations(&mut self, max: u32) -> &mut Self {
+    pub fn max_automatic_token_associations(&mut self, max: i32) -> &mut Self {
         self.data_mut().max_automatic_token_associations = Some(max);
         self
     }
@@ -268,9 +268,7 @@ impl FromProtobuf<services::ContractUpdateTransactionBody> for ContractUpdateTra
             contract_memo: pb.memo_field.map(|it| match it {
                 MemoField::Memo(it) | MemoField::MemoWrapper(it) => it,
             }),
-            max_automatic_token_associations: pb
-                .max_automatic_token_associations
-                .map(|it| it as u32),
+            max_automatic_token_associations: pb.max_automatic_token_associations,
             auto_renew_account_id: Option::from_protobuf(pb.auto_renew_account_id)?,
             proxy_account_id: Option::from_protobuf(pb.proxy_account_id)?,
             staked_id: Option::from_protobuf(pb.staked_id)?,
@@ -365,7 +363,7 @@ mod tests {
 
     const CONTRACT_ID: ContractId = ContractId::new(0, 0, 5007);
 
-    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u32 = 101;
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: i32 = 101;
     const AUTO_RENEW_PERIOD: Duration = Duration::days(1);
     const CONTRACT_MEMO: &str = "3";
     const EXPIRATION_TIME: OffsetDateTime =
@@ -693,7 +691,7 @@ mod tests {
             admin_key: Some(admin_key().to_protobuf()),
             proxy_account_id: Some(PROXY_ACCOUNT_ID.to_protobuf()),
             auto_renew_period: Some(AUTO_RENEW_PERIOD.to_protobuf()),
-            max_automatic_token_associations: Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS as _),
+            max_automatic_token_associations: Some(MAX_AUTOMATIC_TOKEN_ASSOCIATIONS),
             auto_renew_account_id: Some(AUTO_RENEW_ACCOUNT_ID.to_protobuf()),
             decline_reward: None,
             memo_field: Some(services::contract_update_transaction_body::MemoField::MemoWrapper(

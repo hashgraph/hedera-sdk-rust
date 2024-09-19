@@ -403,6 +403,33 @@ pub enum RequestType {
 
     /// Execute a PRNG transaction.
     UtilPrng,
+
+    /// Get a record for a transaction.
+    TransactionGetFastRecord,
+
+    /// Update the metadata of one or more NFT's of a specific token type.
+    TokenUpdateNfts,
+
+    /// Create a new node.
+    NodeCreate,
+
+    /// Update an existing node.
+    NodeUpdate,
+
+    /// Delete a node.
+    NodeDelete,
+
+    /// Reject tokens.
+    TokenReject,
+
+    /// Airdrop tokens.
+    TokenAirdrop,
+
+    /// Claim airdrop tokens.
+    TokenClaimAirdrop,
+
+    /// Cancel airdrop tokens.
+    TokenCancelAirdrop,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -482,6 +509,15 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::EthereumTransaction => Self::EthereumTransaction,
             HederaFunctionality::NodeStakeUpdate => Self::NodeStakeUpdate,
             HederaFunctionality::UtilPrng => Self::UtilPrng,
+            HederaFunctionality::TransactionGetFastRecord => Self::TransactionGetFastRecord,
+            HederaFunctionality::TokenUpdateNfts => Self::TokenUpdateNfts,
+            HederaFunctionality::NodeCreate => Self::NodeCreate,
+            HederaFunctionality::NodeUpdate => Self::NodeUpdate,
+            HederaFunctionality::NodeDelete => Self::NodeDelete,
+            HederaFunctionality::TokenReject => Self::TokenReject,
+            HederaFunctionality::TokenAirdrop => Self::TokenAirdrop,
+            HederaFunctionality::TokenClaimAirdrop => Self::TokenClaimAirdrop,
+            HederaFunctionality::TokenCancelAirdrop => Self::TokenCancelAirdrop,
         };
 
         Ok(value)
@@ -567,6 +603,15 @@ impl ToProtobuf for RequestType {
             Self::EthereumTransaction => HederaFunctionality::EthereumTransaction,
             Self::NodeStakeUpdate => HederaFunctionality::NodeStakeUpdate,
             Self::UtilPrng => HederaFunctionality::UtilPrng,
+            Self::TransactionGetFastRecord => HederaFunctionality::TransactionGetFastRecord,
+            Self::TokenUpdateNfts => HederaFunctionality::TokenUpdateNfts,
+            Self::NodeCreate => HederaFunctionality::NodeCreate,
+            Self::NodeUpdate => HederaFunctionality::NodeUpdate,
+            Self::NodeDelete => HederaFunctionality::NodeDelete,
+            Self::TokenReject => HederaFunctionality::TokenReject,
+            Self::TokenAirdrop => HederaFunctionality::TokenAirdrop,
+            Self::TokenClaimAirdrop => HederaFunctionality::TokenClaimAirdrop,
+            Self::TokenCancelAirdrop => HederaFunctionality::TokenCancelAirdrop,
         }
     }
 }

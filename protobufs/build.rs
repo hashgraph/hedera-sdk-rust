@@ -26,6 +26,8 @@ use std::fs::{
 };
 use std::path::Path;
 
+use regex::RegexBuilder;
+
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
 const DERIVE_EQ_HASH_COPY: &str = "#[derive(Copy, Eq, Hash)]";
 const SERVICES_FOLDER: &str = "./protobufs/services";
@@ -40,14 +42,45 @@ fn main() -> anyhow::Result<()> {
         anyhow::bail!("Folder {SERVICES_FOLDER} does not exist; do you need to `git submodule update --init`?");
     }
 
-    let services: Vec<_> = read_dir(services_path)?
+    let out_dir = env::var("OUT_DIR")?;
+    let out_path = Path::new(&out_dir);
+    let services_tmp_path = out_path.join("services_src");
+
+    // ensure we start fresh
+    let _ = fs::remove_dir_all(&services_tmp_path);
+
+    create_dir_all(&services_tmp_path)?;
+
+    // copy over services into our tmp path so we can edit
+    fs_extra::copy_items(
+        &[services_path],
+        &out_path,
+        &fs_extra::dir::CopyOptions::new().overwrite(true).copy_inside(false),
+    )?;
+    fs::rename(out_path.join("services"), &services_tmp_path)?;
+
+    let services: Vec<_> = read_dir(&services_tmp_path)?
         .filter_map(|entry| {
             let entry = entry.ok()?;
             entry.file_type().ok()?.is_file().then(|| entry.path())
         })
         .collect();
 
-    let mut cfg = tonic_build::configure().build_server(cfg!(feature = "server"));
+    // iterate through each file
+    let re_package = RegexBuilder::new(r"^package (.*);$").multi_line(true).build()?;
+    for service in &services {
+        let contents = fs::read_to_string(service)?;
+
+        // ensure that every `package _` entry is `package proto;`
+        let contents = re_package.replace(&contents, "package proto;");
+
+        // remove com.hedera.hapi.node.addressbook. prefix
+        let contents = contents.replace("com.hedera.hapi.node.addressbook.", "");
+
+        fs::write(service, &*contents)?;
+    }
+
+    let mut cfg = tonic_build::configure();
 
     // most of the protobufs in "basic types" should be Eq + Hash + Copy
     // any protobufs that would typically be used as parameter, that meet the requirements of those
@@ -98,7 +131,7 @@ fn main() -> anyhow::Result<()> {
      "]"#,
     );
 
-    cfg.compile(&services, &["./protobufs/services/"])?;
+    cfg.compile(&services, &[services_tmp_path])?;
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
@@ -211,6 +244,7 @@ fn main() -> anyhow::Result<()> {
         .services_same("TokenUnfreezeAccountTransactionBody")
         .services_same("TokenUnpauseTransactionBody")
         .services_same("TokenUpdateTransactionBody")
+        .services_same("TokenUpdateNftsTransactionBody")
         .services_same("TokenWipeAccountTransactionBody")
         .services_same("Transaction")
         .services_same("TransactionBody")

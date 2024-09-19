@@ -98,10 +98,7 @@ async fn over_supply_limit_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus {
-            status: Status::TokenMaxSupplyReached,
-            transaction_id: _
-        })
+        Err(hedera::Error::ReceiptStatus { status: Status::TokenMaxSupplyReached, .. })
     );
 
     token.delete(&client).await?;
@@ -120,10 +117,7 @@ async fn missing_token_id_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::InvalidTokenId,
-            transaction_id: _
-        })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidTokenId, .. })
     );
 
     Ok(())
@@ -186,7 +180,7 @@ async fn missing_supply_key_sig_fails() -> anyhow::Result<()> {
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, transaction_id: _ })
+        Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
 
     token.delete(&client).await?;
@@ -275,15 +269,11 @@ async fn nft_metadata_too_long_fails() -> anyhow::Result<()> {
         .metadata([[1; 101]])
         .sign(account.key.clone())
         .execute(&client)
+        .await?
+        .get_receipt(&client)
         .await;
 
-    assert_matches!(
-        res,
-        Err(hedera::Error::TransactionPreCheckStatus {
-            status: Status::MetadataTooLong,
-            transaction_id: _
-        })
-    );
+    assert_matches!(res, Err(hedera::Error::ReceiptStatus { status: Status::MetadataTooLong, .. }));
 
     token.delete(&client).await?;
     account.delete(&client).await?;

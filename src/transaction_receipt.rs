@@ -105,6 +105,10 @@ pub struct TransactionReceipt {
     /// The receipts (if any) of all child transactions spawned by the transaction with the
     /// given top-level id, in consensus order.
     pub children: Vec<TransactionReceipt>,
+
+    /// In the receipt of a NodeCreate, NodeUpdate, NodeDelete, the id of the newly created node.
+    /// An affected node identifier.
+    pub node_id: u64,
 }
 
 impl TransactionReceipt {
@@ -144,8 +148,7 @@ impl TransactionReceipt {
         children: Vec<Self>,
         transaction_id: Option<&TransactionId>,
     ) -> crate::Result<Self> {
-        let status = Status::from_i32(receipt.status)
-            .ok_or(Error::ResponseStatusUnrecognized(receipt.status))?;
+        let status = Status::try_from(receipt.status).unwrap_or_default();
 
         let account_id = Option::from_protobuf(receipt.account_id)?;
         let file_id = Option::from_protobuf(receipt.file_id)?;
@@ -177,6 +180,7 @@ impl TransactionReceipt {
             duplicates,
             children,
             transaction_id: transaction_id.copied(),
+            node_id: receipt.node_id,
         })
     }
 
@@ -233,6 +237,7 @@ impl ToProtobuf for TransactionReceipt {
             schedule_id: self.schedule_id.to_protobuf(),
             scheduled_transaction_id: self.scheduled_transaction_id.to_protobuf(),
             serial_numbers: self.serials.clone(),
+            node_id: self.node_id,
         }
     }
 }
@@ -273,6 +278,7 @@ mod tests {
             serials: Vec::from([1, 2, 3]),
             duplicates: Vec::new(),
             children: Vec::new(),
+            node_id: 1,
         }
     }
 
@@ -382,6 +388,7 @@ mod tests {
                     2,
                     3,
                 ],
+                node_id: 1,
             }
         "#]]
         .assert_debug_eq(&make_receipt().to_protobuf())

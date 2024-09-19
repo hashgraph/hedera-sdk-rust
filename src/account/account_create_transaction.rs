@@ -82,7 +82,8 @@ pub struct AccountCreateTransactionData {
     /// The maximum number of tokens that an Account can be implicitly associated with.
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
-    max_automatic_token_associations: u16,
+    /// If the value is set to `-1`, unlimited automatic token associations are allowed.
+    max_automatic_token_associations: i32,
 
     // notably *not* a PublicKey.
     /// A 20-byte EVM address to be used as the account's alias.
@@ -201,12 +202,12 @@ impl AccountCreateTransaction {
     ///
     /// Defaults to `0`. Allows up to a maximum value of `1000`.
     #[must_use]
-    pub fn get_max_automatic_token_associations(&self) -> u16 {
+    pub fn get_max_automatic_token_associations(&self) -> i32 {
         self.data().max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that an Account can be implicitly associated with.
-    pub fn max_automatic_token_associations(&mut self, amount: u16) -> &mut Self {
+    pub fn max_automatic_token_associations(&mut self, amount: i32) -> &mut Self {
         self.data_mut().max_automatic_token_associations = amount;
         self
     }
@@ -326,7 +327,7 @@ impl FromProtobuf<services::CryptoCreateTransactionBody> for AccountCreateTransa
             auto_renew_period: pb.auto_renew_period.map(Into::into),
             auto_renew_account_id: None,
             account_memo: pb.memo,
-            max_automatic_token_associations: pb.max_automatic_token_associations as u16,
+            max_automatic_token_associations: pb.max_automatic_token_associations,
             alias,
             staked_id: Option::from_protobuf(pb.staked_id)?,
             decline_staking_reward: pb.decline_reward,
@@ -410,7 +411,7 @@ mod tests {
     const STAKED_ACCOUNT_ID: AccountId = AccountId::new(0, 0, 3);
     const STAKED_NODE_ID: u64 = 4;
     const ALIAS: EvmAddress = EvmAddress(hex!("5c562e90feaf0eebd33ea75d21024f249d451417"));
-    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: u16 = 100;
+    const MAX_AUTOMATIC_TOKEN_ASSOCIATIONS: i32 = 100;
 
     fn make_transaction() -> AccountCreateTransaction {
         let mut tx = AccountCreateTransaction::new_for_tests();
@@ -699,7 +700,7 @@ mod tests {
             realm_id: None,
             new_realm_admin_key: None,
             memo: ACCOUNT_MEMO.to_owned(),
-            max_automatic_token_associations: MAX_AUTOMATIC_TOKEN_ASSOCIATIONS as i32,
+            max_automatic_token_associations: MAX_AUTOMATIC_TOKEN_ASSOCIATIONS,
             decline_reward: false,
             alias: ALIAS.to_bytes().to_vec(),
             staked_id: Some(services::crypto_create_transaction_body::StakedId::StakedAccountId(

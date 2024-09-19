@@ -86,7 +86,7 @@ async fn transfer_after_allowance_remove_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::ReceiptStatus {
             status: hedera::Status::SpenderDoesNotHaveAllowance,
-            transaction_id: _
+            ..
         })
     );
 

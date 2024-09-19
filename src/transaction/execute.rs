@@ -129,6 +129,12 @@ where
 
 /// Pre-execute associated fields for transaction data.
 pub trait TransactionData: Clone + Into<AnyTransactionData> {
+    /// Whether this transaction is intended to be executed to return a cost estimate.
+    #[doc(hidden)]
+    fn for_cost_estimate(&self) -> bool {
+        false
+    }
+
     /// Returns the maximum allowed transaction fee if none is specified.
     ///
     /// Specifically, this default will be used in the following case:
@@ -231,9 +237,11 @@ where
         &self,
         status: crate::Status,
         transaction_id: Option<&TransactionId>,
+        response: Self::GrpcResponse,
     ) -> crate::Error {
         crate::Error::TransactionPreCheckStatus {
             status,
+            cost: (response.cost != 0).then(|| Hbar::from_tinybars(response.cost as i64)),
             transaction_id: Box::new(
                 *transaction_id.expect("transactions must have transaction IDs"),
             ),
@@ -269,10 +277,14 @@ where
         assert!(self.is_frozen());
         let data = self.body.data.to_transaction_data_protobuf(chunk_info);
 
-        let max_transaction_fee = self
-            .body
-            .max_transaction_fee
-            .unwrap_or_else(|| self.body.data.default_max_transaction_fee());
+        let transaction_fee = if self.body.data.for_cost_estimate() {
+            0
+        } else {
+            self.body
+                .max_transaction_fee
+                .unwrap_or_else(|| self.body.data.default_max_transaction_fee())
+                .to_tinybars() as u64
+        };
 
         services::TransactionBody {
             data: Some(data),
@@ -286,7 +298,7 @@ where
             memo: self.body.transaction_memo.clone(),
             node_account_id: Some(chunk_info.node_account_id.to_protobuf()),
             generate_record: false,
-            transaction_fee: max_transaction_fee.to_tinybars() as u64,
+            transaction_fee,
         }
     }
 }
@@ -427,8 +439,9 @@ impl<'a, D: TransactionExecute> Execute for SourceTransactionExecuteView<'a, D> 
         &self,
         status: crate::Status,
         transaction_id: Option<&TransactionId>,
+        response: Self::GrpcResponse,
     ) -> crate::Error {
-        self.transaction.make_error_pre_check(status, transaction_id)
+        self.transaction.make_error_pre_check(status, transaction_id, response)
     }
 
     fn response_pre_check_status(response: &Self::GrpcResponse) -> crate::Result<i32> {

@@ -162,6 +162,7 @@ where
         &self,
         status: crate::Status,
         transaction_id: Option<&TransactionId>,
+        _response: Self::GrpcResponse,
     ) -> crate::Error {
         if let Some(transaction_id) = self.data.transaction_id() {
             crate::Error::QueryPreCheckStatus { status, transaction_id: Box::new(transaction_id) }

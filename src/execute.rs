@@ -17,10 +17,10 @@
  * limitations under the License.
  * ‍
  */
+mod error;
 
 use std::any::type_name;
 use std::borrow::Cow;
-use std::error::Error as StdError;
 use std::ops::ControlFlow;
 use std::time::{
     Duration,
@@ -41,6 +41,7 @@ use tonic::transport::Channel;
 use triomphe::Arc;
 
 use crate::client::NetworkData;
+use crate::execute::error::is_hyper_canceled;
 use crate::ping_query::PingQuery;
 use crate::{
     client,
@@ -130,6 +131,7 @@ pub(crate) trait Execute: ValidateChecksums {
         &self,
         status: Status,
         transaction_id: Option<&TransactionId>,
+        response: Self::GrpcResponse,
     ) -> crate::Error;
 
     /// Extract the pre-check status from the GRPC response.
@@ -273,7 +275,12 @@ where
                     match &tmp {
                         Ok(ControlFlow::Break(_)) => log::Level::Debug,
                         Ok(ControlFlow::Continue(_)) => log::Level::Warn,
-                        Err(_) => log::Level::Error,
+                        Err(e) =>
+                            if e.is_transient() {
+                                log::Level::Warn
+                            } else {
+                                log::Level::Error
+                            },
                     },
                     "Execution of {} on node at index {node_index} / node id {} {}",
                     type_name::<E>(),
@@ -312,17 +319,6 @@ fn map_tonic_error(
     node_index: usize,
     request_free: bool,
 ) -> retry::Error {
-    /// punches through all the layers of `tonic::Status` sources to check if this is a `hyper::Error` that is canceled.
-
-    fn is_hyper_canceled(status: &tonic::Status) -> bool {
-        status
-            .source()
-            .and_then(|it| it.downcast_ref::<tonic::transport::Error>())
-            .and_then(StdError::source)
-            .and_then(|it| it.downcast_ref::<hyper::Error>())
-            .is_some_and(hyper::Error::is_canceled)
-    }
-
     const MIME_HTML: &[u8] = b"text/html";
 
     match status.code() {
@@ -375,13 +371,19 @@ async fn execute_single<E: Execute + Sync>(
     let (node_account_id, channel) = ctx.network.channel(node_index);
 
     log::debug!(
-        "Executing {} on node at index {node_index} / node id {node_account_id}",
+        "Preparing {} on node at index {node_index} / node id {node_account_id}",
         type_name::<E>()
     );
 
     let (request, context) = executable
         .make_request(transaction_id.as_ref(), node_account_id)
-        .map_err(crate::retry::Error::Permanent)?;
+        // Does not represent a network error or error returned by a node
+        .map_err(retry::Error::Permanent)?;
+
+    log::debug!(
+        "Executing {} on node at index {node_index} / node id {node_account_id}",
+        type_name::<E>()
+    );
 
     let fut = executable.execute(channel, request);
 
@@ -416,13 +418,13 @@ async fn execute_single<E: Execute + Sync>(
     let status = E::response_pre_check_status(&response)
         .and_then(|status| {
             // not sure how to proceed, fail immediately
-            Status::from_i32(status).ok_or_else(|| Error::ResponseStatusUnrecognized(status))
+            Status::try_from(status).or_else(|_| Err(Error::ResponseStatusUnrecognized(status)))
         })
         .map_err(retry::Error::Permanent)?;
 
     match status {
         Status::Ok if executable.should_retry(&response) => Err(retry::Error::Transient(
-            executable.make_error_pre_check(status, transaction_id.as_ref()),
+            executable.make_error_pre_check(status, transaction_id.as_ref(), response),
         )),
 
         Status::Ok => executable
@@ -433,9 +435,11 @@ async fn execute_single<E: Execute + Sync>(
         Status::Busy | Status::PlatformNotActive => {
             // NOTE: this is a "busy" node
             // try the next node in our allowed list, immediately
-            Ok(ControlFlow::Continue(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Ok(ControlFlow::Continue(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
 
         // would do an `if_let` but, not stable ._.
@@ -447,23 +451,29 @@ async fn execute_single<E: Execute + Sync>(
 
             *transaction_id = Some(new);
 
-            Ok(ControlFlow::Continue(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Ok(ControlFlow::Continue(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
 
         _ if executable.should_retry_pre_check(status) => {
             // conditional retry on pre-check should back-off and try again
-            Err(retry::Error::Transient(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Err(retry::Error::Transient(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
 
         _ => {
             // any other pre-check is an error that the user needs to fix, fail immediately
-            Err(retry::Error::Permanent(
-                executable.make_error_pre_check(status, transaction_id.as_ref()),
-            ))
+            Err(retry::Error::Permanent(executable.make_error_pre_check(
+                status,
+                transaction_id.as_ref(),
+                response,
+            )))
         }
     }
 }

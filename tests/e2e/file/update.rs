@@ -86,10 +86,7 @@ async fn immutable_file_fails() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await;
 
-    assert_matches!(
-        res,
-        Err(hedera::Error::ReceiptStatus { status: Status::Unauthorized, transaction_id: _ })
-    );
+    assert_matches!(res, Err(hedera::Error::ReceiptStatus { status: Status::Unauthorized, .. }));
 
     Ok(())
 }
@@ -100,16 +97,11 @@ async fn missing_file_id_fails() -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let res = FileUpdateTransaction::new()
-        .contents(b"contents".to_vec())
-        .execute(&client)
-        .await?
-        .get_receipt(&client)
-        .await;
+    let res = FileUpdateTransaction::new().contents(b"contents".to_vec()).execute(&client).await;
 
     assert_matches!(
         res,
-        Err(hedera::Error::ReceiptStatus { status: Status::InvalidFileId, transaction_id: _ })
+        Err(hedera::Error::TransactionPreCheckStatus { status: Status::InvalidFileId, .. })
     );
 
     Ok(())

@@ -161,14 +161,14 @@ impl ContractCreateFlow {
 
     /// Retunrs the maximum number of tokens that the contract can be automatically associated with.
     #[must_use]
-    pub fn get_max_automatic_token_associations(&self) -> u32 {
+    pub fn get_max_automatic_token_associations(&self) -> i32 {
         self.contract_data.max_automatic_token_associations
     }
 
     /// Sets the maximum number of tokens that the contract can be automatically associated with.
     pub fn max_automatic_token_associations(
         &mut self,
-        max_automatic_token_associations: u32,
+        max_automatic_token_associations: i32,
     ) -> &mut Self {
         self.contract_data.max_automatic_token_associations = max_automatic_token_associations;
 
@@ -382,7 +382,7 @@ struct ContractData {
     constructor_parameters: Vec<u8>,
     gas: u64,
     initial_balance: Hbar,
-    max_automatic_token_associations: u32,
+    max_automatic_token_associations: i32,
     decline_staking_reward: bool,
     admin_key: Option<Key>,
     //  proxy_account_id: Option<AccountId>

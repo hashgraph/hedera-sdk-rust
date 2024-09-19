@@ -6,6 +6,7 @@ use hedera::{
     PublicKey,
 };
 
+mod bytecode;
 mod create;
 mod create_flow;
 mod delete;
