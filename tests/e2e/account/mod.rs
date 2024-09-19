@@ -48,4 +48,23 @@ impl Account {
 
         Ok(())
     }
+
+    pub async fn create_with_max_associations(
+        max_automatic_token_associations: i32,
+        account_key: &PrivateKey,
+        client: &hedera::Client,
+    ) -> hedera::Result<Self> {
+        let receipt = hedera::AccountCreateTransaction::new()
+            .key(account_key.public_key())
+            .initial_balance(Hbar::new(10))
+            .max_automatic_token_associations(max_automatic_token_associations)
+            .execute(client)
+            .await?
+            .get_receipt(client)
+            .await?;
+
+        let account_id = receipt.account_id.unwrap();
+
+        Ok(Account { key: account_key.clone(), id: account_id })
+    }
 }

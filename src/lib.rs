@@ -140,6 +140,8 @@ mod network_version_info_query;
 mod node_address;
 mod node_address_book;
 mod node_address_book_query;
+mod pending_airdrop_id;
+mod pending_airdrop_record;
 mod ping_query;
 mod prng_transaction;
 mod query;
@@ -270,6 +272,7 @@ pub use node_address::NodeAddress;
 pub use node_address_book::NodeAddressBook;
 pub use node_address_book_query::NodeAddressBookQuery;
 pub(crate) use node_address_book_query::NodeAddressBookQueryData;
+pub use pending_airdrop_record::PendingAirdropRecord;
 pub use prng_transaction::PrngTransaction;
 pub(crate) use protobuf::{
     FromProtobuf,
@@ -310,9 +313,12 @@ pub use token::{
     NftId,
     RoyaltyFee,
     RoyaltyFeeData,
+    TokenAirdropTransaction,
     TokenAssociateTransaction,
     TokenAssociation,
     TokenBurnTransaction,
+    TokenCancelAirdropTransaction,
+    TokenClaimAirdropTransaction,
     TokenCreateTransaction,
     TokenDeleteTransaction,
     TokenDissociateTransaction,

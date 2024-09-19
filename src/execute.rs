@@ -17,10 +17,10 @@
  * limitations under the License.
  * ‍
  */
+mod error;
 
 use std::any::type_name;
 use std::borrow::Cow;
-use std::error::Error as StdError;
 use std::ops::ControlFlow;
 use std::time::{
     Duration,
@@ -41,6 +41,7 @@ use tonic::transport::Channel;
 use triomphe::Arc;
 
 use crate::client::NetworkData;
+use crate::execute::error::is_hyper_canceled;
 use crate::ping_query::PingQuery;
 use crate::{
     client,
@@ -274,7 +275,12 @@ where
                     match &tmp {
                         Ok(ControlFlow::Break(_)) => log::Level::Debug,
                         Ok(ControlFlow::Continue(_)) => log::Level::Warn,
-                        Err(_) => log::Level::Error,
+                        Err(e) =>
+                            if e.is_transient() {
+                                log::Level::Warn
+                            } else {
+                                log::Level::Error
+                            },
                     },
                     "Execution of {} on node at index {node_index} / node id {} {}",
                     type_name::<E>(),
@@ -313,17 +319,6 @@ fn map_tonic_error(
     node_index: usize,
     request_free: bool,
 ) -> retry::Error {
-    /// punches through all the layers of `tonic::Status` sources to check if this is a `hyper::Error` that is canceled.
-
-    fn is_hyper_canceled(status: &tonic::Status) -> bool {
-        status
-            .source()
-            .and_then(|it| it.downcast_ref::<tonic::transport::Error>())
-            .and_then(StdError::source)
-            .and_then(|it| it.downcast_ref::<hyper::Error>())
-            .is_some_and(hyper::Error::is_canceled)
-    }
-
     const MIME_HTML: &[u8] = b"text/html";
 
     match status.code() {
@@ -376,13 +371,19 @@ async fn execute_single<E: Execute + Sync>(
     let (node_account_id, channel) = ctx.network.channel(node_index);
 
     log::debug!(
-        "Executing {} on node at index {node_index} / node id {node_account_id}",
+        "Preparing {} on node at index {node_index} / node id {node_account_id}",
         type_name::<E>()
     );
 
     let (request, context) = executable
         .make_request(transaction_id.as_ref(), node_account_id)
-        .map_err(crate::retry::Error::Permanent)?;
+        // Does not represent a network error or error returned by a node
+        .map_err(retry::Error::Permanent)?;
+
+    log::debug!(
+        "Executing {} on node at index {node_index} / node id {node_account_id}",
+        type_name::<E>()
+    );
 
     let fut = executable.execute(channel, request);
 
