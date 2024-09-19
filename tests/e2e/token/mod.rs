@@ -15,6 +15,9 @@ mod pause;
 mod reject;
 mod reject_flow;
 
+mod airdrop;
+mod cancel_airdrop;
+mod claim_airdrop;
 mod revoke_kyc;
 mod transfer;
 mod unfreeze;
@@ -101,6 +104,10 @@ pub(crate) struct FungibleToken {
     pub(crate) owner: Account,
 }
 
+pub(crate) const TEST_FUNGIBLE_INITIAL_BALANCE: &u64 = &1_000_000;
+pub(crate) const TEST_MINTED_NFTS: &u64 = &10;
+pub(crate) const TEST_AMOUNT: i64 = 100;
+
 impl FungibleToken {
     pub(crate) async fn create(
         client: &Client,
@@ -180,6 +187,36 @@ impl FungibleToken {
         };
 
         Ok(Self { id: token_id, owner: owner.clone() })
+    }
+
+    async fn create_ft(
+        client: &Client,
+        owner: &Account,
+        decimals: u32,
+    ) -> anyhow::Result<FungibleToken> {
+        let id = TokenCreateTransaction::new()
+            .name("ffff".to_string())
+            .symbol("F".to_string())
+            .token_memo("memo".to_string())
+            .decimals(decimals)
+            .initial_supply(1_000_000)
+            .max_supply(1_000_000)
+            .treasury_account_id(owner.id)
+            .token_supply_type(hedera::TokenSupplyType::Finite)
+            .admin_key(owner.key.public_key())
+            .freeze_key(owner.key.public_key())
+            .wipe_key(owner.key.public_key())
+            .supply_key(owner.key.public_key())
+            .metadata_key(owner.key.public_key())
+            .pause_key(owner.key.public_key())
+            .execute(&client)
+            .await?
+            .get_receipt(&client)
+            .await?
+            .token_id
+            .unwrap();
+
+        Ok(FungibleToken { id, owner: owner.clone() })
     }
 
     async fn burn(&self, client: &Client, supply: u64) -> hedera::Result<()> {

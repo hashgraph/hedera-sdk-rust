@@ -1115,6 +1115,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "hmac",
+ "hyper 0.14.30",
  "hyper 1.4.1",
  "k256",
  "log",
