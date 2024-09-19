@@ -80,7 +80,7 @@ features = ["ecdsa", "precomputed-tables", "std"]
 
 [dependencies.pkcs8]
 version = "0.10.0"
-default_features = false
+default-features = false
 features = ["encryption"]
 
 [dependencies.triomphe]

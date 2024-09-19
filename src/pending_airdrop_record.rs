@@ -18,6 +18,8 @@
  * ‍
  */
 
+use core::fmt;
+
 use hedera_proto::services;
 
 use crate::pending_airdrop_id::PendingAirdropId;
@@ -27,7 +29,7 @@ use crate::protobuf::{
 };
 
 /// A record of a new pending airdrop.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct PendingAirdropRecord {
     /// A unique, composite, identifier for a pending airdrop.
     /// This field is REQUIRED.
@@ -35,6 +37,26 @@ pub struct PendingAirdropRecord {
 
     /// A single pending airdrop amount.
     pub pending_airdrop_value: Option<u64>,
+}
+
+impl fmt::Debug for PendingAirdropRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PendingAirdropRecord")
+            .field("pending_airdrop_id", &self.pending_airdrop_id)
+            .field("pending_airdrop_value", &self.pending_airdrop_value)
+            .finish()
+    }
+}
+
+impl fmt::Display for PendingAirdropRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "PendingAirdropRecord {{ id: {}, value: {} }}",
+            self.pending_airdrop_id,
+            self.pending_airdrop_value.map_or_else(|| "None".to_string(), |v| v.to_string())
+        )
+    }
 }
 
 impl PendingAirdropRecord {
