@@ -192,6 +192,17 @@ impl FromProtobuf<services::TokenInfo> for TokenInfo {
         let treasury_account_id = pb_getf!(pb, treasury)?;
         let ledger_id = LedgerId::from_bytes(pb.ledger_id);
 
+        let expiry = if let Some(expiry) = pb.expiry {
+            // Hack to handle the case where None expiry is -9223372036854775808
+            if expiry.seconds == -9223372036854775808 {
+                None
+            } else {
+                expiry.into()
+            }
+        } else {
+            None
+        };
+
         Ok(Self {
             token_id: TokenId::from_protobuf(token_id)?,
             name: pb.name,
@@ -209,7 +220,7 @@ impl FromProtobuf<services::TokenInfo> for TokenInfo {
             is_deleted: pb.deleted,
             auto_renew_account: auto_renew_account_id,
             auto_renew_period: pb.auto_renew_period.map(Into::into),
-            expiration_time: pb.expiry.map(Into::into),
+            expiration_time: expiry.map(Into::into),
             token_memo: pb.memo,
             token_type,
             supply_type: token_supply_type,
