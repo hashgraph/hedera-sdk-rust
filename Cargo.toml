@@ -31,6 +31,10 @@ hedera-proto = { path = "./protobufs", version = "0.13.0", features = [
 ] }
 hex = "0.4.3"
 hmac = "0.12.1"
+# Dependency of tonic 0.11. Can be removed when tonic is upgraded to 0.12.
+hyper_0 = { package = "hyper", version = "0.14", default-features = false }
+# Dependency of tonic 0.12
+hyper = { version = "1.3.1", default-features = false }
 log = "0.4.17"
 num-bigint = "0.4.3"
 once_cell = "1.10.0"
@@ -52,7 +56,6 @@ parking_lot = "0.12.0"
 serde_json = { version = "1.0.96", optional = true }
 serde = { version = "1.0.163", optional = true }
 serde_derive = { version = "1.0.163", optional = true }
-hyper = { version = "1.3.1", default-features = false }
 pem = "3.0.1"
 cbc = "0.1.2"
 aes = "0.8.3"

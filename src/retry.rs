@@ -13,6 +13,16 @@ pub(crate) enum Error {
     EmptyTransient,
 }
 
+impl Error {
+    pub(crate) fn is_transient(&self) -> bool {
+        match self {
+            Error::Transient(_) => true,
+            Error::Permanent(_) => false,
+            Error::EmptyTransient => true,
+        }
+    }
+}
+
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 /// Durably retry some function according to the `backoff` until the backoff expires.
