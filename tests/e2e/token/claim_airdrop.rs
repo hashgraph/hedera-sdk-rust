@@ -72,8 +72,6 @@ async fn basic() -> anyhow::Result<()> {
         .get_record(&client)
         .await?;
 
-    println!("record: {record:?}");
-
     // Verify transaction record
     assert_eq!(record.pending_airdrop_records.len(), 3);
     assert_eq!(record.pending_airdrop_records.get(0).unwrap().pending_airdrop_value, Some(100));
@@ -123,6 +121,118 @@ async fn basic() -> anyhow::Result<()> {
 
     assert_eq!(operator_account_balance.tokens.get(&token.id), Some(&(999_900 as u64)));
     assert_eq!(operator_account_balance.tokens.get(&nft.id), Some(&(8 as u64)));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn claim_to_multiple_receivers() -> anyhow::Result<()> {
+    let Some(TestEnvironment { config, client }) = setup_nonfree() else {
+        return Ok(());
+    };
+
+    let operator_account = test_operator_account(&config).await?;
+
+    // Create a receiver1 with 0 auto associations
+    let receiver_key_1 = PrivateKey::generate_ed25519();
+    let receiver_account_1 =
+        Account::create_with_max_associations(0, &receiver_key_1, &client).await?;
+
+    // Create a receiver2 with 0 auto associations
+    let receiver_key_2 = PrivateKey::generate_ed25519();
+    let receiver_account_2 =
+        Account::create_with_max_associations(0, &receiver_key_2, &client).await?;
+
+    // Create a token and an NFT
+    let token = FungibleToken::create_ft(&client, &operator_account, 3).await?;
+    let nft = Nft::create(&client, &operator_account).await?;
+
+    // Mint Nfts
+    let mint_receipt = TokenMintTransaction::new()
+        .token_id(nft.id)
+        .metadata(repeat(vec![9, 1, 6]).take(10).collect::<Vec<Vec<_>>>())
+        .execute(&client)
+        .await?
+        .get_receipt(&client)
+        .await?;
+
+    let nft_serials = mint_receipt.serials;
+
+    // Airdrop the tokens to both
+    let mut binding = TokenAirdropTransaction::new();
+    let record = binding
+        .nft_transfer(
+            nft.id.nft(nft_serials[0].try_into().unwrap()),
+            operator_account.id,
+            receiver_account_1.id,
+        )
+        .nft_transfer(
+            nft.id.nft(nft_serials[1].try_into().unwrap()),
+            operator_account.id,
+            receiver_account_1.id,
+        )
+        .token_transfer(token.id, receiver_account_1.id, 100)
+        .token_transfer(token.id, operator_account.id, -100)
+        .nft_transfer(
+            nft.id.nft(nft_serials[2].try_into().unwrap()),
+            operator_account.id,
+            receiver_account_2.id,
+        )
+        .nft_transfer(
+            nft.id.nft(nft_serials[3].try_into().unwrap()),
+            operator_account.id,
+            receiver_account_2.id,
+        )
+        .token_transfer(token.id, receiver_account_2.id, 100)
+        .token_transfer(token.id, operator_account.id, -100)
+        .execute(&client)
+        .await?
+        .get_record(&client)
+        .await?;
+
+    // Verify the txn record
+    assert_eq!(record.pending_airdrop_records.len(), 6);
+
+    // Claim the tokens signing with receiver1 and receiver2
+    let pending_airdrop_ids = record
+        .pending_airdrop_records
+        .iter()
+        .map(|record| record.pending_airdrop_id)
+        .collect::<Vec<_>>();
+
+    let record = TokenClaimAirdropTransaction::new()
+        .pending_airdrop_ids(pending_airdrop_ids)
+        .freeze_with(&client)?
+        .sign(receiver_key_1)
+        .sign(receiver_key_2)
+        .execute(&client)
+        .await?
+        .get_record(&client)
+        .await?;
+
+    // verify in the transaction record the pending airdrop ids for nft and ft - should no longer exist
+    assert_eq!(record.pending_airdrop_records.len(), 0);
+
+    // Verify the receiver1 holds the tokens via query
+    let receiver_account_balance =
+        AccountBalanceQuery::new().account_id(receiver_account_1.id).execute(&client).await?;
+
+    assert_eq!(receiver_account_balance.tokens.get(&token.id).as_deref(), Some(&(100 as u64)));
+    assert_eq!(receiver_account_balance.tokens.get(&nft.id), Some(&(2 as u64)));
+
+    // Verify the receiver2 holds the tokens via query
+    let receiver_account_balance_2 =
+        AccountBalanceQuery::new().account_id(receiver_account_2.id).execute(&client).await?;
+
+    assert_eq!(receiver_account_balance_2.tokens.get(&token.id).as_deref(), Some(&(100 as u64)));
+    assert_eq!(receiver_account_balance_2.tokens.get(&nft.id), Some(&(2 as u64)));
+
+    // Verify the operator does not hold the tokens
+    let operator_balance =
+        AccountBalanceQuery::new().account_id(operator_account.id).execute(&client).await?;
+
+    assert_eq!(operator_balance.tokens.get(&token.id), Some(&((1_000_000 - 100 * 2) as u64)));
+    assert_eq!(operator_balance.tokens.get(&nft.id), Some(&(6 as u64)));
 
     Ok(())
 }

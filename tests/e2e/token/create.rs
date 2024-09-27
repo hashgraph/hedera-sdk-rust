@@ -172,6 +172,7 @@ async fn missing_treasury_account_id_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config: _, client }) = setup_nonfree() else {
         return Ok(());
     };
+
     let res = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
@@ -196,10 +197,12 @@ async fn missing_treasury_account_id_sig_fails() -> anyhow::Result<()> {
         return Ok(());
     };
 
+    let account = Account::create(Hbar::new(0), &client).await?;
+
     let res = TokenCreateTransaction::new()
         .name("ffff")
         .symbol("F")
-        .treasury_account_id(AccountId::from(3))
+        .treasury_account_id(account.id)
         .expiration_time(OffsetDateTime::now_utc() + Duration::minutes(5))
         .execute(&client)
         .await?
@@ -210,6 +213,8 @@ async fn missing_treasury_account_id_sig_fails() -> anyhow::Result<()> {
         res,
         Err(hedera::Error::ReceiptStatus { status: Status::InvalidSignature, .. })
     );
+
+    account.delete(&client).await?;
 
     Ok(())
 }
