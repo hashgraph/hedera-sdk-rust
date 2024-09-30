@@ -124,7 +124,10 @@ where
 
     type Response = <Self as MirrorRequest>::Response;
 
-    type ItemStream<'a> = <Self as MirrorRequest>::ItemStream<'a> where Self: 'a;
+    type ItemStream<'a>
+        = <Self as MirrorRequest>::ItemStream<'a>
+    where
+        Self: 'a;
 
     fn subscribe_with_optional_timeout<'a>(
         &self,

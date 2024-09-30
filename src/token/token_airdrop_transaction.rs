@@ -117,7 +117,7 @@ impl TokenAirdropTransaction {
         account_id: AccountId,
         value: i64,
     ) -> &mut Self {
-        self._token_transfer(token_id, account_id, value, false, None)
+        self._token_transfer(token_id, account_id, value, false)
     }
 
     /// Return a non-approved token transfer.
@@ -165,7 +165,7 @@ impl TokenAirdropTransaction {
         amount: i64,
         decimals: u32,
     ) -> &mut Self {
-        self._token_transfer(token_id, account_id, amount, false, Some(decimals));
+        self._token_transfer_with_decimals(token_id, account_id, amount, false, Some(decimals));
         self
     }
 
@@ -181,7 +181,7 @@ impl TokenAirdropTransaction {
         account_id: AccountId,
         amount: i64,
     ) -> &mut Self {
-        self._token_transfer(token_id, account_id, amount, true, None);
+        self._token_transfer(token_id, account_id, amount, true);
         self
     }
 
@@ -204,11 +204,42 @@ impl TokenAirdropTransaction {
         amount: i64,
         decimals: u32,
     ) -> &mut Self {
-        self._token_transfer(token_id, account_id, amount, true, Some(decimals));
+        self._token_transfer_with_decimals(token_id, account_id, amount, true, Some(decimals));
         self
     }
 
     fn _token_transfer(
+        &mut self,
+        token_id: TokenId,
+        account_id: AccountId,
+        amount: i64,
+        is_approved: bool,
+    ) -> &mut Self {
+        let transfer = Transfer { account_id, amount, is_approval: is_approved };
+        let data = self.data_mut();
+
+        if let Some(tt) = data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id) {
+            if let Some(tt) = tt
+                .transfers
+                .iter_mut()
+                .find(|t| t.account_id == account_id && t.is_approval == is_approved)
+            {
+                tt.amount += amount;
+            } else {
+                tt.transfers.push(transfer);
+            }
+        } else {
+            data.token_transfers.push(TokenTransfer {
+                token_id,
+                expected_decimals: None,
+                nft_transfers: Vec::new(),
+                transfers: vec![transfer],
+            });
+        }
+        self
+    }
+
+    fn _token_transfer_with_decimals(
         &mut self,
         token_id: TokenId,
         account_id: AccountId,
@@ -220,8 +251,21 @@ impl TokenAirdropTransaction {
         let data = self.data_mut();
 
         if let Some(tt) = data.token_transfers.iter_mut().find(|tt| tt.token_id == token_id) {
+            if tt.expected_decimals.is_some() && tt.expected_decimals != expected_decimals {
+                panic!("expected decimals mismatch");
+            }
+
             tt.expected_decimals = expected_decimals;
-            tt.transfers.push(transfer);
+
+            if let Some(tt) = tt
+                .transfers
+                .iter_mut()
+                .find(|t| t.account_id == account_id && t.is_approval == approved)
+            {
+                tt.amount += amount;
+            } else {
+                tt.transfers.push(transfer);
+            }
         } else {
             data.token_transfers.push(TokenTransfer {
                 token_id,
@@ -336,7 +380,9 @@ impl ToProtobuf for TokenAirdropTransactionData {
                     .cmp(&b.account_id.shard)
                     .then_with(|| a.account_id.realm.cmp(&b.account_id.realm))
                     .then_with(|| a.account_id.num.cmp(&b.account_id.num))
+                    .then_with(|| a.is_approval.cmp(&b.is_approval))
             });
+
             tt.nft_transfers.sort_by(|a, b| a.serial.cmp(&b.serial));
         }
 
@@ -478,6 +524,9 @@ mod tests {
 
         let tx = transaction_body(tx);
         let tx2 = transaction_body(tx2);
+
+        println!("tx: {:?}", tx);
+        println!("tx2: {:?}", tx2);
 
         assert_eq!(tx, tx2)
     }
