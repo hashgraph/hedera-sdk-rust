@@ -18,7 +18,7 @@
  * ‍
  */
 
-use std::fmt::Debug;
+use std::fmt;
 
 use hedera_proto::services;
 
@@ -39,7 +39,7 @@ use crate::{
 /// A PendingAirdropId SHALL be recorded when created and MUST be provided in any transaction
 /// that would modify that pending airdrop (such as a `claimAirdrop` or `cancelAirdrop`).
 ///
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct PendingAirdropId {
     /// A sending account.
     ///
@@ -58,6 +58,30 @@ pub struct PendingAirdropId {
 
     /// Nft Id.
     pub nft_id: Option<NftId>,
+}
+
+impl fmt::Debug for PendingAirdropId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("PendingAirdropId")
+            .field("sender_id", &self.sender_id)
+            .field("receiver_id", &self.receiver_id)
+            .field("token_id", &self.token_id)
+            .field("nft_id", &self.nft_id)
+            .finish()
+    }
+}
+
+impl fmt::Display for PendingAirdropId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "PendingAirdropId {{ sender_id: {}, receiver_id: {}, token_id: {}, nft_id: {} }}",
+            self.sender_id,
+            self.receiver_id,
+            self.token_id.map_or_else(|| "None".to_string(), |v| v.to_string()),
+            self.nft_id.map_or_else(|| "None".to_string(), |v| v.to_string()),
+        )
+    }
 }
 
 impl PendingAirdropId {

@@ -59,9 +59,10 @@ impl MirrorQueryExecute for AnyMirrorQueryData {
 
     type Response = AnyMirrorQueryResponse;
 
-    type ItemStream<'a> = BoxStream<'a, crate::Result<Self::Item>>
-        where
-            Self: 'a;
+    type ItemStream<'a>
+        = BoxStream<'a, crate::Result<Self::Item>>
+    where
+        Self: 'a;
 
     fn subscribe_with_optional_timeout<'a>(
         &self,
