@@ -41,7 +41,7 @@ use tonic::transport::Channel;
 use triomphe::Arc;
 
 use crate::client::NetworkData;
-use crate::execute::error::is_hyper_canceled;
+use crate::execute::error::is_tonic_status_transient;
 use crate::ping_query::PingQuery;
 use crate::{
     client,
@@ -331,13 +331,6 @@ fn map_tonic_error(
             retry::Error::Transient(status.into())
         }
 
-        // if the proxy cancels the request (IE it's `Unavailable`/`ResourceExausted`) treat it like a transient error.
-        tonic::Code::Unknown if is_hyper_canceled(&status) => {
-            network.mark_node_unhealthy(node_index);
-
-            retry::Error::Transient(status.into())
-        }
-
         // todo: find a way to make this less fragile
         // hack:
         // if this happens:
@@ -355,6 +348,12 @@ fn map_tonic_error(
                 true => retry::Error::Transient(status.into()),
                 false => retry::Error::Permanent(status.into()),
             }
+        }
+
+        _ if is_tonic_status_transient(&status) => {
+            network.mark_node_unhealthy(node_index);
+
+            retry::Error::Transient(status.into())
         }
 
         // fail immediately
