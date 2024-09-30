@@ -183,8 +183,12 @@ pub use account::{
     AllProxyStakers,
     ProxyStaker,
 };
-pub use client::Client;
 pub(crate) use client::Operator;
+pub use client::{
+    Client,
+    ClientBuilder,
+    EndpointConfig,
+};
 pub use contract::{
     ContractBytecodeQuery,
     ContractCallQuery,
