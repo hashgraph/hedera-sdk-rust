@@ -195,29 +195,29 @@ impl TokenRejectFlow {
         client: &Client,
         timeout_per_transaction: Option<std::time::Duration>,
     ) -> crate::Result<TransactionResponse> {
-        let response =
+        let reject_response =
             make_token_reject_transaction(&self.token_reject_data, self.node_account_ids.clone())?
                 .execute_with_optional_timeout(client, timeout_per_transaction)
                 .await?;
 
-        response
+        reject_response
             .get_receipt_query()
             .execute_with_optional_timeout(client, timeout_per_transaction)
             .await?;
 
-        let response = make_token_dissociate_transaction(
+        let dissociate_response = make_token_dissociate_transaction(
             &self.token_reject_data,
             self.node_account_ids.clone(),
         )?
         .execute_with_optional_timeout(client, timeout_per_transaction)
         .await?;
 
-        response
+        dissociate_response
             .get_receipt_query()
             .execute_with_optional_timeout(client, timeout_per_transaction)
             .await?;
 
-        Ok(response)
+        Ok(reject_response)
     }
 }
 
