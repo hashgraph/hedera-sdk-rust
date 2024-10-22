@@ -8,7 +8,7 @@ license = "Apache-2.0"
 name = "hedera"
 readme = "README.md"
 repository = "https://github.com/hashgraph/hedera-sdk-rust"
-version = "0.28.0"
+version = "0.29.0"
 
 [lib]
 bench = false
@@ -25,7 +25,11 @@ backoff = "0.4.0"
 ed25519-dalek = { version = "2.0.0", features = ["rand_core"] }
 fraction = { version = "0.15.1", default-features = false }
 futures-core = "0.3.21"
-hedera-proto = { path = "./protobufs", version = "0.13.0", features = [
+# Transitive dependency of tonic 0.11. Can be removed when tonic is upgraded to 0.12.
+h2_03 = { package = "h2", version = "0.3.6" }
+# Transitive dependency of tonic 0.12
+h2 = "0.4.6"
+hedera-proto = { path = "./protobufs", version = "0.14.0", features = [
   "time_0_3",
   "fraction",
 ] }
