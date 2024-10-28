@@ -130,8 +130,6 @@ async fn basic_flow_nft() -> anyhow::Result<()> {
         .map(|it| it as u64)
         .collect::<Vec<u64>>();
 
-    println!("here");
-
     _ = TokenAssociateTransaction::new()
         .account_id(receiver_account.id)
         .token_ids([nft.id])
@@ -142,8 +140,6 @@ async fn basic_flow_nft() -> anyhow::Result<()> {
         .get_receipt(&client)
         .await?;
 
-    println!("here1");
-
     _ = TransferTransaction::new()
         .nft_transfer(nft.id.nft(nft_serials[0]), operator_account.id, receiver_account.id)
         .nft_transfer(nft.id.nft(nft_serials[1]), operator_account.id, receiver_account.id)
@@ -151,10 +147,6 @@ async fn basic_flow_nft() -> anyhow::Result<()> {
         .await?
         .get_receipt(&client)
         .await?;
-
-    println!("here2");
-    println!("nft_id_0: {}", nft.id.nft(nft_serials[0]));
-    println!("nft_id_1: {}", nft.id.nft(nft_serials[1]));
 
     _ = TokenRejectFlow::new()
         .owner(receiver_account.id)
