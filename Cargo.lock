@@ -2848,6 +2848,7 @@ dependencies = [
  "hedera",
  "hedera-proto",
  "hex",
+ "hex-literal",
  "hyper 0.14.30",
  "jsonrpsee",
  "once_cell",

@@ -17,14 +17,16 @@ use jsonrpsee::server::{
 };
 use jsonrpsee::types::Request;
 use jsonrpsee::MethodResponse;
-use sdk_client::{
+use methods::{
     RpcServer,
     RpcServerImpl,
 };
 use tokio::signal;
 
+mod errors;
 mod helpers;
-pub(crate) mod sdk_client;
+pub(crate) mod methods;
+mod responses;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -79,13 +81,11 @@ where
 {
     type Future = BoxFuture<'a, MethodResponse>;
     fn call(&self, req: Request<'a>) -> Self::Future {
-        tracing::info!("TCK server processed method call: {}", req.method);
         let count = self.count.clone();
         let service = self.service.clone();
         Box::pin(async move {
             let rp = service.call(req).await;
-            // Modify the state.
-            count.fetch_add(1, Ordering::Relaxed);
+            count.fetch_add(1, Ordering::SeqCst);
             rp
         })
     }

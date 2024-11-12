@@ -1,193 +1,268 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use serde::{
-    Deserialize,
-    Serialize,
+use hedera::{
+    AccountId,
+    Hbar,
+    Key,
+    KeyList,
+    PrivateKey,
+    PublicKey,
+    Transaction,
+    TransactionId,
 };
+use hex::ToHex;
+use jsonrpsee::types::error::INVALID_PARAMS_CODE;
+use jsonrpsee::types::{
+    ErrorObject,
+    ErrorObjectOwned,
+};
+use serde_json::Value;
+use time::Duration;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum JsonObject {
-    String(String),
-    I64(i64),
-    Bool(bool),
-    Vec(Vec<JsonObject>),
-    Map(HashMap<String, JsonObject>),
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+pub enum KeyType {
+    Ed25519PrivateKeyType,
+    Ed25519PublicKeyType,
+    EcdsaSecp256k1PrivateKeyType,
+    EcdsaSecp256k1PublicKeyType,
+    KeyListType,
+    ThresholdKeyType,
+    EvmAddressType,
 }
 
-impl FromStr for JsonObject {
-    type Err = String;
+impl FromStr for KeyType {
+    type Err = ErrorObjectOwned;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Try parsing as i64
-        if let Ok(i) = s.parse::<i64>() {
-            return Ok(JsonObject::I64(i));
+        match s {
+            "ed25519PrivateKey" => Ok(KeyType::Ed25519PrivateKeyType),
+            "ed25519PublicKey" => Ok(KeyType::Ed25519PublicKeyType),
+            "ecdsaSecp256k1PrivateKey" => Ok(KeyType::EcdsaSecp256k1PrivateKeyType),
+            "ecdsaSecp256k1PublicKey" => Ok(KeyType::EcdsaSecp256k1PublicKeyType),
+            "keyList" => Ok(KeyType::KeyListType),
+            "thresholdKey" => Ok(KeyType::ThresholdKeyType),
+            "evmAddress" => Ok(KeyType::EvmAddressType),
+            _ => Err(ErrorObject::borrowed(-32603, "generateKey: type is NOT a valid value", None)),
         }
+    }
+}
 
-        // Try parsing as bool
-        if let Ok(b) = s.parse::<bool>() {
-            return Ok(JsonObject::Bool(b));
-        }
-
-        // Try parsing as JSON array
-        if s.starts_with('[') && s.ends_with(']') {
-            if let Ok(array) = serde_json::from_str::<Vec<JsonObject>>(s) {
-                return Ok(JsonObject::Vec(array));
+pub(crate) fn fill_common_transaction_params<D>(
+    transaction: &mut Transaction<D>,
+    common_transaction_params: &HashMap<String, Value>,
+) {
+    if let Some(transaction_id) = common_transaction_params.get("transactionId") {
+        match transaction_id {
+            Value::String(transaction_id) => {
+                transaction
+                    .transaction_id(TransactionId::from_str(transaction_id.as_str()).unwrap());
             }
+            _ => {}
         }
+    }
 
-        // Try parsing as JSON map
-        if s.starts_with('{') && s.ends_with('}') {
-            if let Ok(map) = serde_json::from_str::<HashMap<String, JsonObject>>(s) {
-                return Ok(JsonObject::Map(map));
+    if let Some(node_id) = common_transaction_params.get("nodeId") {
+        match node_id {
+            Value::String(node_id) => {
+                transaction.node_account_ids([AccountId::from_str(&node_id.as_str()).unwrap()]);
             }
-        }
-
-        // Default to String
-        Ok(JsonObject::String(s.to_string()))
-    }
-}
-
-const JSON_RPC_VERSION: &str = "2.0";
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct JsonRequest {
-    pub jsonrpc: String,
-    pub id: i64,
-    pub method: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub params: Option<JsonObject>,
-}
-
-impl JsonRequest {
-    pub fn new(id: i64, method: String, params: JsonObject) -> Self {
-        Self {
-            jsonrpc: JSON_RPC_VERSION.to_string(),
-            id,
-            method,
-            params: Some(params),
+            _ => {}
         }
     }
 
-    pub fn to_dict(&self) -> HashMap<String, JsonObject> {
-        let mut dict = HashMap::new();
-        dict.insert("jsonrpc".to_string(), JsonObject::String(self.jsonrpc.clone()));
-        dict.insert("id".to_string(), JsonObject::I64(self.id));
-        dict.insert("method".to_string(), JsonObject::String(self.method.clone()));
-        
-        if let Some(params) = &self.params {
-            dict.insert("params".to_string(), params.clone());
-        }
-
-        dict
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct JsonResponse {
-    jsonrpc: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    id: Option<i64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    result: Option<JsonObject>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<JsonError>,
-}
-
-impl JsonResponse {
-    pub fn success(id: i64, result: JsonObject) -> Self {
-        Self {
-            jsonrpc: JSON_RPC_VERSION.to_string(),
-            id: Some(id),
-            result: Some(result),
-            error: None,
+    if let Some(max_fee) = common_transaction_params.get("maxTransactionFee") {
+        match max_fee {
+            Value::String(max_fee) => {
+                transaction.max_transaction_fee(Hbar::from_tinybars(
+                    max_fee.as_str().parse::<i64>().unwrap(),
+                ));
+            }
+            _ => {}
         }
     }
 
-    pub fn error(id: Option<i64>, error: JsonError) -> Self {
-        Self {
-            jsonrpc: JSON_RPC_VERSION.to_string(),
-            id,
-            result: None,
-            error: Some(error),
-        }
-    }
-}
-#[derive(Debug, Clone, Deserialize)]
-pub enum JsonError {
-    HederaError {
-        message: String,
-        data: Option<JsonObject>
-    },
-    InvalidRequest {
-        message: String,
-        data: Option<JsonObject>
-    },
-    MethodNotFound {
-        message: String,
-        data: Option<JsonObject>
-    },
-    InvalidParams {
-        message: String,
-        data: Option<JsonObject>
-    },
-    InternalError {
-        message: String,
-        data: Option<JsonObject>
-    },
-    ParseError {
-        message: String,
-        data: Option<JsonObject>
-    },
-}
-
-impl JsonError {
-    pub fn code(&self) -> i32 {
-        match self {
-            Self::HederaError { .. } => -32001,
-            Self::InvalidRequest { .. } => -32600,
-            Self::MethodNotFound { .. } => -32601,
-            Self::InvalidParams { .. } => -32602,
-            Self::InternalError { .. } => -32603,
-            Self::ParseError { .. } => -32700,
-        }
-    }
-
-    pub fn message(&self) -> &str {
-        match self {
-            Self::HederaError { message, .. } |
-            Self::InvalidRequest { message, .. } |
-            Self::MethodNotFound { message, .. } |
-            Self::InvalidParams { message, .. } |
-            Self::InternalError { message, .. } |
-            Self::ParseError { message, .. } => message,
-        }
-    }
-
-    pub fn data(&self) -> Option<&JsonObject> {
-        match self {
-            Self::HederaError { data, .. } |
-            Self::InvalidRequest { data, .. } |
-            Self::MethodNotFound { data, .. } |
-            Self::InvalidParams { data, .. } |
-            Self::InternalError { data, .. } |
-            Self::ParseError { data, .. } => data.as_ref(),
-        }
-    }
-}
-
-impl Serialize for JsonError {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
+    if let Some(transaction_valid_duration) =
+        common_transaction_params.get("transactionValidDuration")
     {
-        use serde::ser::SerializeStruct;
-        let mut state = serializer.serialize_struct("JsonError", 3)?;
-        state.serialize_field("code", &self.code())?;
-        state.serialize_field("message", &self.message())?;
-        if let Some(data) = self.data() {
-            state.serialize_field("data", data)?;
+        match transaction_valid_duration {
+            Value::String(transaction_valid_duration) => {
+                transaction.transaction_valid_duration(Duration::seconds(
+                    transaction_valid_duration.as_str().parse::<i64>().unwrap(),
+                ));
+            }
+            _ => {}
         }
-        state.end()
+    }
+
+    if let Some(memo) = common_transaction_params.get("memo") {
+        match memo {
+            Value::String(memo) => {
+                transaction.transaction_memo(memo.as_str());
+            }
+            _ => {}
+        }
+    }
+}
+
+pub(crate) fn generate_key_helper(
+    _type: String,
+    from_key: Option<String>,
+    threshold: Option<i32>,
+    keys: Option<Value>,
+    private_keys: &mut Vec<Value>,
+    is_list: bool,
+) -> Result<String, ErrorObjectOwned> {
+    // Check the key type
+    let key_type = KeyType::from_str(&_type)?;
+
+    if from_key.is_some()
+        && key_type != KeyType::Ed25519PublicKeyType
+        && key_type != KeyType::EcdsaSecp256k1PublicKeyType
+        && key_type != KeyType::EvmAddressType
+    {
+        return Err(ErrorObject::borrowed(INVALID_PARAMS_CODE, "generateKey: fromKey MUST NOT be provided for types other than ed25519PublicKey, ecdsaSecp256k1PublicKey, or evmAddress.", None));
+    }
+
+    if threshold.is_some() && key_type != KeyType::ThresholdKeyType {
+        return Err(ErrorObject::borrowed(
+            INVALID_PARAMS_CODE,
+            "generateKey: threshold MUST NOT be provided for types other than thresholdKey.",
+            None,
+        ));
+    } else if threshold.is_none() && key_type == KeyType::ThresholdKeyType {
+        return Err(ErrorObject::borrowed(
+            INVALID_PARAMS_CODE,
+            "generateKey: threshold MUST be provided for thresholdKey types.",
+            None,
+        ));
+    };
+
+    if keys.is_some() && key_type != KeyType::ThresholdKeyType && key_type != KeyType::KeyListType {
+        return Err(ErrorObject::borrowed(
+            INVALID_PARAMS_CODE,
+            "generateKey: keys MUST NOT be provided for types other than keyList or thresholdKey.",
+            None,
+        ));
+    } else if keys.is_none()
+        && (key_type == KeyType::ThresholdKeyType || key_type == KeyType::KeyListType)
+    {
+        return Err(ErrorObject::borrowed(
+            INVALID_PARAMS_CODE,
+            "generateKey: keys MUST be provided for keyList and thresholdKey types.",
+            None,
+        ));
+    };
+
+    match key_type {
+        KeyType::Ed25519PrivateKeyType | KeyType::EcdsaSecp256k1PrivateKeyType => {
+            let key = if key_type == KeyType::Ed25519PublicKeyType {
+                PrivateKey::generate_ed25519().to_string_der()
+            } else {
+                PrivateKey::generate_ecdsa().to_string_der()
+            };
+
+            if is_list {
+                private_keys.push(Value::String(key.clone()));
+            }
+
+            return Ok(key);
+        }
+        KeyType::Ed25519PublicKeyType | KeyType::EcdsaSecp256k1PublicKeyType => {
+            if let Some(from_key) = from_key {
+                return PrivateKey::from_str_der(&from_key)
+                    .map(|key| key.public_key().to_string_der())
+                    .map_err(|_| {
+                        ErrorObject::borrowed(
+                            INVALID_PARAMS_CODE,
+                            "generateKey: could not produce {key_type:?}",
+                            None,
+                        )
+                    });
+            };
+
+            let key = if key_type == KeyType::Ed25519PublicKeyType {
+                PrivateKey::generate_ed25519()
+            } else {
+                PrivateKey::generate_ecdsa()
+            };
+
+            if is_list {
+                private_keys.push(Value::String(key.to_string_der()));
+            }
+
+            return Ok(key.public_key().to_string_der());
+        }
+        KeyType::KeyListType | KeyType::ThresholdKeyType => {
+            let mut key_list = KeyList::new();
+
+            if let Value::Array(key_array) = keys.unwrap() {
+                for key in key_array {
+                    let generate_key = &generate_key_helper(
+                        key["type"].as_str().unwrap().to_string(),
+                        None,
+                        None,
+                        key.get("keys").map(|value| value.clone()),
+                        private_keys,
+                        true,
+                    )?;
+
+                    let get_key = get_hedera_key(&generate_key)?;
+
+                    key_list.keys.push(get_key);
+                }
+            }
+
+            if KeyType::from_str(&_type)? == KeyType::ThresholdKeyType {
+                key_list.threshold = Some(threshold.unwrap() as u32);
+            }
+
+            return Ok(Key::KeyList(key_list).to_bytes().encode_hex());
+        }
+        KeyType::EvmAddressType => {
+            if from_key.is_none() {
+                return Ok(PrivateKey::generate_ecdsa()
+                    .public_key()
+                    .to_evm_address()
+                    .unwrap()
+                    .to_string());
+            }
+
+            let private_key = PrivateKey::from_str_ecdsa(&from_key.clone().unwrap());
+
+            match private_key {
+                Ok(key) => {
+                    return Ok(key.public_key().to_evm_address().unwrap().to_string());
+                }
+                Err(_) => {
+                    let private_key = PublicKey::from_str_ecdsa(&from_key.unwrap());
+
+                    match private_key {
+                        Ok(key) => {
+                            return Ok(key.to_evm_address().unwrap().to_string());
+                        }
+                        Err(_) => {
+                            return Err(ErrorObject::borrowed(INVALID_PARAMS_CODE, "generateKey: fromKey for evmAddress MUST be an ECDSAsecp256k1 private or public key.", None));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub(crate) fn get_hedera_key(key: &str) -> Result<Key, ErrorObjectOwned> {
+    match PrivateKey::from_str_der(key).map(|pk| Key::Single(pk.public_key())) {
+        Ok(key) => Ok(key),
+        Err(_) => match PublicKey::from_str_der(key).map(Key::Single) {
+            Ok(key) => Ok(key),
+            Err(_) => {
+                let public_key = PublicKey::from_str_ed25519(key).map_err(|_| {
+                    ErrorObject::borrowed(-32603, "generateKey: fromKey is invalid.", None)
+                })?;
+
+                Ok(public_key.into())
+            }
+        },
     }
 }
