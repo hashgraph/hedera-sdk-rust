@@ -2846,6 +2846,8 @@ dependencies = [
  "async-trait",
  "futures-util",
  "hedera",
+ "hedera-proto",
+ "hex",
  "hyper 0.14.30",
  "jsonrpsee",
  "once_cell",
