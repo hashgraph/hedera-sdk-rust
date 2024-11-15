@@ -38,6 +38,11 @@ fn main() -> anyhow::Result<()> {
 
     let services_path = Path::new(SERVICES_FOLDER);
 
+    // The contents of this folder will be copied and modified before it is
+    // used for code generation. Later we will suppress generation of cargo
+    // directives on the copy, so set a directive on the source.
+    println!("cargo:rerun-if-changed={}", SERVICES_FOLDER);
+
     if !services_path.is_dir() {
         anyhow::bail!("Folder {SERVICES_FOLDER} does not exist; do you need to `git submodule update --init`?");
     }
@@ -80,7 +85,12 @@ fn main() -> anyhow::Result<()> {
         fs::write(service, &*contents)?;
     }
 
-    let mut cfg = tonic_build::configure();
+    let mut cfg = tonic_build::configure()
+        // We have already emitted a cargo directive to trigger a rerun on the source folder
+        // that the copy this builds is based on. If the directives are not suppressed, the
+        // crate will rebuild on every compile due to the modified time stamps post-dating
+        // the start time of the compile action.
+        .emit_rerun_if_changed(false);
 
     // most of the protobufs in "basic types" should be Eq + Hash + Copy
     // any protobufs that would typically be used as parameter, that meet the requirements of those
