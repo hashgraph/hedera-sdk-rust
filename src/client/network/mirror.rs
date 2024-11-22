@@ -100,7 +100,7 @@ impl MirrorNetworkData {
         self.channel
             .get_or_init(|| {
                 let endpoints = self.addresses.iter().map(|address| {
-                    let uri = format!("tcp://{address}");
+                    let uri = format!("https://{address}");
                     Endpoint::from_shared(uri)
                         .unwrap()
                         .keep_alive_timeout(Duration::from_secs(10))
