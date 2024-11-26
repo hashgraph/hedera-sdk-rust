@@ -11,6 +11,12 @@ pub struct AccountCreateResponse {
     pub status: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct AccountUpdateResponse {
+    pub status: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GenerateKeyResponse {
