@@ -1,5 +1,6 @@
 mod account;
 mod client;
+mod address_book;
 mod common;
 mod contract;
 mod ethereum_transaction;
