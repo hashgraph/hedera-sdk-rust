@@ -2,7 +2,7 @@
  * ‌
  * Hedera Rust SDK
  * ​
- * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
+ * Copyright (C) 2022 - 2024 Hedera Hashgraph, LLC
  * ​
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,7 @@ use crate::{
 /// receipt.
 pub type NodeDeleteTransaction = Transaction<NodeDeleteTransactionData>;
 
+/// A transaction body to delete a node from the network address book.
 #[derive(Debug, Clone, Default)]
 pub struct NodeDeleteTransactionData {
     /// A consensus node identifier in the network state.

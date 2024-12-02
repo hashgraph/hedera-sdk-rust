@@ -183,6 +183,11 @@ pub use account::{
     AllProxyStakers,
     ProxyStaker,
 };
+pub use address_book::{
+    NodeCreateTransaction,
+    NodeDeleteTransaction,
+    NodeUpdateTransaction,
+};
 pub use client::Client;
 pub(crate) use client::Operator;
 pub use contract::{
@@ -293,6 +298,7 @@ pub use schedule::{
     ScheduleSignTransaction,
 };
 pub use semantic_version::SemanticVersion;
+pub use service_endpoint::ServiceEndpoint;
 pub use staking_info::StakingInfo;
 pub use system::{
     FreezeTransaction,

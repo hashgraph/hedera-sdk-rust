@@ -2,7 +2,7 @@
  * ‌
  * Hedera Rust SDK
  * ​
- * Copyright (C) 2022 - 2023 Hedera Hashgraph, LLC
+ * Copyright (C) 2022 - 2024 Hedera Hashgraph, LLC
  * ​
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ use crate::{
 /// to join the network, and requires governing council authorization.
 pub type NodeCreateTransaction = Transaction<NodeCreateTransactionData>;
 
+/// A transaction body to add a new consensus node to the network address book.
 #[derive(Debug, Clone, Default)]
 pub struct NodeCreateTransactionData {
     /// A Node account identifier.
