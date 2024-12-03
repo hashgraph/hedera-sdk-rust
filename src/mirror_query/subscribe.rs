@@ -282,7 +282,6 @@ pub(crate) fn subscribe<I: Send, R: MirrorRequest<GrpcItem = I> + Send + Sync>(
                         return;
                     }
                 }
-
                 _ => {
                     // encountered an un-recoverable failure when attempting
                     // to establish the stream
