@@ -16,6 +16,7 @@ Clone this repository and its submodules:
 
 ```bash
 git clone --recursive https://github.com/hashgraph/hedera-sdk-rust.git
+
 ```
 
 Update [`\protobufs`](https://github.com/hashgraph/hedera-protobufs) submodule to recent version (if necessary):
@@ -64,7 +65,7 @@ cargo run --release --example create_account
 ```
 
 
-### Integration Tests
+### Tests
 
 Before running the integration tests, an operator key, operator id, and a network name must be set in an `.env` file.
 
@@ -80,6 +81,24 @@ TEST_RUN_NONFREE=
 ```
 
 Run the tests using `cargo test`
+
+```bash
+# Run all tests (unit and integration tests)
+cargo test
+
+# Run specific tests in a module
+cargo test <MODULE_NAME>::<FILE_NAME>::<FUNCTION_NAME>
+```
+
+e.g.
+```bash
+# Run account module tests
+cargo test account
+# Run account module tests in file
+cargo test account::create
+# Run a single test
+cargo test account::create::initial_balance_and_key
+```
 
 #### Local Environment Testing
 
