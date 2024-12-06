@@ -22,6 +22,7 @@ use hedera_proto::services;
 use time::OffsetDateTime;
 
 use crate::protobuf::FromProtobuf;
+use crate::ToProtobuf;
 
 /// The current and next exchange rates between [`Hbar`](crate::HbarUnit::Hbar) and USD-cents.
 #[derive(Debug, Clone)]
@@ -52,6 +53,17 @@ impl FromProtobuf<services::ExchangeRateSet> for ExchangeRates {
     }
 }
 
+impl ToProtobuf for ExchangeRates {
+    type Protobuf = services::ExchangeRateSet;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ExchangeRateSet {
+            current_rate: Some(self.current_rate.to_protobuf()),
+            next_rate: Some(self.next_rate.to_protobuf()),
+        }
+    }
+}
+
 /// Denotes a conversion between Hbars and cents (USD).
 #[derive(Debug, Clone)]
 pub struct ExchangeRate {
@@ -79,6 +91,18 @@ impl FromProtobuf<services::ExchangeRate> for ExchangeRate {
         let cents = pb.cent_equiv as u32;
 
         Ok(Self { hbars, cents, expiration_time: pb_getf!(pb, expiration_time)?.into() })
+    }
+}
+
+impl ToProtobuf for ExchangeRate {
+    type Protobuf = services::ExchangeRate;
+
+    fn to_protobuf(&self) -> Self::Protobuf {
+        services::ExchangeRate {
+            hbar_equiv: self.hbars as i32,
+            cent_equiv: self.cents as i32,
+            expiration_time: Some(self.expiration_time.into()),
+        }
     }
 }
 
