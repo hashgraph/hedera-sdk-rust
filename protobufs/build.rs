@@ -31,6 +31,7 @@ use regex::RegexBuilder;
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
 const DERIVE_EQ_HASH_COPY: &str = "#[derive(Copy, Eq, Hash)]";
 const SERVICES_FOLDER: &str = "./protobufs/services";
+const EVENT_FOLDER: &str = "./protobufs/event";
 
 fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
@@ -65,6 +66,7 @@ fn main() -> anyhow::Result<()> {
     fs::rename(out_path.join("services"), &services_tmp_path)?;
 
     let services: Vec<_> = read_dir(&services_tmp_path)?
+        .chain(read_dir(&services_tmp_path.join("auxiliary").join("tss"))?)
         .filter_map(|entry| {
             let entry = entry.ok()?;
             entry.file_type().ok()?.is_file().then(|| entry.path())
@@ -81,6 +83,12 @@ fn main() -> anyhow::Result<()> {
 
         // remove com.hedera.hapi.node.addressbook. prefix
         let contents = contents.replace("com.hedera.hapi.node.addressbook.", "");
+
+        // remove com.hedera.hapi.services.auxiliary.tss. prefix
+        let contents = contents.replace("com.hedera.hapi.services.auxiliary.tss.", "");
+
+        // remove com.hedera.hapi.platform.event. prefix
+        let contents = contents.replace("com.hedera.hapi.platform.event.", "");
 
         fs::write(service, &*contents)?;
     }
@@ -124,7 +132,10 @@ fn main() -> anyhow::Result<()> {
         .type_attribute("proto.TokenAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.GrantedCryptoAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.GrantedTokenAllowance", DERIVE_EQ_HASH)
-        .type_attribute("proto.Duration", DERIVE_EQ_HASH_COPY);
+        .type_attribute("proto.Duration", DERIVE_EQ_HASH_COPY)
+        .type_attribute("proto.StateSignatureTransaction", DERIVE_EQ_HASH_COPY);
+
+    println!("cfg: {:#?}", cfg);
 
     // the ResponseCodeEnum should be marked as #[non_exhaustive] so
     // adding variants does not trigger a breaking change
@@ -140,11 +151,43 @@ fn main() -> anyhow::Result<()> {
  successful transaction.
      "]"#,
     );
-
+    
+    // Services fails with message:
+    // --- stderr
+    // Error: protoc failed: event/state_signature_transaction.proto: File not found.
+    // transaction_body.proto:111:1: Import "event/state_signature_transaction.proto" was not found or had errors.
+    //
     cfg.compile(&services, &[services_tmp_path])?;
+
+    panic!("Services succeeded");
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
+
+    // platform
+    // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
+
+    let platform_out_dir = Path::new(&env::var("OUT_DIR")?).join("platform").join("event");
+    create_dir_all(&platform_out_dir)?;
+
+    tonic_build::configure()
+        .build_server(false)
+        .extern_path(".proto.Timestamp", "crate::services::Timestamp")
+        .extern_path(".proto.SemanticVersion", "crate::services::SemanticVersion")
+        .out_dir(&platform_out_dir)
+        .compile(
+            &[
+                "./protobufs/platform/event/event_consensus_data.proto",
+                "./protobufs/platform/event/event_descriptor.proto",
+                "./protobufs/platform/event/event_core.proto",
+                "./protobufs/platform/event/event_transaction.proto",
+                "./protobufs/platform/event/gossip_event.proto",
+                "./protobufs/platform/event/state_signature_transaction.proto",
+            ],
+            &["./protobufs/platform/event/", "./protobufs/services/"],
+        )?;
+
+    remove_useless_comments(&platform_out_dir.join("proto.rs"))?;
 
     // mirror
     // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
@@ -256,6 +299,11 @@ fn main() -> anyhow::Result<()> {
         .services_same("TokenUpdateTransactionBody")
         .services_same("TokenUpdateNftsTransactionBody")
         .services_same("TokenWipeAccountTransactionBody")
+        .services_same("TssMessageTransactionBody")
+        .services_same("TssVoteTransactionBody")
+        .services_same("TssShareSignatureTransactionBody")
+        .services_same("TssEncryptionKeyTransactionBody")
+        .services_same("StateSignatureTransaction")
         .services_same("Transaction")
         .services_same("TransactionBody")
         .services_same("UncheckedSubmitBody")
