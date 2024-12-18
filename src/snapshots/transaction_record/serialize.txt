@@ -31,7 +31,32 @@ TransactionRecord {
                     ),
                 },
             ),
-            exchange_rate: None,
+            exchange_rate: Some(
+                ExchangeRateSet {
+                    current_rate: Some(
+                        ExchangeRate {
+                            hbar_equiv: 100,
+                            cent_equiv: 100,
+                            expiration_time: Some(
+                                TimestampSeconds {
+                                    seconds: 1554158542,
+                                },
+                            ),
+                        },
+                    ),
+                    next_rate: Some(
+                        ExchangeRate {
+                            hbar_equiv: 200,
+                            cent_equiv: 200,
+                            expiration_time: Some(
+                                TimestampSeconds {
+                                    seconds: 1554158542,
+                                },
+                            ),
+                        },
+                    ),
+                },
+            ),
             topic_id: Some(
                 TopicId {
                     shard_num: 9,

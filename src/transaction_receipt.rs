@@ -29,6 +29,7 @@ use crate::{
     AccountId,
     ContractId,
     Error,
+    ExchangeRates,
     FileId,
     FromProtobuf,
     ScheduleId,
@@ -60,8 +61,9 @@ pub struct TransactionReceipt {
     /// In the receipt for a `ContractCreateTransaction`, the id of the newly created contract.
     pub contract_id: Option<ContractId>,
 
-    // The exchange rates in effect when the transaction reached consensus.
-    // TODO: pub exchange_rate: ExchangeRate,
+    /// The exchange rates in effect when the transaction reached consensus.
+    pub exchange_rates: Option<ExchangeRates>,
+
     /// In the receipt for a `TopicCreateTransaction`, the id of the newly created topic.
     pub topic_id: Option<TopicId>,
 
@@ -156,6 +158,7 @@ impl TransactionReceipt {
         let topic_id = Option::from_protobuf(receipt.topic_id)?;
         let token_id = Option::from_protobuf(receipt.token_id)?;
         let schedule_id = Option::from_protobuf(receipt.schedule_id)?;
+        let exchange_rates = Option::from_protobuf(receipt.exchange_rate)?;
 
         let scheduled_transaction_id = Option::from_protobuf(receipt.scheduled_transaction_id)?;
 
@@ -163,6 +166,7 @@ impl TransactionReceipt {
             status,
             total_supply: receipt.new_total_supply,
             serials: receipt.serial_numbers,
+            exchange_rates,
             topic_running_hash_version: receipt.topic_running_hash_version,
             topic_sequence_number: receipt.topic_sequence_number,
             topic_running_hash: receipt
@@ -227,7 +231,7 @@ impl ToProtobuf for TransactionReceipt {
             account_id: self.account_id.to_protobuf(),
             file_id: self.file_id.to_protobuf(),
             contract_id: self.contract_id.to_protobuf(),
-            exchange_rate: None,
+            exchange_rate: self.exchange_rates.to_protobuf(),
             topic_id: self.topic_id.to_protobuf(),
             topic_sequence_number: self.topic_sequence_number,
             topic_running_hash: self.topic_running_hash.clone().unwrap_or_default(),
@@ -245,12 +249,18 @@ impl ToProtobuf for TransactionReceipt {
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
+    use time::OffsetDateTime;
 
     use crate::protobuf::ToProtobuf;
-    use crate::transaction::test_helpers::TEST_TX_ID;
+    use crate::transaction::test_helpers::{
+        TEST_TX_ID,
+        VALID_START,
+    };
     use crate::{
         AccountId,
         ContractId,
+        ExchangeRate,
+        ExchangeRates,
         FileId,
         ScheduleId,
         Status,
@@ -259,6 +269,8 @@ mod tests {
         TransactionReceipt,
     };
 
+    const EXPIRATION_TIME: OffsetDateTime = VALID_START;
+
     // needed in `transaction_record`.
     pub(crate) fn make_receipt() -> TransactionReceipt {
         TransactionReceipt {
@@ -266,6 +278,18 @@ mod tests {
             status: Status::ScheduleAlreadyDeleted,
             account_id: Some(AccountId::new(1, 2, 3)),
             file_id: Some(FileId::new(4, 5, 6)),
+            exchange_rates: Some(ExchangeRates {
+                current_rate: ExchangeRate {
+                    hbars: 100,
+                    cents: 100,
+                    expiration_time: EXPIRATION_TIME,
+                },
+                next_rate: ExchangeRate {
+                    hbars: 200,
+                    cents: 200,
+                    expiration_time: EXPIRATION_TIME,
+                },
+            }),
             contract_id: Some(ContractId::new(3, 2, 1)),
             topic_id: Some(TopicId::new(9, 8, 7)),
             topic_sequence_number: 3,
@@ -316,7 +340,32 @@ mod tests {
                         ),
                     },
                 ),
-                exchange_rate: None,
+                exchange_rate: Some(
+                    ExchangeRateSet {
+                        current_rate: Some(
+                            ExchangeRate {
+                                hbar_equiv: 100,
+                                cent_equiv: 100,
+                                expiration_time: Some(
+                                    TimestampSeconds {
+                                        seconds: 1554158542,
+                                    },
+                                ),
+                            },
+                        ),
+                        next_rate: Some(
+                            ExchangeRate {
+                                hbar_equiv: 200,
+                                cent_equiv: 200,
+                                expiration_time: Some(
+                                    TimestampSeconds {
+                                        seconds: 1554158542,
+                                    },
+                                ),
+                            },
+                        ),
+                    },
+                ),
                 topic_id: Some(
                     TopicId {
                         shard_num: 9,

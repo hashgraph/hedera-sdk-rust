@@ -104,6 +104,7 @@ pub(crate) const PREVIEWNET: &[(u64, &[&str])] = &[
     (9, &["6.previewnet.hedera.com", "34.125.23.49", "50.18.17.93", "20.150.136.89"]),
 ];
 
+#[derive(Default)]
 pub(crate) struct Network(pub(crate) ArcSwap<NetworkData>);
 
 impl Network {

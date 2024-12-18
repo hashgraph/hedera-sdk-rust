@@ -53,6 +53,7 @@ use crate::{
     Hbar,
     LedgerId,
     NodeAddressBook,
+    NodeAddressBookQuery,
     PrivateKey,
     PublicKey,
 };
@@ -287,6 +288,22 @@ impl Client {
             ManagedNetwork::new(Network::from_addresses(&network)?, MirrorNetwork::default());
 
         Ok(ClientBuilder::new(network).disable_network_updating().build())
+    }
+
+    /// Construct a client from a select mirror network
+    pub async fn for_mirror_network(mirror_networks: Vec<String>) -> crate::Result<Self> {
+        let network_addresses: HashMap<String, AccountId> = HashMap::new();
+        let network = ManagedNetwork::new(
+            Network::from_addresses(&network_addresses)?,
+            MirrorNetwork::from_addresses(mirror_networks.into_iter().map(Cow::Owned).collect()),
+        );
+
+        let client = ClientBuilder::new(network).build();
+        let address_book = NodeAddressBookQuery::default().execute(&client).await?;
+
+        client.set_network_from_address_book(address_book);
+
+        Ok(client)
     }
 
     /// Construct a Hedera client pre-configured for mainnet access.
