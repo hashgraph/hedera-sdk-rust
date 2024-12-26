@@ -31,6 +31,7 @@ use regex::RegexBuilder;
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
 const DERIVE_EQ_HASH_COPY: &str = "#[derive(Copy, Eq, Hash)]";
 const SERVICES_FOLDER: &str = "./protobufs/services";
+const EVENT_FOLDER: &str = "./protobufs/platform/event";
 
 fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
@@ -64,9 +65,37 @@ fn main() -> anyhow::Result<()> {
     )?;
     fs::rename(out_path.join("services"), &services_tmp_path)?;
 
+    let event_path = Path::new(EVENT_FOLDER);
+    println!("cargo:rerun-if-changed={}", EVENT_FOLDER);
+
+    if !event_path.is_dir() {
+        anyhow::bail!(
+            "Folder {EVENT_FOLDER} does not exist; do you need to `git submodule update --init`?"
+        );
+    }
+
+    let event_tmp_path = out_path.join("event");
+
+    // // Ensure we start fresh
+    let _ = fs::remove_dir_all(&event_tmp_path);
+
+    create_dir_all(&event_tmp_path)?;
+
+    // Copy the event folder
+    fs_extra::copy_items(
+        &[event_path],
+        &services_tmp_path,
+        &fs_extra::dir::CopyOptions::new().overwrite(true).copy_inside(false),
+    )?;
+    fs::rename(out_path.join("event"), &event_tmp_path)?;
+    let _ = fs::remove_dir_all(&event_tmp_path);
+
     let services: Vec<_> = read_dir(&services_tmp_path)?
+        .chain(read_dir(&services_tmp_path.join("auxiliary").join("tss"))?)
+        .chain(read_dir(&services_tmp_path.join("event"))?)
         .filter_map(|entry| {
             let entry = entry.ok()?;
+
             entry.file_type().ok()?.is_file().then(|| entry.path())
         })
         .collect();
@@ -81,6 +110,12 @@ fn main() -> anyhow::Result<()> {
 
         // remove com.hedera.hapi.node.addressbook. prefix
         let contents = contents.replace("com.hedera.hapi.node.addressbook.", "");
+
+        // remove com.hedera.hapi.services.auxiliary.tss. prefix
+        let contents = contents.replace("com.hedera.hapi.services.auxiliary.tss.", "");
+
+        // remove com.hedera.hapi.platform.event. prefix
+        let contents = contents.replace("com.hedera.hapi.platform.event.", "");
 
         fs::write(service, &*contents)?;
     }
@@ -141,7 +176,14 @@ fn main() -> anyhow::Result<()> {
      "]"#,
     );
 
+    // Services fails with message:
+    // --- stderr
+    // Error: protoc failed: event/state_signature_transaction.proto: File not found.
+    // transaction_body.proto:111:1: Import "event/state_signature_transaction.proto" was not found or had errors.
+    //
     cfg.compile(&services, &[services_tmp_path])?;
+
+    // panic!("Services succeeded");
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
@@ -256,6 +298,10 @@ fn main() -> anyhow::Result<()> {
         .services_same("TokenUpdateTransactionBody")
         .services_same("TokenUpdateNftsTransactionBody")
         .services_same("TokenWipeAccountTransactionBody")
+        .services_same("TssMessageTransactionBody")
+        .services_same("TssVoteTransactionBody")
+        .services_same("TssShareSignatureTransactionBody")
+        .services_same("TssEncryptionKeyTransactionBody")
         .services_same("Transaction")
         .services_same("TransactionBody")
         .services_same("UncheckedSubmitBody")
