@@ -430,6 +430,12 @@ pub enum RequestType {
 
     /// Cancel airdrop tokens.
     TokenCancelAirdrop,
+
+    /// Submit a vote as part of the Threshold Signature Scheme (TSS) processing.
+    TssMessage,
+
+    /// Submit a vote as part of the Threshold Signature Scheme (TSS) processing.
+    TssVote,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -518,6 +524,8 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::TokenAirdrop => Self::TokenAirdrop,
             HederaFunctionality::TokenClaimAirdrop => Self::TokenClaimAirdrop,
             HederaFunctionality::TokenCancelAirdrop => Self::TokenCancelAirdrop,
+            HederaFunctionality::TssMessage => Self::TssMessage,
+            HederaFunctionality::TssVote => Self::TssVote,
         };
 
         Ok(value)
@@ -612,6 +620,8 @@ impl ToProtobuf for RequestType {
             Self::TokenAirdrop => HederaFunctionality::TokenAirdrop,
             Self::TokenClaimAirdrop => HederaFunctionality::TokenClaimAirdrop,
             Self::TokenCancelAirdrop => HederaFunctionality::TokenCancelAirdrop,
+            Self::TssMessage => HederaFunctionality::TssMessage,
+            Self::TssVote => HederaFunctionality::TssVote,
         }
     }
 }

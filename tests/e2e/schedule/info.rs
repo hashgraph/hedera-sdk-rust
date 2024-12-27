@@ -84,7 +84,10 @@ async fn query() -> anyhow::Result<()> {
     assert_eq!(info.payer_account_id, Some(op.account_id));
     let _ = info.scheduled_transaction()?;
 
-    assert_eq!(info.signatories, KeyList::new());
+    assert_eq!(
+        info.signatories,
+        KeyList { keys: vec![op.private_key.public_key().into()].into(), threshold: None }
+    );
     assert!(!info.wait_for_expiry);
 
     account.delete(&client).await?;
