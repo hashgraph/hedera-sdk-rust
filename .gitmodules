@@ -1,3 +1,3 @@
 [submodule "protobufs/src"]
 	path = protobufs/protobufs
-	url = https://github.com/hashgraph/hedera-protobufs.git
+	url = https://github.com/hashgraph/hedera-services.git
