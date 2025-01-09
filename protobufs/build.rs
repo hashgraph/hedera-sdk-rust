@@ -176,14 +176,7 @@ fn main() -> anyhow::Result<()> {
      "]"#,
     );
 
-    // Services fails with message:
-    // --- stderr
-    // Error: protoc failed: event/state_signature_transaction.proto: File not found.
-    // transaction_body.proto:111:1: Import "event/state_signature_transaction.proto" was not found or had errors.
-    //
     cfg.compile(&services, &[services_tmp_path])?;
-
-    // panic!("Services succeeded");
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
