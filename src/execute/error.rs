@@ -33,21 +33,6 @@ fn has_transient_io_error<E: StdError>(error: E) -> bool {
     }
 }
 
-// tonic 0.11 (current dependency)
-fn is_hyper_0_error_transient(error: &hyper_0::Error) -> bool {
-    if error.is_canceled() || has_transient_io_error(error) {
-        true
-    } else if let Some(source) = error.source() {
-        if let Some(h2_error) = source.downcast_ref::<h2_03::Error>() {
-            h2_error.is_go_away()
-        } else {
-            false
-        }
-    } else {
-        false
-    }
-}
-
 // tonic 0.12
 fn is_hyper_error_transient(error: &hyper::Error) -> bool {
     if error.is_canceled() || has_transient_io_error(error) {
@@ -80,8 +65,8 @@ pub(super) fn is_tonic_status_transient(status: &tonic::Status) -> bool {
         return false;
     };
 
-    if let Some(hyper_0) = source.downcast_ref::<hyper_0::Error>() {
-        is_hyper_0_error_transient(hyper_0)
+    if let Some(hyper) = source.downcast_ref::<hyper::Error>() {
+        is_hyper_error_transient(hyper)
     } else if let Some(hyper) = source.downcast_ref::<hyper::Error>() {
         is_hyper_error_transient(hyper)
     } else {
