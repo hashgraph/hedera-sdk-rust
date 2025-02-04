@@ -670,6 +670,9 @@ impl FromProtobuf<services::transaction_body::Data> for AnyTransactionData {
             Data::TssVote(_) => {
                 return Err(Error::from_protobuf("unsupported transaction `TssVoteTransaction`"))
             }
+            Data::TssShareSignature(_) => {
+                return Err(Error::from_protobuf("unsupported transaction `TssShareSignature`"))
+            }
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(
                     "unsupported transaction `AddLiveHashTransaction`",
@@ -1017,6 +1020,9 @@ impl FromProtobuf<Vec<services::transaction_body::Data>> for ServicesTransaction
             }
             Data::TssVote(_) => {
                 return Err(Error::from_protobuf("unsupported transaction `TssVoteTransaction`"))
+            }
+            Data::TssShareSignature(_) => {
+                return Err(Error::from_protobuf("unsupported transaction `TssShareSignature`"))
             }
             Data::CryptoAddLiveHash(_) => {
                 return Err(Error::from_protobuf(

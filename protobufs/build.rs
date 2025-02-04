@@ -29,8 +29,9 @@ use std::path::Path;
 use regex::RegexBuilder;
 
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
-const SERVICES_FOLDER: &str = "./protobufs/services";
-const EVENT_FOLDER: &str = "./protobufs/platform/event";
+const SERVICES_FOLDER: &str = "./services/hapi/hedera-protobufs/services";
+const EVENT_FOLDER: &str = "./services/hapi/hedera-protobufs/platform/event";
+// const SERVICES_ROOT_FOLDER: &str = "./services/hapi/hedera-protobufs/";
 
 fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
@@ -177,6 +178,8 @@ fn main() -> anyhow::Result<()> {
 
     cfg.compile_protos(&services, &[services_tmp_path])?;
 
+    println!("here");
+
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
 
@@ -197,11 +200,8 @@ fn main() -> anyhow::Result<()> {
         )
         .out_dir(&mirror_out_dir)
         .compile_protos(
-            &[
-                "./protobufs/mirror/consensus_service.proto",
-                "./protobufs/mirror/mirror_network_service.proto",
-            ],
-            &["./protobufs/mirror/", "./protobufs/services/"],
+            &["./mirror/consensus_service.proto", "./mirror/mirror_network_service.proto"],
+            &["./mirror/", "./services/hapi/hedera-protobufs/services/"],
         )?;
 
     remove_useless_comments(&mirror_out_dir.join("proto.rs"))?;
@@ -217,8 +217,11 @@ fn main() -> anyhow::Result<()> {
     let cfg = builder::extern_basic_types(cfg);
 
     cfg.out_dir(&streams_out_dir).compile_protos(
-        &["./protobufs/streams/account_balance_file.proto"],
-        &["./protobufs/streams/", "./protobufs/services/"],
+        &["./services/hapi/hedera-protobufs/streams/account_balance_file.proto"],
+        &[
+            "./services/hapi/hedera-protobufs/streams/",
+            "./services/hapi/hedera-protobufs/services/",
+        ],
     )?;
 
     // see note wrt services.
@@ -300,8 +303,8 @@ fn main() -> anyhow::Result<()> {
         .services_same("VirtualAddress");
 
     cfg.out_dir(&sdk_out_dir).compile_protos(
-        &["./protobufs/sdk/transaction_list.proto"],
-        &["./protobufs/sdk/", "./protobufs/services/"],
+        &["./sdk/transaction_list.proto"],
+        &["./sdk/", "./services/hapi/hedera-protobufs/services/"],
     )?;
 
     // see note wrt services.
