@@ -191,7 +191,7 @@ impl MirrorRequest for TopicMessageQueryData {
             limit: self.limit,
         };
 
-        Box::pin(async {
+        Box::pin(async move {
             ConsensusServiceClient::new(channel)
                 .subscribe_topic(request)
                 .await

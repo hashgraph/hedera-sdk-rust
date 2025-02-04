@@ -25,8 +25,6 @@ backoff = "0.4.0"
 ed25519-dalek = { version = "2.0.0", features = ["rand_core"] }
 fraction = { version = "0.15.1", default-features = false }
 futures-core = "0.3.21"
-# Transitive dependency of tonic 0.11. Can be removed when tonic is upgraded to 0.12.
-h2_03 = { package = "h2", version = "0.3.6" }
 # Transitive dependency of tonic 0.12
 h2 = "0.4.6"
 hedera-proto = { path = "./protobufs", version = "0.15.0", features = [
@@ -35,8 +33,6 @@ hedera-proto = { path = "./protobufs", version = "0.15.0", features = [
 ] }
 hex = "0.4.3"
 hmac = "0.12.1"
-# Dependency of tonic 0.11. Can be removed when tonic is upgraded to 0.12.
-hyper_0 = { package = "hyper", version = "0.14", default-features = false }
 # Dependency of tonic 0.12
 hyper = { version = "1.3.1", default-features = false }
 log = "0.4.17"
@@ -49,8 +45,9 @@ sha3 = "0.10.2"
 thiserror = "1.0.31"
 time = "0.3.9"
 tokio = { version = "1.24.2", features = ["time"] }
-tonic = { version = "0.11.0", features = ["tls", "tls-webpki-roots"] }
+tonic = { version = "0.12.3", features = ["transport", "tls"] }
 tinystr = { version = "0.7.0", default-features = false }
+rustls = "0.23.21"
 arc-swap = "1.6.0"
 rlp = "0.5.2"
 bytes = { version = "1.2.1", default-features = false }
@@ -71,7 +68,7 @@ version = "0.3.21"
 default-features = false
 
 [dependencies.prost]
-version = "0.12.4"
+version = "0.13.4"
 default-features = false
 features = ["std"]
 
