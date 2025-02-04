@@ -436,6 +436,9 @@ pub enum RequestType {
 
     /// Submit a vote as part of the Threshold Signature Scheme (TSS) processing.
     TssVote,
+
+    /// Submit a node signature as part of the Threshold Signature Scheme (TSS) processing.
+    TssShareSignature,
 }
 
 impl FromProtobuf<services::HederaFunctionality> for RequestType {
@@ -526,6 +529,7 @@ impl FromProtobuf<services::HederaFunctionality> for RequestType {
             HederaFunctionality::TokenCancelAirdrop => Self::TokenCancelAirdrop,
             HederaFunctionality::TssMessage => Self::TssMessage,
             HederaFunctionality::TssVote => Self::TssVote,
+            HederaFunctionality::TssShareSignature => Self::TssShareSignature,
         };
 
         Ok(value)
@@ -622,6 +626,7 @@ impl ToProtobuf for RequestType {
             Self::TokenCancelAirdrop => HederaFunctionality::TokenCancelAirdrop,
             Self::TssMessage => HederaFunctionality::TssMessage,
             Self::TssVote => HederaFunctionality::TssVote,
+            Self::TssShareSignature => HederaFunctionality::TssShareSignature,
         }
     }
 }
