@@ -11,8 +11,9 @@
 # NOTE: Must be placed last to ensure enforcement over all other rules
 
 # Protection Rules for Github Configuration Files and Actions Workflows
-/.github/                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers
-/.github/workflows/                             @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
+/.github/                                       @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/platform-ci
+/.github/dependabot.yml                         @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera @hashgraph/platform-ci
+/.github/workflows/                             @hashgraph/platform-ci @hashgraph/platform-ci-committers @hashgraph/release-engineering-managers @hashgraph/release-engineering 
 
 # Legacy Maven project files
 **/pom.xml                                      @hashgraph/release-engineering @hashgraph/release-engineering-managers @hashgraph/hedera-sdk @hashgraph/hedera-sdk-rust-contributors @hashgraph/launchbadge-hedera
