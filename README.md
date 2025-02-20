@@ -11,6 +11,7 @@
 
 - [Rust](https://rustup.rs)
 - [protoc](https://grpc.io/docs/protoc-installation)
+- [OpenSSL](https://www.openssl.org/)
 
 Clone this repository and its submodules:
 
@@ -19,7 +20,7 @@ git clone --recursive https://github.com/hashgraph/hedera-sdk-rust.git
 
 ```
 
-Update [`\protobufs`](https://github.com/hashgraph/hedera-protobufs) submodule to recent version (if necessary):
+Update [`\protobufs`](https://github.com/hiero-ledger/hiero-consensus-node.git) submodule to recent version (if necessary):
 
 ```bash
 git submodule update --recursive --remote
@@ -105,7 +106,7 @@ cargo test account::create::initial_balance_and_key
 Hedera offers a way to run tests through your localhost using the `hedera-local-node` service.
 
 For instructions on how to set up and run local node, follow the steps in the git repository:
-<https://github.com/hashgraph/hedera-local-node>
+<https://github.com/hiero-ledger/hiero-local-node>
 
 Once the local node is running in Docker, use these environment variables in the `.env`.
 

@@ -29,9 +29,9 @@ use std::path::Path;
 use regex::RegexBuilder;
 
 const DERIVE_EQ_HASH: &str = "#[derive(Eq, Hash)]";
-const DERIVE_EQ_HASH_COPY: &str = "#[derive(Copy, Eq, Hash)]";
-const SERVICES_FOLDER: &str = "./protobufs/services";
-const EVENT_FOLDER: &str = "./protobufs/platform/event";
+const SERVICES_FOLDER: &str = "./services/hapi/hedera-protobufs/services";
+const EVENT_FOLDER: &str = "./services/hapi/hedera-protobufs/platform/event";
+// const SERVICES_ROOT_FOLDER: &str = "./services/hapi/hedera-protobufs/";
 
 fn main() -> anyhow::Result<()> {
     // services is the "base" module for the hedera protobufs
@@ -131,35 +131,35 @@ fn main() -> anyhow::Result<()> {
     // any protobufs that would typically be used as parameter, that meet the requirements of those
     // traits
     cfg = cfg
-        .type_attribute("proto.ShardID", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.RealmID", DERIVE_EQ_HASH_COPY)
+        .type_attribute("proto.ShardID", DERIVE_EQ_HASH)
+        .type_attribute("proto.RealmID", DERIVE_EQ_HASH)
         .type_attribute("proto.AccountID", DERIVE_EQ_HASH)
         .type_attribute("proto.AccountID.account", DERIVE_EQ_HASH)
-        .type_attribute("proto.FileID", DERIVE_EQ_HASH_COPY)
+        .type_attribute("proto.FileID", DERIVE_EQ_HASH)
         .type_attribute("proto.ContractID", DERIVE_EQ_HASH)
         .type_attribute("proto.ContractID.contract", DERIVE_EQ_HASH)
         .type_attribute("proto.TransactionID", DERIVE_EQ_HASH)
-        .type_attribute("proto.Timestamp", DERIVE_EQ_HASH_COPY)
+        .type_attribute("proto.Timestamp", DERIVE_EQ_HASH)
         .type_attribute("proto.NftTransfer", DERIVE_EQ_HASH)
-        .type_attribute("proto.Fraction", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.TopicID", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.TokenID", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.ScheduleID", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.FeeComponents", DERIVE_EQ_HASH_COPY)
+        .type_attribute("proto.Fraction", DERIVE_EQ_HASH)
+        .type_attribute("proto.TopicID", DERIVE_EQ_HASH)
+        .type_attribute("proto.TokenID", DERIVE_EQ_HASH)
+        .type_attribute("proto.ScheduleID", DERIVE_EQ_HASH)
+        .type_attribute("proto.FeeComponents", DERIVE_EQ_HASH)
         .type_attribute("proto.Key", DERIVE_EQ_HASH)
         .type_attribute("proto.KeyList", DERIVE_EQ_HASH)
         .type_attribute("proto.ThresholdKey", DERIVE_EQ_HASH)
         .type_attribute("proto.Key.key", DERIVE_EQ_HASH)
         .type_attribute("proto.SignaturePair", DERIVE_EQ_HASH)
         .type_attribute("proto.SignaturePair.signature", DERIVE_EQ_HASH)
-        .type_attribute("proto.FeeData", DERIVE_EQ_HASH_COPY)
-        .type_attribute("proto.TokenBalance", DERIVE_EQ_HASH_COPY)
+        .type_attribute("proto.FeeData", DERIVE_EQ_HASH)
+        .type_attribute("proto.TokenBalance", DERIVE_EQ_HASH)
         .type_attribute("proto.TokenAssociation", DERIVE_EQ_HASH)
         .type_attribute("proto.CryptoAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.TokenAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.GrantedCryptoAllowance", DERIVE_EQ_HASH)
         .type_attribute("proto.GrantedTokenAllowance", DERIVE_EQ_HASH)
-        .type_attribute("proto.Duration", DERIVE_EQ_HASH_COPY);
+        .type_attribute("proto.Duration", DERIVE_EQ_HASH);
 
     // the ResponseCodeEnum should be marked as #[non_exhaustive] so
     // adding variants does not trigger a breaking change
@@ -176,21 +176,15 @@ fn main() -> anyhow::Result<()> {
      "]"#,
     );
 
-    // Services fails with message:
-    // --- stderr
-    // Error: protoc failed: event/state_signature_transaction.proto: File not found.
-    // transaction_body.proto:111:1: Import "event/state_signature_transaction.proto" was not found or had errors.
-    //
-    cfg.compile(&services, &[services_tmp_path])?;
+    cfg.compile_protos(&services, &[services_tmp_path])?;
 
-    // panic!("Services succeeded");
+    println!("here");
 
     // NOTE: prost generates rust doc comments and fails to remove the leading * line
     remove_useless_comments(&Path::new(&env::var("OUT_DIR")?).join("proto.rs"))?;
 
     // mirror
     // NOTE: must be compiled in a separate folder otherwise it will overwrite the previous build
-
     let mirror_out_dir = Path::new(&env::var("OUT_DIR")?).join("mirror");
     create_dir_all(&mirror_out_dir)?;
 
@@ -205,12 +199,9 @@ fn main() -> anyhow::Result<()> {
             "crate::services::ConsensusMessageChunkInfo",
         )
         .out_dir(&mirror_out_dir)
-        .compile(
-            &[
-                "./protobufs/mirror/consensus_service.proto",
-                "./protobufs/mirror/mirror_network_service.proto",
-            ],
-            &["./protobufs/mirror/", "./protobufs/services/"],
+        .compile_protos(
+            &["./mirror/consensus_service.proto", "./mirror/mirror_network_service.proto"],
+            &["./mirror/", "./services/hapi/hedera-protobufs/services/"],
         )?;
 
     remove_useless_comments(&mirror_out_dir.join("proto.rs"))?;
@@ -225,9 +216,12 @@ fn main() -> anyhow::Result<()> {
     let cfg = tonic_build::configure();
     let cfg = builder::extern_basic_types(cfg);
 
-    cfg.out_dir(&streams_out_dir).compile(
-        &["./protobufs/streams/account_balance_file.proto"],
-        &["./protobufs/streams/", "./protobufs/services/"],
+    cfg.out_dir(&streams_out_dir).compile_protos(
+        &["./services/hapi/hedera-protobufs/streams/account_balance_file.proto"],
+        &[
+            "./services/hapi/hedera-protobufs/streams/",
+            "./services/hapi/hedera-protobufs/services/",
+        ],
     )?;
 
     // see note wrt services.
@@ -308,9 +302,9 @@ fn main() -> anyhow::Result<()> {
         .services_same("UtilPrngTransactionBody")
         .services_same("VirtualAddress");
 
-    cfg.out_dir(&sdk_out_dir).compile(
-        &["./protobufs/sdk/transaction_list.proto"],
-        &["./protobufs/sdk/", "./protobufs/services/"],
+    cfg.out_dir(&sdk_out_dir).compile_protos(
+        &["./sdk/transaction_list.proto"],
+        &["./sdk/", "./services/hapi/hedera-protobufs/services/"],
     )?;
 
     // see note wrt services.

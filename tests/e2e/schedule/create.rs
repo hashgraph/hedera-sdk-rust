@@ -186,9 +186,6 @@ async fn transfer() -> anyhow::Result<()> {
     Ok(())
 }
 
-// token balances are deprecated.
-// async fn canScheduleTokenTransfer() -> anyhow::Result<()> {}
-
 #[tokio::test]
 async fn double_schedule_fails() -> anyhow::Result<()> {
     let Some(TestEnvironment { config, client }) = setup_nonfree() else {
